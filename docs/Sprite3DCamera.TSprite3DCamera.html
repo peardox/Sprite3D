@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DCamera: Class TSprite3DCamera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DCamera"></span><h1 class="cio">Class TSprite3DCamera</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DCamera.html">Sprite3DCamera</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DCamera = class(TGorillaCamera)</code></p>
+<h2 class="description">Description</h2>
+<p>
+A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
+<p>
+
+
+<p>The constructor builds the pivot chain and makes the camera a child of RollPivot. Place the camera in a scene by setting <code>Rig.Parent</code>, never the camera's own Parent. Leave TCamera.Target nil: the pivots aim the camera at OrbitCenter.
+
+<p>The pivots have no owner and are not stored in .fmx files. Freeing the camera frees the pivots; freeing Rig frees the pivots and the camera. Like any FMX object, use it from the main thread only. The class is registered with RegisterFmxClasses.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#Rig">Rig</a></dt>
+  <dd>The root of the pivot chain; set <code>Rig.Parent</code> to place the camera in a scene.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#LookAt-TPoint3D-TLookAtMode-">LookAt</a></dt>
+  <dd>Turns the camera, from where it stands, to face APoint.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+</dl>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TGorillaCamera</li>
+<li class="thisitem">TSprite3DCamera</li></ul><h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#LookAt-TPoint3D-TLookAtMode-">LookAt</a></strong>(const APoint: TPoint3D; const AMode: <a href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a> = <a href="Sprite3DCamera.html#lmMinimalTwist">lmMinimalTwist</a>);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#SetOrientation-TQuat-">SetOrientation</a></strong>(const Q: <a href="Sprite3DCamera.TQuat.html">TQuat</a>);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Orbit-Single-Single-">Orbit</a></strong>(const DeltaAzimuth, DeltaPolar: Single);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Zoom-Single-">Zoom</a></strong>(const Factor: Single);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#MoveCenterTo-TPoint3D-">MoveCenterTo</a></strong>(const APoint: TPoint3D);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#CameraPosition">CameraPosition</a></strong>: TPoint3D;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FindViewport">FindViewport</a></strong>: TViewport3D;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-Single-">FitToBounds</a></strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TGorillaModel-Single-">FitToBounds</a></strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-Single-Single-Single-">FitToBounds</a></strong>(const ABox: TBoundingBox; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TGorillaModel-Single-">FitToBoundsMax</a></strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-Single-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-TControl3D-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Rig">Rig</a></strong>: TDummy read FAzimuthPivot;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#AzimuthPivot">AzimuthPivot</a></strong>: TDummy read FAzimuthPivot;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#PolarPivot">PolarPivot</a></strong>: TDummy read FPolarPivot;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#RollPivot">RollPivot</a></strong>: TDummy read FRollPivot;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#OrbitCenter">OrbitCenter</a></strong>: TPosition3D read GetOrbitCenter;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Orientation">Orientation</a></strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a> read GetOrientation write <a href="Sprite3DCamera.TSprite3DCamera.html#SetOrientation-TQuat-">SetOrientation</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Azimuth">Azimuth</a></strong>: Single read FAzimuth write SetAzimuth;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#PolarAngle">PolarAngle</a></strong>: Single read FPolarAngle write SetPolarAngle;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Roll">Roll</a></strong>: Single read FRoll write SetRoll;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Distance">Distance</a></strong>: Single read FDistance write SetDistance;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TComponent-"></span><code>constructor <strong>Create</strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates the camera and its pivot chain.</p>
+<p>
+
+
+<p>Distance starts at 10 and all three angles at 0. If AOwner is a TGorillaViewport, Rig is parented to it straight away; otherwise set <code>Rig.Parent</code> before the camera can render anything.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOwner</dt>
+<dd>The owner of the camera itself, not of the pivots. If it is a TGorillaViewport it also becomes the parent of Rig.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frees the camera and, if it was freed directly, its pivot chain.</p>
+<p>
+
+
+<p>When the camera is freed directly, for example by its owner, it detaches from RollPivot and frees Rig, which frees PolarPivot and RollPivot with it. When Rig is being freed by its own parent, the pivots are already on their way out and are left alone.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="LookAt-TPoint3D-TLookAtMode-"></span><code>procedure <strong>LookAt</strong>(const APoint: TPoint3D; const AMode: <a href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a> = <a href="Sprite3DCamera.html#lmMinimalTwist">lmMinimalTwist</a>);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Turns the camera, from where it stands, to face APoint.</p>
+<p>
+
+
+<p>The turn is the shortest-arc rotation from the current view direction to the new one. No world-up vector is involved, so it works looking straight up or down and never flips; a 180-degree turn pivots about the camera's own up axis.
+
+<p>The camera's position does not change. APoint becomes the new OrbitCenter and Distance becomes the camera's distance from it, so later orbiting circles that point. If the camera already stands on APoint, within 1E-6, nothing happens.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APoint</dt>
+<dd>The point to face, in the rig parent's space.</dd>
+<dt>AMode</dt>
+<dd>Whether Roll may change; see TLookAtMode.</dd>
+</dl>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a></dt>
+  <dd>How LookAt treats Roll when it turns the camera.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#SetOrientation-TQuat-">SetOrientation</a></dt>
+  <dd>Sets the orientation directly, in the rig parent's space.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetOrientation-TQuat-"></span><code>procedure <strong>SetOrientation</strong>(const Q: <a href="Sprite3DCamera.TQuat.html">TQuat</a>);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the orientation directly, in the rig parent's space.</p>
+<p>
+
+
+<p>Q is normalised, then split into Azimuth, PolarAngle and Roll. Of the two angle sets that give the same rotation, the one nearest the current angles is chosen, so the values change continuously and PolarAngle can run past +/-90. At an exact pole Azimuth is held and the rest of the twist goes into Roll. Azimuth is wrapped into 0 to 360; PolarAngle and Roll are not wrapped.
+
+<p>OrbitCenter and Distance do not change, so the camera swings round the centre.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Q</dt>
+<dd>The new orientation. A quaternion of near-zero length is treated as the identity.</dd>
+</dl>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#Orientation">Orientation</a></dt>
+  <dd>The camera's orientation as a quaternion in the rig parent's space.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Orbit-Single-Single-"></span><code>procedure <strong>Orbit</strong>(const DeltaAzimuth, DeltaPolar: Single);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Adds to Azimuth and PolarAngle, for example from a mouse drag.</p>
+<p>
+
+
+<p>Azimuth is wrapped into 0 to 360. PolarAngle is not limited, so the camera can carry on over a pole. Roll, Distance and OrbitCenter do not change.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>DeltaAzimuth</dt>
+<dd>Degrees to add to Azimuth.</dd>
+<dt>DeltaPolar</dt>
+<dd>Degrees to add to PolarAngle; positive raises the camera.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Zoom-Single-"></span><code>procedure <strong>Zoom</strong>(const Factor: Single);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Multiplies Distance by Factor, for example from the mouse wheel.</p>
+<p>
+
+
+<p>A Factor below 1 moves the camera closer. A Factor of zero or less is ignored, and Distance never goes below 0.001. In orthographic mode the apparent size depends on OrthoHeight, not on Distance, so zooming this way has no visible effect there.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Factor</dt>
+<dd>The multiplier; must be greater than zero to have any effect.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MoveCenterTo-TPoint3D-"></span><code>procedure <strong>MoveCenterTo</strong>(const APoint: TPoint3D);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Moves the orbit centre to APoint without changing the angles or Distance.</p>
+<p>
+
+
+<p>The camera moves with the centre, so the view pans.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APoint</dt>
+<dd>The new orbit centre, in the rig parent's space.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CameraPosition"></span><code>function <strong>CameraPosition</strong>: TPoint3D;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns the camera's position in the rig parent's space.</p>
+<p>
+
+
+<p>Computed from OrbitCenter, the three angles and Distance rather than read back from FMX matrices, so it is correct before the first frame is drawn.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The camera's position.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FindViewport"></span><code>function <strong>FindViewport</strong>: TViewport3D;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns the TGorillaViewport the rig is placed in, or nil.</p>
+<p>
+
+
+<p>Walks up the parent chain from Rig's parent and stops at the first TGorillaViewport. A plain TViewport3D is not recognised. The caller does not own the result.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The viewport, typed as TViewport3D, or nil if Rig has no TGorillaViewport above it.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBounds-TBoundingBox-Single-"></span><code>function <strong>FitToBounds</strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes ABox as large as possible in the viewport for the current angles.</p>
+<p>
+
+
+<p>The fit is for the camera's current Azimuth, PolarAngle and Roll, which are never changed. OrbitCenter moves and Distance changes; in orthographic or isometric mode OrthoHeight, and OrthoWidth if it is non-zero, are scaled as well. The view is centred on the box's eight corners, and they touch both edges of the tighter axis. The frustum, including the aspect ratio, comes from GetProjectionMatrix for the viewport's size.
+
+<p>Changing an angle afterwards can push the box out of view, so call FitToBounds again after every change, or use FitToBoundsMax. In perspective mode every corner is also kept at least 1 unit in front of the camera, FMX's near plane, which can make a very deep box smaller than the view.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in the rig parent's space. For a box in an object's own local space, use the overload that takes ASpace.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view on the tighter axis. Negative values count as 0.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty, there is no viewport, or it has zero width or height.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-TControl3D-Single-">FitToBoundsMax</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for every angle.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FindViewport">FindViewport</a></dt>
+  <dd>Returns the TGorillaViewport the rig is placed in, or nil.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBounds-TGorillaModel-Single-"></span><code>function <strong>FitToBounds</strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes a Gorilla model's bounding box as large as possible for the current angles.</p>
+<p>
+
+
+<p>Takes <code>AModel.GetAnimatedBoundingBox</code>, which Gorilla v1.5 documents as the box of the current pose in the model's local space and which ShowBoundingBox draws. It is passed, with AModel as the space, to the overload that takes ASpace, so the model's position, rotation and scale are applied once. The box follows the animation, so the fit is for the pose at the time of the call.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to frame; nil makes the call return False.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the model was framed; False, with nothing changed, if AModel is nil, it has no vertices, there is no viewport, or the viewport has zero width or height.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-TControl3D-Single-">FitToBoundsMax</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for every angle.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBounds-TBoundingBox-Single-Single-Single-"></span><code>function <strong>FitToBounds</strong>(const ABox: TBoundingBox; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fits ABox for the current angles and an explicit view size.</p>
+<p>
+
+
+<p>Works like the overload without a view size, but uses AViewWidth and AViewHeight instead of the viewport's size, so no viewport is needed, for example before it is shown. Only their ratio matters.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in the rig parent's space.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty or either size is zero or less.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBounds-TBoundingBox-TControl3D-Single-"></span><code>function <strong>FitToBounds</strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fits a box given in ASpace's local coordinates for the current angles.</p>
+<p>
+
+
+<p>All eight corners are carried through ASpace's position, rotation and scale into the rig parent's space, then fitted as in the other overloads, using the viewport's size. A rotated box is fitted as the rotated box, not as a larger axis-aligned one, and non-uniform scale is handled.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in ASpace's local coordinates, such as a model's mesh bounds.</dd>
+<dt>ASpace</dt>
+<dd>The object whose local space ABox is in. If nil, ABox is taken to be in absolute viewport space.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty, there is no viewport, or it has zero width or height.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBoundsMax-TBoundingBox-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes ABox as large as possible while it stays visible at every angle.</p>
+<p>
+
+
+<p>Azimuth, PolarAngle and Roll together reach every orientation, so the box can end up in any rotation about the orbit centre. All those rotations together fill the sphere around the box's centre that reaches its farthest corner, so that sphere is what is fitted: it is the smallest shape that is safe for every angle. OrbitCenter moves to the box's centre and Distance, or the orthographic size, is set; the angles are not changed and can then be changed freely without refitting.
+
+<p>The box looks smaller than with FitToBounds, by up to the ratio of the box's half diagonal to its smaller visible half-size. In perspective mode the sphere is kept at least 1 unit in front of the camera, FMX's near plane.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in the rig parent's space. For a box in an object's own local space, use the overload that takes ASpace.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of the view on the tighter axis. Negative values count as 0.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty, there is no viewport, or it has zero width or height.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBoundsMax-TGorillaModel-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes a Gorilla model's bounding box as large as possible while it stays visible at every angle.</p>
+<p>
+
+
+<p>Takes <code>AModel.GetAnimatedBoundingBox</code>, the current pose's box in the model's local space, and passes it with AModel as the space to the overload that takes ASpace, so the model's transform is applied once. The pose is taken at the time of the call; an animation that later reaches outside that box can still overflow.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to frame; nil makes the call return False.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the model was framed; False, with nothing changed, if AModel is nil, it has no vertices, there is no viewport, or the viewport has zero width or height.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBoundsMax-TBoundingBox-Single-Single-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const ABox: TBoundingBox; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fits ABox for every angle and an explicit view size.</p>
+<p>
+
+
+<p>Works like the overload without a view size, but uses AViewWidth and AViewHeight instead of the viewport's size, so no viewport is needed, for example before it is shown. Only their ratio matters.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in the rig parent's space.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty or either size is zero or less.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBoundsMax-TBoundingBox-TControl3D-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fits a box given in ASpace's local coordinates for every angle.</p>
+<p>
+
+
+<p>All eight corners are carried through ASpace's position, rotation and scale into the rig parent's space. The sphere is centred on the transformed box's centre and reaches its farthest transformed corner, so non-uniform scale is handled. It is then fitted as in the other overloads, using the viewport's size.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in ASpace's local coordinates, such as a model's mesh bounds.</dd>
+<dt>ASpace</dt>
+<dd>The object whose local space ABox is in. If nil, ABox is taken to be in absolute viewport space.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty, there is no viewport, or it has zero width or height.</p></td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Rig"></span><code>property <strong>Rig</strong>: TDummy read FAzimuthPivot;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The root of the pivot chain; set <code>Rig.Parent</code> to place the camera in a scene.</p>
+<p>
+
+
+<p>The same object as AzimuthPivot. Its Position is OrbitCenter. Freeing Rig frees the whole chain, the camera included.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthPivot"></span><code>property <strong>AzimuthPivot</strong>: TDummy read FAzimuthPivot;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The pivot that turns about Y for Azimuth; the root of the chain, same as Rig.</p>
+<p>
+
+
+<p>Its rotation is overwritten whenever an angle changes, so do not set it directly.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PolarPivot"></span><code>property <strong>PolarPivot</strong>: TDummy read FPolarPivot;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The pivot that turns about X for PolarAngle; a child of AzimuthPivot.</p>
+<p>
+
+
+<p>Its rotation is overwritten whenever an angle changes, so do not set it directly.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollPivot"></span><code>property <strong>RollPivot</strong>: TDummy read FRollPivot;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The pivot that turns about Z for Roll; a child of PolarPivot and the camera's parent.</p>
+<p>
+
+
+<p>Its rotation is overwritten whenever an angle changes, so do not set it directly.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OrbitCenter"></span><code>property <strong>OrbitCenter</strong>: TPosition3D read GetOrbitCenter;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The point the camera orbits and looks at, in the rig parent's space.</p>
+<p>
+
+
+<p>This is Rig's Position object, so writing to it, for example <code>OrbitCenter.Point := P</code>, moves the centre and the camera with it. It is named so as not to clash with TCamera.Target, which should be left nil on this camera.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Orientation"></span><code>property <strong>Orientation</strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a> read GetOrientation write <a href="Sprite3DCamera.TSprite3DCamera.html#SetOrientation-TQuat-">SetOrientation</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The camera's orientation as a quaternion in the rig parent's space.</p>
+<p>
+
+
+<p>Reading builds <code>Qy(Azimuth) * Qx(-PolarAngle) * Qz(Roll)</code>. Writing calls SetOrientation, which splits the quaternion back into the three angles.
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#SetOrientation-TQuat-">SetOrientation</a></dt>
+  <dd>Sets the orientation directly, in the rig parent's space.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Azimuth"></span><code>property <strong>Azimuth</strong>: Single read FAzimuth write SetAzimuth;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Rotation about the vertical Y axis through the orbit centre, in degrees.</p>
+<p>
+
+
+<p>Written values are wrapped into 0 to 360. The pivots update at once.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="PolarAngle"></span><code>property <strong>PolarAngle</strong>: Single read FPolarAngle write SetPolarAngle;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Elevation of the camera above the orbit centre, in degrees.</p>
+<p>
+
+
+<p>0 is level with the centre, +90 is directly above looking down and -90 directly below looking up. Not limited: values past +/-90 carry the camera over the pole and down the far side, upside down.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Roll"></span><code>property <strong>Roll</strong>: Single read FRoll write SetRoll;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Rotation of the camera about its own view direction, in degrees.</p>
+<p>
+
+
+<p>Neither wrapped nor limited. It never changes where the camera points.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Distance"></span><code>property <strong>Distance</strong>: Single read FDistance write SetDistance;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Distance from the orbit centre to the camera, in scene units.</p>
+<p>
+
+
+<p>Defaults to 10 and is clamped to at least 0.001. In orthographic mode it does not change the apparent size; FitToBounds still sets it to keep the near plane clear of the framed object.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

@@ -1,4 +1,4 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'Form1'
@@ -28,15 +28,15 @@ object Form1: TForm1
         item
         end>
       IsSelected = True
-      Size.Width = 35.000000000000000000
+      Size.Width = 45.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
       TabOrder = 0
-      Text = '3D'
+      Text = 'View'
       ExplicitSize.cx = 35.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
-      object Layout1: TLayout
+      object MainLayout: TLayout
         Align = Client
         Size.Width = 776.000000000000000000
         Size.Height = 656.000000000000000000
@@ -49,7 +49,7 @@ object Form1: TForm1
           Size.PlatformDefault = False
           TabOrder = 1
         end
-        object Layout2: TLayout
+        object ControlsLayout: TLayout
           Align = Right
           Position.X = 626.000000000000000000
           Size.Width = 150.000000000000000000
@@ -158,6 +158,14 @@ object Form1: TForm1
             Text = '0'
             TabOrder = 93
           end
+          object chkFitAnyAngle: TCheckBox
+            Anchors = [akLeft, akBottom]
+            Position.X = 16.000000000000000000
+            Position.Y = 598.000000000000000000
+            TabOrder = 96
+            Text = 'Fit any angle'
+            OnChange = chkFitAnyAngleChange
+          end
           object chkOrthoToggle: TCheckBox
             Anchors = [akLeft, akBottom]
             Position.X = 16.000000000000000000
@@ -175,7 +183,7 @@ object Form1: TForm1
         Data = {0000}
       end
     end
-    object TabItem1: TTabItem
+    object DebugTab: TTabItem
       CustomIcon = <
         item
         end>
@@ -188,7 +196,7 @@ object Form1: TForm1
       Text = 'Debug'
       ExplicitSize.cx = 56.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
-      object Memo1: TMemo
+      object DebugMemo: TMemo
         Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
         DataDetectorTypes = []
         Align = Client

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DCamera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DCamera</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Orbit camera for Gorilla3D, driven by a chain of three single-axis pivots.</p>
+<p>
+
+
+<p>TSprite3DCamera is a TGorillaCamera that hangs at the end of a chain of three TDummy pivots. Each pivot turns about one axis only, so Azimuth, PolarAngle and Roll never combine as Euler angles on one object, and the camera can pass over the poles without gimbal lock. The camera sits Distance units back from the orbit centre and always looks at it.
+
+<p></p>
+
+<pre class="preformatted">
+&lt;your parent&gt;                      e.g. TGorillaViewport, or any TControl3D
+`-- AzimuthPivot (TDummy)         rotates about Y  -&gt;  Azimuth
+    `-- PolarPivot (TDummy)       rotates about X  -&gt;  PolarAngle
+        `-- RollPivot (TDummy)    rotates about Z  -&gt;  Roll
+            `-- TSprite3DCamera    at (0, 0, -Distance), looking along +Z</pre>
+
+<p>
+
+<p>Angles are in degrees. The orientation is the quaternion Qy(Azimuth) * Qx(-PolarAngle) * Qz(Roll) in the rig parent's space, and TQuat does the arithmetic. FMX's up direction is -Y.
+
+<p>LookAt turns the camera where it stands to face a point. FitToBounds makes a box as large as possible in the viewport without overflowing it, in perspective or orthographic mode, for the current angles. FitToBoundsMax does the same for every possible Azimuth, PolarAngle and Roll, so the angles can then change freely. The header comment after the unit line explains the maths behind them.
+
+<p></p>
+
+<pre class="preformatted">
+Cam := TSprite3DCamera.Create(Self);
+Cam.Rig.Parent := GorillaViewport1;   // parent the whole chain, not Cam itself
+GorillaViewport1.Camera := Cam;
+GorillaViewport1.UsingDesignCamera := False;
+Cam.FitToBounds(GorillaModel1);</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DCamera.TQuat.html"><code>TQuat</code></a></td>
+<td class="itemdesc">A quaternion of Doubles, used for the camera's orientation arithmetic.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DCamera.TSprite3DCamera.html"><code>TSprite3DCamera</code></a></td>
+<td class="itemdesc">A TGorillaCamera that orbits a centre point through a chain of three pivots.</td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a></strong> = (...);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TLookAtMode"></span><code><strong>TLookAtMode</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+How LookAt treats Roll when it turns the camera.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#LookAt-TPoint3D-TLookAtMode-">TSprite3DCamera.LookAt</a></dt>
+  <dd>Turns the camera, from where it stands, to face APoint.</dd>
+</dl>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="lmMinimalTwist">lmMinimalTwist</span>: The default. A pure shortest-arc turn: the camera keeps as much of its current up direction as it can. Repeated LookAt calls can build up some roll.</li>
+<li>
+<span id="lmKeepRoll">lmKeepRoll</span>: The same view direction, but Roll keeps its current value, so the horizon stays as it was. Still safe at the poles, where Azimuth is held.</li>
+</ul>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

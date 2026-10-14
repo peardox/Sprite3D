@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DCamera: Record TQuat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TQuat"></span><h1 class="cio">Record TQuat</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DCamera.html">Sprite3DCamera</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TQuat = record</code></p>
+<h2 class="description">Description</h2>
+<p>
+A quaternion of Doubles, used for the camera's orientation arithmetic.</p>
+<p>
+
+
+<p>Hamilton convention, with the right-hand rule on raw coordinates. <code>A * B</code> means apply B first, then A. The rotation helpers expect a unit quaternion; Create does not normalise. TQuat is a plain value type with nothing to free, and may be used on any thread.</p>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DCamera.TQuat.html#W">W</a></strong>: Double;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DCamera.TQuat.html#X">X</a></strong>: Double;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DCamera.TQuat.html#Y">Y</a></strong>: Double;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DCamera.TQuat.html#Z">Z</a></strong>: Double;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TQuat.html#Create-Double-Double-Double-Double-">Create</a></strong>(const AW, AX, AY, AZ: Double): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TQuat.html#Identity">Identity</a></strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TQuat.html#AxisAngle-TPoint3D-Double-">AxisAngle</a></strong>(const Axis: TPoint3D; const Radians: Double): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TQuat.html#ShortestArc-TPoint3D-TPoint3D-TPoint3D-">ShortestArc</a></strong>(const AFrom, ATo, AFallbackAxis: TPoint3D): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TQuat.html#Slerp-TQuat-TQuat-Double-">Slerp</a></strong>(const A, B: <a href="Sprite3DCamera.TQuat.html">TQuat</a>; const T: Double): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class operator <strong><a href="Sprite3DCamera.TQuat.html#Multiply-TQuat-TQuat-">Multiply</a></strong>(const A, B: <a href="Sprite3DCamera.TQuat.html">TQuat</a>): <a href="Sprite3DCamera.TQuat.html">TQuat</a>;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TQuat.html#Conjugate">Conjugate</a></strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a>;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TQuat.html#Normalized">Normalized</a></strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a>;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TQuat.html#Rotate-TPoint3D-">Rotate</a></strong>(const V: TPoint3D): TPoint3D;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="W"></span><code><strong>W</strong>: Double;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The scalar part W and the vector part X, Y, Z.</p>
+<p>
+
+
+<p>For a rotation by angle t about unit axis n, W = cos(t/2) and (X, Y, Z) = n sin(t/2).</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="X"></span><code><strong>X</strong>: Double;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The scalar part W and the vector part X, Y, Z.</p>
+<p>
+
+
+<p>For a rotation by angle t about unit axis n, W = cos(t/2) and (X, Y, Z) = n sin(t/2).</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Y"></span><code><strong>Y</strong>: Double;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The scalar part W and the vector part X, Y, Z.</p>
+<p>
+
+
+<p>For a rotation by angle t about unit axis n, W = cos(t/2) and (X, Y, Z) = n sin(t/2).</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Z"></span><code><strong>Z</strong>: Double;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The scalar part W and the vector part X, Y, Z.</p>
+<p>
+
+
+<p>For a rotation by angle t about unit axis n, W = cos(t/2) and (X, Y, Z) = n sin(t/2).</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-Double-Double-Double-Double-"></span><code>class function <strong>Create</strong>(const AW, AX, AY, AZ: Double): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Builds a quaternion from its four components, without normalising.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AW</dt>
+<dd>The scalar part.</dd>
+<dt>AX</dt>
+<dd>The X component of the vector part.</dd>
+<dt>AY</dt>
+<dd>The Y component of the vector part.</dd>
+<dt>AZ</dt>
+<dd>The Z component of the vector part.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The quaternion (AW, AX, AY, AZ), exactly as given.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Identity"></span><code>class function <strong>Identity</strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns the identity rotation, which leaves every vector unchanged.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The quaternion (1, 0, 0, 0).</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AxisAngle-TPoint3D-Double-"></span><code>class function <strong>AxisAngle</strong>(const Axis: TPoint3D; const Radians: Double): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Builds the rotation of Radians about Axis.</p>
+<p>
+
+
+<p>Axis is normalised first, so it need not be unit length, but it must not be zero. Positive angles follow the right-hand rule about Axis.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Axis</dt>
+<dd>The axis to turn about; any non-zero length.</dd>
+<dt>Radians</dt>
+<dd>The angle to turn, in radians.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">A unit quaternion for the rotation.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShortestArc-TPoint3D-TPoint3D-TPoint3D-"></span><code>class function <strong>ShortestArc</strong>(const AFrom, ATo, AFallbackAxis: TPoint3D): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Builds the smallest rotation that turns AFrom onto ATo.</p>
+<p>
+
+
+<p>Both vectors must be unit length. When they point in opposite directions, with a dot product below -1 + 1E-6, every axis gives an equally short turn, so the result is a 180-degree turn about AFallbackAxis. LookAt passes the camera's own up direction there.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrom</dt>
+<dd>The starting direction, unit length.</dd>
+<dt>ATo</dt>
+<dd>The target direction, unit length.</dd>
+<dt>AFallbackAxis</dt>
+<dd>The axis used only for opposite vectors; must be perpendicular to AFrom, any non-zero length.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">A unit quaternion that rotates AFrom onto ATo.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#LookAt-TPoint3D-TLookAtMode-">TSprite3DCamera.LookAt</a></dt>
+  <dd>Turns the camera, from where it stands, to face APoint.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Slerp-TQuat-TQuat-Double-"></span><code>class function <strong>Slerp</strong>(const A, B: <a href="Sprite3DCamera.TQuat.html">TQuat</a>; const T: Double): <a href="Sprite3DCamera.TQuat.html">TQuat</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Interpolates spherically between two rotations.</p>
+<p>
+
+
+<p>Always takes the shorter way round, using -B in place of B where that is nearer to A. When A and B are almost equal it falls back to linear interpolation to avoid dividing by a tiny sine. The result is normalised.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>A</dt>
+<dd>The rotation at T = 0; unit length.</dd>
+<dt>B</dt>
+<dd>The rotation at T = 1; unit length.</dd>
+<dt>T</dt>
+<dd>The interpolation factor, normally from 0 to 1.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The interpolated rotation, as a unit quaternion.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Multiply-TQuat-TQuat-"></span><code>class operator <strong>Multiply</strong>(const A, B: <a href="Sprite3DCamera.TQuat.html">TQuat</a>): <a href="Sprite3DCamera.TQuat.html">TQuat</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Composes two rotations; the result applies B first, then A.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>A</dt>
+<dd>The rotation applied second.</dd>
+<dt>B</dt>
+<dd>The rotation applied first.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The Hamilton product <code>A * B</code>, not normalised.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Conjugate"></span><code>function <strong>Conjugate</strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns the conjugate, which for a unit quaternion is the inverse rotation.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The quaternion (W, -X, -Y, -Z).</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Normalized"></span><code>function <strong>Normalized</strong>: <a href="Sprite3DCamera.TQuat.html">TQuat</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns this quaternion scaled to unit length.</p>
+<p>
+
+
+<p>If the length is below 1E-6 there is no meaningful direction, and the identity is returned instead.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">A unit quaternion.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Rotate-TPoint3D-"></span><code>function <strong>Rotate</strong>(const V: TPoint3D): TPoint3D;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Rotates a vector by this quaternion.</p>
+<p>
+
+
+<p>The result is only a pure rotation if this is a unit quaternion.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>V</dt>
+<dd>The vector to rotate.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The rotated vector.</p></td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

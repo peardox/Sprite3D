@@ -3,7 +3,7 @@ program Sprite3d;
 uses
   System.StartUpCopy,
   FMX.Forms,
-  Sprite3dMain in 'Sprite3dMain.pas' {Form1},
+  Sprite3dMain in 'Sprite3dMain.pas' {MainForm},
   Sprite3DCamera in 'Sprite3DCamera.pas';
 
 begin
@@ -11,6 +11,6 @@ begin
   ReportMemoryLeaksOnShutdown := True;
 
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.

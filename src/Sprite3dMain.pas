@@ -1,4 +1,48 @@
+//** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
+//**
+//** The form has two tabs. The 3D tab holds a TGorillaViewport, created at run time, and a
+//** panel of three dials for Azimuth, inclination and Roll, plus a check box that switches
+//** between perspective and orthographic projection. The Debug tab holds a memo for log
+//** output.
+//**
+//** On show, the form loads models/TestModel.glb, plays its last animation by name, centres
+//** and turns it 180 degrees about X, and calls FitToBounds so it fills the view. The model
+//** is refitted whenever a dial turns, the viewport is resized, the projection changes or
+//** the "Fit any angle" box is toggled. Checked, that box uses FitToBoundsMax, which frames
+//** the model for every angle at once; unchecked, FitToBounds frames it exactly for the
+//** current angles.
+//**
+//** @preformatted(
+//** TabControl1
+//** |-- GorillaTab "3D"
+//** |   `-- Layout1
+//** |       |-- ViewportLayout   owns the TGorillaViewport
+//** |       `-- Layout2          dials, labels, both check boxes
+//** `-- TabItem1 "Debug"
+//**     `-- DebugMemo
+//** )
 unit Sprite3dMain;
+{
+  Demo form for TSprite3DCamera: loads a model and drives the camera with dials.
+  The form has two tabs. The 3D tab holds a TGorillaViewport, created at run
+  time, and a panel of three dials for Azimuth, inclination and Roll, plus a
+  check box that switches between perspective and orthographic projection.
+  The Debug tab holds a memo for log output.
+  On show, the form loads models/TestModel.glb, plays its last animation by
+  name, centres and turns it 180 degrees about X, and calls FitToBounds so it
+  fills the view. The model is refitted whenever a dial turns, the viewport
+  is resized, the projection changes or the "Fit any angle" box is
+  toggled. Checked, that box uses FitToBoundsMax, which frames the model
+  for every angle at once; unchecked, FitToBounds frames it exactly for
+  the current angles.
+    TabControl1
+    |-- GorillaTab "3D"
+    |   `-- Layout1
+    |       |-- ViewportLayout   owns the TGorillaViewport
+    |       `-- Layout2          dials, labels, both check boxes
+    `-- TabItem1 "Debug"
+        `-- DebugMemo
+}
 
 interface
 
@@ -12,33 +56,183 @@ uses
   FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera;
 
 type
+  //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
+  //**
+  //** Casting a TControl3D to this class exposes its protected members inside the unit that
+  //** declares the cast. Because it is in the interface section, other units can use it too.
+  /// <summary>Protected-access helper for TControl3D; nothing in the project uses it
+  /// yet.</summary>
+  /// <remarks>Casting a TControl3D to this class exposes its protected members inside the unit
+  /// that declares the cast. Because it is in the interface section, other units can use it
+  /// too.</remarks>
   TControl3DAccess = class(TControl3D);
-  TForm1 = class(TForm)
+  //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
+  //**
+  //** The viewport, light, model and TSprite3DCamera are created at run time, not at design
+  //** time; the form owns none of them directly. All event handlers run on the main thread.
+  //**
+  //** @seealso(TSprite3DCamera)
+  /// <summary>The main form: a Gorilla3D view of one model, with dials for the camera.</summary>
+  /// <remarks>The viewport, light, model and TSprite3DCamera are created at run time, not at
+  /// design time; the form owns none of them directly. All event handlers run on the main
+  /// thread.</remarks>
+  /// <seealso cref="Sprite3DCamera.TSprite3DCamera"/>
+  TMainForm = class(TForm)
+    //** @abstract(Fills the form and holds the 3D tab and the Debug tab.)
+    /// <summary>Fills the form and holds the 3D tab and the Debug tab.</summary>
     TabControl1: TTabControl;
+    //** @abstract(The tab captioned "3D", with the viewport and camera controls; active at
+    //** start-up.)
+    /// <summary>The tab captioned "3D", with the viewport and camera controls; active at
+    /// start-up.</summary>
     GorillaTab: TTabItem;
-    TabItem1: TTabItem;
-    Memo1: TMemo;
-    Layout1: TLayout;
+    DebugTab: TTabItem;
+    DebugMemo: TMemo;
+    MainLayout: TLayout;
+    //** @abstract(The area left of the control panel; owns the TGorillaViewport made in
+    //** FormCreate.)
+    /// <summary>The area left of the control panel; owns the TGorillaViewport made in
+    /// FormCreate.</summary>
     ViewportLayout: TLayout;
-    Layout2: TLayout;
+    ControlsLayout: TLayout;
+    //** @abstract(Sets the camera's Azimuth; see AzimuthDialChange.)
+    /// <summary>Sets the camera's Azimuth; see <see cref="AzimuthDialChange"/>.</summary>
     AzimuthDial: TArcDial;
+    //** @abstract(The caption "Azimuth" above AzimuthDial.)
+    /// <summary>The caption "Azimuth" above AzimuthDial.</summary>
     AzimuthLabel: TLabel;
+    //** @abstract(Shows the current azimuth in whole degrees.)
+    /// <summary>Shows the current azimuth in whole degrees.</summary>
     AzimuthText: TLabel;
+    //** @abstract(Sets the camera's PolarAngle; see AngleDialChange.)
+    /// <summary>Sets the camera's PolarAngle; see <see cref="AngleDialChange"/>.</summary>
     AngleDial: TArcDial;
+    //** @abstract(The caption "Inclination" above AngleDial.)
+    /// <summary>The caption "Inclination" above AngleDial.</summary>
     AngleLabel: TLabel;
+    //** @abstract(Shows the current polar angle in whole degrees.)
+    /// <summary>Shows the current polar angle in whole degrees.</summary>
     AngleText: TLabel;
+    //** @abstract(An FMX TModel3D placed at design time; the code does not use it.)
+    //**
+    //** The model on screen is a TGorillaModel created at run time by SwitchModel.
+    /// <summary>An FMX TModel3D placed at design time; the code does not use it.</summary>
+    /// <remarks>The model on screen is a TGorillaModel created at run time by
+    /// SwitchModel.</remarks>
     Model3D1: TModel3D;
+    //** @abstract(Sets the camera's Roll; see RollDialChange.)
+    /// <summary>Sets the camera's Roll; see <see cref="RollDialChange"/>.</summary>
     RollDial: TArcDial;
+    //** @abstract(The caption "Roll" above RollDial.)
+    /// <summary>The caption "Roll" above RollDial.</summary>
     RollLabel: TLabel;
+    //** @abstract(Shows the current roll in whole degrees.)
+    /// <summary>Shows the current roll in whole degrees.</summary>
     RollText: TLabel;
+    //** @abstract(Switches the camera between orthographic and perspective projection.)
+    /// <summary>Switches the camera between orthographic and perspective projection.</summary>
     chkOrthoToggle: TCheckBox;
+    //** @abstract(Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.)
+    //**
+    //** Checked, the model is framed once for every possible Azimuth, inclination and Roll and
+    //** turning the dials only moves the camera round it. Unchecked, the model is framed
+    //** exactly for the current angles and refitted after every dial change.
+    /// <summary>Chooses FitToBoundsMax over FitToBounds, so the model fits at every
+    /// angle.</summary>
+    /// <remarks>Checked, the model is framed once for every possible Azimuth, inclination and
+    /// Roll and turning the dials only moves the camera round it. Unchecked, the model is
+    /// framed exactly for the current angles and refitted after every dial change.</remarks>
+    chkFitAnyAngle: TCheckBox;
+    //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
+    //**
+    //** The models folder is the library path on macOS, the home folder on Linux and
+    //** @code('../../../') elsewhere; on Windows it is the current folder instead if that has a
+    //** models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a
+    //** point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
+    //** camera. The viewport runs at a fixed 60 frames per second without VSync.
+    //**
+    //** @param(Sender The form.)
+    /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
+    /// <remarks>The models folder is the library path on macOS, the home folder on Linux and
+    /// <c>'../../../'</c> elsewhere; on Windows it is the current folder instead if that has a
+    /// models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a point
+    /// light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's camera.
+    /// The viewport runs at a fixed 60 frames per second without VSync.</remarks>
+    /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
+    //** @abstract(Loads models/TestModel.glb from the models folder and fits the camera to it.)
+    //**
+    //** Shows a message and loads nothing if the file is missing or cannot be read.
+    //**
+    //** @param(Sender The form.)
+    /// <summary>Loads models/TestModel.glb from the models folder and fits the camera to
+    /// it.</summary>
+    /// <remarks>Shows a message and loads nothing if the file is missing or cannot be
+    /// read.</remarks>
+    /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
+    //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
+    //**
+    //** The dial value is negated and shifted into 0 to 360, shown in AzimuthText, and written
+    //** to the camera; the model is then refitted for the new view.
+    //**
+    //** @param(Sender AzimuthDial.)
+    /// <summary>Copies AzimuthDial to the camera's Azimuth.</summary>
+    /// <remarks>The dial value is negated and shifted into 0 to 360, shown in AzimuthText, and
+    /// written to the camera; the model is then refitted for the new view.</remarks>
+    /// <param name="Sender">AzimuthDial.</param>
     procedure AzimuthDialChange(Sender: TObject);
+    //** @abstract(Copies AngleDial to the camera's PolarAngle.)
+    //**
+    //** The dial value is negated and shifted into 0 to 360, shown in AngleText, and written to
+    //** the camera; the model is then refitted. Values past 90 take the camera over the pole.
+    //**
+    //** @param(Sender AngleDial.)
+    /// <summary>Copies AngleDial to the camera's PolarAngle.</summary>
+    /// <remarks>The dial value is negated and shifted into 0 to 360, shown in AngleText, and
+    /// written to the camera; the model is then refitted. Values past 90 take the camera over
+    /// the pole.</remarks>
+    /// <param name="Sender">AngleDial.</param>
     procedure AngleDialChange(Sender: TObject);
+    //** @abstract(Copies RollDial to the camera's Roll.)
+    //**
+    //** The dial value is shifted into 0 to 360, without negating, shown in RollText, and
+    //** written to the camera; the model is then refitted for the new view.
+    //**
+    //** @param(Sender RollDial.)
+    /// <summary>Copies RollDial to the camera's Roll.</summary>
+    /// <remarks>The dial value is shifted into 0 to 360, without negating, shown in RollText,
+    /// and written to the camera; the model is then refitted for the new view.</remarks>
+    /// <param name="Sender">RollDial.</param>
     procedure RollDialChange(Sender: TObject);
+    //** @abstract(Refits the camera to the model when the viewport changes size.)
+    //**
+    //** Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is loaded.
+    //**
+    //** @param(Sender The TGorillaViewport.)
+    /// <summary>Refits the camera to the model when the viewport changes size.</summary>
+    /// <remarks>Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is
+    /// loaded.</remarks>
+    /// <param name="Sender">The TGorillaViewport.</param>
     procedure GorillaViewportResize(Sender: TObject);
+    //** @abstract(Switches the projection to match chkOrthoToggle and refits the model.)
+    //**
+    //** Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the form
+    //** caption, and calls FitToBounds, since the two modes size the view differently.
+    //**
+    //** @param(Sender chkOrthoToggle.)
+    /// <summary>Switches the projection to match chkOrthoToggle and refits the model.</summary>
+    /// <remarks>Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in
+    /// the form caption, and calls FitToBounds, since the two modes size the view
+    /// differently.</remarks>
+    /// <param name="Sender">chkOrthoToggle.</param>
     procedure chkOrthoToggleChange(Sender: TObject);
+    //** @abstract(Refits the model when the fit mode changes.)
+    //**
+    //** @param(Sender chkFitAnyAngle.)
+    /// <summary>Refits the model when the fit mode changes.</summary>
+    /// <param name="Sender">chkFitAnyAngle.</param>
+    procedure chkFitAnyAngleChange(Sender: TObject);
   private
     { Private declarations }
     FModelRotation: TPoint3D;
@@ -52,12 +246,15 @@ type
     GorillaCamera: TSprite3DCamera;
     ModelDir: String;
     procedure SwitchModel(const AModel: String);
+    function FitModel: Boolean;
   public
     { Public declarations }
   end;
 
 var
-  Form1: TForm1;
+  //** @abstract(The main form, created by Application.CreateForm in Sprite3d.dpr.)
+  /// <summary>The main form, created by Application.CreateForm in Sprite3d.dpr.</summary>
+  MainForm: TMainForm;
 
 implementation
 
@@ -78,7 +275,7 @@ uses
 
 {$R *.fmx}
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
   TabControl1.ActiveTab := GorillaTab;
 
@@ -112,7 +309,7 @@ begin
 
 end;
 
-procedure TForm1.AngleDialChange(Sender: TObject);
+procedure TMainForm.AngleDialChange(Sender: TObject);
 begin
   FPolarAngle := -AngleDial.Value;
   if FPolarAngle < 0 then
@@ -121,10 +318,11 @@ begin
   AngleText.Text := Format('%3.0f',[FPolarAngle]);
 
   GorillaCamera.PolarAngle := FPolarAngle;
+  FitModel;
 
 end;
 
-procedure TForm1.AzimuthDialChange(Sender: TObject);
+procedure TMainForm.AzimuthDialChange(Sender: TObject);
 begin
   FAzimuth := -AzimuthDial.Value;
 
@@ -134,9 +332,10 @@ begin
   AzimuthText.Text := Format('%3.0f',[FAzimuth]);
 
   GorillaCamera.Azimuth := FAzimuth;
+  FitModel;
 end;
 
-procedure TForm1.chkOrthoToggleChange(Sender: TObject);
+procedure TMainForm.chkOrthoToggleChange(Sender: TObject);
 begin
   if chkOrthoToggle.IsChecked then
     begin
@@ -148,11 +347,10 @@ begin
       Caption := 'Perspective';
       GorillaCamera.ProjectionMode := TGorillaCameraProjection.cpPerspective;
     end;
-  if Assigned(GorillaCamera) and Assigned(GorillaModel) then
-    GorillaCamera.FitToBounds(GorillaModel);
+  FitModel;
 end;
 
-procedure TForm1.RollDialChange(Sender: TObject);
+procedure TMainForm.RollDialChange(Sender: TObject);
 begin
   FRoll := RollDial.Value;
 
@@ -162,25 +360,44 @@ begin
   RollText.Text := Format('%3.0f',[FRoll]);
 
   GorillaCamera.Roll := FRoll;
+  FitModel;
 end;
 
 // On startup load a default Model as specified by DefaultLoadType
 // The directory layout of models/Orientation follows this pattern
 // to allow easy addition of new Model types
-procedure TForm1.FormShow(Sender: TObject);
+procedure TMainForm.FormShow(Sender: TObject);
 begin
   SwitchModel(ModelDir + 'models/TestModel.glb');
 end;
 
-procedure TForm1.GorillaViewportResize(Sender: TObject);
+procedure TMainForm.GorillaViewportResize(Sender: TObject);
 begin
-  if Assigned(GorillaCamera) and Assigned(GorillaModel) then
-    GorillaCamera.FitToBounds(GorillaModel);
+  FitModel;
+end;
+
+// Refit after anything that changes the view: angles, size, projection or
+// fit mode. FitToBounds is exact for the current angles only, so it has to
+// be redone each time; FitToBoundsMax already allows for every angle, so
+// redoing it after a dial change gives the same result.
+function TMainForm.FitModel: Boolean;
+begin
+  Result := Assigned(GorillaCamera) and Assigned(GorillaModel);
+  if Result then
+    if chkFitAnyAngle.IsChecked then
+      Result := GorillaCamera.FitToBoundsMax(GorillaModel)
+    else
+      Result := GorillaCamera.FitToBounds(GorillaModel);
+end;
+
+procedure TMainForm.chkFitAnyAngleChange(Sender: TObject);
+begin
+  FitModel;
 end;
 
 // Load a Model Clearing any old model first (so it Switches them)
 // GorillaModel will be Nil on first call but set on subsequent calls
-procedure TForm1.SwitchModel(const AModel: String);
+procedure TMainForm.SwitchModel(const AModel: String);
 var
   BBox: TBoundingBox;
   anims: TStringList;
@@ -207,10 +424,10 @@ begin
     try
       if GorillaModel.AnimationManager.Animations.Count > 0 then
         begin
-          Memo1.Lines.Add('---------- anims ---------------');
+          DebugMemo.Lines.Add('---------- anims ---------------');
           for var AnimName in GorillaModel.AnimationManager.Animations.Keys do
             anims.Add(AnimName);
-          Memo1.Lines.Add('--------------------------------');
+          DebugMemo.Lines.Add('--------------------------------');
           GorillaModel.AnimationManager.PlayAnimation(anims[anims.count - 1]);
         end;
     finally
@@ -223,6 +440,10 @@ begin
     BBox := GorillaModel.GetBoundingBox();
 
     GorillaModel.IsMarked := True;
+    // The orange box is the one FitToBounds fits: the current pose's
+    // bounds. IsMarked's designer box uses the static mesh and can differ
+    // slightly from it on an animated model.
+    GorillaModel.ShowBoundingBox := True;
     GorillaModel.Position.Point := Point3D(BBox.TopLeftNear.X + (BBox.Width / 2),
                                             BBox.TopLeftNear.Y + (BBox.Height / 2),
                                             BBox.TopLeftNear.Z + (BBox.Depth / 2));
@@ -233,7 +454,7 @@ begin
     GorillaModel.RotationAngle.Y := FModelRotation.Y;
     GorillaModel.RotationAngle.Z := FModelRotation.Z;
 
-    if not GorillaCamera.FitToBounds(GorillaModel) then
+    if not FitModel then
       Caption := 'Problem fitting Camera'
     else if GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpOrthographic then
       Caption := 'Orthographic'
