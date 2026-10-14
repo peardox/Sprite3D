@@ -1,12 +1,12 @@
 //** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
 //**
-//** The form has two tabs. The 3D tab holds a TGorillaViewport, created at run time, and a
-//** panel of three dials for Azimuth, inclination and Roll, plus a check box that switches
-//** between perspective and orthographic projection. The Debug tab holds a memo for log
-//** output.
+//** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
+//** panel of three dials for Azimuth, inclination and Roll, plus two check boxes: one
+//** switches between perspective and orthographic projection, the other chooses how the model
+//** is fitted. The Debug tab holds a memo for log output.
 //**
-//** On show, the form loads models/TestModel.glb, plays its last animation by name, centres
-//** and turns it 180 degrees about X, and calls FitToBounds so it fills the view. The model
+//** On show, the form loads a test model, if animated plays its last animation by name, centres
+//** and turns it 180 degrees about X, and fits the camera so it fills the view. The model
 //** is refitted whenever a dial turns, the viewport is resized, the projection changes or
 //** the "Fit any angle" box is toggled. Checked, that box uses FitToBoundsMax, which frames
 //** the model for every angle at once; unchecked, FitToBounds frames it exactly for the
@@ -14,33 +14,34 @@
 //**
 //** @preformatted(
 //** TabControl1
-//** |-- GorillaTab "3D"
-//** |   `-- Layout1
+//** |-- GorillaTab "View"
+//** |   `-- MainLayout
 //** |       |-- ViewportLayout   owns the TGorillaViewport
-//** |       `-- Layout2          dials, labels, both check boxes
-//** `-- TabItem1 "Debug"
+//** |       `-- ControlsLayout   dials, labels, both check boxes
+//** `-- DebugTab "Debug"
 //**     `-- DebugMemo
 //** )
 unit Sprite3dMain;
 {
   Demo form for TSprite3DCamera: loads a model and drives the camera with dials.
-  The form has two tabs. The 3D tab holds a TGorillaViewport, created at run
-  time, and a panel of three dials for Azimuth, inclination and Roll, plus a
-  check box that switches between perspective and orthographic projection.
-  The Debug tab holds a memo for log output.
-  On show, the form loads models/TestModel.glb, plays its last animation by
-  name, centres and turns it 180 degrees about X, and calls FitToBounds so it
+  The form has two tabs. The View tab holds a TGorillaViewport, created at run
+  time, and a panel of three dials for Azimuth, inclination and Roll, plus
+  two check boxes: one switches between perspective and orthographic
+  projection, the other chooses how the model is fitted. The Debug tab
+  holds a memo for log output.
+  On show, the form a test model, plays its last animation by
+  name, centres and turns it 180 degrees about X, and fits the camera so it
   fills the view. The model is refitted whenever a dial turns, the viewport
   is resized, the projection changes or the "Fit any angle" box is
   toggled. Checked, that box uses FitToBoundsMax, which frames the model
   for every angle at once; unchecked, FitToBounds frames it exactly for
   the current angles.
     TabControl1
-    |-- GorillaTab "3D"
-    |   `-- Layout1
+    |-- GorillaTab "View"
+    |   `-- MainLayout
     |       |-- ViewportLayout   owns the TGorillaViewport
-    |       `-- Layout2          dials, labels, both check boxes
-    `-- TabItem1 "Debug"
+    |       `-- ControlsLayout   dials, labels, both check boxes
+    `-- DebugTab "Debug"
         `-- DebugMemo
 }
 
@@ -78,22 +79,34 @@ type
   /// thread.</remarks>
   /// <seealso cref="Sprite3DCamera.TSprite3DCamera"/>
   TMainForm = class(TForm)
-    //** @abstract(Fills the form and holds the 3D tab and the Debug tab.)
-    /// <summary>Fills the form and holds the 3D tab and the Debug tab.</summary>
+    //** @abstract(Fills the form and holds the View tab and the Debug tab.)
+    /// <summary>Fills the form and holds the View tab and the Debug tab.</summary>
     TabControl1: TTabControl;
-    //** @abstract(The tab captioned "3D", with the viewport and camera controls; active at
+    //** @abstract(The tab captioned "View", with the viewport and camera controls; active at
     //** start-up.)
-    /// <summary>The tab captioned "3D", with the viewport and camera controls; active at
+    /// <summary>The tab captioned "View", with the viewport and camera controls; active at
     /// start-up.</summary>
     GorillaTab: TTabItem;
+    //** @abstract(The tab captioned "Debug", holding DebugMemo.)
+    /// <summary>The tab captioned "Debug", holding DebugMemo.</summary>
     DebugTab: TTabItem;
+    //** @abstract(Log output; SwitchModel writes separator lines here when a model has
+    //** animations.)
+    /// <summary>Log output; SwitchModel writes separator lines here when a model has
+    /// animations.</summary>
     DebugMemo: TMemo;
+    //** @abstract(Fills the View tab and holds ViewportLayout and ControlsLayout.)
+    /// <summary>Fills the View tab and holds ViewportLayout and ControlsLayout.</summary>
     MainLayout: TLayout;
     //** @abstract(The area left of the control panel; owns the TGorillaViewport made in
     //** FormCreate.)
     /// <summary>The area left of the control panel; owns the TGorillaViewport made in
     /// FormCreate.</summary>
     ViewportLayout: TLayout;
+    //** @abstract(The right-hand control panel holding the dials, their labels and both
+    //** check boxes.)
+    /// <summary>The right-hand control panel holding the dials, their labels and both check
+    /// boxes.</summary>
     ControlsLayout: TLayout;
     //** @abstract(Sets the camera's Azimuth; see AzimuthDialChange.)
     /// <summary>Sets the camera's Azimuth; see <see cref="AzimuthDialChange"/>.</summary>
@@ -160,12 +173,12 @@ type
     /// The viewport runs at a fixed 60 frames per second without VSync.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
-    //** @abstract(Loads models/TestModel.glb from the models folder and fits the camera to it.)
+    //** @abstract(Loads a test model from the models folder and fits the camera to it.)
     //**
     //** Shows a message and loads nothing if the file is missing or cannot be read.
     //**
     //** @param(Sender The form.)
-    /// <summary>Loads models/TestModel.glb from the models folder and fits the camera to
+    /// <summary>Loads a test model from the models folder and fits the camera to
     /// it.</summary>
     /// <remarks>Shows a message and loads nothing if the file is missing or cannot be
     /// read.</remarks>
@@ -242,7 +255,6 @@ type
     GorillaViewport: TGorillaViewport;
     GorillaLight: TGorillaLight;
     GorillaModel: TGorillaModel;
-    GorillaAnimationController: TGorillaAnimationController;
     GorillaCamera: TSprite3DCamera;
     ModelDir: String;
     procedure SwitchModel(const AModel: String);
@@ -368,7 +380,8 @@ end;
 // to allow easy addition of new Model types
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  SwitchModel(ModelDir + 'models/TestModel.glb');
+//  SwitchModel(ModelDir + 'models/TestAnimatedCharacter.glb');
+  SwitchModel(ModelDir + 'models/TestStaticCharacter.glb');
 end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
