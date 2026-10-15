@@ -5,12 +5,12 @@
 //** switches between perspective and orthographic projection, the other chooses how the model
 //** is fitted. The Debug tab holds a memo for log output.
 //**
-//** On show, the form loads a test model, if animated plays its last animation by name, centres
-//** and turns it 180 degrees about X, and fits the camera so it fills the view. The model
-//** is refitted whenever a dial turns, the viewport is resized, the projection changes or
-//** the "Fit any angle" box is toggled. Checked, that box uses FitToBoundsMax, which frames
-//** the model for every angle at once; unchecked, FitToBounds frames it exactly for the
-//** current angles.
+//** On show, the form loads the model whose file FormShow names, plays its last animation by
+//** name if it has any, centres it and turns it 180 degrees about X, and fits the camera so it
+//** fills the view. The model is refitted whenever a dial turns, the viewport is resized, the
+//** projection changes or the "Fit any angle" box is toggled. Checked, that box uses
+//** FitToBoundsMax, which frames the model for every angle at once; unchecked, FitToBounds
+//** frames it exactly for the current angles.
 //**
 //** @preformatted(
 //** TabControl1
@@ -29,13 +29,13 @@ unit Sprite3dMain;
   two check boxes: one switches between perspective and orthographic
   projection, the other chooses how the model is fitted. The Debug tab
   holds a memo for log output.
-  On show, the form a test model, plays its last animation by
-  name, centres and turns it 180 degrees about X, and fits the camera so it
-  fills the view. The model is refitted whenever a dial turns, the viewport
-  is resized, the projection changes or the "Fit any angle" box is
-  toggled. Checked, that box uses FitToBoundsMax, which frames the model
-  for every angle at once; unchecked, FitToBounds frames it exactly for
-  the current angles.
+  On show, the form loads the model whose file FormShow names, plays its
+  last animation by name if it has any, centres it and turns it 180 degrees
+  about X, and fits the camera so it fills the view. The model is refitted
+  whenever a dial turns, the viewport is resized, the projection changes or
+  the "Fit any angle" box is toggled. Checked, that box uses
+  FitToBoundsMax, which frames the model for every angle at once;
+  unchecked, FitToBounds frames it exactly for the current angles.
     TabControl1
     |-- GorillaTab "View"
     |   `-- MainLayout
@@ -173,15 +173,15 @@ type
     /// The viewport runs at a fixed 60 frames per second without VSync.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
-    //** @abstract(Loads a test model from the models folder and fits the camera to it.)
+    //** @abstract(Loads a model from the models folder and fits the camera to it.)
     //**
-    //** Shows a message and loads nothing if the file is missing or cannot be read.
+    //** The file is named in this handler; change it there to try a different model. Shows a
+    //** message and loads nothing if the file is missing or cannot be read.
     //**
     //** @param(Sender The form.)
-    /// <summary>Loads a test model from the models folder and fits the camera to
-    /// it.</summary>
-    /// <remarks>Shows a message and loads nothing if the file is missing or cannot be
-    /// read.</remarks>
+    /// <summary>Loads a model from the models folder and fits the camera to it.</summary>
+    /// <remarks>The file is named in this handler; change it there to try a different model.
+    /// Shows a message and loads nothing if the file is missing or cannot be read.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
     //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
@@ -303,6 +303,11 @@ begin
   if DirectoryExists('models') then
     ModelDir := String.Empty;
   {$IFEND}
+
+  FAzimuth := 180;
+  FRoll := 0;
+  FPolarAngle := 0;
+
   GorillaViewport := TGorillaViewport.Create(ViewportLayout);
   GorillaViewport.OnResize := GorillaViewportResize;
   GorillaLight := TGorillaLight.Create(GorillaViewport);
@@ -330,21 +335,15 @@ begin
   AngleText.Text := Format('%3.0f',[FPolarAngle]);
 
   GorillaCamera.PolarAngle := FPolarAngle;
-  FitModel;
-
 end;
 
 procedure TMainForm.AzimuthDialChange(Sender: TObject);
 begin
   FAzimuth := -AzimuthDial.Value;
 
-  if FAzimuth < 0 then
-      FAzimuth := FAzimuth + 360;
-
-  AzimuthText.Text := Format('%3.0f',[FAzimuth]);
+  AzimuthText.Text := Format('%3.0f',[FAzimuth + 180]);
 
   GorillaCamera.Azimuth := FAzimuth;
-  FitModel;
 end;
 
 procedure TMainForm.chkOrthoToggleChange(Sender: TObject);
@@ -372,7 +371,6 @@ begin
   RollText.Text := Format('%3.0f',[FRoll]);
 
   GorillaCamera.Roll := FRoll;
-  FitModel;
 end;
 
 // On startup load a default Model as specified by DefaultLoadType
@@ -447,10 +445,11 @@ begin
       anims.Free;
     end;
 
-    RollDial.Value := 0;
-    AzimuthDial.Value := 0;
-    AngleDial.Value := 0;
     BBox := GorillaModel.GetBoundingBox();
+
+    GorillaCamera.Roll := FRoll;
+    GorillaCamera.Azimuth := FAzimuth;
+    GorillaCamera.PolarAngle := FPolarAngle;
 
     GorillaModel.IsMarked := True;
     // The orange box is the one FitToBounds fits: the current pose's
@@ -475,7 +474,6 @@ begin
       Caption := 'Perspective'
     else
       Caption := 'Some other projection';
-
 
   except
     on E : Exception do
