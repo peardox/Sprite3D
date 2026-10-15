@@ -59,7 +59,7 @@ object MainForm: TMainForm
           object AzimuthDial: TArcDial
             Position.X = 6.000000000000000000
             Position.Y = 8.000000000000000000
-            RotationAngle = 90.000000000000000000
+            RotationAngle = -90.000000000000000000
             Size.Width = 144.000000000000000000
             Size.Height = 144.000000000000000000
             Size.PlatformDefault = False
@@ -93,7 +93,7 @@ object MainForm: TMainForm
           object AngleDial: TArcDial
             Position.X = 6.000000000000000000
             Position.Y = 390.000000000000000000
-            RotationAngle = 270.000000000000000000
+            RotationAngle = -90.000000000000000000
             Size.Width = 144.000000000000000000
             Size.Height = 144.000000000000000000
             Size.PlatformDefault = False
@@ -127,7 +127,7 @@ object MainForm: TMainForm
           object RollDial: TArcDial
             Position.X = 6.000000000000000000
             Position.Y = 200.000000000000000000
-            RotationAngle = 90.000000000000000000
+            RotationAngle = -90.000000000000000000
             Size.Width = 144.000000000000000000
             Size.Height = 144.000000000000000000
             Size.PlatformDefault = False
@@ -206,6 +206,22 @@ object MainForm: TMainForm
         TabOrder = 0
         Viewport.Width = 772.000000000000000000
         Viewport.Height = 652.000000000000000000
+      end
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 448
+    Top = 8
+  end
+  object MainMenu1: TMainMenu
+    Left = 504
+    Top = 8
+    object FileMenu: TMenuItem
+      Text = 'File'
+      object OpenModelMenuItem: TMenuItem
+        Locked = True
+        Text = 'OpenModel'
+        OnClick = OpenModelMenuItemClick
       end
     end
   end

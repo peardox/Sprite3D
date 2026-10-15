@@ -5,12 +5,17 @@
 //** switches between perspective and orthographic projection, the other chooses how the model
 //** is fitted. The Debug tab holds a memo for log output.
 //**
+//** The camera starts at Azimuth 180, inclination 0 and Roll 0, and each dial and its
+//** readout always show the camera's current angle, from 0 to 359 degrees.
+//**
 //** On show, the form loads the model whose file FormShow names, plays its last animation by
 //** name if it has any, centres it and turns it 180 degrees about X, and fits the camera so it
-//** fills the view. The model is refitted whenever a dial turns, the viewport is resized, the
-//** projection changes or the "Fit any angle" box is toggled. Checked, that box uses
-//** FitToBoundsMax, which frames the model for every angle at once; unchecked, FitToBounds
-//** frames it exactly for the current angles.
+//** fills the view. The model is refitted when the viewport is resized, the projection changes
+//** or the "Fit any angle" box is toggled, but not when a dial turns. Checked, that box uses
+//** FitToBoundsMax, which frames the model for every angle at once, so the dials can never
+//** push it out of view. Unchecked, FitToBounds frames it exactly for the angles at the time
+//** of the fit, and turning a dial afterwards can push part of it past the edge until the
+//** next refit.
 //**
 //** @preformatted(
 //** TabControl1
@@ -29,13 +34,18 @@ unit Sprite3dMain;
   two check boxes: one switches between perspective and orthographic
   projection, the other chooses how the model is fitted. The Debug tab
   holds a memo for log output.
+  The camera starts at Azimuth 180, inclination 0 and Roll 0, and each dial
+  and its readout always show the camera's current angle, from 0 to 359
+  degrees.
   On show, the form loads the model whose file FormShow names, plays its
   last animation by name if it has any, centres it and turns it 180 degrees
   about X, and fits the camera so it fills the view. The model is refitted
-  whenever a dial turns, the viewport is resized, the projection changes or
-  the "Fit any angle" box is toggled. Checked, that box uses
-  FitToBoundsMax, which frames the model for every angle at once;
-  unchecked, FitToBounds frames it exactly for the current angles.
+  when the viewport is resized, the projection changes or the "Fit any
+  angle" box is toggled, but not when a dial turns. Checked, that box uses
+  FitToBoundsMax, which frames the model for every angle at once, so the
+  dials can never push it out of view. Unchecked, FitToBounds frames it
+  exactly for the angles at the time of the fit, and turning a dial
+  afterwards can push part of it past the edge until the next refit.
     TabControl1
     |-- GorillaTab "View"
     |   `-- MainLayout
@@ -54,7 +64,7 @@ uses
   Gorilla.Model, FMX.Controls3D, Gorilla.Light, Gorilla.Viewport,
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
-  FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera;
+  FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus;
 
 type
   //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
@@ -147,15 +157,23 @@ type
     chkOrthoToggle: TCheckBox;
     //** @abstract(Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.)
     //**
-    //** Checked, the model is framed once for every possible Azimuth, inclination and Roll and
-    //** turning the dials only moves the camera round it. Unchecked, the model is framed
-    //** exactly for the current angles and refitted after every dial change.
+    //** Checked, the model is framed for every possible Azimuth, inclination and Roll, so
+    //** turning the dials only moves the camera round it and the model always stays in view.
+    //** Unchecked, the model is framed exactly for the angles at the time of the fit; turning a
+    //** dial afterwards can push part of it past the edge until the next refit, which happens
+    //** on a resize, a projection change or toggling this box.
     /// <summary>Chooses FitToBoundsMax over FitToBounds, so the model fits at every
     /// angle.</summary>
-    /// <remarks>Checked, the model is framed once for every possible Azimuth, inclination and
-    /// Roll and turning the dials only moves the camera round it. Unchecked, the model is
-    /// framed exactly for the current angles and refitted after every dial change.</remarks>
+    /// <remarks>Checked, the model is framed for every possible Azimuth, inclination and Roll,
+    /// so turning the dials only moves the camera round it and the model always stays in view.
+    /// Unchecked, the model is framed exactly for the angles at the time of the fit; turning a
+    /// dial afterwards can push part of it past the edge until the next refit, which happens on
+    /// a resize, a projection change or toggling this box.</remarks>
     chkFitAnyAngle: TCheckBox;
+    OpenDialog1: TOpenDialog;
+    MainMenu1: TMainMenu;
+    FileMenu: TMenuItem;
+    OpenModelMenuItem: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
     //** The models folder is the library path on macOS, the home folder on Linux and
@@ -164,13 +182,20 @@ type
     //** point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
     //** camera. The viewport runs at a fixed 60 frames per second without VSync.
     //**
+    //** The camera starts at Azimuth 180, inclination 0 and Roll 0. The dials are turned to
+    //** those angles and the readouts set to match, so dial, readout and camera agree from the
+    //** start.
+    //**
     //** @param(Sender The form.)
     /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
-    /// <remarks>The models folder is the library path on macOS, the home folder on Linux and
-    /// <c>'../../../'</c> elsewhere; on Windows it is the current folder instead if that has a
-    /// models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a point
-    /// light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's camera.
-    /// The viewport runs at a fixed 60 frames per second without VSync.</remarks>
+    /// <remarks><para>The models folder is the library path on macOS, the home folder on Linux
+    /// and <c>'../../../'</c> elsewhere; on Windows it is the current folder instead if that has
+    /// a models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a
+    /// point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
+    /// camera. The viewport runs at a fixed 60 frames per second without VSync.</para>
+    /// <para>The camera starts at Azimuth 180, inclination 0 and Roll 0. The dials are turned to
+    /// those angles and the readouts set to match, so dial, readout and camera agree from the
+    /// start.</para></remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Loads a model from the models folder and fits the camera to it.)
@@ -186,36 +211,39 @@ type
     procedure FormShow(Sender: TObject);
     //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
     //**
-    //** The dial value is negated and shifted into 0 to 360, shown in AzimuthText, and written
-    //** to the camera; the model is then refitted for the new view.
+    //** The dial value is negated and wrapped into 0 to 360, shown in AzimuthText and written to
+    //** the camera. The model is not refitted; see chkFitAnyAngle.
     //**
     //** @param(Sender AzimuthDial.)
     /// <summary>Copies AzimuthDial to the camera's Azimuth.</summary>
-    /// <remarks>The dial value is negated and shifted into 0 to 360, shown in AzimuthText, and
-    /// written to the camera; the model is then refitted for the new view.</remarks>
+    /// <remarks>The dial value is negated and wrapped into 0 to 360, shown in AzimuthText and
+    /// written to the camera. The model is not refitted; see
+    /// <see cref="chkFitAnyAngle"/>.</remarks>
     /// <param name="Sender">AzimuthDial.</param>
     procedure AzimuthDialChange(Sender: TObject);
     //** @abstract(Copies AngleDial to the camera's PolarAngle.)
     //**
-    //** The dial value is negated and shifted into 0 to 360, shown in AngleText, and written to
-    //** the camera; the model is then refitted. Values past 90 take the camera over the pole.
+    //** The dial value is negated and wrapped into 0 to 360, shown in AngleText and written to
+    //** the camera. Values past 90 take the camera over the pole. The model is not refitted;
+    //** see chkFitAnyAngle.
     //**
     //** @param(Sender AngleDial.)
     /// <summary>Copies AngleDial to the camera's PolarAngle.</summary>
-    /// <remarks>The dial value is negated and shifted into 0 to 360, shown in AngleText, and
-    /// written to the camera; the model is then refitted. Values past 90 take the camera over
-    /// the pole.</remarks>
+    /// <remarks>The dial value is negated and wrapped into 0 to 360, shown in AngleText and
+    /// written to the camera. Values past 90 take the camera over the pole. The model is not
+    /// refitted; see <see cref="chkFitAnyAngle"/>.</remarks>
     /// <param name="Sender">AngleDial.</param>
     procedure AngleDialChange(Sender: TObject);
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
-    //** The dial value is shifted into 0 to 360, without negating, shown in RollText, and
-    //** written to the camera; the model is then refitted for the new view.
+    //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
+    //** to the camera. The model is not refitted; see chkFitAnyAngle.
     //**
     //** @param(Sender RollDial.)
     /// <summary>Copies RollDial to the camera's Roll.</summary>
-    /// <remarks>The dial value is shifted into 0 to 360, without negating, shown in RollText,
-    /// and written to the camera; the model is then refitted for the new view.</remarks>
+    /// <remarks>The dial value is wrapped into 0 to 360, without negating, shown in RollText
+    /// and written to the camera. The model is not refitted; see
+    /// <see cref="chkFitAnyAngle"/>.</remarks>
     /// <param name="Sender">RollDial.</param>
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
@@ -246,6 +274,7 @@ type
     /// <summary>Refits the model when the fit mode changes.</summary>
     /// <param name="Sender">chkFitAnyAngle.</param>
     procedure chkFitAnyAngleChange(Sender: TObject);
+    procedure OpenModelMenuItemClick(Sender: TObject);
   private
     { Private declarations }
     FModelRotation: TPoint3D;
@@ -259,6 +288,7 @@ type
     ModelDir: String;
     procedure SwitchModel(const AModel: String);
     function FitModel: Boolean;
+    procedure ApplyAngles;
   public
     { Public declarations }
   end;
@@ -304,7 +334,7 @@ begin
     ModelDir := String.Empty;
   {$IFEND}
 
-  FAzimuth := 180;
+  FAzimuth := 0;
   FRoll := 0;
   FPolarAngle := 0;
 
@@ -324,26 +354,55 @@ begin
   GorillaModel := Nil;
   GorillaCamera.FOV := 45;
 
+  // Point the dials at the starting angles, then show those angles and give
+  // them to the camera. Setting a dial fires its OnChange, which reads the
+  // same angle back, so the fields keep their values; ApplyAngles covers a
+  // dial that was already in place and so fired nothing.
+  AzimuthDial.Value := -FAzimuth;
+  AngleDial.Value := -FPolarAngle;
+  RollDial.Value := FRoll;
+  ApplyAngles;
+end;
+
+{ Shift an angle in degrees by whole turns into [0, 360) }
+function Wrap360(const ADegrees: Single): Single;
+begin
+  Result := ADegrees - 360 * Floor(ADegrees / 360);
+end;
+
+{ Show the readout for a wrapped angle: whole degrees, never "360" }
+function DegreesText(const ADegrees: Single): String;
+begin
+  Result := Format('%3d', [Round(ADegrees) mod 360]);
+end;
+
+// The single place where the three angles reach the readouts and the
+// camera, so a dial, its readout and the camera can never disagree.
+// Dials do not refit: with "Fit any angle" off, turning one can push the
+// model past the edge until the next refit; with it on, it never does.
+procedure TMainForm.ApplyAngles;
+begin
+  AzimuthText.Text := DegreesText(FAzimuth);
+  AngleText.Text := DegreesText(FPolarAngle);
+  RollText.Text := DegreesText(FRoll);
+  if Assigned(GorillaCamera) then
+  begin
+    GorillaCamera.Azimuth := Wrap360(-FAzimuth);
+    GorillaCamera.PolarAngle := FPolarAngle;
+    GorillaCamera.Roll := FRoll;
+  end;
 end;
 
 procedure TMainForm.AngleDialChange(Sender: TObject);
 begin
-  FPolarAngle := -AngleDial.Value;
-  if FPolarAngle < 0 then
-      FPolarAngle := FPolarAngle + 360;
-
-  AngleText.Text := Format('%3.0f',[FPolarAngle]);
-
-  GorillaCamera.PolarAngle := FPolarAngle;
+  FPolarAngle := Wrap360(-AngleDial.Value);
+  ApplyAngles;
 end;
 
 procedure TMainForm.AzimuthDialChange(Sender: TObject);
 begin
-  FAzimuth := -AzimuthDial.Value;
-
-  AzimuthText.Text := Format('%3.0f',[FAzimuth + 180]);
-
-  GorillaCamera.Azimuth := FAzimuth;
+  FAzimuth := Wrap360(-AzimuthDial.Value);
+  ApplyAngles;
 end;
 
 procedure TMainForm.chkOrthoToggleChange(Sender: TObject);
@@ -363,14 +422,8 @@ end;
 
 procedure TMainForm.RollDialChange(Sender: TObject);
 begin
-  FRoll := RollDial.Value;
-
-  if FRoll < 0 then
-      FRoll := FRoll + 360;
-
-  RollText.Text := Format('%3.0f',[FRoll]);
-
-  GorillaCamera.Roll := FRoll;
+  FRoll := Wrap360(RollDial.Value);
+  ApplyAngles;
 end;
 
 // On startup load a default Model as specified by DefaultLoadType
@@ -378,8 +431,8 @@ end;
 // to allow easy addition of new Model types
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-//  SwitchModel(ModelDir + 'models/TestAnimatedCharacter.glb');
-  SwitchModel(ModelDir + 'models/TestStaticCharacter.glb');
+  SwitchModel(ModelDir + 'models/TestAnimatedCharacter.glb');
+//  SwitchModel(ModelDir + 'models/TestStaticCharacter.glb');
 end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
@@ -387,10 +440,15 @@ begin
   FitModel;
 end;
 
-// Refit after anything that changes the view: angles, size, projection or
-// fit mode. FitToBounds is exact for the current angles only, so it has to
-// be redone each time; FitToBoundsMax already allows for every angle, so
-// redoing it after a dial change gives the same result.
+procedure TMainForm.OpenModelMenuItemClick(Sender: TObject);
+begin
+  if OpenDialog1.Execute then
+    SwitchModel(OpenDialog1.Filename);
+end;
+
+// Refit after a change of model, size, projection or fit mode. The dials do
+// not call this: FitToBoundsMax already allows for every angle, and with
+// FitToBounds a dial turn is allowed to push the model past the edge.
 function TMainForm.FitModel: Boolean;
 begin
   Result := Assigned(GorillaCamera) and Assigned(GorillaModel);
@@ -448,10 +506,9 @@ begin
     BBox := GorillaModel.GetBoundingBox();
 
     GorillaCamera.Roll := FRoll;
-    GorillaCamera.Azimuth := FAzimuth;
+    GorillaCamera.Azimuth := Wrap360(-FAzimuth);
     GorillaCamera.PolarAngle := FPolarAngle;
 
-    GorillaModel.IsMarked := True;
     // The orange box is the one FitToBounds fits: the current pose's
     // bounds. IsMarked's designer box uses the static mesh and can differ
     // slightly from it on an animated model.
