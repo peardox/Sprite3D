@@ -1,33 +1,45 @@
 //** @abstract(Draws a model's X, Y and Z axes through its centre of rotation.)
 //**
-//** ShowModelAxes adds a TModelAxes to a TGorillaModel. In each frame's main pass it draws
-//** three lines with the context's DrawLine helper: red along X, green along Y and blue along
-//** Z. They cross at the model's centre of rotation, which is FMX's RotationCenter in the
-//** model's own coordinates and is the model's origin unless that has been changed. Each line
-//** runs from one face of the model's bounding box to the opposite face, so unless the centre
-//** of rotation lies outside that box, the lines stay inside the box that FitToBounds frames.
+//** ShowModelAxes adds a TModelAxes to a TGorillaModel. It shows three lines: red along X,
+//** green along Y and blue along Z. They cross at the model's centre of rotation, which is
+//** FMX's RotationCenter in the model's own coordinates and is the model's origin unless that
+//** has been changed. Each line runs from one face of the model's bounding box to the opposite
+//** face, so unless the centre of rotation lies outside that box, the lines stay inside the box
+//** that FitToBounds frames. The axes move, turn and scale with the model and show its own
+//** axes rather than the scene's. FMX's Y axis points down the screen, so with no rotation the
+//** green line's positive end is at the bottom.
 //**
-//** The axes are a child of the model and are drawn with their own AbsoluteMatrix, so they
-//** move, turn and scale with the model and show its own axes rather than the scene's. FMX's Y
-//** axis points down the screen, so with no rotation the green line's positive end is at the
-//** bottom. By default the lines are 1 pixel wide and drawn with depth testing off, so the
-//** model never hides them.
+//** There are two ways of drawing, chosen by OnTop. Gorilla's materials have no setting to turn
+//** depth testing off, so only the context can draw over the model.
 //**
-//** This follows Gorilla v1.5's Line Rendering guide: a TDummy descendant that overrides
-//** Render, sets and restores the context matrix, draws only in the main pass, and wraps a
-//** wider line width in BeginLineRendering and EndLineRendering. Widths above 1 pixel work on
-//** desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+//** OnTop True, the default, draws the lines over everything, so the model never hides them,
+//** even inside a solid model. In each frame's main pass the TModelAxes draws them with the
+//** context's DrawLine helper, following Gorilla v1.5's Line Rendering guide. Widths above 1
+//** pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+//**
+//** OnTop False draws each line with a GLSL shader, through the documented SurfaceShader hook
+//** of a TGorillaDefaultMaterialSource, which Gorilla converts for Vulkan and Metal. Each line
+//** is drawn on two thin TGorillaPlane strips that cross along it, so it is seen from any
+//** angle; the shader keeps only the pixels within LineWidth / 2 of the strip's middle. The
+//** width works on every backend. The lines are ordinary geometry, so the model hides the
+//** parts inside it or behind it. The strips are not children of the model, so they never
+//** count in its bounding box; they sit in a frame beside the model that copies its position,
+//** rotation, scale and centre of rotation whenever they change.
 //**
 //** @preformatted(
-//** TGorillaModel
-//** `-- TModelAxes      one per model, found by FindModelAxes;
-//**                     draws the three lines in its Render
+//** <model's parent>
+//** |-- TGorillaModel
+//** |   `-- TModelAxes          one per model, found by FindModelAxes; OnTop: draws the lines
+//** |                           in its Render; otherwise keeps the frame on the model
+//** `-- axes frame              OnTop False only; TDummy copying the model's transform
+//**     `-- 6 x TGorillaPlane   two strips per line, drawn by their shaders
 //** )
 //**
 //** Usage:
 //**
 //** @preformatted(
-//** ShowModelAxes@(GorillaModel1@);    // after the model is loaded
+//** ShowModelAxes@(GorillaModel1@);                // after the model is loaded; drawn on top
+//** ShowModelAxes@(GorillaModel1@, 2, False@);      // shader lines 2 pixels wide
 //** HideModelAxes@(GorillaModel1@);
 //** )
 unit Sprite3DAxes;
@@ -35,70 +47,93 @@ unit Sprite3DAxes;
 {
   Draws a model's X, Y and Z axes through its centre of rotation.
 
-  ShowModelAxes adds a TModelAxes to a TGorillaModel. In each frame's main
-  pass it draws three lines with the context's DrawLine helper: red along X,
-  green along Y and blue along Z. They cross at the model's centre of
-  rotation, which is FMX's RotationCenter in the model's own coordinates and
-  is the model's origin unless that has been changed. Each line runs from one
-  face of the model's bounding box to the opposite face, so unless the centre
-  of rotation lies outside that box, the lines stay inside the box that
-  FitToBounds frames.
+  ShowModelAxes adds a TModelAxes to a TGorillaModel. It shows three lines:
+  red along X, green along Y and blue along Z. They cross at the model's
+  centre of rotation, which is FMX's RotationCenter in the model's own
+  coordinates and is the model's origin unless that has been changed. Each
+  line runs from one face of the model's bounding box to the opposite face,
+  so unless the centre of rotation lies outside that box, the lines stay
+  inside the box that FitToBounds frames. The axes move, turn and scale with
+  the model and show its own axes rather than the scene's. FMX's Y axis
+  points down the screen, so with no rotation the green line's positive end
+  is at the bottom.
 
-  The axes are a child of the model and are drawn with their own
-  AbsoluteMatrix, so they move, turn and scale with the model and show its
-  own axes rather than the scene's. FMX's Y axis points down the screen, so
-  with no rotation the green line's positive end is at the bottom. By
-  default the lines are 1 pixel wide and drawn with depth testing off, so
-  the model never hides them.
+  There are two ways of drawing, chosen by OnTop. Gorilla's materials have
+  no setting to turn depth testing off, so only the context can draw over
+  the model.
 
-  This follows Gorilla v1.5's Line Rendering guide: a TDummy descendant that
-  overrides Render, sets and restores the context matrix, draws only in the
-  main pass, and wraps a wider line width in BeginLineRendering and
-  EndLineRendering. Widths above 1 pixel work on desktop OpenGL only;
-  Vulkan, Metal and OpenGL ES always draw 1 pixel.
+  OnTop True, the default, draws the lines over everything, so the model
+  never hides them, even inside a solid model. In each frame's main pass the
+  TModelAxes draws them with the context's DrawLine helper, following
+  Gorilla v1.5's Line Rendering guide. Widths above 1 pixel work on desktop
+  OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
 
-    TGorillaModel
-    `-- TModelAxes      one per model, found by FindModelAxes;
-                        draws the three lines in its Render
+  OnTop False draws each line with a GLSL shader, through the documented
+  SurfaceShader hook of a TGorillaDefaultMaterialSource, which Gorilla
+  converts for Vulkan and Metal. Each line is drawn on two thin
+  TGorillaPlane strips that cross along it, so it is seen from any angle;
+  the shader keeps only the pixels within LineWidth / 2 of the strip's
+  middle. The width works on every backend. The lines are ordinary geometry,
+  so the model hides the parts inside it or behind it. The strips are not
+  children of the model, so they never count in its bounding box; they sit
+  in a frame beside the model that copies its position, rotation, scale and
+  centre of rotation whenever they change.
+
+    <model's parent>
+    |-- TGorillaModel
+    |   `-- TModelAxes          one per model, found by FindModelAxes; OnTop: draws the lines
+    |                           in its Render; otherwise keeps the frame on the model
+    `-- axes frame              OnTop False only; TDummy copying the model's transform
+        `-- 6 x TGorillaPlane   two strips per line, drawn by their shaders
 
   Usage:
-    ShowModelAxes(GorillaModel1);    // after the model is loaded
+    ShowModelAxes(GorillaModel1);                // after the model is loaded; drawn on top
+    ShowModelAxes(GorillaModel1, 2, False);      // shader lines 2 pixels wide
     HideModelAxes(GorillaModel1);
 }
 
 interface
 
 uses
-  System.Classes, System.UITypes, System.Math, System.Math.Vectors,
+  System.Classes, System.SysUtils, System.UITypes, System.Math, System.Math.Vectors,
   FMX.Types3D, FMX.Controls3D, FMX.Objects3D,
-  Gorilla.Context, Gorilla.Context.Types, Gorilla.Model;
+  Gorilla.Context, Gorilla.Context.Types, Gorilla.Model, Gorilla.Plane,
+  Gorilla.Material.Default;
 
 type
-  //** @abstract(Draws three coloured lines through a point, using the render context.)
+  //** @abstract(Shows three coloured lines through a point, drawn on top or by shaders.)
   //**
-  //** A TDummy that overrides Render, as Gorilla's Line Rendering guide recommends, so it adds
-  //** no meshes or materials. It draws only in the main pass, not in shadow, reflection or
-  //** other passes. The lines are in its parent's coordinates when it has no position,
-  //** rotation or scale of its own, which is how ShowModelAxes adds it. Its Width, Height and
-  //** Depth are set to the lines' extent and its Position to their middle, so anything that
-  //** culls by an object's size sees the whole set.
+  //** A TDummy. With OnTop it draws the lines in its own Render, in the main pass only, with
+  //** the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a frame
+  //** beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render
+  //** copies the parent's position, rotation, scale and centre of rotation to the frame if any
+  //** of them changed. The strips are built when SetExtent is called and rebuilt only when a
+  //** property changes. Freeing the TModelAxes frees the frame, strips and materials.
   //**
-  //** The object is not stored in .fmx files and ignores the mouse. Use it from the main thread
-  //** only.
-  /// <summary>Draws three coloured lines through a point, using the render context.</summary>
-  /// <remarks><para>A TDummy that overrides Render, as Gorilla's Line Rendering guide
-  /// recommends, so it adds no meshes or materials. It draws only in the main pass, not in
-  /// shadow, reflection or other passes. The lines are in its parent's coordinates when it has
-  /// no position, rotation or scale of its own, which is how ShowModelAxes adds it. Its Width,
-  /// Height and Depth are set to the lines' extent and its Position to their middle, so
-  /// anything that culls by an object's size sees the whole set.</para>
-  /// <para>The object is not stored in .fmx files and ignores the mouse. Use it from the main
-  /// thread only.</para></remarks>
+  //** Its Width, Height and Depth are set to the lines' extent and its Position to their
+  //** middle, so anything that culls by an object's size sees the whole set. The object is not
+  //** stored in .fmx files and ignores the mouse. Use it from the main thread only.
+  /// <summary>Shows three coloured lines through a point, drawn on top or by
+  /// shaders.</summary>
+  /// <remarks><para>A TDummy. With OnTop it draws the lines in its own Render, in the main pass
+  /// only, with the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a
+  /// frame beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render
+  /// copies the parent's position, rotation, scale and centre of rotation to the frame if any
+  /// of them changed. The strips are built when SetExtent is called and rebuilt only when a
+  /// property changes. Freeing the TModelAxes frees the frame, strips and materials.</para>
+  /// <para>Its Width, Height and Depth are set to the lines' extent and its Position to their
+  /// middle, so anything that culls by an object's size sees the whole set. The object is not
+  /// stored in .fmx files and ignores the mouse. Use it from the main thread only.</para>
+  /// </remarks>
   TModelAxes = class(TDummy)
   private
     FLo: TPoint3D;
     FHi: TPoint3D;
     FCentre: TPoint3D;
+    FBoxLo: TPoint3D;
+    FBoxHi: TPoint3D;
+    FPivot: TPoint3D;
+    FFrame: TDummy;
     FXColor: TAlphaColor;
     FYColor: TAlphaColor;
     FZColor: TAlphaColor;
@@ -106,23 +141,43 @@ type
     FOnTop: Boolean;
     FHasExtent: Boolean;
     procedure DrawLines;
+    procedure DrawOnTop;
+    procedure FreeStrips;
+    procedure RebuildStrips;
+    procedure AddStrip(const ACentre: TPoint3D; const ALength: Single;
+      const ARotation: TPoint3D; const AAlongY: Boolean; const AColor: TAlphaColor);
+    procedure SyncFrame;
+    function StripCode(const AAlongY: Boolean; const AColor: TAlphaColor): string;
     procedure SetXColor(const Value: TAlphaColor);
     procedure SetYColor(const Value: TAlphaColor);
     procedure SetZColor(const Value: TAlphaColor);
     procedure SetLineWidth(const Value: Single);
     procedure SetOnTop(const Value: Boolean);
   protected
-    //** @abstract(Draws the three lines in the main pass.)
+    //** @abstract(Draws the lines on top, or keeps the strips' frame on the parent.)
     //**
-    //** Does nothing before SetExtent is called, or in any pass other than the main one.
-    //** Sets the context matrix to this object's AbsoluteMatrix for the drawing and restores
+    //** Does nothing before SetExtent is called. With OnTop, draws the three lines in the main
+    //** pass only, setting the context matrix to this object's AbsoluteMatrix and restoring
     //** the previous matrix, line state and depth test afterwards, even if drawing fails.
-    /// <summary>Draws the three lines in the main pass.</summary>
-    /// <remarks>Does nothing before <see cref="SetExtent"/> is called, or in any pass other
-    /// than the main one. Sets the context matrix to this object's AbsoluteMatrix for the
-    /// drawing and restores the previous matrix, line state and depth test afterwards, even if
-    /// drawing fails.</remarks>
+    //** Without OnTop, copies the parent's transform to the frame if it changed, and draws
+    //** nothing.
+    /// <summary>Draws the lines on top, or keeps the strips' frame on the parent.</summary>
+    /// <remarks>Does nothing before <see cref="SetExtent"/> is called. With OnTop, draws the
+    /// three lines in the main pass only, setting the context matrix to this object's
+    /// AbsoluteMatrix and restoring the previous matrix, line state and depth test afterwards,
+    /// even if drawing fails. Without OnTop, copies the parent's transform to the frame if it
+    /// changed, and draws nothing.</remarks>
     procedure Render; override;
+
+    //** @abstract(Forgets the frame if something else frees it first.)
+    //**
+    //** @param(AComponent The component being freed or removed.)
+    //**
+    //** @param(Operation What is happening to it.)
+    /// <summary>Forgets the frame if something else frees it first.</summary>
+    /// <param name="AComponent">The component being freed or removed.</param>
+    /// <param name="Operation">What is happening to it.</param>
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     //** @abstract(Creates axes with no extent: red, green and blue, 1 pixel wide, on top.)
     //**
@@ -135,11 +190,21 @@ type
     /// <param name="AOwner">The owner, or nil to leave freeing to the parent.</param>
     constructor Create(AOwner: TComponent); override;
 
+    //** @abstract(Frees the axes, with any frame, strips and materials.)
+    //**
+    //** If the frame's parent is already being freed, as when the whole scene closes, the
+    //** frame is left for it to free.
+    /// <summary>Frees the axes, with any frame, strips and materials.</summary>
+    /// <remarks>If the frame's parent is already being freed, as when the whole scene closes,
+    /// the frame is left for it to free.</remarks>
+    destructor Destroy; override;
+
     //** @abstract(Sets where the three lines cross and how far each reaches.)
     //**
     //** Each line passes through ACentre parallel to one axis and runs from the low corner's
     //** value to the high corner's value on that axis, widened if need be to reach ACentre.
-    //** All points are in the parent's coordinates. Redraws the axes.
+    //** All points are in the parent's coordinates. Without OnTop the strips are built here,
+    //** so set the parent first; they are not built without one. Redraws the axes.
     //**
     //** @param(ALow The corner with the smallest X, Y and Z, such as a bounding box's
     //** TopLeftNear.)
@@ -151,7 +216,9 @@ type
     /// <summary>Sets where the three lines cross and how far each reaches.</summary>
     /// <remarks>Each line passes through ACentre parallel to one axis and runs from the low
     /// corner's value to the high corner's value on that axis, widened if need be to reach
-    /// ACentre. All points are in the parent's coordinates. Redraws the axes.</remarks>
+    /// ACentre. All points are in the parent's coordinates. Without OnTop the strips are built
+    /// here, so set the parent first; they are not built without one. Redraws the
+    /// axes.</remarks>
     /// <param name="ALow">The corner with the smallest X, Y and Z, such as a bounding box's
     /// TopLeftNear.</param>
     /// <param name="AHigh">The corner with the largest X, Y and Z, such as a bounding box's
@@ -170,21 +237,25 @@ type
     property ZColor: TAlphaColor read FZColor write SetZColor;
     //** @abstract(Line width in screen pixels, whatever the distance; 1 by default.)
     //**
-    //** Values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw
-    //** 1 pixel. Values below 1 count as 1.
+    //** Without OnTop the shader draws any width on every backend. With OnTop, values above 1
+    //** work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values
+    //** below 1 count as 1.
     /// <summary>Line width in screen pixels, whatever the distance; 1 by default.</summary>
-    /// <remarks>Values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always
-    /// draw 1 pixel. Values below 1 count as 1.</remarks>
+    /// <remarks>Without OnTop the shader draws any width on every backend. With OnTop, values
+    /// above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+    /// Values below 1 count as 1.</remarks>
     property LineWidth: Single read FLineWidth write SetLineWidth;
     //** @abstract(Whether the lines are drawn over everything; True by default.)
     //**
-    //** True turns depth testing off while the lines are drawn, so the model and anything in
-    //** front cannot hide them. False draws them like any other geometry, so they disappear
-    //** where they pass inside a solid model.
+    //** True draws them with the context and depth testing off, so the model and anything in
+    //** front cannot hide them. False draws them with shaders as ordinary geometry, so they
+    //** disappear where they pass inside a solid model or behind something. Changing it
+    //** switches between the two at once.
     /// <summary>Whether the lines are drawn over everything; True by default.</summary>
-    /// <remarks>True turns depth testing off while the lines are drawn, so the model and
-    /// anything in front cannot hide them. False draws them like any other geometry, so they
-    /// disappear where they pass inside a solid model.</remarks>
+    /// <remarks>True draws them with the context and depth testing off, so the model and
+    /// anything in front cannot hide them. False draws them with shaders as ordinary geometry,
+    /// so they disappear where they pass inside a solid model or behind something. Changing it
+    /// switches between the two at once.</remarks>
     property OnTop: Boolean read FOnTop write SetOnTop;
   end;
 
@@ -197,16 +268,16 @@ type
 //** red, Y green and Z blue.
 //**
 //** The axes are added as a child of AModel, so they follow its position, rotation and scale,
-//** and are freed with it. They are sized for the box at the time of the call. Call from the
-//** main thread only.
+//** and are freed with it. They are sized for the box at the time of the call. Without
+//** AOnTop, AModel must already have a parent. Call from the main thread only.
 //**
 //** @param(AModel The model to draw axes on. Nothing happens if it is nil.)
 //**
-//** @param(ALineWidth Line width in screen pixels. Values above 1 work on desktop OpenGL
-//** only.)
+//** @param(ALineWidth Line width in screen pixels. With AOnTop, values above 1 work on desktop
+//** OpenGL only; without it, on every backend.)
 //**
 //** @param(AOnTop True to draw the lines over everything, so the model cannot hide them;
-//** False to let the model hide the parts inside it.)
+//** False to draw them with shaders, letting the model hide the parts inside it.)
 //**
 //** @returns(The new axes, owned by AModel; or nil, with nothing added, if AModel is nil or
 //** its bounding box is empty.)
@@ -221,13 +292,13 @@ type
 /// <c>GetAnimatedBoundingBox</c>, widened if need be to reach the centre of rotation. X is
 /// red, Y green and Z blue.</para>
 /// <para>The axes are added as a child of AModel, so they follow its position, rotation and
-/// scale, and are freed with it. They are sized for the box at the time of the call. Call from
-/// the main thread only.</para></remarks>
+/// scale, and are freed with it. They are sized for the box at the time of the call. Without
+/// AOnTop, AModel must already have a parent. Call from the main thread only.</para></remarks>
 /// <param name="AModel">The model to draw axes on. Nothing happens if it is nil.</param>
-/// <param name="ALineWidth">Line width in screen pixels. Values above 1 work on desktop OpenGL
-/// only.</param>
+/// <param name="ALineWidth">Line width in screen pixels. With AOnTop, values above 1 work on
+/// desktop OpenGL only; without it, on every backend.</param>
 /// <param name="AOnTop">True to draw the lines over everything, so the model cannot hide them;
-/// False to let the model hide the parts inside it.</param>
+/// False to draw them with shaders, letting the model hide the parts inside it.</param>
 /// <returns>The new axes, owned by AModel; or nil, with nothing added, if AModel is nil or its
 /// bounding box is empty.</returns>
 /// <seealso cref="HideModelAxes"/>
@@ -237,15 +308,15 @@ function ShowModelAxes(const AModel: TGorillaModel; const ALineWidth: Single = 1
 
 //** @abstract(Removes the axes ShowModelAxes added to AModel.)
 //**
-//** Frees the TModelAxes. Does nothing if AModel is nil or has no axes. Call from the main
-//** thread only.
+//** Frees the TModelAxes, with any strips. Does nothing if AModel is nil or has no axes. Call
+//** from the main thread only.
 //**
 //** @param(AModel The model to remove the axes from.)
 //**
 //** @seealso(ShowModelAxes)
 /// <summary>Removes the axes ShowModelAxes added to AModel.</summary>
-/// <remarks>Frees the TModelAxes. Does nothing if AModel is nil or has no axes. Call from the
-/// main thread only.</remarks>
+/// <remarks>Frees the TModelAxes, with any strips. Does nothing if AModel is nil or has no
+/// axes. Call from the main thread only.</remarks>
 /// <param name="AModel">The model to remove the axes from.</param>
 /// <seealso cref="ShowModelAxes"/>
 procedure HideModelAxes(const AModel: TGorillaModel);
@@ -267,6 +338,29 @@ function FindModelAxes(const AModel: TGorillaModel): TModelAxes;
 
 implementation
 
+const
+  // A strip is never thinner than this, so a flat model still gets a
+  // valid plane
+  MIN_STRIP = 0.001;
+
+{ Copy ASource to ATarget only if it differs, so an unchanged transform
+  never triggers a repaint }
+procedure CopyIfChanged(const ATarget: TPosition3D; const ASource: TPoint3D);
+var
+  P: TPoint3D;
+begin
+  P := ATarget.Point;
+  if (P.X <> ASource.X) or (P.Y <> ASource.Y) or (P.Z <> ASource.Z) then
+    ATarget.Point := ASource;
+end;
+
+{ A GLSL float literal: always with a decimal point, whatever the locale,
+  since GLSL does not mix ints and floats freely }
+function GlslFloat(const AValue: Single): string;
+begin
+  Result := FormatFloat('0.0#####', AValue, TFormatSettings.Invariant);
+end;
+
 { TModelAxes }
 
 constructor TModelAxes.Create(AOwner: TComponent);
@@ -282,28 +376,47 @@ begin
   FOnTop := True;
 end;
 
+destructor TModelAxes.Destroy;
+begin
+  FreeStrips;
+  inherited;
+end;
+
+procedure TModelAxes.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited;
+  if (Operation = opRemove) and (AComponent = FFrame) then
+    FFrame := nil;   // the strips and materials went with it
+end;
+
 procedure TModelAxes.SetExtent(const ALow, AHigh, ACentre: TPoint3D);
 var
   Mid: TPoint3D;
 begin
-  FLo := Point3D(Min(ALow.X, ACentre.X), Min(ALow.Y, ACentre.Y),
+  // In the parent's (the model's) coordinates, for the strips
+  FBoxLo := Point3D(Min(ALow.X, ACentre.X), Min(ALow.Y, ACentre.Y),
     Min(ALow.Z, ACentre.Z));
-  FHi := Point3D(Max(AHigh.X, ACentre.X), Max(AHigh.Y, ACentre.Y),
+  FBoxHi := Point3D(Max(AHigh.X, ACentre.X), Max(AHigh.Y, ACentre.Y),
     Max(AHigh.Z, ACentre.Z));
+  FPivot := ACentre;
 
   // Sit in the middle of the lines, sized to them, so a size-based cull
-  // never drops them; the lines are then drawn relative to this position
-  Mid := (FLo + FHi) * 0.5;
+  // never drops them; DrawLines then works relative to this position
+  Mid := (FBoxLo + FBoxHi) * 0.5;
   Position.Point := Mid;
-  Width := Max(FHi.X - FLo.X, 0.001);
-  Height := Max(FHi.Y - FLo.Y, 0.001);
-  Depth := Max(FHi.Z - FLo.Z, 0.001);
-  FLo := FLo - Mid;
-  FHi := FHi - Mid;
+  Width := Max(FBoxHi.X - FBoxLo.X, MIN_STRIP);
+  Height := Max(FBoxHi.Y - FBoxLo.Y, MIN_STRIP);
+  Depth := Max(FBoxHi.Z - FBoxLo.Z, MIN_STRIP);
+  FLo := FBoxLo - Mid;
+  FHi := FBoxHi - Mid;
   FCentre := ACentre - Mid;
   FHasExtent := True;
+
+  RebuildStrips;
   Repaint;
 end;
+
+{ --- On top: drawn by the context --- }
 
 procedure TModelAxes.DrawLines;
 var
@@ -318,16 +431,12 @@ begin
     Point3D(FCentre.X, FCentre.Y, FHi.Z), O, FZColor);
 end;
 
-procedure TModelAxes.Render;
+procedure TModelAxes.DrawOnTop;
 var
   Ctx: TGorillaContext;
   PrevMat: TMatrix3D;
   Wide: Boolean;
 begin
-  inherited;
-  if not FHasExtent then
-    Exit;
-
   // Main pass only: Render also runs in shadow, reflection, environment
   // and other passes, where CurrentPass is assigned. Under a plain FMX
   // context there are no passes, and the FMX helpers still work.
@@ -345,8 +454,7 @@ begin
   PrevMat := Context.CurrentMatrix;
   Context.SetMatrix(AbsoluteMatrix);
   try
-    if FOnTop then
-      Context.SetContextState(TContextState.csZTestOff);
+    Context.SetContextState(TContextState.csZTestOff);
     try
       if Wide then
         Ctx.BeginLineRendering(FLineWidth, TGorillaLineType.Solid, True);
@@ -357,41 +465,202 @@ begin
           Ctx.EndLineRendering(True);
       end;
     finally
-      if FOnTop then
-        Context.SetContextState(TContextState.csZTestOn);
+      Context.SetContextState(TContextState.csZTestOn);
     end;
   finally
     Context.SetMatrix(PrevMat);
   end;
 end;
 
+{ --- Not on top: drawn by shaders on strips --- }
+
+procedure TModelAxes.SyncFrame;
+var
+  Model: TControl3D;
+begin
+  if (FFrame = nil) or not (Parent is TControl3D) then
+    Exit;
+  Model := TControl3D(Parent);
+  // Same parent and the same transform properties give the same matrix,
+  // so the frame's space is exactly the model's
+  if FFrame.Parent <> Model.Parent then
+    FFrame.Parent := Model.Parent;
+  CopyIfChanged(FFrame.Position, Model.Position.Point);
+  CopyIfChanged(FFrame.RotationAngle, Model.RotationAngle.Point);
+  CopyIfChanged(FFrame.Scale, Model.Scale.Point);
+  CopyIfChanged(FFrame.RotationCenter, Model.RotationCenter.Point);
+end;
+
+procedure TModelAxes.FreeStrips;
+var
+  Frame: TDummy;
+begin
+  Frame := FFrame;
+  FFrame := nil;
+  if Frame = nil then
+    Exit;
+  Frame.RemoveFreeNotification(Self);
+  // When the frame's parent is already being freed (the scene is closing)
+  // it frees the frame itself; freeing it here too would do it twice
+  if (Frame.Parent <> nil) and (csDestroying in Frame.Parent.ComponentState) then
+    Exit;
+  Frame.Parent := nil;
+  Frame.Free;   // frees the strips, then the materials it owns
+end;
+
+function TModelAxes.StripCode(const AAlongY: Boolean; const AColor: TAlphaColor): string;
+var
+  C: TAlphaColorRec;
+  Across: string;
+begin
+  C := TAlphaColorRec(AColor);
+  // The line runs down the middle of the strip, along its local X or Y.
+  // v_VertPos is the strip's own unit-square position, -0.5 to 0.5, so the
+  // other coordinate is 0 on the line. Divided by fwidth it becomes the
+  // distance from the line in pixels, whatever the strip's size, distance
+  // or angle; pixels further than half the line width are discarded. The
+  // strip ends where the line ends, so no end test is needed.
+  if AAlongY then
+    Across := 'x'
+  else
+    Across := 'y';
+  Result :=
+    'void SurfaceShader(inout TLocals DATA){' + sLineBreak +
+    '  float s = vars.v_VertPos.' + Across + ';' + sLineBreak +
+    '  float d = abs(s) / max(fwidth(s), 0.000001);' + sLineBreak +
+    '  if (d > ' + GlslFloat(FLineWidth * 0.5) + ') discard;' + sLineBreak +
+    '  DATA.BaseColor = vec4(' + GlslFloat(C.R / 255) + ', ' + GlslFloat(C.G / 255) +
+      ', ' + GlslFloat(C.B / 255) + ', ' + GlslFloat(C.A / 255) + ');' + sLineBreak +
+    '  DATA.Alpha = ' + GlslFloat(C.A / 255) + ';' + sLineBreak +
+    '}';
+end;
+
+procedure TModelAxes.AddStrip(const ACentre: TPoint3D; const ALength: Single;
+  const ARotation: TPoint3D; const AAlongY: Boolean; const AColor: TAlphaColor);
+var
+  Plane: TGorillaPlane;
+  Mat: TGorillaDefaultMaterialSource;
+  Code: TStringList;
+  Len: Single;
+begin
+  // The plane, parented before anything else, as in Gorilla's examples
+  Plane := TGorillaPlane.Create(nil);
+  Plane.Stored := False;
+  Plane.Locked := True;
+  Plane.HitTest := False;
+  Plane.Parent := FFrame;   // freed with the frame
+  Plane.TwoSide := True;    // seen from either side
+
+  // Square, so the line is exactly as long as the strip whichever way it
+  // runs; only the line's pixels survive the shader. The line is centred
+  // on the strip, so the turn's direction does not matter.
+  Len := Max(ALength, MIN_STRIP);
+  Plane.Width := Len;
+  Plane.Height := Len;
+  Plane.RotationAngle.Point := ARotation;
+  Plane.Position.Point := ACentre;
+
+  // Owned by the frame, so freed with it, after the plane that uses it
+  Mat := TGorillaDefaultMaterialSource.Create(FFrame);
+  Mat.UseLighting := False;
+  Mat.UseSpecular := False;
+  Mat.Diffuse := AColor;
+  // The shader property takes a TStrings instance; setting .Text at runtime
+  // would not trigger Gorilla's shader update
+  Code := TStringList.Create;
+  try
+    Code.Text := StripCode(AAlongY, AColor);
+    Mat.SurfaceShader := Code;
+  finally
+    Code.Free;
+  end;
+  Plane.MaterialSource := Mat;
+end;
+
+procedure TModelAxes.RebuildStrips;
+var
+  Model: TControl3D;
+  Mid, Size, NoTurn, TurnX, TurnY: TPoint3D;
+begin
+  NoTurn := TPoint3D.Zero;
+  TurnX := Point3D(90, 0, 0);   // local X-Y into X-Z; local Y onto Z
+  TurnY := Point3D(0, 90, 0);   // local X-Y into Z-Y; local X onto Z
+
+  FreeStrips;
+  if FOnTop or not FHasExtent or not (Parent is TControl3D)
+    or (Parent.Parent = nil) then
+    Exit;
+  Model := TControl3D(Parent);
+
+  // A frame beside the model, on the model's transform, so the strips are
+  // in model units without being part of the model's bounds
+  FFrame := TDummy.Create(nil);
+  FFrame.Stored := False;
+  FFrame.Locked := True;
+  FFrame.HitTest := False;
+  FFrame.FreeNotification(Self);
+  FFrame.Parent := Model.Parent;
+  SyncFrame;
+
+  // Two strips per line, in the two planes that contain it, so whichever
+  // way the line is seen at least one strip faces the camera. Each turn is
+  // about one axis only, so the order of FMX's rotations does not matter.
+  Mid := (FBoxLo + FBoxHi) * 0.5;
+  Size := FBoxHi - FBoxLo;
+  // X: along local X, in X-Y and in X-Z
+  AddStrip(Point3D(Mid.X, FPivot.Y, FPivot.Z), Size.X, NoTurn, False, FXColor);
+  AddStrip(Point3D(Mid.X, FPivot.Y, FPivot.Z), Size.X, TurnX, False, FXColor);
+  // Y: along local Y, in X-Y and in Z-Y
+  AddStrip(Point3D(FPivot.X, Mid.Y, FPivot.Z), Size.Y, NoTurn, True, FYColor);
+  AddStrip(Point3D(FPivot.X, Mid.Y, FPivot.Z), Size.Y, TurnY, True, FYColor);
+  // Z: along local Y turned onto Z in X-Z, and local X turned onto Z in Z-Y
+  AddStrip(Point3D(FPivot.X, FPivot.Y, Mid.Z), Size.Z, TurnX, True, FZColor);
+  AddStrip(Point3D(FPivot.X, FPivot.Y, Mid.Z), Size.Z, TurnY, False, FZColor);
+end;
+
+procedure TModelAxes.Render;
+begin
+  inherited;
+  if not FHasExtent then
+    Exit;
+  if FOnTop then
+    DrawOnTop
+  else
+    SyncFrame;   // a no-op unless the model moved, turned or was scaled
+end;
+
 procedure TModelAxes.SetXColor(const Value: TAlphaColor);
 begin
   FXColor := Value;
+  RebuildStrips;
   Repaint;
 end;
 
 procedure TModelAxes.SetYColor(const Value: TAlphaColor);
 begin
   FYColor := Value;
+  RebuildStrips;
   Repaint;
 end;
 
 procedure TModelAxes.SetZColor(const Value: TAlphaColor);
 begin
   FZColor := Value;
+  RebuildStrips;
   Repaint;
 end;
 
 procedure TModelAxes.SetLineWidth(const Value: Single);
 begin
   FLineWidth := Max(Value, 1);
+  RebuildStrips;
   Repaint;
 end;
 
 procedure TModelAxes.SetOnTop(const Value: Boolean);
 begin
   FOnTop := Value;
+  RebuildStrips;   // builds the strips when False, frees them when True
   Repaint;
 end;
 
@@ -417,7 +686,7 @@ begin
   if Axes <> nil then
   begin
     Axes.Parent := nil;
-    Axes.Free;
+    Axes.Free;   // frees any frame, strips and materials
   end;
 end;
 
@@ -441,9 +710,10 @@ begin
   Result := TModelAxes.Create(nil);
   Result.LineWidth := ALineWidth;
   Result.OnTop := AOnTop;
+  // Parent first: the strips need the model and its parent
+  Result.Parent := AModel;   // freed with the model
   Result.SetExtent(Box.TopLeftNear, Box.BottomRightFar,
     AModel.RotationCenter.Point);
-  Result.Parent := AModel;   // freed with the model
 end;
 
 end.
