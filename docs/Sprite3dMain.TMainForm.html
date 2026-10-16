@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3dMain: Class TMainForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TMainForm"></span><h1 class="cio">Class TMainForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3dMain.html">Sprite3dMain</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TMainForm = class(TForm)</code></p>
+<h2 class="description">Description</h2>
+<p>
+The main form: a Gorilla3D view of one model, with dials for the camera.</p>
+<p>
+
+
+<p>The viewport, light, model and TSprite3DCamera are created at run time, not at design time; the form owns none of them directly. All event handlers run on the main thread.
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a></dt>
+  <dd>A TGorillaCamera that orbits a centre point through a chain of three pivots.</dd>
+</dl>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TForm</li>
+<li class="thisitem">TMainForm</li></ul><h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#TabControl1">TabControl1</a></strong>: TTabControl;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#GorillaTab">GorillaTab</a></strong>: TTabItem;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#DebugTab">DebugTab</a></strong>: TTabItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#DebugMemo">DebugMemo</a></strong>: TMemo;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#MainLayout">MainLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewportLayout">ViewportLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#DistanceLayout">DistanceLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#DistanceLabel">DistanceLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#DistanceTrack">DistanceTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ControlsLayout">ControlsLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AzimuthDial">AzimuthDial</a></strong>: TArcDial;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AzimuthLabel">AzimuthLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AzimuthText">AzimuthText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AngleDial">AngleDial</a></strong>: TArcDial;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AngleLabel">AngleLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AngleText">AngleText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#Model3D1">Model3D1</a></strong>: TModel3D;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#RollDial">RollDial</a></strong>: TArcDial;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#RollLabel">RollLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#RollText">RollText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#chkOrthoToggle">chkOrthoToggle</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#chkFitAnyAngle">chkFitAnyAngle</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#chkShowAxes">chkShowAxes</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#chkShowGrid">chkShowGrid</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#OpenDialog1">OpenDialog1</a></strong>: TOpenDialog;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#MainMenu1">MainMenu1</a></strong>: TMainMenu;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#FileMenu">FileMenu</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#OpenModelMenuItem">OpenModelMenuItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewMenu">ViewMenu</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewVariableItem">ViewVariableItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewIsometricItem">ViewIsometricItem</a></strong>: TMenuItem;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#FormCreate-TObject-">FormCreate</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#FormShow-TObject-">FormShow</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#AzimuthDialChange-TObject-">AzimuthDialChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#AngleDialChange-TObject-">AngleDialChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#RollDialChange-TObject-">RollDialChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#GorillaViewportResize-TObject-">GorillaViewportResize</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#chkOrthoToggleChange-TObject-">chkOrthoToggleChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#chkFitAnyAngleChange-TObject-">chkFitAnyAngleChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#chkShowAxesChange-TObject-">chkShowAxesChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#chkShowGridChange-TObject-">chkShowGridChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#OpenModelMenuItemClick-TObject-">OpenModelMenuItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewVariableItemClick-TObject-">ViewVariableItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewIsometricItemClick-TObject-">ViewIsometricItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#DistanceTrackChange-TObject-">DistanceTrackChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="TabControl1"></span><code><strong>TabControl1</strong>: TTabControl;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fills the form and holds the View tab and the Debug tab.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GorillaTab"></span><code><strong>GorillaTab</strong>: TTabItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The tab captioned &quot;View&quot;, with the viewport and camera controls; active at start-up.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DebugTab"></span><code><strong>DebugTab</strong>: TTabItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The tab captioned &quot;Debug&quot;, holding DebugMemo.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DebugMemo"></span><code><strong>DebugMemo</strong>: TMemo;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Log output; SwitchModel writes separator lines here when a model has animations.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MainLayout"></span><code><strong>MainLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fills the View tab and holds ViewportLayout and ControlsLayout.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewportLayout"></span><code><strong>ViewportLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The area left of the control panel; owns the TGorillaViewport made in FormCreate.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceLayout"></span><code><strong>DistanceLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Test strip along the bottom of the 3D view holding the distance slider.</p>
+<p>
+
+
+<p>For testing only; delete it, with DistanceLabel, DistanceTrack and DistanceTrackChange, when it is no longer needed. The model is then always shown at the fitted distance.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceLabel"></span><code><strong>DistanceLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the distance slider's factor, such as &quot;Distance x2.5&quot;.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceTrack"></span><code><strong>DistanceTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Moves the camera out from the fitted distance, from x1 to x20; test only.</p>
+<p>
+
+
+<p>See DistanceTrackChange.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ControlsLayout"></span><code><strong>ControlsLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The right-hand control panel holding the dials, their labels and both check boxes.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthDial"></span><code><strong>AzimuthDial</strong>: TArcDial;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the camera's Azimuth; see AzimuthDialChange.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthLabel"></span><code><strong>AzimuthLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption &quot;Azimuth&quot; above AzimuthDial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthText"></span><code><strong>AzimuthText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the current azimuth in whole degrees.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleDial"></span><code><strong>AngleDial</strong>: TArcDial;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the camera's PolarAngle; see AngleDialChange.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleLabel"></span><code><strong>AngleLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption &quot;Inclination&quot; above AngleDial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleText"></span><code><strong>AngleText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the current polar angle in whole degrees.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Model3D1"></span><code><strong>Model3D1</strong>: TModel3D;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+An FMX TModel3D placed at design time; the code does not use it.</p>
+<p>
+
+
+<p>The model on screen is a TGorillaModel created at run time by SwitchModel.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollDial"></span><code><strong>RollDial</strong>: TArcDial;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the camera's Roll; see RollDialChange.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollLabel"></span><code><strong>RollLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption &quot;Roll&quot; above RollDial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollText"></span><code><strong>RollText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the current roll in whole degrees.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkOrthoToggle"></span><code><strong>chkOrthoToggle</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Switches the camera between orthographic and perspective projection.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkFitAnyAngle"></span><code><strong>chkFitAnyAngle</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.</p>
+<p>
+
+
+<p>Checked, the model is framed for every possible Azimuth, inclination and Roll, so turning the dials only moves the camera round it and the model always stays in view. Unchecked, the model is framed exactly for the angles at the time of the fit; turning a dial afterwards can push part of it past the edge until the next refit, which happens on a resize, a projection change or toggling this box.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkShowAxes"></span><code><strong>chkShowAxes</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows or hides the model's X, Y and Z axes; checked at start-up.</p>
+<p>
+
+
+<p>Checked, every model is loaded with ShowModelAxes from Sprite3DAxes, which draws red, green and blue lines through its centre of rotation; unchecked, they are removed.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkShowGrid"></span><code><strong>chkShowGrid</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows or hides the floor grid; checked at start-up.</p>
+<p>
+
+
+<p>Checked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws a shader grid of grey lines 1.0 apart on the model's floor; unchecked, it is removed.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OpenDialog1"></span><code><strong>OpenDialog1</strong>: TOpenDialog;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Asks for the model file that File, OpenModel loads.</p>
+<p>
+
+
+<p>Its filter, set in the form designer, offers only the formats the unit has loaders for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and then one at a time.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MainMenu1"></span><code><strong>MainMenu1</strong>: TMainMenu;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The form's menu bar, holding FileMenu.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FileMenu"></span><code><strong>FileMenu</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;File&quot; menu, holding OpenModelMenuItem.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OpenModelMenuItem"></span><code><strong>OpenModelMenuItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;OpenModel&quot; item; see OpenModelMenuItemClick.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewMenu"></span><code><strong>ViewMenu</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;View&quot; menu, choosing how the camera angles are set.</p>
+<p>
+
+
+<p>Its items form one radio group: Variable or Isometric.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewVariableItem"></span><code><strong>ViewVariableItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Variable&quot; view; see ViewVariableItemClick.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewIsometricItem"></span><code><strong>ViewIsometricItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Isometric&quot; view, chosen at start-up; see ViewIsometricItemClick.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormCreate-TObject-"></span><code>procedure <strong>FormCreate</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets up the viewport, light and camera, and picks the models folder.</p>
+<p>
+
+
+<p>The models folder is the library path on macOS, the home folder on Linux and <code>'../../../'</code> elsewhere; on Windows it is the current folder instead if that has a models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60 frames per second without VSync.
+
+<p>The dials start at 0, then the isometric view is chosen, as View, Isometric does: the dials are turned to its angles and switched off, and the readouts set to match, so dial, readout and camera agree from the start.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormShow-TObject-"></span><code>procedure <strong>FormShow</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Loads the first model from the models folder and fits the camera to it.</p>
+<p>
+
+
+<p>The file is named in this handler; change it there to start with a different model, or use File, OpenModel once the form is up. Shows a message and loads nothing if the file is missing or cannot be read.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthDialChange-TObject-"></span><code>procedure <strong>AzimuthDialChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Copies AzimuthDial to the camera's Azimuth.</p>
+<p>
+
+
+<p>The dial value is negated, wrapped into 0 to 360 and shown in AzimuthText. The camera gets the angle reversed, 360 minus the readout, so the view turns the right way for the dial. The model is not refitted; see chkFitAnyAngle.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>AzimuthDial.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleDialChange-TObject-"></span><code>procedure <strong>AngleDialChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Copies AngleDial to the camera's PolarAngle.</p>
+<p>
+
+
+<p>The dial value is negated and wrapped into 0 to 360, shown in AngleText and written to the camera. Values past 90 take the camera over the pole. The model is not refitted; see chkFitAnyAngle.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>AngleDial.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollDialChange-TObject-"></span><code>procedure <strong>RollDialChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Copies RollDial to the camera's Roll.</p>
+<p>
+
+
+<p>The dial value is wrapped into 0 to 360, without negating, shown in RollText and written to the camera. The model is not refitted; see chkFitAnyAngle.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>RollDial.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GorillaViewportResize-TObject-"></span><code>procedure <strong>GorillaViewportResize</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Refits the camera to the model when the viewport changes size.</p>
+<p>
+
+
+<p>Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is loaded.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The TGorillaViewport.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkOrthoToggleChange-TObject-"></span><code>procedure <strong>chkOrthoToggleChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Switches the projection to match chkOrthoToggle and refits the model.</p>
+<p>
+
+
+<p>Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the form caption, and calls FitToBounds, since the two modes size the view differently.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>chkOrthoToggle.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkFitAnyAngleChange-TObject-"></span><code>procedure <strong>chkFitAnyAngleChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Refits the model when the fit mode changes.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>chkFitAnyAngle.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkShowAxesChange-TObject-"></span><code>procedure <strong>chkShowAxesChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Adds or removes the model's axes to match chkShowAxes.</p>
+<p>
+
+
+<p>Does nothing until a model is loaded.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>chkShowAxes.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="chkShowGridChange-TObject-"></span><code>procedure <strong>chkShowGridChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Adds or removes the floor grid to match chkShowGrid.</p>
+<p>
+
+
+<p>Does nothing until a model is loaded.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>chkShowGrid.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OpenModelMenuItemClick-TObject-"></span><code>procedure <strong>OpenModelMenuItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Lets the user pick a model file and loads it in place of the current one.</p>
+<p>
+
+
+<p>Shows OpenDialog1 and passes the chosen file to SwitchModel, which clears the old model and loads the new one with the current camera angles and fit mode. Nothing changes if the dialog is cancelled. A file that fails to load is reported by SwitchModel, and the view is then left empty until another model loads.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>OpenModelMenuItem.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewVariableItemClick-TObject-"></span><code>procedure <strong>ViewVariableItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Hands the camera angles back to the dials.</p>
+<p>
+
+
+<p>Checks the Variable item and turns the three dials back on. The camera keeps its current angles until a dial is turned.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>ViewVariableItem.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewIsometricItemClick-TObject-"></span><code>procedure <strong>ViewIsometricItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the isometric view and fixes it.</p>
+<p>
+
+
+<p>Sets the inclination to 35.264, the true isometric elevation, the azimuth to 45 and the roll to 0, as shown on the readouts, turns the dials to match and switches them off, then refits the model for the new view. As with the dial, the azimuth reaches the camera reversed.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>ViewIsometricItem.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceTrackChange-TObject-"></span><code>procedure <strong>DistanceTrackChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Moves the camera out by the slider's factor; test only.</p>
+<p>
+
+
+<p>In perspective mode the camera's Distance becomes the fitted distance times the factor; in orthographic mode, where distance does not change the size, OrthoHeight is scaled instead. The factor is kept when the model is refitted.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>DistanceTrack.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

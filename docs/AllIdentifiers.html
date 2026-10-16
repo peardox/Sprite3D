@@ -34,9 +34,39 @@
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
-<td class="itemname"><a class="bold" href="Sprite3dMain.html#Form1">Form1</a></td>
+<td class="itemname"><a class="bold" href="Sprite3DAxes.html#FindModelAxes-TGorillaModel-">FindModelAxes</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
+<td class="itemdesc"><p>Returns the axes ShowModelAxes added to AModel, or nil.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DGrid.html#FindModelGrid-TGorillaModel-">FindModelGrid</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
+<td class="itemdesc"><p>Returns the grid ShowModelGrid added to AModel, or nil.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DAxes.html#HideModelAxes-TGorillaModel-">HideModelAxes</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
+<td class="itemdesc"><p>Removes the axes ShowModelAxes added to AModel.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
+<td class="itemdesc"><p>Removes the grid ShowModelGrid added to AModel.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3dMain.html#MainForm">MainForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
 <td class="itemdesc"><p>The main form, created by Application.CreateForm in Sprite3d.dpr.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DAxes.html#ShowModelAxes-TGorillaModel-Single-Boolean-">ShowModelAxes</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
+<td class="itemdesc"><p>Draws AModel's X, Y and Z axes through its centre of rotation.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
+<td class="itemdesc"><p>Shows a shader-drawn grid on AModel's floor.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3dMain.TControl3DAccess.html">TControl3DAccess</a></td>
@@ -44,9 +74,9 @@
 <td class="itemdesc"><p>Protected-access helper for TControl3D; nothing in the project uses it yet.</p></td>
 </tr>
 <tr class="list">
-<td class="itemname"><a class="bold" href="Sprite3dMain.TForm1.html">TForm1</a></td>
-<td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
-<td class="itemdesc"><p>The main form: a Gorilla3D view of one model, with dials for the camera.</p></td>
+<td class="itemname"><a class="bold" href="Sprite3DGrid.html#TGridAxis">TGridAxis</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
+<td class="itemdesc"><p>The axis a TModelGrid is drawn across.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a></td>
@@ -54,11 +84,26 @@
 <td class="itemdesc"><p>How LookAt treats Roll when it turns the camera.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3dMain.TMainForm.html">TMainForm</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
+<td class="itemdesc"><p>The main form: a Gorilla3D view of one model, with dials for the camera.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DAxes.TModelAxes.html">TModelAxes</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
+<td class="itemdesc"><p>Draws three coloured lines through a point, using the render context.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DGrid.TModelGrid.html">TModelGrid</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
+<td class="itemdesc"><p>Shows a shader-drawn grid for its parent model.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.TQuat.html">TQuat</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
 <td class="itemdesc"><p>A quaternion of Doubles, used for the camera's orientation arithmetic.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
 <td class="itemdesc"><p>A TGorillaCamera that orbits a centre point through a chain of three pivots.</p></td>

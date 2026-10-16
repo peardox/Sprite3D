@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DAxes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DAxes</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Draws a model's X, Y and Z axes through its centre of rotation.</p>
+<p>
+
+
+<p>ShowModelAxes adds a TModelAxes to a TGorillaModel. In each frame's main pass it draws three lines with the context's DrawLine helper: red along X, green along Y and blue along Z. They cross at the model's centre of rotation, which is FMX's RotationCenter in the model's own coordinates and is the model's origin unless that has been changed. Each line runs from one face of the model's bounding box to the opposite face, so unless the centre of rotation lies outside that box, the lines stay inside the box that FitToBounds frames.
+
+<p>The axes are a child of the model and are drawn with their own AbsoluteMatrix, so they move, turn and scale with the model and show its own axes rather than the scene's. FMX's Y axis points down the screen, so with no rotation the green line's positive end is at the bottom. By default the lines are 1 pixel wide and drawn with depth testing off, so the model never hides them.
+
+<p>This follows Gorilla v1.5's Line Rendering guide: a TDummy descendant that overrides Render, sets and restores the context matrix, draws only in the main pass, and wraps a wider line width in BeginLineRendering and EndLineRendering. Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+
+<p></p>
+
+<pre class="preformatted">
+TGorillaModel
+`-- TModelAxes      one per model, found by FindModelAxes;
+                    draws the three lines in its Render</pre>
+
+<p>
+
+<p></p>
+
+<pre class="preformatted">
+ShowModelAxes(GorillaModel1);    // after the model is loaded
+HideModelAxes(GorillaModel1);</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAxes.TModelAxes.html"><code>TModelAxes</code></a></td>
+<td class="itemdesc">Draws three coloured lines through a point, using the render context.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DAxes.html#ShowModelAxes-TGorillaModel-Single-Boolean-">ShowModelAxes</a></strong>(const AModel: TGorillaModel; const ALineWidth: Single = 1; const AOnTop: Boolean = True): <a href="Sprite3DAxes.TModelAxes.html">TModelAxes</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAxes.html#HideModelAxes-TGorillaModel-">HideModelAxes</a></strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DAxes.html#FindModelAxes-TGorillaModel-">FindModelAxes</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DAxes.TModelAxes.html">TModelAxes</a>;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowModelAxes-TGorillaModel-Single-Boolean-"></span><code>function <strong>ShowModelAxes</strong>(const AModel: TGorillaModel; const ALineWidth: Single = 1; const AOnTop: Boolean = True): <a href="Sprite3DAxes.TModelAxes.html">TModelAxes</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Draws AModel's X, Y and Z axes through its centre of rotation.</p>
+<p>
+
+
+<p>Any axes already on AModel are removed first, so calling it again, for example after loading a different model, redraws them for the new bounds. The lines cross at <code>AModel.RotationCenter</code> and each runs across AModel's current bounding box, from <code>GetAnimatedBoundingBox</code>, widened if need be to reach the centre of rotation. X is red, Y green and Z blue.
+
+<p>The axes are added as a child of AModel, so they follow its position, rotation and scale, and are freed with it. They are sized for the box at the time of the call. Call from the main thread only.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to draw axes on. Nothing happens if it is nil.</dd>
+<dt>ALineWidth</dt>
+<dd>Line width in screen pixels. Values above 1 work on desktop OpenGL only.</dd>
+<dt>AOnTop</dt>
+<dd>True to draw the lines over everything, so the model cannot hide them; False to let the model hide the parts inside it.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The new axes, owned by AModel; or nil, with nothing added, if AModel is nil or its bounding box is empty.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DAxes.html#HideModelAxes-TGorillaModel-">HideModelAxes</a></dt>
+  <dd>Removes the axes ShowModelAxes added to AModel.</dd>
+  <dt><a class="normal" href="Sprite3DAxes.html#FindModelAxes-TGorillaModel-">FindModelAxes</a></dt>
+  <dd>Returns the axes ShowModelAxes added to AModel, or nil.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="HideModelAxes-TGorillaModel-"></span><code>procedure <strong>HideModelAxes</strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Removes the axes ShowModelAxes added to AModel.</p>
+<p>
+
+
+<p>Frees the TModelAxes. Does nothing if AModel is nil or has no axes. Call from the main thread only.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to remove the axes from.</dd>
+</dl>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DAxes.html#ShowModelAxes-TGorillaModel-Single-Boolean-">ShowModelAxes</a></dt>
+  <dd>Draws AModel's X, Y and Z axes through its centre of rotation.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FindModelAxes-TGorillaModel-"></span><code>function <strong>FindModelAxes</strong>(const AModel: TGorillaModel): <a href="Sprite3DAxes.TModelAxes.html">TModelAxes</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Returns the axes ShowModelAxes added to AModel, or nil.</p>
+<p>
+
+
+<p>Looks only at AModel's direct children. The caller does not own the result; it is freed with AModel or by HideModelAxes.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to look on; nil gives nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The axes, or nil if AModel is nil or has none.</p></td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

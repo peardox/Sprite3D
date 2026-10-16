@@ -1,13 +1,14 @@
 //** @abstract(Draws a far-reaching grid on a model's floor with a GLSL shader.)
 //**
 //** ShowModelGrid adds a TModelGrid to a TGorillaModel. It shows a grid of lines across one of
-//** the model's axes, Y by default, so the grid lies in X and Z. The lines are GridSize apart in
-//** the model's own units, 1.0 by default, in mid-grey, with one through the model's centre of
-//** rotation, and the grid reaches GridCells cells each side of it, fading out towards its
-//** edge. GridLevel is where it crosses its axis; with GridOnFloor, the default, that is the
-//** model's floor, the bounding-box face across the grid's axis that is lower in the scene.
-//** That suits a model standing on its lowest bound, as the test animation does, but not
-//** every model; set GridLevel to override it.
+//** the model's axes, Y by default, so the grid lies in X and Z. The lines are GridSize apart
+//** in the model's own units, 1.0 by default, in dark grey, with one through the model's centre
+//** of rotation, and the grid reaches GridCells cells each side of it, 1000 by default. Distant
+//** lines fade out as their cells shrink to a few pixels on screen, so the grid dissolves into
+//** the distance rather than stopping at an edge. GridLevel is where it crosses its axis; with
+//** GridOnFloor, the default, that is the model's floor, the bounding-box face across the
+//** grid's axis that is lower in the scene. That suits a model standing on its lowest bound, as
+//** the test animation does, but not every model; set GridLevel to override it.
 //**
 //** The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its
 //** TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla
@@ -44,13 +45,15 @@ unit Sprite3DGrid;
   ShowModelGrid adds a TModelGrid to a TGorillaModel. It shows a grid of
   lines across one of the model's axes, Y by default, so the grid lies in X
   and Z. The lines are GridSize apart in the model's own units, 1.0 by
-  default, in mid-grey, with one through the model's centre of rotation, and
-  the grid reaches GridCells cells each side of it, fading out towards its
-  edge. GridLevel is where it crosses its axis; with GridOnFloor, the
-  default, that is the model's floor, the bounding-box face across the
-  grid's axis that is lower in the scene. That suits a model standing on its
-  lowest bound, as the test animation does, but not every model; set
-  GridLevel to override it.
+  default, in dark grey, with one through the model's centre of rotation,
+  and the grid reaches GridCells cells each side of it, 1000 by default.
+  Distant lines fade out as their cells shrink to a few pixels on screen, so
+  the grid dissolves into the distance rather than stopping at an edge.
+  GridLevel is where it crosses its axis; with GridOnFloor, the default,
+  that is the model's floor, the bounding-box face across the grid's axis
+  that is lower in the scene. That suits a model standing on its lowest
+  bound, as the test animation does, but not every model; set GridLevel to
+  override it.
 
   The grid is a single TGorillaPlane. The lines are worked out per pixel by
   GLSL code in its TGorillaDefaultMaterialSource, through its documented
@@ -169,13 +172,13 @@ type
   public
     //** @abstract(Creates a grid with no extent: across Y, on the floor, lines 1.0 apart.)
     //**
-    //** The colour is mid-grey and the grid reaches 100 cells each side. Nothing is built
+    //** The colour is dark grey and the grid reaches 1000 cells each side. Nothing is built
     //** until SetExtent is called.
     //**
     //** @param(AOwner The owner, or nil to leave freeing to the parent.)
     /// <summary>Creates a grid with no extent: across Y, on the floor, lines 1.0
     /// apart.</summary>
-    /// <remarks>The colour is mid-grey and the grid reaches 100 cells each side. Nothing is
+    /// <remarks>The colour is dark grey and the grid reaches 1000 cells each side. Nothing is
     /// built until <see cref="SetExtent"/> is called.</remarks>
     /// <param name="AOwner">The owner, or nil to leave freeing to the parent.</param>
     constructor Create(AOwner: TComponent); override;
@@ -237,10 +240,10 @@ type
     /// of GridSize from it. The grid scales with the parent. Zero or less hides the
     /// grid.</remarks>
     property GridSize: Single read FGridSize write SetGridSize;
-    //** @abstract(Colour of the grid lines; mid-grey, $FF808080, by default.)
+    //** @abstract(Colour of the grid lines; dark grey, $FF404040, by default.)
     //**
     //** Its alpha scales the lines' opacity.
-    /// <summary>Colour of the grid lines; mid-grey, $FF808080, by default.</summary>
+    /// <summary>Colour of the grid lines; dark grey, $FF404040, by default.</summary>
     /// <remarks>Its alpha scales the lines' opacity.</remarks>
     property GridColor: TAlphaColor read FGridColor write SetGridColor;
     //** @abstract(Where the grid crosses its axis, in the parent's units; 0 with no other
@@ -269,16 +272,19 @@ type
     /// scene, the face with the smaller value is used. This assumes the model stands on its
     /// lowest bound, which is true of the test animation but not of every model.</remarks>
     property GridOnFloor: Boolean read FGridOnFloor write SetGridOnFloor;
-    //** @abstract(How many grid cells reach out each side of the centre; 100 by default.)
+    //** @abstract(How many grid cells reach out each side of the centre; 1000 by default.)
     //**
-    //** The plane is 2 * GridCells * GridSize across, so 200 units square by default. The
-    //** lines fade out over the outer half. The cost does not depend on this value. Values
-    //** below 1 count as 1.
-    /// <summary>How many grid cells reach out each side of the centre; 100 by
+    //** The plane is 2 * GridCells * GridSize across, so 2000 units square by default. Lines
+    //** fade out as their cells shrink to a few pixels on screen, so the grid normally
+    //** dissolves into the distance before its edge is seen; the last tenth also fades, with a
+    //** straight edge. The cost does not depend on this value. Values below 1 count as 1.
+    /// <summary>How many grid cells reach out each side of the centre; 1000 by
     /// default.</summary>
-    /// <remarks>The plane is 2 * GridCells * GridSize across, so 200 units square by default.
-    /// The lines fade out over the outer half. The cost does not depend on this value. Values
-    /// below 1 count as 1.</remarks>
+    /// <remarks>The plane is 2 * GridCells * GridSize across, so 2000 units square by default.
+    /// Lines fade out as their cells shrink to a few pixels on screen, so the grid normally
+    /// dissolves into the distance before its edge is seen; the last tenth also fades, with a
+    /// straight edge. The cost does not depend on this value. Values below 1 count as
+    /// 1.</remarks>
     property GridCells: Integer read FGridCells write SetGridCells;
   end;
 
@@ -343,8 +349,13 @@ function FindModelGrid(const AModel: TGorillaModel): TModelGrid;
 implementation
 
 const
-  // Fraction of the grid's radius over which the lines fade out
-  FADE_START = 0.5;
+  // The square edge fade starts this far out, as a fraction of the half-size
+  EDGE_FADE_START = 0.9;
+  // Lines fade out as a grid cell shrinks on screen from DENSE_FULL to
+  // DENSE_GONE pixels across, so far-off lines dissolve instead of turning
+  // to moire, well before the plane's edge comes into view
+  DENSE_FULL = 8.0;
+  DENSE_GONE = 2.0;
 
 { Component AIndex of AP: 0 = X, 1 = Y, 2 = Z }
 function GetComp(const AP: TPoint3D; const AIndex: Integer): Single;
@@ -395,10 +406,10 @@ begin
   HitTest := False;
   FGridAxis := gaY;
   FGridSize := 1.0;
-  FGridColor := TAlphaColorRec.Grey;   // $FF808080, mid-grey
+  FGridColor := $FF404040;   // dark grey; set GridColor to change it
   FGridLevel := 0;
   FGridOnFloor := True;
-  FGridCells := 100;
+  FGridCells := 1000;
 end;
 
 destructor TModelGrid.Destroy;
@@ -509,23 +520,29 @@ begin
   Half := FGridCells * FGridSize;
   // The plane's own position, from the documented varying v_VertPos (the
   // original vertex position). TGorillaPlane lies in its local X-Y plane,
-  // like FMX's TPlane, so X and Y are the grid's two coordinates, exact in
-  // model units whatever the plane's UV layout. No texture coordinates are
-  // used: TLocals only declares them when the mesh has them and a texture
-  // is in use.
+  // like FMX's TPlane, so X and Y are the grid's two coordinates. Its mesh
+  // is a unit square, -0.5 to 0.5, with Width and Height applied as a
+  // scale, so the position is multiplied by the plane's size to get model
+  // units. No texture coordinates are used: TLocals only declares them when
+  // the mesh has them and a texture is in use.
   // Distance to the nearest line in each direction, in pixels, via fwidth;
   // within about a pixel of a line it is drawn, smoothly at the edges.
-  // Beyond FADE_START of the radius the lines fade to nothing.
+  // fwidth is also the size of a pixel in cells, so 1 / its larger part is
+  // how many pixels the smaller side of a cell covers: the lines fade out as
+  // that falls from DENSE_FULL to DENSE_GONE. A short square fade at the
+  // edge keeps the plane's boundary straight if it is ever in view.
   Result :=
     'void SurfaceShader(inout TLocals DATA){' + sLineBreak +
-    '  vec2 p = vars.v_VertPos.xy;' + sLineBreak +
+    '  vec2 p = vars.v_VertPos.xy * ' + GlslFloat(2 * Half) + ';' + sLineBreak +
     '  vec2 g = p / ' + GlslFloat(FGridSize) + ';' + sLineBreak +
     '  vec2 w = max(fwidth(g), vec2(0.000001));' + sLineBreak +
     '  vec2 d = abs(fract(g - 0.5) - 0.5) / w;' + sLineBreak +
     '  float line = 1.0 - min(min(d.x, d.y), 1.0);' + sLineBreak +
-    '  float fade = 1.0 - smoothstep(' + GlslFloat(Half * FADE_START) + ', ' +
-      GlslFloat(Half) + ', length(p));' + sLineBreak +
-    '  float a = line * fade * ' + GlslFloat(C.A / 255) + ';' + sLineBreak +
+    '  float dense = smoothstep(' + GlslFloat(DENSE_GONE) + ', ' + GlslFloat(DENSE_FULL) +
+      ', 1.0 / max(w.x, w.y));' + sLineBreak +
+    '  float edge = 1.0 - smoothstep(' + GlslFloat(Half * EDGE_FADE_START) + ', ' +
+      GlslFloat(Half) + ', max(abs(p.x), abs(p.y)));' + sLineBreak +
+    '  float a = line * dense * edge * ' + GlslFloat(C.A / 255) + ';' + sLineBreak +
     '  if (a < 0.02) discard;' + sLineBreak +
     '  DATA.BaseColor = vec4(' + GlslFloat(C.R / 255) + ', ' + GlslFloat(C.G / 255) +
       ', ' + GlslFloat(C.B / 255) + ', a);' + sLineBreak +

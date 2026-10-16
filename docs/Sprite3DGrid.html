@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DGrid</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DGrid</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Draws a far-reaching grid on a model's floor with a GLSL shader.</p>
+<p>
+
+
+<p>ShowModelGrid adds a TModelGrid to a TGorillaModel. It shows a grid of lines across one of the model's axes, Y by default, so the grid lies in X and Z. The lines are GridSize apart in the model's own units, 1.0 by default, in dark grey, with one through the model's centre of rotation, and the grid reaches GridCells cells each side of it, 1000 by default. Distant lines fade out as their cells shrink to a few pixels on screen, so the grid dissolves into the distance rather than stopping at an edge. GridLevel is where it crosses its axis; with GridOnFloor, the default, that is the model's floor, the bounding-box face across the grid's axis that is lower in the scene. That suits a model standing on its lowest bound, as the test animation does, but not every model; set GridLevel to override it.
+
+<p>The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla converts for Vulkan and Metal. So the grid costs two triangles however far it reaches, the lines are anti-aliased and about a pixel wide at any distance, and nothing is recalculated per frame. Changing a grid property rewrites the shader once, with the new values written into it as constants.
+
+<p>The plane is not a child of the model, so it never counts in the model's bounding box, and FitToBounds is unaffected. It sits in a frame beside the model that copies the model's position, rotation, scale and centre of rotation whenever they change, so the grid is in the model's units and moves with it.
+
+<p></p>
+
+<pre class="preformatted">
+&lt;model's parent&gt;
+|-- TGorillaModel
+|   `-- TModelGrid       one per model, found by FindModelGrid;
+|                        keeps the frame on the model's transform
+`-- grid frame           TDummy copying the model's transform, owned by the TModelGrid
+    `-- TGorillaPlane    turned onto GridAxis at GridLevel; grid drawn by its shader</pre>
+
+<p>
+
+<p></p>
+
+<pre class="preformatted">
+Grid := ShowModelGrid(GorillaModel1);   // after the model is loaded and placed
+if Grid &lt;&gt; nil then
+  Grid.GridSize := 0.5;
+HideModelGrid(GorillaModel1);</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DGrid.TModelGrid.html"><code>TModelGrid</code></a></td>
+<td class="itemdesc">Shows a shader-drawn grid for its parent model.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DGrid.html#FindModelGrid-TGorillaModel-">FindModelGrid</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DGrid.html#TGridAxis">TGridAxis</a></strong> = (...);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowModelGrid-TGorillaModel-"></span><code>function <strong>ShowModelGrid</strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Shows a shader-drawn grid on AModel's floor.</p>
+<p>
+
+
+<p>Any grid already on AModel is removed first, so calling it again, for example after loading a different model, rebuilds it for the new bounds. The grid uses AModel's current bounding box, from <code>GetAnimatedBoundingBox</code>, and <code>AModel.RotationCenter</code>. Call it once the model is placed and turned, since the floor depends on the turn. The grid is added as a child of AModel and is freed with it. Call from the main thread only.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to show a grid for. Nothing happens if it is nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or its bounding box is empty.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></dt>
+  <dd>Removes the grid ShowModelGrid added to AModel.</dd>
+  <dt><a class="normal" href="Sprite3DGrid.html#FindModelGrid-TGorillaModel-">FindModelGrid</a></dt>
+  <dd>Returns the grid ShowModelGrid added to AModel, or nil.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="HideModelGrid-TGorillaModel-"></span><code>procedure <strong>HideModelGrid</strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Removes the grid ShowModelGrid added to AModel.</p>
+<p>
+
+
+<p>Does nothing if AModel is nil or has no grid. Call from the main thread only.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to remove the grid from.</dd>
+</dl>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></dt>
+  <dd>Shows a shader-drawn grid on AModel's floor.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FindModelGrid-TGorillaModel-"></span><code>function <strong>FindModelGrid</strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Returns the grid ShowModelGrid added to AModel, or nil.</p>
+<p>
+
+
+<p>Looks only at AModel's direct children. The caller does not own the result.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to look on; nil gives nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The grid, or nil if AModel is nil or has none.</p></td></tr>
+</table>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TGridAxis"></span><code><strong>TGridAxis</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The axis a TModelGrid is drawn across.</p>
+<p>
+
+
+<p>The grid lies in the plane of the other two axes.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="gaX">gaX</span>: Across X: the grid lies in Y and Z.</li>
+<li>
+<span id="gaY">gaY</span>: Across Y, the default: the grid lies in X and Z.</li>
+<li>
+<span id="gaZ">gaZ</span>: Across Z: the grid lies in X and Y.</li>
+</ul>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

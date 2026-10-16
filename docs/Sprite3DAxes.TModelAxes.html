@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DAxes: Class TModelAxes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TModelAxes"></span><h1 class="cio">Class TModelAxes</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DAxes.html">Sprite3DAxes</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TModelAxes = class(TDummy)</code></p>
+<h2 class="description">Description</h2>
+<p>
+Draws three coloured lines through a point, using the render context.</p>
+<p>
+
+
+<p>A TDummy that overrides Render, as Gorilla's Line Rendering guide recommends, so it adds no meshes or materials. It draws only in the main pass, not in shadow, reflection or other passes. The lines are in its parent's coordinates when it has no position, rotation or scale of its own, which is how ShowModelAxes adds it. Its Width, Height and Depth are set to the lines' extent and its Position to their middle, so anything that culls by an object's size sees the whole set.
+
+<p>The object is not stored in .fmx files and ignores the mouse. Use it from the main thread only.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TDummy</li>
+<li class="thisitem">TModelAxes</li></ul><h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAxes.TModelAxes.html#Render">Render</a></strong>; override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DAxes.TModelAxes.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAxes.TModelAxes.html#SetExtent-TPoint3D-TPoint3D-TPoint3D-">SetExtent</a></strong>(const ALow, AHigh, ACentre: TPoint3D);</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#XColor">XColor</a></strong>: TAlphaColor read FXColor write SetXColor;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#YColor">YColor</a></strong>: TAlphaColor read FYColor write SetYColor;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#ZColor">ZColor</a></strong>: TAlphaColor read FZColor write SetZColor;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#LineWidth">LineWidth</a></strong>: Single read FLineWidth write SetLineWidth;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#OnTop">OnTop</a></strong>: Boolean read FOnTop write SetOnTop;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-protected wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Render"></span><code>procedure <strong>Render</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Draws the three lines in the main pass.</p>
+<p>
+
+
+<p>Does nothing before SetExtent is called, or in any pass other than the main one. Sets the context matrix to this object's AbsoluteMatrix for the drawing and restores the previous matrix, line state and depth test afterwards, even if drawing fails.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TComponent-"></span><code>constructor <strong>Create</strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates axes with no extent: red, green and blue, 1 pixel wide, on top.</p>
+<p>
+
+
+<p>Nothing is drawn until SetExtent is called.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOwner</dt>
+<dd>The owner, or nil to leave freeing to the parent.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetExtent-TPoint3D-TPoint3D-TPoint3D-"></span><code>procedure <strong>SetExtent</strong>(const ALow, AHigh, ACentre: TPoint3D);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets where the three lines cross and how far each reaches.</p>
+<p>
+
+
+<p>Each line passes through ACentre parallel to one axis and runs from the low corner's value to the high corner's value on that axis, widened if need be to reach ACentre. All points are in the parent's coordinates. Redraws the axes.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ALow</dt>
+<dd>The corner with the smallest X, Y and Z, such as a bounding box's TopLeftNear.</dd>
+<dt>AHigh</dt>
+<dd>The corner with the largest X, Y and Z, such as a bounding box's BottomRightFar.</dd>
+<dt>ACentre</dt>
+<dd>The point the three lines cross.</dd>
+</dl>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="XColor"></span><code>property <strong>XColor</strong>: TAlphaColor read FXColor write SetXColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Colour of the X line; red by default.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="YColor"></span><code>property <strong>YColor</strong>: TAlphaColor read FYColor write SetYColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Colour of the Y line; green by default.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ZColor"></span><code>property <strong>ZColor</strong>: TAlphaColor read FZColor write SetZColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Colour of the Z line; blue by default.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="LineWidth"></span><code>property <strong>LineWidth</strong>: Single read FLineWidth write SetLineWidth;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Line width in screen pixels, whatever the distance; 1 by default.</p>
+<p>
+
+
+<p>Values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values below 1 count as 1.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnTop"></span><code>property <strong>OnTop</strong>: Boolean read FOnTop write SetOnTop;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the lines are drawn over everything; True by default.</p>
+<p>
+
+
+<p>True turns depth testing off while the lines are drawn, so the model and anything in front cannot hide them. False draws them like any other geometry, so they disappear where they pass inside a solid model.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

@@ -6,11 +6,11 @@
 //** one chooses how the model is fitted, and one switches between perspective and orthographic
 //** projection. The Debug tab holds a memo for log output.
 //**
-//** The camera starts with all three angles at 0, and each readout always shows its dial's
-//** angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the
-//** readout, so the view turns the right way for the dial. View, Variable, the default, lets
-//** the dials set the angles; View, Isometric sets the camera to PolarAngle 35.264, Azimuth 45
-//** and Roll 0, the true isometric view, and switches the dials off. A test slider along the
+//** The camera starts in the isometric view, and each readout always shows its dial's angle,
+//** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
+//** the view turns the right way for the dial. View, Variable lets the dials set the angles;
+//** View, Isometric, the default for now, sets the readouts to inclination 35.264, azimuth 45
+//** and roll 0, the true isometric view, and switches the dials off. A test slider along the
 //** bottom of the 3D view moves the camera out from the fitted distance, x1 to x20.
 //**
 //** On show, the form loads the model whose file FormShow names; File, OpenModel then loads any
@@ -49,12 +49,12 @@ unit Sprite3dMain;
   its centre of rotation, one a grid on its floor, one chooses how the model
   is fitted, and one switches between perspective and orthographic
   projection. The Debug tab holds a memo for log output.
-  The camera starts with all three angles at 0, and each readout always
-  shows its dial's angle, from 0 to 359 degrees. Azimuth is sent to the
-  camera reversed, 360 minus the readout, so the view turns the right way
-  for the dial. View, Variable, the default, lets the dials set the angles;
-  View, Isometric sets the camera to PolarAngle 35.264, Azimuth 45 and Roll
-  0, the true isometric view, and switches the dials off. A test slider
+  The camera starts in the isometric view, and each readout always shows its
+  dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera
+  reversed, 360 minus the readout, so the view turns the right way for the
+  dial. View, Variable lets the dials set the angles; View, Isometric, the
+  default for now, sets the readouts to inclination 35.264, azimuth 45 and
+  roll 0, the true isometric view, and switches the dials off. A test slider
   along the bottom of the 3D view moves the camera out from the fitted
   distance, x1 to x20.
   On show, the form loads the model whose file FormShow names; File,
@@ -264,12 +264,12 @@ type
     /// <summary>The "View" menu, choosing how the camera angles are set.</summary>
     /// <remarks>Its items form one radio group: Variable or Isometric.</remarks>
     ViewMenu: TMenuItem;
-    //** @abstract(The "Variable" view, checked at start-up; see ViewVariableItemClick.)
-    /// <summary>The "Variable" view, checked at start-up; see
-    /// <see cref="ViewVariableItemClick"/>.</summary>
+    //** @abstract(The "Variable" view; see ViewVariableItemClick.)
+    /// <summary>The "Variable" view; see <see cref="ViewVariableItemClick"/>.</summary>
     ViewVariableItem: TMenuItem;
-    //** @abstract(The "Isometric" view; see ViewIsometricItemClick.)
-    /// <summary>The "Isometric" view; see <see cref="ViewIsometricItemClick"/>.</summary>
+    //** @abstract(The "Isometric" view, chosen at start-up; see ViewIsometricItemClick.)
+    /// <summary>The "Isometric" view, chosen at start-up; see
+    /// <see cref="ViewIsometricItemClick"/>.</summary>
     ViewIsometricItem: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
@@ -279,9 +279,9 @@ type
     //** point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
     //** camera. The viewport runs at a fixed 60 frames per second without VSync.
     //**
-    //** The camera starts with all three angles at 0. The dials are turned to
-    //** those angles and the readouts set to match, so dial, readout and camera agree from the
-    //** start.
+    //** The dials start at 0, then the isometric view is chosen, as View, Isometric does:
+    //** the dials are turned to its angles and switched off, and the readouts set to match,
+    //** so dial, readout and camera agree from the start.
     //**
     //** @param(Sender The form.)
     /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
@@ -290,9 +290,9 @@ type
     /// a models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a
     /// point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
     /// camera. The viewport runs at a fixed 60 frames per second without VSync.</para>
-    /// <para>The camera starts with all three angles at 0. The dials are turned to
-    /// those angles and the readouts set to match, so dial, readout and camera agree from the
-    /// start.</para></remarks>
+    /// <para>The dials start at 0, then the isometric view is chosen, as View, Isometric
+    /// does: the dials are turned to its angles and switched off, and the readouts set to
+    /// match, so dial, readout and camera agree from the start.</para></remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Loads the first model from the models folder and fits the camera to it.)
@@ -422,17 +422,17 @@ type
     procedure ViewVariableItemClick(Sender: TObject);
     //** @abstract(Sets the isometric view and fixes it.)
     //**
-    //** Sets the camera's PolarAngle to 35.264, the true isometric elevation, its Azimuth to
-    //** 45 and its Roll to 0, turns the dials to match and switches them off, then refits the
-    //** model for the new view. Because azimuth is sent to the camera reversed, the azimuth
-    //** readout shows 315.
+    //** Sets the inclination to 35.264, the true isometric elevation, the azimuth to 45 and
+    //** the roll to 0, as shown on the readouts, turns the dials to match and switches them
+    //** off, then refits the model for the new view. As with the dial, the azimuth reaches the
+    //** camera reversed.
     //**
     //** @param(Sender ViewIsometricItem.)
     /// <summary>Sets the isometric view and fixes it.</summary>
-    /// <remarks>Sets the camera's PolarAngle to 35.264, the true isometric elevation, its
-    /// Azimuth to 45 and its Roll to 0, turns the dials to match and switches them off, then
-    /// refits the model for the new view. Because azimuth is sent to the camera reversed, the
-    /// azimuth readout shows 315.</remarks>
+    /// <remarks>Sets the inclination to 35.264, the true isometric elevation, the azimuth to
+    /// 45 and the roll to 0, as shown on the readouts, turns the dials to match and switches
+    /// them off, then refits the model for the new view. As with the dial, the azimuth reaches
+    /// the camera reversed.</remarks>
     /// <param name="Sender">ViewIsometricItem.</param>
     procedure ViewIsometricItemClick(Sender: TObject);
     //** @abstract(Moves the camera out by the slider's factor; test only.)
@@ -543,6 +543,10 @@ begin
   AngleDial.Value := -FPolarAngle;
   RollDial.Value := FRoll;
   ApplyAngles;
+
+  // Start in the isometric view for now; View, Variable hands the angles
+  // back to the dials
+  ViewIsometricItemClick(Self);
 end;
 
 { Shift an angle in degrees by whole turns into [0, 360) }
@@ -639,16 +643,17 @@ end;
 
 procedure TMainForm.ViewIsometricItemClick(Sender: TObject);
 const
-  // Camera angles: the true isometric elevation is ArcTan(1 / Sqrt(2))
+  // As shown on the readouts; the true isometric elevation is
+  // ArcTan(1 / Sqrt(2))
   ISO_POLAR = 35.264;
   ISO_AZIMUTH = 45;
   ISO_ROLL = 0;
 begin
   ViewVariableItem.IsChecked := False;
   ViewIsometricItem.IsChecked := True;
-  // The dial fields hold the readout values; azimuth reaches the camera
-  // reversed (see ApplyAngles), so the readout is the reverse of 45
-  FAzimuth := Wrap360(-ISO_AZIMUTH);
+  // The dial fields hold the readout values; ApplyAngles sends azimuth to
+  // the camera reversed, as it does for the dial
+  FAzimuth := ISO_AZIMUTH;
   FPolarAngle := ISO_POLAR;
   FRoll := ISO_ROLL;
   // Turn the dials to match; their OnChange reads the same angles back

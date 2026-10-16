@@ -286,7 +286,6 @@ object MainForm: TMainForm
         Locked = True
         GroupIndex = 1
         RadioItem = True
-        IsChecked = True
         Text = 'Variable'
         OnClick = ViewVariableItemClick
       end
@@ -294,6 +293,7 @@ object MainForm: TMainForm
         Locked = True
         GroupIndex = 1
         RadioItem = True
+        IsChecked = True
         Text = 'Isometric'
         OnClick = ViewIsometricItemClick
       end

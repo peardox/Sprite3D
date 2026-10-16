@@ -35,20 +35,30 @@ Demo form for TSprite3DCamera: loads a model and drives the camera with dials.</
 <p>
 
 
-<p>The form has two tabs. The 3D tab holds a TGorillaViewport, created at run time, and a panel of three dials for Azimuth, inclination and Roll, plus a check box that switches between perspective and orthographic projection. The Debug tab holds a memo for log output.
+<p>The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a panel of three dials for Azimuth, inclination and Roll, plus four check boxes: one shows the model's own X, Y and Z axes through its centre of rotation, one a grid on its floor, one chooses how the model is fitted, and one switches between perspective and orthographic projection. The Debug tab holds a memo for log output.
 
-<p>On show, the form loads models/TestModel.glb, plays its last animation by name, centres and turns it 180 degrees about X, and calls FitToBounds so it fills the view. The model is refitted whenever a dial turns, the viewport is resized, the projection changes or the &quot;Fit any angle&quot; box is toggled. Checked, that box uses FitToBoundsMax, which frames the model for every angle at once; unchecked, FitToBounds frames it exactly for the current angles.
+<p>The camera starts in the isometric view, and each readout always shows its dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so the view turns the right way for the dial. View, Variable lets the dials set the angles; View, Isometric, the default for now, sets the readouts to inclination 35.264, azimuth 45 and roll 0, the true isometric view, and switches the dials off. A test slider along the bottom of the 3D view moves the camera out from the fitted distance, x1 to x20.
+
+<p>On show, the form loads the model whose file FormShow names; File, OpenModel then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY file. Each model replaces the last: it plays its last animation by name if it has any, is centred and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is refitted when the viewport is resized, the projection changes or the &quot;Fit any angle&quot; box is toggled, but not when a dial turns. Checked, that box uses FitToBoundsMax, which frames the model for every angle at once, so the dials can never push it out of view. Unchecked, FitToBounds frames it exactly for the angles at the time of the fit, and turning a dial afterwards can push part of it past the edge until the next refit.
 
 <p></p>
 
 <pre class="preformatted">
 TabControl1
-|-- GorillaTab &quot;3D&quot;
-|   `-- Layout1
+|-- GorillaTab &quot;View&quot;
+|   `-- MainLayout
 |       |-- ViewportLayout   owns the TGorillaViewport
-|       `-- Layout2          dials, labels, both check boxes
-`-- TabItem1 &quot;Debug&quot;
-    `-- Memo1</pre>
+|       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
+|       `-- ControlsLayout   dials, labels, four check boxes
+`-- DebugTab &quot;Debug&quot;
+    `-- DebugMemo
+
+MainMenu1
+|-- FileMenu &quot;File&quot;
+|   `-- OpenModelMenuItem &quot;OpenModel&quot;   shows OpenDialog1
+`-- ViewMenu &quot;View&quot;
+    |-- ViewVariableItem &quot;Variable&quot;    dials set the angles
+    `-- ViewIsometricItem &quot;Isometric&quot;  fixed isometric angles</pre>
 
 <p></p>
 <span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
@@ -63,21 +73,21 @@ TabControl1
 <td class="itemdesc">Protected-access helper for TControl3D; nothing in the project uses it yet.</td>
 </tr>
 <tr class="list2">
-<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3dMain.TForm1.html"><code>TForm1</code></a></td>
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3dMain.TMainForm.html"><code>TMainForm</code></a></td>
 <td class="itemdesc">The main form: a Gorilla3D view of one model, with dials for the camera.</td>
 </tr>
 </table>
 <span id="PasDoc-Variables"></span><h3 class="summary">Variables</h3>
 <table class="summary wide_list">
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3dMain.html#Form1">Form1</a></strong>: <a href="Sprite3dMain.TForm1.html">TForm1</a>;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.html#MainForm">MainForm</a></strong>: <a href="Sprite3dMain.TMainForm.html">TMainForm</a>;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
 <h3 class="detail">Variables</h3>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
-<td class="itemcode"><span id="Form1"></span><code><strong>Form1</strong>: <a href="Sprite3dMain.TForm1.html">TForm1</a>;</code></td>
+<td class="itemcode"><span id="MainForm"></span><code><strong>MainForm</strong>: <a href="Sprite3dMain.TMainForm.html">TMainForm</a>;</code></td>
 </tr>
 <tr><td colspan="1">
 <p>

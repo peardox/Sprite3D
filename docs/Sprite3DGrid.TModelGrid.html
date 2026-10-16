@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DGrid: Class TModelGrid</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TModelGrid"></span><h1 class="cio">Class TModelGrid</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DGrid.html">Sprite3DGrid</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TModelGrid = class(TDummy)</code></p>
+<h2 class="description">Description</h2>
+<p>
+Shows a shader-drawn grid for its parent model.</p>
+<p>
+
+
+<p>A TDummy that draws nothing itself. It owns a frame beside its parent, holding the TGorillaPlane the grid is drawn on, and in each Render copies the parent's position, rotation, scale and centre of rotation to the frame if any of them changed. The plane and its material are built when SetExtent is called and rebuilt only when a grid property changes. Freeing the TModelGrid frees the frame, plane and material.
+
+<p>The object is not stored in .fmx files and ignores the mouse. Use it from the main thread only.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TDummy</li>
+<li class="thisitem">TModelGrid</li></ul><h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.TModelGrid.html#Render">Render</a></strong>; override;</code></td>
+</tr>
+<tr class="list2 visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.TModelGrid.html#Notification-TComponent-TOperation-">Notification</a></strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DGrid.TModelGrid.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DGrid.TModelGrid.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.TModelGrid.html#SetExtent-TPoint3D-TPoint3D-TPoint3D-">SetExtent</a></strong>(const ALow, AHigh, ACentre: TPoint3D);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.TModelGrid.html#UpdateGrid">UpdateGrid</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DGrid.TModelGrid.html#GridAxis">GridAxis</a></strong>: <a href="Sprite3DGrid.html#TGridAxis">TGridAxis</a> read FGridAxis write SetGridAxis;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DGrid.TModelGrid.html#GridSize">GridSize</a></strong>: Single read FGridSize write SetGridSize;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DGrid.TModelGrid.html#GridColor">GridColor</a></strong>: TAlphaColor read FGridColor write SetGridColor;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DGrid.TModelGrid.html#GridLevel">GridLevel</a></strong>: Single read FGridLevel write SetGridLevel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DGrid.TModelGrid.html#GridOnFloor">GridOnFloor</a></strong>: Boolean read FGridOnFloor write SetGridOnFloor;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DGrid.TModelGrid.html#GridCells">GridCells</a></strong>: Integer read FGridCells write SetGridCells;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-protected wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Render"></span><code>procedure <strong>Render</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Keeps the grid frame on the parent's transform.</p>
+<p>
+
+
+<p>Copies the parent's position, rotation, scale and centre of rotation to the frame if any of them changed; otherwise does nothing. Draws nothing: the plane draws the grid.</p>
+</td></tr>
+</table>
+<table class="detail visibility-protected wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Notification-TComponent-TOperation-"></span><code>procedure <strong>Notification</strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Forgets the frame if something else frees it first.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AComponent</dt>
+<dd>The component being freed or removed.</dd>
+<dt>Operation</dt>
+<dd>What is happening to it.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TComponent-"></span><code>constructor <strong>Create</strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates a grid with no extent: across Y, on the floor, lines 1.0 apart.</p>
+<p>
+
+
+<p>The colour is dark grey and the grid reaches 1000 cells each side. Nothing is built until SetExtent is called.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOwner</dt>
+<dd>The owner, or nil to leave freeing to the parent.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frees the grid, with its frame, plane and material.</p>
+<p>
+
+
+<p>If the frame's parent is already being freed, as when the whole scene closes, the frame is left for it to free.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetExtent-TPoint3D-TPoint3D-TPoint3D-"></span><code>procedure <strong>SetExtent</strong>(const ALow, AHigh, ACentre: TPoint3D);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Gives the model's bounds and centre of rotation, and builds the grid.</p>
+<p>
+
+
+<p>All points are in the parent's coordinates. The grid is centred on ACentre in its plane, and with GridOnFloor its level is picked from the bounds. Set the parent first: the grid needs it, and is not built without one.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ALow</dt>
+<dd>The bounding box's corner with the smallest X, Y and Z.</dd>
+<dt>AHigh</dt>
+<dd>The bounding box's corner with the largest X, Y and Z.</dd>
+<dt>ACentre</dt>
+<dd>The centre of rotation; one line passes through it each way.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="UpdateGrid"></span><code>procedure <strong>UpdateGrid</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Picks the floor again, if GridOnFloor, and rebuilds the grid.</p>
+<p>
+
+
+<p>The floor depends on how the parent is turned, and is only picked when the grid is built or a grid property changes. Call this after turning the parent. Moving or scaling the parent needs no call.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GridAxis"></span><code>property <strong>GridAxis</strong>: <a href="Sprite3DGrid.html#TGridAxis">TGridAxis</a> read FGridAxis write SetGridAxis;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The axis the grid is drawn across; gaY by default, so it lies in X and Z.</p>
+<p>
+
+
+<p>With GridOnFloor the floor is picked again for the new axis.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GridSize"></span><code>property <strong>GridSize</strong>: Single read FGridSize write SetGridSize;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Distance between grid lines in the parent's units; 1.0 by default.</p>
+<p>
+
+
+<p>One line passes through the centre of rotation and the rest are whole multiples of GridSize from it. The grid scales with the parent. Zero or less hides the grid.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GridColor"></span><code>property <strong>GridColor</strong>: TAlphaColor read FGridColor write SetGridColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Colour of the grid lines; dark grey, $FF404040, by default.</p>
+<p>
+
+
+<p>Its alpha scales the lines' opacity.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GridLevel"></span><code>property <strong>GridLevel</strong>: Single read FGridLevel write SetGridLevel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Where the grid crosses its axis, in the parent's units; 0 with no other information.</p>
+<p>
+
+
+<p>Every point on the grid has this value on GridAxis. While GridOnFloor is True it is set to the floor whenever the grid is built. Setting it yourself turns GridOnFloor off, so your value is kept.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GridOnFloor"></span><code>property <strong>GridOnFloor</strong>: Boolean read FGridOnFloor write SetGridOnFloor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether GridLevel follows the model's floor; True by default.</p>
+<p>
+
+
+<p>The floor is the face of the bounding box, across GridAxis, that is lower in the scene once the parent's transform is applied; FMX's Y points down, so that is the one with the larger scene Y. If neither is lower, because GridAxis is level in the scene, the face with the smaller value is used. This assumes the model stands on its lowest bound, which is true of the test animation but not of every model.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GridCells"></span><code>property <strong>GridCells</strong>: Integer read FGridCells write SetGridCells;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How many grid cells reach out each side of the centre; 1000 by default.</p>
+<p>
+
+
+<p>The plane is 2 * GridCells * GridSize across, so 2000 units square by default. Lines fade out as their cells shrink to a few pixels on screen, so the grid normally dissolves into the distance before its edge is seen; the last tenth also fades, with a straight edge. The cost does not depend on this value. Values below 1 count as 1.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>
