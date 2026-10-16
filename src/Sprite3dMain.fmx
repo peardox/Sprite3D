@@ -293,9 +293,22 @@ object MainForm: TMainForm
         Locked = True
         GroupIndex = 1
         RadioItem = True
-        IsChecked = True
         Text = 'Isometric'
         OnClick = ViewIsometricItemClick
+      end
+      object ViewPixel2To1Item: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        Text = 'Pixel 2:1'
+        OnClick = ViewPixel2To1ItemClick
+      end
+      object ViewAngle45Item: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        Text = '45 degrees'
+        OnClick = ViewAngle45ItemClick
       end
     end
   end

@@ -271,6 +271,8 @@ type
     /// <summary>The "Isometric" view, chosen at start-up; see
     /// <see cref="ViewIsometricItemClick"/>.</summary>
     ViewIsometricItem: TMenuItem;
+    ViewPixel2To1Item: TMenuItem;
+    ViewAngle45Item: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
     //** The models folder is the library path on macOS, the home folder on Linux and
@@ -448,6 +450,8 @@ type
     /// is scaled instead. The factor is kept when the model is refitted.</remarks>
     /// <param name="Sender">DistanceTrack.</param>
     procedure DistanceTrackChange(Sender: TObject);
+    procedure ViewPixel2To1ItemClick(Sender: TObject);
+    procedure ViewAngle45ItemClick(Sender: TObject);
   private
     { Private declarations }
     FModelRotation: TPoint3D;
@@ -467,6 +471,7 @@ type
     function FitModel: Boolean;
     procedure ApplyAngles;
     procedure ApplyDistance;
+    procedure SetPolarViewAngle(const APolarAngle: Single);
   public
     { Public declarations }
   end;
@@ -641,11 +646,26 @@ begin
   RollDial.Enabled := True;
 end;
 
+procedure TMainForm.ViewAngle45ItemClick(Sender: TObject);
+begin
+  // ArcTan(Pi / 4)
+  SetPolarViewAngle(RadToDeg(ArcTan(Pi / 4)));
+end;
+
 procedure TMainForm.ViewIsometricItemClick(Sender: TObject);
-const
-  // As shown on the readouts; the true isometric elevation is
+begin
   // ArcTan(1 / Sqrt(2))
-  ISO_POLAR = 35.264;
+  SetPolarViewAngle(RadToDeg(ArcTan(1 / Sqrt(2))));
+end;
+
+procedure TMainForm.ViewPixel2To1ItemClick(Sender: TObject);
+begin
+  // ArcTan(1 / 2)
+  SetPolarViewAngle(RadToDeg(ArcTan(0.5)));
+end;
+
+procedure TMainForm.SetPolarViewAngle(const APolarAngle: Single);
+const
   ISO_AZIMUTH = 45;
   ISO_ROLL = 0;
 begin
@@ -654,7 +674,7 @@ begin
   // The dial fields hold the readout values; ApplyAngles sends azimuth to
   // the camera reversed, as it does for the dial
   FAzimuth := ISO_AZIMUTH;
-  FPolarAngle := ISO_POLAR;
+  FPolarAngle := APolarAngle;
   FRoll := ISO_ROLL;
   // Turn the dials to match; their OnChange reads the same angles back
   AzimuthDial.Value := -FAzimuth;
