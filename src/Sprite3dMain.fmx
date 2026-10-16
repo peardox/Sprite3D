@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 682
+  ClientHeight = 690
   ClientWidth = 776
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -13,16 +13,16 @@ object MainForm: TMainForm
   object TabControl1: TTabControl
     Align = Client
     Size.Width = 776.000000000000000000
-    Size.Height = 682.000000000000000000
+    Size.Height = 690.000000000000000000
     Size.PlatformDefault = False
     TabIndex = 0
     TabOrder = 0
     TabPosition = PlatformDefault
     Sizes = (
       776s
-      656s
+      664s
       776s
-      656s)
+      664s)
     object GorillaTab: TTabItem
       CustomIcon = <
         item
@@ -39,21 +39,53 @@ object MainForm: TMainForm
       object MainLayout: TLayout
         Align = Client
         Size.Width = 776.000000000000000000
-        Size.Height = 656.000000000000000000
+        Size.Height = 664.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         object ViewportLayout: TLayout
           Align = Client
           Size.Width = 626.000000000000000000
-          Size.Height = 656.000000000000000000
+          Size.Height = 664.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
+          object DistanceLayout: TLayout
+            Align = Bottom
+            Position.Y = 632.000000000000000000
+            Size.Width = 626.000000000000000000
+            Size.Height = 32.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 0
+            object DistanceLabel: TLabel
+              Align = Left
+              Margins.Left = 8.000000000000000000
+              Position.X = 8.000000000000000000
+              Size.Width = 96.000000000000000000
+              Size.Height = 32.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'Distance x1.0'
+              TabOrder = 0
+            end
+            object DistanceTrack: TTrackBar
+              Align = Client
+              CanParentFocus = True
+              Max = 20.000000000000000000
+              Min = 1.000000000000000000
+              Orientation = Horizontal
+              Margins.Right = 8.000000000000000000
+              Size.Width = 514.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              Value = 1.000000000000000000
+              OnChange = DistanceTrackChange
+            end
+          end
         end
         object ControlsLayout: TLayout
           Align = Right
           Position.X = 626.000000000000000000
           Size.Width = 150.000000000000000000
-          Size.Height = 656.000000000000000000
+          Size.Height = 664.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
           object AzimuthDial: TArcDial
@@ -158,10 +190,28 @@ object MainForm: TMainForm
             Text = '0'
             TabOrder = 93
           end
+          object chkShowGrid: TCheckBox
+            Anchors = [akLeft, akBottom]
+            IsChecked = True
+            Position.X = 16.000000000000000000
+            Position.Y = 564.000000000000000000
+            TabOrder = 98
+            Text = 'Show grid'
+            OnChange = chkShowGridChange
+          end
+          object chkShowAxes: TCheckBox
+            Anchors = [akLeft, akBottom]
+            IsChecked = True
+            Position.X = 16.000000000000000000
+            Position.Y = 588.000000000000000000
+            TabOrder = 97
+            Text = 'Show axes'
+            OnChange = chkShowAxesChange
+          end
           object chkFitAnyAngle: TCheckBox
             Anchors = [akLeft, akBottom]
             Position.X = 16.000000000000000000
-            Position.Y = 598.000000000000000000
+            Position.Y = 612.000000000000000000
             TabOrder = 96
             Text = 'Fit any angle'
             OnChange = chkFitAnyAngleChange
@@ -169,7 +219,7 @@ object MainForm: TMainForm
           object chkOrthoToggle: TCheckBox
             Anchors = [akLeft, akBottom]
             Position.X = 16.000000000000000000
-            Position.Y = 624.000000000000000000
+            Position.Y = 636.000000000000000000
             TabOrder = 95
             Text = 'Orthographic'
             OnChange = chkOrthoToggleChange
@@ -201,15 +251,21 @@ object MainForm: TMainForm
         DataDetectorTypes = []
         Align = Client
         Size.Width = 776.000000000000000000
-        Size.Height = 656.000000000000000000
+        Size.Height = 664.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         Viewport.Width = 772.000000000000000000
-        Viewport.Height = 652.000000000000000000
+        Viewport.Height = 660.000000000000000000
       end
     end
   end
   object OpenDialog1: TOpenDialog
+    Filter = 
+      'All supported models (*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.dae;*.st' +
+      'l;*.ply)|*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.dae;*.stl;*.ply|glTF ' +
+      'binary (*.glb)|*.glb|glTF (*.gltf)|*.gltf|FBX (*.fbx)|*.fbx|Wave' +
+      'front OBJ (*.obj)|*.obj|USD binary (*.usdc)|*.usdc|Collada (*.da' +
+      'e)|*.dae|STL (*.stl)|*.stl|PLY (*.ply)|*.ply'
     Left = 448
     Top = 8
   end
@@ -222,6 +278,24 @@ object MainForm: TMainForm
         Locked = True
         Text = 'OpenModel'
         OnClick = OpenModelMenuItemClick
+      end
+    end
+    object ViewMenu: TMenuItem
+      Text = 'View'
+      object ViewVariableItem: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        IsChecked = True
+        Text = 'Variable'
+        OnClick = ViewVariableItemClick
+      end
+      object ViewIsometricItem: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        Text = 'Isometric'
+        OnClick = ViewIsometricItemClick
       end
     end
   end

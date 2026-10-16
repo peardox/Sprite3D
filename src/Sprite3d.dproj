@@ -348,6 +348,8 @@
             <Form>MainForm</Form>
         </DCCReference>
         <DCCReference Include="Sprite3DCamera.pas"/>
+        <DCCReference Include="Sprite3DAxes.pas"/>
+        <DCCReference Include="Sprite3DGrid.pas"/>
         <None Include="..\README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
