@@ -1,10 +1,9 @@
 ﻿//** @abstract(Orbit camera for Gorilla3D, driven by a chain of three single-axis pivots.)
 //**
 //** TSprite3DCamera is a TGorillaCamera that hangs at the end of a chain of three TDummy
-//** pivots. Each pivot turns about one axis only, so Azimuth, PolarAngle and Roll never
-//** combine as Euler angles on one object, and the camera can pass over the poles without
-//** gimbal lock. The camera sits Distance units back from the orbit centre and always looks
-//** at it.
+//** pivots. Each pivot turns about one axis only, so Azimuth, PolarAngle and Roll never combine
+//** as Euler angles on one object, and the camera can pass over the poles without gimbal lock.
+//** The camera sits Distance units back from the orbit centre and always looks at it.
 //**
 //** @preformatted(
 //** <your parent>                      e.g. TGorillaViewport, or any TControl3D
@@ -12,141 +11,233 @@
 //**     `-- PolarPivot @(TDummy@)       rotates about X  ->  PolarAngle
 //**         `-- RollPivot @(TDummy@)    rotates about Z  ->  Roll
 //**             `-- TSprite3DCamera    at @(0, 0, -Distance@), looking along +Z
+//**                                    at the orbit centre, OrbitCenter
 //** )
 //**
-//** Angles are in degrees. The orientation is the quaternion
-//** Qy@(Azimuth@) * Qx@(-PolarAngle@) * Qz@(Roll@) in the rig parent's space, and TQuat does
-//** the arithmetic. FMX's up direction is -Y.
+//** Angles are in degrees, and FMX's up direction is -Y. PolarAngle is an elevation and is not
+//** limited: 0 is level with the centre, +90 is above it looking down and -90 is below it
+//** looking up. Values past +/-90 carry the camera over the pole and down the far side, upside
+//** down, and so on for any value.
 //**
-//** LookAt turns the camera where it stands to face a point. FitToBounds makes a box as
-//** large as possible in the viewport without overflowing it, in perspective or orthographic
-//** mode, for the current angles. FitToBoundsMax does the same for every possible Azimuth,
-//** PolarAngle and Roll, so the angles can then change freely. The header comment after the
-//** unit line explains the maths behind them.
+//** Orientation. The three angles are views of one orientation quaternion, in the rig parent's
+//** space, and TQuat does the arithmetic:
+//**
+//** @preformatted(
+//** Q = Qy@(Azimuth@) * Qx@(-PolarAngle@) * Qz@(Roll@)
+//** )
+//**
+//** Reading Orientation builds Q from the angles; SetOrientation splits any quaternion back
+//** into the three angles and passes them to the pivots. Of the two angle sets that give the
+//** same rotation, it picks the one nearest the current angles, so the values change
+//** continuously and PolarAngle can run past +/-90 instead of snapping back. At an exact pole,
+//** where Azimuth and Roll turn about the same axis, it keeps the current Azimuth and puts the
+//** rest of the twist into Roll, so nothing jumps.
+//**
+//** LookAt. LookAt keeps the camera where it is and turns it to face a point. The turn is the
+//** shortest-arc rotation from the current view direction to the new one. No world-up vector is
+//** involved, so nothing can become parallel to the view direction: it works looking straight
+//** up or down and never flips, and a 180-degree turn pivots about the camera's own up axis.
+//** The point becomes the new OrbitCenter and Distance becomes the camera's distance from it,
+//** so orbiting continues round that point.
+//**
+//** With lmMinimalTwist, the default, the camera keeps as much of its current up direction as
+//** it can, so repeated LookAt calls can build up some roll, as with any free-flying camera.
+//** With lmKeepRoll the view direction is the same but Roll keeps its current value, so the
+//** horizon stays as it was; at an exact pole Azimuth is held rather than worked out again.
+//**
+//** FitToBounds and FitToBoundsMax. Both make a box as large as possible in the viewport
+//** without any part of it overflowing. Neither changes the angles: they move the orbit centre
+//** and set Distance, or the orthographic size.
+//**
+//** FitToBounds fits the box's eight corners exactly, for the current Azimuth, PolarAngle and
+//** Roll. The view is centred on them, so the box touches both edges of the tighter axis, left
+//** and right or top and bottom, with equal room on the other axis. Changing an angle
+//** afterwards can push the box out of view, so call it again after every change.
+//**
+//** FitToBoundsMax fits the box for every Azimuth, PolarAngle and Roll. Together the three
+//** angles reach every orientation, so the box can end up in any rotation about the orbit
+//** centre, and all those rotations together fill the ball about the orbit centre that reaches
+//** the box's farthest corner. That ball is what is fitted: nothing smaller is safe, because
+//** some angle always brings a corner onto it. The ball is centred on the box centre or, when
+//** the box comes from a model or another object, on that object's centre of rotation, its
+//** RotationCenter. That point can lie outside the box; the camera then circles the point the
+//** model turns about, which stays put however an animation moves the box. The orbit centre
+//** goes to the ball's centre, and the angles can then change freely without refitting.
+//**
+//** Both read the frustum from the camera's own GetProjectionMatrix for the viewport's size, so
+//** the FOV convention, vertical or horizontal, and the aspect ratio come from Gorilla itself,
+//** never from guesses.
+//**
+//** In perspective, FitToBounds works in camera space. With tx and ty the tangents of the
+//** half-angles, each corner (x, y, z) must satisfy the first two conditions below for an eye
+//** at (cx, cy, cz). Per axis that gives the farthest-forward eye shown, with cx halfway
+//** between the bounds, and the eye takes the smaller cz of the two axes, so both fit. It is
+//** also kept NEAR_CLEARANCE, 1 unit and FMX's near plane, behind the nearest corner, so the
+//** near plane cannot cut into the box. Distance is then measured to the depth of the box's
+//** middle.
+//**
+//** @preformatted(
+//** |x - cx| <= tx * @(z - cz@)   and   |y - cy| <= ty * @(z - cz@)
+//** cz = @(min@(x + tx z@) - max@(x - tx z@)@) / @(2 tx@)
+//** )
+//**
+//** In perspective, FitToBoundsMax makes the ball, of radius R, touch the narrower pair of
+//** frustum planes, s being the projection scale on the narrower axis times the margin:
+//**
+//** @preformatted(
+//** Distance = R / sin@(half@) = R * Sqrt@(1 + s * s@)
+//** )
+//**
+//** In orthographic or isometric mode the size does not depend on distance, so OrthoHeight, and
+//** OrthoWidth if one is set, is scaled until the box (FitToBounds) or the ball
+//** (FitToBoundsMax) just fills the tighter axis, and the view is centred on it. Distance only
+//** has to keep the camera clear of it. AMargin is padding as a fraction of the view: 0.1 makes
+//** the fitted box or ball 1/1.1 of the view on the tighter axis.
+//**
+//** Coordinate spaces matter. FitToBounds(Box) expects the box in the rig parent's space, the
+//** scene. A model's own bounds are in its local space, usually centred on the mesh origin, so
+//** if the model has been moved, for example lifted to stand on a floor, or scaled, using them
+//** directly aims at the wrong point. Pass the object too, as in FitToBounds(Box, Model), and
+//** the box's corners are carried through the model's full transform first, so position,
+//** rotation and even non-uniform scale are allowed for. FitToBounds(Model) and
+//** FitToBoundsMax(Model) do this with the model's local box from GetAnimatedBoundingBox, the
+//** same box ShowBoundingBox draws. The viewport is found by walking up from the rig to the
+//** first TGorillaViewport.
+//**
+//** Usage:
 //**
 //** @preformatted(
 //** Cam := TSprite3DCamera.Create@(Self@);
 //** Cam.Rig.Parent := GorillaViewport1;   // parent the whole chain, not Cam itself
 //** GorillaViewport1.Camera := Cam;
 //** GorillaViewport1.UsingDesignCamera := False;
-//** Cam.FitToBounds@(GorillaModel1@);
+//** Cam.FitToBounds@(GorillaModel1@);       // frame a model
+//** Cam.LookAt@(Point3D@(2, 0, 3@)@);         // or face a point, in the rig parent's space
 //** )
 unit Sprite3DCamera;
 
-{ TSprite3DCamera - a TCamera with an internal pivot chain:
+{
+  Orbit camera for Gorilla3D, driven by a chain of three single-axis pivots.
 
-    <your parent>                (e.g. TViewport3D / TForm3D / any TControl3D)
-      └─ AzimuthPivot (TDummy)    rotates around Y  -> Azimuth
-          └─ PolarPivot (TDummy)  rotates around X  -> PolarAngle
-              └─ RollPivot (TDummy) rotates around Z -> Roll
-                  └─ TSprite3DCamera  sits at (0, 0, -Distance), looking +Z
-                                    at the pivot origin (= OrbitCenter)
+  TSprite3DCamera is a TGorillaCamera that hangs at the end of a chain of
+  three TDummy pivots. Each pivot turns about one axis only, so Azimuth,
+  PolarAngle and Roll never combine as Euler angles on one object, and the
+  camera can pass over the poles without gimbal lock. The camera sits
+  Distance units back from the orbit centre and always looks at it.
 
-  Angles are in degrees.
-  PolarAngle is an elevation and is NOT clamped: 0 = equator, +90 = above
-  the centre looking down, -90 = below looking up. Values past +/-90 carry
-  the camera over the pole and down the far side (upside down), and so on
-  for any value. FMX's up is -Y.
+    <your parent>                      e.g. TGorillaViewport, or any TControl3D
+    `-- AzimuthPivot (TDummy)         rotates about Y  ->  Azimuth
+        `-- PolarPivot (TDummy)       rotates about X  ->  PolarAngle
+            `-- RollPivot (TDummy)    rotates about Z  ->  Roll
+                `-- TSprite3DCamera    at (0, 0, -Distance), looking along +Z
+                                       at the orbit centre, OrbitCenter
 
-  Orientation
-  -----------
-  The three angles are a view of one orientation quaternion
-      Q = Qy(Azimuth) * Qx(-PolarAngle) * Qz(Roll)
-  in the rig parent's coordinate space. Reading `Orientation` builds Q
-  from the angles; `SetOrientation` decomposes any quaternion back into
-  the three angles and pushes them to the pivots. The decomposition:
-    - picks, of the two equivalent angle triples, the one nearest the
-      current angles, so the values change continuously and the polar
-      angle can run past +/-90 instead of snapping back;
-    - at the exact poles (where Azimuth and Roll spin about the same axis)
-      keeps the current Azimuth and puts the remaining twist in Roll,
-      so nothing jumps.
+  Angles are in degrees, and FMX's up direction is -Y. PolarAngle is an
+  elevation and is not limited: 0 is level with the centre, +90 is above it
+  looking down and -90 is below it looking up. Values past +/-90 carry the
+  camera over the pole and down the far side, upside down, and so on for any
+  value.
 
-  LookAt
-  ------
-  LookAt keeps the camera where it is and turns it to face a point. The
-  turn is the shortest-arc quaternion from the current view direction to
-  the new one. No world-up vector is involved, so there is nothing to
-  become parallel to the view direction: it works looking straight up or
-  down and never flips. A 180-degree turn pivots about the camera's own
-  up axis. The point becomes the new OrbitCenter, and Distance is set to
-  the camera's distance from it, so orbiting continues around that point.
+  Orientation. The three angles are views of one orientation quaternion, in
+  the rig parent's space, and TQuat does the arithmetic:
 
-  Modes:
-    lmMinimalTwist (default) - pure shortest-arc turn; the camera keeps as
-      much of its current "up" as possible. Repeated LookAts can build up
-      some roll, as any free-flying camera does.
-    lmKeepRoll - same view direction, but Roll is kept at its current
-      value, keeping the horizon as it was. Still pole-safe: at the exact
-      poles Azimuth is held rather than recomputed.
+    Q = Qy(Azimuth) * Qx(-PolarAngle) * Qz(Roll)
 
-  Usage:
-    Cam := TSprite3DCamera.Create(Self);
-    Cam.Rig.Parent := Viewport3D1;   // attach the whole chain, NOT Cam.Parent
-    Viewport3D1.Camera := Cam;
-    Viewport3D1.UsingDesignCamera := False;
+  Reading Orientation builds Q from the angles; SetOrientation splits any
+  quaternion back into the three angles and passes them to the pivots. Of
+  the two angle sets that give the same rotation, it picks the one nearest
+  the current angles, so the values change continuously and PolarAngle can
+  run past +/-90 instead of snapping back. At an exact pole, where Azimuth
+  and Roll turn about the same axis, it keeps the current Azimuth and puts
+  the rest of the twist into Roll, so nothing jumps.
 
-    Cam.LookAt(Point3D(2, 0, 3));    // point in the rig parent's space
+  LookAt. LookAt keeps the camera where it is and turns it to face a point.
+  The turn is the shortest-arc rotation from the current view direction to
+  the new one. No world-up vector is involved, so nothing can become
+  parallel to the view direction: it works looking straight up or down and
+  never flips, and a 180-degree turn pivots about the camera's own up axis.
+  The point becomes the new OrbitCenter and Distance becomes the camera's
+  distance from it, so orbiting continues round that point.
 
-  FitToBounds / FitToBoundsMax
-  ----------------------------
-  Both make a box as large as possible in the viewport without any part
-  of it overflowing. Neither changes the angles; they move the orbit
-  centre and set Distance (or the orthographic size).
+  With lmMinimalTwist, the default, the camera keeps as much of its current
+  up direction as it can, so repeated LookAt calls can build up some roll,
+  as with any free-flying camera. With lmKeepRoll the view direction is the
+  same but Roll keeps its current value, so the horizon stays as it was; at
+  an exact pole Azimuth is held rather than worked out again.
 
-    - FitToBounds fits the box's eight corners exactly, for the CURRENT
-      Azimuth, PolarAngle and Roll. The view is centred on them, so the
-      box touches both edges of the tighter axis - left and right, or top
-      and bottom - with equal room on the other axis. Changing an angle
-      afterwards can push the box out of view; call it again after every
-      change.
-    - FitToBoundsMax fits the box for EVERY Azimuth, PolarAngle and Roll.
-      Together the three angles reach every orientation, so the box can
-      end up in any rotation about the orbit centre, and the union of all
-      those rotations is the ball about the box centre that reaches the
-      farthest corner. That ball is what gets fitted - nothing smaller is
-      safe, because some angle always brings a corner onto it - and the
-      orbit centre goes to the box centre. After that the angles can be
-      changed freely without refitting.
+  FitToBounds and FitToBoundsMax. Both make a box as large as possible in
+  the viewport without any part of it overflowing. Neither changes the
+  angles: they move the orbit centre and set Distance, or the orthographic
+  size.
 
-  Both read the frustum from the camera's own GetProjectionMatrix
-  for the viewport's size, so the FOV convention (vertical / horizontal)
-  and the aspect ratio come from Gorilla itself, never from guesses.
+  FitToBounds fits the box's eight corners exactly, for the current Azimuth,
+  PolarAngle and Roll. The view is centred on them, so the box touches both
+  edges of the tighter axis, left and right or top and bottom, with equal
+  room on the other axis. Changing an angle afterwards can push the box out
+  of view, so call it again after every change.
 
-    - Perspective, FitToBounds: in camera space, with tx, ty the tangents of
-      the half-angles, each corner (x, y, z) must satisfy
-        |x - cx| <= tx * (z - cz)   and   |y - cy| <= ty * (z - cz)
-      for an eye at (cx, cy, cz). Per axis that gives the farthest-forward
-      eye, cz = (min(x + tx z) - max(x - tx z)) / (2 tx), with cx halfway
-      between. The eye takes the smaller cz of the two axes, so both fit,
-      and is also kept NEAR_CLEARANCE (1 unit, FMX's near plane) behind
-      the nearest corner so the near plane cannot cut into the box.
-      Distance is then measured to the depth of the box's middle.
-    - Perspective, FitToBoundsMax: the ball is made tangent to the
-      narrower pair of frustum planes:
-        Distance = R / sin(half) = R * Sqrt(1 + s*s)
-      s being the projection scale on the narrower axis (times the margin).
-    - Orthographic / isometric: size does not depend on distance, so
-      OrthoHeight (and OrthoWidth, if you set one) is scaled until the box
-      (FitToBounds) or the ball (FitToBoundsMax) just fills the tighter
-      axis, and the view is centred on it. Distance only needs to keep
-      the camera clear of it.
-    - AMargin is padding as a fraction of the view: 0.1 makes the fitted
-      box (or ball) 1/1.1 of the view on the tighter axis.
+  FitToBoundsMax fits the box for every Azimuth, PolarAngle and Roll.
+  Together the three angles reach every orientation, so the box can end up
+  in any rotation about the orbit centre, and all those rotations together
+  fill the ball about the orbit centre that reaches the box's farthest
+  corner. That ball is what is fitted: nothing smaller is safe, because some
+  angle always brings a corner onto it. The ball is centred on the box
+  centre or, when the box comes from a model or another object, on that
+  object's centre of rotation, its RotationCenter. That point can lie
+  outside the box; the camera then circles the point the model turns about,
+  which stays put however an animation moves the box. The orbit centre goes
+  to the ball's centre, and the angles can then change freely without
+  refitting.
 
-  Coordinate spaces matter: FitToBounds(Box) expects the box in the rig
-  parent's (scene) space. A model's own bounds are in its LOCAL space,
-  usually centred on the mesh origin; if the model has been moved (say
-  lifted to stand on a floor) or scaled, using them directly aims at the
-  wrong point. Pass the object too - FitToBounds(Box, Model) - and the
-  box's corners are carried through the model's full transform first,
-  so position, rotation and (even non-uniform) scale are accounted for.
-  FitToBounds(Model) does this with the model's local box from
-  GetAnimatedBoundingBox, the same box ShowBoundingBox draws; so does
-  FitToBoundsMax(Model).
+  Both read the frustum from the camera's own GetProjectionMatrix for the
+  viewport's size, so the FOV convention, vertical or horizontal, and the
+  aspect ratio come from Gorilla itself, never from guesses.
 
+  In perspective, FitToBounds works in camera space. With tx and ty the
+  tangents of the half-angles, each corner (x, y, z) must satisfy the first
+  two conditions below for an eye at (cx, cy, cz). Per axis that gives the
+  farthest-forward eye shown, with cx halfway between the bounds, and the
+  eye takes the smaller cz of the two axes, so both fit. It is also kept
+  NEAR_CLEARANCE, 1 unit and FMX's near plane, behind the nearest corner, so
+  the near plane cannot cut into the box. Distance is then measured to the
+  depth of the box's middle.
+
+    |x - cx| <= tx * (z - cz)   and   |y - cy| <= ty * (z - cz)
+    cz = (min(x + tx z) - max(x - tx z)) / (2 tx)
+
+  In perspective, FitToBoundsMax makes the ball, of radius R, touch the
+  narrower pair of frustum planes, s being the projection scale on the
+  narrower axis times the margin:
+
+    Distance = R / sin(half) = R * Sqrt(1 + s * s)
+
+  In orthographic or isometric mode the size does not depend on distance, so
+  OrthoHeight, and OrthoWidth if one is set, is scaled until the box
+  (FitToBounds) or the ball (FitToBoundsMax) just fills the tighter axis,
+  and the view is centred on it. Distance only has to keep the camera clear
+  of it. AMargin is padding as a fraction of the view: 0.1 makes the fitted
+  box or ball 1/1.1 of the view on the tighter axis.
+
+  Coordinate spaces matter. FitToBounds(Box) expects the box in the rig
+  parent's space, the scene. A model's own bounds are in its local space,
+  usually centred on the mesh origin, so if the model has been moved, for
+  example lifted to stand on a floor, or scaled, using them directly aims at
+  the wrong point. Pass the object too, as in FitToBounds(Box, Model), and
+  the box's corners are carried through the model's full transform first, so
+  position, rotation and even non-uniform scale are allowed for.
+  FitToBounds(Model) and FitToBoundsMax(Model) do this with the model's
+  local box from GetAnimatedBoundingBox, the same box ShowBoundingBox draws.
   The viewport is found by walking up from the rig to the first
   TGorillaViewport.
+
+  Usage:
+
+    Cam := TSprite3DCamera.Create(Self);
+    Cam.Rig.Parent := GorillaViewport1;   // parent the whole chain, not Cam itself
+    GorillaViewport1.Camera := Cam;
+    GorillaViewport1.UsingDesignCamera := False;
+    Cam.FitToBounds(GorillaModel1);       // frame a model
+    Cam.LookAt(Point3D(2, 0, 3));         // or face a point, in the rig parent's space
 }
 
 interface
@@ -391,7 +482,8 @@ type
       AMargin: Single; const AAnyAngle: Boolean): Boolean;
     function FitCorners(const ACorners: array of TPoint3D;
       const AViewWidth, AViewHeight, AMargin: Single;
-      const AAnyAngle: Boolean): Boolean;
+      const AAnyAngle: Boolean; const APivot: TPoint3D;
+      const AUsePivot: Boolean): Boolean;
   public
     //** @abstract(Creates the camera and its pivot chain.)
     //**
@@ -714,7 +806,8 @@ type
 
     { Make ABox as large as possible in the viewport while staying fully
       visible for EVERY Azimuth, PolarAngle and Roll. The orbit centre
-      moves to the box centre, so the angles can then be changed freely
+      moves to the box centre (or, in the overloads that know the object,
+      to its centre of rotation), so the angles can then be changed freely
       without refitting. See unit header. }
     //** @abstract(Makes ABox as large as possible while it stays visible at every angle.)
     //**
@@ -723,7 +816,8 @@ type
     //** around the box's centre that reaches its farthest corner, so that sphere is what is
     //** fitted: it is the smallest shape that is safe for every angle. OrbitCenter moves to
     //** the box's centre and Distance, or the orthographic size, is set; the angles are not
-    //** changed and can then be changed freely without refitting.
+    //** changed and can then be changed freely without refitting. The overloads that take a
+    //** model or ASpace centre the sphere on that object's centre of rotation instead.
     //**
     //** The box looks smaller than with FitToBounds, by up to the ratio of the box's half
     //** diagonal to its smaller visible half-size. In perspective mode the sphere is kept at
@@ -745,7 +839,8 @@ type
     /// sphere around the box's centre that reaches its farthest corner, so that sphere is what
     /// is fitted: it is the smallest shape that is safe for every angle. OrbitCenter moves to
     /// the box's centre and Distance, or the orthographic size, is set; the angles are not
-    /// changed and can then be changed freely without refitting.</para>
+    /// changed and can then be changed freely without refitting. The overloads that take a
+    /// model or ASpace centre the sphere on that object's centre of rotation instead.</para>
     /// <para>The box looks smaller than with <see cref="FitToBounds"/>, by up to the ratio of
     /// the box's half diagonal to its smaller visible half-size. In perspective mode the sphere
     /// is kept at least 1 unit in front of the camera, FMX's near plane.</para></remarks>
@@ -764,8 +859,11 @@ type
     //**
     //** Takes @code(AModel.GetAnimatedBoundingBox), the current pose's box in the model's local
     //** space, and passes it with AModel as the space to the overload that takes ASpace, so the
-    //** model's transform is applied once. The pose is taken at the time of the call; an
-    //** animation that later reaches outside that box can still overflow.
+    //** model's transform is applied once. The sphere is centred on the model's centre of
+    //** rotation, its RotationCenter, which can lie outside the box: the camera then circles
+    //** the point the model turns about, which stays put however an animation moves the box.
+    //** The pose is taken at the time of the call; an animation that later reaches farther
+    //** from that point can still overflow.
     //**
     //** @param(AModel The model to frame; nil makes the call return False.)
     //**
@@ -780,8 +878,11 @@ type
     /// at every angle.</summary>
     /// <remarks>Takes <c>AModel.GetAnimatedBoundingBox</c>, the current pose's box in the
     /// model's local space, and passes it with AModel as the space to the overload that takes
-    /// ASpace, so the model's transform is applied once. The pose is taken at the time of the
-    /// call; an animation that later reaches outside that box can still overflow.</remarks>
+    /// ASpace, so the model's transform is applied once. The sphere is centred on the model's
+    /// centre of rotation, its RotationCenter, which can lie outside the box: the camera then
+    /// circles the point the model turns about, which stays put however an animation moves
+    /// the box. The pose is taken at the time of the call; an animation that later reaches
+    /// farther from that point can still overflow.</remarks>
     /// <param name="AModel">The model to frame; nil makes the call return False.</param>
     /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
     /// the view on the tighter axis.</param>
@@ -828,9 +929,12 @@ type
     //** @abstract(Fits a box given in ASpace's local coordinates for every angle.)
     //**
     //** All eight corners are carried through ASpace's position, rotation and scale into the rig
-    //** parent's space. The sphere is centred on the transformed box's centre and reaches its
-    //** farthest transformed corner, so non-uniform scale is handled. It is then fitted as in
-    //** the other overloads, using the viewport's size.
+    //** parent's space. The sphere is centred on ASpace's centre of rotation, its RotationCenter
+    //** carried into the same space, and reaches the farthest transformed corner from it, so
+    //** non-uniform scale is handled. The centre of rotation can lie outside the box; the camera
+    //** then circles it, which keeps it steady while an animation moves the box. With ASpace nil
+    //** the sphere is centred on the box. It is then fitted as in the other overloads, using
+    //** the viewport's size.
     //**
     //** @param(ABox The box to frame, in ASpace's local coordinates, such as a model's mesh
     //** bounds.)
@@ -845,9 +949,12 @@ type
     //** there is no viewport, or it has zero width or height.)
     /// <summary>Fits a box given in ASpace's local coordinates for every angle.</summary>
     /// <remarks>All eight corners are carried through ASpace's position, rotation and scale into
-    /// the rig parent's space. The sphere is centred on the transformed box's centre and reaches
-    /// its farthest transformed corner, so non-uniform scale is handled. It is then fitted as in
-    /// the other overloads, using the viewport's size.</remarks>
+    /// the rig parent's space. The sphere is centred on ASpace's centre of rotation, its
+    /// RotationCenter carried into the same space, and reaches the farthest transformed corner
+    /// from it, so non-uniform scale is handled. The centre of rotation can lie outside the
+    /// box; the camera then circles it, which keeps it steady while an animation moves the box.
+    /// With ASpace nil the sphere is centred on the box. It is then fitted as in the other
+    /// overloads, using the viewport's size.</remarks>
     /// <param name="ABox">The box to frame, in ASpace's local coordinates, such as a model's
     /// mesh bounds.</param>
     /// <param name="ASpace">The object whose local space ABox is in. If nil, ABox is taken to be
@@ -1382,6 +1489,8 @@ function TSprite3DCamera.FitBox(const ABox: TBoundingBox;
 var
   RigParent: TFmxObject;
   Corners: TBoxCorners;
+  Pivot: TPoint3D;
+  UsePivot: Boolean;
   I: Integer;
 
   // ASpace local -> rig parent space, via FMX absolute (viewport) space
@@ -1411,12 +1520,24 @@ begin
       Corners[I] := ToRigSpace(Corners[I]);
   end;
 
-  Result := FitCorners(Corners, AViewWidth, AViewHeight, AMargin, AAnyAngle);
+  // For every angle, a box from an object is fitted about that object's
+  // centre of rotation, which can lie outside the box: the camera then
+  // circles the point the model turns about, which stays put however an
+  // animation moves the box, instead of following the box's centre
+  UsePivot := AAnyAngle and (ASpace <> nil) and not AFromRigSpace;
+  if UsePivot then
+    Pivot := ToRigSpace(ASpace.RotationCenter.Point)
+  else
+    Pivot := TPoint3D.Zero;
+
+  Result := FitCorners(Corners, AViewWidth, AViewHeight, AMargin, AAnyAngle,
+    Pivot, UsePivot);
 end;
 
 function TSprite3DCamera.FitCorners(const ACorners: array of TPoint3D;
   const AViewWidth, AViewHeight, AMargin: Single;
-  const AAnyAngle: Boolean): Boolean;
+  const AAnyAngle: Boolean; const APivot: TPoint3D;
+  const AUsePivot: Boolean): Boolean;
 var
   Q: TQuat;
   M: TMatrix3D;
@@ -1449,12 +1570,15 @@ begin
   AxU := Q.Rotate(Point3D(0, 1, 0));
   AxF := Q.Rotate(Point3D(0, 0, 1));
 
-  // Centre of the corners (the affine image of the box centre) and the
-  // radius of the sphere around it that reaches the farthest corner
+  // Centre of the corners (the affine image of the box centre), or for an
+  // every-angle fit with a pivot, the pivot; then the radius of the sphere
+  // around it that reaches the farthest corner
   Center := TPoint3D.Zero;
   for I := 0 to High(ACorners) do
     Center := Center + ACorners[I];
   Center := Center * (1 / Length(ACorners));
+  if AAnyAngle and AUsePivot then
+    Center := APivot;
   Rad := 0;
   for I := 0 to High(ACorners) do
     Rad := Max(Rad, (ACorners[I] - Center).Length);
@@ -1464,7 +1588,8 @@ begin
     // Every Azimuth / PolarAngle / Roll together reach every orientation,
     // so the box can take any rotation about the orbit centre. The union
     // of those rotations is the ball of radius Rad about Center, so that
-    // ball is fitted, centred, with the orbit centre on the box centre.
+    // ball is fitted, centred, with the orbit centre on Center: the
+    // object's centre of rotation if there is one, otherwise the box's.
     if IsOrthographic then
     begin
       // Scale the visible area until its narrower half-size holds the radius

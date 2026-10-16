@@ -24,6 +24,8 @@
 //**                     draws the three lines in its Render
 //** )
 //**
+//** Usage:
+//**
 //** @preformatted(
 //** ShowModelAxes@(GorillaModel1@);    // after the model is loaded
 //** HideModelAxes@(GorillaModel1@);

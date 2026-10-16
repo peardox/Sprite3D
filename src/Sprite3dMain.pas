@@ -10,18 +10,21 @@
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
 //** the view turns the right way for the dial. View, Variable lets the dials set the angles;
 //** View, Isometric, the default for now, sets the readouts to inclination 35.264, azimuth 45
-//** and roll 0, the true isometric view, and switches the dials off. A test slider along the
+//** and roll 0, the true isometric view, and switches the dials off; View, Pixel 2:1 does the
+//** same with an inclination of about 26.565; View, 3/4 View uses 45 degrees through the
+//** orthographic camera; View, Head On and View, Top Down use inclinations of 0 and 90 at
+//** azimuth 0; and View, Side View uses inclination 0 at azimuth 90. A test slider along the
 //** bottom of the 3D view moves the camera out from the fitted distance, x1 to x20.
 //**
 //** On show, the form loads the model whose file FormShow names; File, OpenModel then loads any
-//** other glTF, FBX, OBJ, USD, Collada, STL or PLY file. Each model replaces the last: it plays
-//** its last animation by name if it has any, is centred and turned 180 degrees about X, and
-//** the camera is fitted so it fills the view. The model is refitted when the viewport is
-//** resized, the projection changes or the "Fit any angle" box is toggled, but not when a dial
-//** turns. Checked, that box uses FitToBoundsMax, which frames the model for every angle at
-//** once, so the dials can never push it out of view. Unchecked, FitToBounds frames it exactly
-//** for the angles at the time of the fit, and turning a dial afterwards can push part of it
-//** past the edge until the next refit.
+//** other glTF, FBX, OBJ, USD, Collada, STL or PLY file, and File, Exit closes the application.
+//** Each model replaces the last: it plays its last animation by name if it has any, is centred
+//** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
+//** refitted when the viewport is resized, the projection changes or the "Fit any angle" box is
+//** toggled, but not when a dial turns. Checked, that box uses FitToBoundsMax, which frames the
+//** model for every angle at once, so the dials can never push it out of view. Unchecked,
+//** FitToBounds frames it exactly for the angles at the time of the fit, and turning a dial
+//** afterwards can push part of it past the edge until the next refit.
 //**
 //** @preformatted(
 //** TabControl1
@@ -35,10 +38,16 @@
 //**
 //** MainMenu1
 //** |-- FileMenu "File"
-//** |   `-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+//** |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+//** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"
-//**     |-- ViewVariableItem "Variable"    dials set the angles
-//**     `-- ViewIsometricItem "Isometric"  fixed isometric angles
+//**     |-- ViewVariableItem "Variable"     dials set the angles
+//**     |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+//**     |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+//**     |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+//**     |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+//**     |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+//**     `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
 //** )
 unit Sprite3dMain;
 {
@@ -54,20 +63,23 @@ unit Sprite3dMain;
   reversed, 360 minus the readout, so the view turns the right way for the
   dial. View, Variable lets the dials set the angles; View, Isometric, the
   default for now, sets the readouts to inclination 35.264, azimuth 45 and
-  roll 0, the true isometric view, and switches the dials off. A test slider
-  along the bottom of the 3D view moves the camera out from the fitted
-  distance, x1 to x20.
+  roll 0, the true isometric view, and switches the dials off; View, Pixel
+  2:1 does the same with an inclination of about 26.565; View, 3/4 View uses
+  45 degrees through the orthographic camera; View, Head On and View, Top
+  Down use inclinations of 0 and 90 at azimuth 0; and View, Side View uses
+  inclination 0 at azimuth 90. A test slider along the bottom of the 3D view
+  moves the camera out from the fitted distance, x1 to x20.
   On show, the form loads the model whose file FormShow names; File,
   OpenModel then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY
-  file. Each model replaces the last: it plays its last animation by name if
-  it has any, is centred and turned 180 degrees about X, and the camera is
-  fitted so it fills the view. The model is refitted when the viewport is
-  resized, the projection changes or the "Fit any angle" box is toggled, but
-  not when a dial turns. Checked, that box uses FitToBoundsMax, which frames
-  the model for every angle at once, so the dials can never push it out of
-  view. Unchecked, FitToBounds frames it exactly for the angles at the time
-  of the fit, and turning a dial afterwards can push part of it past the
-  edge until the next refit.
+  file, and File, Exit closes the application. Each model replaces the last:
+  it plays its last animation by name if it has any, is centred and turned
+  180 degrees about X, and the camera is fitted so it fills the view. The
+  model is refitted when the viewport is resized, the projection changes or
+  the "Fit any angle" box is toggled, but not when a dial turns. Checked,
+  that box uses FitToBoundsMax, which frames the model for every angle at
+  once, so the dials can never push it out of view. Unchecked, FitToBounds
+  frames it exactly for the angles at the time of the fit, and turning a
+  dial afterwards can push part of it past the edge until the next refit.
     TabControl1
     |-- GorillaTab "View"
     |   `-- MainLayout
@@ -79,10 +91,16 @@ unit Sprite3dMain;
 
     MainMenu1
     |-- FileMenu "File"
-    |   `-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+    |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+    |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"
-        |-- ViewVariableItem "Variable"    dials set the angles
-        `-- ViewIsometricItem "Isometric"  fixed isometric angles
+        |-- ViewVariableItem "Variable"     dials set the angles
+        |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+        |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+        |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+        |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+        |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+        `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
 }
 
 interface
@@ -258,11 +276,23 @@ type
     //** @abstract(The "OpenModel" item; see OpenModelMenuItemClick.)
     /// <summary>The "OpenModel" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
     OpenModelMenuItem: TMenuItem;
+    //** @abstract(Separator line in the File menu, above Exit.)
+    /// <summary>Separator line in the File menu, above Exit.</summary>
+    FileSeparatorItem: TMenuItem;
+    //** @abstract(The "Exit" item; see ExitMenuItemClick.)
+    /// <summary>The "Exit" item; see <see cref="ExitMenuItemClick"/>.</summary>
+    ExitMenuItem: TMenuItem;
     //** @abstract(The "View" menu, choosing how the camera angles are set.)
     //**
-    //** Its items form one radio group: Variable or Isometric.
+    //** Its items form one radio group: Variable, where the dials set the angles, and the
+    //** fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side
+    //** View. Choosing an item clears every check in the menu, sets the view, then checks that
+    //** item.
     /// <summary>The "View" menu, choosing how the camera angles are set.</summary>
-    /// <remarks>Its items form one radio group: Variable or Isometric.</remarks>
+    /// <remarks>Its items form one radio group: Variable, where the dials set the angles, and
+    /// the fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side
+    /// View. Choosing an item clears every check in the menu, sets the view, then checks that
+    /// item.</remarks>
     ViewMenu: TMenuItem;
     //** @abstract(The "Variable" view; see ViewVariableItemClick.)
     /// <summary>The "Variable" view; see <see cref="ViewVariableItemClick"/>.</summary>
@@ -271,8 +301,21 @@ type
     /// <summary>The "Isometric" view, chosen at start-up; see
     /// <see cref="ViewIsometricItemClick"/>.</summary>
     ViewIsometricItem: TMenuItem;
+    //** @abstract(The "Pixel 2:1" view; see ViewPixel2To1ItemClick.)
+    /// <summary>The "Pixel 2:1" view; see <see cref="ViewPixel2To1ItemClick"/>.</summary>
     ViewPixel2To1Item: TMenuItem;
-    ViewAngle45Item: TMenuItem;
+    //** @abstract(The "3/4 View" view; see ViewThreeQuarterItemClick.)
+    /// <summary>The "3/4 View" view; see <see cref="ViewThreeQuarterItemClick"/>.</summary>
+    ViewThreeQuarterItem: TMenuItem;
+    //** @abstract(The "Head On" view; see ViewHeadOnItemClick.)
+    /// <summary>The "Head On" view; see <see cref="ViewHeadOnItemClick"/>.</summary>
+    ViewHeadOnItem: TMenuItem;
+    //** @abstract(The "Top Down" view; see ViewTopDownItemClick.)
+    /// <summary>The "Top Down" view; see <see cref="ViewTopDownItemClick"/>.</summary>
+    ViewTopDownItem: TMenuItem;
+    //** @abstract(The "Side View" view; see ViewSideItemClick.)
+    /// <summary>The "Side View" view; see <see cref="ViewSideItemClick"/>.</summary>
+    ViewSideItem: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
     //** The models folder is the library path on macOS, the home folder on Linux and
@@ -411,30 +454,44 @@ type
     /// view is then left empty until another model loads.</remarks>
     /// <param name="Sender">OpenModelMenuItem.</param>
     procedure OpenModelMenuItemClick(Sender: TObject);
+    //** @abstract(Closes the application.)
+    //**
+    //** Closes the main form, which ends the application in the normal way, so the form and
+    //** everything it owns are freed as usual.
+    //**
+    //** @param(Sender ExitMenuItem.)
+    /// <summary>Closes the application.</summary>
+    /// <remarks>Closes the main form, which ends the application in the normal way, so the form
+    /// and everything it owns are freed as usual.</remarks>
+    /// <param name="Sender">ExitMenuItem.</param>
+    procedure ExitMenuItemClick(Sender: TObject);
     //** @abstract(Hands the camera angles back to the dials.)
     //**
-    //** Checks the Variable item and turns the three dials back on. The camera keeps its
-    //** current angles until a dial is turned.
+    //** Clears every View check, turns the three dials back on and checks the Variable item.
+    //** The camera keeps its current angles until a dial is turned.
     //**
     //** @param(Sender ViewVariableItem.)
     /// <summary>Hands the camera angles back to the dials.</summary>
-    /// <remarks>Checks the Variable item and turns the three dials back on. The camera keeps
-    /// its current angles until a dial is turned.</remarks>
+    /// <remarks>Clears every View check, turns the three dials back on and checks the Variable
+    /// item. The camera keeps its current angles until a dial is turned.</remarks>
     /// <param name="Sender">ViewVariableItem.</param>
     procedure ViewVariableItemClick(Sender: TObject);
     //** @abstract(Sets the isometric view and fixes it.)
     //**
-    //** Sets the inclination to 35.264, the true isometric elevation, the azimuth to 45 and
-    //** the roll to 0, as shown on the readouts, turns the dials to match and switches them
-    //** off, then refits the model for the new view. As with the dial, the azimuth reaches the
-    //** camera reversed.
+    //** Clears every View check, sets the inclination to ArcTan@(1/Sqrt@(2@)@), about 35.264
+    //** degrees, the true isometric elevation, the azimuth to 45 and the roll to 0, as shown on
+    //** the readouts, turns the dials to match and switches them off, refits the model for the
+    //** new view, then checks the Isometric item. As with the dial, the azimuth reaches the
+    //** camera reversed. The other fixed views work the same way with their own inclination.
     //**
     //** @param(Sender ViewIsometricItem.)
     /// <summary>Sets the isometric view and fixes it.</summary>
-    /// <remarks>Sets the inclination to 35.264, the true isometric elevation, the azimuth to
-    /// 45 and the roll to 0, as shown on the readouts, turns the dials to match and switches
-    /// them off, then refits the model for the new view. As with the dial, the azimuth reaches
-    /// the camera reversed.</remarks>
+    /// <remarks>Clears every View check, sets the inclination to ArcTan(1/Sqrt(2)), about
+    /// 35.264 degrees, the true isometric elevation, the azimuth to 45 and the roll to 0, as
+    /// shown on the readouts, turns the dials to match and switches them off, refits the model
+    /// for the new view, then checks the Isometric item. As with the dial, the azimuth reaches
+    /// the camera reversed. The other fixed views work the same way with their own
+    /// inclination.</remarks>
     /// <param name="Sender">ViewIsometricItem.</param>
     procedure ViewIsometricItemClick(Sender: TObject);
     //** @abstract(Moves the camera out by the slider's factor; test only.)
@@ -450,8 +507,61 @@ type
     /// is scaled instead. The factor is kept when the model is refitted.</remarks>
     /// <param name="Sender">DistanceTrack.</param>
     procedure DistanceTrackChange(Sender: TObject);
+    //** @abstract(Sets the pixel-art 2:1 view and fixes it.)
+    //**
+    //** As View, Isometric, but with the inclination ArcTan@(1/2@), about 26.565 degrees, at
+    //** which lines on the floor run 2 pixels across for each pixel up, as in 2:1 pixel art.
+    //**
+    //** @param(Sender ViewPixel2To1Item.)
+    /// <summary>Sets the pixel-art 2:1 view and fixes it.</summary>
+    /// <remarks>As View, Isometric, but with the inclination ArcTan(1/2), about 26.565
+    /// degrees, at which lines on the floor run 2 pixels across for each pixel up, as in 2:1
+    /// pixel art.</remarks>
+    /// <param name="Sender">ViewPixel2To1Item.</param>
     procedure ViewPixel2To1ItemClick(Sender: TObject);
-    procedure ViewAngle45ItemClick(Sender: TObject);
+    //** @abstract(Sets the 3/4 view, through the orthographic camera, and fixes it.)
+    //**
+    //** The angle of military projection: inclination 45 degrees at azimuth 45. It also ticks
+    //** chkOrthoToggle, switching the camera to orthographic, which gives the flat look of
+    //** 3/4-view game art. Other views leave the projection as it is.
+    //**
+    //** @param(Sender ViewThreeQuarterItem.)
+    /// <summary>Sets the 3/4 view, through the orthographic camera, and fixes it.</summary>
+    /// <remarks>The angle of military projection: inclination 45 degrees at azimuth 45. It also
+    /// ticks chkOrthoToggle, switching the camera to orthographic, which gives the flat look of
+    /// 3/4-view game art. Other views leave the projection as it is.</remarks>
+    /// <param name="Sender">ViewThreeQuarterItem.</param>
+    procedure ViewThreeQuarterItemClick(Sender: TObject);
+    //** @abstract(Sets the head-on view and fixes it.)
+    //**
+    //** Inclination 0 and azimuth 0: level with the model, looking along its Z axis.
+    //**
+    //** @param(Sender ViewHeadOnItem.)
+    /// <summary>Sets the head-on view and fixes it.</summary>
+    /// <remarks>Inclination 0 and azimuth 0: level with the model, looking along its Z
+    /// axis.</remarks>
+    /// <param name="Sender">ViewHeadOnItem.</param>
+    procedure ViewHeadOnItemClick(Sender: TObject);
+    //** @abstract(Sets the top-down view and fixes it.)
+    //**
+    //** Inclination 90 and azimuth 0: straight down onto the model.
+    //**
+    //** @param(Sender ViewTopDownItem.)
+    /// <summary>Sets the top-down view and fixes it.</summary>
+    /// <remarks>Inclination 90 and azimuth 0: straight down onto the model.</remarks>
+    /// <param name="Sender">ViewTopDownItem.</param>
+    procedure ViewTopDownItemClick(Sender: TObject);
+    //** @abstract(Sets the side view and fixes it.)
+    //**
+    //** Inclination 0 and azimuth 90: level with the model, from the side, a quarter turn
+    //** from View, Head On.
+    //**
+    //** @param(Sender ViewSideItem.)
+    /// <summary>Sets the side view and fixes it.</summary>
+    /// <remarks>Inclination 0 and azimuth 90: level with the model, from the side, a quarter
+    /// turn from View, Head On.</remarks>
+    /// <param name="Sender">ViewSideItem.</param>
+    procedure ViewSideItemClick(Sender: TObject);
   private
     { Private declarations }
     FModelRotation: TPoint3D;
@@ -471,7 +581,11 @@ type
     function FitModel: Boolean;
     procedure ApplyAngles;
     procedure ApplyDistance;
-    procedure SetPolarViewAngle(const APolarAngle: Single);
+    procedure SetPolarViewAngle(const APolarAngle: Single;
+      const AAzimuth: Single = 45);
+    procedure ClearViewChecks;
+    procedure SelectFixedView(const AItem: TMenuItem; const APolarAngle: Single;
+      const AAzimuth: Single = 45);
   public
     { Public declarations }
   end;
@@ -622,7 +736,8 @@ end;
 // to allow easy addition of new Model types
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  SwitchModel(ModelDir + 'models/TestAnimatedCharacter.glb');
+  SwitchModel(ModelDir + 'models/uvcube.glb');
+//  SwitchModel(ModelDir + 'models/TestAnimatedCharacter.glb');
 //  SwitchModel(ModelDir + 'models/TestStaticCharacter.glb');
 end;
 
@@ -637,45 +752,91 @@ begin
     SwitchModel(OpenDialog1.Filename);
 end;
 
+procedure TMainForm.ExitMenuItemClick(Sender: TObject);
+begin
+  Close;   // closing the main form ends the application
+end;
+
+// Remove the check from every item in the View menu, so a new item needs
+// no changes here
+procedure TMainForm.ClearViewChecks;
+var
+  I: Integer;
+begin
+  for I := 0 to ViewMenu.ItemsCount - 1 do
+    ViewMenu.Items[I].IsChecked := False;
+end;
+
+// The pattern for every fixed view: clear all the checks, set the view,
+// then check the item that chose it
+procedure TMainForm.SelectFixedView(const AItem: TMenuItem;
+  const APolarAngle, AAzimuth: Single);
+begin
+  ClearViewChecks;
+  SetPolarViewAngle(APolarAngle, AAzimuth);
+  AItem.IsChecked := True;
+end;
+
 procedure TMainForm.ViewVariableItemClick(Sender: TObject);
 begin
-  ViewVariableItem.IsChecked := True;
-  ViewIsometricItem.IsChecked := False;
+  ClearViewChecks;
   AzimuthDial.Enabled := True;
   AngleDial.Enabled := True;
   RollDial.Enabled := True;
-end;
-
-procedure TMainForm.ViewAngle45ItemClick(Sender: TObject);
-begin
-  // ArcTan(Pi / 4)
-  SetPolarViewAngle(RadToDeg(ArcTan(Pi / 4)));
+  ViewVariableItem.IsChecked := True;
 end;
 
 procedure TMainForm.ViewIsometricItemClick(Sender: TObject);
 begin
-  // ArcTan(1 / Sqrt(2))
-  SetPolarViewAngle(RadToDeg(ArcTan(1 / Sqrt(2))));
+  // ArcTan(1 / Sqrt(2)), about 35.264 degrees
+  SelectFixedView(ViewIsometricItem, RadToDeg(ArcTan(1 / Sqrt(2))));
 end;
 
 procedure TMainForm.ViewPixel2To1ItemClick(Sender: TObject);
 begin
-  // ArcTan(1 / 2)
-  SetPolarViewAngle(RadToDeg(ArcTan(0.5)));
+  // ArcTan(1 / 2), about 26.565 degrees: floor lines run 2 across per 1 up
+  SelectFixedView(ViewPixel2To1Item, RadToDeg(ArcTan(0.5)));
 end;
 
-procedure TMainForm.SetPolarViewAngle(const APolarAngle: Single);
-const
-  ISO_AZIMUTH = 45;
-  ISO_ROLL = 0;
+procedure TMainForm.ViewThreeQuarterItemClick(Sender: TObject);
 begin
-  ViewVariableItem.IsChecked := False;
-  ViewIsometricItem.IsChecked := True;
+  // Military projection's 45 degrees, through the orthographic camera. The
+  // check box's OnChange switches the projection and refits.
+  chkOrthoToggle.IsChecked := True;
+  SelectFixedView(ViewThreeQuarterItem, 45);
+end;
+
+procedure TMainForm.ViewHeadOnItemClick(Sender: TObject);
+begin
+  // Level with the model, looking straight along its Z axis
+  SelectFixedView(ViewHeadOnItem, 0, 0);
+end;
+
+procedure TMainForm.ViewTopDownItemClick(Sender: TObject);
+begin
+  // Straight down onto the model
+  SelectFixedView(ViewTopDownItem, 90, 0);
+end;
+
+procedure TMainForm.ViewSideItemClick(Sender: TObject);
+begin
+  // Level with the model, from the side: a quarter turn from Head On
+  SelectFixedView(ViewSideItem, 0, 90);
+end;
+
+// Sets a fixed view: the given inclination and azimuth (45 unless given)
+// with roll 0, all as shown on the readouts, with the dials turned to
+// match and switched off, then refits. The View menu checks are the
+// caller's job.
+procedure TMainForm.SetPolarViewAngle(const APolarAngle, AAzimuth: Single);
+const
+  FIXED_ROLL = 0;
+begin
   // The dial fields hold the readout values; ApplyAngles sends azimuth to
   // the camera reversed, as it does for the dial
-  FAzimuth := ISO_AZIMUTH;
+  FAzimuth := AAzimuth;
   FPolarAngle := APolarAngle;
-  FRoll := ISO_ROLL;
+  FRoll := FIXED_ROLL;
   // Turn the dials to match; their OnChange reads the same angles back
   AzimuthDial.Value := -FAzimuth;
   AngleDial.Value := -FPolarAngle;

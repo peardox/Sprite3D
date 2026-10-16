@@ -12,8 +12,9 @@
 //**
 //** The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its
 //** TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla
-//** converts for Vulkan and Metal. So the grid costs two triangles however far it reaches, the
-//** lines are anti-aliased and about a pixel wide at any distance, and nothing is recalculated
+//** converts for Vulkan and Metal. The plane is split into 64 by 64 squares so that the
+//** position the shader reads stays exact across it; the cost is the same however far the grid
+//** reaches, the lines stay about two pixels wide at any distance, and nothing is recalculated
 //** per frame. Changing a grid property rewrites the shader once, with the new values written
 //** into it as constants.
 //**
@@ -30,6 +31,8 @@
 //** `-- grid frame           TDummy copying the model's transform, owned by the TModelGrid
 //**     `-- TGorillaPlane    turned onto GridAxis at GridLevel; grid drawn by its shader
 //** )
+//**
+//** Usage:
 //**
 //** @preformatted(
 //** Grid := ShowModelGrid@(GorillaModel1@);   // after the model is loaded and placed
@@ -57,9 +60,10 @@ unit Sprite3DGrid;
 
   The grid is a single TGorillaPlane. The lines are worked out per pixel by
   GLSL code in its TGorillaDefaultMaterialSource, through its documented
-  SurfaceShader hook, which Gorilla converts for Vulkan and Metal. So the
-  grid costs two triangles however far it reaches, the lines are
-  anti-aliased and about a pixel wide at any distance, and nothing is
+  SurfaceShader hook, which Gorilla converts for Vulkan and Metal. The plane
+  is split into 64 by 64 squares so that the position the shader reads stays
+  exact across it; the cost is the same however far the grid reaches, the
+  lines stay about two pixels wide at any distance, and nothing is
   recalculated per frame. Changing a grid property rewrites the shader once,
   with the new values written into it as constants.
 
@@ -351,6 +355,12 @@ implementation
 const
   // The square edge fade starts this far out, as a fraction of the half-size
   EDGE_FADE_START = 0.9;
+  // The plane is split into this many squares each way. The position the
+  // shader reads is interpolated across each triangle; across one huge
+  // triangle, clipped by the near plane, it drifts, and the two halves of
+  // an unsplit plane drift differently, so the grid lines jump where they
+  // meet. Small triangles keep it exact; 64 x 64 is 8192 triangles.
+  GRID_SUBDIVISIONS = 64;
   // Lines fade out as a grid cell shrinks on screen from DENSE_FULL to
   // DENSE_GONE pixels across, so far-off lines dissolve instead of turning
   // to moire, well before the plane's edge comes into view
@@ -526,7 +536,8 @@ begin
   // units. No texture coordinates are used: TLocals only declares them when
   // the mesh has them and a texture is in use.
   // Distance to the nearest line in each direction, in pixels, via fwidth;
-  // within about a pixel of a line it is drawn, smoothly at the edges.
+  // within about a pixel of a line it is drawn. The edge is soft in Alpha,
+  // but this material is not blended, so on screen the lines are solid.
   // fwidth is also the size of a pixel in cells, so 1 / its larger part is
   // how many pixels the smaller side of a cell covers: the lines fade out as
   // that falls from DENSE_FULL to DENSE_GONE. A short square fade at the
@@ -585,6 +596,8 @@ begin
   // TGorillaPlane lies in its local X-Y plane, like FMX's TPlane, sized by
   // Width and Height; turn it onto GridAxis
   Half := FGridCells * FGridSize;
+  Plane.SubdivisionsWidth := GRID_SUBDIVISIONS;
+  Plane.SubdivisionsHeight := GRID_SUBDIVISIONS;
   Plane.Width := 2 * Half;
   Plane.Height := 2 * Half;
   case FGridAxis of

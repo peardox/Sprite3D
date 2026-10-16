@@ -279,6 +279,15 @@ object MainForm: TMainForm
         Text = 'OpenModel'
         OnClick = OpenModelMenuItemClick
       end
+      object FileSeparatorItem: TMenuItem
+        Locked = True
+        Text = '-'
+      end
+      object ExitMenuItem: TMenuItem
+        Locked = True
+        Text = 'Exit'
+        OnClick = ExitMenuItemClick
+      end
     end
     object ViewMenu: TMenuItem
       Text = 'View'
@@ -303,12 +312,33 @@ object MainForm: TMainForm
         Text = 'Pixel 2:1'
         OnClick = ViewPixel2To1ItemClick
       end
-      object ViewAngle45Item: TMenuItem
+      object ViewThreeQuarterItem: TMenuItem
         Locked = True
         GroupIndex = 1
         RadioItem = True
-        Text = '45 degrees'
-        OnClick = ViewAngle45ItemClick
+        Text = '3/4 View'
+        OnClick = ViewThreeQuarterItemClick
+      end
+      object ViewHeadOnItem: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        Text = 'Head On'
+        OnClick = ViewHeadOnItemClick
+      end
+      object ViewTopDownItem: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        Text = 'Top Down'
+        OnClick = ViewTopDownItemClick
+      end
+      object ViewSideItem: TMenuItem
+        Locked = True
+        GroupIndex = 1
+        RadioItem = True
+        Text = 'Side View'
+        OnClick = ViewSideItemClick
       end
     end
   end
