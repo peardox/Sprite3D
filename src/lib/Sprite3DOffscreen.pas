@@ -320,18 +320,18 @@ type
       const AOnGrabbed: TSprite3DGrabSizesProc): Boolean;
     //** @abstract(What grabs show behind the model when TransparentBackground is True.)
     //**
-    //** Transparent, the default, leaves the background transparent. Solid and Gradient fill
-    //** it, after the matting, with the colour or with the gradient from GradientFrom at the
-    //** top to GradientTo at the bottom; soft edges blend into it as they would on screen.
-    //** The checker settings are not used: the checker only stands for transparency on
-    //** screen. Changes made while Busy apply from the next grab.
+    //** None, the default, and Transparent leave the background transparent. Solid and
+    //** Gradient fill it, after the matting, with the colour or with the gradient from
+    //** GradientFrom to GradientTo in GradientDirection; soft edges blend into it as they
+    //** would on screen. The checker settings are not used: the checker only stands for
+    //** transparency on screen. Changes made while Busy apply from the next grab.
     /// <summary>What grabs show behind the model when TransparentBackground is
     /// True.</summary>
-    /// <remarks>Transparent, the default, leaves the background transparent. Solid and Gradient
-    /// fill it, after the matting, with the colour or with the gradient from GradientFrom at
-    /// the top to GradientTo at the bottom; soft edges blend into it as they would on screen.
-    /// The checker settings are not used: the checker only stands for transparency on screen.
-    /// Changes made while Busy apply from the next grab.</remarks>
+    /// <remarks>None, the default, and Transparent leave the background transparent. Solid
+    /// and Gradient fill it, after the matting, with the colour or with the gradient from
+    /// GradientFrom to GradientTo in GradientDirection; soft edges blend into it as they
+    /// would on screen. The checker settings are not used: the checker only stands for
+    /// transparency on screen. Changes made while Busy apply from the next grab.</remarks>
     property Backdrop: TSprite3DBackgroundSpec read FBackdrop write FBackdrop;
     //** @abstract(True from a successful Grab until its procedure has run or Cancel.)
     /// <summary>True from a successful Grab until its procedure has run or
@@ -753,7 +753,7 @@ begin
 end;
 
 // Fills the transparent parts of a matted image, RGBA rows bottom first and
-// premultiplied, with a solid colour or a top-to-bottom gradient: each
+// premultiplied, with a solid colour or a gradient in its direction: each
 // pixel becomes itself plus the backdrop times what it lets through,
 // 1 - alpha, so soft edges blend into the backdrop. Every pixel ends opaque.
 procedure FillBackdrop(var APixels: TBytes; const AWidth, AHeight: Integer;
@@ -762,20 +762,20 @@ var
   X, Y, I, Rest: Integer;
   Fill: TAlphaColorRec;
 begin
-  if ABackdrop.Kind = TSprite3DBackgroundKind.Transparent then
+  if ABackdrop.Kind in [TSprite3DBackgroundKind.None,
+    TSprite3DBackgroundKind.Transparent] then
     Exit;
   Fill := TAlphaColorRec(ABackdrop.Colour);
   for Y := 0 to AHeight - 1 do
   begin
-    // Rows are stored bottom first; the gradient runs from the top
-    if ABackdrop.Kind = TSprite3DBackgroundKind.Gradient then
-      if AHeight > 1 then
-        Fill := TAlphaColorRec(ABackdrop.GradientAt((AHeight - 1 - Y) / (AHeight - 1)))
-      else
-        Fill := TAlphaColorRec(ABackdrop.GradientAt(0));
     I := Y * AWidth * 4;
     for X := 0 to AWidth - 1 do
     begin
+      // Rows are stored bottom first; the gradient is measured from the top
+      // left, at the pixel's centre
+      if ABackdrop.Kind = TSprite3DBackgroundKind.Gradient then
+        Fill := TAlphaColorRec(ABackdrop.GradientAtPoint(X + 0.5, AHeight - Y - 0.5,
+          AWidth, AHeight));
       Rest := 255 - APixels[I + 3];
       if Rest > 0 then
       begin

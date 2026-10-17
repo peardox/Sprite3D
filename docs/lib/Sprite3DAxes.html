@@ -7,6 +7,49 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
 <link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
 </head>
 <body>
 <nav class="navbar d-md-none sticky-top bg-body-tertiary">
@@ -35,25 +78,33 @@ Draws a model's X, Y and Z axes through its centre of rotation.</p>
 <p>
 
 
-<p>ShowModelAxes adds a TModelAxes to a TGorillaModel. In each frame's main pass it draws three lines with the context's DrawLine helper: red along X, green along Y and blue along Z. They cross at the model's centre of rotation, which is FMX's RotationCenter in the model's own coordinates and is the model's origin unless that has been changed. Each line runs from one face of the model's bounding box to the opposite face, so unless the centre of rotation lies outside that box, the lines stay inside the box that FitToBounds frames.
+<p>ShowModelAxes adds a TModelAxes to a TGorillaModel. It shows three lines: red along X, green along Y and blue along Z. They cross at the model's centre of rotation, which is FMX's RotationCenter in the model's own coordinates and is the model's origin unless that has been changed. Each line runs from one face of the model's bounding box to the opposite face, so unless the centre of rotation lies outside that box, the lines stay inside the box that FitToBounds frames. The axes move, turn and scale with the model and show its own axes rather than the scene's. FMX's Y axis points down the screen, so with no rotation the green line's positive end is at the bottom.
 
-<p>The axes are a child of the model and are drawn with their own AbsoluteMatrix, so they move, turn and scale with the model and show its own axes rather than the scene's. FMX's Y axis points down the screen, so with no rotation the green line's positive end is at the bottom. By default the lines are 1 pixel wide and drawn with depth testing off, so the model never hides them.
+<p>There are two ways of drawing, chosen by OnTop. Gorilla's materials have no setting to turn depth testing off, so only the context can draw over the model.
 
-<p>This follows Gorilla v1.5's Line Rendering guide: a TDummy descendant that overrides Render, sets and restores the context matrix, draws only in the main pass, and wraps a wider line width in BeginLineRendering and EndLineRendering. Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+<p>OnTop True, the default, draws the lines over everything, so the model never hides them, even inside a solid model. In each frame's main pass the TModelAxes draws them with the context's DrawLine helper, following Gorilla v1.5's Line Rendering guide. Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+
+<p>OnTop False draws each line with a GLSL shader, through the documented SurfaceShader hook of a TGorillaDefaultMaterialSource, which Gorilla converts for Vulkan and Metal. Each line is drawn on two thin TGorillaPlane strips that cross along it, so it is seen from any angle; the shader keeps only the pixels within LineWidth / 2 of the strip's middle. The width works on every backend. The lines are ordinary geometry, so the model hides the parts inside it or behind it. The strips are not children of the model, so they never count in its bounding box; they sit in a frame beside the model that copies its position, rotation, scale and centre of rotation whenever they change.
 
 <p></p>
 
 <pre class="preformatted">
-TGorillaModel
-`-- TModelAxes      one per model, found by FindModelAxes;
-                    draws the three lines in its Render</pre>
+&lt;model's parent&gt;
+|-- TGorillaModel
+|   `-- TModelAxes          one per model, found by FindModelAxes; OnTop: draws the lines
+|                           in its Render; otherwise keeps the frame on the model
+`-- axes frame              OnTop False only; TDummy copying the model's transform
+    `-- 6 x TGorillaPlane   two strips per line, drawn by their shaders</pre>
 
 <p>
 
+<p>Usage:
+
 <p></p>
 
 <pre class="preformatted">
-ShowModelAxes(GorillaModel1);    // after the model is loaded
+ShowModelAxes(GorillaModel1);                // after the model is loaded; drawn on top
+ShowModelAxes(GorillaModel1@, 2, False);      // shader lines 2 pixels wide
 HideModelAxes(GorillaModel1);</pre>
 
 <p></p>
@@ -66,7 +117,7 @@ HideModelAxes(GorillaModel1);</pre>
 </tr>
 <tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAxes.TModelAxes.html"><code>TModelAxes</code></a></td>
-<td class="itemdesc">Draws three coloured lines through a point, using the render context.</td>
+<td class="itemdesc">Shows three coloured lines through a point, drawn on top or by shaders.</td>
 </tr>
 </table>
 <span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
@@ -95,7 +146,7 @@ Draws AModel's X, Y and Z axes through its centre of rotation.</p>
 
 <p>Any axes already on AModel are removed first, so calling it again, for example after loading a different model, redraws them for the new bounds. The lines cross at <code>AModel.RotationCenter</code> and each runs across AModel's current bounding box, from <code>GetAnimatedBoundingBox</code>, widened if need be to reach the centre of rotation. X is red, Y green and Z blue.
 
-<p>The axes are added as a child of AModel, so they follow its position, rotation and scale, and are freed with it. They are sized for the box at the time of the call. Call from the main thread only.
+<p>The axes are added as a child of AModel, so they follow its position, rotation and scale, and are freed with it. They are sized for the box at the time of the call. Without AOnTop, AModel must already have a parent. Call from the main thread only.
 
 <p>
 
@@ -113,9 +164,9 @@ Draws AModel's X, Y and Z axes through its centre of rotation.</p>
 <dt>AModel</dt>
 <dd>The model to draw axes on. Nothing happens if it is nil.</dd>
 <dt>ALineWidth</dt>
-<dd>Line width in screen pixels. Values above 1 work on desktop OpenGL only.</dd>
+<dd>Line width in screen pixels. With AOnTop, values above 1 work on desktop OpenGL only; without it, on every backend.</dd>
 <dt>AOnTop</dt>
-<dd>True to draw the lines over everything, so the model cannot hide them; False to let the model hide the parts inside it.</dd>
+<dd>True to draw the lines over everything, so the model cannot hide them; False to draw them with shaders, letting the model hide the parts inside it.</dd>
 </dl>
 <h6 class="description_section">Returns</h6>
 <p class="return">The new axes, owned by AModel; or nil, with nothing added, if AModel is nil or its bounding box is empty.</p><h6 class="description_section">See also</h6>
@@ -137,7 +188,7 @@ Removes the axes ShowModelAxes added to AModel.</p>
 <p>
 
 
-<p>Frees the TModelAxes. Does nothing if AModel is nil or has no axes. Call from the main thread only.
+<p>Frees the TModelAxes, with any strips. Does nothing if AModel is nil or has no axes. Call from the main thread only.
 
 <p>
 

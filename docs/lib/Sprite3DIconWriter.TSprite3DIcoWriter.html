@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DIconWriter: Class TSprite3DIcoWriter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DIcoWriter"></span><h1 class="cio">Class TSprite3DIcoWriter</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DIcoWriter = class(<a class="normal" href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a>)</code></p>
+<h2 class="description">Description</h2>
+<p>
+Writes Windows .ico files.</p>
+<p>
+
+
+<p>Each image is stored with 32 bits per pixel: 8-bit blue, green, red and alpha. Images smaller than PngMinSize are stored as bitmaps, with the AND mask older readers need, and larger ones as PNG, which keeps the file small; this is how Windows 10 and 11 store their own icons, with PNG only for 256. Images may be 1 to 256 pixels square. The default sizes are Windows 10 and 11's: 16, 20, 24, 32, 40, 48, 64 and 256.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TObject</li>
+<li class="ancestor"><a class="normal" href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a></li>
+<li class="thisitem">TSprite3DIcoWriter</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#DialogFilter">DialogFilter</a></strong>: String;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#FixFileName-String-">FixFileName</a></strong>(const AFileName: String): String;</code></td>
+</tr>
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#SaveToFile-arrayofTBitmap-String-">SaveToFile</a></strong>(const AImages: array of TBitmap; const AFileName: String);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#Create">Create</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#FormatName">FormatName</a></strong>: String; override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#FileExtension">FileExtension</a></strong>: String; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#DefaultSizes">DefaultSizes</a></strong>: TArray&lt;Integer&gt;; override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#SaveToStream-arrayofTBitmap-TStream-">SaveToStream</a></strong>(const AImages: array of TBitmap; const AStream: TStream); override;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DIconWriter.TSprite3DIcoWriter.html#PngMinSize">PngMinSize</a></strong>: Integer read FPngMinSize write FPngMinSize;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DialogFilter"></span><code>class function <strong>DialogFilter</strong>: String;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a>.</p><p>
+The format as one file type for a file dialog's Filter.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Such as <code>'Windows icon (*.ico)|*.ico'</code>.</p></td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FixFileName-String-"></span><code>class function <strong>FixFileName</strong>(const AFileName: String): String;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a>.</p><p>
+AFileName with this format's extension, added or replacing another.</p>
+<p>
+
+
+<p>A name already ending in the extension, in any case, is returned unchanged.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>A file name, with or without an extension.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The file name ending in FileExtension.</p></td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SaveToFile-arrayofTBitmap-String-"></span><code>procedure <strong>SaveToFile</strong>(const AImages: array of TBitmap; const AFileName: String);</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a>.</p><p>
+Writes the images to a file in this format.</p>
+<p>
+
+
+<p>Creates the file's folder if needed and replaces any existing file. Blocks while writing. If writing fails, the part-written file is deleted.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AImages</dt>
+<dd>The images, as for SaveToStream.</dd>
+<dt>AFileName</dt>
+<dd>The full path to write; it is used as given, so pass it through FixFileName first to be sure of the extension.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>Exception</code></dt>
+<dd>If the images are unsuitable, as for SaveToStream, or the file cannot be written.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create"></span><code>constructor <strong>Create</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates a writer that stores 256-pixel images as PNG.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormatName"></span><code>class function <strong>FormatName</strong>: String; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns <code>'Windows icon'</code>.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return"><code>'Windows icon'</code>.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FileExtension"></span><code>class function <strong>FileExtension</strong>: String; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns <code>'.ico'</code>.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return"><code>'.ico'</code>.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DefaultSizes"></span><code>class function <strong>DefaultSizes</strong>: TArray&lt;Integer&gt;; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns Windows 10 and 11's sizes: 16, 20, 24, 32, 40, 48, 64 and 256.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The eight sizes, smallest first.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SaveToStream-arrayofTBitmap-TStream-"></span><code>procedure <strong>SaveToStream</strong>(const AImages: array of TBitmap; const AStream: TStream); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Writes the images as one .ico file, in the order given.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AImages</dt>
+<dd>One to 65535 images, each square and 1 to 256 pixels.</dd>
+<dt>AStream</dt>
+<dd>The stream to write to, from its current position.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no images, too many, or one is not square or is larger than 256 pixels.</dd>
+</dl>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PngMinSize"></span><code>property <strong>PngMinSize</strong>: Integer read FPngMinSize write FPngMinSize;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The smallest image size stored as PNG; 256 by default.</p>
+<p>
+
+
+<p>Images this size or larger are stored as PNG, smaller ones as bitmaps. Set it above 256 to store every image as a bitmap, for the oldest readers, or lower to make the file smaller; Windows Vista and later read either.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

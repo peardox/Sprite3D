@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DHelpers: Class TSprite3DAppSettings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DAppSettings"></span><h1 class="cio">Class TSprite3DAppSettings</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DHelpers.html">Sprite3DHelpers</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DAppSettings = class(TSprite3DJsonSettings)</code></p>
+<h2 class="description">Description</h2>
+<p>
+The application's settings, kept between sessions in settings.json.</p>
+<p>
+
+
+<p>Create it, call Load once at start-up, and call Save after changing a setting. The file is <code>settings.json</code> in SupportFolder; on the first run it does not exist yet, so every setting keeps its default until the first Save. For the main thread only.
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt>TSprite3DJsonSettings</dt>
+  <dd></dd>
+</dl>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TSprite3DJsonSettings</li>
+<li class="thisitem">TSprite3DAppSettings</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#Create">Create</a></strong>; reintroduce;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#SupportFolder">SupportFolder</a></strong>: String; static;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#HasSaveFolder">HasSaveFolder</a></strong>: Boolean;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#BackgroundSpec">BackgroundSpec</a></strong>: TSprite3DBackgroundSpec read GetBackgroundSpec
+      write SetBackgroundSpec;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#SaveFolder">SaveFolder</a></strong>: String read FSaveFolder write FSaveFolder;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#IconFolder">IconFolder</a></strong>: String read FIconFolder write FIconFolder;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#BackgroundKind">BackgroundKind</a></strong>: TSprite3DBackgroundKind read FBackgroundKind
+      write FBackgroundKind;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#BackgroundColour">BackgroundColour</a></strong>: String read FBackgroundColour write FBackgroundColour;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GradientFrom">GradientFrom</a></strong>: String read FGradientFrom write FGradientFrom;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GradientTo">GradientTo</a></strong>: String read FGradientTo write FGradientTo;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GradientDirection">GradientDirection</a></strong>: TSprite3DGradientDirection read FGradientDirection
+      write FGradientDirection;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CheckerSize">CheckerSize</a></strong>: Integer read FCheckerSize write FCheckerSize;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CheckerLight">CheckerLight</a></strong>: String read FCheckerLight write FCheckerLight;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CheckerDark">CheckerDark</a></strong>: String read FCheckerDark write FCheckerDark;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowGrid">ShowGrid</a></strong>: Boolean read FShowGrid write FShowGrid;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowAxes">ShowAxes</a></strong>: Boolean read FShowAxes write FShowAxes;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#FitAnyAngle">FitAnyAngle</a></strong>: Boolean read FFitAnyAngle write FFitAnyAngle;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#Orthographic">Orthographic</a></strong>: Boolean read FOrthographic write FOrthographic;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create"></span><code>constructor <strong>Create</strong>; reintroduce;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates the settings with their defaults, for settings.json in SupportFolder.</p>
+<p>
+
+
+<p>Nothing is read until Load is called.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SupportFolder"></span><code>class function <strong>SupportFolder</strong>: String; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The application's per-user folder, for settings.json and support files.</p>
+<p>
+
+
+<p>AppDataFolder for APP_NAME: for example <code>%APPDATA%\Sprite3D</code> on Windows. It is created by the first Save.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The folder's full path, without a trailing path delimiter.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="HasSaveFolder"></span><code>function <strong>HasSaveFolder</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True if SaveFolder is set and the folder still exists.</p>
+<p>
+
+
+<p>False on the first run, and also if the folder has been removed or is on a drive that is not connected, so the user can be asked for a folder again.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Whether grabs can be saved in SaveFolder without asking.</p></td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="BackgroundSpec"></span><code>property <strong>BackgroundSpec</strong>: TSprite3DBackgroundSpec read GetBackgroundSpec
+      write SetBackgroundSpec;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The background settings together, as the viewport and grabs use them.</p>
+<p>
+
+
+<p>Reading turns the stored colour texts back into colours; one that cannot be read takes its default. Writing stores all of them; call Save afterwards to keep them.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="SaveFolder"></span><code>property <strong>SaveFolder</strong>: String read FSaveFolder write FSaveFolder;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The folder grabs are saved in; empty until one is chosen.</p>
+<p>
+
+
+<p>Stored as <code>saveFolder</code> in settings.json.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="IconFolder"></span><code>property <strong>IconFolder</strong>: String read FIconFolder write FIconFolder;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The folder the last icon was saved in, where the next save dialog opens; empty until an icon is saved.</p>
+<p>
+
+
+<p>Stored as <code>iconFolder</code> in settings.json.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="BackgroundKind"></span><code>property <strong>BackgroundKind</strong>: TSprite3DBackgroundKind read FBackgroundKind
+      write FBackgroundKind;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+What the background shows: None, Transparent, Solid or Gradient.</p>
+<p>
+
+
+<p>Stored as <code>backgroundKind</code>, by name. None, the default until one is chosen, draws no background; Transparent shows a checker in the viewport. Both leave grabs transparent.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="BackgroundColour"></span><code>property <strong>BackgroundColour</strong>: String read FBackgroundColour write FBackgroundColour;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Solid background's colour, as <code>#AARRGGBB</code>.</p>
+<p>
+
+
+<p>Stored as <code>backgroundColour</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="GradientFrom"></span><code>property <strong>GradientFrom</strong>: String read FGradientFrom write FGradientFrom;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Gradient background's starting colour, as <code>#AARRGGBB</code>.</p>
+<p>
+
+
+<p>Stored as <code>gradientFrom</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="GradientTo"></span><code>property <strong>GradientTo</strong>: String read FGradientTo write FGradientTo;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Gradient background's ending colour, as <code>#AARRGGBB</code>.</p>
+<p>
+
+
+<p>Stored as <code>gradientTo</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="GradientDirection"></span><code>property <strong>GradientDirection</strong>: TSprite3DGradientDirection read FGradientDirection
+      write FGradientDirection;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Which way the Gradient background runs.</p>
+<p>
+
+
+<p>Stored as <code>gradientDirection</code>, by name. TopToBottom, the default, is used when settings.json has none.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="CheckerSize"></span><code>property <strong>CheckerSize</strong>: Integer read FCheckerSize write FCheckerSize;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The side of each checker square in the viewport, in pixels; 64 by default.</p>
+<p>
+
+
+<p>Stored as <code>checkerSize</code>. Values below 1 count as 1.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="CheckerLight"></span><code>property <strong>CheckerLight</strong>: String read FCheckerLight write FCheckerLight;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The lighter checker colour, as <code>#AARRGGBB</code>.</p>
+<p>
+
+
+<p>Stored as <code>checkerLight</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="CheckerDark"></span><code>property <strong>CheckerDark</strong>: String read FCheckerDark write FCheckerDark;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The darker checker colour, as <code>#AARRGGBB</code>.</p>
+<p>
+
+
+<p>Stored as <code>checkerDark</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="ShowGrid"></span><code>property <strong>ShowGrid</strong>: Boolean read FShowGrid write FShowGrid;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the main form's &quot;Show grid&quot; box is checked; True by default.</p>
+<p>
+
+
+<p>Stored as <code>showGrid</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="ShowAxes"></span><code>property <strong>ShowAxes</strong>: Boolean read FShowAxes write FShowAxes;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the main form's &quot;Show axes&quot; box is checked; True by default.</p>
+<p>
+
+
+<p>Stored as <code>showAxes</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="FitAnyAngle"></span><code>property <strong>FitAnyAngle</strong>: Boolean read FFitAnyAngle write FFitAnyAngle;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the main form's &quot;Fit any angle&quot; box is checked; False by default.</p>
+<p>
+
+
+<p>Stored as <code>fitAnyAngle</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Orthographic"></span><code>property <strong>Orthographic</strong>: Boolean read FOrthographic write FOrthographic;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the main form's &quot;Orthographic&quot; box is checked; False by default.</p>
+<p>
+
+
+<p>Stored as <code>orthographic</code>.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

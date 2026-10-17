@@ -84,9 +84,14 @@ type
     FBackgroundColour: String;
     FGradientFrom: String;
     FGradientTo: String;
+    FGradientDirection: TSprite3DGradientDirection;
     FCheckerSize: Integer;
     FCheckerLight: String;
     FCheckerDark: String;
+    FShowGrid: Boolean;
+    FShowAxes: Boolean;
+    FFitAnyAngle: Boolean;
+    FOrthographic: Boolean;
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
     procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
   public
@@ -147,13 +152,15 @@ type
     /// until an icon is saved.</summary>
     /// <remarks>Stored as <c>iconFolder</c> in settings.json.</remarks>
     property IconFolder: String read FIconFolder write FIconFolder;
-    //** @abstract(What the background shows: Transparent, Solid or Gradient.)
+    //** @abstract(What the background shows: None, Transparent, Solid or Gradient.)
     //**
-    //** Stored as @code(backgroundKind), by name. Transparent, the default, shows a checker in
-    //** the viewport and leaves grabs transparent.
-    /// <summary>What the background shows: Transparent, Solid or Gradient.</summary>
-    /// <remarks>Stored as <c>backgroundKind</c>, by name. Transparent, the default, shows a
-    /// checker in the viewport and leaves grabs transparent.</remarks>
+    //** Stored as @code(backgroundKind), by name. None, the default until one is chosen,
+    //** draws no background; Transparent shows a checker in the viewport. Both leave grabs
+    //** transparent.
+    /// <summary>What the background shows: None, Transparent, Solid or Gradient.</summary>
+    /// <remarks>Stored as <c>backgroundKind</c>, by name. None, the default until one is
+    /// chosen, draws no background; Transparent shows a checker in the viewport. Both leave
+    /// grabs transparent.</remarks>
     property BackgroundKind: TSprite3DBackgroundKind read FBackgroundKind
       write FBackgroundKind;
     //** @abstract(The Solid background's colour, as @code(#AARRGGBB).)
@@ -162,18 +169,27 @@ type
     /// <summary>The Solid background's colour, as <c>#AARRGGBB</c>.</summary>
     /// <remarks>Stored as <c>backgroundColour</c>.</remarks>
     property BackgroundColour: String read FBackgroundColour write FBackgroundColour;
-    //** @abstract(The Gradient background's top colour, as @code(#AARRGGBB).)
+    //** @abstract(The Gradient background's starting colour, as @code(#AARRGGBB).)
     //**
     //** Stored as @code(gradientFrom).
-    /// <summary>The Gradient background's top colour, as <c>#AARRGGBB</c>.</summary>
+    /// <summary>The Gradient background's starting colour, as <c>#AARRGGBB</c>.</summary>
     /// <remarks>Stored as <c>gradientFrom</c>.</remarks>
     property GradientFrom: String read FGradientFrom write FGradientFrom;
-    //** @abstract(The Gradient background's bottom colour, as @code(#AARRGGBB).)
+    //** @abstract(The Gradient background's ending colour, as @code(#AARRGGBB).)
     //**
     //** Stored as @code(gradientTo).
-    /// <summary>The Gradient background's bottom colour, as <c>#AARRGGBB</c>.</summary>
+    /// <summary>The Gradient background's ending colour, as <c>#AARRGGBB</c>.</summary>
     /// <remarks>Stored as <c>gradientTo</c>.</remarks>
     property GradientTo: String read FGradientTo write FGradientTo;
+    //** @abstract(Which way the Gradient background runs.)
+    //**
+    //** Stored as @code(gradientDirection), by name. TopToBottom, the default, is used when
+    //** settings.json has none.
+    /// <summary>Which way the Gradient background runs.</summary>
+    /// <remarks>Stored as <c>gradientDirection</c>, by name. TopToBottom, the default, is used
+    /// when settings.json has none.</remarks>
+    property GradientDirection: TSprite3DGradientDirection read FGradientDirection
+      write FGradientDirection;
     //** @abstract(The side of each checker square in the viewport, in pixels; 64 by
     //** default.)
     //**
@@ -194,6 +210,35 @@ type
     /// <summary>The darker checker colour, as <c>#AARRGGBB</c>.</summary>
     /// <remarks>Stored as <c>checkerDark</c>.</remarks>
     property CheckerDark: String read FCheckerDark write FCheckerDark;
+    //** @abstract(Whether the main form's "Show grid" box is checked; True by default.)
+    //**
+    //** Stored as @code(showGrid).
+    /// <summary>Whether the main form's "Show grid" box is checked; True by
+    /// default.</summary>
+    /// <remarks>Stored as <c>showGrid</c>.</remarks>
+    property ShowGrid: Boolean read FShowGrid write FShowGrid;
+    //** @abstract(Whether the main form's "Show axes" box is checked; True by default.)
+    //**
+    //** Stored as @code(showAxes).
+    /// <summary>Whether the main form's "Show axes" box is checked; True by
+    /// default.</summary>
+    /// <remarks>Stored as <c>showAxes</c>.</remarks>
+    property ShowAxes: Boolean read FShowAxes write FShowAxes;
+    //** @abstract(Whether the main form's "Fit any angle" box is checked; False by
+    //** default.)
+    //**
+    //** Stored as @code(fitAnyAngle).
+    /// <summary>Whether the main form's "Fit any angle" box is checked; False by
+    /// default.</summary>
+    /// <remarks>Stored as <c>fitAnyAngle</c>.</remarks>
+    property FitAnyAngle: Boolean read FFitAnyAngle write FFitAnyAngle;
+    //** @abstract(Whether the main form's "Orthographic" box is checked; False by default.)
+    //**
+    //** Stored as @code(orthographic).
+    /// <summary>Whether the main form's "Orthographic" box is checked; False by
+    /// default.</summary>
+    /// <remarks>Stored as <c>orthographic</c>.</remarks>
+    property Orthographic: Boolean read FOrthographic write FOrthographic;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -442,6 +487,12 @@ begin
   FSaveFolder := String.Empty;
   FIconFolder := String.Empty;
   SetBackgroundSpec(TSprite3DBackgroundSpec.Default);
+  // As the main form's check boxes start; a settings.json without these
+  // keys leaves them so
+  FShowGrid := True;
+  FShowAxes := True;
+  FFitAnyAngle := False;
+  FOrthographic := False;
 end;
 
 // A colour as #AARRGGBB, which people can read and edit in settings.json
@@ -477,6 +528,7 @@ begin
   Result.Colour := TextToColour(FBackgroundColour, Defaults.Colour);
   Result.GradientFrom := TextToColour(FGradientFrom, Defaults.GradientFrom);
   Result.GradientTo := TextToColour(FGradientTo, Defaults.GradientTo);
+  Result.GradientDirection := FGradientDirection;
   Result.CheckerSize := Max(FCheckerSize, 1);
   Result.CheckerLight := TextToColour(FCheckerLight, Defaults.CheckerLight);
   Result.CheckerDark := TextToColour(FCheckerDark, Defaults.CheckerDark);
@@ -488,6 +540,7 @@ begin
   FBackgroundColour := ColourToText(Value.Colour);
   FGradientFrom := ColourToText(Value.GradientFrom);
   FGradientTo := ColourToText(Value.GradientTo);
+  FGradientDirection := Value.GradientDirection;
   FCheckerSize := Max(Value.CheckerSize, 1);
   FCheckerLight := ColourToText(Value.CheckerLight);
   FCheckerDark := ColourToText(Value.CheckerDark);

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DHelpers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DHelpers</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Support routines for the Sprite3D application that are neither UI nor library.</p>
+<p>
+
+
+<p>The application keeps three kinds of code apart. The units in <code>ui</code> only handle the user interface; the units in <code>lib</code> are a library with no knowledge of this application, usable in other projects; and this unit holds what is left: the application's own rules, such as where models are found, how grabs are named and saved, and how a loaded model is placed. It uses the library and the RTL, never the UI.
+
+<p>TSprite3DAppSettings holds the settings kept between sessions, in <code>settings.json</code> in the application's own per-user folder, SupportFolder.
+
+<p>Loading a model through LoadModelFile also registers Gorilla3D's loaders for glTF, FBX, OBJ, USD, Collada, STL and PLY files, as this unit uses them.
+
+<p>All routines are for the main thread.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TControl3DAccess.html"><code>TControl3DAccess</code></a></td>
+<td class="itemdesc">Protected-access helper for TControl3D; nothing in the project uses it yet.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DAppSettings.html"><code>TSprite3DAppSettings</code></a></td>
+<td class="itemdesc">The application's settings, kept between sessions in settings.json.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#Wrap360-Single-">Wrap360</a></strong>(const ADegrees: Single): Single;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></strong>(const ADegrees: Single): String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DefaultModelDir">DefaultModelDir</a></strong>: String;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></strong>: String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></strong>(const AFolder, APrefix, AExtension: String; var ANumber: Integer): String;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></strong>(const ABitmap: TBitmap; const AFolder: String; var ANumber: Integer): String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></strong>(const AModel: TGorillaModel; const AFileName: String; out ABox: TBoundingBox): TArray&lt;String&gt;;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#PlaceModel-TGorillaModel-TBoundingBox-">PlaceModel</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#IsModelFile-String-">IsModelFile</a></strong>(const AFileName: String): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></strong>(const ARequested: TArray&lt;String&gt;; const ADefault: String): String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></strong>(const AExtension: String): String;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Constants"></span><h3 class="summary">Constants</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#APP_NAME">APP_NAME</a></strong> = 'Sprite3D';</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#SETTINGS_FILE_NAME">SETTINGS_FILE_NAME</a></strong> = 'settings.json';</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="Wrap360-Single-"></span><code>function <strong>Wrap360</strong>(const ADegrees: Single): Single;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Shifts an angle in degrees by whole turns into the range 0 to 360.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ADegrees</dt>
+<dd>Any angle in degrees, negative or past a full turn.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The same direction as an angle from 0 up to, but not including, 360.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DegreesText-Single-"></span><code>function <strong>DegreesText</strong>(const ADegrees: Single): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Formats an angle from Wrap360 as whole degrees for a readout.</p>
+<p>
+
+
+<p>Rounds to the nearest degree, so 359.6 shows as 0, never 360, and pads to three characters so readouts stay the same width.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ADegrees</dt>
+<dd>An angle from 0 up to 360.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The angle as text, such as <code>' 0'</code> or <code>' 45'</code>.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DefaultModelDir"></span><code>function <strong>DefaultModelDir</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The folder that holds the application's models folder, for this platform.</p>
+<p>
+
+
+<p>The library path on macOS, the home folder on Linux and <code>'../../../'</code> elsewhere; on Windows it is the current folder instead, returned as an empty string, if that has a models subfolder.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">A folder path ending in a path delimiter, or empty for the current folder.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DefaultGrabFolder"></span><code>function <strong>DefaultGrabFolder</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The folder grabs are saved in without asking, or empty where the user should choose.</p>
+<p>
+
+
+<p>Android and iOS have no folder dialog, so there grabs go to a fixed Grabs folder the user can reach: under the app's public storage on Android, which shows over USB or in a file manager, and under its Documents folder on iOS, which shows in the Files app once the app enables file sharing in its Info.plist. Elsewhere this returns an empty string.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The fixed grab folder on Android and iOS; an empty string on other platforms.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="NextNumberedFileName-String-String-String-Integer-"></span><code>function <strong>NextNumberedFileName</strong>(const AFolder, APrefix, AExtension: String; var ANumber: Integer): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The first free numbered file name in a folder, such as grab001.png.</p>
+<p>
+
+
+<p>Starts at ANumber and moves it past every name already taken, so an existing file is never chosen. Numbers have at least three digits. The file is not created.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFolder</dt>
+<dd>The folder to look in.</dd>
+<dt>APrefix</dt>
+<dd>The start of the file name, such as <code>'grab'</code>.</dd>
+<dt>AExtension</dt>
+<dd>The extension, with its dot, such as <code>'.png'</code>.</dd>
+<dt>ANumber</dt>
+<dd>The number to try first; on return, the number of the name returned.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The full path of the first name that does not exist yet.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveGrab-TBitmap-String-Integer-"></span><code>function <strong>SaveGrab</strong>(const ABitmap: TBitmap; const AFolder: String; var ANumber: Integer): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Saves a grab as the next free grabNNN.png in a folder.</p>
+<p>
+
+
+<p>Creates the folder if needed, picks the name with NextNumberedFileName starting at ANumber, saves ABitmap there as PNG and moves ANumber on to the next number. Blocks while the file is written.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABitmap</dt>
+<dd>The image to save; it is not freed.</dd>
+<dt>AFolder</dt>
+<dd>The folder to save in.</dd>
+<dt>ANumber</dt>
+<dd>The number to try first; on return, one past the number used. Unchanged if the save fails.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The full path of the file written.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>Exception</code></dt>
+<dd>If the folder cannot be created or the file cannot be written; the class depends on the cause.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="LoadModelFile-TGorillaModel-String-TBoundingBox-"></span><code>function <strong>LoadModelFile</strong>(const AModel: TGorillaModel; const AFileName: String; out ABox: TBoundingBox): TArray&lt;String&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Replaces a model's contents with a model file and starts its last animation.</p>
+<p>
+
+
+<p>Clears AModel, loads AFileName into it, and, if the file has animations, plays the one whose name sorts last. Blocks while the file loads.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to load into; its old contents are removed first.</dd>
+<dt>AFileName</dt>
+<dd>A glTF, FBX, OBJ, USD, Collada, STL or PLY file.</dd>
+<dt>ABox</dt>
+<dd>The model's bounding box straight after loading, before anything is added to it or it is moved; pass it to PlaceModel.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The names of the model's animations in sorted order; empty if it has none.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>Exception</code></dt>
+<dd>If the file cannot be read or loaded; AModel is then left cleared or part-loaded.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PlaceModel-TGorillaModel-TBoundingBox-"></span><code>procedure <strong>PlaceModel</strong>(const AModel: TGorillaModel; const ABox: TBoundingBox);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Centres a loaded model on its bounding box and turns it right way up.</p>
+<p>
+
+
+<p>Moves AModel to the centre of ABox and turns it 180 degrees about X, which the application's models need to stand upright.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to place.</dd>
+<dt>ABox</dt>
+<dd>The box LoadModelFile returned for it.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IsModelFile-String-"></span><code>function <strong>IsModelFile</strong>(const AFileName: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether a file is a model LoadModelFile can load, judged by its extension.</p>
+<p>
+
+
+<p>The extensions are those of the loaders this unit registers: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, in any case. The file's contents are not checked.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>A file name or path.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if its extension is one of the model formats.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="StartupModelFile-TArrayString-String-"></span><code>function <strong>StartupModelFile</strong>(const ARequested: TArray&lt;String&gt;; const ADefault: String): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The model to load at start-up: the first one the system asked to open, or ADefault.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ARequested</dt>
+<dd>The files the operating system asked the application to open, oldest first, as Sprite3DOpenFiles collects them; files that are not models are skipped.</dd>
+<dt>ADefault</dt>
+<dd>The model to load when none was asked for.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The first model in ARequested, or ADefault if it holds none.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="AutoIconFileName-String-"></span><code>function <strong>AutoIconFileName</strong>(const AExtension: String): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The file an icon is saved to without asking, or empty where the user should choose.</p>
+<p>
+
+
+<p>Android and iOS have no save dialog, so there icons go to the next free <code>iconNNN</code> name, with AExtension, in DefaultGrabFolder. Elsewhere this returns an empty string, and the user picks the file.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AExtension</dt>
+<dd>The icon format's extension, with its dot, such as <code>'.ico'</code>.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The full path on Android and iOS; an empty string on other platforms.</p></td></tr>
+</table>
+<h3 class="detail">Constants</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="APP_NAME"></span><code><strong>APP_NAME</strong> = 'Sprite3D';</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The application's name, used for its per-user folder.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SETTINGS_FILE_NAME"></span><code><strong>SETTINGS_FILE_NAME</strong> = 'settings.json';</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The name of the settings file in SupportFolder.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

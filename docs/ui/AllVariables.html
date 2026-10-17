@@ -1,12 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>All Classes, Interfaces, Objects and Records</title>
+<title>All Variables</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="PasDoc 1.0.5.snapshot">
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
 <link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
 </head>
 <body>
 <nav class="navbar d-md-none sticky-top bg-body-tertiary">
@@ -26,7 +69,7 @@
 <ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
 <main class="pasdoc-content content">
 <div class="container-fluid py-3 px-4">
-<h1 class="allitems">All Classes, Interfaces, Objects and Records</h1>
+<h1 class="allitems">All Variables</h1>
 <table class="itemstable wide_list">
 <tr class="listheader">
 <th class="itemname">Name</th>
@@ -34,34 +77,9 @@
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
-<td class="itemname"><a class="bold" href="Sprite3dMain.TControl3DAccess.html">TControl3DAccess</a></td>
+<td class="itemname"><a class="bold" href="Sprite3dMain.html#MainForm">MainForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
-<td class="itemdesc"><p>Protected-access helper for TControl3D; nothing in the project uses it yet.</p></td>
-</tr>
-<tr class="list2">
-<td class="itemname"><a class="bold" href="Sprite3dMain.TMainForm.html">TMainForm</a></td>
-<td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
-<td class="itemdesc"><p>The main form: a Gorilla3D view of one model, with dials for the camera.</p></td>
-</tr>
-<tr class="list">
-<td class="itemname"><a class="bold" href="Sprite3DAxes.TModelAxes.html">TModelAxes</a></td>
-<td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
-<td class="itemdesc"><p>Draws three coloured lines through a point, using the render context.</p></td>
-</tr>
-<tr class="list2">
-<td class="itemname"><a class="bold" href="Sprite3DGrid.TModelGrid.html">TModelGrid</a></td>
-<td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
-<td class="itemdesc"><p>Shows a shader-drawn grid for its parent model.</p></td>
-</tr>
-<tr class="list">
-<td class="itemname"><a class="bold" href="Sprite3DCamera.TQuat.html">TQuat</a></td>
-<td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
-<td class="itemdesc"><p>A quaternion of Doubles, used for the camera's orientation arithmetic.</p></td>
-</tr>
-<tr class="list2">
-<td class="itemname"><a class="bold" href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a></td>
-<td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
-<td class="itemdesc"><p>A TGorillaCamera that orbits a centre point through a chain of three pivots.</p></td>
+<td class="itemdesc"><p>The main form, created by Application.CreateForm in Sprite3d.dpr.</p></td>
 </tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

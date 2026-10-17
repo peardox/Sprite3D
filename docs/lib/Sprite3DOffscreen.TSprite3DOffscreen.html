@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DOffscreen: Class TSprite3DOffscreen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DOffscreen"></span><h1 class="cio">Class TSprite3DOffscreen</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DOffscreen = class(TGorillaRenderPassController)</code></p>
+<h2 class="description">Description</h2>
+<p>
+A render pass that draws the viewport's scene off screen, one frame on request.</p>
+<p>
+
+
+<p>Create it, set Viewport to the TGorillaViewport to capture, then call Grab whenever an image is wanted. The pass uses the viewport's camera, lights and models as they are at the time of the frame. It takes over the inherited OnBeginRender, OnEndRender, BackgroundColor and Iterations, which must not be changed. All members are for the main thread only.
+
+<p>With TransparentBackground, the default, the background comes out transparent, with soft edges and see-through materials partly transparent, by difference matting: the frame is drawn twice, over black and over white. Where the two differ, the background showed through, by as much as they differ; the over-black image is then the colour already multiplied by that alpha, which is how FMX bitmaps hold it. This needs nothing from the renderer's own alpha, which Gorilla's passes do not keep. Both drawings are made in the same frame, as two iterations of the pass, so an animated model is caught in the same pose in both; if the renderer does not take the new clear colour between iterations, the pass finds the drawings identical and, from then on, draws them in frames one after the other instead. The first grab also draws over 50% grey, which shows whether the renderer gamma-encodes its output after blending; if it does, the matting is done in linear light, so soft edges keep their true alpha either way.
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DOffscreen.html#TSprite3DGrabProc">TSprite3DGrabProc</a></dt>
+  <dd>Receives the result of TSprite3DOffscreen.Grab.</dd>
+</dl>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TGorillaRenderPassController</li>
+<li class="thisitem">TSprite3DOffscreen</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#CreateMaterialSource">CreateMaterialSource</a></strong>(): TGorillaRenderPassMaterialSource; override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Create-TComponent-String-">Create</a></strong>(AOwner: TComponent; const AId: String = 'Sprite3DOffscreen'); override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Grab-TSprite3DGrabProc-">Grab</a></strong>(const AOnGrabbed: <a href="Sprite3DOffscreen.html#TSprite3DGrabProc">TSprite3DGrabProc</a>): Boolean;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Cancel">Cancel</a></strong>;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#GrabSizes-arrayofInteger-TSprite3DGrabSizesProc-">GrabSizes</a></strong>(const ASizes: array of Integer; const AOnGrabbed: <a href="Sprite3DOffscreen.html#TSprite3DGrabSizesProc">TSprite3DGrabSizesProc</a>): Boolean;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Backdrop">Backdrop</a></strong>: <a href="Sprite3DBackground.TSprite3DBackgroundSpec.html">TSprite3DBackgroundSpec</a> read FBackdrop write FBackdrop;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Busy">Busy</a></strong>: Boolean read FBusy;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Width">Width</a></strong>: Integer read FWidth write SetWidth default <a href="Sprite3DOffscreen.html#DEFAULT_OFFSCREEN_WIDTH">DEFAULT_OFFSCREEN_WIDTH</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Height">Height</a></strong>: Integer read FHeight write SetHeight default <a href="Sprite3DOffscreen.html#DEFAULT_OFFSCREEN_HEIGHT">DEFAULT_OFFSCREEN_HEIGHT</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#TransparentBackground">TransparentBackground</a></strong>: Boolean read FTransparentBackground
+      write FTransparentBackground default True;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#OpaqueBackground">OpaqueBackground</a></strong>: TAlphaColor read FOpaqueBackground write FOpaqueBackground
+      default TAlphaColors.Black;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#OnBeforeGrab">OnBeforeGrab</a></strong>: <a href="Sprite3DOffscreen.html#TSprite3DGrabSizeEvent">TSprite3DGrabSizeEvent</a> read FOnBeforeGrab write FOnBeforeGrab;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#OnAfterGrab">OnAfterGrab</a></strong>: TNotifyEvent read FOnAfterGrab write FOnAfterGrab;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-protected wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="CreateMaterialSource"></span><code>function <strong>CreateMaterialSource</strong>(): TGorillaRenderPassMaterialSource; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns nil: this pass draws every object with its own materials.</p>
+<p>
+
+
+<p>Abstract in TGorillaRenderPassController, so it must be overridden. A pass's material source provides the shader for the RectToFBO method, or one material that every object is drawn with; this pass uses RenderListToFBO and must keep each model's own materials and textures, so it has none.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Always nil.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TComponent-String-"></span><code>constructor <strong>Create</strong>(AOwner: TComponent; const AId: String = 'Sprite3DOffscreen'); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates the pass, switched off, with a 256 by 256 target.</p>
+<p>
+
+
+<p>The pass renders before the main pass, into its own frame buffer, with Gorilla's default rendering (order-independent transparency), and makes the background transparent. Nothing is drawn until Viewport is set and Grab is called.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOwner</dt>
+<dd>The owner, which frees the pass; the viewport is a good choice.</dd>
+<dt>AId</dt>
+<dd>Gorilla's identifier for the pass; each pass on one viewport needs its own.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frees the pass; a grab still waiting is dropped without calling back.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Grab-TSprite3DGrabProc-"></span><code>function <strong>Grab</strong>(const AOnGrabbed: <a href="Sprite3DOffscreen.html#TSprite3DGrabProc">TSprite3DGrabProc</a>): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Asks for the next frame to be rendered off screen and passed to AOnGrabbed.</p>
+<p>
+
+
+<p>Returns at once and does not block. AOnGrabbed runs later on the main thread, once, with the image or with the reason it failed. Width and Height are fixed until then.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOnGrabbed</dt>
+<dd>The procedure to call with the result; must not be nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the grab was started; False, with nothing started, if one is already under way (see Busy), Viewport is not set or AOnGrabbed is nil.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Cancel"></span><code>procedure <strong>Cancel</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Abandons a grab that is under way, without calling its procedure.</p>
+<p>
+
+
+<p>Does nothing if no grab is under way. Use it if the viewport may not render again soon, for example while it is hidden.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabSizes-arrayofInteger-TSprite3DGrabSizesProc-"></span><code>function <strong>GrabSizes</strong>(const ASizes: array of Integer; const AOnGrabbed: <a href="Sprite3DOffscreen.html#TSprite3DGrabSizesProc">TSprite3DGrabSizesProc</a>): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Grabs one square image of each size in turn, then passes them all to AOnGrabbed.</p>
+<p>
+
+
+<p>Does what Grab does once for each size, one frame after another: Width and Height are set to the size, OnBeforeGrab and OnAfterGrab run around each grab, so the camera can be fitted to each, and the images are collected. Afterwards Width and Height are put back as they were. Returns at once and does not block; AOnGrabbed runs once on the main thread when every size is done, or as soon as one fails. Busy is True throughout, as each grab starts the next; do not call Grab or Cancel until AOnGrabbed has run.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ASizes</dt>
+<dd>The widths, which are also the heights, in pixels; each at least 1.</dd>
+<dt>AOnGrabbed</dt>
+<dd>The procedure to call with the images; must not be nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the grabs were started; False, with nothing started, if a grab is already under way, Viewport is not set, ASizes is empty or AOnGrabbed is nil.</p></td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Backdrop"></span><code>property <strong>Backdrop</strong>: <a href="Sprite3DBackground.TSprite3DBackgroundSpec.html">TSprite3DBackgroundSpec</a> read FBackdrop write FBackdrop;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+What grabs show behind the model when TransparentBackground is True.</p>
+<p>
+
+
+<p>None, the default, and Transparent leave the background transparent. Solid and Gradient fill it, after the matting, with the colour or with the gradient from GradientFrom to GradientTo in GradientDirection; soft edges blend into it as they would on screen. The checker settings are not used: the checker only stands for transparency on screen. Changes made while Busy apply from the next grab.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Busy"></span><code>property <strong>Busy</strong>: Boolean read FBusy;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True from a successful Grab until its procedure has run or Cancel.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Width"></span><code>property <strong>Width</strong>: Integer read FWidth write SetWidth default <a href="Sprite3DOffscreen.html#DEFAULT_OFFSCREEN_WIDTH">DEFAULT_OFFSCREEN_WIDTH</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The target's width in pixels; 256 by default.</p>
+<p>
+
+
+<p>Values below 1 count as 1. Changes made while Busy wait for the next grab.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Height"></span><code>property <strong>Height</strong>: Integer read FHeight write SetHeight default <a href="Sprite3DOffscreen.html#DEFAULT_OFFSCREEN_HEIGHT">DEFAULT_OFFSCREEN_HEIGHT</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The target's height in pixels; 256 by default.</p>
+<p>
+
+
+<p>Values below 1 count as 1. Changes made while Busy wait for the next grab.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="TransparentBackground"></span><code>property <strong>TransparentBackground</strong>: Boolean read FTransparentBackground
+      write FTransparentBackground default True;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether grabs have a transparent background; True by default.</p>
+<p>
+
+
+<p>True draws each grab twice, over black and over white, and works out each pixel's alpha from the difference, as described for the class, so the background is fully transparent and soft edges are partly so. False draws it once over OpaqueBackground, with every pixel opaque.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="OpaqueBackground"></span><code>property <strong>OpaqueBackground</strong>: TAlphaColor read FOpaqueBackground write FOpaqueBackground
+      default TAlphaColors.Black;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The background colour when TransparentBackground is False; black by default.</p>
+<p>
+
+
+<p>Its alpha is ignored: the background is always drawn opaque.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="OnBeforeGrab"></span><code>property <strong>OnBeforeGrab</strong>: <a href="Sprite3DOffscreen.html#TSprite3DGrabSizeEvent">TSprite3DGrabSizeEvent</a> read FOnBeforeGrab write FOnBeforeGrab;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Runs in Grab, just before the frame is requested, to set the scene up for the target.</p>
+<p>
+
+
+<p>Use it to fit the camera to the target's shape, for example with <code>TSprite3DCamera.FitToBounds(Model, AWidth, AHeight)</code>, so the model fills the grab. Whatever it changes is drawn into the target and must be put back in OnAfterGrab, which follows it: after the pass has drawn, before the main pass draws the same frame, or from Cancel if the frame never comes. It is not called if the pass is freed first. Runs on the main thread.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="OnAfterGrab"></span><code>property <strong>OnAfterGrab</strong>: TNotifyEvent read FOnAfterGrab write FOnAfterGrab;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Runs once after an OnBeforeGrab, to put back what it changed.</p>
+<p>
+
+
+<p>Called from inside the render, just after the target has been drawn and read, so the main pass in the same frame shows the scene as before; or from Cancel if the frame never came. Not called if the pass is freed while a grab is waiting. Runs on the main thread, and must only change scene state, not show dialogs or call Grab.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

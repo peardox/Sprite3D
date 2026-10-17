@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DIconWriter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DIconWriter</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Writes sets of square images as icon files, starting with Windows .ico.</p>
+<p>
+
+
+<p>TSprite3DIconWriter is the base for icon formats: each descendant gives its format's name, file extension and the image sizes it normally holds, and writes a set of FMX bitmaps in that format. TSprite3DIcoWriter writes Windows icons. Every format is registered at start-up with RegisterIconWriter, so a program can offer all of them, for example as the file types of a save dialog, through IconWriters and IconDialogFilter; adding a format, such as the macOS .icns format, needs only a new descendant and its registration.
+
+<p>The writers are plain Pascal over FMX bitmaps and streams, so they work the same on every platform. They do not render anything; the images come from the caller, for example from TSprite3DOffscreen.GrabSizes.
+
+<p></p>
+
+<pre class="preformatted">
+TSprite3DIconWriter (abstract)
+`-- TSprite3DIcoWriter   Windows .ico: 16, 20, 24, 32, 40, 48, 64, 256, 32-bit</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DIconWriter.TSprite3DIconWriter.html"><code>TSprite3DIconWriter</code></a></td>
+<td class="itemdesc">Base class for an icon file format.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DIconWriter.TSprite3DIcoWriter.html"><code>TSprite3DIcoWriter</code></a></td>
+<td class="itemdesc">Writes Windows .ico files.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DIconWriter.html#RegisterIconWriter-TSprite3DIconWriterClass-">RegisterIconWriter</a></strong>(const AWriter: <a href="Sprite3DIconWriter.html#TSprite3DIconWriterClass">TSprite3DIconWriterClass</a>);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DIconWriter.html#IconWriters">IconWriters</a></strong>: TArray&lt;<a href="Sprite3DIconWriter.html#TSprite3DIconWriterClass">TSprite3DIconWriterClass</a>&gt;;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DIconWriter.html#IconDialogFilter">IconDialogFilter</a></strong>: String;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DIconWriter.html#TSprite3DIconWriterClass">TSprite3DIconWriterClass</a></strong> = class of <a href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a>;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="RegisterIconWriter-TSprite3DIconWriterClass-"></span><code>procedure <strong>RegisterIconWriter</strong>(const AWriter: <a href="Sprite3DIconWriter.html#TSprite3DIconWriterClass">TSprite3DIconWriterClass</a>);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Adds an icon format to those IconWriters lists.</p>
+<p>
+
+
+<p>Call it from a writer unit's initialization section. Registering a class twice has no further effect.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AWriter</dt>
+<dd>The writer class to add.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IconWriters"></span><code>function <strong>IconWriters</strong>: TArray&lt;<a href="Sprite3DIconWriter.html#TSprite3DIconWriterClass">TSprite3DIconWriterClass</a>&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Every registered icon format, in the order registered.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The writer classes; TSprite3DIcoWriter is always first.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IconDialogFilter"></span><code>function <strong>IconDialogFilter</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+A file dialog Filter offering every registered icon format.</p>
+<p>
+
+
+<p>The formats are in the order of IconWriters, so a dialog's FilterIndex, which counts from 1, picks <code>IconWriters[FilterIndex - 1]</code>.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Such as <code>'Windows icon (*.ico)|*.ico'</code>.</p></td></tr>
+</table>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DIconWriterClass"></span><code><strong>TSprite3DIconWriterClass</strong> = class of <a href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+A TSprite3DIconWriter descendant, for choosing a format at run time.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

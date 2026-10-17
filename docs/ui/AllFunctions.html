@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>All Functions and Procedures</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="allitems">All Functions and Procedures</h1>
+<table class="itemstable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemunit">Unit</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The file an icon is saved to without asking, or empty where the user should choose.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The folder grabs are saved in without asking, or empty where the user should choose.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultModelDir">DefaultModelDir</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The folder that holds the application's models folder, for this platform.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Formats an angle from Wrap360 as whole degrees for a readout.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsModelFile-String-">IsModelFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Whether a file is a model LoadModelFile can load, judged by its extension.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Replaces a model's contents with a model file and starts its last animation.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The first free numbered file name in a folder, such as grab001.png.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlaceModel-TGorillaModel-TBoundingBox-">PlaceModel</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Centres a loaded model on its bounding box and turns it right way up.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Saves a grab as the next free grabNNN.png in a folder.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The model to load at start-up: the first one the system asked to open, or ADefault.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#Wrap360-Single-">Wrap360</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Shifts an angle in degrees by whole turns into the range 0 to 360.</p></td>
+</tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

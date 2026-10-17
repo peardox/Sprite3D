@@ -7,6 +7,49 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
 <link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
 </head>
 <body>
 <nav class="navbar d-md-none sticky-top bg-body-tertiary">
@@ -37,25 +80,37 @@
 <code>type TModelAxes = class(TDummy)</code></p>
 <h2 class="description">Description</h2>
 <p>
-Draws three coloured lines through a point, using the render context.</p>
+Shows three coloured lines through a point, drawn on top or by shaders.</p>
 <p>
 
 
-<p>A TDummy that overrides Render, as Gorilla's Line Rendering guide recommends, so it adds no meshes or materials. It draws only in the main pass, not in shadow, reflection or other passes. The lines are in its parent's coordinates when it has no position, rotation or scale of its own, which is how ShowModelAxes adds it. Its Width, Height and Depth are set to the lines' extent and its Position to their middle, so anything that culls by an object's size sees the whole set.
+<p>A TDummy. With OnTop it draws the lines in its own Render, in the main pass only, with the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a frame beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render copies the parent's position, rotation, scale and centre of rotation to the frame if any of them changed. The strips are built when SetExtent is called and rebuilt only when a property changes. Freeing the TModelAxes frees the frame, strips and materials.
 
-<p>The object is not stored in .fmx files and ignores the mouse. Use it from the main thread only.</p>
+<p>Its Width, Height and Depth are set to the lines' extent and its Position to their middle, so anything that culls by an object's size sees the whole set. The object is not stored in .fmx files and ignores the mouse. Use it from the main thread only.</p>
 <span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
 <ul class="hierarchy"><li class="ancestor">TDummy</li>
-<li class="thisitem">TModelAxes</li></ul><h2 class="overview">Overview</h2>
+<li class="thisitem">TModelAxes</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
 <span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
 <table class="summary wide_list">
 <tr class="list visibility-protected">
 <td class="visibility"><span class="badge vis-protected">Protected</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DAxes.TModelAxes.html#Render">Render</a></strong>; override;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list2 visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAxes.TModelAxes.html#Notification-TComponent-TOperation-">Notification</a></strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>constructor <strong><a href="Sprite3DAxes.TModelAxes.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DAxes.TModelAxes.html#Destroy">Destroy</a></strong>; override;</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -94,11 +149,34 @@ Draws three coloured lines through a point, using the render context.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-Draws the three lines in the main pass.</p>
+Draws the lines on top, or keeps the strips' frame on the parent.</p>
 <p>
 
 
-<p>Does nothing before SetExtent is called, or in any pass other than the main one. Sets the context matrix to this object's AbsoluteMatrix for the drawing and restores the previous matrix, line state and depth test afterwards, even if drawing fails.</p>
+<p>Does nothing before SetExtent is called. With OnTop, draws the three lines in the main pass only, setting the context matrix to this object's AbsoluteMatrix and restoring the previous matrix, line state and depth test afterwards, even if drawing fails. Without OnTop, copies the parent's transform to the frame if it changed, and draws nothing.</p>
+</td></tr>
+</table>
+<table class="detail visibility-protected wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Notification-TComponent-TOperation-"></span><code>procedure <strong>Notification</strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Forgets the frame if something else frees it first.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AComponent</dt>
+<dd>The component being freed or removed.</dd>
+<dt>Operation</dt>
+<dd>What is happening to it.</dd>
+</dl>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -125,6 +203,20 @@ Creates axes with no extent: red, green and blue, 1 pixel wide, on top.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frees the axes, with any frame, strips and materials.</p>
+<p>
+
+
+<p>If the frame's parent is already being freed, as when the whole scene closes, the frame is left for it to free.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="SetExtent-TPoint3D-TPoint3D-TPoint3D-"></span><code>procedure <strong>SetExtent</strong>(const ALow, AHigh, ACentre: TPoint3D);</code></td>
 </tr>
 <tr><td colspan="2">
@@ -133,7 +225,7 @@ Sets where the three lines cross and how far each reaches.</p>
 <p>
 
 
-<p>Each line passes through ACentre parallel to one axis and runs from the low corner's value to the high corner's value on that axis, widened if need be to reach ACentre. All points are in the parent's coordinates. Redraws the axes.
+<p>Each line passes through ACentre parallel to one axis and runs from the low corner's value to the high corner's value on that axis, widened if need be to reach ACentre. All points are in the parent's coordinates. Without OnTop the strips are built here, so set the parent first; they are not built without one. Redraws the axes.
 
 <p>
 
@@ -193,7 +285,7 @@ Line width in screen pixels, whatever the distance; 1 by default.</p>
 <p>
 
 
-<p>Values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values below 1 count as 1.</p>
+<p>Without OnTop the shader draws any width on every backend. With OnTop, values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values below 1 count as 1.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -207,7 +299,7 @@ Whether the lines are drawn over everything; True by default.</p>
 <p>
 
 
-<p>True turns depth testing off while the lines are drawn, so the model and anything in front cannot hide them. False draws them like any other geometry, so they disappear where they pass inside a solid model.</p>
+<p>True draws them with the context and depth testing off, so the model and anything in front cannot hide them. False draws them with shaders as ordinary geometry, so they disappear where they pass inside a solid model or behind something. Changing it switches between the two at once.</p>
 </td></tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

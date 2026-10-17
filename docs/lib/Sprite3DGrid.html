@@ -7,6 +7,49 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
 <link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
 </head>
 <body>
 <nav class="navbar d-md-none sticky-top bg-body-tertiary">
@@ -37,7 +80,7 @@ Draws a far-reaching grid on a model's floor with a GLSL shader.</p>
 
 <p>ShowModelGrid adds a TModelGrid to a TGorillaModel. It shows a grid of lines across one of the model's axes, Y by default, so the grid lies in X and Z. The lines are GridSize apart in the model's own units, 1.0 by default, in dark grey, with one through the model's centre of rotation, and the grid reaches GridCells cells each side of it, 1000 by default. Distant lines fade out as their cells shrink to a few pixels on screen, so the grid dissolves into the distance rather than stopping at an edge. GridLevel is where it crosses its axis; with GridOnFloor, the default, that is the model's floor, the bounding-box face across the grid's axis that is lower in the scene. That suits a model standing on its lowest bound, as the test animation does, but not every model; set GridLevel to override it.
 
-<p>The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla converts for Vulkan and Metal. So the grid costs two triangles however far it reaches, the lines are anti-aliased and about a pixel wide at any distance, and nothing is recalculated per frame. Changing a grid property rewrites the shader once, with the new values written into it as constants.
+<p>The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla converts for Vulkan and Metal. The plane is split into 64 by 64 squares so that the position the shader reads stays exact across it; the cost is the same however far the grid reaches, the lines stay about two pixels wide at any distance, and nothing is recalculated per frame. Changing a grid property rewrites the shader once, with the new values written into it as constants.
 
 <p>The plane is not a child of the model, so it never counts in the model's bounding box, and FitToBounds is unaffected. It sits in a frame beside the model that copies the model's position, rotation, scale and centre of rotation whenever they change, so the grid is in the model's units and moves with it.
 
@@ -52,6 +95,8 @@ Draws a far-reaching grid on a model's floor with a GLSL shader.</p>
     `-- TGorillaPlane    turned onto GridAxis at GridLevel; grid drawn by its shader</pre>
 
 <p>
+
+<p>Usage:
 
 <p></p>
 

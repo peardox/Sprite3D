@@ -25,9 +25,10 @@
 //** for that folder only when none is known: SaveFolder is kept between sessions in
 //** settings.json, through TSprite3DAppSettings in Sprite3DHelpers. File, Save As Icon
 //** renders the view off screen at each of Windows' icon sizes and saves them together as
-//** one .ico file the user names. Behind the model the viewport shows a background, by
-//** default a two-grey checker standing for transparency; File, Background Settings...
-//** chooses Transparent, Solid or Gradient, which grabs and icons follow too.
+//** one .ico file the user names. Behind the model the viewport can show a background; by
+//** default none is drawn. File, Background Settings... chooses None, Transparent (a
+//** two-grey checker standing for transparency), Solid or Gradient, which grabs and icons
+//** follow too.
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
 //** refitted when the viewport is resized, the projection changes or the "Fit any angle" box is
@@ -103,9 +104,10 @@ unit Sprite3dMain;
   sessions in settings.json, through TSprite3DAppSettings in
   Sprite3DHelpers. File, Save As Icon renders the view off screen at each of
   Windows' icon sizes and saves them together as one .ico file the user
-  names. Behind the model the viewport shows a background, by default a
-  two-grey checker standing for transparency; File, Background Settings...
-  chooses Transparent, Solid or Gradient, which grabs and icons follow too.
+  names. Behind the model the viewport can show a background; by default
+  none is drawn. File, Background Settings... chooses None, Transparent (a
+  two-grey checker standing for transparency), Solid or Gradient, which
+  grabs and icons follow too.
   Each model replaces the last:
   it plays its last animation by name if it has any, is centred and turned
   180 degrees about X, and the camera is fitted so it fills the view. The
@@ -386,25 +388,30 @@ type
     //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
     //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is the
     //** current folder instead if that has a models subfolder. The handler creates a
-    //** TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera with a
-    //** 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60
-    //** frames per second without VSync.
+    //** TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree FOV,
+    //** which becomes the viewport's camera, and a point light parented to the camera at its
+    //** origin, so it sits where the camera is and points where it looks. The viewport runs
+    //** at a fixed 60 frames per second without VSync.
     //**
     //** The dials start at 0, then the isometric view is chosen, as View, Isometric does:
     //** the dials are turned to its angles and switched off, and the readouts set to match,
-    //** so dial, readout and camera agree from the start.
+    //** so dial, readout and camera agree from the start. Last, the four check boxes are set
+    //** as settings.json says they were left, which also sets the projection.
     //**
     //** @param(Sender The form.)
     /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
     /// <remarks><para>The models folder comes from DefaultModelDir in Sprite3DHelpers: it is
     /// the library path on macOS, the home folder on Linux and <c>'../../../'</c> elsewhere; on
     /// Windows it is the current folder instead if that has a models subfolder. The handler
-    /// creates a TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera
-    /// with a 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed
-    /// 60 frames per second without VSync.</para>
+    /// creates a TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree
+    /// FOV, which becomes the viewport's camera, and a point light parented to the camera at
+    /// its origin, so it sits where the camera is and points where it looks. The viewport runs
+    /// at a fixed 60 frames per second without VSync.</para>
     /// <para>The dials start at 0, then the isometric view is chosen, as View, Isometric
     /// does: the dials are turned to its angles and switched off, and the readouts set to
-    /// match, so dial, readout and camera agree from the start.</para></remarks>
+    /// match, so dial, readout and camera agree from the start. Last, the four check boxes
+    /// are set as settings.json says they were left, which also sets the
+    /// projection.</para></remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Loads the first model, the one the system asked to open or the default, and
@@ -432,14 +439,19 @@ type
     /// cannot be read.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
-    //** @abstract(Stops taking open requests and frees the settings.)
+    //** @abstract(Stops taking open requests, saves the check boxes' states and frees the
+    //** settings.)
     //**
-    //** Settings are saved as soon as they change, so nothing is written here.
+    //** The states of "Show grid", "Show axes", "Fit any angle" and "Orthographic" are
+    //** written to settings.json for the next session; a failed save is ignored, as no
+    //** message can be shown here. Other settings are saved as soon as they change.
     //**
     //** @param(Sender The form.)
-    /// <summary>Stops taking open requests and frees the settings.</summary>
-    /// <remarks>Settings are saved as soon as they change, so nothing is written
-    /// here.</remarks>
+    /// <summary>Stops taking open requests, saves the check boxes' states and frees the
+    /// settings.</summary>
+    /// <remarks>The states of "Show grid", "Show axes", "Fit any angle" and "Orthographic"
+    /// are written to settings.json for the next session; a failed save is ignored, as no
+    /// message can be shown here. Other settings are saved as soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
     //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
@@ -755,6 +767,8 @@ type
     procedure OpenRequestedFile(const AFileName: String);
     procedure ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
       const ASave: Boolean);
+    procedure RestoreCheckBoxes;
+    procedure SaveCheckBoxes;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     procedure BackgroundDialogAccept(Sender: TObject);
     {$ENDIF}
@@ -839,9 +853,6 @@ begin
 
   GorillaViewport := TGorillaViewport.Create(ViewportLayout);
   GorillaViewport.OnResize := GorillaViewportResize;
-  GorillaLight := TGorillaLight.Create(GorillaViewport);
-  GorillaLight.Parent := GorillaViewport;
-  GorillaLight.LightType := TLightType.Point;
   GorillaViewport.UseFixedFrameRate := true;
   GorillaViewport.VSync := False;
   GorillaViewport.HitTest := False;
@@ -850,6 +861,14 @@ begin
   GorillaViewport.UsingDesignCamera := False;
   GorillaCamera := TSprite3DCamera.Create(GorillaViewport);
   GorillaViewport.Camera := GorillaCamera;// .Camera;
+  // The light rides on the camera: a child at its origin with no turn of its
+  // own, so it sits where the camera is and points where the camera looks,
+  // lighting whatever side of the model is in view
+  GorillaLight := TGorillaLight.Create(GorillaViewport);
+  GorillaLight.Parent := GorillaCamera;
+  GorillaLight.Position.Point := TPoint3D.Zero;
+  GorillaLight.RotationAngle.Point := TPoint3D.Zero;
+  GorillaLight.LightType := TLightType.Point;
   GorillaModel := Nil;
   GorillaCamera.FOV := 45;
 
@@ -881,6 +900,9 @@ begin
   // Start in the isometric view for now; View, Variable hands the angles
   // back to the dials
   ViewIsometricItemClick(Self);
+
+  // The check boxes as they were left last session
+  RestoreCheckBoxes;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   BuildMobileMenu;
@@ -1068,7 +1090,38 @@ end;
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   FileOpenRequests.OnOpenFile := nil;
+  SaveCheckBoxes;
   FreeAndNil(FSettings);
+end;
+
+// Sets the check boxes from settings.json. Each OnChange does what a click
+// would: the projection and caption, the fit, and the grid and axes, which
+// SwitchModel adds to each model as the boxes say. Before the first model is
+// loaded, the grid and axes calls find no model and do nothing.
+procedure TMainForm.RestoreCheckBoxes;
+begin
+  chkShowGrid.IsChecked := FSettings.ShowGrid;
+  chkShowAxes.IsChecked := FSettings.ShowAxes;
+  chkFitAnyAngle.IsChecked := FSettings.FitAnyAngle;
+  chkOrthoToggle.IsChecked := FSettings.Orthographic;
+end;
+
+// Keeps the check boxes' states in settings.json for the next session. Runs
+// as the form is destroyed, where a message box cannot be shown, so a failed
+// save is ignored and the next session starts from the last saved states.
+procedure TMainForm.SaveCheckBoxes;
+begin
+  if FSettings = nil then
+    Exit;
+  FSettings.ShowGrid := chkShowGrid.IsChecked;
+  FSettings.ShowAxes := chkShowAxes.IsChecked;
+  FSettings.FitAnyAngle := chkFitAnyAngle.IsChecked;
+  FSettings.Orthographic := chkOrthoToggle.IsChecked;
+  try
+    FSettings.Save;
+  except
+    // Nowhere to report it; see above
+  end;
 end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DCamera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DCamera</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Orbit camera for Gorilla3D, driven by a chain of three single-axis pivots.</p>
+<p>
+
+
+<p>TSprite3DCamera is a TGorillaCamera that hangs at the end of a chain of three TDummy pivots. Each pivot turns about one axis only, so Azimuth, PolarAngle and Roll never combine as Euler angles on one object, and the camera can pass over the poles without gimbal lock. The camera sits Distance units back from the orbit centre and always looks at it.
+
+<p></p>
+
+<pre class="preformatted">
+&lt;your parent&gt;                      e.g. TGorillaViewport, or any TControl3D
+`-- AzimuthPivot (TDummy)         rotates about Y  -&gt;  Azimuth
+    `-- PolarPivot (TDummy)       rotates about X  -&gt;  PolarAngle
+        `-- RollPivot (TDummy)    rotates about Z  -&gt;  Roll
+            `-- TSprite3DCamera    at (0, 0, -Distance), looking along +Z
+                                   at the orbit centre, OrbitCenter</pre>
+
+<p>
+
+<p>Angles are in degrees, and FMX's up direction is -Y. PolarAngle is an elevation and is not limited: 0 is level with the centre, +90 is above it looking down and -90 is below it looking up. Values past +/-90 carry the camera over the pole and down the far side, upside down, and so on for any value.
+
+<p>Orientation. The three angles are views of one orientation quaternion, in the rig parent's space, and TQuat does the arithmetic:
+
+<p></p>
+
+<pre class="preformatted">
+Q = Qy(Azimuth) * Qx(-PolarAngle) * Qz(Roll)</pre>
+
+<p>
+
+<p>Reading Orientation builds Q from the angles; SetOrientation splits any quaternion back into the three angles and passes them to the pivots. Of the two angle sets that give the same rotation, it picks the one nearest the current angles, so the values change continuously and PolarAngle can run past +/-90 instead of snapping back. At an exact pole, where Azimuth and Roll turn about the same axis, it keeps the current Azimuth and puts the rest of the twist into Roll, so nothing jumps.
+
+<p>LookAt. LookAt keeps the camera where it is and turns it to face a point. The turn is the shortest-arc rotation from the current view direction to the new one. No world-up vector is involved, so nothing can become parallel to the view direction: it works looking straight up or down and never flips, and a 180-degree turn pivots about the camera's own up axis. The point becomes the new OrbitCenter and Distance becomes the camera's distance from it, so orbiting continues round that point.
+
+<p>With lmMinimalTwist, the default, the camera keeps as much of its current up direction as it can, so repeated LookAt calls can build up some roll, as with any free-flying camera. With lmKeepRoll the view direction is the same but Roll keeps its current value, so the horizon stays as it was; at an exact pole Azimuth is held rather than worked out again.
+
+<p>FitToBounds and FitToBoundsMax. Both make a box as large as possible in the viewport without any part of it overflowing. Neither changes the angles: they move the orbit centre and set Distance, or the orthographic size.
+
+<p>FitToBounds fits the box's eight corners exactly, for the current Azimuth, PolarAngle and Roll. The view is centred on them, so the box touches both edges of the tighter axis, left and right or top and bottom, with equal room on the other axis. Changing an angle afterwards can push the box out of view, so call it again after every change.
+
+<p>FitToBoundsMax fits the box for every Azimuth, PolarAngle and Roll. Together the three angles reach every orientation, so the box can end up in any rotation about the orbit centre, and all those rotations together fill the ball about the orbit centre that reaches the box's farthest corner. That ball is what is fitted: nothing smaller is safe, because some angle always brings a corner onto it. The ball is centred on the box centre or, when the box comes from a model or another object, on that object's centre of rotation, its RotationCenter. That point can lie outside the box; the camera then circles the point the model turns about, which stays put however an animation moves the box. The orbit centre goes to the ball's centre, and the angles can then change freely without refitting.
+
+<p>Both read the frustum from the camera's own GetProjectionMatrix for the viewport's size, so the FOV convention, vertical or horizontal, and the aspect ratio come from Gorilla itself, never from guesses.
+
+<p>In perspective, FitToBounds works in camera space. With tx and ty the tangents of the half-angles, each corner (x, y, z) must satisfy the first two conditions below for an eye at (cx, cy, cz). Per axis that gives the farthest-forward eye shown, with cx halfway between the bounds, and the eye takes the smaller cz of the two axes, so both fit. It is also kept NEAR_CLEARANCE, 1 unit and FMX's near plane, behind the nearest corner, so the near plane cannot cut into the box. Distance is then measured to the depth of the box's middle.
+
+<p></p>
+
+<pre class="preformatted">
+|x - cx| &lt;= tx * (z - cz)   and   |y - cy| &lt;= ty * (z - cz)
+cz = (min(x + tx z) - max(x - tx z)) / (2 tx)</pre>
+
+<p>
+
+<p>In perspective, FitToBoundsMax makes the ball, of radius R, touch the narrower pair of frustum planes, s being the projection scale on the narrower axis times the margin:
+
+<p></p>
+
+<pre class="preformatted">
+Distance = R / sin(half) = R * Sqrt(1 + s * s)</pre>
+
+<p>
+
+<p>In orthographic or isometric mode the size does not depend on distance, so OrthoHeight, and OrthoWidth if one is set, is scaled until the box (FitToBounds) or the ball (FitToBoundsMax) just fills the tighter axis, and the view is centred on it. Distance only has to keep the camera clear of it. AMargin is padding as a fraction of the view: 0.1 makes the fitted box or ball 1/1.1 of the view on the tighter axis.
+
+<p>Coordinate spaces matter. FitToBounds(Box) expects the box in the rig parent's space, the scene. A model's own bounds are in its local space, usually centred on the mesh origin, so if the model has been moved, for example lifted to stand on a floor, or scaled, using them directly aims at the wrong point. Pass the object too, as in FitToBounds(Box, Model), and the box's corners are carried through the model's full transform first, so position, rotation and even non-uniform scale are allowed for. FitToBounds(Model) and FitToBoundsMax(Model) do this with the model's local box from GetAnimatedBoundingBox, the same box ShowBoundingBox draws. The viewport is found by walking up from the rig to the first TGorillaViewport.
+
+<p>Usage:
+
+<p></p>
+
+<pre class="preformatted">
+Cam := TSprite3DCamera.Create(Self);
+Cam.Rig.Parent := GorillaViewport1;   // parent the whole chain, not Cam itself
+GorillaViewport1.Camera := Cam;
+GorillaViewport1.UsingDesignCamera := False;
+Cam.FitToBounds(GorillaModel1);       // frame a model
+Cam.LookAt(Point3D(2, 0, 3));         // or face a point, in the rig parent's space</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DCamera.TQuat.html"><code>TQuat</code></a></td>
+<td class="itemdesc">A quaternion of Doubles, used for the camera's orientation arithmetic.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DCamera.TSprite3DFraming.html"><code>TSprite3DFraming</code></a></td>
+<td class="itemdesc">A camera's framing: where it orbits and how far out it is.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DCamera.TSprite3DCamera.html"><code>TSprite3DCamera</code></a></td>
+<td class="itemdesc">A TGorillaCamera that orbits a centre point through a chain of three pivots.</td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a></strong> = (...);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TLookAtMode"></span><code><strong>TLookAtMode</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+How LookAt treats Roll when it turns the camera.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#LookAt-TPoint3D-TLookAtMode-">TSprite3DCamera.LookAt</a></dt>
+  <dd>Turns the camera, from where it stands, to face APoint.</dd>
+</dl>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="lmMinimalTwist">lmMinimalTwist</span>: The default. A pure shortest-arc turn: the camera keeps as much of its current up direction as it can. Repeated LookAt calls can build up some roll.</li>
+<li>
+<span id="lmKeepRoll">lmKeepRoll</span>: The same view direction, but Roll keeps its current value, so the horizon stays as it was. Still safe at the poles, where Azimuth is held.</li>
+</ul>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

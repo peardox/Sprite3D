@@ -7,6 +7,49 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
 <link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
 </head>
 <body>
 <nav class="navbar d-md-none sticky-top bg-body-tertiary">
@@ -61,7 +104,11 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 </dl>
 <span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
 <ul class="hierarchy"><li class="ancestor">TGorillaCamera</li>
-<li class="thisitem">TSprite3DCamera</li></ul><h2 class="overview">Overview</h2>
+<li class="thisitem">TSprite3DCamera</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
 <span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
 <table class="summary wide_list">
 <tr class="list visibility-public">
@@ -98,6 +145,22 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#ViewHalfExtents-Single-Single-Single-">ViewHalfExtents</a></strong>(const ADepth: Single; out AHalfWidth, AHalfHeight: Single): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#MaxViewDepth">MaxViewDepth</a></strong>: Single; static;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#SaveFraming">SaveFraming</a></strong>: <a href="Sprite3DCamera.TSprite3DFraming.html">TSprite3DFraming</a>;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#RestoreFraming-TSprite3DFraming-">RestoreFraming</a></strong>(const AFraming: <a href="Sprite3DCamera.TSprite3DFraming.html">TSprite3DFraming</a>);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FindViewport">FindViewport</a></strong>: TViewport3D;</code></td>
 </tr>
 <tr class="list2 visibility-public">
@@ -114,19 +177,27 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TGorillaModel-Single-Single-Single-">FitToBounds</a></strong>(const AModel: TGorillaModel; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TGorillaModel-Single-">FitToBoundsMax</a></strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TGorillaModel-Single-">FitToBoundsMax</a></strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-Single-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TGorillaModel-Single-Single-Single-">FitToBoundsMax</a></strong>(const AModel: TGorillaModel; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -368,6 +439,112 @@ Returns the camera's position in the rig parent's space.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ViewHalfExtents-Single-Single-Single-"></span><code>function <strong>ViewHalfExtents</strong>(const ADepth: Single; out AHalfWidth, AHalfHeight: Single): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Half the width and height of the view at a depth in front of the camera.</p>
+<p>
+
+
+<p>Read from the camera's own projection for the viewport's size, so it holds in perspective and orthographic mode alike, with Gorilla's FOV convention and the viewport's aspect ratio. In orthographic mode the size is the same at every depth. Use it to size something that must fill the view, such as a background plane.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ADepth</dt>
+<dd>The distance in front of the camera, along its view direction.</dd>
+<dt>AHalfWidth</dt>
+<dd>Half the visible width at that depth, in scene units.</dd>
+<dt>AHalfHeight</dt>
+<dd>Half the visible height at that depth, in scene units.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the sizes were worked out; False, with both 0, if there is no viewport or it has no size.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#MaxViewDepth">MaxViewDepth</a></dt>
+  <dd>The far plane: nothing farther from the camera than this is drawn.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MaxViewDepth"></span><code>class function <strong>MaxViewDepth</strong>: Single; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The far plane: nothing farther from the camera than this is drawn.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The distance, in scene units, of the far plane the fitting assumes.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SaveFraming"></span><code>function <strong>SaveFraming</strong>: <a href="Sprite3DCamera.TSprite3DFraming.html">TSprite3DFraming</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Returns the current framing, for RestoreFraming to put back later.</p>
+<p>
+
+
+<p>Use it around a temporary fit, such as fitting the model to an off-screen target of a different shape.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">OrbitCenter, Distance, OrthoHeight and OrthoWidth as they are now.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#RestoreFraming-TSprite3DFraming-">RestoreFraming</a></dt>
+  <dd>Puts back a framing returned by SaveFraming.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RestoreFraming-TSprite3DFraming-"></span><code>procedure <strong>RestoreFraming</strong>(const AFraming: <a href="Sprite3DCamera.TSprite3DFraming.html">TSprite3DFraming</a>);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Puts back a framing returned by SaveFraming.</p>
+<p>
+
+
+<p>Sets OrbitCenter, Distance, OrthoHeight and OrthoWidth; the angles are left as they are.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFraming</dt>
+<dd>The framing to restore.</dd>
+</dl>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#SaveFraming">SaveFraming</a></dt>
+  <dd>Returns the current framing, for RestoreFraming to put back later.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="FindViewport"></span><code>function <strong>FindViewport</strong>: TViewport3D;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -497,6 +674,49 @@ Fits ABox for the current angles and an explicit view size.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBounds-TGorillaModel-Single-Single-Single-"></span><code>function <strong>FitToBounds</strong>(const AModel: TGorillaModel; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes a Gorilla model's bounding box as large as possible in a view of the given size, for the current angles.</p>
+<p>
+
+
+<p>Works like the overload that takes only a model, but frames it for AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use it to fit the model to an off-screen target, such as a TSprite3DOffscreen, whose shape differs from the viewport's. The camera is changed as by every fit, so the on-screen view changes too until it is refitted or restored.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to frame; nil makes the call return False.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the model was framed; False, with nothing changed, if AModel is nil, it has no vertices, or either size is zero or less.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-TControl3D-Single-">FitToBoundsMax</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for every angle.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="FitToBounds-TBoundingBox-TControl3D-Single-"></span><code>function <strong>FitToBounds</strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -537,7 +757,7 @@ Makes ABox as large as possible while it stays visible at every angle.</p>
 <p>
 
 
-<p>Azimuth, PolarAngle and Roll together reach every orientation, so the box can end up in any rotation about the orbit centre. All those rotations together fill the sphere around the box's centre that reaches its farthest corner, so that sphere is what is fitted: it is the smallest shape that is safe for every angle. OrbitCenter moves to the box's centre and Distance, or the orthographic size, is set; the angles are not changed and can then be changed freely without refitting.
+<p>Azimuth, PolarAngle and Roll together reach every orientation, so the box can end up in any rotation about the orbit centre. All those rotations together fill the sphere around the box's centre that reaches its farthest corner, so that sphere is what is fitted: it is the smallest shape that is safe for every angle. OrbitCenter moves to the box's centre and Distance, or the orthographic size, is set; the angles are not changed and can then be changed freely without refitting. The overloads that take a model or ASpace centre the sphere on that object's centre of rotation instead.
 
 <p>The box looks smaller than with FitToBounds, by up to the ratio of the box's half diagonal to its smaller visible half-size. In perspective mode the sphere is kept at least 1 unit in front of the camera, FMX's near plane.
 
@@ -574,7 +794,7 @@ Makes a Gorilla model's bounding box as large as possible while it stays visible
 <p>
 
 
-<p>Takes <code>AModel.GetAnimatedBoundingBox</code>, the current pose's box in the model's local space, and passes it with AModel as the space to the overload that takes ASpace, so the model's transform is applied once. The pose is taken at the time of the call; an animation that later reaches outside that box can still overflow.
+<p>Takes <code>AModel.GetAnimatedBoundingBox</code>, the current pose's box in the model's local space, and passes it with AModel as the space to the overload that takes ASpace, so the model's transform is applied once. The sphere is centred on the model's centre of rotation, its RotationCenter, which can lie outside the box: the camera then circles the point the model turns about, which stays put however an animation moves the box. The pose is taken at the time of the call; an animation that later reaches farther from that point can still overflow.
 
 <p>
 
@@ -637,6 +857,49 @@ Fits ABox for every angle and an explicit view size.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBoundsMax-TGorillaModel-Single-Single-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const AModel: TGorillaModel; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes a Gorilla model's bounding box as large as possible in a view of the given size while it stays visible at every angle.</p>
+<p>
+
+
+<p>Works like the overload that takes only a model, centring the sphere on the model's centre of rotation, but frames it for AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use it to fit the model to an off-screen target whose shape differs from the viewport's. The camera is changed as by every fit.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to frame; nil makes the call return False.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the model was framed; False, with nothing changed, if AModel is nil, it has no vertices, or either size is zero or less.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="FitToBoundsMax-TBoundingBox-TControl3D-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -645,7 +908,7 @@ Fits a box given in ASpace's local coordinates for every angle.</p>
 <p>
 
 
-<p>All eight corners are carried through ASpace's position, rotation and scale into the rig parent's space. The sphere is centred on the transformed box's centre and reaches its farthest transformed corner, so non-uniform scale is handled. It is then fitted as in the other overloads, using the viewport's size.
+<p>All eight corners are carried through ASpace's position, rotation and scale into the rig parent's space. The sphere is centred on ASpace's centre of rotation, its RotationCenter carried into the same space, and reaches the farthest transformed corner from it, so non-uniform scale is handled. The centre of rotation can lie outside the box; the camera then circles it, which keeps it steady while an animation moves the box. With ASpace nil the sphere is centred on the box. It is then fitted as in the other overloads, using the viewport's size.
 
 <p>
 
