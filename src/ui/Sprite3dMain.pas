@@ -16,11 +16,16 @@
 //** azimuth 0; and View, Side View uses inclination 0 at azimuth 90. A test slider along the
 //** bottom of the 3D view moves the camera out from the fitted distance, x1 to x20.
 //**
-//** On show, the form loads the model whose file FormShow names; File, OpenModel then loads any
+//** On show, the form loads the model the operating system asked it to open, as when a .glb or
+//** .gltf file is double-clicked in Explorer or Finder, or else the model whose file FormShow
+//** names; files the system asks to open later replace it. File, OpenModel then loads any
 //** other glTF, FBX, OBJ, USD, Collada, STL or PLY file, and File, Exit closes the application.
 //** File, Grab renders the view off screen at 256 by 256 pixels, with the model fitted to fill
 //** it, and saves it as the next of grab001.png, grab002.png and so on in SaveFolder, asking
-//** for that folder the first time.
+//** for that folder only when none is known: SaveFolder is kept between sessions in
+//** settings.json, through TSprite3DAppSettings in Sprite3DHelpers. File, Save As Icon
+//** renders the view off screen at each of Windows' icon sizes and saves them together as
+//** one .ico file the user names.
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
 //** refitted when the viewport is resized, the projection changes or the "Fit any angle" box is
@@ -52,6 +57,7 @@
 //** |-- FileMenu "File"
 //** |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
+//** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"
 //**     |-- ViewVariableItem "Variable"     dials set the angles
@@ -82,12 +88,19 @@ unit Sprite3dMain;
   Down use inclinations of 0 and 90 at azimuth 0; and View, Side View uses
   inclination 0 at azimuth 90. A test slider along the bottom of the 3D view
   moves the camera out from the fitted distance, x1 to x20.
-  On show, the form loads the model whose file FormShow names; File,
+  On show, the form loads the model the operating system asked it to open,
+  as when a .glb or .gltf file is double-clicked in Explorer or Finder, or
+  else the model whose file FormShow names; files the system asks to open
+  later replace it. File,
   OpenModel then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY
   file, and File, Exit closes the application. File, Grab renders the view
   off screen at 256 by 256 pixels, with the model fitted to fill it, and
   saves it as the next of grab001.png, grab002.png and so on in SaveFolder,
-  asking for that folder the first time. Each model replaces the last:
+  asking for that folder only when none is known: SaveFolder is kept between
+  sessions in settings.json, through TSprite3DAppSettings in
+  Sprite3DHelpers. File, Save As Icon renders the view off screen at each of
+  Windows' icon sizes and saves them together as one .ico file the user
+  names. Each model replaces the last:
   it plays its last animation by name if it has any, is centred and turned
   180 degrees about X, and the camera is fitted so it fills the view. The
   model is refitted when the viewport is resized, the projection changes or
@@ -120,6 +133,7 @@ unit Sprite3dMain;
     |-- FileMenu "File"
     |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
+    |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"
         |-- ViewVariableItem "Variable"     dials set the angles
@@ -141,7 +155,7 @@ uses
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
-  Sprite3DOffscreen
+  Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView, FMX.ListBox
   {$ENDIF}
@@ -290,6 +304,16 @@ type
     /// loaders for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and
     /// then one at a time.</remarks>
     OpenDialog1: TOpenDialog;
+    //** @abstract(Asks where File, Save As Icon saves; see SaveAsIconMenuItemClick.)
+    //**
+    //** Its filter is set from IconDialogFilter each time, so it offers every registered icon
+    //** format; for now only Windows .ico. It prompts before overwriting a file.
+    /// <summary>Asks where File, Save As Icon saves; see
+    /// <see cref="SaveAsIconMenuItemClick"/>.</summary>
+    /// <remarks>Its filter is set from IconDialogFilter each time, so it offers every
+    /// registered icon format; for now only Windows .ico. It prompts before overwriting a
+    /// file.</remarks>
+    SaveIconDialog: TSaveDialog;
     //** @abstract(The form's menu bar, holding FileMenu.)
     /// <summary>The form's menu bar, holding FileMenu.</summary>
     MainMenu1: TMainMenu;
@@ -303,6 +327,9 @@ type
     //** @abstract(The "Grab" item; see GrabMenuItemClick.)
     /// <summary>The "Grab" item; see <see cref="GrabMenuItemClick"/>.</summary>
     GrabMenuItem: TMenuItem;
+    //** @abstract(The "Save As Icon" item; see SaveAsIconMenuItemClick.)
+    /// <summary>The "Save As Icon" item; see <see cref="SaveAsIconMenuItemClick"/>.</summary>
+    SaveAsIconMenuItem: TMenuItem;
     //** @abstract(Separator line in the File menu, above Exit.)
     /// <summary>Separator line in the File menu, above Exit.</summary>
     FileSeparatorItem: TMenuItem;
@@ -349,7 +376,8 @@ type
     //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is the
     //** current folder instead if that has a models subfolder. The handler creates a
     //** TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera with a
-    //** 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60 frames per second without VSync.
+    //** 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60
+    //** frames per second without VSync.
     //**
     //** The dials start at 0, then the isometric view is chosen, as View, Isometric does:
     //** the dials are turned to its angles and switched off, and the readouts set to match,
@@ -361,26 +389,48 @@ type
     /// the library path on macOS, the home folder on Linux and <c>'../../../'</c> elsewhere; on
     /// Windows it is the current folder instead if that has a models subfolder. The handler
     /// creates a TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera
-    /// with a 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60 frames per second without VSync.</para>
+    /// with a 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed
+    /// 60 frames per second without VSync.</para>
     /// <para>The dials start at 0, then the isometric view is chosen, as View, Isometric
     /// does: the dials are turned to its angles and switched off, and the readouts set to
     /// match, so dial, readout and camera agree from the start.</para></remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
-    //** @abstract(Loads the first model from the models folder and fits the camera to it.)
+    //** @abstract(Loads the first model, the one the system asked to open or the default, and
+    //** starts taking open requests.)
     //**
-    //** The file is named in this handler; change it there to start with a different model, or
-    //** use File, OpenModel once the form is up. Shows a message and loads nothing if the file
-    //** is missing or cannot be read.
+    //** If the application was started to open a model, for example by double-clicking a
+    //** .glb or .gltf file in Explorer or Finder, that model is loaded; the files come from
+    //** FileOpenRequests in Sprite3DOpenFiles, and the first one that is a model is used.
+    //** Otherwise the default model, named in this handler, is loaded; change it there to
+    //** start with a different one. From then on, files the system asks to open while the
+    //** application runs, as macOS, iOS and Android can, replace the current model. Runs once,
+    //** the first time the form is shown. Shows a message and loads nothing if the file is
+    //** missing or cannot be read.
     //**
     //** @param(Sender The form.)
-    /// <summary>Loads the first model from the models folder and fits the camera to
-    /// it.</summary>
-    /// <remarks>The file is named in this handler; change it there to start with a different
-    /// model, or use File, OpenModel once the form is up. Shows a message and loads nothing if
-    /// the file is missing or cannot be read.</remarks>
+    /// <summary>Loads the first model, the one the system asked to open or the default, and
+    /// starts taking open requests.</summary>
+    /// <remarks>If the application was started to open a model, for example by double-clicking
+    /// a .glb or .gltf file in Explorer or Finder, that model is loaded; the files come from
+    /// FileOpenRequests in Sprite3DOpenFiles, and the first one that is a model is used.
+    /// Otherwise the default model, named in this handler, is loaded; change it there to start
+    /// with a different one. From then on, files the system asks to open while the application
+    /// runs, as macOS, iOS and Android can, replace the current model. Runs once, the first
+    /// time the form is shown. Shows a message and loads nothing if the file is missing or
+    /// cannot be read.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
+    //** @abstract(Stops taking open requests and frees the settings.)
+    //**
+    //** Settings are saved as soon as they change, so nothing is written here.
+    //**
+    //** @param(Sender The form.)
+    /// <summary>Stops taking open requests and frees the settings.</summary>
+    /// <remarks>Settings are saved as soon as they change, so nothing is written
+    /// here.</remarks>
+    /// <param name="Sender">The form.</param>
+    procedure FormDestroy(Sender: TObject);
     //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
     //**
     //** The dial value is negated, wrapped into 0 to 360 and shown in AzimuthText. The camera
@@ -483,8 +533,9 @@ type
     procedure OpenModelMenuItemClick(Sender: TObject);
     //** @abstract(Renders the view off screen and saves it as the next grabNNN.png.)
     //**
-    //** If SaveFolder is empty, a "Save Location" folder dialog asks for it first, and
-    //** SaveFolder is set to the choice; if the dialog is cancelled nothing is grabbed. The
+    //** If no usable SaveFolder is known, because none has been chosen yet or the stored one no
+    //** longer exists, a "Save Location" folder dialog asks for it first, and SaveFolder is
+    //** set to the choice and saved; if the dialog is cancelled nothing is grabbed. The
     //** image comes from Offscreen at its Width and Height, 256 by 256 unless changed, with the
     //** camera refitted by FitToBounds for that size so the model fills it, and is saved a
     //** frame later as grab001.png, grab002.png and so on: the number starts at 1
@@ -495,8 +546,9 @@ type
     //**
     //** @param(Sender GrabMenuItem.)
     /// <summary>Renders the view off screen and saves it as the next grabNNN.png.</summary>
-    /// <remarks>If SaveFolder is empty, a "Save Location" folder dialog asks for it first, and
-    /// SaveFolder is set to the choice; if the dialog is cancelled nothing is grabbed. The
+    /// <remarks>If no usable SaveFolder is known, because none has been chosen yet or the stored
+    /// one no longer exists, a "Save Location" folder dialog asks for it first, and SaveFolder
+    /// is set to the choice and saved; if the dialog is cancelled nothing is grabbed. The
     /// image comes from Offscreen at its Width and Height, 256 by 256 unless changed, with the
     /// camera refitted by FitToBounds for that size so the model fills it, and is saved a
     /// frame later as grab001.png, grab002.png and so on: the number starts at 1 when
@@ -506,6 +558,29 @@ type
     /// grab is still under way is ignored.</remarks>
     /// <param name="Sender">GrabMenuItem.</param>
     procedure GrabMenuItemClick(Sender: TObject);
+    //** @abstract(Renders the view at every icon size and saves it as one icon file.)
+    //**
+    //** First asks for the file with SaveIconDialog, which opens in the folder the last icon
+    //** was saved in, kept in settings.json, and offers only the .ico type; nothing happens
+    //** if it is cancelled. Android and iOS have no save dialog, so there the icon goes to the
+    //** next free iconNNN.ico in the Grabs folder. Then Offscreen renders the view once for
+    //** each of the format's sizes, 16, 20, 24, 32, 40, 48, 64 and 256 for .ico, each with
+    //** the camera fitted to it as for File, Grab, and the images are written together. The
+    //** saved file is logged in DebugMemo; a failure is reported with a message. A click while
+    //** a grab is under way is ignored.
+    //**
+    //** @param(Sender SaveAsIconMenuItem.)
+    /// <summary>Renders the view at every icon size and saves it as one icon file.</summary>
+    /// <remarks>First asks for the file with SaveIconDialog, which opens in the folder the last
+    /// icon was saved in, kept in settings.json, and offers only the .ico type; nothing happens
+    /// if it is cancelled. Android and iOS have no save dialog, so there the icon goes to the
+    /// next free iconNNN.ico in the Grabs folder. Then Offscreen renders the view once for each
+    /// of the format's sizes, 16, 20, 24, 32, 40, 48, 64 and 256 for .ico, each with the camera
+    /// fitted to it as for File, Grab, and the images are written together. The saved file is
+    /// logged in DebugMemo; a failure is reported with a message. A click while a grab is under
+    /// way is ignored.</remarks>
+    /// <param name="Sender">SaveAsIconMenuItem.</param>
+    procedure SaveAsIconMenuItemClick(Sender: TObject);
     //** @abstract(Closes the application.)
     //**
     //** Closes the main form, which ends the application in the normal way, so the form and
@@ -630,6 +705,10 @@ type
     FOffscreen: TSprite3DOffscreen;
     // Number for the next grab file; back to 1 whenever SaveFolder is chosen
     FGrabNumber: Integer;
+    // Settings kept between sessions in settings.json
+    FSettings: TSprite3DAppSettings;
+    // True once FormShow has loaded the first model
+    FStarted: Boolean;
     // The on-screen framing, kept while a grab is fitted to its target
     FSavedFraming: TSprite3DFraming;
     ModelDir: String;
@@ -643,6 +722,11 @@ type
     procedure SelectFixedView(const AItem: TMenuItem; const APolarAngle: Single;
       const AAzimuth: Single = 45);
     function ChooseSaveFolder: Boolean;
+    procedure OpenRequestedFile(const AFileName: String);
+    function ChooseIconFile(out AFileName: String;
+      out AWriter: TSprite3DIconWriterClass): Boolean;
+    function GetSaveFolder: String;
+    procedure SetSaveFolder(const Value: String);
     procedure OffscreenBeforeGrab(Sender: TObject; const AWidth, AHeight: Integer);
     procedure OffscreenAfterGrab(Sender: TObject);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
@@ -659,20 +743,26 @@ type
     {$ENDIF}
   public
     { Public declarations }
-    //** @abstract(The folder File, Grab saves into; empty until one is chosen.)
+    //** @abstract(The folder File, Grab saves into, kept between sessions; empty until one is
+    //** chosen.)
     //**
-    //** Empty at start-up, so the first grab shows the "Save Location" dialog and stores the
-    //** choice here. Android and iOS have no such dialog: there the first grab sets it to a
-    //** Grabs folder in the app's public storage on Android, or its Documents folder on iOS.
-    //** Set it in code to save elsewhere without asking; set it back to empty to ask again.
-    //** The folder is created if it does not exist when a grab is saved.
-    /// <summary>The folder File, Grab saves into; empty until one is chosen.</summary>
-    /// <remarks>Empty at start-up, so the first grab shows the "Save Location" dialog and
-    /// stores the choice here. Android and iOS have no such dialog: there the first grab sets
-    /// it to a Grabs folder in the app's public storage on Android, or its Documents folder on
-    /// iOS. Set it in code to save elsewhere without asking; set it back to empty to ask again.
-    /// The folder is created if it does not exist when a grab is saved.</remarks>
-    SaveFolder: String;
+    //** Read from settings.json at start-up, so it is empty only on the first run, or until a
+    //** folder is chosen. The first grab without a usable folder shows the "Save Location"
+    //** dialog and stores the choice here. Android and iOS have no such dialog: there the
+    //** first grab sets it to a Grabs folder in the app's public storage on Android, or its
+    //** Documents folder on iOS. Setting it saves settings.json at once; a failure to write
+    //** the file is reported with a message, and the new folder is still used this session.
+    //** Set it to empty to be asked again.
+    /// <summary>The folder File, Grab saves into, kept between sessions; empty until one is
+    /// chosen.</summary>
+    /// <remarks>Read from settings.json at start-up, so it is empty only on the first run, or
+    /// until a folder is chosen. The first grab without a usable folder shows the "Save
+    /// Location" dialog and stores the choice here. Android and iOS have no such dialog: there
+    /// the first grab sets it to a Grabs folder in the app's public storage on Android, or its
+    /// Documents folder on iOS. Setting it saves settings.json at once; a failure to write the
+    /// file is reported with a message, and the new folder is still used this session. Set it
+    /// to empty to be asked again.</remarks>
+    property SaveFolder: String read GetSaveFolder write SetSaveFolder;
     //** @abstract(The off-screen renderer File, Grab uses; set its Width and Height to
     //** change the grab size.)
     //**
@@ -698,7 +788,7 @@ uses
   FMX.Platform,
   Gorilla.DefTypes, System.Math,
   FMX.Types3D,
-  Sprite3DAxes, Sprite3DGrid, Sprite3DHelpers;
+  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles;
 
 {$R *.fmx}
 
@@ -733,7 +823,9 @@ begin
   FOffscreen.Viewport := GorillaViewport;
   FOffscreen.OnBeforeGrab := OffscreenBeforeGrab;
   FOffscreen.OnAfterGrab := OffscreenAfterGrab;
-  SaveFolder := String.Empty;
+  // Settings from earlier sessions; on the first run, the defaults
+  FSettings := TSprite3DAppSettings.Create;
+  FSettings.Load;
   FGrabNumber := 1;
   // Fill the space the bottom test strip (DistanceLayout) leaves
   GorillaViewport.Align := TAlignLayout.Client;
@@ -910,10 +1002,34 @@ end;
 // The directory layout of models/Orientation follows this pattern
 // to allow easy addition of new Model types
 procedure TMainForm.FormShow(Sender: TObject);
+const
+  DEFAULT_MODEL = 'models/uvcube.glb';
+//  DEFAULT_MODEL = 'models/TestAnimatedCharacter.glb';
+//  DEFAULT_MODEL = 'models/TestStaticCharacter.glb';
 begin
-  SwitchModel(ModelDir + 'models/uvcube.glb');
-//  SwitchModel(ModelDir + 'models/TestAnimatedCharacter.glb');
-//  SwitchModel(ModelDir + 'models/TestStaticCharacter.glb');
+  if FStarted then
+    Exit;   // the form can be shown again; the model stays as it is
+  FStarted := True;
+  // A model the system asked to open, such as one double-clicked in
+  // Explorer or Finder, takes the default's place
+  SwitchModel(StartupModelFile(FileOpenRequests.TakePending,
+    ModelDir + DEFAULT_MODEL));
+  FileOpenRequests.OnOpenFile := OpenRequestedFile;
+end;
+
+// A file the system asks to open while the application runs
+procedure TMainForm.OpenRequestedFile(const AFileName: String);
+begin
+  if IsModelFile(AFileName) then
+    SwitchModel(AFileName)
+  else
+    ShowMessage('Not a model this application can open: ' + AFileName);
+end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  FileOpenRequests.OnOpenFile := nil;
+  FreeAndNil(FSettings);
 end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
@@ -931,7 +1047,7 @@ procedure TMainForm.GrabMenuItemClick(Sender: TObject);
 begin
   if FOffscreen.Busy then
     Exit;   // the last grab has not been saved yet
-  if (SaveFolder = String.Empty) and not ChooseSaveFolder then
+  if not FSettings.HasSaveFolder and not ChooseSaveFolder then
     Exit;   // no folder, no grab
 
   if not FOffscreen.Grab(
@@ -971,6 +1087,100 @@ end;
 procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
 begin
   GorillaCamera.RestoreFraming(FSavedFraming);
+end;
+
+function TMainForm.GetSaveFolder: String;
+begin
+  Result := FSettings.SaveFolder;
+end;
+
+// Keep the folder and write settings.json straight away, so it survives
+// however the session ends
+procedure TMainForm.SetSaveFolder(const Value: String);
+begin
+  FSettings.SaveFolder := Value;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
+procedure TMainForm.SaveAsIconMenuItemClick(Sender: TObject);
+var
+  FileName: String;
+  Writer: TSprite3DIconWriterClass;
+begin
+  if FOffscreen.Busy then
+    Exit;   // a grab is still under way
+  if not ChooseIconFile(FileName, Writer) then
+    Exit;
+
+  if not FOffscreen.GrabSizes(Writer.DefaultSizes,
+    procedure(const AImages: TArray<TBitmap>; const AError: String)
+    var
+      Icon: TSprite3DIconWriter;
+    begin
+      if AError <> String.Empty then
+      begin
+        ShowMessage('Icon failed: ' + AError);
+        Exit;
+      end;
+      Icon := Writer.Create;
+      try
+        try
+          Icon.SaveToFile(AImages, FileName);
+          DebugMemo.Lines.Add('Saved icon ' + FileName);
+        except
+          on E: Exception do
+            ShowMessage('Can''t save ' + FileName + sLineBreak + E.Message);
+        end;
+      finally
+        Icon.Free;
+      end;
+    end) then
+    ShowMessage('Icon could not start');
+end;
+
+// Ask which file, and so which format, to save the icon as. The dialog
+// offers every registered format and opens where the last icon went; the
+// chosen folder is kept for next time. Android and iOS have no save
+// dialog, so there the first format is used with a numbered name.
+function TMainForm.ChooseIconFile(out AFileName: String;
+  out AWriter: TSprite3DIconWriterClass): Boolean;
+var
+  Writers: TArray<TSprite3DIconWriterClass>;
+  Index: Integer;
+begin
+  Writers := IconWriters;
+  AWriter := Writers[0];
+  AFileName := AutoIconFileName(AWriter.FileExtension);
+  if AFileName <> String.Empty then
+    Exit(True);
+
+  SaveIconDialog.Filter := IconDialogFilter;
+  SaveIconDialog.FilterIndex := 1;
+  SaveIconDialog.InitialDir := FSettings.IconFolder;
+  SaveIconDialog.FileName := String.Empty;
+  Result := SaveIconDialog.Execute and (SaveIconDialog.FileName <> String.Empty);
+  if not Result then
+    Exit;
+
+  Index := SaveIconDialog.FilterIndex - 1;
+  if (Index >= 0) and (Index <= High(Writers)) then
+    AWriter := Writers[Index];
+  AFileName := AWriter.FixFileName(SaveIconDialog.FileName);
+
+  FSettings.IconFolder := ExtractFileDir(AFileName);
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
 end;
 
 // Ask for the grab folder with a "Save Location" dialog, or, where there is

@@ -109,6 +109,26 @@ type
   TSprite3DGrabSizeEvent = procedure(Sender: TObject; const AWidth,
     AHeight: Integer) of object;
 
+  //** @abstract(Receives the result of TSprite3DOffscreen.GrabSizes.)
+  //**
+  //** Runs on the main thread, outside the render loop. The bitmaps belong to the
+  //** TSprite3DOffscreen and are freed when the procedure returns; to keep them, copy them
+  //** with @code(TBitmap.Assign) or save them.
+  //**
+  //** @param(AImages One bitmap for each size asked for, in the same order and of that size;
+  //** empty if the grabs failed.)
+  //**
+  //** @param(AError Why the grabs failed; empty when AImages holds every size.)
+  /// <summary>Receives the result of TSprite3DOffscreen.GrabSizes.</summary>
+  /// <remarks>Runs on the main thread, outside the render loop. The bitmaps belong to the
+  /// TSprite3DOffscreen and are freed when the procedure returns; to keep them, copy them with
+  /// <c>TBitmap.Assign</c> or save them.</remarks>
+  /// <param name="AImages">One bitmap for each size asked for, in the same order and of that
+  /// size; empty if the grabs failed.</param>
+  /// <param name="AError">Why the grabs failed; empty when AImages holds every size.</param>
+  TSprite3DGrabSizesProc = reference to procedure(const AImages: TArray<TBitmap>;
+    const AError: String);
+
   //** @abstract(A render pass that draws the viewport's scene off screen, one frame on
   //** request.)
   //**
@@ -214,6 +234,41 @@ type
     /// <remarks>Does nothing if no grab is under way. Use it if the viewport may not render
     /// again soon, for example while it is hidden.</remarks>
     procedure Cancel;
+    //** @abstract(Grabs one square image of each size in turn, then passes them all to
+    //** AOnGrabbed.)
+    //**
+    //** Does what Grab does once for each size, one frame after another: Width and Height are
+    //** set to the size, OnBeforeGrab and OnAfterGrab run around each grab, so the camera can
+    //** be fitted to each, and the images are collected. Afterwards Width and Height are put
+    //** back as they were. Returns at once and does not block; AOnGrabbed runs once on the
+    //** main thread when every size is done, or as soon as one fails. Busy is True
+    //** throughout, as each grab starts the next; do not call Grab or Cancel until
+    //** AOnGrabbed has run.
+    //**
+    //** @param(ASizes The widths, which are also the heights, in pixels; each at least 1.)
+    //**
+    //** @param(AOnGrabbed The procedure to call with the images; must not be nil.)
+    //**
+    //** @returns(True if the grabs were started; False, with nothing started, if a grab is
+    //** already under way, Viewport is not set, ASizes is empty or AOnGrabbed is nil.)
+    /// <summary>Grabs one square image of each size in turn, then passes them all to
+    /// AOnGrabbed.</summary>
+    /// <remarks>Does what Grab does once for each size, one frame after another: Width and
+    /// Height are set to the size, OnBeforeGrab and OnAfterGrab run around each grab, so the
+    /// camera can be fitted to each, and the images are collected. Afterwards Width and Height
+    /// are put back as they were. Returns at once and does not block; AOnGrabbed runs once on
+    /// the main thread when every size is done, or as soon as one fails. Busy is True
+    /// throughout, as each grab starts the next; do not call Grab or Cancel until AOnGrabbed
+    /// has run.</remarks>
+    /// <param name="ASizes">The widths, which are also the heights, in pixels; each at least
+    /// 1.</param>
+    /// <param name="AOnGrabbed">The procedure to call with the images; must not be
+    /// nil.</param>
+    /// <returns>True if the grabs were started; False, with nothing started, if a grab is
+    /// already under way, Viewport is not set, ASizes is empty or AOnGrabbed is
+    /// nil.</returns>
+    function GrabSizes(const ASizes: array of Integer;
+      const AOnGrabbed: TSprite3DGrabSizesProc): Boolean;
     //** @abstract(True from a successful Grab until its procedure has run or Cancel.)
     /// <summary>True from a successful Grab until its procedure has run or
     /// Cancel.</summary>
@@ -542,6 +597,122 @@ begin
   FPending := True;
   Enabled := True;
   Viewport.Invalidate;
+end;
+
+// One GrabSizes run: grabs each size in turn from the previous grab's
+// procedure, keeping copies, and frees itself when it has reported
+type
+  TGrabSizesJob = class
+  private
+    FOffscreen: TSprite3DOffscreen;
+    FSizes: TArray<Integer>;
+    FIndex: Integer;
+    FImages: TArray<TBitmap>;
+    FOnGrabbed: TSprite3DGrabSizesProc;
+    FOldWidth: Integer;
+    FOldHeight: Integer;
+    function GrabNext: Boolean;
+    procedure Finish(const AError: String);
+  public
+    constructor Create(const AOffscreen: TSprite3DOffscreen;
+      const ASizes: array of Integer; const AOnGrabbed: TSprite3DGrabSizesProc);
+    destructor Destroy; override;
+  end;
+
+constructor TGrabSizesJob.Create(const AOffscreen: TSprite3DOffscreen;
+  const ASizes: array of Integer; const AOnGrabbed: TSprite3DGrabSizesProc);
+var
+  I: Integer;
+begin
+  inherited Create;
+  FOffscreen := AOffscreen;
+  SetLength(FSizes, Length(ASizes));
+  for I := 0 to High(ASizes) do
+    FSizes[I] := ASizes[I];
+  FOnGrabbed := AOnGrabbed;
+  FOldWidth := AOffscreen.Width;
+  FOldHeight := AOffscreen.Height;
+end;
+
+destructor TGrabSizesJob.Destroy;
+var
+  Image: TBitmap;
+begin
+  for Image in FImages do
+    Image.Free;
+  inherited;
+end;
+
+// Starts the grab for FSizes[FIndex]; False if it could not start
+function TGrabSizesJob.GrabNext: Boolean;
+var
+  Job: TGrabSizesJob;
+begin
+  Job := Self;
+  FOffscreen.Width := FSizes[FIndex];
+  FOffscreen.Height := FSizes[FIndex];
+  Result := FOffscreen.Grab(
+    procedure(const ABitmap: TBitmap; const AError: String)
+    var
+      Kept: TBitmap;
+    begin
+      if not Assigned(ABitmap) then
+      begin
+        Job.Finish(AError);
+        Exit;
+      end;
+      // The grab's bitmap is freed when this returns, so keep a copy
+      Kept := TBitmap.Create;
+      Kept.Assign(ABitmap);
+      Job.FImages := Job.FImages + [Kept];
+      Inc(Job.FIndex);
+      if Job.FIndex > High(Job.FSizes) then
+        Job.Finish(String.Empty)
+      else if not Job.GrabNext then
+        Job.Finish('A grab could not be started.');
+    end);
+end;
+
+// Puts the size back, reports, and frees the job and its images
+procedure TGrabSizesJob.Finish(const AError: String);
+var
+  Images: TArray<TBitmap>;
+begin
+  FOffscreen.Width := FOldWidth;
+  FOffscreen.Height := FOldHeight;
+  try
+    if AError = String.Empty then
+      Images := FImages
+    else
+      Images := nil;
+    FOnGrabbed(Images, AError);
+  finally
+    Free;
+  end;
+end;
+
+function TSprite3DOffscreen.GrabSizes(const ASizes: array of Integer;
+  const AOnGrabbed: TSprite3DGrabSizesProc): Boolean;
+var
+  Job: TGrabSizesJob;
+  Size: Integer;
+begin
+  Result := (not FBusy) and Assigned(Viewport) and (Length(ASizes) > 0) and
+    Assigned(AOnGrabbed);
+  if not Result then
+    Exit;
+  for Size in ASizes do
+    if Size < 1 then
+      Exit(False);
+  Job := TGrabSizesJob.Create(Self, ASizes, AOnGrabbed);
+  Result := Job.GrabNext;
+  if not Result then
+  begin
+    // Nothing was started: undo quietly, without calling back
+    Width := Job.FOldWidth;
+    Height := Job.FOldHeight;
+    Job.Free;
+  end;
 end;
 
 procedure TSprite3DOffscreen.Cancel;

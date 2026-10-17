@@ -6,6 +6,9 @@
 //** application's own rules, such as where models are found, how grabs are named and saved,
 //** and how a loaded model is placed. It uses the library and the RTL, never the UI.
 //**
+//** TSprite3DAppSettings holds the settings kept between sessions, in @code(settings.json)
+//** in the application's own per-user folder, SupportFolder.
+//**
 //** Loading a model through LoadModelFile also registers Gorilla3D's loaders for glTF, FBX,
 //** OBJ, USD, Collada, STL and PLY files, as this unit uses them.
 //**
@@ -23,6 +26,9 @@ unit Sprite3DHelpers;
   found, how grabs are named and saved, and how a loaded model is placed.
   It uses the library and the RTL, never the UI.
 
+  TSprite3DAppSettings holds the settings kept between sessions, in
+  settings.json in the application's own per-user folder, SupportFolder.
+
   Loading a model through LoadModelFile also registers Gorilla3D's loaders
   for glTF, FBX, OBJ, USD, Collada, STL and PLY files, as this unit uses
   them.
@@ -35,7 +41,15 @@ interface
 uses
   System.SysUtils, System.Types, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
-  Gorilla.Model;
+  Gorilla.Model, Sprite3DStorage;
+
+const
+  //** @abstract(The application's name, used for its per-user folder.)
+  /// <summary>The application's name, used for its per-user folder.</summary>
+  APP_NAME = 'Sprite3D';
+  //** @abstract(The name of the settings file in SupportFolder.)
+  /// <summary>The name of the settings file in SupportFolder.</summary>
+  SETTINGS_FILE_NAME = 'settings.json';
 
 type
   //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
@@ -48,6 +62,72 @@ type
   /// that declares the cast. Because it is in the interface section, other units can use it
   /// too.</remarks>
   TControl3DAccess = class(TControl3D);
+
+  //** @abstract(The application's settings, kept between sessions in settings.json.)
+  //**
+  //** Create it, call Load once at start-up, and call Save after changing a setting. The file
+  //** is @code(settings.json) in SupportFolder; on the first run it does not exist yet, so
+  //** every setting keeps its default until the first Save. For the main thread only.
+  //**
+  //** @seealso(TSprite3DJsonSettings)
+  /// <summary>The application's settings, kept between sessions in settings.json.</summary>
+  /// <remarks>Create it, call Load once at start-up, and call Save after changing a setting.
+  /// The file is <c>settings.json</c> in SupportFolder; on the first run it does not exist
+  /// yet, so every setting keeps its default until the first Save. For the main thread
+  /// only.</remarks>
+  /// <seealso cref="Sprite3DStorage.TSprite3DJsonSettings"/>
+  TSprite3DAppSettings = class(TSprite3DJsonSettings)
+  private
+    FSaveFolder: String;
+    FIconFolder: String;
+  public
+    //** @abstract(Creates the settings with their defaults, for settings.json in
+    //** SupportFolder.)
+    //**
+    //** Nothing is read until Load is called.
+    /// <summary>Creates the settings with their defaults, for settings.json in
+    /// SupportFolder.</summary>
+    /// <remarks>Nothing is read until Load is called.</remarks>
+    constructor Create; reintroduce;
+    //** @abstract(The application's per-user folder, for settings.json and support files.)
+    //**
+    //** AppDataFolder for APP_NAME: for example @code(%APPDATA%\Sprite3D) on Windows. It is
+    //** created by the first Save.
+    //**
+    //** @returns(The folder's full path, without a trailing path delimiter.)
+    /// <summary>The application's per-user folder, for settings.json and support
+    /// files.</summary>
+    /// <remarks>AppDataFolder for APP_NAME: for example <c>%APPDATA%\Sprite3D</c> on Windows.
+    /// It is created by the first Save.</remarks>
+    /// <returns>The folder's full path, without a trailing path delimiter.</returns>
+    class function SupportFolder: String; static;
+    //** @abstract(True if SaveFolder is set and the folder still exists.)
+    //**
+    //** False on the first run, and also if the folder has been removed or is on a drive
+    //** that is not connected, so the user can be asked for a folder again.
+    //**
+    //** @returns(Whether grabs can be saved in SaveFolder without asking.)
+    /// <summary>True if SaveFolder is set and the folder still exists.</summary>
+    /// <remarks>False on the first run, and also if the folder has been removed or is on a
+    /// drive that is not connected, so the user can be asked for a folder again.</remarks>
+    /// <returns>Whether grabs can be saved in SaveFolder without asking.</returns>
+    function HasSaveFolder: Boolean;
+  published
+    //** @abstract(The folder grabs are saved in; empty until one is chosen.)
+    //**
+    //** Stored as @code(saveFolder) in settings.json.
+    /// <summary>The folder grabs are saved in; empty until one is chosen.</summary>
+    /// <remarks>Stored as <c>saveFolder</c> in settings.json.</remarks>
+    property SaveFolder: String read FSaveFolder write FSaveFolder;
+    //** @abstract(The folder the last icon was saved in, where the next save dialog opens;
+    //** empty until an icon is saved.)
+    //**
+    //** Stored as @code(iconFolder) in settings.json.
+    /// <summary>The folder the last icon was saved in, where the next save dialog opens; empty
+    /// until an icon is saved.</summary>
+    /// <remarks>Stored as <c>iconFolder</c> in settings.json.</remarks>
+    property IconFolder: String read FIconFolder write FIconFolder;
+  end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
 //**
@@ -213,6 +293,62 @@ function LoadModelFile(const AModel: TGorillaModel; const AFileName: String;
 /// <param name="ABox">The box LoadModelFile returned for it.</param>
 procedure PlaceModel(const AModel: TGorillaModel; const ABox: TBoundingBox);
 
+//** @abstract(Whether a file is a model LoadModelFile can load, judged by its extension.)
+//**
+//** The extensions are those of the loaders this unit registers: .glb, .gltf, .fbx, .obj,
+//** .usdc, .dae, .stl and .ply, in any case. The file's contents are not checked.
+//**
+//** @param(AFileName A file name or path.)
+//**
+//** @returns(True if its extension is one of the model formats.)
+/// <summary>Whether a file is a model LoadModelFile can load, judged by its
+/// extension.</summary>
+/// <remarks>The extensions are those of the loaders this unit registers: .glb, .gltf, .fbx,
+/// .obj, .usdc, .dae, .stl and .ply, in any case. The file's contents are not
+/// checked.</remarks>
+/// <param name="AFileName">A file name or path.</param>
+/// <returns>True if its extension is one of the model formats.</returns>
+function IsModelFile(const AFileName: String): Boolean;
+
+//** @abstract(The model to load at start-up: the first one the system asked to open, or
+//** ADefault.)
+//**
+//** @param(ARequested The files the operating system asked the application to open, oldest
+//** first, as Sprite3DOpenFiles collects them; files that are not models are skipped.)
+//**
+//** @param(ADefault The model to load when none was asked for.)
+//**
+//** @returns(The first model in ARequested, or ADefault if it holds none.)
+/// <summary>The model to load at start-up: the first one the system asked to open, or
+/// ADefault.</summary>
+/// <param name="ARequested">The files the operating system asked the application to open,
+/// oldest first, as Sprite3DOpenFiles collects them; files that are not models are
+/// skipped.</param>
+/// <param name="ADefault">The model to load when none was asked for.</param>
+/// <returns>The first model in ARequested, or ADefault if it holds none.</returns>
+function StartupModelFile(const ARequested: TArray<String>;
+  const ADefault: String): String;
+
+//** @abstract(The file an icon is saved to without asking, or empty where the user should
+//** choose.)
+//**
+//** Android and iOS have no save dialog, so there icons go to the next free
+//** @code(iconNNN) name, with AExtension, in DefaultGrabFolder. Elsewhere this returns an
+//** empty string, and the user picks the file.
+//**
+//** @param(AExtension The icon format's extension, with its dot, such as @code('.ico').)
+//**
+//** @returns(The full path on Android and iOS; an empty string on other platforms.)
+/// <summary>The file an icon is saved to without asking, or empty where the user should
+/// choose.</summary>
+/// <remarks>Android and iOS have no save dialog, so there icons go to the next free
+/// <c>iconNNN</c> name, with AExtension, in DefaultGrabFolder. Elsewhere this returns an empty
+/// string, and the user picks the file.</remarks>
+/// <param name="AExtension">The icon format's extension, with its dot, such as
+/// <c>'.ico'</c>.</param>
+/// <returns>The full path on Android and iOS; an empty string on other platforms.</returns>
+function AutoIconFileName(const AExtension: String): String;
+
 implementation
 
 uses
@@ -230,6 +366,25 @@ uses
 const
   // The turn every loaded model is given so that it stands upright
   MODEL_ROTATION: TPoint3D = (X: 180; Y: 0; Z: 0);
+
+{ TSprite3DAppSettings }
+
+constructor TSprite3DAppSettings.Create;
+begin
+  inherited Create(TPath.Combine(SupportFolder, SETTINGS_FILE_NAME));
+  FSaveFolder := String.Empty;
+  FIconFolder := String.Empty;
+end;
+
+class function TSprite3DAppSettings.SupportFolder: String;
+begin
+  Result := AppDataFolder(APP_NAME);
+end;
+
+function TSprite3DAppSettings.HasSaveFolder: Boolean;
+begin
+  Result := (FSaveFolder <> String.Empty) and DirectoryExists(FSaveFolder);
+end;
 
 function Wrap360(const ADegrees: Single): Single;
 begin
@@ -291,6 +446,43 @@ begin
   Result := NextNumberedFileName(AFolder, 'grab', '.png', Number);
   ABitmap.SaveToFile(Result);
   ANumber := Number + 1;
+end;
+
+const
+  // One for each loader in the uses clause above
+  MODEL_EXTENSIONS: array[0..7] of String =
+    ('.glb', '.gltf', '.fbx', '.obj', '.usdc', '.dae', '.stl', '.ply');
+
+function IsModelFile(const AFileName: String): Boolean;
+var
+  Ext: String;
+begin
+  Ext := ExtractFileExt(AFileName);
+  for var Known in MODEL_EXTENSIONS do
+    if SameText(Ext, Known) then
+      Exit(True);
+  Result := False;
+end;
+
+function StartupModelFile(const ARequested: TArray<String>;
+  const ADefault: String): String;
+begin
+  for var FileName in ARequested do
+    if IsModelFile(FileName) then
+      Exit(FileName);
+  Result := ADefault;
+end;
+
+function AutoIconFileName(const AExtension: String): String;
+var
+  Folder: String;
+  Number: Integer;
+begin
+  Folder := DefaultGrabFolder;
+  if Folder = String.Empty then
+    Exit(String.Empty);   // desktop: the user chooses
+  Number := 1;
+  Result := NextNumberedFileName(Folder, 'icon', AExtension, Number);
 end;
 
 function LoadModelFile(const AModel: TGorillaModel; const AFileName: String;

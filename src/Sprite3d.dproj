@@ -111,6 +111,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <DCC_UnitSearchPath>..\delphi-neon\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
@@ -347,11 +348,14 @@
         <DCCReference Include="ui\Sprite3dMain.pas">
             <Form>MainForm</Form>
         </DCCReference>
-        <DCCReference Include="Sprite3DHelpers.pas"/>
+        <DCCReference Include="ui\Sprite3DHelpers.pas"/>
         <DCCReference Include="lib\Sprite3DCamera.pas"/>
         <DCCReference Include="lib\Sprite3DAxes.pas"/>
         <DCCReference Include="lib\Sprite3DGrid.pas"/>
         <DCCReference Include="lib\Sprite3DOffscreen.pas"/>
+        <DCCReference Include="lib\Sprite3DStorage.pas"/>
+        <DCCReference Include="lib\Sprite3DIconWriter.pas"/>
+        <DCCReference Include="lib\Sprite3DOpenFiles.pas"/>
         <None Include="..\README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

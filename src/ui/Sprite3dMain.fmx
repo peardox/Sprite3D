@@ -9,6 +9,7 @@ object MainForm: TMainForm
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
   OnShow = FormShow
+  OnDestroy = FormDestroy
   DesignerMasterStyle = 0
   object TabControl1: TTabControl
     Align = Client
@@ -269,6 +270,14 @@ object MainForm: TMainForm
     Left = 448
     Top = 8
   end
+  object SaveIconDialog: TSaveDialog
+    DefaultExt = 'ico'
+    Filter = 'Windows icon (*.ico)|*.ico'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
+    Title = 'Save As Icon'
+    Left = 448
+    Top = 64
+  end
   object MainMenu1: TMainMenu
     Left = 504
     Top = 8
@@ -283,6 +292,11 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Grab'
         OnClick = GrabMenuItemClick
+      end
+      object SaveAsIconMenuItem: TMenuItem
+        Locked = True
+        Text = 'Save As Icon'
+        OnClick = SaveAsIconMenuItemClick
       end
       object FileSeparatorItem: TMenuItem
         Locked = True
