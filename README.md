@@ -9,15 +9,15 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 ## Features
 
 - **Orbit camera.** Three dials set azimuth, inclination and roll. The camera turns on a chain of single-axis pivots, so it passes over the poles without gimbal lock.
-- **Fixed views.** The View menu offers Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View, or Variable to use the dials.
+- **Fixed views.** View, Camera offers Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View, or Variable to use the dials. The chosen view, and the dials' angles in Variable, are restored next session.
 - **Fitting.** Each model is centred and the camera fitted so the model fills the view. With "Fit any angle" checked, the fit holds for every angle, so the dials can never push the model out of view.
 - **Perspective or orthographic** projection.
-- **Bounding box, axes and grid.** The model's bounding box, its X, Y and Z axes through its centre of rotation, and a far-reaching grid on the bottom of the bounding box that fades out with distance and follows the box as an animation plays. Each can be switched off.
+- **Bounding box, axes and grid.** The model's bounding box, its X, Y and Z axes through its centre of rotation, and a far-reaching grid on the model's floor, the lowest point of its own geometry, that fades out with distance. Each can be switched off.
 - **Grab.** File, Grab renders the view off screen at 256 × 256 pixels, with the model fitted to fill the image, and saves it as the next of `grab001.png`, `grab002.png` and so on. The background is transparent unless a solid colour or gradient is chosen.
 - **Save As Icon.** File, Save As Icon renders the view at each size Windows 10 and 11 use (16, 20, 24, 32, 40, 48, 64 and 256 pixels, 32-bit) and saves them as one `.ico` file. The icon writer is designed so other formats, such as macOS icons, can be added.
 - **Background.** File, Background Settings... chooses what is drawn behind the model: None, Transparent (a two-grey checker standing for transparency, with an adjustable square size), Solid, or Gradient (top to bottom, left to right, or either diagonal). Colours can be picked or typed as hex. Grabs and icons follow the choice.
 - **Opening files from the system.** When the operating system opens the application with a model, for example a `.glb` or `.gltf` file double-clicked in Explorer or Finder, that model is loaded instead of the default one. This is handled on Windows, macOS, Linux, Android and iOS.
-- **Settings kept between sessions** in `settings.json`: the grab folder, the icon folder, the background and the state of the main form's check boxes.
+- **Settings kept between sessions** in `settings.json`: the grab folder, the icon folder, the background, the camera view and the state of the main form's check boxes.
 - **Mobile layout.** On Android and iOS the menus are reached through a hamburger button.
 
 Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.

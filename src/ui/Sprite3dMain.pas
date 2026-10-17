@@ -2,19 +2,21 @@
 //**
 //** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
 //** panel of three dials for Azimuth, inclination and Roll, plus five check boxes: one shows
-//** the model's bounding box, one its own X, Y and Z axes through its centre of rotation, one
-//** a grid on the bottom of its bounding box, one chooses how the model is fitted, and one
-//** switches between perspective and orthographic projection. The Debug tab holds a memo for log output.
+//** the model's bounding box, one its own X, Y and Z axes through its centre of rotation, one a
+//** grid on the bottom of its bounding box, one chooses how the model is fitted, and one
+//** switches between perspective and orthographic projection. The Debug tab holds a memo for
+//** log output.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
-//** the view turns the right way for the dial. View, Variable lets the dials set the angles;
-//** View, Isometric, the default for now, sets the readouts to inclination 35.264, azimuth 45
-//** and roll 0, the true isometric view, and switches the dials off; View, Pixel 2:1 does the
-//** same with an inclination of about 26.565; View, 3/4 View uses 45 degrees through the
-//** orthographic camera; View, Head On and View, Top Down use inclinations of 0 and 90 at
-//** azimuth 0; and View, Side View uses inclination 0 at azimuth 90. A test slider along the
-//** bottom of the 3D view moves the camera out from the fitted distance, x1 to x20.
+//** the view turns the right way for the dial. View, Camera, Variable lets the dials set the
+//** angles; View, Camera, Isometric, the default for now, sets the readouts to inclination
+//** 35.264, azimuth 45 and roll 0, the true isometric view, and switches the dials off; View,
+//** Camera, Pixel 2:1 does the same with an inclination of about 26.565; View, Camera, 3/4 View
+//** uses 45 degrees through the orthographic camera; View, Camera, Head On and View, Camera,
+//** Top Down use inclinations of 0 and 90 at azimuth 0; and View, Camera, Side View uses
+//** inclination 0 at azimuth 90. A test slider along the bottom of the 3D view moves the camera
+//** out from the fitted distance, x1 to x20.
 //**
 //** On show, the form loads the model the operating system asked it to open, as when a .glb or
 //** .gltf file is double-clicked in Explorer or Finder, or else the model whose file FormShow
@@ -64,67 +66,67 @@
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"
-//**     |-- ViewVariableItem "Variable"     dials set the angles
-//**     |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-//**     |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-//**     |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
-//**     |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-//**     |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-//**     `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//**     `-- CameraMenu "Camera"             the view, kept in settings.json
+//**         |-- ViewVariableItem "Variable"     dials set the angles
+//**         |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+//**         |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+//**         |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+//**         |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+//**         |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+//**         `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
 //** )
 unit Sprite3dMain;
 {
   Demo form for TSprite3DCamera: loads a model and drives the camera with dials.
-  The form has two tabs. The View tab holds a TGorillaViewport, created at
-  run time, and a panel of three dials for Azimuth, inclination and Roll,
-  plus five check boxes: one shows the model's bounding box, one its own X,
-  Y and Z axes through its centre of rotation, one a grid on the bottom of
-  its bounding box, one chooses how the model is fitted, and one switches
-  between perspective and orthographic projection. The Debug tab holds a memo for log output.
+
+  The form has two tabs. The View tab holds a TGorillaViewport, created at run
+  time, and a panel of three dials for Azimuth, inclination and Roll, plus
+  five check boxes: one shows the model's bounding box, one its own X, Y and Z
+  axes through its centre of rotation, one a grid on the bottom of its
+  bounding box, one chooses how the model is fitted, and one switches between
+  perspective and orthographic projection. The Debug tab holds a memo for log
+  output.
+
   The camera starts in the isometric view, and each readout always shows its
-  dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera
-  reversed, 360 minus the readout, so the view turns the right way for the
-  dial. View, Variable lets the dials set the angles; View, Isometric, the
+  dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed,
+  360 minus the readout, so the view turns the right way for the dial. View,
+  Camera, Variable lets the dials set the angles; View, Camera, Isometric, the
   default for now, sets the readouts to inclination 35.264, azimuth 45 and
-  roll 0, the true isometric view, and switches the dials off; View, Pixel
-  2:1 does the same with an inclination of about 26.565; View, 3/4 View uses
-  45 degrees through the orthographic camera; View, Head On and View, Top
-  Down use inclinations of 0 and 90 at azimuth 0; and View, Side View uses
-  inclination 0 at azimuth 90. A test slider along the bottom of the 3D view
-  moves the camera out from the fitted distance, x1 to x20.
-  On show, the form loads the model the operating system asked it to open,
-  as when a .glb or .gltf file is double-clicked in Explorer or Finder, or
-  else the model whose file FormShow names; files the system asks to open
-  later replace it. File,
-  OpenModel then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY
-  file, and File, Exit closes the application. File, Grab renders the view
-  off screen at 256 by 256 pixels, with the model fitted to fill it, and
-  saves it as the next of grab001.png, grab002.png and so on in SaveFolder,
-  asking for that folder only when none is known: SaveFolder is kept between
-  sessions in settings.json, through TSprite3DAppSettings in
+  roll 0, the true isometric view, and switches the dials off; View, Camera,
+  Pixel 2:1 does the same with an inclination of about 26.565; View, Camera,
+  3/4 View uses 45 degrees through the orthographic camera; View, Camera, Head
+  On and View, Camera, Top Down use inclinations of 0 and 90 at azimuth 0; and
+  View, Camera, Side View uses inclination 0 at azimuth 90. A test slider
+  along the bottom of the 3D view moves the camera out from the fitted
+  distance, x1 to x20.
+
+  On show, the form loads the model the operating system asked it to open, as
+  when a .glb or .gltf file is double-clicked in Explorer or Finder, or else
+  the model whose file FormShow names; files the system asks to open later
+  replace it. File, OpenModel then loads any other glTF, FBX, OBJ, USD,
+  Collada, STL or PLY file, and File, Exit closes the application. File, Grab
+  renders the view off screen at 256 by 256 pixels, with the model fitted to
+  fill it, and saves it as the next of grab001.png, grab002.png and so on in
+  SaveFolder, asking for that folder only when none is known: SaveFolder is
+  kept between sessions in settings.json, through TSprite3DAppSettings in
   Sprite3DHelpers. File, Save As Icon renders the view off screen at each of
-  Windows' icon sizes and saves them together as one .ico file the user
-  names. Behind the model the viewport can show a background; by default
-  none is drawn. File, Background Settings... chooses None, Transparent (a
-  two-grey checker standing for transparency), Solid or Gradient, which
-  grabs and icons follow too.
-  Each model replaces the last:
-  it plays its last animation by name if it has any, is centred and turned
-  180 degrees about X, and the camera is fitted so it fills the view. The
-  model is refitted when the viewport is resized, the projection changes or
-  the "Fit any angle" box is toggled, but not when a dial turns. Checked,
-  that box uses FitToBoundsMax, which frames the model for every angle at
-  once, so the dials can never push it out of view. Unchecked, FitToBounds
-  frames it exactly for the angles at the time of the fit, and turning a
-  dial afterwards can push part of it past the edge until the next refit.
-    TabControl1
-    |-- GorillaTab "View"
-    |   `-- MainLayout
-    |       |-- ViewportLayout   owns the TGorillaViewport
-    |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
-    |       `-- ControlsLayout   dials, labels, five check boxes
-    `-- DebugTab "Debug"
-        `-- DebugMemo
+  Windows' icon sizes and saves them together as one .ico file the user names.
+  Behind the model the viewport can show a background; by default none is
+  drawn. File, Background Settings... chooses None, Transparent (a two-grey
+  checker standing for transparency), Solid or Gradient, which grabs and icons
+  follow too. Each model replaces the last: it plays its last animation by
+  name if it has any, is centred and turned 180 degrees about X, and the
+  camera is fitted so it fills the view. The model is refitted when the
+  viewport is resized, the projection changes or the "Fit any angle" box is
+  toggled, but not when a dial turns. Checked, that box uses FitToBoundsMax,
+  which frames the model for every angle at once, so the dials can never push
+  it out of view. Unchecked, FitToBounds frames it exactly for the angles at
+  the time of the fit, and turning a dial afterwards can push part of it past
+  the edge until the next refit. TabControl1 |-- GorillaTab "View" |   `--
+  MainLayout |       |-- ViewportLayout   owns the TGorillaViewport |       |
+  `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack |       `--
+  ControlsLayout   dials, labels, five check boxes `-- DebugTab "Debug" `--
+  DebugMemo
 
     The form only handles the user interface. The 3D work is done by the
     library units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and
@@ -145,13 +147,14 @@ unit Sprite3dMain;
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
     |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"
-        |-- ViewVariableItem "Variable"     dials set the angles
-        |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-        |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-        |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
-        |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-        |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-        `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+        `-- CameraMenu "Camera"             the view, kept in settings.json
+            |-- ViewVariableItem "Variable"     dials set the angles
+            |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+            |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+            |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+            |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+            |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+            `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
 }
 
 interface
@@ -159,7 +162,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs,
-  System.Math.Vectors, Gorilla.Control, Gorilla.Transform, Gorilla.Mesh,
+  System.Math.Vectors, FMX.Types3D, Gorilla.Control, Gorilla.Transform, Gorilla.Mesh,
   Gorilla.Model, FMX.Controls3D, Gorilla.Light, Gorilla.Viewport,
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
@@ -358,23 +361,30 @@ type
     //** @abstract(The "Exit" item; see ExitMenuItemClick.)
     /// <summary>The "Exit" item; see <see cref="ExitMenuItemClick"/>.</summary>
     ExitMenuItem: TMenuItem;
-    //** @abstract(The "View" menu, choosing how the camera angles are set.)
+    //** @abstract(The "View" menu; holds CameraMenu.)
+    /// <summary>The "View" menu; holds <see cref="CameraMenu"/>.</summary>
+    ViewMenu: TMenuItem;
+    //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
     //**
     //** Its items form one radio group: Variable, where the dials set the angles, and the
-    //** fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side
-    //** View. Choosing an item clears every check in the menu, sets the view, then checks that
-    //** item.
-    /// <summary>The "View" menu, choosing how the camera angles are set.</summary>
+    //** fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View. Choosing
+    //** an item clears every check in the submenu, sets the view, then checks that item. The
+    //** checked item, and the dials' angles while Variable is checked, are kept in
+    //** settings.json and restored at start-up.
+    /// <summary>The "Camera" submenu of View, choosing how the camera angles are
+    /// set.</summary>
     /// <remarks>Its items form one radio group: Variable, where the dials set the angles, and
-    /// the fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side
-    /// View. Choosing an item clears every check in the menu, sets the view, then checks that
-    /// item.</remarks>
-    ViewMenu: TMenuItem;
+    /// the fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View.
+    /// Choosing an item clears every check in the submenu, sets the view, then checks that
+    /// item. The checked item, and the dials' angles while Variable is checked, are kept in
+    /// settings.json and restored at start-up.</remarks>
+    CameraMenu: TMenuItem;
     //** @abstract(The "Variable" view; see ViewVariableItemClick.)
     /// <summary>The "Variable" view; see <see cref="ViewVariableItemClick"/>.</summary>
     ViewVariableItem: TMenuItem;
-    //** @abstract(The "Isometric" view, chosen at start-up; see ViewIsometricItemClick.)
-    /// <summary>The "Isometric" view, chosen at start-up; see
+    //** @abstract(The "Isometric" view, chosen at start-up when no other is saved; see
+    //** ViewIsometricItemClick.)
+    /// <summary>The "Isometric" view, chosen at start-up when no other is saved; see
     /// <see cref="ViewIsometricItemClick"/>.</summary>
     ViewIsometricItem: TMenuItem;
     //** @abstract(The "Pixel 2:1" view; see ViewPixel2To1ItemClick.)
@@ -395,17 +405,18 @@ type
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
     //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
-    //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is the
-    //** current folder instead if that has a models subfolder. The handler creates a
+    //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is
+    //** the current folder instead if that has a models subfolder. The handler creates a
     //** TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree FOV,
     //** which becomes the viewport's camera, and a point light parented to the camera at its
     //** origin, so it sits where the camera is and points where it looks. The viewport runs
     //** at a fixed 60 frames per second without VSync.
     //**
-    //** The dials start at 0, then the isometric view is chosen, as View, Isometric does:
-    //** the dials are turned to its angles and switched off, and the readouts set to match,
-    //** so dial, readout and camera agree from the start. Last, the five check boxes are set
-    //** as settings.json says they were left, which also sets the projection.
+    //** The dials start at 0, then the camera view kept in settings.json is chosen, as its
+    //** View, Camera item would choose it: a fixed view turns the dials to its angles and
+    //** switches them off, and Variable turns them to the angles kept with it and leaves them
+    //** on. Isometric is chosen when none is kept. Last, the five check boxes are set as
+    //** settings.json says they were left, which also sets the projection.
     //**
     //** @param(Sender The form.)
     /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
@@ -414,13 +425,13 @@ type
     /// Windows it is the current folder instead if that has a models subfolder. The handler
     /// creates a TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree
     /// FOV, which becomes the viewport's camera, and a point light parented to the camera at
-    /// its origin, so it sits where the camera is and points where it looks. The viewport runs
-    /// at a fixed 60 frames per second without VSync.</para>
-    /// <para>The dials start at 0, then the isometric view is chosen, as View, Isometric
-    /// does: the dials are turned to its angles and switched off, and the readouts set to
-    /// match, so dial, readout and camera agree from the start. Last, the five check boxes
-    /// are set as settings.json says they were left, which also sets the
-    /// projection.</para></remarks>
+    /// its origin, so it sits where the camera is and points where it looks. The viewport
+    /// runs at a fixed 60 frames per second without VSync.</para>
+    /// <para>The dials start at 0, then the camera view kept in settings.json is chosen, as
+    /// its View, Camera item would choose it: a fixed view turns the dials to its angles and
+    /// switches them off, and Variable turns them to the angles kept with it and leaves them
+    /// on. Isometric is chosen when none is kept. Last, the five check boxes are set as
+    /// settings.json says they were left, which also sets the projection.</para></remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Loads the first model, the one the system asked to open or the default, and
@@ -448,19 +459,20 @@ type
     /// cannot be read.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
-    //** @abstract(Stops taking open requests, saves the check boxes' states and frees the
-    //** settings.)
+    //** @abstract(Stops taking open requests, saves the view state and frees the settings.)
     //**
-    //** The states of "Show bounding box", "Show grid", "Show axes", "Fit any angle" and
-    //** "Orthographic" are written to settings.json for the next session; a failed save is ignored, as no
-    //** message can be shown here. Other settings are saved as soon as they change.
+    //** The checked View, Camera item, the dials' angles if that is Variable, and the states
+    //** of the five check boxes are written to settings.json for the next session; a failed
+    //** save is ignored, as no message can be shown here. Other settings are saved as soon as
+    //** they change.
     //**
     //** @param(Sender The form.)
-    /// <summary>Stops taking open requests, saves the check boxes' states and frees the
+    /// <summary>Stops taking open requests, saves the view state and frees the
     /// settings.</summary>
-    /// <remarks>The states of "Show bounding box", "Show grid", "Show axes", "Fit any angle"
-    /// and "Orthographic" are written to settings.json for the next session; a failed save is ignored, as no
-    /// message can be shown here. Other settings are saved as soon as they change.</remarks>
+    /// <remarks>The checked View, Camera item, the dials' angles if that is Variable, and the
+    /// states of the five check boxes are written to settings.json for the next session; a
+    /// failed save is ignored, as no message can be shown here. Other settings are saved as
+    /// soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
     //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
@@ -694,12 +706,13 @@ type
     procedure DistanceTrackChange(Sender: TObject);
     //** @abstract(Sets the pixel-art 2:1 view and fixes it.)
     //**
-    //** As View, Isometric, but with the inclination ArcTan@(1/2@), about 26.565 degrees, at
-    //** which lines on the floor run 2 pixels across for each pixel up, as in 2:1 pixel art.
+    //** As View, Camera, Isometric, but with the inclination ArcTan@(1/2@), about 26.565
+    //** degrees, at which lines on the floor run 2 pixels across for each pixel up, as in 2:1
+    //** pixel art.
     //**
     //** @param(Sender ViewPixel2To1Item.)
     /// <summary>Sets the pixel-art 2:1 view and fixes it.</summary>
-    /// <remarks>As View, Isometric, but with the inclination ArcTan(1/2), about 26.565
+    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(1/2), about 26.565
     /// degrees, at which lines on the floor run 2 pixels across for each pixel up, as in 2:1
     /// pixel art.</remarks>
     /// <param name="Sender">ViewPixel2To1Item.</param>
@@ -739,12 +752,12 @@ type
     //** @abstract(Sets the side view and fixes it.)
     //**
     //** Inclination 0 and azimuth 90: level with the model, from the side, a quarter turn
-    //** from View, Head On.
+    //** from View, Camera, Head On.
     //**
     //** @param(Sender ViewSideItem.)
     /// <summary>Sets the side view and fixes it.</summary>
     /// <remarks>Inclination 0 and azimuth 90: level with the model, from the side, a quarter
-    /// turn from View, Head On.</remarks>
+    /// turn from View, Camera, Head On.</remarks>
     /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
   private
@@ -769,6 +782,7 @@ type
     FStarted: Boolean;
     // The viewport's background, fixed to the camera
     FBackground: TSprite3DBackground;
+    FModelBox: TBoundingBox;   // the model's own bounds, measured as loaded
     // The on-screen framing, kept while a grab is fitted to its target
     FSavedFraming: TSprite3DFraming;
     ModelDir: String;
@@ -786,7 +800,10 @@ type
     procedure ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
       const ASave: Boolean);
     procedure RestoreCheckBoxes;
-    procedure SaveCheckBoxes;
+    procedure RestoreCameraView;
+    procedure SaveViewState;
+    function CameraViewKey(const AItem: TMenuItem): String;
+    function CameraViewItem(const AKey: String): TMenuItem;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     procedure BackgroundDialogAccept(Sender: TObject);
     {$ENDIF}
@@ -854,7 +871,6 @@ implementation
 uses
   FMX.Platform,
   Gorilla.DefTypes, System.Math,
-  FMX.Types3D,
   Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm;
 
 {$R *.fmx}
@@ -915,9 +931,8 @@ begin
   RollDial.Value := FRoll;
   ApplyAngles;
 
-  // Start in the isometric view for now; View, Variable hands the angles
-  // back to the dials
-  ViewIsometricItemClick(Self);
+  // The camera view as it was left last session; Isometric the first time
+  RestoreCameraView;
 
   // The check boxes as they were left last session
   RestoreCheckBoxes;
@@ -929,16 +944,52 @@ end;
 
 {$IF DEFINED(ANDROID) or DEFINED(IOS)}
 // A toolbar along the top with the platform's hamburger button, which opens
-// a drawer listing MainMenu1: one group per top-level menu, one row per item.
-// Rows are made from the menu items themselves, so items added to MainMenu1
-// later appear here too. Separators are left out, and so is Exit on iOS,
-// where apps do not quit themselves.
+// a drawer listing MainMenu1: one group per menu or submenu that has items,
+// such as View, Camera, one row per item. Rows are made from the menu items
+// themselves, so items added to MainMenu1 later appear here too. Separators
+// are left out, and so is Exit on iOS, where apps do not quit themselves.
 procedure TMainForm.BuildMobileMenu;
+
+  // A group headed AHeading for AMenu's items, then a group for each of its
+  // submenus, headed with both names
+  procedure AddMenu(const AMenu: TMenuItem; const AHeading: String);
+  var
+    J: Integer;
+    Item: TMenuItem;
+    Header: TListBoxGroupHeader;
+    Row: TListBoxItem;
+    HasRows: Boolean;
+  begin
+    HasRows := False;
+    for J := 0 to AMenu.ItemsCount - 1 do
+    begin
+      Item := AMenu.Items[J];
+      if (Item.Text = '-') or (Item.ItemsCount > 0) then
+        Continue;
+      {$IFDEF IOS}
+      if Item = ExitMenuItem then
+        Continue;
+      {$ENDIF}
+      if not HasRows then
+      begin
+        Header := TListBoxGroupHeader.Create(FMenuList);
+        Header.Text := AHeading;
+        FMenuList.AddObject(Header);
+        HasRows := True;
+      end;
+      Row := TListBoxItem.Create(FMenuList);
+      Row.Text := Item.Text;
+      Row.TagObject := Item;
+      Row.OnClick := MobileMenuItemClick;
+      FMenuList.AddObject(Row);
+    end;
+    for J := 0 to AMenu.ItemsCount - 1 do
+      if AMenu.Items[J].ItemsCount > 0 then
+        AddMenu(AMenu.Items[J], AHeading + ', ' + AMenu.Items[J].Text);
+  end;
+
 var
-  I, J: Integer;
-  MenuTop, Item: TMenuItem;
-  Header: TListBoxGroupHeader;
-  Row: TListBoxItem;
+  I: Integer;
 begin
   FMenuBar := TToolBar.Create(Self);
   FMenuBar.Parent := Self;
@@ -963,29 +1014,8 @@ begin
   FMenuList.GroupingKind := TListGroupingKind.Grouped;
 
   for I := 0 to MainMenu1.ItemsCount - 1 do
-  begin
-    if not (MainMenu1.Items[I] is TMenuItem) then
-      Continue;
-    MenuTop := TMenuItem(MainMenu1.Items[I]);
-    Header := TListBoxGroupHeader.Create(FMenuList);
-    Header.Text := MenuTop.Text;
-    FMenuList.AddObject(Header);
-    for J := 0 to MenuTop.ItemsCount - 1 do
-    begin
-      Item := MenuTop.Items[J];
-      if Item.Text = '-' then
-        Continue;
-      {$IFDEF IOS}
-      if Item = ExitMenuItem then
-        Continue;
-      {$ENDIF}
-      Row := TListBoxItem.Create(FMenuList);
-      Row.Text := Item.Text;
-      Row.TagObject := Item;
-      Row.OnClick := MobileMenuItemClick;
-      FMenuList.AddObject(Row);
-    end;
-  end;
+    if MainMenu1.Items[I] is TMenuItem then
+      AddMenu(TMenuItem(MainMenu1.Items[I]), TMenuItem(MainMenu1.Items[I]).Text);
 end;
 
 // Each time the drawer opens, copy the menu's checks and enabled states to
@@ -1108,7 +1138,7 @@ end;
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   FileOpenRequests.OnOpenFile := nil;
-  SaveCheckBoxes;
+  SaveViewState;
   FreeAndNil(FSettings);
 end;
 
@@ -1125,13 +1155,78 @@ begin
   chkOrthoToggle.IsChecked := FSettings.Orthographic;
 end;
 
-// Keeps the check boxes' states in settings.json for the next session. Runs
-// as the form is destroyed, where a message box cannot be shown, so a failed
-// save is ignored and the next session starts from the last saved states.
-procedure TMainForm.SaveCheckBoxes;
+// The name settings.json keeps for a View, Camera item: its component name
+// without the View prefix and Item suffix, such as Isometric for
+// ViewIsometricItem, so it stays the same if the caption changes
+function TMainForm.CameraViewKey(const AItem: TMenuItem): String;
+begin
+  Result := AItem.Name;
+  if Result.StartsWith('View') then
+    Result := Result.Substring(4);
+  if Result.EndsWith('Item') then
+    Result := Result.Substring(0, Result.Length - 4);
+end;
+
+// The View, Camera item kept as AKey, or nil if none has that name
+function TMainForm.CameraViewItem(const AKey: String): TMenuItem;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if AKey = String.Empty then
+    Exit;
+  for I := 0 to CameraMenu.ItemsCount - 1 do
+    if SameText(CameraViewKey(CameraMenu.Items[I]), AKey) then
+      Exit(CameraMenu.Items[I]);
+end;
+
+// Chooses the camera view kept in settings.json, as its menu item would.
+// For Variable the dials are first turned to the angles kept with it, each
+// dial's OnChange taking its angle, and ApplyAngles covering a dial that
+// was already there; a fixed view sets its own angles. Isometric is chosen
+// when no view, or an unknown one, is kept.
+procedure TMainForm.RestoreCameraView;
+var
+  Item: TMenuItem;
+begin
+  Item := CameraViewItem(FSettings.CameraView);
+  if Item = ViewVariableItem then
+  begin
+    FAzimuth := Wrap360(FSettings.VariableAzimuth);
+    FPolarAngle := Wrap360(FSettings.VariableInclination);
+    FRoll := Wrap360(FSettings.VariableRoll);
+    AzimuthDial.Value := -FAzimuth;
+    AngleDial.Value := -FPolarAngle;
+    RollDial.Value := FRoll;
+    ApplyAngles;
+    ViewVariableItemClick(ViewVariableItem);
+  end
+  else if (Item <> nil) and Assigned(Item.OnClick) then
+    Item.OnClick(Item)
+  else
+    ViewIsometricItemClick(ViewIsometricItem);
+end;
+
+// Keeps the camera view and the check boxes' states in settings.json for
+// the next session. The dials' angles are kept only while Variable is
+// checked, so a fixed view leaves the last Variable angles in place. Runs as
+// the form is destroyed, where a message box cannot be shown, so a failed
+// save is ignored and the next session starts from the last saved state.
+procedure TMainForm.SaveViewState;
+var
+  I: Integer;
 begin
   if FSettings = nil then
     Exit;
+  for I := 0 to CameraMenu.ItemsCount - 1 do
+    if CameraMenu.Items[I].IsChecked then
+      FSettings.CameraView := CameraViewKey(CameraMenu.Items[I]);
+  if ViewVariableItem.IsChecked then
+  begin
+    FSettings.VariableAzimuth := FAzimuth;
+    FSettings.VariableInclination := FPolarAngle;
+    FSettings.VariableRoll := FRoll;
+  end;
   FSettings.ShowBoundingBox := chkShowBounds.IsChecked;
   FSettings.ShowGrid := chkShowGrid.IsChecked;
   FSettings.ShowAxes := chkShowAxes.IsChecked;
@@ -1380,8 +1475,8 @@ procedure TMainForm.ClearViewChecks;
 var
   I: Integer;
 begin
-  for I := 0 to ViewMenu.ItemsCount - 1 do
-    ViewMenu.Items[I].IsChecked := False;
+  for I := 0 to CameraMenu.ItemsCount - 1 do
+    CameraMenu.Items[I].IsChecked := False;
 end;
 
 // The pattern for every fixed view: clear all the checks, set the view,
@@ -1528,7 +1623,7 @@ end;
 procedure TMainForm.chkShowGridChange(Sender: TObject);
 begin
   if chkShowGrid.IsChecked then
-    ShowModelGrid(GorillaModel)
+    ShowModelGrid(GorillaModel, FModelBox)
   else
     HideModelGrid(GorillaModel);
 end;
@@ -1554,6 +1649,8 @@ begin
 
   try
     Anims := LoadModelFile(GorillaModel, AModel, BBox);
+    // The model's own bounds, before any helper is added: the grid's floor
+    FModelBox := BBox;
     if Length(Anims) > 0 then
       begin
         DebugMemo.Lines.Add('---------- anims ---------------');
@@ -1577,7 +1674,7 @@ begin
     // Floor grid, after the model is placed and turned, because the floor
     // depends on which way up it is
     if chkShowGrid.IsChecked then
-      ShowModelGrid(GorillaModel);
+      ShowModelGrid(GorillaModel, FModelBox);
 
     if not FitModel then
       Caption := 'Problem fitting Camera'

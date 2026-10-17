@@ -324,54 +324,57 @@ object MainForm: TMainForm
     end
     object ViewMenu: TMenuItem
       Text = 'View'
-      object ViewVariableItem: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = 'Variable'
-        OnClick = ViewVariableItemClick
-      end
-      object ViewIsometricItem: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = 'Isometric'
-        OnClick = ViewIsometricItemClick
-      end
-      object ViewPixel2To1Item: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = 'Pixel 2:1'
-        OnClick = ViewPixel2To1ItemClick
-      end
-      object ViewThreeQuarterItem: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = '3/4 View'
-        OnClick = ViewThreeQuarterItemClick
-      end
-      object ViewHeadOnItem: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = 'Head On'
-        OnClick = ViewHeadOnItemClick
-      end
-      object ViewTopDownItem: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = 'Top Down'
-        OnClick = ViewTopDownItemClick
-      end
-      object ViewSideItem: TMenuItem
-        Locked = True
-        GroupIndex = 1
-        RadioItem = True
-        Text = 'Side View'
-        OnClick = ViewSideItemClick
+      object CameraMenu: TMenuItem
+        Text = 'Camera'
+        object ViewVariableItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Variable'
+          OnClick = ViewVariableItemClick
+        end
+        object ViewIsometricItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Isometric'
+          OnClick = ViewIsometricItemClick
+        end
+        object ViewPixel2To1Item: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Pixel 2:1'
+          OnClick = ViewPixel2To1ItemClick
+        end
+        object ViewThreeQuarterItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = '3/4 View'
+          OnClick = ViewThreeQuarterItemClick
+        end
+        object ViewHeadOnItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Head On'
+          OnClick = ViewHeadOnItemClick
+        end
+        object ViewTopDownItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Top Down'
+          OnClick = ViewTopDownItemClick
+        end
+        object ViewSideItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Side View'
+          OnClick = ViewSideItemClick
+        end
       end
     end
   end

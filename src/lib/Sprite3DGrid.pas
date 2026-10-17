@@ -7,17 +7,18 @@
 //** lines fade out as their cells shrink to a few pixels on screen, so the grid dissolves into
 //** the distance rather than stopping at an edge. GridLevel is where it crosses its axis; with
 //** GridOnFloor, the default, that is the model's floor, the bounding-box face across the
-//** grid's axis that is lower in the scene: the bottom of the box ShowBoundingBox draws. The
-//** floor follows the box as it changes, as while an animation plays, so the grid stays
-//** under the model. That suits a model standing on its lowest bound, but not every model;
-//** set GridLevel to override it.
+//** grid's axis that is lower in the scene, the lowest point of the model's own geometry.
+//** For a model centred on its origin and reaching 1 each way that is -1 in Y; for a model
+//** standing on its origin it is 0. Give ShowModelGrid the box measured as the model was
+//** loaded, before any helper such as the axes is added, as Gorilla counts helpers in the
+//** model's bounds. Set GridLevel to put the grid elsewhere.
 //**
 //** The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its
 //** TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla
 //** converts for Vulkan and Metal. The plane is split into 64 by 64 squares so that the
 //** position the shader reads stays exact across it; the cost is the same however far the grid
-//** reaches, the lines stay about two pixels wide at any distance, and the shader is not
-//** rebuilt per frame; with GridOnFloor only the plane's level is moved. Changing a grid property rewrites the shader once, with the new values written
+//** reaches, the lines stay about two pixels wide at any distance, and nothing is recalculated
+//** per frame. Changing a grid property rewrites the shader once, with the new values written
 //** into it as constants.
 //**
 //** The plane is not a child of the model, so it never counts in the model's bounding box,
@@ -56,19 +57,20 @@ unit Sprite3DGrid;
   the grid dissolves into the distance rather than stopping at an edge.
   GridLevel is where it crosses its axis; with GridOnFloor, the default,
   that is the model's floor, the bounding-box face across the grid's axis
-  that is lower in the scene: the bottom of the box ShowBoundingBox draws.
-  The floor follows the box as it changes, as while an animation plays, so
-  the grid stays under the model. That suits a model standing on its lowest
-  bound, but not every model; set GridLevel to override it.
+  that is lower in the scene, the lowest point of the model's own geometry.
+  For a model centred on its origin and reaching 1 each way that is -1 in
+  Y; for a model standing on its origin it is 0. Give ShowModelGrid the box
+  measured as the model was loaded, before any helper such as the axes is
+  added, as Gorilla counts helpers in the model's bounds. Set GridLevel to
+  put the grid elsewhere.
 
   The grid is a single TGorillaPlane. The lines are worked out per pixel by
   GLSL code in its TGorillaDefaultMaterialSource, through its documented
   SurfaceShader hook, which Gorilla converts for Vulkan and Metal. The plane
   is split into 64 by 64 squares so that the position the shader reads stays
   exact across it; the cost is the same however far the grid reaches, the
-  lines stay about two pixels wide at any distance, and the shader is not
-  rebuilt per frame; with GridOnFloor only the plane's level is moved.
-  Changing a grid property rewrites the shader once,
+  lines stay about two pixels wide at any distance, and nothing is
+  recalculated per frame. Changing a grid property rewrites the shader once,
   with the new values written into it as constants.
 
   The plane is not a child of the model, so it never counts in the model's
@@ -138,9 +140,10 @@ type
     FBoxLo: TPoint3D;
     FBoxHi: TPoint3D;
     FPivot: TPoint3D;
+    FFloorLo: TPoint3D;   // the model's own bounds, without the pivot: the
+    FFloorHi: TPoint3D;   // floor is one of their faces
     FHasExtent: Boolean;
     FFrame: TDummy;
-    FPlane: TGorillaPlane;   // the plane in FFrame; freed with it
     FGridAxis: TGridAxis;
     FGridSize: Single;
     FGridColor: TAlphaColor;
@@ -150,7 +153,6 @@ type
     procedure FreeGrid;
     procedure RebuildGrid;
     procedure SyncFrame;
-    procedure FollowFloor;
     function FloorLevel: Single;
     function SurfaceCode: string;
     procedure SetGridAxis(const Value: TGridAxis);
@@ -160,19 +162,14 @@ type
     procedure SetGridOnFloor(const Value: Boolean);
     procedure SetGridCells(const Value: Integer);
   protected
-    //** @abstract(Keeps the grid frame on the parent's transform, and the grid on its
-    //** floor.)
+    //** @abstract(Keeps the grid frame on the parent's transform.)
     //**
     //** Copies the parent's position, rotation, scale and centre of rotation to the frame if
-    //** any of them changed. With GridOnFloor and a TGorillaModel parent, it also reads the
-    //** model's current bounding box and, if the floor face has moved, moves the plane to
-    //** it. Draws nothing: the plane draws the grid.
-    /// <summary>Keeps the grid frame on the parent's transform, and the grid on its
-    /// floor.</summary>
+    //** any of them changed; otherwise does nothing. Draws nothing: the plane draws the grid.
+    /// <summary>Keeps the grid frame on the parent's transform.</summary>
     /// <remarks>Copies the parent's position, rotation, scale and centre of rotation to the
-    /// frame if any of them changed. With GridOnFloor and a TGorillaModel parent, it also
-    /// reads the model's current bounding box and, if the floor face has moved, moves the
-    /// plane to it. Draws nothing: the plane draws the grid.</remarks>
+    /// frame if any of them changed; otherwise does nothing. Draws nothing: the plane draws the
+    /// grid.</remarks>
     procedure Render; override;
 
     //** @abstract(Forgets the frame if something else frees it first.)
@@ -210,7 +207,8 @@ type
     //** @abstract(Gives the model's bounds and centre of rotation, and builds the grid.)
     //**
     //** All points are in the parent's coordinates. The grid is centred on ACentre in its
-    //** plane, and with GridOnFloor its level is picked from the bounds. Set the parent first:
+    //** plane, and with GridOnFloor its level is the face of ALow and AHigh across GridAxis
+    //** that is lower in the scene; ACentre does not affect the level. Set the parent first:
     //** the grid needs it, and is not built without one.
     //**
     //** @param(ALow The bounding box's corner with the smallest X, Y and Z.)
@@ -220,8 +218,9 @@ type
     //** @param(ACentre The centre of rotation; one line passes through it each way.)
     /// <summary>Gives the model's bounds and centre of rotation, and builds the grid.</summary>
     /// <remarks>All points are in the parent's coordinates. The grid is centred on ACentre in
-    /// its plane, and with GridOnFloor its level is picked from the bounds. Set the parent
-    /// first: the grid needs it, and is not built without one.</remarks>
+    /// its plane, and with GridOnFloor its level is the face of ALow and AHigh across GridAxis
+    /// that is lower in the scene; ACentre does not affect the level. Set the parent first:
+    /// the grid needs it, and is not built without one.</remarks>
     /// <param name="ALow">The bounding box's corner with the smallest X, Y and Z.</param>
     /// <param name="AHigh">The bounding box's corner with the largest X, Y and Z.</param>
     /// <param name="ACentre">The centre of rotation; one line passes through it each
@@ -303,13 +302,12 @@ type
     property GridCells: Integer read FGridCells write SetGridCells;
   end;
 
-//** @abstract(Shows a shader-drawn grid on AModel's floor.)
+//** @abstract(Shows a shader-drawn grid on AModel's floor, from its current bounds.)
 //**
-//** Any grid already on AModel is removed first, so calling it again, for example after
-//** loading a different model, rebuilds it for the new bounds. The grid uses AModel's current
-//** bounding box, from @code(GetAnimatedBoundingBox), and @code(AModel.RotationCenter). Call
-//** it once the model is placed and turned, since the floor depends on the turn. The grid is
-//** added as a child of AModel and is freed with it. Call from the main thread only.
+//** As the other ShowModelGrid, with AModel's current bounding box from
+//** @code(GetAnimatedBoundingBox). Gorilla counts the model's children in that box, so any
+//** helper already added, such as the axes, can lower the floor; where the box measured as
+//** the model was loaded is to hand, pass it to the other ShowModelGrid instead.
 //**
 //** @param(AModel The model to show a grid for. Nothing happens if it is nil.)
 //**
@@ -319,19 +317,54 @@ type
 //** @seealso(HideModelGrid)
 //**
 //** @seealso(FindModelGrid)
-/// <summary>Shows a shader-drawn grid on AModel's floor.</summary>
-/// <remarks>Any grid already on AModel is removed first, so calling it again, for example
-/// after loading a different model, rebuilds it for the new bounds. The grid uses AModel's
-/// current bounding box, from <c>GetAnimatedBoundingBox</c>, and
-/// <c>AModel.RotationCenter</c>. Call it once the model is placed and turned, since the floor
-/// depends on the turn. The grid is added as a child of AModel and is freed with it. Call from
-/// the main thread only.</remarks>
+/// <summary>Shows a shader-drawn grid on AModel's floor, from its current bounds.</summary>
+/// <remarks>As the other ShowModelGrid, with AModel's current bounding box from
+/// <c>GetAnimatedBoundingBox</c>. Gorilla counts the model's children in that box, so any
+/// helper already added, such as the axes, can lower the floor; where the box measured as the
+/// model was loaded is to hand, pass it to the other ShowModelGrid instead.</remarks>
 /// <param name="AModel">The model to show a grid for. Nothing happens if it is nil.</param>
 /// <returns>The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or its
 /// bounding box is empty.</returns>
 /// <seealso cref="HideModelGrid"/>
 /// <seealso cref="FindModelGrid"/>
-function ShowModelGrid(const AModel: TGorillaModel): TModelGrid;
+function ShowModelGrid(const AModel: TGorillaModel): TModelGrid; overload;
+
+//** @abstract(Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.)
+//**
+//** Any grid already on AModel is removed first, so calling it again, for example after
+//** loading a different model, rebuilds it for the new bounds. The floor is the face of ABox
+//** across the grid's axis that is lower in the scene, and one line each way passes through
+//** @code(AModel.RotationCenter). Call it once the model is placed and turned, since the
+//** floor depends on the turn. The grid is added as a child of AModel and is freed with it.
+//** Call from the main thread only.
+//**
+//** @param(AModel The model to show a grid for. Nothing happens if it is nil.)
+//**
+//** @param(ABox The model's own bounds, in its own coordinates, best measured as it was
+//** loaded, before any helper was added to it.)
+//**
+//** @returns(The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or
+//** ABox is empty.)
+//**
+//** @seealso(HideModelGrid)
+//**
+//** @seealso(FindModelGrid)
+/// <summary>Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</summary>
+/// <remarks>Any grid already on AModel is removed first, so calling it again, for example
+/// after loading a different model, rebuilds it for the new bounds. The floor is the face of
+/// ABox across the grid's axis that is lower in the scene, and one line each way passes
+/// through <c>AModel.RotationCenter</c>. Call it once the model is placed and turned, since
+/// the floor depends on the turn. The grid is added as a child of AModel and is freed with it.
+/// Call from the main thread only.</remarks>
+/// <param name="AModel">The model to show a grid for. Nothing happens if it is nil.</param>
+/// <param name="ABox">The model's own bounds, in its own coordinates, best measured as it was
+/// loaded, before any helper was added to it.</param>
+/// <returns>The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or
+/// ABox is empty.</returns>
+/// <seealso cref="HideModelGrid"/>
+/// <seealso cref="FindModelGrid"/>
+function ShowModelGrid(const AModel: TGorillaModel; const ABox: TBoundingBox): TModelGrid;
+  overload;
 
 //** @abstract(Removes the grid ShowModelGrid added to AModel.)
 //**
@@ -453,6 +486,8 @@ begin
   FBoxHi := Point3D(Max(AHigh.X, ACentre.X), Max(AHigh.Y, ACentre.Y),
     Max(AHigh.Z, ACentre.Z));
   FPivot := ACentre;
+  FFloorLo := ALow;
+  FFloorHi := AHigh;
   FHasExtent := True;
 
   // Sit over the model's box, sized to it, so a size-based cull never
@@ -479,8 +514,8 @@ begin
     Exit;   // no other information: the plane through 0
   Model := TControl3D(Parent);
   Axis := Ord(FGridAxis);
-  Lo := GetComp(FBoxLo, Axis);
-  Hi := GetComp(FBoxHi, Axis);
+  Lo := GetComp(FFloorLo, Axis);
+  Hi := GetComp(FFloorHi, Axis);
 
   // Carry both faces into the scene and take the one lower on screen;
   // FMX's Y points down, so lower means a larger Y
@@ -521,7 +556,6 @@ var
 begin
   Frame := FFrame;
   FFrame := nil;
-  FPlane := nil;   // the frame frees it
   if Frame = nil then
     Exit;
   Frame.RemoveFreeNotification(Self);
@@ -640,7 +674,6 @@ begin
     Code.Free;
   end;
   Plane.MaterialSource := Mat;
-  FPlane := Plane;
 end;
 
 procedure TModelGrid.UpdateGrid;
@@ -653,44 +686,9 @@ end;
 procedure TModelGrid.Render;
 begin
   inherited;
-  SyncFrame;     // a no-op unless the model moved, turned or was scaled
-  FollowFloor;   // a no-op unless the model's bounds changed
+  SyncFrame;   // a no-op unless the model moved, turned or was scaled
 end;
 
-// Keeps the grid on the bottom of the model's current bounding box, the box
-// ShowBoundingBox draws, which changes as an animation plays. The extent is
-// taken as SetExtent takes it; only when it changes is the floor picked
-// again, and the plane moved, rather than rebuilt, if the floor moved.
-procedure TModelGrid.FollowFloor;
-const
-  BOX_EPS = 1E-5;
-var
-  Box: TBoundingBox;
-  Lo, Hi, P: TPoint3D;
-  Level: Single;
-begin
-  if not FGridOnFloor or (FPlane = nil) or not (Parent is TGorillaModel) then
-    Exit;
-  Box := TGorillaModel(Parent).GetAnimatedBoundingBox();
-  if (Box.Left > Box.Right) or (Box.Top > Box.Bottom) or (Box.Near > Box.Far) then
-    Exit;   // no vertices
-  Lo := Point3D(Min(Box.Left, FPivot.X), Min(Box.Top, FPivot.Y), Min(Box.Near, FPivot.Z));
-  Hi := Point3D(Max(Box.Right, FPivot.X), Max(Box.Bottom, FPivot.Y),
-    Max(Box.Far, FPivot.Z));
-  if SameValue(Lo.X, FBoxLo.X, BOX_EPS) and SameValue(Lo.Y, FBoxLo.Y, BOX_EPS) and
-    SameValue(Lo.Z, FBoxLo.Z, BOX_EPS) and SameValue(Hi.X, FBoxHi.X, BOX_EPS) and
-    SameValue(Hi.Y, FBoxHi.Y, BOX_EPS) and SameValue(Hi.Z, FBoxHi.Z, BOX_EPS) then
-    Exit;
-  FBoxLo := Lo;
-  FBoxHi := Hi;
-  Level := FloorLevel;
-  if SameValue(Level, FGridLevel, BOX_EPS) then
-    Exit;
-  FGridLevel := Level;
-  P := FPivot;
-  SetComp(P, Ord(FGridAxis), FGridLevel);
-  FPlane.Position.Point := P;
-end;
 
 procedure TModelGrid.SetGridAxis(const Value: TGridAxis);
 begin
@@ -756,6 +754,14 @@ begin
 end;
 
 function ShowModelGrid(const AModel: TGorillaModel): TModelGrid;
+begin
+  if AModel = nil then
+    Exit(nil);
+  // Current pose, in the model's own coordinates, children included
+  Result := ShowModelGrid(AModel, AModel.GetAnimatedBoundingBox());
+end;
+
+function ShowModelGrid(const AModel: TGorillaModel; const ABox: TBoundingBox): TModelGrid;
 var
   Box: TBoundingBox;
 begin
@@ -765,9 +771,8 @@ begin
 
   HideModelGrid(AModel);
 
-  // Current pose, in the model's own coordinates. Empty (min > max) if
-  // there are no vertices.
-  Box := AModel.GetAnimatedBoundingBox();
+  // Empty (min > max) if there are no vertices
+  Box := ABox;
   if (Box.Left > Box.Right) or (Box.Top > Box.Bottom) or (Box.Near > Box.Far) then
     Exit;
 

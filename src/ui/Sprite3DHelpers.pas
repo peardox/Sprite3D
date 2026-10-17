@@ -93,6 +93,10 @@ type
     FShowAxes: Boolean;
     FFitAnyAngle: Boolean;
     FOrthographic: Boolean;
+    FCameraView: String;
+    FVariableAzimuth: Single;
+    FVariableInclination: Single;
+    FVariableRoll: Single;
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
     procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
   public
@@ -248,6 +252,47 @@ type
     /// default.</summary>
     /// <remarks>Stored as <c>orthographic</c>.</remarks>
     property Orthographic: Boolean read FOrthographic write FOrthographic;
+    //** @abstract(The main form's camera view, the checked View, Camera item; Isometric by
+    //** default.)
+    //**
+    //** Stored as @code(cameraView): the item's name without its View prefix and Item suffix,
+    //** one of Variable, Isometric, Pixel2To1, ThreeQuarter, HeadOn, TopDown and Side. An
+    //** unknown name gives Isometric.
+    /// <summary>The main form's camera view, the checked View, Camera item; Isometric by
+    /// default.</summary>
+    /// <remarks>Stored as <c>cameraView</c>: the item's name without its View prefix and Item
+    /// suffix, one of Variable, Isometric, Pixel2To1, ThreeQuarter, HeadOn, TopDown and Side.
+    /// An unknown name gives Isometric.</remarks>
+    property CameraView: String read FCameraView write FCameraView;
+    //** @abstract(The Azimuth dial's angle in the Variable view, in degrees; 0 by default.)
+    //**
+    //** Stored as @code(variableAzimuth). Kept whenever the session ends in the Variable
+    //** view, and restored with it.
+    /// <summary>The Azimuth dial's angle in the Variable view, in degrees; 0 by
+    /// default.</summary>
+    /// <remarks>Stored as <c>variableAzimuth</c>. Kept whenever the session ends in the
+    /// Variable view, and restored with it.</remarks>
+    property VariableAzimuth: Single read FVariableAzimuth write FVariableAzimuth;
+    //** @abstract(The Inclination dial's angle in the Variable view, in degrees; 0 by
+    //** default.)
+    //**
+    //** Stored as @code(variableInclination). Kept whenever the session ends in the Variable
+    //** view, and restored with it.
+    /// <summary>The Inclination dial's angle in the Variable view, in degrees; 0 by
+    /// default.</summary>
+    /// <remarks>Stored as <c>variableInclination</c>. Kept whenever the session ends in the
+    /// Variable view, and restored with it.</remarks>
+    property VariableInclination: Single read FVariableInclination
+      write FVariableInclination;
+    //** @abstract(The Roll dial's angle in the Variable view, in degrees; 0 by default.)
+    //**
+    //** Stored as @code(variableRoll). Kept whenever the session ends in the Variable view,
+    //** and restored with it.
+    /// <summary>The Roll dial's angle in the Variable view, in degrees; 0 by
+    /// default.</summary>
+    /// <remarks>Stored as <c>variableRoll</c>. Kept whenever the session ends in the Variable
+    /// view, and restored with it.</remarks>
+    property VariableRoll: Single read FVariableRoll write FVariableRoll;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -503,6 +548,11 @@ begin
   FShowAxes := True;
   FFitAnyAngle := False;
   FOrthographic := False;
+  // The main form's view as it starts
+  FCameraView := 'Isometric';
+  FVariableAzimuth := 0;
+  FVariableInclination := 0;
+  FVariableRoll := 0;
 end;
 
 // A colour as #AARRGGBB, which people can read and edit in settings.json
