@@ -279,6 +279,11 @@ object MainForm: TMainForm
         Text = 'OpenModel'
         OnClick = OpenModelMenuItemClick
       end
+      object GrabMenuItem: TMenuItem
+        Locked = True
+        Text = 'Grab'
+        OnClick = GrabMenuItemClick
+      end
       object FileSeparatorItem: TMenuItem
         Locked = True
         Text = '-'

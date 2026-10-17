@@ -4,7 +4,7 @@
         <ProjectVersion>20.5</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>2790547</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -344,12 +344,14 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="Sprite3dMain.pas">
+        <DCCReference Include="ui\Sprite3dMain.pas">
             <Form>MainForm</Form>
         </DCCReference>
-        <DCCReference Include="Sprite3DCamera.pas"/>
-        <DCCReference Include="Sprite3DAxes.pas"/>
-        <DCCReference Include="Sprite3DGrid.pas"/>
+        <DCCReference Include="Sprite3DHelpers.pas"/>
+        <DCCReference Include="lib\Sprite3DCamera.pas"/>
+        <DCCReference Include="lib\Sprite3DAxes.pas"/>
+        <DCCReference Include="lib\Sprite3DGrid.pas"/>
+        <DCCReference Include="lib\Sprite3DOffscreen.pas"/>
         <None Include="..\README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

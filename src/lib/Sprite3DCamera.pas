@@ -428,6 +428,32 @@ type
   TLookAtMode = (lmMinimalTwist, lmKeepRoll);
 
 
+  //** @abstract(A camera's framing: where it orbits and how far out it is.)
+  //**
+  //** Holds what FitToBounds and FitToBoundsMax change, so a fit can be undone. Angles are
+  //** not included; a fit never changes them.
+  //**
+  //** @seealso(TSprite3DCamera.SaveFraming)
+  /// <summary>A camera's framing: where it orbits and how far out it is.</summary>
+  /// <remarks>Holds what FitToBounds and FitToBoundsMax change, so a fit can be undone. Angles
+  /// are not included; a fit never changes them.</remarks>
+  /// <seealso cref="TSprite3DCamera.SaveFraming"/>
+  TSprite3DFraming = record
+    //** @abstract(The point the camera orbits, OrbitCenter, in the rig parent's space.)
+    /// <summary>The point the camera orbits, OrbitCenter, in the rig parent's space.</summary>
+    OrbitCenter: TPoint3D;
+    //** @abstract(The camera's Distance from OrbitCenter.)
+    /// <summary>The camera's Distance from OrbitCenter.</summary>
+    Distance: Single;
+    //** @abstract(The orthographic view height, OrthoHeight.)
+    /// <summary>The orthographic view height, OrthoHeight.</summary>
+    OrthoHeight: Single;
+    //** @abstract(The orthographic view width, OrthoWidth; 0 when it follows the height.)
+    /// <summary>The orthographic view width, OrthoWidth; 0 when it follows the
+    /// height.</summary>
+    OrthoWidth: Single;
+  end;
+
   //** @abstract(A TGorillaCamera that orbits a centre point through a chain of three pivots.)
   //**
   //** The constructor builds the pivot chain and makes the camera a child of RollPivot. Place
@@ -627,6 +653,34 @@ type
     /// from FMX matrices, so it is correct before the first frame is drawn.</remarks>
     /// <returns>The camera's position.</returns>
     function CameraPosition: TPoint3D;
+    //** @abstract(Returns the current framing, for RestoreFraming to put back later.)
+    //**
+    //** Use it around a temporary fit, such as fitting the model to an off-screen target of a
+    //** different shape.
+    //**
+    //** @returns(OrbitCenter, Distance, OrthoHeight and OrthoWidth as they are now.)
+    //**
+    //** @seealso(RestoreFraming)
+    /// <summary>Returns the current framing, for RestoreFraming to put back later.</summary>
+    /// <remarks>Use it around a temporary fit, such as fitting the model to an off-screen
+    /// target of a different shape.</remarks>
+    /// <returns>OrbitCenter, Distance, OrthoHeight and OrthoWidth as they are now.</returns>
+    /// <seealso cref="RestoreFraming"/>
+    function SaveFraming: TSprite3DFraming;
+    //** @abstract(Puts back a framing returned by SaveFraming.)
+    //**
+    //** Sets OrbitCenter, Distance, OrthoHeight and OrthoWidth; the angles are left as they
+    //** are.
+    //**
+    //** @param(AFraming The framing to restore.)
+    //**
+    //** @seealso(SaveFraming)
+    /// <summary>Puts back a framing returned by SaveFraming.</summary>
+    /// <remarks>Sets OrbitCenter, Distance, OrthoHeight and OrthoWidth; the angles are left as
+    /// they are.</remarks>
+    /// <param name="AFraming">The framing to restore.</param>
+    /// <seealso cref="SaveFraming"/>
+    procedure RestoreFraming(const AFraming: TSprite3DFraming);
 
     { The TViewport3D (e.g. TGorillaViewport) the rig lives in, or nil }
     //** @abstract(Returns the TGorillaViewport the rig is placed in, or nil.)
@@ -765,6 +819,49 @@ type
     /// <returns>True if the box was framed; False, with nothing changed, if the box is empty or
     /// either size is zero or less.</returns>
     function FitToBounds(const ABox: TBoundingBox; const AViewWidth,
+      AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
+    { Same, for a Gorilla model and an explicit view size (e.g. an
+      off-screen target whose shape differs from the viewport's) }
+    //** @abstract(Makes a Gorilla model's bounding box as large as possible in a view of the given
+    //** size, for the current angles.)
+    //**
+    //** Works like the overload that takes only a model, but frames it for AViewWidth by
+    //** AViewHeight instead of the viewport's size; only their ratio matters. Use it to fit the
+    //** model to an off-screen target, such as a TSprite3DOffscreen, whose shape differs from
+    //** the viewport's. The camera is changed as by every fit, so the on-screen view changes
+    //** too until it is refitted or restored.
+    //**
+    //** @param(AModel The model to frame; nil makes the call return False.)
+    //**
+    //** @param(AViewWidth The width of the view, in the same units as AViewHeight.)
+    //**
+    //** @param(AViewHeight The height of the view, in the same units as AViewWidth.)
+    //**
+    //** @param(AMargin Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view
+    //** on the tighter axis.)
+    //**
+    //** @returns(True if the model was framed; False, with nothing changed, if AModel is nil,
+    //** it has no vertices, or either size is zero or less.)
+    //**
+    //** @seealso(FitToBoundsMax)
+    /// <summary>Makes a Gorilla model's bounding box as large as possible in a view of the
+    /// given size, for the current angles.</summary>
+    /// <remarks>Works like the overload that takes only a model, but frames it for AViewWidth
+    /// by AViewHeight instead of the viewport's size; only their ratio matters. Use it to fit
+    /// the model to an off-screen target, such as a TSprite3DOffscreen, whose shape differs from
+    /// the viewport's. The camera is changed as by every fit, so the on-screen view changes too
+    /// until it is refitted or restored.</remarks>
+    /// <param name="AModel">The model to frame; nil makes the call return False.</param>
+    /// <param name="AViewWidth">The width of the view, in the same units as
+    /// AViewHeight.</param>
+    /// <param name="AViewHeight">The height of the view, in the same units as
+    /// AViewWidth.</param>
+    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
+    /// view on the tighter axis.</param>
+    /// <returns>True if the model was framed; False, with nothing changed, if AModel is nil, it
+    /// has no vertices, or either size is zero or less.</returns>
+    /// <seealso cref="FitToBoundsMax"/>
+    function FitToBounds(const AModel: TGorillaModel; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
     { ABox is in ASpace's LOCAL coordinates (e.g. a model's mesh bounds).
       Its corners are carried through ASpace's position, rotation and
@@ -924,6 +1021,47 @@ type
     /// <returns>True if the box was framed; False, with nothing changed, if the box is empty or
     /// either size is zero or less.</returns>
     function FitToBoundsMax(const ABox: TBoundingBox; const AViewWidth,
+      AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
+    { Same, for a Gorilla model and an explicit view size }
+    //** @abstract(Makes a Gorilla model's bounding box as large as possible in a view of the given
+    //** size while it stays visible at every angle.)
+    //**
+    //** Works like the overload that takes only a model, centring the sphere on the model's
+    //** centre of rotation, but frames it for AViewWidth by AViewHeight instead of the
+    //** viewport's size; only their ratio matters. Use it to fit the model to an off-screen
+    //** target whose shape differs from the viewport's. The camera is changed as by every fit.
+    //**
+    //** @param(AModel The model to frame; nil makes the call return False.)
+    //**
+    //** @param(AViewWidth The width of the view, in the same units as AViewHeight.)
+    //**
+    //** @param(AViewHeight The height of the view, in the same units as AViewWidth.)
+    //**
+    //** @param(AMargin Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of the
+    //** view on the tighter axis.)
+    //**
+    //** @returns(True if the model was framed; False, with nothing changed, if AModel is nil,
+    //** it has no vertices, or either size is zero or less.)
+    //**
+    //** @seealso(FitToBounds)
+    /// <summary>Makes a Gorilla model's bounding box as large as possible in a view of the
+    /// given size while it stays visible at every angle.</summary>
+    /// <remarks>Works like the overload that takes only a model, centring the sphere on the
+    /// model's centre of rotation, but frames it for AViewWidth by AViewHeight instead of the
+    /// viewport's size; only their ratio matters. Use it to fit the model to an off-screen
+    /// target whose shape differs from the viewport's. The camera is changed as by every
+    /// fit.</remarks>
+    /// <param name="AModel">The model to frame; nil makes the call return False.</param>
+    /// <param name="AViewWidth">The width of the view, in the same units as
+    /// AViewHeight.</param>
+    /// <param name="AViewHeight">The height of the view, in the same units as
+    /// AViewWidth.</param>
+    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
+    /// the view on the tighter axis.</param>
+    /// <returns>True if the model was framed; False, with nothing changed, if AModel is nil, it
+    /// has no vertices, or either size is zero or less.</returns>
+    /// <seealso cref="FitToBounds"/>
+    function FitToBoundsMax(const AModel: TGorillaModel; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
     { ABox is in ASpace's LOCAL coordinates, as for FitToBounds }
     //** @abstract(Fits a box given in ASpace's local coordinates for every angle.)
@@ -1393,6 +1531,22 @@ begin
   UpdatePivots;
 end;
 
+function TSprite3DCamera.SaveFraming: TSprite3DFraming;
+begin
+  Result.OrbitCenter := OrbitCenter.Point;
+  Result.Distance := Distance;
+  Result.OrthoHeight := OrthoHeight;
+  Result.OrthoWidth := OrthoWidth;
+end;
+
+procedure TSprite3DCamera.RestoreFraming(const AFraming: TSprite3DFraming);
+begin
+  OrbitCenter.Point := AFraming.OrbitCenter;
+  Distance := AFraming.Distance;
+  OrthoHeight := AFraming.OrthoHeight;
+  OrthoWidth := AFraming.OrthoWidth;
+end;
+
 function TSprite3DCamera.CameraPosition: TPoint3D;
 begin
   Result := FAzimuthPivot.Position.Point +
@@ -1438,6 +1592,15 @@ begin
     FitToBounds(AModel.GetAnimatedBoundingBox(), AModel, AMargin);
 end;
 
+function TSprite3DCamera.FitToBounds(const AModel: TGorillaModel;
+  const AViewWidth, AViewHeight: Single; const AMargin: Single): Boolean;
+begin
+  // Same box and space as FitToBounds(AModel), for a view of a given size
+  Result := Assigned(AModel) and
+    FitBox(AModel.GetAnimatedBoundingBox(), AModel, False, AViewWidth,
+      AViewHeight, AMargin, False);
+end;
+
 function TSprite3DCamera.FitToBounds(const ABox: TBoundingBox;
   const ASpace: TControl3D; const AMargin: Single): Boolean;
 var
@@ -1470,6 +1633,15 @@ begin
   // Same box and space as FitToBounds(AModel); see the note there
   Result := Assigned(AModel) and
     FitToBoundsMax(AModel.GetAnimatedBoundingBox(), AModel, AMargin);
+end;
+
+function TSprite3DCamera.FitToBoundsMax(const AModel: TGorillaModel;
+  const AViewWidth, AViewHeight: Single; const AMargin: Single): Boolean;
+begin
+  // Same box and space as FitToBoundsMax(AModel), for a view of a given size
+  Result := Assigned(AModel) and
+    FitBox(AModel.GetAnimatedBoundingBox(), AModel, False, AViewWidth,
+      AViewHeight, AMargin, True);
 end;
 
 function TSprite3DCamera.FitToBoundsMax(const ABox: TBoundingBox;

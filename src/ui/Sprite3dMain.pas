@@ -18,6 +18,9 @@
 //**
 //** On show, the form loads the model whose file FormShow names; File, OpenModel then loads any
 //** other glTF, FBX, OBJ, USD, Collada, STL or PLY file, and File, Exit closes the application.
+//** File, Grab renders the view off screen at 256 by 256 pixels, with the model fitted to fill
+//** it, and saves it as the next of grab001.png, grab002.png and so on in SaveFolder, asking
+//** for that folder the first time.
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
 //** refitted when the viewport is resized, the projection changes or the "Fit any angle" box is
@@ -25,6 +28,15 @@
 //** model for every angle at once, so the dials can never push it out of view. Unchecked,
 //** FitToBounds frames it exactly for the angles at the time of the fit, and turning a dial
 //** afterwards can push part of it past the edge until the next refit.
+//**
+//** The form only handles the user interface. The 3D work is done by the library units in
+//** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and Sprite3DOffscreen. The
+//** application's other rules, such as where models are found, how a model is loaded and
+//** placed, and how grabs are named and saved, are in Sprite3DHelpers.
+//**
+//** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
+//** hamburger button on a toolbar at the top, which opens a drawer listing every item in
+//** MainMenu1; ticks show the current View. Exit is left out on iOS.
 //**
 //** @preformatted(
 //** TabControl1
@@ -39,6 +51,7 @@
 //** MainMenu1
 //** |-- FileMenu "File"
 //** |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+//** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"
 //**     |-- ViewVariableItem "Variable"     dials set the angles
@@ -71,7 +84,10 @@ unit Sprite3dMain;
   moves the camera out from the fitted distance, x1 to x20.
   On show, the form loads the model whose file FormShow names; File,
   OpenModel then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY
-  file, and File, Exit closes the application. Each model replaces the last:
+  file, and File, Exit closes the application. File, Grab renders the view
+  off screen at 256 by 256 pixels, with the model fitted to fill it, and
+  saves it as the next of grab001.png, grab002.png and so on in SaveFolder,
+  asking for that folder the first time. Each model replaces the last:
   it plays its last animation by name if it has any, is centred and turned
   180 degrees about X, and the camera is fitted so it fills the view. The
   model is refitted when the viewport is resized, the projection changes or
@@ -89,9 +105,21 @@ unit Sprite3dMain;
     `-- DebugTab "Debug"
         `-- DebugMemo
 
+    The form only handles the user interface. The 3D work is done by the
+    library units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and
+    Sprite3DOffscreen. The application's other rules, such as where models
+    are found, how a model is loaded and placed, and how grabs are named and
+    saved, are in Sprite3DHelpers.
+
+    On Android and iOS, where FMX shows no menu bar, the same menus are
+    reached through a hamburger button on a toolbar at the top, which opens a
+    drawer listing every item in MainMenu1; ticks show the current View.
+    Exit is left out on iOS.
+
     MainMenu1
     |-- FileMenu "File"
     |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+    |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"
         |-- ViewVariableItem "Variable"     dials set the angles
@@ -112,19 +140,14 @@ uses
   Gorilla.Model, FMX.Controls3D, Gorilla.Light, Gorilla.Viewport,
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
-  FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus;
+  FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
+  Sprite3DOffscreen
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  , FMX.MultiView, FMX.ListBox
+  {$ENDIF}
+  ;
 
 type
-  //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
-  //**
-  //** Casting a TControl3D to this class exposes its protected members inside the unit that
-  //** declares the cast. Because it is in the interface section, other units can use it too.
-  /// <summary>Protected-access helper for TControl3D; nothing in the project uses it
-  /// yet.</summary>
-  /// <remarks>Casting a TControl3D to this class exposes its protected members inside the unit
-  /// that declares the cast. Because it is in the interface section, other units can use it
-  /// too.</remarks>
-  TControl3DAccess = class(TControl3D);
   //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
   //**
   //** The viewport, light, model and TSprite3DCamera are created at run time, not at design
@@ -270,12 +293,16 @@ type
     //** @abstract(The form's menu bar, holding FileMenu.)
     /// <summary>The form's menu bar, holding FileMenu.</summary>
     MainMenu1: TMainMenu;
-    //** @abstract(The "File" menu, holding OpenModelMenuItem.)
-    /// <summary>The "File" menu, holding OpenModelMenuItem.</summary>
+    //** @abstract(The "File" menu, holding OpenModelMenuItem, GrabMenuItem and ExitMenuItem.)
+    /// <summary>The "File" menu, holding OpenModelMenuItem, GrabMenuItem and
+    /// ExitMenuItem.</summary>
     FileMenu: TMenuItem;
     //** @abstract(The "OpenModel" item; see OpenModelMenuItemClick.)
     /// <summary>The "OpenModel" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
     OpenModelMenuItem: TMenuItem;
+    //** @abstract(The "Grab" item; see GrabMenuItemClick.)
+    /// <summary>The "Grab" item; see <see cref="GrabMenuItemClick"/>.</summary>
+    GrabMenuItem: TMenuItem;
     //** @abstract(Separator line in the File menu, above Exit.)
     /// <summary>Separator line in the File menu, above Exit.</summary>
     FileSeparatorItem: TMenuItem;
@@ -318,11 +345,11 @@ type
     ViewSideItem: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
-    //** The models folder is the library path on macOS, the home folder on Linux and
-    //** @code('../../../') elsewhere; on Windows it is the current folder instead if that has a
-    //** models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a
-    //** point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
-    //** camera. The viewport runs at a fixed 60 frames per second without VSync.
+    //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
+    //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is the
+    //** current folder instead if that has a models subfolder. The handler creates a
+    //** TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera with a
+    //** 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60 frames per second without VSync.
     //**
     //** The dials start at 0, then the isometric view is chosen, as View, Isometric does:
     //** the dials are turned to its angles and switched off, and the readouts set to match,
@@ -330,11 +357,11 @@ type
     //**
     //** @param(Sender The form.)
     /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
-    /// <remarks><para>The models folder is the library path on macOS, the home folder on Linux
-    /// and <c>'../../../'</c> elsewhere; on Windows it is the current folder instead if that has
-    /// a models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a
-    /// point light, and a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's
-    /// camera. The viewport runs at a fixed 60 frames per second without VSync.</para>
+    /// <remarks><para>The models folder comes from DefaultModelDir in Sprite3DHelpers: it is
+    /// the library path on macOS, the home folder on Linux and <c>'../../../'</c> elsewhere; on
+    /// Windows it is the current folder instead if that has a models subfolder. The handler
+    /// creates a TGorillaViewport owned by ViewportLayout, a point light, and a TSprite3DCamera
+    /// with a 45-degree FOV, which becomes the viewport's camera. The viewport runs at a fixed 60 frames per second without VSync.</para>
     /// <para>The dials start at 0, then the isometric view is chosen, as View, Isometric
     /// does: the dials are turned to its angles and switched off, and the readouts set to
     /// match, so dial, readout and camera agree from the start.</para></remarks>
@@ -454,6 +481,31 @@ type
     /// view is then left empty until another model loads.</remarks>
     /// <param name="Sender">OpenModelMenuItem.</param>
     procedure OpenModelMenuItemClick(Sender: TObject);
+    //** @abstract(Renders the view off screen and saves it as the next grabNNN.png.)
+    //**
+    //** If SaveFolder is empty, a "Save Location" folder dialog asks for it first, and
+    //** SaveFolder is set to the choice; if the dialog is cancelled nothing is grabbed. The
+    //** image comes from Offscreen at its Width and Height, 256 by 256 unless changed, with the
+    //** camera refitted by FitToBounds for that size so the model fills it, and is saved a
+    //** frame later as grab001.png, grab002.png and so on: the number starts at 1
+    //** when the folder is chosen and goes up by one for every file saved, skipping any name
+    //** already in the folder, so earlier grabs are never overwritten. Each saved file is
+    //** logged in DebugMemo; a failed grab or save is reported with a message. A click while
+    //** the previous grab is still under way is ignored.
+    //**
+    //** @param(Sender GrabMenuItem.)
+    /// <summary>Renders the view off screen and saves it as the next grabNNN.png.</summary>
+    /// <remarks>If SaveFolder is empty, a "Save Location" folder dialog asks for it first, and
+    /// SaveFolder is set to the choice; if the dialog is cancelled nothing is grabbed. The
+    /// image comes from Offscreen at its Width and Height, 256 by 256 unless changed, with the
+    /// camera refitted by FitToBounds for that size so the model fills it, and is saved a
+    /// frame later as grab001.png, grab002.png and so on: the number starts at 1 when
+    /// the folder is chosen and goes up by one for every file saved, skipping any name already
+    /// in the folder, so earlier grabs are never overwritten. Each saved file is logged in
+    /// DebugMemo; a failed grab or save is reported with a message. A click while the previous
+    /// grab is still under way is ignored.</remarks>
+    /// <param name="Sender">GrabMenuItem.</param>
+    procedure GrabMenuItemClick(Sender: TObject);
     //** @abstract(Closes the application.)
     //**
     //** Closes the main form, which ends the application in the normal way, so the form and
@@ -564,7 +616,6 @@ type
     procedure ViewSideItemClick(Sender: TObject);
   private
     { Private declarations }
-    FModelRotation: TPoint3D;
     FAzimuth: Single;
     FRoll: Single;
     FPolarAngle: Single;
@@ -576,6 +627,11 @@ type
     GorillaLight: TGorillaLight;
     GorillaModel: TGorillaModel;
     GorillaCamera: TSprite3DCamera;
+    FOffscreen: TSprite3DOffscreen;
+    // Number for the next grab file; back to 1 whenever SaveFolder is chosen
+    FGrabNumber: Integer;
+    // The on-screen framing, kept while a grab is fitted to its target
+    FSavedFraming: TSprite3DFraming;
     ModelDir: String;
     procedure SwitchModel(const AModel: String);
     function FitModel: Boolean;
@@ -586,8 +642,49 @@ type
     procedure ClearViewChecks;
     procedure SelectFixedView(const AItem: TMenuItem; const APolarAngle: Single;
       const AAzimuth: Single = 45);
+    function ChooseSaveFolder: Boolean;
+    procedure OffscreenBeforeGrab(Sender: TObject; const AWidth, AHeight: Integer);
+    procedure OffscreenAfterGrab(Sender: TObject);
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  private
+    // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
+    // through a hamburger button and a drawer instead
+    FMenuBar: TToolBar;
+    FMenuButton: TSpeedButton;
+    FMenuDrawer: TMultiView;
+    FMenuList: TListBox;
+    procedure BuildMobileMenu;
+    procedure RefreshMobileMenu(Sender: TObject);
+    procedure MobileMenuItemClick(Sender: TObject);
+    {$ENDIF}
   public
     { Public declarations }
+    //** @abstract(The folder File, Grab saves into; empty until one is chosen.)
+    //**
+    //** Empty at start-up, so the first grab shows the "Save Location" dialog and stores the
+    //** choice here. Android and iOS have no such dialog: there the first grab sets it to a
+    //** Grabs folder in the app's public storage on Android, or its Documents folder on iOS.
+    //** Set it in code to save elsewhere without asking; set it back to empty to ask again.
+    //** The folder is created if it does not exist when a grab is saved.
+    /// <summary>The folder File, Grab saves into; empty until one is chosen.</summary>
+    /// <remarks>Empty at start-up, so the first grab shows the "Save Location" dialog and
+    /// stores the choice here. Android and iOS have no such dialog: there the first grab sets
+    /// it to a Grabs folder in the app's public storage on Android, or its Documents folder on
+    /// iOS. Set it in code to save elsewhere without asking; set it back to empty to ask again.
+    /// The folder is created if it does not exist when a grab is saved.</remarks>
+    SaveFolder: String;
+    //** @abstract(The off-screen renderer File, Grab uses; set its Width and Height to
+    //** change the grab size.)
+    //**
+    //** Created in FormCreate, attached to the viewport, which owns and frees it.
+    //**
+    //** @seealso(TSprite3DOffscreen)
+    /// <summary>The off-screen renderer File, Grab uses; set its Width and Height to change
+    /// the grab size.</summary>
+    /// <remarks>Created in FormCreate, attached to the viewport, which owns and frees
+    /// it.</remarks>
+    /// <seealso cref="Sprite3DOffscreen.TSprite3DOffscreen"/>
+    property Offscreen: TSprite3DOffscreen read FOffscreen;
   end;
 
 var
@@ -598,20 +695,10 @@ var
 implementation
 
 uses
-  System.IOUtils,
   FMX.Platform,
   Gorilla.DefTypes, System.Math,
-  Gorilla.Animation,
-  Gorilla.GLB.Loader,
-  Gorilla.GLTF.Loader,
-  Gorilla.OBJ.Loader,
-  Gorilla.USD.Loader,
-  Gorilla.FBX.Loader,
-  Gorilla.DAE.Loader,
-  Gorilla.STL.Loader,
-  Gorilla.PLY.Loader,
   FMX.Types3D,
-  Sprite3DAxes, Sprite3DGrid;
+  Sprite3DAxes, Sprite3DGrid, Sprite3DHelpers;
 
 {$R *.fmx}
 
@@ -619,18 +706,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   TabControl1.ActiveTab := GorillaTab;
 
-  {$IF DEFINED(MACOS)}
-  ModelDir := IncludeTrailingPathDelimiter(TPath.GetLibraryPath);
-  {$ELSEIF DEFINED(LINUX)}
-  ModelDir := IncludeTrailingPathDelimiter(TPath.GetHomePath);
-  {$ELSE}
-  ModelDir := '../../../';
-  {$ENDIF}
-
-  {$IF DEFINED(MSWINDOWS)}
-  if DirectoryExists('models') then
-    ModelDir := String.Empty;
-  {$IFEND}
+  ModelDir := DefaultModelDir;
 
   FAzimuth := 0;
   FRoll := 0;
@@ -651,6 +727,14 @@ begin
   GorillaViewport.Camera := GorillaCamera;// .Camera;
   GorillaModel := Nil;
   GorillaCamera.FOV := 45;
+
+  // Off-screen renderer for File, Grab: 256 x 256 by default
+  FOffscreen := TSprite3DOffscreen.Create(GorillaViewport);
+  FOffscreen.Viewport := GorillaViewport;
+  FOffscreen.OnBeforeGrab := OffscreenBeforeGrab;
+  FOffscreen.OnAfterGrab := OffscreenAfterGrab;
+  SaveFolder := String.Empty;
+  FGrabNumber := 1;
   // Fill the space the bottom test strip (DistanceLayout) leaves
   GorillaViewport.Align := TAlignLayout.Client;
 
@@ -666,19 +750,110 @@ begin
   // Start in the isometric view for now; View, Variable hands the angles
   // back to the dials
   ViewIsometricItemClick(Self);
+
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  BuildMobileMenu;
+  {$ENDIF}
 end;
 
-{ Shift an angle in degrees by whole turns into [0, 360) }
-function Wrap360(const ADegrees: Single): Single;
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+// A toolbar along the top with the platform's hamburger button, which opens
+// a drawer listing MainMenu1: one group per top-level menu, one row per item.
+// Rows are made from the menu items themselves, so items added to MainMenu1
+// later appear here too. Separators are left out, and so is Exit on iOS,
+// where apps do not quit themselves.
+procedure TMainForm.BuildMobileMenu;
+var
+  I, J: Integer;
+  MenuTop, Item: TMenuItem;
+  Header: TListBoxGroupHeader;
+  Row: TListBoxItem;
 begin
-  Result := ADegrees - 360 * Floor(ADegrees / 360);
+  FMenuBar := TToolBar.Create(Self);
+  FMenuBar.Parent := Self;
+  FMenuBar.Align := TAlignLayout.Top;
+
+  FMenuButton := TSpeedButton.Create(Self);
+  FMenuButton.Parent := FMenuBar;
+  FMenuButton.Align := TAlignLayout.Left;
+  FMenuButton.StyleLookup := 'drawertoolbutton';
+  FMenuButton.Width := FMenuBar.Height;
+
+  FMenuDrawer := TMultiView.Create(Self);
+  FMenuDrawer.Parent := Self;
+  FMenuDrawer.Mode := TMultiViewMode.Drawer;
+  FMenuDrawer.MasterButton := FMenuButton;
+  FMenuDrawer.Width := 260;
+  FMenuDrawer.OnStartShowing := RefreshMobileMenu;
+
+  FMenuList := TListBox.Create(Self);
+  FMenuList.Parent := FMenuDrawer;
+  FMenuList.Align := TAlignLayout.Client;
+  FMenuList.GroupingKind := TListGroupingKind.Grouped;
+
+  for I := 0 to MainMenu1.ItemsCount - 1 do
+  begin
+    if not (MainMenu1.Items[I] is TMenuItem) then
+      Continue;
+    MenuTop := TMenuItem(MainMenu1.Items[I]);
+    Header := TListBoxGroupHeader.Create(FMenuList);
+    Header.Text := MenuTop.Text;
+    FMenuList.AddObject(Header);
+    for J := 0 to MenuTop.ItemsCount - 1 do
+    begin
+      Item := MenuTop.Items[J];
+      if Item.Text = '-' then
+        Continue;
+      {$IFDEF IOS}
+      if Item = ExitMenuItem then
+        Continue;
+      {$ENDIF}
+      Row := TListBoxItem.Create(FMenuList);
+      Row.Text := Item.Text;
+      Row.TagObject := Item;
+      Row.OnClick := MobileMenuItemClick;
+      FMenuList.AddObject(Row);
+    end;
+  end;
 end;
 
-{ Show the readout for a wrapped angle: whole degrees, never "360" }
-function DegreesText(const ADegrees: Single): String;
+// Each time the drawer opens, copy the menu's checks and enabled states to
+// its rows, so the current View shows a tick
+procedure TMainForm.RefreshMobileMenu(Sender: TObject);
+var
+  I: Integer;
+  Row: TListBoxItem;
+  Item: TMenuItem;
 begin
-  Result := Format('%3d', [Round(ADegrees) mod 360]);
+  for I := 0 to FMenuList.Count - 1 do
+  begin
+    Row := FMenuList.ListItems[I];
+    if not (Row.TagObject is TMenuItem) then
+      Continue;
+    Item := TMenuItem(Row.TagObject);
+    Row.Enabled := Item.Enabled;
+    if Item.IsChecked then
+      Row.ItemData.Accessory := TListBoxItemData.TAccessory.aCheckmark
+    else
+      Row.ItemData.Accessory := TListBoxItemData.TAccessory.aNone;
+  end;
 end;
+
+// Close the drawer, then run the menu item's own handler, so a row does
+// exactly what its menu item does on the desktop
+procedure TMainForm.MobileMenuItemClick(Sender: TObject);
+var
+  Item: TMenuItem;
+begin
+  if not (TListBoxItem(Sender).TagObject is TMenuItem) then
+    Exit;
+  Item := TMenuItem(TListBoxItem(Sender).TagObject);
+  FMenuDrawer.HideMaster;
+  if Item.Enabled and Assigned(Item.OnClick) then
+    Item.OnClick(Item);
+end;
+{$ENDIF}
+
 
 // The single place where dial changes reach the readouts and the camera,
 // so they can never disagree. Azimuth goes to the camera reversed (360
@@ -751,6 +926,76 @@ begin
   if OpenDialog1.Execute then
     SwitchModel(OpenDialog1.Filename);
 end;
+
+procedure TMainForm.GrabMenuItemClick(Sender: TObject);
+begin
+  if FOffscreen.Busy then
+    Exit;   // the last grab has not been saved yet
+  if (SaveFolder = String.Empty) and not ChooseSaveFolder then
+    Exit;   // no folder, no grab
+
+  if not FOffscreen.Grab(
+    procedure(const ABitmap: TBitmap; const AError: String)
+    var
+      FileName: String;
+    begin
+      if not Assigned(ABitmap) then
+      begin
+        ShowMessage('Grab failed: ' + AError);
+        Exit;
+      end;
+      try
+        FileName := SaveGrab(ABitmap, SaveFolder, FGrabNumber);
+        DebugMemo.Lines.Add('Grabbed ' + FileName);
+      except
+        on E: Exception do
+          ShowMessage('Can''t save the grab in ' + SaveFolder + sLineBreak +
+            E.Message);
+      end;
+    end) then
+    ShowMessage('Grab could not start');
+end;
+
+// Fit the model to the grab's own shape, as large as it will go for the
+// current angles (FitToBounds, whatever "Fit any angle" says, and without
+// the test distance factor), keeping the on-screen framing to put back
+procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
+  const AWidth, AHeight: Integer);
+begin
+  FSavedFraming := GorillaCamera.SaveFraming;
+  if Assigned(GorillaModel) then
+    GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight);
+end;
+
+// Put the on-screen framing back before the main pass draws
+procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
+begin
+  GorillaCamera.RestoreFraming(FSavedFraming);
+end;
+
+// Ask for the grab folder with a "Save Location" dialog, or, where there is
+// no such dialog (Android, iOS), take the fixed folder. On a choice,
+// SaveFolder takes it and numbering restarts at 1; on cancel nothing changes.
+function TMainForm.ChooseSaveFolder: Boolean;
+var
+  Dir: String;
+begin
+  Dir := DefaultGrabFolder;
+  if Dir <> String.Empty then
+    Result := True
+  else
+  begin
+    Dir := SaveFolder;
+    Result := SelectDirectory('Save Location', String.Empty, Dir) and
+      (Dir <> String.Empty);
+  end;
+  if Result then
+  begin
+    SaveFolder := Dir;
+    FGrabNumber := 1;
+  end;
+end;
+
 
 procedure TMainForm.ExitMenuItemClick(Sender: TObject);
 begin
@@ -915,7 +1160,7 @@ end;
 procedure TMainForm.SwitchModel(const AModel: String);
 var
   BBox: TBoundingBox;
-  anims: TStringList;
+  Anims: TArray<String>;
 begin
   if (AModel = String.Empty) or (not FileExists(AModel)) then
     begin
@@ -929,27 +1174,15 @@ begin
       GorillaModel.Parent := GorillaViewport;
     end;
 
-  GorillaModel.Clear;
-
   try
-    GorillaModel.LoadFromFile(nil, AModel, []);
-    anims := TStringList.Create;
-    anims.Sorted := True;
-
-    try
-      if GorillaModel.AnimationManager.Animations.Count > 0 then
-        begin
-          DebugMemo.Lines.Add('---------- anims ---------------');
-          for var AnimName in GorillaModel.AnimationManager.Animations.Keys do
-            anims.Add(AnimName);
-          DebugMemo.Lines.Add('--------------------------------');
-          GorillaModel.AnimationManager.PlayAnimation(anims[anims.count - 1]);
-        end;
-    finally
-      anims.Free;
-    end;
-
-    BBox := GorillaModel.GetBoundingBox();
+    Anims := LoadModelFile(GorillaModel, AModel, BBox);
+    if Length(Anims) > 0 then
+      begin
+        DebugMemo.Lines.Add('---------- anims ---------------');
+        for var AnimName in Anims do
+          DebugMemo.Lines.Add(AnimName);
+        DebugMemo.Lines.Add('--------------------------------');
+      end;
 
     GorillaCamera.Roll := FRoll;
     GorillaCamera.Azimuth := Wrap360(-FAzimuth);
@@ -961,15 +1194,7 @@ begin
     // Axes through the centre of rotation, sized for the newly loaded model
     if chkShowAxes.IsChecked then
       ShowModelAxes(GorillaModel);
-    GorillaModel.Position.Point := Point3D(BBox.TopLeftNear.X + (BBox.Width / 2),
-                                            BBox.TopLeftNear.Y + (BBox.Height / 2),
-                                            BBox.TopLeftNear.Z + (BBox.Depth / 2));
-
-    FModelRotation := Point3D(180, 0, 0);
-
-    GorillaModel.RotationAngle.X := FModelRotation.X;
-    GorillaModel.RotationAngle.Y := FModelRotation.Y;
-    GorillaModel.RotationAngle.Z := FModelRotation.Z;
+    PlaceModel(GorillaModel, BBox);
 
     // Floor grid, after the model is placed and turned, because the floor
     // depends on which way up it is
