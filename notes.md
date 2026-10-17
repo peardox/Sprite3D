@@ -17,7 +17,7 @@
 >
 > The kinds
 >
-> None: every plane is moved far beyond the far plane, so nothing is drawn and the viewport’s own black shows.
+> None: every plane is moved behind the camera, so nothing is drawn and the viewport’s own black shows.
 > Solid: one full-view plane, a pair really (see below), whose material has a tiny GLSL SurfaceShader that sets one colour.
 > Gradient: the same plane, with a shader that blends from the From colour to the To colour down the plane’s own Y axis (vars.v_VertPos.y). For the other directions, the plane is turned in the view so its Y axis points the chosen way, and enlarged so it still covers the view. The diagonals run exactly corner to corner. After turning, the code reads the plane’s matrix to confirm the axis points the right way, and turns it the other way if not.
 > Transparent (the checker): the full-view plane is put away. The view is tiled with small square planes side by side, light and dark alternating, starting with light at the top-left. All light squares share one material and all dark squares another. They’re all made at startup and only moved afterwards, up to 150 squares of each grey; above that, the squares are drawn at 2×, 3× and so on.
@@ -35,7 +35,7 @@
 >
 > Grabs and icons
 >
-> The background is hidden while a grab is drawn: OnBeforeGrab sets Hidden, which moves the planes beyond the far plane, and OnAfterGrab brings them back. The off-screen renderer cuts the model out against a transparent background. With None or Transparent the grab stays transparent. With Solid or Gradient it fills the colour or gradient in afterwards, per pixel, in the same direction as on screen, so soft edges blend into it.
+> The background is hidden while a grab is drawn: OnBeforeGrab sets Hidden, which moves the planes behind the camera, and OnAfterGrab brings them back. The off-screen renderer cuts the model out against a transparent background. With None or Transparent the grab stays transparent. With Solid or Gradient it fills the colour or gradient in afterwards, per pixel, in the same direction as on screen, so soft edges blend into it.
 >
 > Not working yet
 >
