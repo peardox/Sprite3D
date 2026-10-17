@@ -215,40 +215,40 @@ type
     /// <summary>The darker checker colour, as <c>#AARRGGBB</c>.</summary>
     /// <remarks>Stored as <c>checkerDark</c>.</remarks>
     property CheckerDark: String read FCheckerDark write FCheckerDark;
-    //** @abstract(Whether the main form's "Show bounding box" box is checked; True by
+    //** @abstract(Whether View, Show bounding box is ticked on the main form; True by
     //** default.)
     //**
     //** Stored as @code(showBoundingBox).
-    /// <summary>Whether the main form's "Show bounding box" box is checked; True by
+    /// <summary>Whether View, Show bounding box is ticked on the main form; True by
     /// default.</summary>
     /// <remarks>Stored as <c>showBoundingBox</c>.</remarks>
     property ShowBoundingBox: Boolean read FShowBoundingBox write FShowBoundingBox;
-    //** @abstract(Whether the main form's "Show grid" box is checked; True by default.)
+    //** @abstract(Whether View, Show grid is ticked on the main form; True by default.)
     //**
     //** Stored as @code(showGrid).
-    /// <summary>Whether the main form's "Show grid" box is checked; True by
+    /// <summary>Whether View, Show grid is ticked on the main form; True by
     /// default.</summary>
     /// <remarks>Stored as <c>showGrid</c>.</remarks>
     property ShowGrid: Boolean read FShowGrid write FShowGrid;
-    //** @abstract(Whether the main form's "Show axes" box is checked; True by default.)
+    //** @abstract(Whether View, Show axes is ticked on the main form; True by default.)
     //**
     //** Stored as @code(showAxes).
-    /// <summary>Whether the main form's "Show axes" box is checked; True by
+    /// <summary>Whether View, Show axes is ticked on the main form; True by
     /// default.</summary>
     /// <remarks>Stored as <c>showAxes</c>.</remarks>
     property ShowAxes: Boolean read FShowAxes write FShowAxes;
-    //** @abstract(Whether the main form's "Fit any angle" box is checked; False by
+    //** @abstract(Whether View, Fit any angle is ticked on the main form; False by
     //** default.)
     //**
     //** Stored as @code(fitAnyAngle).
-    /// <summary>Whether the main form's "Fit any angle" box is checked; False by
+    /// <summary>Whether View, Fit any angle is ticked on the main form; False by
     /// default.</summary>
     /// <remarks>Stored as <c>fitAnyAngle</c>.</remarks>
     property FitAnyAngle: Boolean read FFitAnyAngle write FFitAnyAngle;
-    //** @abstract(Whether the main form's "Orthographic" box is checked; False by default.)
+    //** @abstract(Whether View, Orthographic is ticked on the main form; False by default.)
     //**
     //** Stored as @code(orthographic).
-    /// <summary>Whether the main form's "Orthographic" box is checked; False by
+    /// <summary>Whether View, Orthographic is ticked on the main form; False by
     /// default.</summary>
     /// <remarks>Stored as <c>orthographic</c>.</remarks>
     property Orthographic: Boolean read FOrthographic write FOrthographic;

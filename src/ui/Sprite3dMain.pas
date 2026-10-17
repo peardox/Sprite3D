@@ -1,11 +1,12 @@
 //** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
 //**
 //** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
-//** panel of three dials for Azimuth, inclination and Roll, plus five check boxes: one shows
-//** the model's bounding box, one its own X, Y and Z axes through its centre of rotation, one a
-//** grid on the bottom of its bounding box, one chooses how the model is fitted, and one
-//** switches between perspective and orthographic projection. The Debug tab holds a memo for
-//** log output.
+//** panel of three dials for Azimuth, inclination and Roll. The Debug tab holds a memo for log
+//** output. Below the Camera submenu, the View menu has five items that are ticked or not, each
+//** switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid
+//** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Fit
+//** any angle chooses how the model is fitted, and Orthographic switches between perspective
+//** and orthographic projection.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
@@ -31,11 +32,12 @@
 //** default none is drawn. File, Background Settings... chooses None, Transparent (a
 //** two-grey checker standing for transparency), Solid or Gradient, which grabs and icons
 //** follow too.
+//**
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
-//** refitted when the viewport is resized, the projection changes or the "Fit any angle" box is
-//** toggled, but not when a dial turns. Checked, that box uses FitToBoundsMax, which frames the
-//** model for every angle at once, so the dials can never push it out of view. Unchecked,
+//** refitted when the viewport is resized, the projection changes or View, Fit any angle is
+//** chosen, but not when a dial turns. Ticked, that item uses FitToBoundsMax, which frames the
+//** model for every angle at once, so the dials can never push it out of view. Not ticked,
 //** FitToBounds frames it exactly for the angles at the time of the fit, and turning a dial
 //** afterwards can push part of it past the edge until the next refit.
 //**
@@ -46,7 +48,8 @@
 //**
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
 //** hamburger button on a toolbar at the top, which opens a drawer listing every item in
-//** MainMenu1; ticks show the current View. Exit is left out on iOS.
+//** MainMenu1; ticks show the current camera view and which View items are on. Exit is left
+//** out on iOS.
 //**
 //** @preformatted(
 //** TabControl1
@@ -54,7 +57,7 @@
 //** |   `-- MainLayout
 //** |       |-- ViewportLayout   owns the TGorillaViewport
 //** |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
-//** |       `-- ControlsLayout   dials, labels, five check boxes
+//** |       `-- ControlsLayout   dials and their labels
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
 //**
@@ -65,27 +68,35 @@
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
-//** `-- ViewMenu "View"
-//**     `-- CameraMenu "Camera"             the view, kept in settings.json
-//**         |-- ViewVariableItem "Variable"     dials set the angles
-//**         |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-//**         |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-//**         |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
-//**         |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-//**         |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-//**         `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//** `-- ViewMenu "View"                   its ticks are kept in settings.json
+//**     |-- CameraMenu "Camera"             the view, kept in settings.json
+//**     |   |-- ViewVariableItem "Variable"     dials set the angles
+//**     |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+//**     |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+//**     |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+//**     |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+//**     |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//**     |-- ViewSeparatorItem "-"
+//**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
+//**     |-- ShowGridItem "Show grid"        ticked at start-up
+//**     |-- ShowAxesItem "Show axes"        ticked at start-up
+//**     |-- FitAnyAngleItem "Fit any angle" FitToBoundsMax instead of FitToBounds
+//**     `-- OrthographicItem "Orthographic" orthographic instead of perspective
 //** )
 unit Sprite3dMain;
 {
-  Demo form for TSprite3DCamera: loads a model and drives the camera with dials.
+  Demo form for TSprite3DCamera: loads a model and drives the camera with
+  dials.
 
   The form has two tabs. The View tab holds a TGorillaViewport, created at run
-  time, and a panel of three dials for Azimuth, inclination and Roll, plus
-  five check boxes: one shows the model's bounding box, one its own X, Y and Z
-  axes through its centre of rotation, one a grid on the bottom of its
-  bounding box, one chooses how the model is fitted, and one switches between
-  perspective and orthographic projection. The Debug tab holds a memo for log
-  output.
+  time, and a panel of three dials for Azimuth, inclination and Roll. The
+  Debug tab holds a memo for log output. Below the Camera submenu, the View
+  menu has five items that are ticked or not, each switched by choosing it:
+  Show bounding box shows the model's bounding box, Show grid a grid on the
+  model's floor, Show axes its own X, Y and Z axes through its centre of
+  rotation, Fit any angle chooses how the model is fitted, and Orthographic
+  switches between perspective and orthographic projection.
 
   The camera starts in the isometric view, and each readout always shows its
   dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed,
@@ -114,30 +125,37 @@ unit Sprite3dMain;
   Behind the model the viewport can show a background; by default none is
   drawn. File, Background Settings... chooses None, Transparent (a two-grey
   checker standing for transparency), Solid or Gradient, which grabs and icons
-  follow too. Each model replaces the last: it plays its last animation by
-  name if it has any, is centred and turned 180 degrees about X, and the
-  camera is fitted so it fills the view. The model is refitted when the
-  viewport is resized, the projection changes or the "Fit any angle" box is
-  toggled, but not when a dial turns. Checked, that box uses FitToBoundsMax,
-  which frames the model for every angle at once, so the dials can never push
-  it out of view. Unchecked, FitToBounds frames it exactly for the angles at
-  the time of the fit, and turning a dial afterwards can push part of it past
-  the edge until the next refit. TabControl1 |-- GorillaTab "View" |   `--
-  MainLayout |       |-- ViewportLayout   owns the TGorillaViewport |       |
-  `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack |       `--
-  ControlsLayout   dials, labels, five check boxes `-- DebugTab "Debug" `--
-  DebugMemo
+  follow too.
 
-    The form only handles the user interface. The 3D work is done by the
-    library units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and
-    Sprite3DOffscreen. The application's other rules, such as where models
-    are found, how a model is loaded and placed, and how grabs are named and
-    saved, are in Sprite3DHelpers.
+  Each model replaces the last: it plays its last animation by name if it has
+  any, is centred and turned 180 degrees about X, and the camera is fitted so
+  it fills the view. The model is refitted when the viewport is resized, the
+  projection changes or View, Fit any angle is chosen, but not when a dial
+  turns. Ticked, that item uses FitToBoundsMax, which frames the model for
+  every angle at once, so the dials can never push it out of view. Not ticked,
+  FitToBounds frames it exactly for the angles at the time of the fit, and
+  turning a dial afterwards can push part of it past the edge until the next
+  refit.
 
-    On Android and iOS, where FMX shows no menu bar, the same menus are
-    reached through a hamburger button on a toolbar at the top, which opens a
-    drawer listing every item in MainMenu1; ticks show the current View.
-    Exit is left out on iOS.
+  The form only handles the user interface. The 3D work is done by the library
+  units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and
+  Sprite3DOffscreen. The application's other rules, such as where models are
+  found, how a model is loaded and placed, and how grabs are named and saved,
+  are in Sprite3DHelpers.
+
+  On Android and iOS, where FMX shows no menu bar, the same menus are reached
+  through a hamburger button on a toolbar at the top, which opens a drawer
+  listing every item in MainMenu1; ticks show the current camera view and
+  which View items are on. Exit is left out on iOS.
+
+    TabControl1
+    |-- GorillaTab "View"
+    |   `-- MainLayout
+    |       |-- ViewportLayout   owns the TGorillaViewport
+    |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
+    |       `-- ControlsLayout   dials and their labels
+    `-- DebugTab "Debug"
+        `-- DebugMemo
 
     MainMenu1
     |-- FileMenu "File"
@@ -146,15 +164,21 @@ unit Sprite3dMain;
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
     |   `-- ExitMenuItem "Exit"             closes the application
-    `-- ViewMenu "View"
-        `-- CameraMenu "Camera"             the view, kept in settings.json
-            |-- ViewVariableItem "Variable"     dials set the angles
-            |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-            |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-            |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
-            |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-            |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-            `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+    `-- ViewMenu "View"                   its ticks are kept in settings.json
+        |-- CameraMenu "Camera"             the view, kept in settings.json
+        |   |-- ViewVariableItem "Variable"     dials set the angles
+        |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+        |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+        |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+        |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+        |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+        |-- ViewSeparatorItem "-"
+        |-- ShowBoundsItem "Show bounding box"  ticked at start-up
+        |-- ShowGridItem "Show grid"        ticked at start-up
+        |-- ShowAxesItem "Show axes"        ticked at start-up
+        |-- FitAnyAngleItem "Fit any angle" FitToBoundsMax instead of FitToBounds
+        `-- OrthographicItem "Orthographic" orthographic instead of perspective
 }
 
 interface
@@ -231,10 +255,8 @@ type
     /// only.</summary>
     /// <remarks>See <see cref="DistanceTrackChange"/>.</remarks>
     DistanceTrack: TTrackBar;
-    //** @abstract(The right-hand control panel holding the dials, their labels and both
-    //** check boxes.)
-    /// <summary>The right-hand control panel holding the dials, their labels and both check
-    /// boxes.</summary>
+    //** @abstract(The right-hand control panel holding the dials and their labels.)
+    /// <summary>The right-hand control panel holding the dials and their labels.</summary>
     ControlsLayout: TLayout;
     //** @abstract(Sets the camera's Azimuth; see AzimuthDialChange.)
     /// <summary>Sets the camera's Azimuth; see <see cref="AzimuthDialChange"/>.</summary>
@@ -270,51 +292,6 @@ type
     //** @abstract(Shows the current roll in whole degrees.)
     /// <summary>Shows the current roll in whole degrees.</summary>
     RollText: TLabel;
-    //** @abstract(Switches the camera between orthographic and perspective projection.)
-    /// <summary>Switches the camera between orthographic and perspective projection.</summary>
-    chkOrthoToggle: TCheckBox;
-    //** @abstract(Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.)
-    //**
-    //** Checked, the model is framed for every possible Azimuth, inclination and Roll, so
-    //** turning the dials only moves the camera round it and the model always stays in view.
-    //** Unchecked, the model is framed exactly for the angles at the time of the fit; turning a
-    //** dial afterwards can push part of it past the edge until the next refit, which happens
-    //** on a resize, a projection change or toggling this box.
-    /// <summary>Chooses FitToBoundsMax over FitToBounds, so the model fits at every
-    /// angle.</summary>
-    /// <remarks>Checked, the model is framed for every possible Azimuth, inclination and Roll,
-    /// so turning the dials only moves the camera round it and the model always stays in view.
-    /// Unchecked, the model is framed exactly for the angles at the time of the fit; turning a
-    /// dial afterwards can push part of it past the edge until the next refit, which happens on
-    /// a resize, a projection change or toggling this box.</remarks>
-    chkFitAnyAngle: TCheckBox;
-    //** @abstract(Shows or hides the model's X, Y and Z axes; checked at start-up.)
-    //**
-    //** Checked, every model is loaded with ShowModelAxes from Sprite3DAxes, which draws red,
-    //** green and blue lines through its centre of rotation; unchecked, they are removed.
-    /// <summary>Shows or hides the model's X, Y and Z axes; checked at start-up.</summary>
-    /// <remarks>Checked, every model is loaded with ShowModelAxes from Sprite3DAxes, which draws
-    /// red, green and blue lines through its centre of rotation; unchecked, they are
-    /// removed.</remarks>
-    chkShowAxes: TCheckBox;
-    //** @abstract(Shows or hides the model's bounding box; checked at start-up.)
-    //**
-    //** Checked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the
-    //** bounds of its current pose, the box the camera fits and the grid lies on.
-    /// <summary>Shows or hides the model's bounding box; checked at start-up.</summary>
-    /// <remarks>Checked, every model is drawn with Gorilla's ShowBoundingBox, an orange box
-    /// round the bounds of its current pose, the box the camera fits and the grid lies
-    /// on.</remarks>
-    chkShowBounds: TCheckBox;
-    //** @abstract(Shows or hides the floor grid; checked at start-up.)
-    //**
-    //** Checked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws a
-    //** shader grid of grey lines 1.0 apart on the model's floor; unchecked, it is removed.
-    /// <summary>Shows or hides the floor grid; checked at start-up.</summary>
-    /// <remarks>Checked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws
-    /// a shader grid of grey lines 1.0 apart on the model's floor; unchecked, it is
-    /// removed.</remarks>
-    chkShowGrid: TCheckBox;
     //** @abstract(Asks for the model file that File, OpenModel loads.)
     //**
     //** Its filter, set in the form designer, offers only the formats the unit has loaders
@@ -379,6 +356,59 @@ type
     /// item. The checked item, and the dials' angles while Variable is checked, are kept in
     /// settings.json and restored at start-up.</remarks>
     CameraMenu: TMenuItem;
+    //** @abstract(The line between CameraMenu and the View menu's on/off items.)
+    /// <summary>The line between CameraMenu and the View menu's on/off items.</summary>
+    ViewSeparatorItem: TMenuItem;
+    //** @abstract(Shows or hides the model's bounding box; ticked at start-up.)
+    //**
+    //** Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the
+    //** bounds of its current pose, the box the camera fits. See ShowBoundsItemClick.
+    /// <summary>Shows or hides the model's bounding box; ticked at start-up.</summary>
+    /// <remarks>Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box
+    /// round the bounds of its current pose, the box the camera fits. See
+    /// <see cref="ShowBoundsItemClick"/>.</remarks>
+    ShowBoundsItem: TMenuItem;
+    //** @abstract(Shows or hides the floor grid; ticked at start-up.)
+    //**
+    //** Ticked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws a
+    //** shader grid of grey lines 1.0 apart on the model's floor, the lowest point of its own
+    //** geometry. See ShowGridItemClick.
+    /// <summary>Shows or hides the floor grid; ticked at start-up.</summary>
+    /// <remarks>Ticked, every model is loaded with ShowModelGrid from Sprite3DGrid, which
+    /// draws a shader grid of grey lines 1.0 apart on the model's floor, the lowest point of
+    /// its own geometry. See <see cref="ShowGridItemClick"/>.</remarks>
+    ShowGridItem: TMenuItem;
+    //** @abstract(Shows or hides the model's X, Y and Z axes; ticked at start-up.)
+    //**
+    //** Ticked, every model is loaded with ShowModelAxes from Sprite3DAxes, which draws red,
+    //** green and blue lines through its centre of rotation. See ShowAxesItemClick.
+    /// <summary>Shows or hides the model's X, Y and Z axes; ticked at start-up.</summary>
+    /// <remarks>Ticked, every model is loaded with ShowModelAxes from Sprite3DAxes, which
+    /// draws red, green and blue lines through its centre of rotation. See
+    /// <see cref="ShowAxesItemClick"/>.</remarks>
+    ShowAxesItem: TMenuItem;
+    //** @abstract(Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.)
+    //**
+    //** Ticked, the model is framed for every possible Azimuth, inclination and Roll, so
+    //** turning the dials only moves the camera round it and the model always stays in view.
+    //** Not ticked, the model is framed exactly for the angles at the time of the fit; turning
+    //** a dial afterwards can push part of it past the edge until the next refit, which
+    //** happens on a resize, a projection change or choosing this item.
+    /// <summary>Chooses FitToBoundsMax over FitToBounds, so the model fits at every
+    /// angle.</summary>
+    /// <remarks>Ticked, the model is framed for every possible Azimuth, inclination and Roll,
+    /// so turning the dials only moves the camera round it and the model always stays in view.
+    /// Not ticked, the model is framed exactly for the angles at the time of the fit; turning
+    /// a dial afterwards can push part of it past the edge until the next refit, which happens
+    /// on a resize, a projection change or choosing this item.</remarks>
+    FitAnyAngleItem: TMenuItem;
+    //** @abstract(Switches the camera between orthographic and perspective projection.)
+    //**
+    //** Ticked, the camera is orthographic; see OrthographicItemClick.
+    /// <summary>Switches the camera between orthographic and perspective projection.</summary>
+    /// <remarks>Ticked, the camera is orthographic; see
+    /// <see cref="OrthographicItemClick"/>.</remarks>
+    OrthographicItem: TMenuItem;
     //** @abstract(The "Variable" view; see ViewVariableItemClick.)
     /// <summary>The "Variable" view; see <see cref="ViewVariableItemClick"/>.</summary>
     ViewVariableItem: TMenuItem;
@@ -415,8 +445,9 @@ type
     //** The dials start at 0, then the camera view kept in settings.json is chosen, as its
     //** View, Camera item would choose it: a fixed view turns the dials to its angles and
     //** switches them off, and Variable turns them to the angles kept with it and leaves them
-    //** on. Isometric is chosen when none is kept. Last, the five check boxes are set as
-    //** settings.json says they were left, which also sets the projection.
+    //** on. Isometric is chosen when none is kept. Last, the View menu's five on/off items are
+    //** ticked as settings.json says they were left, and applied, which also sets the
+    //** projection.
     //**
     //** @param(Sender The form.)
     /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
@@ -430,8 +461,9 @@ type
     /// <para>The dials start at 0, then the camera view kept in settings.json is chosen, as
     /// its View, Camera item would choose it: a fixed view turns the dials to its angles and
     /// switches them off, and Variable turns them to the angles kept with it and leaves them
-    /// on. Isometric is chosen when none is kept. Last, the five check boxes are set as
-    /// settings.json says they were left, which also sets the projection.</para></remarks>
+    /// on. Isometric is chosen when none is kept. Last, the View menu's five on/off items are
+    /// ticked as settings.json says they were left, and applied, which also sets the
+    /// projection.</para></remarks>
     /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Loads the first model, the one the system asked to open or the default, and
@@ -461,56 +493,56 @@ type
     procedure FormShow(Sender: TObject);
     //** @abstract(Stops taking open requests, saves the view state and frees the settings.)
     //**
-    //** The checked View, Camera item, the dials' angles if that is Variable, and the states
-    //** of the five check boxes are written to settings.json for the next session; a failed
-    //** save is ignored, as no message can be shown here. Other settings are saved as soon as
-    //** they change.
+    //** The checked View, Camera item, the dials' angles if that is Variable, and the ticks of
+    //** the View menu's five on/off items are written to settings.json for the next session;
+    //** a failed save is ignored, as no message can be shown here. Other settings are saved as
+    //** soon as they change.
     //**
     //** @param(Sender The form.)
     /// <summary>Stops taking open requests, saves the view state and frees the
     /// settings.</summary>
     /// <remarks>The checked View, Camera item, the dials' angles if that is Variable, and the
-    /// states of the five check boxes are written to settings.json for the next session; a
-    /// failed save is ignored, as no message can be shown here. Other settings are saved as
-    /// soon as they change.</remarks>
+    /// ticks of the View menu's five on/off items are written to settings.json for the next
+    /// session; a failed save is ignored, as no message can be shown here. Other settings are
+    /// saved as soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
     //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
     //**
     //** The dial value is negated, wrapped into 0 to 360 and shown in AzimuthText. The camera
     //** gets the angle reversed, 360 minus the readout, so the view turns the right way for the
-    //** dial. The model is not refitted; see chkFitAnyAngle.
+    //** dial. The model is not refitted; see FitAnyAngleItem.
     //**
     //** @param(Sender AzimuthDial.)
     /// <summary>Copies AzimuthDial to the camera's Azimuth.</summary>
     /// <remarks>The dial value is negated, wrapped into 0 to 360 and shown in AzimuthText. The
     /// camera gets the angle reversed, 360 minus the readout, so the view turns the right way
-    /// for the dial. The model is not refitted; see <see cref="chkFitAnyAngle"/>.</remarks>
+    /// for the dial. The model is not refitted; see <see cref="FitAnyAngleItem"/>.</remarks>
     /// <param name="Sender">AzimuthDial.</param>
     procedure AzimuthDialChange(Sender: TObject);
     //** @abstract(Copies AngleDial to the camera's PolarAngle.)
     //**
     //** The dial value is negated and wrapped into 0 to 360, shown in AngleText and written to
     //** the camera. Values past 90 take the camera over the pole. The model is not refitted;
-    //** see chkFitAnyAngle.
+    //** see FitAnyAngleItem.
     //**
     //** @param(Sender AngleDial.)
     /// <summary>Copies AngleDial to the camera's PolarAngle.</summary>
     /// <remarks>The dial value is negated and wrapped into 0 to 360, shown in AngleText and
     /// written to the camera. Values past 90 take the camera over the pole. The model is not
-    /// refitted; see <see cref="chkFitAnyAngle"/>.</remarks>
+    /// refitted; see <see cref="FitAnyAngleItem"/>.</remarks>
     /// <param name="Sender">AngleDial.</param>
     procedure AngleDialChange(Sender: TObject);
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
     //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
-    //** to the camera. The model is not refitted; see chkFitAnyAngle.
+    //** to the camera. The model is not refitted; see FitAnyAngleItem.
     //**
     //** @param(Sender RollDial.)
     /// <summary>Copies RollDial to the camera's Roll.</summary>
     /// <remarks>The dial value is wrapped into 0 to 360, without negating, shown in RollText
     /// and written to the camera. The model is not refitted; see
-    /// <see cref="chkFitAnyAngle"/>.</remarks>
+    /// <see cref="FitAnyAngleItem"/>.</remarks>
     /// <param name="Sender">RollDial.</param>
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
@@ -523,51 +555,59 @@ type
     /// loaded.</remarks>
     /// <param name="Sender">The TGorillaViewport.</param>
     procedure GorillaViewportResize(Sender: TObject);
-    //** @abstract(Switches the projection to match chkOrthoToggle and refits the model.)
+    //** @abstract(Ticks or unticks OrthographicItem, then switches the projection to match
+    //** and refits the model.)
     //**
     //** Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the form
-    //** caption, and calls FitToBounds, since the two modes size the view differently.
+    //** caption, and refits, since the two modes size the view differently.
     //**
-    //** @param(Sender chkOrthoToggle.)
-    /// <summary>Switches the projection to match chkOrthoToggle and refits the model.</summary>
+    //** @param(Sender OrthographicItem.)
+    /// <summary>Ticks or unticks OrthographicItem, then switches the projection to match and
+    /// refits the model.</summary>
     /// <remarks>Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in
-    /// the form caption, and calls FitToBounds, since the two modes size the view
+    /// the form caption, and refits, since the two modes size the view
     /// differently.</remarks>
-    /// <param name="Sender">chkOrthoToggle.</param>
-    procedure chkOrthoToggleChange(Sender: TObject);
-    //** @abstract(Refits the model when the fit mode changes.)
+    /// <param name="Sender">OrthographicItem.</param>
+    procedure OrthographicItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks FitAnyAngleItem, then refits the model.)
     //**
-    //** @param(Sender chkFitAnyAngle.)
-    /// <summary>Refits the model when the fit mode changes.</summary>
-    /// <param name="Sender">chkFitAnyAngle.</param>
-    procedure chkFitAnyAngleChange(Sender: TObject);
-    //** @abstract(Adds or removes the model's axes to match chkShowAxes.)
+    //** @param(Sender FitAnyAngleItem.)
+    /// <summary>Ticks or unticks FitAnyAngleItem, then refits the model.</summary>
+    /// <param name="Sender">FitAnyAngleItem.</param>
+    procedure FitAnyAngleItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
+    //** match.)
     //**
-    //** Does nothing until a model is loaded.
+    //** Only the tick changes until a model is loaded.
     //**
-    //** @param(Sender chkShowAxes.)
-    /// <summary>Adds or removes the model's axes to match chkShowAxes.</summary>
-    /// <remarks>Does nothing until a model is loaded.</remarks>
-    /// <param name="Sender">chkShowAxes.</param>
-    procedure chkShowAxesChange(Sender: TObject);
-    //** @abstract(Shows or hides the model's bounding box to match chkShowBounds.)
+    //** @param(Sender ShowAxesItem.)
+    /// <summary>Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
+    /// match.</summary>
+    /// <remarks>Only the tick changes until a model is loaded.</remarks>
+    /// <param name="Sender">ShowAxesItem.</param>
+    procedure ShowAxesItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks ShowBoundsItem, then shows or hides the model's bounding
+    //** box to match.)
     //**
-    //** Does nothing until a model is loaded.
+    //** Only the tick changes until a model is loaded.
     //**
-    //** @param(Sender chkShowBounds.)
-    /// <summary>Shows or hides the model's bounding box to match chkShowBounds.</summary>
-    /// <remarks>Does nothing until a model is loaded.</remarks>
-    /// <param name="Sender">chkShowBounds.</param>
-    procedure chkShowBoundsChange(Sender: TObject);
-    //** @abstract(Adds or removes the floor grid to match chkShowGrid.)
+    //** @param(Sender ShowBoundsItem.)
+    /// <summary>Ticks or unticks ShowBoundsItem, then shows or hides the model's bounding box
+    /// to match.</summary>
+    /// <remarks>Only the tick changes until a model is loaded.</remarks>
+    /// <param name="Sender">ShowBoundsItem.</param>
+    procedure ShowBoundsItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks ShowGridItem, then adds or removes the floor grid to
+    //** match.)
     //**
-    //** Does nothing until a model is loaded.
+    //** Only the tick changes until a model is loaded.
     //**
-    //** @param(Sender chkShowGrid.)
-    /// <summary>Adds or removes the floor grid to match chkShowGrid.</summary>
-    /// <remarks>Does nothing until a model is loaded.</remarks>
-    /// <param name="Sender">chkShowGrid.</param>
-    procedure chkShowGridChange(Sender: TObject);
+    //** @param(Sender ShowGridItem.)
+    /// <summary>Ticks or unticks ShowGridItem, then adds or removes the floor grid to
+    /// match.</summary>
+    /// <remarks>Only the tick changes until a model is loaded.</remarks>
+    /// <param name="Sender">ShowGridItem.</param>
+    procedure ShowGridItemClick(Sender: TObject);
     //** @abstract(Lets the user pick a model file and loads it in place of the current one.)
     //**
     //** Shows OpenDialog1 and passes the chosen file to SwitchModel, which clears the old model
@@ -720,13 +760,13 @@ type
     //** @abstract(Sets the 3/4 view, through the orthographic camera, and fixes it.)
     //**
     //** The angle of military projection: inclination 45 degrees at azimuth 45. It also ticks
-    //** chkOrthoToggle, switching the camera to orthographic, which gives the flat look of
+    //** OrthographicItem, switching the camera to orthographic, which gives the flat look of
     //** 3/4-view game art. Other views leave the projection as it is.
     //**
     //** @param(Sender ViewThreeQuarterItem.)
     /// <summary>Sets the 3/4 view, through the orthographic camera, and fixes it.</summary>
     /// <remarks>The angle of military projection: inclination 45 degrees at azimuth 45. It also
-    /// ticks chkOrthoToggle, switching the camera to orthographic, which gives the flat look of
+    /// ticks OrthographicItem, switching the camera to orthographic, which gives the flat look of
     /// 3/4-view game art. Other views leave the projection as it is.</remarks>
     /// <param name="Sender">ViewThreeQuarterItem.</param>
     procedure ViewThreeQuarterItemClick(Sender: TObject);
@@ -799,7 +839,11 @@ type
     procedure OpenRequestedFile(const AFileName: String);
     procedure ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
       const ASave: Boolean);
-    procedure RestoreCheckBoxes;
+    procedure RestoreViewToggles;
+    procedure ApplyProjection;
+    procedure ApplyShowAxes;
+    procedure ApplyShowBounds;
+    procedure ApplyShowGrid;
     procedure RestoreCameraView;
     procedure SaveViewState;
     function CameraViewKey(const AItem: TMenuItem): String;
@@ -934,8 +978,8 @@ begin
   // The camera view as it was left last session; Isometric the first time
   RestoreCameraView;
 
-  // The check boxes as they were left last session
-  RestoreCheckBoxes;
+  // The View menu's on/off items as they were left last session
+  RestoreViewToggles;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   BuildMobileMenu;
@@ -1086,9 +1130,17 @@ begin
   ApplyAngles;
 end;
 
-procedure TMainForm.chkOrthoToggleChange(Sender: TObject);
+procedure TMainForm.OrthographicItemClick(Sender: TObject);
 begin
-  if chkOrthoToggle.IsChecked then
+  OrthographicItem.IsChecked := not OrthographicItem.IsChecked;
+  ApplyProjection;
+end;
+
+// The projection and caption to match OrthographicItem, then a refit, as
+// the two modes size the view differently
+procedure TMainForm.ApplyProjection;
+begin
+  if OrthographicItem.IsChecked then
     begin
       Caption := 'Orthographic';
       GorillaCamera.ProjectionMode := TGorillaCameraProjection.cpOrthographic;
@@ -1142,17 +1194,21 @@ begin
   FreeAndNil(FSettings);
 end;
 
-// Sets the check boxes from settings.json. Each OnChange does what a click
-// would: the projection and caption, the fit, and the grid and axes, which
-// SwitchModel adds to each model as the boxes say. Before the first model is
-// loaded, the grid and axes calls find no model and do nothing.
-procedure TMainForm.RestoreCheckBoxes;
+// Ticks the View menu's on/off items as settings.json says, then applies
+// each, as choosing it would: the projection and caption, the fit, and the
+// grid, axes and box, which SwitchModel also adds to each model as the items
+// say. Before the first model is loaded, those find no model and do nothing.
+procedure TMainForm.RestoreViewToggles;
 begin
-  chkShowBounds.IsChecked := FSettings.ShowBoundingBox;
-  chkShowGrid.IsChecked := FSettings.ShowGrid;
-  chkShowAxes.IsChecked := FSettings.ShowAxes;
-  chkFitAnyAngle.IsChecked := FSettings.FitAnyAngle;
-  chkOrthoToggle.IsChecked := FSettings.Orthographic;
+  ShowBoundsItem.IsChecked := FSettings.ShowBoundingBox;
+  ShowGridItem.IsChecked := FSettings.ShowGrid;
+  ShowAxesItem.IsChecked := FSettings.ShowAxes;
+  FitAnyAngleItem.IsChecked := FSettings.FitAnyAngle;
+  OrthographicItem.IsChecked := FSettings.Orthographic;
+  ApplyShowBounds;
+  ApplyShowGrid;
+  ApplyShowAxes;
+  ApplyProjection;   // refits too, for FitAnyAngleItem
 end;
 
 // The name settings.json keeps for a View, Camera item: its component name
@@ -1207,7 +1263,7 @@ begin
     ViewIsometricItemClick(ViewIsometricItem);
 end;
 
-// Keeps the camera view and the check boxes' states in settings.json for
+// Keeps the camera view and the View menu's on/off items in settings.json for
 // the next session. The dials' angles are kept only while Variable is
 // checked, so a fixed view leaves the last Variable angles in place. Runs as
 // the form is destroyed, where a message box cannot be shown, so a failed
@@ -1227,11 +1283,11 @@ begin
     FSettings.VariableInclination := FPolarAngle;
     FSettings.VariableRoll := FRoll;
   end;
-  FSettings.ShowBoundingBox := chkShowBounds.IsChecked;
-  FSettings.ShowGrid := chkShowGrid.IsChecked;
-  FSettings.ShowAxes := chkShowAxes.IsChecked;
-  FSettings.FitAnyAngle := chkFitAnyAngle.IsChecked;
-  FSettings.Orthographic := chkOrthoToggle.IsChecked;
+  FSettings.ShowBoundingBox := ShowBoundsItem.IsChecked;
+  FSettings.ShowGrid := ShowGridItem.IsChecked;
+  FSettings.ShowAxes := ShowAxesItem.IsChecked;
+  FSettings.FitAnyAngle := FitAnyAngleItem.IsChecked;
+  FSettings.Orthographic := OrthographicItem.IsChecked;
   try
     FSettings.Save;
   except
@@ -1513,8 +1569,9 @@ end;
 procedure TMainForm.ViewThreeQuarterItemClick(Sender: TObject);
 begin
   // Military projection's 45 degrees, through the orthographic camera. The
-  // check box's OnChange switches the projection and refits.
-  chkOrthoToggle.IsChecked := True;
+  // projection is switched, and the model refitted, to match.
+  OrthographicItem.IsChecked := True;
+  ApplyProjection;
   SelectFixedView(ViewThreeQuarterItem, 45);
 end;
 
@@ -1568,7 +1625,7 @@ begin
   Result := Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
     Exit;
-  if chkFitAnyAngle.IsChecked then
+  if FitAnyAngleItem.IsChecked then
     Result := GorillaCamera.FitToBoundsMax(GorillaModel)
   else
     Result := GorillaCamera.FitToBounds(GorillaModel);
@@ -1601,28 +1658,51 @@ begin
   ApplyDistance;
 end;
 
-procedure TMainForm.chkFitAnyAngleChange(Sender: TObject);
+procedure TMainForm.FitAnyAngleItemClick(Sender: TObject);
 begin
+  FitAnyAngleItem.IsChecked := not FitAnyAngleItem.IsChecked;
   FitModel;
 end;
 
-procedure TMainForm.chkShowAxesChange(Sender: TObject);
+procedure TMainForm.ShowAxesItemClick(Sender: TObject);
 begin
-  if chkShowAxes.IsChecked then
+  ShowAxesItem.IsChecked := not ShowAxesItem.IsChecked;
+  ApplyShowAxes;
+end;
+
+procedure TMainForm.ShowBoundsItemClick(Sender: TObject);
+begin
+  ShowBoundsItem.IsChecked := not ShowBoundsItem.IsChecked;
+  ApplyShowBounds;
+end;
+
+procedure TMainForm.ShowGridItemClick(Sender: TObject);
+begin
+  ShowGridItem.IsChecked := not ShowGridItem.IsChecked;
+  ApplyShowGrid;
+end;
+
+// The model's axes to match ShowAxesItem; nothing without a model
+procedure TMainForm.ApplyShowAxes;
+begin
+  if ShowAxesItem.IsChecked then
     ShowModelAxes(GorillaModel)
   else
     HideModelAxes(GorillaModel);
 end;
 
-procedure TMainForm.chkShowBoundsChange(Sender: TObject);
+// The model's bounding box to match ShowBoundsItem; nothing without a model
+procedure TMainForm.ApplyShowBounds;
 begin
   if GorillaModel <> nil then
-    GorillaModel.ShowBoundingBox := chkShowBounds.IsChecked;
+    GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
 end;
 
-procedure TMainForm.chkShowGridChange(Sender: TObject);
+// The floor grid to match ShowGridItem, on the model's own bounds as
+// loaded; nothing without a model
+procedure TMainForm.ApplyShowGrid;
 begin
-  if chkShowGrid.IsChecked then
+  if ShowGridItem.IsChecked then
     ShowModelGrid(GorillaModel, FModelBox)
   else
     HideModelGrid(GorillaModel);
@@ -1665,15 +1745,15 @@ begin
 
     // Draw the box that FitToBounds and FitToBoundsMax fit, if wanted: the
     // bounds of the current pose, in Gorilla's default orange
-    GorillaModel.ShowBoundingBox := chkShowBounds.IsChecked;
+    GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
     // Axes through the centre of rotation, sized for the newly loaded model
-    if chkShowAxes.IsChecked then
+    if ShowAxesItem.IsChecked then
       ShowModelAxes(GorillaModel);
     PlaceModel(GorillaModel, BBox);
 
     // Floor grid, after the model is placed and turned, because the floor
     // depends on which way up it is
-    if chkShowGrid.IsChecked then
+    if ShowGridItem.IsChecked then
       ShowModelGrid(GorillaModel, FModelBox);
 
     if not FitModel then

@@ -191,49 +191,6 @@ object MainForm: TMainForm
             Text = '0'
             TabOrder = 93
           end
-          object chkShowBounds: TCheckBox
-            Anchors = [akLeft, akBottom]
-            IsChecked = True
-            Position.X = 16.000000000000000000
-            Position.Y = 578.000000000000000000
-            TabOrder = 99
-            Text = 'Show BBox'
-            OnChange = chkShowBoundsChange
-          end
-          object chkShowGrid: TCheckBox
-            Anchors = [akLeft, akBottom]
-            IsChecked = True
-            Position.X = 16.000000000000000000
-            Position.Y = 600.000000000000000000
-            TabOrder = 98
-            Text = 'Show grid'
-            OnChange = chkShowGridChange
-          end
-          object chkShowAxes: TCheckBox
-            Anchors = [akLeft, akBottom]
-            IsChecked = True
-            Position.X = 16.000000000000000000
-            Position.Y = 622.000000000000000000
-            TabOrder = 97
-            Text = 'Show axes'
-            OnChange = chkShowAxesChange
-          end
-          object chkFitAnyAngle: TCheckBox
-            Anchors = [akLeft, akBottom]
-            Position.X = 16.000000000000000000
-            Position.Y = 644.000000000000000000
-            TabOrder = 96
-            Text = 'Fit any angle'
-            OnChange = chkFitAnyAngleChange
-          end
-          object chkOrthoToggle: TCheckBox
-            Anchors = [akLeft, akBottom]
-            Position.X = 16.000000000000000000
-            Position.Y = 666.000000000000000000
-            TabOrder = 95
-            Text = 'Orthographic'
-            OnChange = chkOrthoToggleChange
-          end
         end
       end
       object Model3D1: TModel3D
@@ -376,6 +333,38 @@ object MainForm: TMainForm
           Text = 'Side View'
           OnClick = ViewSideItemClick
         end
+      end
+      object ViewSeparatorItem: TMenuItem
+        Locked = True
+        Text = '-'
+      end
+      object ShowBoundsItem: TMenuItem
+        Locked = True
+        IsChecked = True
+        Text = 'Show bounding box'
+        OnClick = ShowBoundsItemClick
+      end
+      object ShowGridItem: TMenuItem
+        Locked = True
+        IsChecked = True
+        Text = 'Show grid'
+        OnClick = ShowGridItemClick
+      end
+      object ShowAxesItem: TMenuItem
+        Locked = True
+        IsChecked = True
+        Text = 'Show axes'
+        OnClick = ShowAxesItemClick
+      end
+      object FitAnyAngleItem: TMenuItem
+        Locked = True
+        Text = 'Fit any angle'
+        OnClick = FitAnyAngleItemClick
+      end
+      object OrthographicItem: TMenuItem
+        Locked = True
+        Text = 'Orthographic'
+        OnClick = OrthographicItemClick
       end
     end
   end
