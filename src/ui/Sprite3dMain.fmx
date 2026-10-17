@@ -197,7 +197,7 @@ object MainForm: TMainForm
             Position.X = 16.000000000000000000
             Position.Y = 578.000000000000000000
             TabOrder = 99
-            Text = 'Show bounding box'
+            Text = 'Show BBox'
             OnChange = chkShowBoundsChange
           end
           object chkShowGrid: TCheckBox
@@ -325,6 +325,7 @@ object MainForm: TMainForm
     object ViewMenu: TMenuItem
       Text = 'View'
       object CameraMenu: TMenuItem
+        Locked = True
         Text = 'Camera'
         object ViewVariableItem: TMenuItem
           Locked = True

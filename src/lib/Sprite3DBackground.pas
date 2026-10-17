@@ -286,6 +286,7 @@ type
       const AAngle, ADX, ADY: Single);
     function SurfaceCode: String;
     function AwayZ: Single;
+    procedure Stow(const APlane: TGorillaPlane);
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
     procedure SetHidden(const Value: Boolean);
   protected
@@ -327,11 +328,12 @@ type
     property Spec: TSprite3DBackgroundSpec read FSpec write SetSpec;
     //** @abstract(True moves the background out of view, as while a grab is drawn.)
     //**
-    //** Its planes are moved behind the camera rather than made invisible, so it takes effect
-    //** for the next drawing even within a frame. False brings it back.
+    //** Its planes are shrunk to a speck and moved away rather than made invisible, so it
+    //** takes effect for the next drawing even within a frame. False brings it back.
     /// <summary>True moves the background out of view, as while a grab is drawn.</summary>
-    /// <remarks>Its planes are moved behind the camera rather than made invisible, so it takes
-    /// effect for the next drawing even within a frame. False brings it back.</remarks>
+    /// <remarks>Its planes are shrunk to a speck and moved away rather than made invisible,
+    /// so it takes effect for the next drawing even within a frame. False brings it
+    /// back.</remarks>
     property Hidden: Boolean read FHidden write SetHidden;
   end;
 
@@ -349,6 +351,10 @@ const
   SQUARE_OVERLAP = 1.01;
   // A little larger than the view, so no edge shows through rounding
   OVERSCAN = 1.02;
+  // A stowed plane's side, too small to cover a pixel however near it is
+  STOW_SIZE = 1E-6;
+  // How far away stowed planes go, in far-plane distances from the camera
+  STOW_DEPTH_FACTOR = 10.0;
 
 // A GLSL float literal: always with a decimal point, whatever the locale
 function GlslFloat(const AValue: Single): String;
@@ -551,7 +557,7 @@ begin
       FSquares[I] := NewPlane(I, FDarkMaterial)
     else
       FSquares[I] := NewPlane(I, FLightMaterial);
-    FSquares[I].Position.Point := Point3D(0, 0, AwayZ);
+    Stow(FSquares[I]);
   end;
   UpdateMaterials;
 end;
@@ -595,12 +601,12 @@ end;
 // view. A square is CheckerSize logical pixels, times the smallest whole
 // multiple that keeps either grey within MaxCheckerSquares; square (column,
 // row) from the top-left is dark where column + row is odd, light otherwise.
-// Spare planes are moved behind the camera, the way Hidden works, rather
-// than made invisible.
+// Spare planes are stowed, the way Hidden works, rather than made
+// invisible.
 procedure TSprite3DBackground.FitSquares(const AZ: Single; const AShow: Boolean);
 var
   Viewport: TViewport3D;
-  HalfW, HalfH, Side, PixelSide, X, Y, Away: Single;
+  HalfW, HalfH, Side, PixelSide, X, Y: Single;
   Columns, Rows, Multiple, Column, Row, I, Pool: Integer;
   Used: array[Boolean] of Integer;   // planes used: [False] light, [True] dark
   Dark: Boolean;
@@ -656,11 +662,9 @@ begin
         Inc(Used[Dark], 2);
       end;
   end;
-  Away := AwayZ;
   for I := 0 to High(FSquares) do
     if ((I < Pool) and (I >= Used[True])) or ((I >= Pool) and (I - Pool >= Used[False])) then
-      if not SameValue(FSquares[I].Position.Z, Away, 0.001) then
-        FSquares[I].Position.Point := Point3D(0, 0, Away);
+      Stow(FSquares[I]);
 end;
 
 // Turns APlane about the view axis so its own Y axis, down which its shader
@@ -702,14 +706,32 @@ begin
     APlane.RotationAngle.Point := Point3D(0, YTurn, -AAngle);
 end;
 
-// Where planes go to be out of view: a far-plane distance behind the
-// camera, which sits Distance behind this frame's origin, looking along +Z.
-// Nothing behind the camera is drawn, whatever the projection. Beyond the
-// far plane would not do: with frustum culling off, Gorilla still drew a
-// plane put there, as a small square in the middle of the view.
+// Where stowed planes go: well beyond the far plane, in front of the camera,
+// which sits Distance behind this frame's origin, looking along +Z
 function TSprite3DBackground.AwayZ: Single;
 begin
-  Result := -FCamera.Distance - FCamera.MaxViewDepth;
+  Result := FCamera.MaxViewDepth * STOW_DEPTH_FACTOR - FCamera.Distance;
+end;
+
+// Puts APlane out of view: shrunk to a speck and moved away. Moving alone
+// was not enough: with frustum culling off, Gorilla still drew a plane put
+// beyond the far plane, as a small square in the middle of the view, and in
+// orthographic view it drew one put behind the camera over the whole scene.
+// Shrunk to STOW_SIZE it cannot cover a pixel wherever it is drawn. It is
+// not made invisible, so the change takes effect for the next drawing even
+// within a frame. Only what differs is set.
+procedure TSprite3DBackground.Stow(const APlane: TGorillaPlane);
+var
+  Z: Single;
+begin
+  if not SameValue(APlane.Width, STOW_SIZE, STOW_SIZE / 10) then
+    APlane.Width := STOW_SIZE;
+  if not SameValue(APlane.Height, STOW_SIZE, STOW_SIZE / 10) then
+    APlane.Height := STOW_SIZE;
+  Z := AwayZ;
+  if not SameValue(APlane.Position.Z, Z, 0.001) or (APlane.Position.X <> 0) or
+    (APlane.Position.Y <> 0) then
+    APlane.Position.Point := Point3D(0, 0, Z);
 end;
 
 // Sizes and places the planes to fill the camera's view; only what changed
@@ -733,11 +755,7 @@ begin
   // every plane out of view, so nothing is drawn.
   Away := FHidden or FCamera.IsOrthographic or
     (FSpec.Kind = TSprite3DBackgroundKind.None);
-  // While Transparent the squares take the whole-view plane's place
-  if Away or (FSpec.Kind = TSprite3DBackgroundKind.Transparent) then
-    Z := AwayZ
-  else
-    Z := Depth - FCamera.Distance;
+  Z := Depth - FCamera.Distance;
   // The plane's shader blends down its own Y axis. For a Gradient, the plane
   // is turned about the view axis so that axis points along the gradient,
   // and sized so its height spans the view along it, end to end, and its
@@ -760,6 +778,13 @@ begin
   for I := 0 to High(FPlanes) do
   begin
     Plane := FPlanes[I];
+    // Stowed while hidden, and while Transparent, as the squares take its
+    // place then
+    if Away or (FSpec.Kind = TSprite3DBackgroundKind.Transparent) then
+    begin
+      Stow(Plane);
+      Continue;
+    end;
     if not SameValue(Plane.Width, PlaneW, 0.001) then
       Plane.Width := PlaneW;
     if not SameValue(Plane.Height, PlaneH, 0.001) then
@@ -769,13 +794,9 @@ begin
       Plane.Position.Point := Point3D(0, 0, Z);
     TurnPlane(Plane, Odd(I), Turn, DX, DY);
   end;
-  // The squares, at the same depth: hidden the same way, so a grab never
-  // shows them
-  if Away then
-    Z := AwayZ
-  else
-    Z := Depth - FCamera.Distance;
-  FitSquares(Z, FSpec.Kind = TSprite3DBackgroundKind.Transparent);
+  // The squares, at the same depth; stowed the same way while hidden, so a
+  // grab never shows them
+  FitSquares(Z, not Away and (FSpec.Kind = TSprite3DBackgroundKind.Transparent));
 end;
 
 procedure TSprite3DBackground.Render;
