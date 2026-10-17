@@ -4,6 +4,8 @@ Sprite3D is a Delphi FireMonkey application for viewing 3D models from fixed and
 
 The code is split so that the 3D parts can be reused: everything in `src/lib` is independent of the application, and `src/ui` holds the forms and the application's own rules.
 
+![Sprite3D showing the sample cube in the isometric view, over the checker that stands for a transparent background](img/ScreenShot.png)
+
 ## Features
 
 - **Orbit camera.** Three dials set azimuth, inclination and roll. The camera turns on a chain of single-axis pivots, so it passes over the poles without gimbal lock.
@@ -88,10 +90,11 @@ The file is plain JSON and can be edited by hand. Colours are written as `#AARRG
 
 ## Documentation
 
-Every public item in the source carries two kinds of documentation comment: `///` XML comments for Help Insight in the IDE, and `//**` comments for [PasDoc](https://pasdoc.github.io/). The HTML help in `docs` is built from `src/lib` and `src/ui` with:
+Every public item in the source carries two kinds of documentation comment: `///` XML comments for Help Insight in the IDE, and `//**` comments for [PasDoc](https://pasdoc.github.io/). The HTML help is in `docs/lib` and `docs/ui`, one set for each source folder, built from within that folder with, for example:
 
 ```
-pasdoc --staronly --auto-abstract --format html --output ../docs *.pas
+cd src/lib
+pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 ```
 
 ## Known issues
@@ -99,3 +102,7 @@ pasdoc --staronly --auto-abstract --format html --output ../docs *.pas
 - In orthographic projection the viewport background is not drawn, as Gorilla3D draws it black over the whole scene there. Grabs are not affected.
 - Background colours in the viewport show about 1.25 times brighter than chosen. Grabs and icons use the exact colours.
 - Check box states are saved when the main form is destroyed, which Android and iOS do not always do before ending an application.
+
+## Further reading
+
+- [Notes](notes.md): how the viewport background is drawn, and why it is built the way it is.
