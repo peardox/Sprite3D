@@ -1,3 +1,5 @@
+!.gitignore
+!uvcube.glb
 *.bin
 *.glb
 *.gltf

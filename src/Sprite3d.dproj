@@ -384,7 +384,7 @@
                 <Source>
                     <Source Name="MainSource">Sprite3d.dpr</Source>
                 </Source>
-                <WelcomePageFile Path="README.md"/>
+                <WelcomePageFile Path="..\README.md"/>
                 <WelcomePageFolder/>
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\bcboffice2k370.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>

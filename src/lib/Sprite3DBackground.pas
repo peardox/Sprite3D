@@ -5,28 +5,31 @@
 //** the checker squares. TSprite3DBackground draws one behind everything a TSprite3DCamera
 //** sees. It is an unlit plane that moves with the camera, just inside the far plane, and is
 //** resized every frame to fill the view exactly, whatever the projection, field of view or
-//** window size; its colours are worked out per pixel by GLSL code in its material, through
-//** the same SurfaceShader hook Sprite3DGrid uses. It hangs from the camera's RollPivot, the
-//** dummy the camera itself hangs from, so it is drawn like any other dummy's child; it is
-//** two planes facing opposite ways, so one always faces the camera however Gorilla culls
-//** back faces.
+//** window size. Its colour comes from a short GLSL SurfaceShader: one colour for Solid, a
+//** blend down the plane for Gradient. It hangs from the camera's RollPivot, the dummy the
+//** camera itself hangs from; every plane is a pair facing opposite ways, so one always
+//** faces the camera however Gorilla culls back faces.
 //**
 //** The Transparent kind draws a checker of two greys, the usual sign that an image is
-//** transparent there; its squares are CheckerSize pixels on screen. Solid fills the view
-//** with one colour, and Gradient blends from GradientFrom at the top to GradientTo at the
-//** bottom.
+//** transparent there. It is built from geometry rather than a shader, as Gorilla would not
+//** draw any per-pixel checker shader: the plane is filled with the light grey, and a pool of
+//** small planes, all sharing one material of the dark grey, is laid over it as the dark
+//** squares, a little nearer the camera. The squares are CheckerSize logical pixels on
+//** screen, counted from the view's top-left corner, which is light. To keep the number of
+//** planes reasonable, a checker that would need more than MaxCheckerSquares dark squares
+//** has its squares enlarged by a whole multiple until it fits.
 //**
 //** The same spec is meant for TSprite3DOffscreen.Backdrop, which gives grabs the same
 //** background: transparent for Transparent, as the checker stands for, and the colour or
-//** gradient otherwise. Hide the plane while a grab is drawn, with Hidden, so it does not
-//** end up in the grab.
+//** gradient otherwise. Hide the background while a grab is drawn, with Hidden, so it does
+//** not end up in the grab.
 //**
 //** @preformatted(
 //** TSprite3DCamera.RollPivot @(TDummy@)
 //** |-- TSprite3DCamera                 at @(0, 0, -Distance@), looking along +Z
 //** `-- TSprite3DBackground @(TDummy@)   fitted to the view every frame
-//**     |-- TGorillaPlane              facing the camera; drawn by its shader
-//**     `-- TGorillaPlane              the same, turned to face the other way
+//**     |-- TGorillaPlane @(x2@)          the whole view; colour, gradient or light grey
+//**     `-- TGorillaPlane @(x2 each@)     the dark checker squares, while Transparent
 //** )
 unit Sprite3DBackground;
 
@@ -38,28 +41,34 @@ unit Sprite3DBackground;
   the size of the checker squares. TSprite3DBackground draws one behind
   everything a TSprite3DCamera sees. It is an unlit plane that moves with
   the camera, just inside the far plane, and is resized every frame to fill
-  the view exactly, whatever the projection, field of view or window size;
-  its colours are worked out per pixel by GLSL code in its material, through
-  the same SurfaceShader hook Sprite3DGrid uses. It hangs from the camera's
-  RollPivot, the dummy the camera itself hangs from, so it is drawn like any
-  other dummy's child; it is two planes facing opposite ways, so one always
-  faces the camera however Gorilla culls back faces.
+  the view exactly, whatever the projection, field of view or window size.
+  Its colour comes from a short GLSL SurfaceShader: one colour for Solid, a
+  blend down the plane for Gradient. It hangs from the camera's RollPivot,
+  the dummy the camera itself hangs from; every plane is a pair facing
+  opposite ways, so one always faces the camera however Gorilla culls back
+  faces.
 
   The Transparent kind draws a checker of two greys, the usual sign that an
-  image is transparent there; its squares are CheckerSize pixels on screen.
-  Solid fills the view with one colour, and Gradient blends from
-  GradientFrom at the top to GradientTo at the bottom.
+  image is transparent there. It is built from geometry rather than a
+  shader, as Gorilla would not draw any per-pixel checker shader: the plane
+  is filled with the light grey, and a pool of small planes, all sharing one
+  material of the dark grey, is laid over it as the dark squares, a little
+  nearer the camera. The squares are CheckerSize logical pixels on screen,
+  counted from the view's top-left corner, which is light. To keep the
+  number of planes reasonable, a checker that would need more than
+  MaxCheckerSquares dark squares has its squares enlarged by a whole
+  multiple until it fits.
 
   The same spec is meant for TSprite3DOffscreen.Backdrop, which gives grabs
   the same background: transparent for Transparent, as the checker stands
-  for, and the colour or gradient otherwise. Hide the plane while a grab is
-  drawn, with Hidden, so it does not end up in the grab.
+  for, and the colour or gradient otherwise. Hide the background while a
+  grab is drawn, with Hidden, so it does not end up in the grab.
 
     TSprite3DCamera.RollPivot (TDummy)
     |-- TSprite3DCamera                 at (0, 0, -Distance), looking along +Z
     `-- TSprite3DBackground (TDummy)   fitted to the view every frame
-        |-- TGorillaPlane              facing the camera; drawn by its shader
-        `-- TGorillaPlane              the same, turned to face the other way
+        |-- TGorillaPlane (x2)          the whole view; colour, gradient or light grey
+        `-- TGorillaPlane (x2 each)     the dark checker squares, while Transparent
 }
 
 interface
@@ -147,38 +156,53 @@ type
   //** @abstract(Draws a background behind everything a TSprite3DCamera sees.)
   //**
   //** Create it and call AttachTo with the camera; it then hangs from the camera's RollPivot
-  //** and is freed with the camera's rig. Each frame it fits its plane to the view at a depth
-  //** just inside the far
-  //** plane, so the scene is always in front of it. Set Spec to change what it shows, and
-  //** PixelScale to the screen's scale so checker squares are CheckerSize logical pixels.
-  //** For the main thread only.
+  //** and is freed with the camera's rig. Each frame it fits its planes to the view at a
+  //** depth just inside the far plane, so the scene is always in front of it. Set Spec to
+  //** change what it shows. While the camera is orthographic the background is kept out of
+  //** view for now, as it draws black over the scene there. For the main thread only.
   /// <summary>Draws a background behind everything a TSprite3DCamera sees.</summary>
   /// <remarks>Create it and call AttachTo with the camera; it then hangs from the camera's
-  /// RollPivot and is freed with the camera's rig. Each frame it fits its plane to the view at
-  /// a depth just inside the far
-  /// plane, so the scene is always in front of it. Set Spec to change what it shows, and
-  /// PixelScale to the screen's scale so checker squares are CheckerSize logical pixels. For
-  /// the main thread only.</remarks>
+  /// RollPivot and is freed with the camera's rig. Each frame it fits its planes to the view
+  /// at a depth just inside the far plane, so the scene is always in front of it. Set Spec to
+  /// change what it shows. While the camera is orthographic the background is kept out of
+  /// view for now, as it draws black over the scene there. For the main thread
+  /// only.</remarks>
   TSprite3DBackground = class(TDummy)
   private
     FCamera: TSprite3DCamera;
-    FPlanes: array[0..1] of TGorillaPlane;
+    FPlanes: array[0..1] of TGorillaPlane;   // the whole view, a facing pair
     FMaterial: TGorillaDefaultMaterialSource;
+    FSquares: TArray<TGorillaPlane>;          // dark squares, in facing pairs
+    FSquareMaterial: TGorillaDefaultMaterialSource;
+    FSquaresWanted: Integer;   // planes the pool is being grown to
     FSpec: TSprite3DBackgroundSpec;
-    FPixelScale: Single;
+    FGrowQueued: Boolean;      // a pool growth is waiting to run after the frame
+    FAlive: IInterface;        // shared with the queued growth; see Destroy
     FHidden: Boolean;
-    procedure BuildPlane;
-    procedure UpdateShader;
+    procedure BuildPlanes;
+    function NewPlane(const AIndex: Integer;
+      const AMaterial: TGorillaDefaultMaterialSource): TGorillaPlane;
+    procedure GrowSquares;
+    procedure QueueGrowSquares(const ACount: Integer);
+    procedure UpdateMaterials;
     procedure Fit;
+    procedure FitSquares(const AZ: Single; const AShow: Boolean);
     function SurfaceCode: String;
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
-    procedure SetPixelScale(const Value: Single);
     procedure SetHidden(const Value: Boolean);
   protected
-    //** @abstract(Fits the plane to the view before each frame is drawn.)
-    /// <summary>Fits the plane to the view before each frame is drawn.</summary>
+    //** @abstract(Fits the planes to the view before each frame is drawn.)
+    /// <summary>Fits the planes to the view before each frame is drawn.</summary>
     procedure Render; override;
   public
+    //** @abstract(The most dark checker squares drawn in the view.)
+    //**
+    //** A checker that would need more has its squares enlarged by a whole multiple until it
+    //** fits. Each square is a pair of planes.
+    /// <summary>The most dark checker squares drawn in the view.</summary>
+    /// <remarks>A checker that would need more has its squares enlarged by a whole multiple
+    /// until it fits. Each square is a pair of planes.</remarks>
+    const MaxCheckerSquares = 400;
     //** @abstract(Creates the background with the default spec, not yet attached.)
     //**
     //** @param(AOwner The owner; nil is usual, as the camera's rig frees it once attached.)
@@ -186,6 +210,10 @@ type
     /// <param name="AOwner">The owner; nil is usual, as the camera's rig frees it once
     /// attached.</param>
     constructor Create(AOwner: TComponent); override;
+    //** @abstract(Frees the background; a growth of the checker still queued is dropped.)
+    /// <summary>Frees the background; a growth of the checker still queued is
+    /// dropped.</summary>
+    destructor Destroy; override;
     //** @abstract(Puts the background behind everything ACamera sees.)
     //**
     //** Makes it a child of ACamera's RollPivot, beside the camera, so it moves and turns with
@@ -200,34 +228,64 @@ type
     //** @abstract(What the background shows; setting it redraws it.)
     /// <summary>What the background shows; setting it redraws it.</summary>
     property Spec: TSprite3DBackgroundSpec read FSpec write SetSpec;
-    //** @abstract(Device pixels per logical pixel; 1 by default.)
+    //** @abstract(True moves the background out of view, as while a grab is drawn.)
     //**
-    //** Set it to the form's canvas scale, such as 2 on a 200% display, so checker squares are
-    //** CheckerSize logical pixels whatever the display.
-    /// <summary>Device pixels per logical pixel; 1 by default.</summary>
-    /// <remarks>Set it to the form's canvas scale, such as 2 on a 200% display, so checker
-    /// squares are CheckerSize logical pixels whatever the display.</remarks>
-    property PixelScale: Single read FPixelScale write SetPixelScale;
-    //** @abstract(True moves the plane out of view, as while a grab is drawn.)
-    //**
-    //** It is moved beyond the far plane rather than made invisible, so it takes effect for
-    //** the next drawing even within a frame. False brings it back.
-    /// <summary>True moves the plane out of view, as while a grab is drawn.</summary>
-    /// <remarks>It is moved beyond the far plane rather than made invisible, so it takes
-    /// effect for the next drawing even within a frame. False brings it back.</remarks>
+    //** Its planes are moved beyond the far plane rather than made invisible, so it takes
+    //** effect for the next drawing even within a frame. False brings it back.
+    /// <summary>True moves the background out of view, as while a grab is drawn.</summary>
+    /// <remarks>Its planes are moved beyond the far plane rather than made invisible, so it
+    /// takes effect for the next drawing even within a frame. False brings it back.</remarks>
     property Hidden: Boolean read FHidden write SetHidden;
   end;
 
 implementation
 
 uses
-  System.Math;
+  System.Types, System.Math, FMX.Viewport3D;
+
+// Shared between the background and its queued pool growth, so a growth
+// that runs after the background has been freed can tell, and do nothing
+type
+  IBackgroundAlive = interface
+    ['{3B1E7C40-2F6D-4E8A-9C51-7A0D4B6E2F13}']
+    function IsAlive: Boolean;
+    procedure Kill;
+  end;
+
+  TBackgroundAlive = class(TInterfacedObject, IBackgroundAlive)
+  private
+    FAlive: Boolean;
+  public
+    constructor Create;
+    function IsAlive: Boolean;
+    procedure Kill;
+  end;
+
+constructor TBackgroundAlive.Create;
+begin
+  inherited Create;
+  FAlive := True;
+end;
+
+function TBackgroundAlive.IsAlive: Boolean;
+begin
+  Result := FAlive;
+end;
+
+procedure TBackgroundAlive.Kill;
+begin
+  FAlive := False;
+end;
 
 const
-  // The plane sits this far along the far plane's distance, so everything
-  // the camera can show is in front of it
+  // The background sits this far along the far plane's distance, so
+  // everything the camera can show is in front of it
   DEPTH_FRACTION = 0.95;
-  // Where the plane goes while Hidden: well beyond the far plane
+  // The checker's squares sit this far along it: clearly nearer than the
+  // background, so the depth buffer never mixes them up, and still behind
+  // anything the scene is likely to hold
+  SQUARE_DEPTH_FRACTION = 0.94;
+  // Where the planes go while Hidden: well beyond the far plane
   HIDDEN_DEPTH_FACTOR = 10.0;
   // A little larger than the view, so no edge shows through rounding
   OVERSCAN = 1.02;
@@ -246,6 +304,32 @@ begin
   C := TAlphaColorRec(AColour);
   Result := 'vec3(' + GlslFloat(C.R / 255) + ', ' + GlslFloat(C.G / 255) + ', ' +
     GlslFloat(C.B / 255) + ')';
+end;
+
+// The SurfaceShader for one colour, the form Gorilla draws reliably
+function SolidCode(const AColour: TAlphaColor): String;
+begin
+  Result :=
+    'void SurfaceShader(inout TLocals DATA){' + sLineBreak +
+    '  vec3 col = ' + GlslColour(AColour) + ';' + sLineBreak +
+    '  DATA.BaseColor = vec4(col, 1.0);' + sLineBreak +
+    '  DATA.Alpha = 1.0;' + sLineBreak +
+    '}';
+end;
+
+// Hands ACode to AMaterial. The shader property takes a TStrings instance;
+// setting .Text at runtime would not trigger Gorilla's shader update.
+procedure SetShader(const AMaterial: TGorillaDefaultMaterialSource; const ACode: String);
+var
+  Code: TStringList;
+begin
+  Code := TStringList.Create;
+  try
+    Code.Text := ACode;
+    AMaterial.SurfaceShader := Code;
+  finally
+    Code.Free;
+  end;
 end;
 
 { TSprite3DBackgroundSpec }
@@ -286,7 +370,13 @@ begin
   Locked := True;
   HitTest := False;
   FSpec := TSprite3DBackgroundSpec.Default;
-  FPixelScale := 1;
+  FAlive := TBackgroundAlive.Create;
+end;
+
+destructor TSprite3DBackground.Destroy;
+begin
+  (FAlive as IBackgroundAlive).Kill;
+  inherited;
 end;
 
 procedure TSprite3DBackground.AttachTo(const ACamera: TSprite3DCamera);
@@ -298,100 +388,208 @@ begin
   Position.Point := TPoint3D.Zero;
   RotationAngle.Point := TPoint3D.Zero;
   if FPlanes[0] = nil then
-    BuildPlane;
+    BuildPlanes;
   Fit;
 end;
 
-// Two planes, each parented before anything else, as in Gorilla's examples.
-// A plane lies in its local X-Y plane, square to the camera, which looks
-// along +Z; FMX's +Y points down the screen, so a plane's +Y is the bottom
-// of the view. The second is turned half a turn about Y, so whichever side
-// Gorilla treats as the front, one of them shows it to the camera. The turn
-// keeps Y, so both draw exactly the same pixels.
-procedure TSprite3DBackground.BuildPlane;
+// A plane parented before anything else, as in Gorilla's examples. A plane
+// lies in its local X-Y plane, square to the camera, which looks along +Z;
+// FMX's +Y points down the screen. An odd AIndex turns it half a turn about
+// Y, so of each pair, whichever side Gorilla treats as the front, one of
+// them shows it to the camera; the turn keeps Y and the plane's centre, so
+// both draw exactly the same pixels.
+function TSprite3DBackground.NewPlane(const AIndex: Integer;
+  const AMaterial: TGorillaDefaultMaterialSource): TGorillaPlane;
+begin
+  Result := TGorillaPlane.Create(nil);
+  Result.Stored := False;
+  Result.Locked := True;
+  Result.HitTest := False;
+  Result.Parent := Self;   // freed with this object
+  if Odd(AIndex) then
+    Result.RotationAngle.Point := Point3D(0, 180, 0);
+  Result.MaterialSource := AMaterial;
+end;
+
+procedure TSprite3DBackground.BuildPlanes;
 var
   I: Integer;
 begin
-  // Owned by this object, so freed with it, after the planes that use it
+  // Owned by this object, so freed with it, after the planes that use them
   FMaterial := TGorillaDefaultMaterialSource.Create(Self);
   FMaterial.UseLighting := False;
   FMaterial.UseSpecular := False;
-  UpdateShader;
-
+  FSquareMaterial := TGorillaDefaultMaterialSource.Create(Self);
+  FSquareMaterial.UseLighting := False;
+  FSquareMaterial.UseSpecular := False;
   for I := 0 to High(FPlanes) do
-  begin
-    FPlanes[I] := TGorillaPlane.Create(nil);
-    FPlanes[I].Stored := False;
-    FPlanes[I].Locked := True;
-    FPlanes[I].HitTest := False;
-    FPlanes[I].Parent := Self;   // freed with this object
-    if I = 1 then
-      FPlanes[I].RotationAngle.Point := Point3D(0, 180, 0);
-    FPlanes[I].MaterialSource := FMaterial;
-  end;
+    FPlanes[I] := NewPlane(I, FMaterial);
+  UpdateMaterials;
 end;
 
-// The pattern, per pixel. The checker uses the window position of the
-// pixel, gl_FragCoord, so its squares are a fixed size on screen however
-// far away the plane is; the gradient uses the plane's own position,
-// v_VertPos, which runs from -0.5 at the top to 0.5 at the bottom.
-function TSprite3DBackground.SurfaceCode: String;
+// Adds square planes until the pool holds FSquaresWanted. Adds children, so
+// it must not run during rendering; Fit queues it instead.
+procedure TSprite3DBackground.GrowSquares;
 var
-  Colour: String;
+  I, Old: Integer;
+begin
+  if (FSquareMaterial = nil) or (Length(FSquares) >= FSquaresWanted) then
+    Exit;
+  Old := Length(FSquares);
+  SetLength(FSquares, FSquaresWanted);
+  for I := Old to High(FSquares) do
+  begin
+    FSquares[I] := NewPlane(I, FSquareMaterial);
+    // Out of sight until Fit places it
+    FSquares[I].Position.Point := Point3D(0, 0, FCamera.MaxViewDepth * HIDDEN_DEPTH_FACTOR);
+  end;
+  Fit;
+  Repaint;
+end;
+
+// Grows the pool to ACount planes on the main thread after the current
+// frame, once however many times it is asked for before then
+procedure TSprite3DBackground.QueueGrowSquares(const ACount: Integer);
+var
+  Alive: IBackgroundAlive;
+  Me: TSprite3DBackground;
+  Step: TThreadProcedure;
+begin
+  FSquaresWanted := Max(FSquaresWanted, ACount);
+  if FGrowQueued then
+    Exit;
+  FGrowQueued := True;
+  Alive := FAlive as IBackgroundAlive;
+  Me := Self;
+  Step :=
+    procedure
+    begin
+      if not Alive.IsAlive then
+        Exit;   // freed meanwhile
+      Me.FGrowQueued := False;
+      Me.GrowSquares;
+    end;
+  System.Classes.TThread.ForceQueue(nil, Step);
+end;
+
+// The colour of the whole-view plane, per pixel, from the plane's own
+// position, v_VertPos, which runs from -0.5 at the top to 0.5 at the bottom.
+// While Transparent it is the checker's light grey; the dark squares are
+// planes of their own.
+function TSprite3DBackground.SurfaceCode: String;
 begin
   case FSpec.Kind of
     TSprite3DBackgroundKind.Solid:
-      Colour := '  vec3 col = ' + GlslColour(FSpec.Colour) + ';' + sLineBreak;
+      Result := SolidCode(FSpec.Colour);
     TSprite3DBackgroundKind.Gradient:
-      Colour :=
+      Result :=
+        'void SurfaceShader(inout TLocals DATA){' + sLineBreak +
         '  float t = clamp(vars.v_VertPos.y + 0.5, 0.0, 1.0);' + sLineBreak +
         '  vec3 col = mix(' + GlslColour(FSpec.GradientFrom) + ', ' +
-          GlslColour(FSpec.GradientTo) + ', t);' + sLineBreak;
+          GlslColour(FSpec.GradientTo) + ', t);' + sLineBreak +
+        '  DATA.BaseColor = vec4(col, 1.0);' + sLineBreak +
+        '  DATA.Alpha = 1.0;' + sLineBreak +
+        '}';
   else
-    Colour :=
-      '  vec2 cell = floor(gl_FragCoord.xy / ' +
-        GlslFloat(Max(FSpec.CheckerSize, 1) * FPixelScale) + ');' + sLineBreak +
-      '  float odd = mod(cell.x + cell.y, 2.0);' + sLineBreak +
-      '  vec3 col = mix(' + GlslColour(FSpec.CheckerLight) + ', ' +
-        GlslColour(FSpec.CheckerDark) + ', odd);' + sLineBreak;
+    Result := SolidCode(FSpec.CheckerLight);
   end;
-  Result :=
-    'void SurfaceShader(inout TLocals DATA){' + sLineBreak +
-    Colour +
-    '  DATA.BaseColor = vec4(col, 1.0);' + sLineBreak +
-    '  DATA.Alpha = 1.0;' + sLineBreak +
-    '}';
 end;
 
-procedure TSprite3DBackground.UpdateShader;
-var
-  Code: TStringList;
+// Builds the shaders for the present spec. Changes the materials, so it must
+// not run during rendering.
+procedure TSprite3DBackground.UpdateMaterials;
 begin
   if FMaterial = nil then
     Exit;
-  // The material's own colour too, in case the shader's is not what reaches
+  // The materials' own colours too, in case a shader's is not what reaches
   // the screen
-  if FSpec.Kind = TSprite3DBackgroundKind.Solid then
-    FMaterial.Diffuse := FSpec.Colour or $FF000000
+  case FSpec.Kind of
+    TSprite3DBackgroundKind.Solid:
+      FMaterial.Diffuse := FSpec.Colour or $FF000000;
+    TSprite3DBackgroundKind.Gradient:
+      FMaterial.Diffuse := FSpec.GradientFrom or $FF000000;
   else
     FMaterial.Diffuse := FSpec.CheckerLight or $FF000000;
-  // The shader property takes a TStrings instance; setting .Text at runtime
-  // would not trigger Gorilla's shader update
-  Code := TStringList.Create;
-  try
-    Code.Text := SurfaceCode;
-    FMaterial.SurfaceShader := Code;
-  finally
-    Code.Free;
   end;
+  SetShader(FMaterial, SurfaceCode);
+  FSquareMaterial.Diffuse := FSpec.CheckerDark or $FF000000;
+  SetShader(FSquareMaterial, SolidCode(FSpec.CheckerDark));
 end;
 
-// Sizes and places the plane to fill the camera's view; only what changed is
-// set, as each change makes the scene redraw
+// Lays the dark squares over the view at local depth AZ, or, without AShow,
+// moves them all out of view. A square is CheckerSize logical pixels, times
+// the smallest whole multiple that keeps the dark squares within
+// MaxCheckerSquares; square (column, row) from the top-left is dark where
+// column + row is odd. Planes the pool lacks are queued for after the frame;
+// those it has spare are hidden.
+procedure TSprite3DBackground.FitSquares(const AZ: Single; const AShow: Boolean);
+var
+  Viewport: TViewport3D;
+  Depth, HalfW, HalfH, Side, PixelSide, X, Y: Single;
+  Columns, Rows, Dark, Multiple, Used, Column, Row, I: Integer;
+  Plane: TGorillaPlane;
+
+  // Places plane AIndex, unless the pool has not reached it yet
+  procedure Place(const AIndex: Integer; const AX, AY: Single);
+  begin
+    if AIndex > High(FSquares) then
+      Exit;
+    Plane := FSquares[AIndex];
+    if not Plane.Visible then
+      Plane.Visible := True;
+    if not SameValue(Plane.Width, Side, 0.0001) then
+      Plane.Width := Side;
+    if not SameValue(Plane.Height, Side, 0.0001) then
+      Plane.Height := Side;
+    if not SameValue(Plane.Position.X, AX, 0.0001) or
+      not SameValue(Plane.Position.Y, AY, 0.0001) or
+      not SameValue(Plane.Position.Z, AZ, 0.001) then
+      Plane.Position.Point := Point3D(AX, AY, AZ);
+  end;
+
+begin
+  Used := 0;
+  Viewport := FCamera.FindViewport;
+  Depth := FCamera.MaxViewDepth * SQUARE_DEPTH_FRACTION;
+  if AShow and (Viewport <> nil) and (Viewport.Width >= 1) and (Viewport.Height >= 1) and
+    FCamera.ViewHalfExtents(Depth, HalfW, HalfH) then
+  begin
+    // The smallest multiple of the asked-for size that keeps the count down
+    Multiple := 1;
+    repeat
+      PixelSide := Max(FSpec.CheckerSize, 1) * Multiple;
+      Columns := Ceil(Viewport.Width / PixelSide);
+      Rows := Ceil(Viewport.Height / PixelSide);
+      Dark := (Columns * Rows) div 2;
+      Inc(Multiple);
+    until Dark <= MaxCheckerSquares;
+    // Logical pixels to units at the squares' depth
+    Side := PixelSide * 2 * HalfW / Viewport.Width;
+    for Row := 0 to Rows - 1 do
+      for Column := 0 to Columns - 1 do
+        if Odd(Column + Row) then
+        begin
+          X := -HalfW + (Column + 0.5) * Side;
+          Y := -HalfH + (Row + 0.5) * Side;
+          Place(Used, X, Y);
+          Place(Used + 1, X, Y);
+          Inc(Used, 2);
+        end;
+    if Used > Length(FSquares) then
+      QueueGrowSquares(Used);
+  end;
+  for I := Used to High(FSquares) do
+    if FSquares[I].Visible then
+      FSquares[I].Visible := False;
+end;
+
+// Sizes and places the planes to fill the camera's view; only what changed
+// is set, as each change makes the scene redraw
 procedure TSprite3DBackground.Fit;
 var
   Depth, HalfW, HalfH, Z: Single;
   Plane: TGorillaPlane;
+  Away: Boolean;
 begin
   if (FPlanes[0] = nil) or (FCamera = nil) then
     Exit;
@@ -399,8 +597,11 @@ begin
   if not FCamera.ViewHalfExtents(Depth, HalfW, HalfH) then
     Exit;
   // Depth is measured from the camera, which is Distance behind this
-  // frame's origin
-  if FHidden then
+  // frame's origin. For now the background is also kept out of view while
+  // the camera is orthographic: there it showed black over the whole scene,
+  // for every kind, although its size and depth were right.
+  Away := FHidden or FCamera.IsOrthographic;
+  if Away then
     Z := FCamera.MaxViewDepth * HIDDEN_DEPTH_FACTOR
   else
     Z := Depth - FCamera.Distance;
@@ -414,6 +615,12 @@ begin
       (Plane.Position.Y <> 0) then
       Plane.Position.Point := Point3D(0, 0, Z);
   end;
+  // The squares: hidden the same way, so a grab never shows them
+  if Away then
+    Z := FCamera.MaxViewDepth * HIDDEN_DEPTH_FACTOR
+  else
+    Z := FCamera.MaxViewDepth * SQUARE_DEPTH_FRACTION - FCamera.Distance;
+  FitSquares(Z, FSpec.Kind = TSprite3DBackgroundKind.Transparent);
 end;
 
 procedure TSprite3DBackground.Render;
@@ -426,15 +633,9 @@ procedure TSprite3DBackground.SetSpec(const Value: TSprite3DBackgroundSpec);
 begin
   FSpec := Value;
   FSpec.CheckerSize := Max(FSpec.CheckerSize, 1);
-  UpdateShader;
-end;
-
-procedure TSprite3DBackground.SetPixelScale(const Value: Single);
-begin
-  if SameValue(Value, FPixelScale) or (Value <= 0) then
-    Exit;
-  FPixelScale := Value;
-  UpdateShader;
+  UpdateMaterials;
+  Fit;
+  Repaint;
 end;
 
 procedure TSprite3DBackground.SetHidden(const Value: Boolean);

@@ -4,7 +4,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Background Settings'
-  ClientHeight = 352
+  ClientHeight = 408
   ClientWidth = 528
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -13,149 +13,180 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
   OnCreate = FormCreate
   OnClose = FormClose
   DesignerMasterStyle = 0
-  object ColourLabel: TLabel
-    Position.X = 16.000000000000000000
-    Position.Y = 12.000000000000000000
-    Size.Width = 240.000000000000000000
-    Size.Height = 17.000000000000000000
+  object BackPanel: TPanel
+    Align = Client
+    Size.Width = 528.000000000000000000
+    Size.Height = 408.000000000000000000
     Size.PlatformDefault = False
-    Text = 'Colour'
     TabOrder = 0
-  end
-  object ColourPanel: TColorPanel
-    Position.X = 16.000000000000000000
-    Position.Y = 36.000000000000000000
-    Size.Width = 240.000000000000000000
-    Size.Height = 220.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 1
-    UseAlpha = False
-    OnChange = ColourPanelChange
-  end
-  object GradientLayout: TLayout
-    Position.X = 16.000000000000000000
-    Position.Y = 268.000000000000000000
-    Size.Width = 240.000000000000000000
-    Size.Height = 64.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 2
-    object FromRadio: TRadioButton
-      GroupName = 'GradientEnd'
-      IsChecked = True
-      Position.Y = 4.000000000000000000
-      Size.Width = 80.000000000000000000
-      Size.Height = 19.000000000000000000
+    object ColourLabel: TLabel
+      Position.X = 16.000000000000000000
+      Position.Y = 12.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 17.000000000000000000
       Size.PlatformDefault = False
+      Text = 'Colour'
       TabOrder = 0
-      Text = 'From (top)'
-      OnChange = GradientEndChange
     end
-    object FromBox: TColorBox
-      Position.X = 104.000000000000000000
-      Size.Width = 136.000000000000000000
-      Size.Height = 26.000000000000000000
-      Size.PlatformDefault = False
-    end
-    object ToRadio: TRadioButton
-      GroupName = 'GradientEnd'
-      Position.Y = 38.000000000000000000
-      Size.Width = 96.000000000000000000
-      Size.Height = 19.000000000000000000
+    object ColourPanel: TColorPanel
+      Position.X = 16.000000000000000000
+      Position.Y = 36.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 220.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
-      Text = 'To (bottom)'
-      OnChange = GradientEndChange
+      UseAlpha = False
+      OnChange = ColourPanelChange
     end
-    object ToBox: TColorBox
-      Position.X = 104.000000000000000000
-      Position.Y = 34.000000000000000000
-      Size.Width = 136.000000000000000000
-      Size.Height = 26.000000000000000000
-      Size.PlatformDefault = False
-    end
-  end
-  object StyleGroup: TGroupBox
-    Position.X = 272.000000000000000000
-    Position.Y = 12.000000000000000000
-    Size.Width = 240.000000000000000000
-    Size.Height = 112.000000000000000000
-    Size.PlatformDefault = False
-    Text = 'Background image style'
-    TabOrder = 3
-    object TransparentRadio: TRadioButton
-      GroupName = 'Style'
-      IsChecked = True
+    object GradientLayout: TLayout
       Position.X = 16.000000000000000000
-      Position.Y = 28.000000000000000000
-      Size.Width = 200.000000000000000000
-      Size.Height = 19.000000000000000000
-      Size.PlatformDefault = False
-      TabOrder = 0
-      Text = 'Transparent'
-      OnChange = StyleChange
-    end
-    object SolidRadio: TRadioButton
-      GroupName = 'Style'
-      Position.X = 16.000000000000000000
-      Position.Y = 54.000000000000000000
-      Size.Width = 200.000000000000000000
-      Size.Height = 19.000000000000000000
-      Size.PlatformDefault = False
-      TabOrder = 1
-      Text = 'Solid'
-      OnChange = StyleChange
-    end
-    object GradientRadio: TRadioButton
-      GroupName = 'Style'
-      Position.X = 16.000000000000000000
-      Position.Y = 80.000000000000000000
-      Size.Width = 200.000000000000000000
-      Size.Height = 19.000000000000000000
+      Position.Y = 268.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 64.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 2
-      Text = 'Gradient'
-      OnChange = StyleChange
+      object FromRadio: TRadioButton
+        GroupName = 'GradientEnd'
+        IsChecked = True
+        Position.Y = 4.000000000000000000
+        Size.Width = 96.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'From (top)'
+        OnChange = GradientEndChange
+      end
+      object FromBox: TColorBox
+        Position.X = 104.000000000000000000
+        Size.Width = 136.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+      end
+      object ToRadio: TRadioButton
+        GroupName = 'GradientEnd'
+        Position.Y = 38.000000000000000000
+        Size.Width = 96.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Text = 'To (bottom)'
+        OnChange = GradientEndChange
+      end
+      object ToBox: TColorBox
+        Position.X = 104.000000000000000000
+        Position.Y = 34.000000000000000000
+        Size.Width = 136.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+      end
     end
-  end
-  object PreviewLabel: TLabel
-    Position.X = 272.000000000000000000
-    Position.Y = 136.000000000000000000
-    Size.Width = 240.000000000000000000
-    Size.Height = 17.000000000000000000
-    Size.PlatformDefault = False
-    Text = 'Preview'
-    TabOrder = 4
-  end
-  object PreviewRect: TRectangle
-    Position.X = 272.000000000000000000
-    Position.Y = 156.000000000000000000
-    Size.Width = 240.000000000000000000
-    Size.Height = 136.000000000000000000
-    Size.PlatformDefault = False
-    Stroke.Color = claGray
-  end
-  object OkButton: TButton
-    Default = True
-    ModalResult = 1
-    Position.X = 336.000000000000000000
-    Position.Y = 312.000000000000000000
-    Size.Width = 80.000000000000000000
-    Size.Height = 26.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 5
-    Text = 'OK'
-    OnClick = ButtonClick
-  end
-  object CancelButton: TButton
-    Cancel = True
-    ModalResult = 2
-    Position.X = 432.000000000000000000
-    Position.Y = 312.000000000000000000
-    Size.Width = 80.000000000000000000
-    Size.Height = 26.000000000000000000
-    Size.PlatformDefault = False
-    TabOrder = 6
-    Text = 'Cancel'
-    OnClick = ButtonClick
+    object StyleGroup: TGroupBox
+      Position.X = 272.000000000000000000
+      Position.Y = 12.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 112.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Background image style'
+      TabOrder = 3
+      object TransparentRadio: TRadioButton
+        GroupName = 'Style'
+        IsChecked = True
+        Position.X = 16.000000000000000000
+        Position.Y = 28.000000000000000000
+        Size.Width = 200.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Transparent'
+        OnChange = StyleChange
+      end
+      object SolidRadio: TRadioButton
+        GroupName = 'Style'
+        Position.X = 16.000000000000000000
+        Position.Y = 54.000000000000000000
+        Size.Width = 200.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Text = 'Solid'
+        OnChange = StyleChange
+      end
+      object GradientRadio: TRadioButton
+        GroupName = 'Style'
+        Position.X = 16.000000000000000000
+        Position.Y = 80.000000000000000000
+        Size.Width = 200.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        Text = 'Gradient'
+        OnChange = StyleChange
+      end
+    end
+    object PreviewLabel: TLabel
+      Position.X = 272.000000000000000000
+      Position.Y = 136.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Preview'
+      TabOrder = 4
+    end
+    object PreviewRect: TRectangle
+      Position.X = 272.000000000000000000
+      Position.Y = 156.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 136.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Color = claGray
+    end
+    object CheckerLabel: TLabel
+      Position.X = 272.000000000000000000
+      Position.Y = 304.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Checker size: 64 px'
+      TabOrder = 5
+    end
+    object CheckerTrack: TTrackBar
+      CanParentFocus = True
+      Frequency = 8.000000000000000000
+      Max = 256.000000000000000000
+      Min = 8.000000000000000000
+      Orientation = Horizontal
+      Position.X = 272.000000000000000000
+      Position.Y = 326.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 6
+      Value = 64.000000000000000000
+      OnChange = CheckerTrackChange
+    end
+    object OkButton: TButton
+      Default = True
+      ModalResult = 1
+      Position.X = 336.000000000000000000
+      Position.Y = 368.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 7
+      Text = 'OK'
+      OnClick = ButtonClick
+    end
+    object CancelButton: TButton
+      Cancel = True
+      ModalResult = 2
+      Position.X = 432.000000000000000000
+      Position.Y = 368.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 8
+      Text = 'Cancel'
+      OnClick = ButtonClick
+    end
   end
 end

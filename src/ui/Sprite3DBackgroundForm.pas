@@ -5,8 +5,9 @@
 //** group of three radio buttons chooses the background image style: Transparent, Solid or
 //** Gradient. On the left a TColorPanel sets the colour: for Solid, the one colour; for
 //** Gradient, the end chosen under it, From (the top) or To (the bottom), whose swatches
-//** show both. Transparent needs no colour, so the panel is disabled then. A preview shows
-//** the result, with a small checker standing for transparency.
+//** show both. Transparent needs no colour, so the panel is disabled then; instead a slider
+//** sets the size of the checker that stands for transparency on screen. A preview shows
+//** the result, with the checker at a quarter of its size.
 //**
 //** The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it
 //** back after OK. On the desktop show it with ShowModal and free it afterwards; on Android
@@ -15,13 +16,15 @@
 //**
 //** @preformatted(
 //** TBackgroundSettingsForm
-//** |-- ColourLabel, ColourPanel       the colour being edited
-//** |-- GradientLayout                 enabled for Gradient only
-//** |   |-- FromRadio, FromBox         edit the top colour
-//** |   `-- ToRadio, ToBox             edit the bottom colour
-//** |-- StyleGroup                     Transparent, Solid, Gradient
-//** |-- PreviewLabel, PreviewRect
-//** `-- OkButton, CancelButton
+//** `-- BackPanel                          the form's opaque background
+//**     |-- ColourLabel, ColourPanel       the colour being edited
+//**     |-- GradientLayout                 enabled for Gradient only
+//**     |   |-- FromRadio, FromBox         edit the top colour
+//**     |   `-- ToRadio, ToBox             edit the bottom colour
+//**     |-- StyleGroup                     Transparent, Solid, Gradient
+//**     |-- PreviewLabel, PreviewRect
+//**     |-- CheckerLabel, CheckerTrack     checker size, for Transparent only
+//**     `-- OkButton, CancelButton
 //** )
 unit Sprite3DBackgroundForm;
 
@@ -34,8 +37,9 @@ unit Sprite3DBackgroundForm;
   style: Transparent, Solid or Gradient. On the left a TColorPanel sets the
   colour: for Solid, the one colour; for Gradient, the end chosen under it,
   From (the top) or To (the bottom), whose swatches show both. Transparent
-  needs no colour, so the panel is disabled then. A preview shows the
-  result, with a small checker standing for transparency.
+  needs no colour, so the panel is disabled then; instead a slider sets the
+  size of the checker that stands for transparency on screen. A preview
+  shows the result, with the checker at a quarter of its size.
 
   The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing
   it and read it back after OK. On the desktop show it with ShowModal and
@@ -44,13 +48,15 @@ unit Sprite3DBackgroundForm;
   closes.
 
     TBackgroundSettingsForm
-    |-- ColourLabel, ColourPanel       the colour being edited
-    |-- GradientLayout                 enabled for Gradient only
-    |   |-- FromRadio, FromBox         edit the top colour
-    |   `-- ToRadio, ToBox             edit the bottom colour
-    |-- StyleGroup                     Transparent, Solid, Gradient
-    |-- PreviewLabel, PreviewRect
-    `-- OkButton, CancelButton
+    `-- BackPanel                          the form's opaque background
+        |-- ColourLabel, ColourPanel       the colour being edited
+        |-- GradientLayout                 enabled for Gradient only
+        |   |-- FromRadio, FromBox         edit the top colour
+        |   `-- ToRadio, ToBox             edit the bottom colour
+        |-- StyleGroup                     Transparent, Solid, Gradient
+        |-- PreviewLabel, PreviewRect
+        |-- CheckerLabel, CheckerTrack     checker size, for Transparent only
+        `-- OkButton, CancelButton
 }
 
 interface
@@ -72,6 +78,11 @@ type
   /// mrOk, read Spec, then free the form. Where ShowModal cannot block, as on Android and iOS,
   /// set OnAccept and call ShowAndFree instead. For the main thread only.</remarks>
   TBackgroundSettingsForm = class(TForm)
+    //** @abstract(Fills the form and holds every other control, giving it an opaque
+    //** background.)
+    /// <summary>Fills the form and holds every other control, giving it an opaque
+    /// background.</summary>
+    BackPanel: TPanel;
     //** @abstract(Says what ColourPanel is setting: the colour, or a gradient end.)
     /// <summary>Says what ColourPanel is setting: the colour, or a gradient end.</summary>
     ColourLabel: TLabel;
@@ -111,6 +122,14 @@ type
     //** @abstract(Shows the background as chosen; a checker stands for transparency.)
     /// <summary>Shows the background as chosen; a checker stands for transparency.</summary>
     PreviewRect: TRectangle;
+    //** @abstract(Shows the checker size chosen with CheckerTrack.)
+    /// <summary>Shows the checker size chosen with CheckerTrack.</summary>
+    CheckerLabel: TLabel;
+    //** @abstract(Sets the checker size, 8 to 256 pixels in steps of 8; enabled for
+    //** Transparent only.)
+    /// <summary>Sets the checker size, 8 to 256 pixels in steps of 8; enabled for Transparent
+    /// only.</summary>
+    CheckerTrack: TTrackBar;
     //** @abstract(Closes the dialog with mrOk; the default button.)
     /// <summary>Closes the dialog with mrOk; the default button.</summary>
     OkButton: TButton;
@@ -156,6 +175,12 @@ type
     /// <summary>Stores ColourPanel's colour as the colour being edited.</summary>
     /// <param name="Sender">ColourPanel.</param>
     procedure ColourPanelChange(Sender: TObject);
+    //** @abstract(Takes CheckerTrack's value, to the nearest 8, as the checker size.)
+    //**
+    //** @param(Sender CheckerTrack.)
+    /// <summary>Takes CheckerTrack's value, to the nearest 8, as the checker size.</summary>
+    /// <param name="Sender">CheckerTrack.</param>
+    procedure CheckerTrackChange(Sender: TObject);
     //** @abstract(After ShowAndFree, closes the dialog with the button's ModalResult.)
     //**
     //** Under ShowModal the buttons' ModalResult closes the dialog by itself; a form shown
@@ -184,11 +209,11 @@ type
     destructor Destroy; override;
     //** @abstract(The background being edited: set it before showing, read it after OK.)
     //**
-    //** Setting it shows its style and colours. CheckerSize and the checker colours are kept
-    //** as given; this dialog does not change them.
+    //** Setting it shows its style, colours and checker size. The checker colours are kept as
+    //** given; this dialog does not change them.
     /// <summary>The background being edited: set it before showing, read it after
     /// OK.</summary>
-    /// <remarks>Setting it shows its style and colours. CheckerSize and the checker colours are
+    /// <remarks>Setting it shows its style, colours and checker size. The checker colours are
     /// kept as given; this dialog does not change them.</remarks>
     property Spec: TSprite3DBackgroundSpec read FSpec write SetSpec;
     //** @abstract(Shows the dialog without blocking, and frees it when it closes.)
@@ -209,11 +234,18 @@ type
 
 implementation
 
+uses
+  System.Math;
+
 {$R *.fmx}
 
 const
-  // The preview's checker: squares of this many pixels
-  PREVIEW_CHECKER = 8;
+  // The preview shows the checker at this fraction of its size
+  PREVIEW_SCALE = 4;
+  // ...but its squares no smaller than this
+  PREVIEW_MIN_SQUARE = 2;
+  // The slider moves in steps of this many pixels
+  CHECKER_STEP = 8;
 
 procedure TBackgroundSettingsForm.FormCreate(Sender: TObject);
 begin
@@ -237,6 +269,21 @@ begin
   Action := TCloseAction.caFree;
 end;
 
+procedure TBackgroundSettingsForm.CheckerTrackChange(Sender: TObject);
+var
+  Size: Integer;
+begin
+  if FUpdating then
+    Exit;
+  Size := Max(Round(CheckerTrack.Value / CHECKER_STEP) * CHECKER_STEP, CHECKER_STEP);
+  if Size = FSpec.CheckerSize then
+    Exit;
+  FSpec.CheckerSize := Size;
+  MakeChecker;
+  UpdateControls;
+  UpdatePreview;
+end;
+
 procedure TBackgroundSettingsForm.ButtonClick(Sender: TObject);
 begin
   if not FFreeOnClose then
@@ -251,20 +298,24 @@ begin
   Show;
 end;
 
-// A tile of four squares in the spec's two checker greys, for the preview
+// A tile of four squares in the spec's two checker greys, for the preview,
+// each square a quarter of the checker size
 procedure TBackgroundSettingsForm.MakeChecker;
+var
+  Square: Integer;
 begin
+  Square := Max(FSpec.CheckerSize div PREVIEW_SCALE, PREVIEW_MIN_SQUARE);
   if FChecker = nil then
-    FChecker := TBitmap.Create(PREVIEW_CHECKER * 2, PREVIEW_CHECKER * 2);
+    FChecker := TBitmap.Create(Square * 2, Square * 2)
+  else
+    FChecker.SetSize(Square * 2, Square * 2);
   if FChecker.Canvas.BeginScene then
   try
     FChecker.Canvas.Clear(FSpec.CheckerLight or $FF000000);
     FChecker.Canvas.Fill.Kind := TBrushKind.Solid;
     FChecker.Canvas.Fill.Color := FSpec.CheckerDark or $FF000000;
-    FChecker.Canvas.FillRect(RectF(PREVIEW_CHECKER, 0, PREVIEW_CHECKER * 2,
-      PREVIEW_CHECKER), 0, 0, [], 1);
-    FChecker.Canvas.FillRect(RectF(0, PREVIEW_CHECKER, PREVIEW_CHECKER,
-      PREVIEW_CHECKER * 2), 0, 0, [], 1);
+    FChecker.Canvas.FillRect(RectF(Square, 0, Square * 2, Square), 0, 0, [], 1);
+    FChecker.Canvas.FillRect(RectF(0, Square, Square, Square * 2), 0, 0, [], 1);
   finally
     FChecker.Canvas.EndScene;
   end;
@@ -285,6 +336,8 @@ begin
     end;
     FromBox.Color := FSpec.GradientFrom;
     ToBox.Color := FSpec.GradientTo;
+    CheckerTrack.Value := EnsureRange(FSpec.CheckerSize, Round(CheckerTrack.Min),
+      Round(CheckerTrack.Max));
   finally
     FUpdating := False;
   end;
@@ -318,6 +371,9 @@ end;
 procedure TBackgroundSettingsForm.UpdateControls;
 begin
   ColourPanel.Enabled := FSpec.Kind <> TSprite3DBackgroundKind.Transparent;
+  CheckerTrack.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Transparent;
+  CheckerLabel.Enabled := CheckerTrack.Enabled;
+  CheckerLabel.Text := Format('Checker size: %d px', [FSpec.CheckerSize]);
   GradientLayout.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Gradient;
   case FSpec.Kind of
     TSprite3DBackgroundKind.Solid:

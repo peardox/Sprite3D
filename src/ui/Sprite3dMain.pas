@@ -828,8 +828,6 @@ uses
 {$R *.fmx}
 
 procedure TMainForm.FormCreate(Sender: TObject);
-var
-  ScreenService: IFMXScreenService;
 begin
   TabControl1.ActiveTab := GorillaTab;
 
@@ -867,9 +865,6 @@ begin
   // The background behind the model, as last chosen; the camera frees it
   FBackground := TSprite3DBackground.Create(nil);
   FBackground.AttachTo(GorillaCamera);
-  if TPlatformServices.Current.SupportsPlatformService(IFMXScreenService,
-    ScreenService) then
-    FBackground.PixelScale := ScreenService.GetScreenScale;
   ApplyBackground(FSettings.BackgroundSpec, False);
   // Fill the space the bottom test strip (DistanceLayout) leaves
   GorillaViewport.Align := TAlignLayout.Client;
