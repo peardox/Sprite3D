@@ -13,6 +13,8 @@ uses
   Sprite3DIconWriter in 'lib\Sprite3DIconWriter.pas',
   Sprite3DOpenFiles in 'lib\Sprite3DOpenFiles.pas';
 
+{$R *.res}
+
 begin
   { Report any dumb memory leaks - switch to false for release }
   ReportMemoryLeaksOnShutdown := True;
