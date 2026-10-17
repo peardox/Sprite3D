@@ -78,7 +78,7 @@ Draws a far-reaching grid on a model's floor with a GLSL shader.</p>
 <p>
 
 
-<p>ShowModelGrid adds a TModelGrid to a TGorillaModel. It shows a grid of lines across one of the model's axes, Y by default, so the grid lies in X and Z. The lines are GridSize apart in the model's own units, 1.0 by default, in dark grey, with one through the model's centre of rotation, and the grid reaches GridCells cells each side of it, 1000 by default. Distant lines fade out as their cells shrink to a few pixels on screen, so the grid dissolves into the distance rather than stopping at an edge. GridLevel is where it crosses its axis; with GridOnFloor, the default, that is the model's floor, the bounding-box face across the grid's axis that is lower in the scene. That suits a model standing on its lowest bound, as the test animation does, but not every model; set GridLevel to override it.
+<p>ShowModelGrid adds a TModelGrid to a TGorillaModel. It shows a grid of lines across one of the model's axes, Y by default, so the grid lies in X and Z. The lines are GridSize apart in the model's own units, 1.0 by default, in dark grey, with one through the model's centre of rotation, and the grid reaches GridCells cells each side of it, 1000 by default. Distant lines fade out as their cells shrink to a few pixels on screen, so the grid dissolves into the distance rather than stopping at an edge. GridLevel is where it crosses its axis; with GridOnFloor, the default, that is the model's floor, the bounding-box face across the grid's axis that is lower in the scene, the lowest point of the model's own geometry. For a model centred on its origin and reaching 1 each way that is -1 in Y; for a model standing on its origin it is 0. Give ShowModelGrid the box measured as the model was loaded, before any helper such as the axes is added, as Gorilla counts helpers in the model's bounds. Set GridLevel to put the grid elsewhere.
 
 <p>The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla converts for Vulkan and Metal. The plane is split into 64 by 64 squares so that the position the shader reads stays exact across it; the cost is the same however far the grid reaches, the lines stay about two pixels wide at any distance, and nothing is recalculated per frame. Changing a grid property rewrites the shader once, with the new values written into it as constants.
 
@@ -122,12 +122,15 @@ HideModelGrid(GorillaModel1);</pre>
 <span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
 <table class="summary wide_list">
 <tr class="list visibility-published">
-<td class="itemcode"><code>function <strong><a href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>; overload;</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></strong>(const AModel: TGorillaModel);</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-TBoundingBox-">ShowModelGrid</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>; overload;</code></td>
 </tr>
 <tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DGrid.html#FindModelGrid-TGorillaModel-">FindModelGrid</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
 </tr>
 </table>
@@ -141,15 +144,15 @@ HideModelGrid(GorillaModel1);</pre>
 <h3 class="detail">Functions and Procedures</h3>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
-<td class="itemcode"><span id="ShowModelGrid-TGorillaModel-"></span><code>function <strong>ShowModelGrid</strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>;</code></td>
+<td class="itemcode"><span id="ShowModelGrid-TGorillaModel-"></span><code>function <strong>ShowModelGrid</strong>(const AModel: TGorillaModel): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>; overload;</code></td>
 </tr>
 <tr><td colspan="1">
 <p>
-Shows a shader-drawn grid on AModel's floor.</p>
+Shows a shader-drawn grid on AModel's floor, from its current bounds.</p>
 <p>
 
 
-<p>Any grid already on AModel is removed first, so calling it again, for example after loading a different model, rebuilds it for the new bounds. The grid uses AModel's current bounding box, from <code>GetAnimatedBoundingBox</code>, and <code>AModel.RotationCenter</code>. Call it once the model is placed and turned, since the floor depends on the turn. The grid is added as a child of AModel and is freed with it. Call from the main thread only.
+<p>As the other ShowModelGrid, with AModel's current bounding box from <code>GetAnimatedBoundingBox</code>. Gorilla counts the model's children in that box, so any helper already added, such as the axes, can lower the floor; where the box measured as the model was loaded is to hand, pass it to the other ShowModelGrid instead.
 
 <p>
 
@@ -165,6 +168,44 @@ Shows a shader-drawn grid on AModel's floor.</p>
 </dl>
 <h6 class="description_section">Returns</h6>
 <p class="return">The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or its bounding box is empty.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></dt>
+  <dd>Removes the grid ShowModelGrid added to AModel.</dd>
+  <dt><a class="normal" href="Sprite3DGrid.html#FindModelGrid-TGorillaModel-">FindModelGrid</a></dt>
+  <dd>Returns the grid ShowModelGrid added to AModel, or nil.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowModelGrid-TGorillaModel-TBoundingBox-"></span><code>function <strong>ShowModelGrid</strong>(const AModel: TGorillaModel; const ABox: TBoundingBox): <a href="Sprite3DGrid.TModelGrid.html">TModelGrid</a>; overload;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</p>
+<p>
+
+
+<p>Any grid already on AModel is removed first, so calling it again, for example after loading a different model, rebuilds it for the new bounds. The floor is the face of ABox across the grid's axis that is lower in the scene, and one line each way passes through <code>AModel.RotationCenter</code>. Call it once the model is placed and turned, since the floor depends on the turn. The grid is added as a child of AModel and is freed with it. Call from the main thread only.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to show a grid for. Nothing happens if it is nil.</dd>
+<dt>ABox</dt>
+<dd>The model's own bounds, in its own coordinates, best measured as it was loaded, before any helper was added to it.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or ABox is empty.</p><h6 class="description_section">See also</h6>
 <dl class="see_also">
   <dt><a class="normal" href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></dt>
   <dd>Removes the grid ShowModelGrid added to AModel.</dd>
@@ -195,8 +236,8 @@ Removes the grid ShowModelGrid added to AModel.</p>
 </dl>
 <h6 class="description_section">See also</h6>
 <dl class="see_also">
-  <dt><a class="normal" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></dt>
-  <dd>Shows a shader-drawn grid on AModel's floor.</dd>
+  <dt><a class="normal" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-TBoundingBox-">ShowModelGrid</a></dt>
+  <dd>Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</dd>
 </dl>
 </td></tr>
 </table>

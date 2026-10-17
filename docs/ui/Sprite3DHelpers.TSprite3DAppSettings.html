@@ -165,19 +165,40 @@ The application's settings, kept between sessions in settings.json.</p>
 </tr>
 <tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
-<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowGrid">ShowGrid</a></strong>: Boolean read FShowGrid write FShowGrid;</code></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowBoundingBox">ShowBoundingBox</a></strong>: Boolean read FShowBoundingBox write FShowBoundingBox;</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
-<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowAxes">ShowAxes</a></strong>: Boolean read FShowAxes write FShowAxes;</code></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowGrid">ShowGrid</a></strong>: Boolean read FShowGrid write FShowGrid;</code></td>
 </tr>
 <tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
-<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#FitAnyAngle">FitAnyAngle</a></strong>: Boolean read FFitAnyAngle write FFitAnyAngle;</code></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowAxes">ShowAxes</a></strong>: Boolean read FShowAxes write FShowAxes;</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#FitAnyAngle">FitAnyAngle</a></strong>: Boolean read FFitAnyAngle write FFitAnyAngle;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#Orthographic">Orthographic</a></strong>: Boolean read FOrthographic write FOrthographic;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CameraView">CameraView</a></strong>: String read FCameraView write FCameraView;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#VariableAzimuth">VariableAzimuth</a></strong>: Single read FVariableAzimuth write FVariableAzimuth;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#VariableInclination">VariableInclination</a></strong>: Single read FVariableInclination
+      write FVariableInclination;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#VariableRoll">VariableRoll</a></strong>: Single read FVariableRoll write FVariableRoll;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
@@ -391,11 +412,25 @@ The darker checker colour, as <code>#AARRGGBB</code>.</p>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="ShowBoundingBox"></span><code>property <strong>ShowBoundingBox</strong>: Boolean read FShowBoundingBox write FShowBoundingBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether View, Show bounding box is ticked on the main form; True by default.</p>
+<p>
+
+
+<p>Stored as <code>showBoundingBox</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><span id="ShowGrid"></span><code>property <strong>ShowGrid</strong>: Boolean read FShowGrid write FShowGrid;</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
-Whether the main form's &quot;Show grid&quot; box is checked; True by default.</p>
+Whether View, Show grid is ticked on the main form; True by default.</p>
 <p>
 
 
@@ -409,7 +444,7 @@ Whether the main form's &quot;Show grid&quot; box is checked; True by default.</
 </tr>
 <tr><td colspan="2">
 <p>
-Whether the main form's &quot;Show axes&quot; box is checked; True by default.</p>
+Whether View, Show axes is ticked on the main form; True by default.</p>
 <p>
 
 
@@ -423,7 +458,7 @@ Whether the main form's &quot;Show axes&quot; box is checked; True by default.</
 </tr>
 <tr><td colspan="2">
 <p>
-Whether the main form's &quot;Fit any angle&quot; box is checked; False by default.</p>
+Whether View, Fit any angle is ticked on the main form; False by default.</p>
 <p>
 
 
@@ -437,11 +472,68 @@ Whether the main form's &quot;Fit any angle&quot; box is checked; False by defau
 </tr>
 <tr><td colspan="2">
 <p>
-Whether the main form's &quot;Orthographic&quot; box is checked; False by default.</p>
+Whether View, Orthographic is ticked on the main form; False by default.</p>
 <p>
 
 
 <p>Stored as <code>orthographic</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="CameraView"></span><code>property <strong>CameraView</strong>: String read FCameraView write FCameraView;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The main form's camera view, the checked View, Camera item; Isometric by default.</p>
+<p>
+
+
+<p>Stored as <code>cameraView</code>: the item's name without its View prefix and Item suffix, one of Variable, Isometric, Pixel2To1, ThreeQuarter, HeadOn, TopDown and Side. An unknown name gives Isometric.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="VariableAzimuth"></span><code>property <strong>VariableAzimuth</strong>: Single read FVariableAzimuth write FVariableAzimuth;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Azimuth dial's angle in the Variable view, in degrees; 0 by default.</p>
+<p>
+
+
+<p>Stored as <code>variableAzimuth</code>. Kept whenever the session ends in the Variable view, and restored with it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="VariableInclination"></span><code>property <strong>VariableInclination</strong>: Single read FVariableInclination
+      write FVariableInclination;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Inclination dial's angle in the Variable view, in degrees; 0 by default.</p>
+<p>
+
+
+<p>Stored as <code>variableInclination</code>. Kept whenever the session ends in the Variable view, and restored with it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="VariableRoll"></span><code>property <strong>VariableRoll</strong>: Single read FVariableRoll write FVariableRoll;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Roll dial's angle in the Variable view, in degrees; 0 by default.</p>
+<p>
+
+
+<p>Stored as <code>variableRoll</code>. Kept whenever the session ends in the Variable view, and restored with it.</p>
 </td></tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
