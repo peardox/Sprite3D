@@ -191,11 +191,20 @@ object MainForm: TMainForm
             Text = '0'
             TabOrder = 93
           end
+          object chkShowBounds: TCheckBox
+            Anchors = [akLeft, akBottom]
+            IsChecked = True
+            Position.X = 16.000000000000000000
+            Position.Y = 560.000000000000000000
+            TabOrder = 99
+            Text = 'Show bounding box'
+            OnChange = chkShowBoundsChange
+          end
           object chkShowGrid: TCheckBox
             Anchors = [akLeft, akBottom]
             IsChecked = True
             Position.X = 16.000000000000000000
-            Position.Y = 576.000000000000000000
+            Position.Y = 582.000000000000000000
             TabOrder = 98
             Text = 'Show grid'
             OnChange = chkShowGridChange
@@ -204,7 +213,7 @@ object MainForm: TMainForm
             Anchors = [akLeft, akBottom]
             IsChecked = True
             Position.X = 16.000000000000000000
-            Position.Y = 600.000000000000000000
+            Position.Y = 604.000000000000000000
             TabOrder = 97
             Text = 'Show axes'
             OnChange = chkShowAxesChange
@@ -212,7 +221,7 @@ object MainForm: TMainForm
           object chkFitAnyAngle: TCheckBox
             Anchors = [akLeft, akBottom]
             Position.X = 16.000000000000000000
-            Position.Y = 624.000000000000000000
+            Position.Y = 626.000000000000000000
             TabOrder = 96
             Text = 'Fit any angle'
             OnChange = chkFitAnyAngleChange

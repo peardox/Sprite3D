@@ -88,6 +88,7 @@ type
     FCheckerSize: Integer;
     FCheckerLight: String;
     FCheckerDark: String;
+    FShowBoundingBox: Boolean;
     FShowGrid: Boolean;
     FShowAxes: Boolean;
     FFitAnyAngle: Boolean;
@@ -210,6 +211,14 @@ type
     /// <summary>The darker checker colour, as <c>#AARRGGBB</c>.</summary>
     /// <remarks>Stored as <c>checkerDark</c>.</remarks>
     property CheckerDark: String read FCheckerDark write FCheckerDark;
+    //** @abstract(Whether the main form's "Show bounding box" box is checked; True by
+    //** default.)
+    //**
+    //** Stored as @code(showBoundingBox).
+    /// <summary>Whether the main form's "Show bounding box" box is checked; True by
+    /// default.</summary>
+    /// <remarks>Stored as <c>showBoundingBox</c>.</remarks>
+    property ShowBoundingBox: Boolean read FShowBoundingBox write FShowBoundingBox;
     //** @abstract(Whether the main form's "Show grid" box is checked; True by default.)
     //**
     //** Stored as @code(showGrid).
@@ -489,6 +498,7 @@ begin
   SetBackgroundSpec(TSprite3DBackgroundSpec.Default);
   // As the main form's check boxes start; a settings.json without these
   // keys leaves them so
+  FShowBoundingBox := True;
   FShowGrid := True;
   FShowAxes := True;
   FFitAnyAngle := False;

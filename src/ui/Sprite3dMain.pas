@@ -1,10 +1,10 @@
 //** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
 //**
 //** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
-//** panel of three dials for Azimuth, inclination and Roll, plus four check boxes: one shows
-//** the model's own X, Y and Z axes through its centre of rotation, one a grid on its floor,
-//** one chooses how the model is fitted, and one switches between perspective and orthographic
-//** projection. The Debug tab holds a memo for log output.
+//** panel of three dials for Azimuth, inclination and Roll, plus five check boxes: one shows
+//** the model's bounding box, one its own X, Y and Z axes through its centre of rotation, one
+//** a grid on the bottom of its bounding box, one chooses how the model is fitted, and one
+//** switches between perspective and orthographic projection. The Debug tab holds a memo for log output.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
@@ -52,7 +52,7 @@
 //** |   `-- MainLayout
 //** |       |-- ViewportLayout   owns the TGorillaViewport
 //** |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
-//** |       `-- ControlsLayout   dials, labels, four check boxes
+//** |       `-- ControlsLayout   dials, labels, five check boxes
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
 //**
@@ -77,10 +77,10 @@ unit Sprite3dMain;
   Demo form for TSprite3DCamera: loads a model and drives the camera with dials.
   The form has two tabs. The View tab holds a TGorillaViewport, created at
   run time, and a panel of three dials for Azimuth, inclination and Roll,
-  plus four check boxes: one shows the model's own X, Y and Z axes through
-  its centre of rotation, one a grid on its floor, one chooses how the model
-  is fitted, and one switches between perspective and orthographic
-  projection. The Debug tab holds a memo for log output.
+  plus five check boxes: one shows the model's bounding box, one its own X,
+  Y and Z axes through its centre of rotation, one a grid on the bottom of
+  its bounding box, one chooses how the model is fitted, and one switches
+  between perspective and orthographic projection. The Debug tab holds a memo for log output.
   The camera starts in the isometric view, and each readout always shows its
   dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera
   reversed, 360 minus the readout, so the view turns the right way for the
@@ -122,7 +122,7 @@ unit Sprite3dMain;
     |   `-- MainLayout
     |       |-- ViewportLayout   owns the TGorillaViewport
     |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
-    |       `-- ControlsLayout   dials, labels, four check boxes
+    |       `-- ControlsLayout   dials, labels, five check boxes
     `-- DebugTab "Debug"
         `-- DebugMemo
 
@@ -294,6 +294,15 @@ type
     /// red, green and blue lines through its centre of rotation; unchecked, they are
     /// removed.</remarks>
     chkShowAxes: TCheckBox;
+    //** @abstract(Shows or hides the model's bounding box; checked at start-up.)
+    //**
+    //** Checked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the
+    //** bounds of its current pose, the box the camera fits and the grid lies on.
+    /// <summary>Shows or hides the model's bounding box; checked at start-up.</summary>
+    /// <remarks>Checked, every model is drawn with Gorilla's ShowBoundingBox, an orange box
+    /// round the bounds of its current pose, the box the camera fits and the grid lies
+    /// on.</remarks>
+    chkShowBounds: TCheckBox;
     //** @abstract(Shows or hides the floor grid; checked at start-up.)
     //**
     //** Checked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws a
@@ -395,7 +404,7 @@ type
     //**
     //** The dials start at 0, then the isometric view is chosen, as View, Isometric does:
     //** the dials are turned to its angles and switched off, and the readouts set to match,
-    //** so dial, readout and camera agree from the start. Last, the four check boxes are set
+    //** so dial, readout and camera agree from the start. Last, the five check boxes are set
     //** as settings.json says they were left, which also sets the projection.
     //**
     //** @param(Sender The form.)
@@ -409,7 +418,7 @@ type
     /// at a fixed 60 frames per second without VSync.</para>
     /// <para>The dials start at 0, then the isometric view is chosen, as View, Isometric
     /// does: the dials are turned to its angles and switched off, and the readouts set to
-    /// match, so dial, readout and camera agree from the start. Last, the four check boxes
+    /// match, so dial, readout and camera agree from the start. Last, the five check boxes
     /// are set as settings.json says they were left, which also sets the
     /// projection.</para></remarks>
     /// <param name="Sender">The form.</param>
@@ -442,15 +451,15 @@ type
     //** @abstract(Stops taking open requests, saves the check boxes' states and frees the
     //** settings.)
     //**
-    //** The states of "Show grid", "Show axes", "Fit any angle" and "Orthographic" are
-    //** written to settings.json for the next session; a failed save is ignored, as no
+    //** The states of "Show bounding box", "Show grid", "Show axes", "Fit any angle" and
+    //** "Orthographic" are written to settings.json for the next session; a failed save is ignored, as no
     //** message can be shown here. Other settings are saved as soon as they change.
     //**
     //** @param(Sender The form.)
     /// <summary>Stops taking open requests, saves the check boxes' states and frees the
     /// settings.</summary>
-    /// <remarks>The states of "Show grid", "Show axes", "Fit any angle" and "Orthographic"
-    /// are written to settings.json for the next session; a failed save is ignored, as no
+    /// <remarks>The states of "Show bounding box", "Show grid", "Show axes", "Fit any angle"
+    /// and "Orthographic" are written to settings.json for the next session; a failed save is ignored, as no
     /// message can be shown here. Other settings are saved as soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
@@ -529,6 +538,15 @@ type
     /// <remarks>Does nothing until a model is loaded.</remarks>
     /// <param name="Sender">chkShowAxes.</param>
     procedure chkShowAxesChange(Sender: TObject);
+    //** @abstract(Shows or hides the model's bounding box to match chkShowBounds.)
+    //**
+    //** Does nothing until a model is loaded.
+    //**
+    //** @param(Sender chkShowBounds.)
+    /// <summary>Shows or hides the model's bounding box to match chkShowBounds.</summary>
+    /// <remarks>Does nothing until a model is loaded.</remarks>
+    /// <param name="Sender">chkShowBounds.</param>
+    procedure chkShowBoundsChange(Sender: TObject);
     //** @abstract(Adds or removes the floor grid to match chkShowGrid.)
     //**
     //** Does nothing until a model is loaded.
@@ -1100,6 +1118,7 @@ end;
 // loaded, the grid and axes calls find no model and do nothing.
 procedure TMainForm.RestoreCheckBoxes;
 begin
+  chkShowBounds.IsChecked := FSettings.ShowBoundingBox;
   chkShowGrid.IsChecked := FSettings.ShowGrid;
   chkShowAxes.IsChecked := FSettings.ShowAxes;
   chkFitAnyAngle.IsChecked := FSettings.FitAnyAngle;
@@ -1113,6 +1132,7 @@ procedure TMainForm.SaveCheckBoxes;
 begin
   if FSettings = nil then
     Exit;
+  FSettings.ShowBoundingBox := chkShowBounds.IsChecked;
   FSettings.ShowGrid := chkShowGrid.IsChecked;
   FSettings.ShowAxes := chkShowAxes.IsChecked;
   FSettings.FitAnyAngle := chkFitAnyAngle.IsChecked;
@@ -1499,6 +1519,12 @@ begin
     HideModelAxes(GorillaModel);
 end;
 
+procedure TMainForm.chkShowBoundsChange(Sender: TObject);
+begin
+  if GorillaModel <> nil then
+    GorillaModel.ShowBoundingBox := chkShowBounds.IsChecked;
+end;
+
 procedure TMainForm.chkShowGridChange(Sender: TObject);
 begin
   if chkShowGrid.IsChecked then
@@ -1540,9 +1566,9 @@ begin
     GorillaCamera.Azimuth := Wrap360(-FAzimuth);
     GorillaCamera.PolarAngle := FPolarAngle;
 
-    // Draw the box that FitToBounds and FitToBoundsMax fit: the bounds of
-    // the current pose, in Gorilla's default orange.
-    GorillaModel.ShowBoundingBox := True;
+    // Draw the box that FitToBounds and FitToBoundsMax fit, if wanted: the
+    // bounds of the current pose, in Gorilla's default orange
+    GorillaModel.ShowBoundingBox := chkShowBounds.IsChecked;
     // Axes through the centre of rotation, sized for the newly loaded model
     if chkShowAxes.IsChecked then
       ShowModelAxes(GorillaModel);
