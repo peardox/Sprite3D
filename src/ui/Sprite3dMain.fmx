@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 702
+  ClientHeight = 720
   ClientWidth = 776
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -14,16 +14,16 @@ object MainForm: TMainForm
   object TabControl1: TTabControl
     Align = Client
     Size.Width = 776.000000000000000000
-    Size.Height = 702.000000000000000000
+    Size.Height = 720.000000000000000000
     Size.PlatformDefault = False
     TabIndex = 0
     TabOrder = 0
     TabPosition = PlatformDefault
     Sizes = (
       776s
-      676s
+      694s
       776s
-      676s)
+      694s)
     object GorillaTab: TTabItem
       CustomIcon = <
         item
@@ -40,18 +40,18 @@ object MainForm: TMainForm
       object MainLayout: TLayout
         Align = Client
         Size.Width = 776.000000000000000000
-        Size.Height = 676.000000000000000000
+        Size.Height = 694.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         object ViewportLayout: TLayout
           Align = Client
           Size.Width = 626.000000000000000000
-          Size.Height = 676.000000000000000000
+          Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
           object DistanceLayout: TLayout
             Align = Bottom
-            Position.Y = 644.000000000000000000
+            Position.Y = 662.000000000000000000
             Size.Width = 626.000000000000000000
             Size.Height = 32.000000000000000000
             Size.PlatformDefault = False
@@ -86,7 +86,7 @@ object MainForm: TMainForm
           Align = Right
           Position.X = 626.000000000000000000
           Size.Width = 150.000000000000000000
-          Size.Height = 676.000000000000000000
+          Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
           object AzimuthDial: TArcDial
@@ -195,7 +195,7 @@ object MainForm: TMainForm
             Anchors = [akLeft, akBottom]
             IsChecked = True
             Position.X = 16.000000000000000000
-            Position.Y = 560.000000000000000000
+            Position.Y = 578.000000000000000000
             TabOrder = 99
             Text = 'Show bounding box'
             OnChange = chkShowBoundsChange
@@ -204,7 +204,7 @@ object MainForm: TMainForm
             Anchors = [akLeft, akBottom]
             IsChecked = True
             Position.X = 16.000000000000000000
-            Position.Y = 582.000000000000000000
+            Position.Y = 600.000000000000000000
             TabOrder = 98
             Text = 'Show grid'
             OnChange = chkShowGridChange
@@ -213,7 +213,7 @@ object MainForm: TMainForm
             Anchors = [akLeft, akBottom]
             IsChecked = True
             Position.X = 16.000000000000000000
-            Position.Y = 604.000000000000000000
+            Position.Y = 622.000000000000000000
             TabOrder = 97
             Text = 'Show axes'
             OnChange = chkShowAxesChange
@@ -221,7 +221,7 @@ object MainForm: TMainForm
           object chkFitAnyAngle: TCheckBox
             Anchors = [akLeft, akBottom]
             Position.X = 16.000000000000000000
-            Position.Y = 626.000000000000000000
+            Position.Y = 644.000000000000000000
             TabOrder = 96
             Text = 'Fit any angle'
             OnChange = chkFitAnyAngleChange
@@ -229,7 +229,7 @@ object MainForm: TMainForm
           object chkOrthoToggle: TCheckBox
             Anchors = [akLeft, akBottom]
             Position.X = 16.000000000000000000
-            Position.Y = 648.000000000000000000
+            Position.Y = 666.000000000000000000
             TabOrder = 95
             Text = 'Orthographic'
             OnChange = chkOrthoToggleChange
@@ -261,11 +261,11 @@ object MainForm: TMainForm
         DataDetectorTypes = []
         Align = Client
         Size.Width = 776.000000000000000000
-        Size.Height = 676.000000000000000000
+        Size.Height = 694.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         Viewport.Width = 772.000000000000000000
-        Viewport.Height = 672.000000000000000000
+        Viewport.Height = 690.000000000000000000
       end
     end
   end
