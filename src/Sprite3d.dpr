@@ -11,7 +11,9 @@ uses
   Sprite3DOffscreen in 'lib\Sprite3DOffscreen.pas',
   Sprite3DStorage in 'lib\Sprite3DStorage.pas',
   Sprite3DIconWriter in 'lib\Sprite3DIconWriter.pas',
-  Sprite3DOpenFiles in 'lib\Sprite3DOpenFiles.pas';
+  Sprite3DOpenFiles in 'lib\Sprite3DOpenFiles.pas',
+  Sprite3DBackground in 'lib\Sprite3DBackground.pas',
+  Sprite3DBackgroundForm in 'ui\Sprite3DBackgroundForm.pas' {BackgroundSettingsForm};
 
 {$R *.res}
 

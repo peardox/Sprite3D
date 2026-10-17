@@ -66,7 +66,8 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.UITypes,
   FMX.Types, FMX.Types3D, FMX.Graphics,
-  Gorilla.Viewport, Gorilla.Context.Rendering, Gorilla.Controller;
+  Gorilla.Viewport, Gorilla.Context.Rendering, Gorilla.Controller,
+  Sprite3DBackground;
 
 const
   //** @abstract(The width, in pixels, of a new TSprite3DOffscreen's target.)
@@ -134,24 +135,63 @@ type
   //**
   //** Create it, set Viewport to the TGorillaViewport to capture, then call Grab whenever an
   //** image is wanted. The pass uses the viewport's camera, lights and models as they are at
-  //** the time of the frame. It takes over the inherited OnEndRender event, which must not be
-  //** reassigned. All members are for the main thread only.
+  //** the time of the frame. It takes over the inherited OnBeginRender, OnEndRender,
+  //** BackgroundColor and Iterations, which must not be changed. All members are for the main
+  //** thread only.
+  //**
+  //** With TransparentBackground, the default, the background comes out transparent, with
+  //** soft edges and see-through materials partly transparent, by difference matting: the
+  //** frame is drawn twice, over black and over white. Where the two differ, the background
+  //** showed through, by as much as they differ; the over-black image is then the colour
+  //** already multiplied by that alpha, which is how FMX bitmaps hold it. This needs nothing
+  //** from the renderer's own alpha, which Gorilla's passes do not keep. Both drawings are
+  //** made in the same frame, as two iterations of the pass, so an animated model is caught
+  //** in the same pose in both; if the renderer does not take the new clear colour between
+  //** iterations, the pass finds the drawings identical and, from then on, draws them in
+  //** frames one after the other instead. The first grab also draws over 50% grey, which
+  //** shows whether the renderer gamma-encodes its output after blending; if it does, the
+  //** matting is done in linear light, so soft edges keep their true alpha either way.
   //**
   //** @seealso(TSprite3DGrabProc)
   /// <summary>A render pass that draws the viewport's scene off screen, one frame on
   /// request.</summary>
   /// <remarks>Create it, set Viewport to the TGorillaViewport to capture, then call Grab
   /// whenever an image is wanted. The pass uses the viewport's camera, lights and models as
-  /// they are at the time of the frame. It takes over the inherited OnEndRender event, which
-  /// must not be reassigned. All members are for the main thread only.</remarks>
+  /// they are at the time of the frame. It takes over the inherited OnBeginRender,
+  /// OnEndRender, BackgroundColor and Iterations, which must not be changed. All members are
+  /// for the main thread only.
+  /// <para>With TransparentBackground, the default, the background comes out transparent,
+  /// with soft edges and see-through materials partly transparent, by difference matting: the
+  /// frame is drawn twice, over black and over white. Where the two differ, the background
+  /// showed through, by as much as they differ; the over-black image is then the colour
+  /// already multiplied by that alpha, which is how FMX bitmaps hold it. This needs nothing
+  /// from the renderer's own alpha, which Gorilla's passes do not keep. Both drawings are made
+  /// in the same frame, as two iterations of the pass, so an animated model is caught in the
+  /// same pose in both; if the renderer does not take the new clear colour between iterations,
+  /// the pass finds the drawings identical and, from then on, draws them in frames one after
+  /// the other instead. The first grab also draws over 50% grey, which shows whether the
+  /// renderer gamma-encodes its output after blending; if it does, the matting is done in
+  /// linear light, so soft edges keep their true alpha either way.</para></remarks>
   /// <seealso cref="TSprite3DGrabProc"/>
   TSprite3DOffscreen = class(TGorillaRenderPassController)
   private
     FWidth: Integer;
     FHeight: Integer;
-    FPremultiplyAlpha: Boolean;
+    FTransparentBackground: Boolean;
+    FOpaqueBackground: TAlphaColor;
     FBusy: Boolean;      // from Grab until the result has been delivered
     FPending: Boolean;   // waiting for the frame to read back
+    FStage: Integer;     // how this grab draws; see Grab
+    FColours: TArray<TAlphaColor>; // the background of each drawing
+    FReads: TArray<TBytes>;        // each drawing, RGBA rows bottom first
+    FReadWidth: Integer;
+    FReadHeight: Integer;
+    FIndex: Integer;       // the drawing the next frame is for, frame by frame
+    FUseFrames: Boolean;   // drawings need a frame each: see HandleEndRender
+    FTriedFrames: Boolean; // this grab fell back to a frame each
+    FOutputKnown: Boolean; // FOutputEncoded has been measured
+    FOutputEncoded: Boolean; // the renderer gamma-encodes after blending
+    FBackdrop: TSprite3DBackgroundSpec;
     FOnGrabbed: TSprite3DGrabProc;
     FAlive: IInterface;  // shared with queued deliveries; see Destroy
     FPrepared: Boolean;  // OnBeforeGrab has run and OnAfterGrab has not
@@ -161,9 +201,19 @@ type
     procedure SetWidth(const Value: Integer);
     procedure SetHeight(const Value: Integer);
     procedure ApplyTargetSize;
+    procedure HandleBeginRender(ASender: TObject; const AContext: TContext3D;
+      const ACount: Integer; const APass: TRenderPass);
     procedure HandleEndRender(ASender: TObject; const AContext: TContext3D;
       const ACount: Integer; const APass: TRenderPass);
-    function ReadOutput(out AError: String): TBitmap;
+    procedure Prepare;
+    function ReadDrawing(const AIndex: Integer; out AError: String): Boolean;
+    procedure StartNextFrame;
+    procedure Fail(const AError: String);
+    procedure CompleteMatte;
+    procedure Finish(const APixels: TBytes; const AWidth, AHeight: Integer;
+      const AError: String);
+    function ReadPixels(out APixels: TBytes; out AWidth, AHeight: Integer;
+      out AError: String): Boolean;
     procedure Deliver(const ABitmap: TBitmap; const AError: String);
   protected
     //** @abstract(Returns nil: this pass draws every object with its own materials.)
@@ -185,17 +235,16 @@ type
     //** @abstract(Creates the pass, switched off, with a 256 by 256 target.)
     //**
     //** The pass renders before the main pass, into its own frame buffer, with Gorilla's
-    //** default rendering @(order-independent transparency@), and clears to a transparent
-    //** background. Nothing is drawn until Viewport is set and Grab is called.
+    //** default rendering @(order-independent transparency@), and makes the background
+    //** transparent. Nothing is drawn until Viewport is set and Grab is called.
     //**
     //** @param(AOwner The owner, which frees the pass; the viewport is a good choice.)
     //**
     //** @param(AId Gorilla's identifier for the pass; each pass on one viewport needs its own.)
     /// <summary>Creates the pass, switched off, with a 256 by 256 target.</summary>
     /// <remarks>The pass renders before the main pass, into its own frame buffer, with
-    /// Gorilla's default rendering (order-independent transparency), and clears to a
-    /// transparent background. Nothing is drawn until Viewport is set and Grab is
-    /// called.</remarks>
+    /// Gorilla's default rendering (order-independent transparency), and makes the background
+    /// transparent. Nothing is drawn until Viewport is set and Grab is called.</remarks>
     /// <param name="AOwner">The owner, which frees the pass; the viewport is a good
     /// choice.</param>
     /// <param name="AId">Gorilla's identifier for the pass; each pass on one viewport needs its
@@ -269,6 +318,21 @@ type
     /// nil.</returns>
     function GrabSizes(const ASizes: array of Integer;
       const AOnGrabbed: TSprite3DGrabSizesProc): Boolean;
+    //** @abstract(What grabs show behind the model when TransparentBackground is True.)
+    //**
+    //** Transparent, the default, leaves the background transparent. Solid and Gradient fill
+    //** it, after the matting, with the colour or with the gradient from GradientFrom at the
+    //** top to GradientTo at the bottom; soft edges blend into it as they would on screen.
+    //** The checker settings are not used: the checker only stands for transparency on
+    //** screen. Changes made while Busy apply from the next grab.
+    /// <summary>What grabs show behind the model when TransparentBackground is
+    /// True.</summary>
+    /// <remarks>Transparent, the default, leaves the background transparent. Solid and Gradient
+    /// fill it, after the matting, with the colour or with the gradient from GradientFrom at
+    /// the top to GradientTo at the bottom; soft edges blend into it as they would on screen.
+    /// The checker settings are not used: the checker only stands for transparency on screen.
+    /// Changes made while Busy apply from the next grab.</remarks>
+    property Backdrop: TSprite3DBackgroundSpec read FBackdrop write FBackdrop;
     //** @abstract(True from a successful Grab until its procedure has run or Cancel.)
     /// <summary>True from a successful Grab until its procedure has run or
     /// Cancel.</summary>
@@ -288,18 +352,28 @@ type
     /// <remarks>Values below 1 count as 1. Changes made while Busy wait for the next
     /// grab.</remarks>
     property Height: Integer read FHeight write SetHeight default DEFAULT_OFFSCREEN_HEIGHT;
-    //** @abstract(Whether read-back pixels are premultiplied by alpha; True by default.)
+    //** @abstract(Whether grabs have a transparent background; True by default.)
     //**
-    //** FMX bitmaps hold premultiplied colour and convert back when saved. If the frame buffer
-    //** already holds premultiplied colour, part-transparent edges come out too dark; set this
-    //** to False then. It makes no difference to fully opaque pixels.
-    /// <summary>Whether read-back pixels are premultiplied by alpha; True by
+    //** True draws each grab twice, over black and over white, and works out each pixel's
+    //** alpha from the difference, as described for the class, so the background is fully
+    //** transparent and soft edges are partly so. False draws it once over OpaqueBackground,
+    //** with every pixel opaque.
+    /// <summary>Whether grabs have a transparent background; True by default.</summary>
+    /// <remarks>True draws each grab twice, over black and over white, and works out each
+    /// pixel's alpha from the difference, as described for the class, so the background is
+    /// fully transparent and soft edges are partly so. False draws it once over
+    /// OpaqueBackground, with every pixel opaque.</remarks>
+    property TransparentBackground: Boolean read FTransparentBackground
+      write FTransparentBackground default True;
+    //** @abstract(The background colour when TransparentBackground is False; black by
+    //** default.)
+    //**
+    //** Its alpha is ignored: the background is always drawn opaque.
+    /// <summary>The background colour when TransparentBackground is False; black by
     /// default.</summary>
-    /// <remarks>FMX bitmaps hold premultiplied colour and convert back when saved. If the frame
-    /// buffer already holds premultiplied colour, part-transparent edges come out too dark; set
-    /// this to False then. It makes no difference to fully opaque pixels.</remarks>
-    property PremultiplyAlpha: Boolean read FPremultiplyAlpha write FPremultiplyAlpha
-      default True;
+    /// <remarks>Its alpha is ignored: the background is always drawn opaque.</remarks>
+    property OpaqueBackground: TAlphaColor read FOpaqueBackground write FOpaqueBackground
+      default TAlphaColors.Black;
     //** @abstract(Runs in Grab, just before the frame is requested, to set the scene up for
     //** the target.)
     //**
@@ -524,21 +598,267 @@ end;
 
 { TSprite3DOffscreen }
 
+const
+  // How a grab draws
+  STAGE_OPAQUE = 0;       // once, over OpaqueBackground
+  STAGE_ITERATIONS = 1;   // every background in one frame, as iterations
+  STAGE_FRAMES = 2;       // every background in a frame of its own
+
+  // The backgrounds for matting: black and white, plus grey to learn
+  // whether the output is gamma-encoded
+  MATTE_GREY: TAlphaColor = $FF808080;
+  // Grey reads back as 128 from linear output and about 186 from
+  // sRGB-encoded output; this splits the two
+  ENCODED_GREY_THRESHOLD = 157;
+
+  // Drawings closer than this in every channel count as identical
+  MATTE_TOLERANCE = 2;
+
+var
+  // sRGB-encoded byte to linear light, 0 to 1
+  SRGBToLinear: array[0..255] of Single;
+
+procedure InitSRGBTable;
+var
+  I: Integer;
+  V: Single;
+begin
+  for I := 0 to 255 do
+  begin
+    V := I / 255;
+    if V <= 0.04045 then
+      SRGBToLinear[I] := V / 12.92
+    else
+      SRGBToLinear[I] := Power((V + 0.055) / 1.055, 2.4);
+  end;
+end;
+
+// Linear light, 0 to 1, to sRGB-encoded, 0 to 1
+function LinearToSRGB(const AValue: Single): Single;
+begin
+  if AValue <= 0 then
+    Result := 0
+  else if AValue >= 1 then
+    Result := 1
+  else if AValue <= 0.0031308 then
+    Result := AValue * 12.92
+  else
+    Result := 1.055 * Power(AValue, 1 / 2.4) - 0.055;
+end;
+
+// Whether two drawings differ anywhere in colour
+function DrawingsDiffer(const ADark, ALight: TBytes): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  I := 0;
+  while I < Length(ADark) do
+  begin
+    if (Abs(ALight[I] - ADark[I]) > MATTE_TOLERANCE) or
+      (Abs(ALight[I + 1] - ADark[I + 1]) > MATTE_TOLERANCE) or
+      (Abs(ALight[I + 2] - ADark[I + 2]) > MATTE_TOLERANCE) then
+      Exit(True);
+    Inc(I, 4);
+  end;
+end;
+
+// Whether the renderer gamma-encodes after blending, from the drawing over
+// grey: where the background shows fully (black over black, white over
+// white), grey reads back as 128 if not and about 186 if so. Returns False
+// if no pixel shows the background, so it cannot tell.
+function MeasureEncoding(const ADark, ALight, AGrey: TBytes;
+  out AEncoded: Boolean): Boolean;
+var
+  I, Count: Integer;
+  Values: array[0..255] of Integer;
+  Half, Seen: Integer;
+begin
+  FillChar(Values, SizeOf(Values), 0);
+  Count := 0;
+  I := 0;
+  while I < Length(ADark) do
+  begin
+    if (ADark[I] <= 1) and (ADark[I + 1] <= 1) and (ADark[I + 2] <= 1) and
+      (ALight[I] >= 254) and (ALight[I + 1] >= 254) and (ALight[I + 2] >= 254) then
+    begin
+      Inc(Values[AGrey[I]]);
+      Inc(Count);
+    end;
+    Inc(I, 4);
+  end;
+  Result := Count > 0;
+  if not Result then
+    Exit;
+  // The median grey value, so stray pixels cannot sway it
+  Half := Count div 2;
+  Seen := 0;
+  for I := 0 to 255 do
+  begin
+    Inc(Seen, Values[I]);
+    if Seen > Half then
+    begin
+      AEncoded := I >= ENCODED_GREY_THRESHOLD;
+      Exit;
+    end;
+  end;
+  AEncoded := False;
+end;
+
+// Difference matting. ADark and ALight are the same drawing over black and
+// over white, RGBA. A pixel with alpha a and colour c blends to c*a over
+// black and c*a + (1 - a) over white, so their difference is 1 - a, and the
+// over-black value is the colour already multiplied by alpha. The three
+// channels' differences are averaged, which evens out rounding. If the
+// renderer blends in linear light and gamma-encodes afterwards (AEncoded),
+// the sums only hold in linear light, so the values are decoded first and
+// the colour encoded again before it is multiplied by alpha. Drawings that
+// are identical give alpha 255 everywhere: no background showed.
+function BuildMatte(const ADark, ALight: TBytes; const AEncoded: Boolean): TBytes;
+var
+  I, K, A: Integer;
+  AF, C: Single;
+begin
+  SetLength(Result, Length(ADark));
+  I := 0;
+  while I < Length(ADark) do
+  begin
+    if not AEncoded then
+    begin
+      A := EnsureRange(255 - ((ALight[I] - ADark[I]) + (ALight[I + 1] - ADark[I + 1]) +
+        (ALight[I + 2] - ADark[I + 2]) + 1) div 3, 0, 255);
+      // Premultiplied colour can never exceed its alpha
+      for K := 0 to 2 do
+        Result[I + K] := Min(ADark[I + K], A);
+    end
+    else
+    begin
+      AF := 1 - ((SRGBToLinear[ALight[I]] - SRGBToLinear[ADark[I]]) +
+        (SRGBToLinear[ALight[I + 1]] - SRGBToLinear[ADark[I + 1]]) +
+        (SRGBToLinear[ALight[I + 2]] - SRGBToLinear[ADark[I + 2]])) / 3;
+      AF := EnsureRange(AF, 0.0, 1.0);
+      A := Round(AF * 255);
+      for K := 0 to 2 do
+        if A = 0 then
+          Result[I + K] := 0
+        else
+        begin
+          C := LinearToSRGB(SRGBToLinear[ADark[I + K]] / AF);
+          Result[I + K] := Min(Round(C * A), A);
+        end;
+    end;
+    Result[I + 3] := A;
+    Inc(I, 4);
+  end;
+end;
+
+// Fills the transparent parts of a matted image, RGBA rows bottom first and
+// premultiplied, with a solid colour or a top-to-bottom gradient: each
+// pixel becomes itself plus the backdrop times what it lets through,
+// 1 - alpha, so soft edges blend into the backdrop. Every pixel ends opaque.
+procedure FillBackdrop(var APixels: TBytes; const AWidth, AHeight: Integer;
+  const ABackdrop: TSprite3DBackgroundSpec);
+var
+  X, Y, I, Rest: Integer;
+  Fill: TAlphaColorRec;
+begin
+  if ABackdrop.Kind = TSprite3DBackgroundKind.Transparent then
+    Exit;
+  Fill := TAlphaColorRec(ABackdrop.Colour);
+  for Y := 0 to AHeight - 1 do
+  begin
+    // Rows are stored bottom first; the gradient runs from the top
+    if ABackdrop.Kind = TSprite3DBackgroundKind.Gradient then
+      if AHeight > 1 then
+        Fill := TAlphaColorRec(ABackdrop.GradientAt((AHeight - 1 - Y) / (AHeight - 1)))
+      else
+        Fill := TAlphaColorRec(ABackdrop.GradientAt(0));
+    I := Y * AWidth * 4;
+    for X := 0 to AWidth - 1 do
+    begin
+      Rest := 255 - APixels[I + 3];
+      if Rest > 0 then
+      begin
+        APixels[I] := Min(255, APixels[I] + (Fill.R * Rest + 127) div 255);
+        APixels[I + 1] := Min(255, APixels[I + 1] + (Fill.G * Rest + 127) div 255);
+        APixels[I + 2] := Min(255, APixels[I + 2] + (Fill.B * Rest + 127) div 255);
+        APixels[I + 3] := 255;
+      end;
+      Inc(I, 4);
+    end;
+  end;
+end;
+
+// RGBA pixels, bottom row first and already premultiplied, as a new FMX
+// bitmap, in whichever byte order the platform's bitmaps use
+function PixelsToBitmap(const APixels: TBytes; const AWidth,
+  AHeight: Integer): TBitmap;
+var
+  Data: TBitmapData;
+  X, Y: Integer;
+  Src, Dst: PByte;
+begin
+  Result := TBitmap.Create(AWidth, AHeight);
+  try
+    if not Result.Map(TMapAccess.Write, Data) then
+      raise EInvalidOperation.Create('Cannot write to the grab bitmap.');
+    try
+      for Y := 0 to AHeight - 1 do
+      begin
+        Src := @APixels[(AHeight - 1 - Y) * AWidth * 4];
+        Dst := Data.GetScanline(Y);
+        for X := 0 to AWidth - 1 do
+        begin
+          case Data.PixelFormat of
+            TPixelFormat.BGRA:
+              begin
+                Dst[0] := Src[2];
+                Dst[1] := Src[1];
+                Dst[2] := Src[0];
+                Dst[3] := Src[3];
+              end;
+            TPixelFormat.RGBA:
+              begin
+                Dst[0] := Src[0];
+                Dst[1] := Src[1];
+                Dst[2] := Src[2];
+                Dst[3] := Src[3];
+              end;
+          else
+            Data.SetPixel(X, Y, (Cardinal(Src[3]) shl 24) or (Cardinal(Src[0]) shl 16) or
+              (Cardinal(Src[1]) shl 8) or Src[2]);
+          end;
+          Inc(Src, 4);
+          Inc(Dst, 4);
+        end;
+      end;
+    finally
+      Result.Unmap(Data);
+    end;
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
 constructor TSprite3DOffscreen.Create(AOwner: TComponent; const AId: String);
 begin
   inherited Create(AOwner, AId);
   FAlive := TAliveFlag.Create;
   FWidth := DEFAULT_OFFSCREEN_WIDTH;
   FHeight := DEFAULT_OFFSCREEN_HEIGHT;
-  FPremultiplyAlpha := True;
+  FTransparentBackground := True;
+  FOpaqueBackground := TAlphaColors.Black;
+  FBackdrop := TSprite3DBackgroundSpec.Default;
 
   Enabled := False;   // only on for the frame a grab needs
   _Type := TRenderPassType.Pre;
   Method := TRenderPassMethod.RenderListToFBO;
   RenderProc := TRenderPassRenderingProc.DefaultRendering;
   OverwriteColor := True;
-  BackgroundColor := TAlphaColors.Null;   // transparent, for sprites
+  BackgroundColor := TAlphaColors.Black;
   ApplyTargetSize;
+  OnBeginRender := HandleBeginRender;
   OnEndRender := HandleEndRender;
 end;
 
@@ -587,16 +907,45 @@ begin
   FOnGrabbed := AOnGrabbed;
   FBusy := True;
   ApplyTargetSize;   // pick up any size change made while busy
-  // Let the owner fit the scene to the target; HandleEndRender restores it
-  // and reads the frame back once this pass has drawn it
+  FReads := nil;
+  FTriedFrames := False;
+  // How the grab draws: see HandleEndRender
+  if not FTransparentBackground then
+  begin
+    FStage := STAGE_OPAQUE;
+    FColours := [TAlphaColor(FOpaqueBackground or $FF000000)];
+  end
+  else
+  begin
+    FColours := [TAlphaColors.Black, TAlphaColors.White];
+    if not FOutputKnown then
+      FColours := FColours + [MATTE_GREY];
+    if FUseFrames then
+      FStage := STAGE_FRAMES
+    else
+      FStage := STAGE_ITERATIONS;
+  end;
+  SetLength(FReads, Length(FColours));
+  FIndex := 0;
+  BackgroundColor := FColours[0];
+  if FStage = STAGE_ITERATIONS then
+    Iterations := Length(FColours)   // HandleBeginRender sets each colour
+  else
+    Iterations := 1;
+  Prepare;
+  FPending := True;
+  Enabled := True;
+  Viewport.Invalidate;
+end;
+
+// Lets the owner fit the scene to the target; Restore puts it back
+procedure TSprite3DOffscreen.Prepare;
+begin
   if Assigned(FOnBeforeGrab) then
   begin
     FPrepared := True;
     FOnBeforeGrab(Self, FWidth, FHeight);
   end;
-  FPending := True;
-  Enabled := True;
-  Viewport.Invalidate;
 end;
 
 // One GrabSizes run: grabs each size in turn from the previous grab's
@@ -719,6 +1068,7 @@ procedure TSprite3DOffscreen.Cancel;
 begin
   FPending := False;
   FBusy := False;
+  FReads := nil;
   FOnGrabbed := nil;
   Enabled := False;
   Restore;
@@ -734,32 +1084,202 @@ begin
     FOnAfterGrab(Self);
 end;
 
+// In the same-frame matting, each iteration is cleared to its own colour
+procedure TSprite3DOffscreen.HandleBeginRender(ASender: TObject;
+  const AContext: TContext3D; const ACount: Integer; const APass: TRenderPass);
+begin
+  if FPending and (FStage = STAGE_ITERATIONS) and (ACount <= High(FColours)) then
+    BackgroundColor := FColours[ACount];
+end;
+
+// Still inside Gorilla's render loop with its context current: read the
+// pixels now, and leave everything else to Finish's queued delivery. The
+// owner's changes are put back (Restore) before the main pass draws the
+// frame, so the screen never shows the grab's framing.
 procedure TSprite3DOffscreen.HandleEndRender(ASender: TObject;
   const AContext: TContext3D; const ACount: Integer; const APass: TRenderPass);
+var
+  Error: String;
+  Pixels: TBytes;
+begin
+  if not FPending then
+    Exit;
+
+  case FStage of
+    STAGE_OPAQUE:
+      if ACount = 0 then
+      begin
+        if not ReadDrawing(0, Error) then
+        begin
+          Fail(Error);
+          Exit;
+        end;
+        FPending := False;
+        Restore;
+        Pixels := FReads[0];
+        for var I := 0 to FReadWidth * FReadHeight - 1 do
+          Pixels[I * 4 + 3] := 255;   // the renderer's alpha is not kept
+        Finish(Pixels, FReadWidth, FReadHeight, String.Empty);
+      end;
+
+    STAGE_ITERATIONS:
+      if ACount <= High(FColours) then
+      begin
+        if not ReadDrawing(ACount, Error) then
+          Fail(Error)
+        else if ACount = High(FColours) then
+        begin
+          if DrawingsDiffer(FReads[0], FReads[1]) then
+            CompleteMatte
+          else
+          begin
+            // The drawings came out alike: the clear colour did not change
+            // between iterations. Keep the first, over black, and draw the
+            // others in frames of their own.
+            FTriedFrames := True;
+            FIndex := 1;
+            StartNextFrame;
+          end;
+        end;
+      end;
+
+    STAGE_FRAMES:
+      if ACount = 0 then
+      begin
+        if not ReadDrawing(FIndex, Error) then
+        begin
+          Fail(Error);
+          Exit;
+        end;
+        Inc(FIndex);
+        if FIndex <= High(FColours) then
+          StartNextFrame
+        else
+        begin
+          // A frame each worked where iterations did not: keep to it
+          if FTriedFrames and DrawingsDiffer(FReads[0], FReads[1]) then
+            FUseFrames := True;
+          CompleteMatte;
+        end;
+      end;
+  end;
+end;
+
+// Reads the drawing just made into FReads[AIndex]; the first sets the size
+// the others must match
+function TSprite3DOffscreen.ReadDrawing(const AIndex: Integer;
+  out AError: String): Boolean;
+var
+  Pixels: TBytes;
+  W, H: Integer;
+begin
+  Result := ReadPixels(Pixels, W, H, AError);
+  if not Result then
+    Exit;
+  if AIndex = 0 then
+  begin
+    FReadWidth := W;
+    FReadHeight := H;
+  end
+  else if (W <> FReadWidth) or (H <> FReadHeight) then
+  begin
+    AError := 'The drawings of the grab differ in size.';
+    Exit(False);
+  end;
+  FReads[AIndex] := Pixels;
+end;
+
+// Ends the grab with an error
+procedure TSprite3DOffscreen.Fail(const AError: String);
+begin
+  FPending := False;
+  Restore;
+  Finish(nil, 0, 0, AError);
+end;
+
+// Every background has been drawn: learn the output's encoding if this grab
+// drew over grey, then build the transparent image
+procedure TSprite3DOffscreen.CompleteMatte;
+var
+  Encoded: Boolean;
+  Matte: TBytes;
+begin
+  FPending := False;
+  Restore;
+  if (not FOutputKnown) and (Length(FReads) > 2) and
+    MeasureEncoding(FReads[0], FReads[1], FReads[2], Encoded) then
+  begin
+    FOutputEncoded := Encoded;
+    FOutputKnown := True;
+  end;
+  Matte := BuildMatte(FReads[0], FReads[1], FOutputEncoded);
+  FillBackdrop(Matte, FReadWidth, FReadHeight, FBackdrop);
+  Finish(Matte, FReadWidth, FReadHeight, String.Empty);
+end;
+
+// Ends this frame's part of the grab and has a later frame draw over the
+// next background. The scene is put back before the main pass draws this
+// frame, then set up again for the target, outside the render loop, before
+// the next read; a frame drawn before then reads nothing, as nothing is
+// pending. The pass is left on: switching it off from inside its own render
+// is not safe.
+procedure TSprite3DOffscreen.StartNextFrame;
+var
+  Alive: IAliveFlag;
+  Me: TSprite3DOffscreen;
+  Step: TThreadProcedure;
+begin
+  FPending := False;
+  Restore;
+  FStage := STAGE_FRAMES;
+  Iterations := 1;
+  BackgroundColor := FColours[FIndex];
+  Alive := FAlive as IAliveFlag;
+  Me := Self;
+  Step :=
+    procedure
+    begin
+      if not Alive.IsAlive or not Me.FBusy then
+        Exit;   // freed or cancelled meanwhile
+      Me.Prepare;
+      Me.FPending := True;
+      Me.Viewport.Invalidate;
+    end;
+  System.Classes.TThread.ForceQueue(nil, Step);
+end;
+
+// Turns the read pixels, if any, into the bitmap for the waiting procedure
+procedure TSprite3DOffscreen.Finish(const APixels: TBytes; const AWidth,
+  AHeight: Integer; const AError: String);
 var
   Bitmap: TBitmap;
   Error: String;
 begin
-  if not FPending or (ACount <> 0) then
-    Exit;
-  FPending := False;
-  // Still inside Gorilla's render loop with its context current: read the
-  // pixels now, but leave everything else to Deliver's queued step
-  Bitmap := ReadOutput(Error);
-  // Before the main pass draws this frame, so the screen never shows the
-  // grab's framing
-  Restore;
+  FReads := nil;
+  Bitmap := nil;
+  Error := AError;
+  if (Error = String.Empty) and (Length(APixels) > 0) then
+    try
+      Bitmap := PixelsToBitmap(APixels, AWidth, AHeight);
+    except
+      on E: Exception do
+        Error := E.Message;
+    end
+  else if Error = String.Empty then
+    Error := 'Nothing was read from the off-screen target.';
   Deliver(Bitmap, Error);
 end;
 
-// Reads the area this pass drew in its output texture into a new bitmap of
-// that size. Must run with the GL context current, i.e. inside the render.
-function TSprite3DOffscreen.ReadOutput(out AError: String): TBitmap;
+// Reads the area this pass drew in its output texture as RGBA bytes, bottom
+// row first, with its size. Must run with the GL context current, i.e.
+// inside the render. Returns False, with AError set, if it cannot.
+function TSprite3DOffscreen.ReadPixels(out APixels: TBytes; out AWidth,
+  AHeight: Integer; out AError: String): Boolean;
 var
   GL: TGLFuncs;
   Missing: String;
   Tex: TTexture;
-  TexW, TexH, X, Y, I: Integer;
+  TexW, TexH, I: Integer;
   ReadX, ReadY, ReadW, ReadH: Integer;
   GLView: array[0..3] of TGLint;
   Fbo: TGLuint;
@@ -768,11 +1288,11 @@ var
   Pixels: TBytes;
   Floats: TArray<Single>;
   F: Single;
-  Data: TBitmapData;
-  Src, Dst: PByte;
-  R, G, B, A: Cardinal;
 begin
-  Result := nil;
+  Result := False;
+  APixels := nil;
+  AWidth := 0;
+  AHeight := 0;
   AError := String.Empty;
 
   Tex := GetOutputTexture;
@@ -873,61 +1393,10 @@ begin
     GL.DeleteFramebuffers(1, @Fbo);
   end;
 
-  // OpenGL rows run bottom to top, in RGBA order; the bitmap's own pixel
-  // format differs by platform (BGRA on desktop, often RGBA on mobile)
-  Result := TBitmap.Create(ReadW, ReadH);
-  try
-    if not Result.Map(TMapAccess.Write, Data) then
-      raise EInvalidOperation.Create('Cannot write to the grab bitmap.');
-    try
-      for Y := 0 to ReadH - 1 do
-      begin
-        Src := @Pixels[(ReadH - 1 - Y) * ReadW * 4];
-        Dst := Data.GetScanline(Y);
-        for X := 0 to ReadW - 1 do
-        begin
-          R := Src[0];
-          G := Src[1];
-          B := Src[2];
-          A := Src[3];
-          if FPremultiplyAlpha and (A < 255) then
-          begin
-            R := (R * A + 127) div 255;
-            G := (G * A + 127) div 255;
-            B := (B * A + 127) div 255;
-          end;
-          case Data.PixelFormat of
-            TPixelFormat.BGRA:
-              begin
-                Dst[0] := B;
-                Dst[1] := G;
-                Dst[2] := R;
-                Dst[3] := A;
-              end;
-            TPixelFormat.RGBA:
-              begin
-                Dst[0] := R;
-                Dst[1] := G;
-                Dst[2] := B;
-                Dst[3] := A;
-              end;
-          else
-            Data.SetPixel(X, Y, (A shl 24) or (R shl 16) or (G shl 8) or B);
-          end;
-          Inc(Src, 4);
-          Inc(Dst, 4);
-        end;
-      end;
-    finally
-      Result.Unmap(Data);
-    end;
-  except
-    on E: Exception do
-    begin
-      FreeAndNil(Result);
-      AError := E.Message;
-    end;
-  end;
+  APixels := Pixels;
+  AWidth := ReadW;
+  AHeight := ReadH;
+  Result := True;
 end;
 
 // Hands ABitmap (owned from here on) to the waiting procedure on a later
@@ -997,5 +1466,8 @@ begin
   // Qualified, in case a unit in the uses clause declares its own TThread
   System.Classes.TThread.ForceQueue(nil, Step);
 end;
+
+initialization
+  InitSRGBTable;
 
 end.

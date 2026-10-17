@@ -25,7 +25,9 @@
 //** for that folder only when none is known: SaveFolder is kept between sessions in
 //** settings.json, through TSprite3DAppSettings in Sprite3DHelpers. File, Save As Icon
 //** renders the view off screen at each of Windows' icon sizes and saves them together as
-//** one .ico file the user names.
+//** one .ico file the user names. Behind the model the viewport shows a background, by
+//** default a two-grey checker standing for transparency; File, Background Settings...
+//** chooses Transparent, Solid or Gradient, which grabs and icons follow too.
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
 //** refitted when the viewport is resized, the projection changes or the "Fit any angle" box is
@@ -58,6 +60,7 @@
 //** |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
+//** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"
 //**     |-- ViewVariableItem "Variable"     dials set the angles
@@ -100,7 +103,10 @@ unit Sprite3dMain;
   sessions in settings.json, through TSprite3DAppSettings in
   Sprite3DHelpers. File, Save As Icon renders the view off screen at each of
   Windows' icon sizes and saves them together as one .ico file the user
-  names. Each model replaces the last:
+  names. Behind the model the viewport shows a background, by default a
+  two-grey checker standing for transparency; File, Background Settings...
+  chooses Transparent, Solid or Gradient, which grabs and icons follow too.
+  Each model replaces the last:
   it plays its last animation by name if it has any, is centred and turned
   180 degrees about X, and the camera is fitted so it fills the view. The
   model is refitted when the viewport is resized, the projection changes or
@@ -134,6 +140,7 @@ unit Sprite3dMain;
     |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
+    |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
     |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"
         |-- ViewVariableItem "Variable"     dials set the angles
@@ -155,7 +162,7 @@ uses
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
-  Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter
+  Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView, FMX.ListBox
   {$ENDIF}
@@ -330,6 +337,10 @@ type
     //** @abstract(The "Save As Icon" item; see SaveAsIconMenuItemClick.)
     /// <summary>The "Save As Icon" item; see <see cref="SaveAsIconMenuItemClick"/>.</summary>
     SaveAsIconMenuItem: TMenuItem;
+    //** @abstract(The "Background Settings..." item; see BackgroundSettingsMenuItemClick.)
+    /// <summary>The "Background Settings..." item; see
+    /// <see cref="BackgroundSettingsMenuItemClick"/>.</summary>
+    BackgroundSettingsMenuItem: TMenuItem;
     //** @abstract(Separator line in the File menu, above Exit.)
     /// <summary>Separator line in the File menu, above Exit.</summary>
     FileSeparatorItem: TMenuItem;
@@ -581,6 +592,23 @@ type
     /// way is ignored.</remarks>
     /// <param name="Sender">SaveAsIconMenuItem.</param>
     procedure SaveAsIconMenuItemClick(Sender: TObject);
+    //** @abstract(Opens the Background Settings dialog and applies what is chosen.)
+    //**
+    //** The dialog, TBackgroundSettingsForm, opens modally, centred on this form, showing the
+    //** background in use. If it is closed with OK, the chosen background is shown in the
+    //** viewport, used for grabs and icons, and saved to settings.json; Cancel changes
+    //** nothing. On Android and iOS, where a dialog cannot block, it opens as an ordinary
+    //** form and OK is applied when it closes.
+    //**
+    //** @param(Sender BackgroundSettingsMenuItem.)
+    /// <summary>Opens the Background Settings dialog and applies what is chosen.</summary>
+    /// <remarks>The dialog, TBackgroundSettingsForm, opens modally, centred on this form,
+    /// showing the background in use. If it is closed with OK, the chosen background is shown
+    /// in the viewport, used for grabs and icons, and saved to settings.json; Cancel changes
+    /// nothing. On Android and iOS, where a dialog cannot block, it opens as an ordinary form
+    /// and OK is applied when it closes.</remarks>
+    /// <param name="Sender">BackgroundSettingsMenuItem.</param>
+    procedure BackgroundSettingsMenuItemClick(Sender: TObject);
     //** @abstract(Closes the application.)
     //**
     //** Closes the main form, which ends the application in the normal way, so the form and
@@ -709,6 +737,8 @@ type
     FSettings: TSprite3DAppSettings;
     // True once FormShow has loaded the first model
     FStarted: Boolean;
+    // The viewport's background, fixed to the camera
+    FBackground: TSprite3DBackground;
     // The on-screen framing, kept while a grab is fitted to its target
     FSavedFraming: TSprite3DFraming;
     ModelDir: String;
@@ -723,6 +753,11 @@ type
       const AAzimuth: Single = 45);
     function ChooseSaveFolder: Boolean;
     procedure OpenRequestedFile(const AFileName: String);
+    procedure ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
+      const ASave: Boolean);
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    procedure BackgroundDialogAccept(Sender: TObject);
+    {$ENDIF}
     function ChooseIconFile(out AFileName: String;
       out AWriter: TSprite3DIconWriterClass): Boolean;
     function GetSaveFolder: String;
@@ -788,11 +823,13 @@ uses
   FMX.Platform,
   Gorilla.DefTypes, System.Math,
   FMX.Types3D,
-  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles;
+  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm;
 
 {$R *.fmx}
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+  ScreenService: IFMXScreenService;
 begin
   TabControl1.ActiveTab := GorillaTab;
 
@@ -827,6 +864,13 @@ begin
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
   FGrabNumber := 1;
+  // The background behind the model, as last chosen; the camera frees it
+  FBackground := TSprite3DBackground.Create(nil);
+  FBackground.AttachTo(GorillaCamera);
+  if TPlatformServices.Current.SupportsPlatformService(IFMXScreenService,
+    ScreenService) then
+    FBackground.PixelScale := ScreenService.GetScreenScale;
+  ApplyBackground(FSettings.BackgroundSpec, False);
   // Fill the space the bottom test strip (DistanceLayout) leaves
   GorillaViewport.Align := TAlignLayout.Client;
 
@@ -1081,12 +1125,62 @@ begin
   FSavedFraming := GorillaCamera.SaveFraming;
   if Assigned(GorillaModel) then
     GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight);
+  // Grabs add their own backdrop after matting; the viewport's would make
+  // every pixel opaque
+  FBackground.Hidden := True;
 end;
 
 // Put the on-screen framing back before the main pass draws
 procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
 begin
   GorillaCamera.RestoreFraming(FSavedFraming);
+  FBackground.Hidden := False;
+end;
+
+procedure TMainForm.BackgroundSettingsMenuItemClick(Sender: TObject);
+var
+  Dialog: TBackgroundSettingsForm;
+begin
+  Dialog := TBackgroundSettingsForm.Create(nil);
+  Dialog.Spec := FSettings.BackgroundSpec;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports OK and frees itself
+  Dialog.OnAccept := BackgroundDialogAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal = mrOk then
+      ApplyBackground(Dialog.Spec, True);
+  finally
+    Dialog.Free;
+  end;
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.BackgroundDialogAccept(Sender: TObject);
+begin
+  ApplyBackground(TBackgroundSettingsForm(Sender).Spec, True);
+end;
+{$ENDIF}
+
+// Shows ASpec in the viewport and uses it for grabs; with ASave, also keeps
+// it in settings.json
+procedure TMainForm.ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
+  const ASave: Boolean);
+begin
+  FBackground.Spec := ASpec;
+  FOffscreen.Backdrop := ASpec;
+  if not ASave then
+    Exit;
+  FSettings.BackgroundSpec := ASpec;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
 end;
 
 function TMainForm.GetSaveFolder: String;

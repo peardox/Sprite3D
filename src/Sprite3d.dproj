@@ -358,6 +358,11 @@
         <DCCReference Include="lib\Sprite3DStorage.pas"/>
         <DCCReference Include="lib\Sprite3DIconWriter.pas"/>
         <DCCReference Include="lib\Sprite3DOpenFiles.pas"/>
+        <DCCReference Include="lib\Sprite3DBackground.pas"/>
+        <DCCReference Include="ui\Sprite3DBackgroundForm.pas">
+            <Form>BackgroundSettingsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <None Include="..\README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

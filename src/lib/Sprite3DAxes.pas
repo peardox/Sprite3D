@@ -96,7 +96,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.UITypes, System.Math, System.Math.Vectors,
-  FMX.Types3D, FMX.Controls3D, FMX.Objects3D,
+  FMX.Types, FMX.Types3D, FMX.Controls3D, FMX.Objects3D,
   Gorilla.Context, Gorilla.Context.Types, Gorilla.Model, Gorilla.Plane,
   Gorilla.Material.Default;
 

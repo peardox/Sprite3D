@@ -653,6 +653,45 @@ type
     /// from FMX matrices, so it is correct before the first frame is drawn.</remarks>
     /// <returns>The camera's position.</returns>
     function CameraPosition: TPoint3D;
+    //** @abstract(Half the width and height of the view at a depth in front of the camera.)
+    //**
+    //** Read from the camera's own projection for the viewport's size, so it holds in
+    //** perspective and orthographic mode alike, with Gorilla's FOV convention and the
+    //** viewport's aspect ratio. In orthographic mode the size is the same at every depth.
+    //** Use it to size something that must fill the view, such as a background plane.
+    //**
+    //** @param(ADepth The distance in front of the camera, along its view direction.)
+    //**
+    //** @param(AHalfWidth Half the visible width at that depth, in scene units.)
+    //**
+    //** @param(AHalfHeight Half the visible height at that depth, in scene units.)
+    //**
+    //** @returns(True if the sizes were worked out; False, with both 0, if there is no
+    //** viewport or it has no size.)
+    //**
+    //** @seealso(MaxViewDepth)
+    /// <summary>Half the width and height of the view at a depth in front of the
+    /// camera.</summary>
+    /// <remarks>Read from the camera's own projection for the viewport's size, so it holds in
+    /// perspective and orthographic mode alike, with Gorilla's FOV convention and the
+    /// viewport's aspect ratio. In orthographic mode the size is the same at every depth. Use
+    /// it to size something that must fill the view, such as a background plane.</remarks>
+    /// <param name="ADepth">The distance in front of the camera, along its view
+    /// direction.</param>
+    /// <param name="AHalfWidth">Half the visible width at that depth, in scene units.</param>
+    /// <param name="AHalfHeight">Half the visible height at that depth, in scene
+    /// units.</param>
+    /// <returns>True if the sizes were worked out; False, with both 0, if there is no viewport
+    /// or it has no size.</returns>
+    /// <seealso cref="MaxViewDepth"/>
+    function ViewHalfExtents(const ADepth: Single; out AHalfWidth,
+      AHalfHeight: Single): Boolean;
+    //** @abstract(The far plane: nothing farther from the camera than this is drawn.)
+    //**
+    //** @returns(The distance, in scene units, of the far plane the fitting assumes.)
+    /// <summary>The far plane: nothing farther from the camera than this is drawn.</summary>
+    /// <returns>The distance, in scene units, of the far plane the fitting assumes.</returns>
+    class function MaxViewDepth: Single; static;
     //** @abstract(Returns the current framing, for RestoreFraming to put back later.)
     //**
     //** Use it around a temporary fit, such as fitting the model to an off-screen target of a
@@ -1545,6 +1584,44 @@ begin
   Distance := AFraming.Distance;
   OrthoHeight := AFraming.OrthoHeight;
   OrthoWidth := AFraming.OrthoWidth;
+end;
+
+function TSprite3DCamera.ViewHalfExtents(const ADepth: Single; out AHalfWidth,
+  AHalfHeight: Single): Boolean;
+var
+  VP: TViewport3D;
+  M: TMatrix3D;
+  SX, SY: Single;
+begin
+  AHalfWidth := 0;
+  AHalfHeight := 0;
+  VP := FindViewport;
+  Result := (VP <> nil) and (VP.Width > 0) and (VP.Height > 0);
+  if not Result then
+    Exit;
+  // As in FitCorners: the diagonal is 1 / tan(half-angle) in perspective
+  // and 1 / (half the visible size) in orthographic mode
+  M := GetProjectionMatrix(VP.Width, VP.Height, NEAR_CLEARANCE, FAR_PLANE);
+  SX := Abs(M.m11);
+  SY := Abs(M.m22);
+  Result := (SX > EPS) and (SY > EPS);
+  if not Result then
+    Exit;
+  if IsOrthographic then
+  begin
+    AHalfWidth := 1 / SX;
+    AHalfHeight := 1 / SY;
+  end
+  else
+  begin
+    AHalfWidth := ADepth / SX;
+    AHalfHeight := ADepth / SY;
+  end;
+end;
+
+class function TSprite3DCamera.MaxViewDepth: Single;
+begin
+  Result := FAR_PLANE;
 end;
 
 function TSprite3DCamera.CameraPosition: TPoint3D;

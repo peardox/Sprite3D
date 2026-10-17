@@ -39,9 +39,9 @@ unit Sprite3DHelpers;
 interface
 
 uses
-  System.SysUtils, System.Types, System.Math.Vectors,
+  System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
-  Gorilla.Model, Sprite3DStorage;
+  Gorilla.Model, Sprite3DStorage, Sprite3DBackground;
 
 const
   //** @abstract(The application's name, used for its per-user folder.)
@@ -80,6 +80,15 @@ type
   private
     FSaveFolder: String;
     FIconFolder: String;
+    FBackgroundKind: TSprite3DBackgroundKind;
+    FBackgroundColour: String;
+    FGradientFrom: String;
+    FGradientTo: String;
+    FCheckerSize: Integer;
+    FCheckerLight: String;
+    FCheckerDark: String;
+    function GetBackgroundSpec: TSprite3DBackgroundSpec;
+    procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
   public
     //** @abstract(Creates the settings with their defaults, for settings.json in
     //** SupportFolder.)
@@ -112,6 +121,17 @@ type
     /// drive that is not connected, so the user can be asked for a folder again.</remarks>
     /// <returns>Whether grabs can be saved in SaveFolder without asking.</returns>
     function HasSaveFolder: Boolean;
+    //** @abstract(The background settings together, as the viewport and grabs use them.)
+    //**
+    //** Reading turns the stored colour texts back into colours; one that cannot be read
+    //** takes its default. Writing stores all of them; call Save afterwards to keep them.
+    /// <summary>The background settings together, as the viewport and grabs use
+    /// them.</summary>
+    /// <remarks>Reading turns the stored colour texts back into colours; one that cannot be
+    /// read takes its default. Writing stores all of them; call Save afterwards to keep
+    /// them.</remarks>
+    property BackgroundSpec: TSprite3DBackgroundSpec read GetBackgroundSpec
+      write SetBackgroundSpec;
   published
     //** @abstract(The folder grabs are saved in; empty until one is chosen.)
     //**
@@ -127,6 +147,53 @@ type
     /// until an icon is saved.</summary>
     /// <remarks>Stored as <c>iconFolder</c> in settings.json.</remarks>
     property IconFolder: String read FIconFolder write FIconFolder;
+    //** @abstract(What the background shows: Transparent, Solid or Gradient.)
+    //**
+    //** Stored as @code(backgroundKind), by name. Transparent, the default, shows a checker in
+    //** the viewport and leaves grabs transparent.
+    /// <summary>What the background shows: Transparent, Solid or Gradient.</summary>
+    /// <remarks>Stored as <c>backgroundKind</c>, by name. Transparent, the default, shows a
+    /// checker in the viewport and leaves grabs transparent.</remarks>
+    property BackgroundKind: TSprite3DBackgroundKind read FBackgroundKind
+      write FBackgroundKind;
+    //** @abstract(The Solid background's colour, as @code(#AARRGGBB).)
+    //**
+    //** Stored as @code(backgroundColour).
+    /// <summary>The Solid background's colour, as <c>#AARRGGBB</c>.</summary>
+    /// <remarks>Stored as <c>backgroundColour</c>.</remarks>
+    property BackgroundColour: String read FBackgroundColour write FBackgroundColour;
+    //** @abstract(The Gradient background's top colour, as @code(#AARRGGBB).)
+    //**
+    //** Stored as @code(gradientFrom).
+    /// <summary>The Gradient background's top colour, as <c>#AARRGGBB</c>.</summary>
+    /// <remarks>Stored as <c>gradientFrom</c>.</remarks>
+    property GradientFrom: String read FGradientFrom write FGradientFrom;
+    //** @abstract(The Gradient background's bottom colour, as @code(#AARRGGBB).)
+    //**
+    //** Stored as @code(gradientTo).
+    /// <summary>The Gradient background's bottom colour, as <c>#AARRGGBB</c>.</summary>
+    /// <remarks>Stored as <c>gradientTo</c>.</remarks>
+    property GradientTo: String read FGradientTo write FGradientTo;
+    //** @abstract(The side of each checker square in the viewport, in pixels; 64 by
+    //** default.)
+    //**
+    //** Stored as @code(checkerSize). Values below 1 count as 1.
+    /// <summary>The side of each checker square in the viewport, in pixels; 64 by
+    /// default.</summary>
+    /// <remarks>Stored as <c>checkerSize</c>. Values below 1 count as 1.</remarks>
+    property CheckerSize: Integer read FCheckerSize write FCheckerSize;
+    //** @abstract(The lighter checker colour, as @code(#AARRGGBB).)
+    //**
+    //** Stored as @code(checkerLight).
+    /// <summary>The lighter checker colour, as <c>#AARRGGBB</c>.</summary>
+    /// <remarks>Stored as <c>checkerLight</c>.</remarks>
+    property CheckerLight: String read FCheckerLight write FCheckerLight;
+    //** @abstract(The darker checker colour, as @code(#AARRGGBB).)
+    //**
+    //** Stored as @code(checkerDark).
+    /// <summary>The darker checker colour, as <c>#AARRGGBB</c>.</summary>
+    /// <remarks>Stored as <c>checkerDark</c>.</remarks>
+    property CheckerDark: String read FCheckerDark write FCheckerDark;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -374,6 +441,56 @@ begin
   inherited Create(TPath.Combine(SupportFolder, SETTINGS_FILE_NAME));
   FSaveFolder := String.Empty;
   FIconFolder := String.Empty;
+  SetBackgroundSpec(TSprite3DBackgroundSpec.Default);
+end;
+
+// A colour as #AARRGGBB, which people can read and edit in settings.json
+function ColourToText(const AColour: TAlphaColor): String;
+begin
+  Result := '#' + IntToHex(Int64(AColour), 8);
+end;
+
+// #AARRGGBB, or #RRGGBB taken as opaque, back to a colour; ADefault if the
+// text is anything else
+function TextToColour(const AText: String; const ADefault: TAlphaColor): TAlphaColor;
+var
+  Hex: String;
+  Value: Int64;
+begin
+  Hex := AText.Trim;
+  if Hex.StartsWith('#') then
+    Hex := Hex.Substring(1);
+  if ((Length(Hex) <> 8) and (Length(Hex) <> 6)) or
+    not TryStrToInt64('$' + Hex, Value) then
+    Exit(ADefault);
+  if Length(Hex) = 6 then
+    Value := Value or $FF000000;
+  Result := TAlphaColor(Value);
+end;
+
+function TSprite3DAppSettings.GetBackgroundSpec: TSprite3DBackgroundSpec;
+var
+  Defaults: TSprite3DBackgroundSpec;
+begin
+  Defaults := TSprite3DBackgroundSpec.Default;
+  Result.Kind := FBackgroundKind;
+  Result.Colour := TextToColour(FBackgroundColour, Defaults.Colour);
+  Result.GradientFrom := TextToColour(FGradientFrom, Defaults.GradientFrom);
+  Result.GradientTo := TextToColour(FGradientTo, Defaults.GradientTo);
+  Result.CheckerSize := Max(FCheckerSize, 1);
+  Result.CheckerLight := TextToColour(FCheckerLight, Defaults.CheckerLight);
+  Result.CheckerDark := TextToColour(FCheckerDark, Defaults.CheckerDark);
+end;
+
+procedure TSprite3DAppSettings.SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
+begin
+  FBackgroundKind := Value.Kind;
+  FBackgroundColour := ColourToText(Value.Colour);
+  FGradientFrom := ColourToText(Value.GradientFrom);
+  FGradientTo := ColourToText(Value.GradientTo);
+  FCheckerSize := Max(Value.CheckerSize, 1);
+  FCheckerLight := ColourToText(Value.CheckerLight);
+  FCheckerDark := ColourToText(Value.CheckerDark);
 end;
 
 class function TSprite3DAppSettings.SupportFolder: String;
