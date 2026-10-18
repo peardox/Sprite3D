@@ -915,7 +915,8 @@ implementation
 uses
   FMX.Platform,
   Gorilla.DefTypes, System.Math,
-  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm;
+  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm,
+  Sprite3DOrbitalForm;
 
 {$R *.fmx}
 
@@ -1168,6 +1169,7 @@ const
 //  DEFAULT_MODEL = 'models/TestAnimatedCharacter.glb';
 //  DEFAULT_MODEL = 'models/TestStaticCharacter.glb';
 begin
+
   if FStarted then
     Exit;   // the form can be shown again; the model stays as it is
   FStarted := True;
@@ -1176,6 +1178,7 @@ begin
   SwitchModel(StartupModelFile(FileOpenRequests.TakePending,
     ModelDir + DEFAULT_MODEL));
   FileOpenRequests.OnOpenFile := OpenRequestedFile;
+
 end;
 
 // A file the system asks to open while the application runs
@@ -1546,7 +1549,27 @@ begin
 end;
 
 procedure TMainForm.ViewVariableItemClick(Sender: TObject);
+// var
+//  Dialog: TOrbitalSettingsForm;
 begin
+//  Dialog := TOrbitalSettingsForm.Create(nil);
+//  Dialog.Spec := FSettings.BackgroundSpec;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports OK and frees itself
+  Dialog.OnAccept := BackgroundDialogAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+{
+  try
+    if Dialog.ShowModal = mrOk then
+      begin
+//      ApplyBackground(Dialog.Spec, True);
+      end;
+  finally
+    Dialog.Free;
+  end;
+}
+  {$ENDIF}
   ClearViewChecks;
   AzimuthDial.Enabled := True;
   AngleDial.Enabled := True;

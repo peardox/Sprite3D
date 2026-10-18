@@ -29,6 +29,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
       TabOrder = 0
     end
     object ColourPanel: TColorPanel
+      Color = claWhite
       Position.X = 16.000000000000000000
       Position.Y = 36.000000000000000000
       Size.Width = 240.000000000000000000
@@ -57,6 +58,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
         OnChange = GradientEndChange
       end
       object FromBox: TColorBox
+        Color = claNull
         Position.X = 104.000000000000000000
         Size.Width = 136.000000000000000000
         Size.Height = 26.000000000000000000
@@ -73,6 +75,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
         OnChange = GradientEndChange
       end
       object ToBox: TColorBox
+        Color = claNull
         Position.X = 104.000000000000000000
         Position.Y = 34.000000000000000000
         Size.Width = 136.000000000000000000

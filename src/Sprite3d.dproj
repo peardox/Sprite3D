@@ -4,8 +4,8 @@
         <ProjectVersion>20.5</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
-        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>2790547</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>Sprite3d.dpr</MainSource>
@@ -363,6 +363,11 @@
             <Form>BackgroundSettingsForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
+        <DCCReference Include="ui\Sprite3DOrbitalForm.pas">
+            <Form>OrbitalSettingsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="common\OSPaths.pas"/>
         <None Include="..\README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
@@ -409,9 +414,84 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="$(BDS)\bin\delphi_PROJECTICNS.icns" Configuration="Debug" Class="ProjectOSXResource">
+                    <Platform Name="OSXARM64">
+                        <RemoteName>Sprite3d.icns</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\README.md" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\README.md" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Resources\StartUp\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="..\README.md" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win64">
                         <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\models\uvcube.glb" Configuration="Debug" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\models\</RemoteDir>
+                        <RemoteName>uvcube.glb</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\models\uvcube.glb" Configuration="Debug" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Resources\models\</RemoteDir>
+                        <RemoteName>uvcube.glb</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\models\uvcube.glb" Configuration="Release" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\models\</RemoteDir>
+                        <RemoteName>uvcube.glb</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\models\uvcube.glb" Configuration="Release" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Resources\models\</RemoteDir>
+                        <RemoteName>uvcube.glb</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Linux64\Debug\Sprite3d" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Linux64">
+                        <RemoteName>Sprite3d</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="OSXARM64\Debug\Sprite3d.dSYM" Configuration="Debug" Class="ProjectOSXDebug">
+                    <Platform Name="OSXARM64">
+                        <RemoteName>Sprite3d</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="OSXARM64\Debug\Sprite3d.entitlements" Configuration="Debug" Class="ProjectOSXEntitlements">
+                    <Platform Name="OSXARM64">
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="OSXARM64\Debug\Sprite3d.info.plist" Configuration="Debug" Class="ProjectOSXInfoPList">
+                    <Platform Name="OSXARM64">
+                        <RemoteName>Info.plist</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="OSXARM64\Debug\Sprite3d" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="OSXARM64">
+                        <RemoteName>Sprite3d</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -424,12 +504,6 @@
                 <DeployFile LocalName="Win64\Debug\Sprite3d.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>Sprite3d.exe</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="Win64\Debug\Sprite3d.rsm" Configuration="Debug" Class="DebugSymbols">
-                    <Platform Name="Win64">
-                        <RemoteName>Sprite3d.rsm</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

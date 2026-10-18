@@ -519,6 +519,7 @@ implementation
 
 uses
   System.Classes, System.Math, System.IOUtils,
+  OSPaths,
   Gorilla.Animation,
   Gorilla.GLB.Loader,
   Gorilla.GLTF.Loader,
@@ -640,6 +641,8 @@ begin
   if DirectoryExists('models') then
     Result := String.Empty;
   {$ENDIF}
+  Result := GetAssetsPath('../../../');
+
 end;
 
 function DefaultGrabFolder: String;
