@@ -386,6 +386,11 @@ type
     /// <summary>The "Side View" view; see <see cref="ViewSideItemClick"/>.</summary>
     ViewSideItem: TMenuItem;
     AnimationListBox: TListBox;
+    ViewOneQuarterItem: TMenuItem;
+    ViewRoot2Item: TMenuItem;
+    ViewGoldenRatioItem: TMenuItem;
+    CameraSeparatorItem1: TMenuItem;
+    CameraSeparatorItem2: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
     //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
@@ -729,6 +734,9 @@ type
     /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
     procedure AnimationListBoxClick(Sender: TObject);
+    procedure ViewOneQuarterItemClick(Sender: TObject);
+    procedure ViewRoot2ItemClick(Sender: TObject);
+    procedure ViewGoldenRatioItemClick(Sender: TObject);
   private
     { Private declarations }
     FSetupComplete: Boolean;
@@ -1517,19 +1525,39 @@ begin
   SelectFixedView(ViewIsometricItem, RadToDeg(ArcTan(1 / Sqrt(2))));
 end;
 
+procedure TMainForm.ViewOneQuarterItemClick(Sender: TObject);
+begin
+  // Military projection's 45 degrees, through the orthographic camera. The
+  // projection is switched, and the model refitted, to match.
+  ApplyProjection;
+  SelectFixedView(ViewOneQuarterItem, 22.5);
+end;
+
 procedure TMainForm.ViewPixel2To1ItemClick(Sender: TObject);
 begin
   // ArcTan(1 / 2), about 26.565 degrees: floor lines run 2 across per 1 up
   SelectFixedView(ViewPixel2To1Item, RadToDeg(ArcTan(0.5)));
 end;
 
+procedure TMainForm.ViewRoot2ItemClick(Sender: TObject);
+begin
+  // ArcTan(Sqrt(2))
+  SelectFixedView(ViewRoot2Item, RadToDeg(ArcTan(Sqrt(2))));
+end;
+
 procedure TMainForm.ViewThreeQuarterItemClick(Sender: TObject);
 begin
   // Military projection's 45 degrees, through the orthographic camera. The
   // projection is switched, and the model refitted, to match.
-  OrthographicItem.IsChecked := True;
+//  OrthographicItem.IsChecked := True;
   ApplyProjection;
   SelectFixedView(ViewThreeQuarterItem, 45);
+end;
+
+procedure TMainForm.ViewGoldenRatioItemClick(Sender: TObject);
+begin
+  // ArcTan(1.61803398875)
+  SelectFixedView(ViewGoldenRatioItem, RadToDeg(ArcTan(1.61803398875)));
 end;
 
 procedure TMainForm.ViewHeadOnItemClick(Sender: TObject);

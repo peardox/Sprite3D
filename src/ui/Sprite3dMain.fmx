@@ -171,6 +171,17 @@ object MainForm: TMainForm
           Text = 'Variable'
           OnClick = ViewVariableItemClick
         end
+        object CameraSeparatorItem2: TMenuItem
+          Locked = True
+          Text = '-'
+        end
+        object ViewOneQuarterItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = '1/4 View'
+          OnClick = ViewOneQuarterItemClick
+        end
         object ViewIsometricItem: TMenuItem
           Locked = True
           GroupIndex = 1
@@ -191,6 +202,24 @@ object MainForm: TMainForm
           RadioItem = True
           Text = '3/4 View'
           OnClick = ViewThreeQuarterItemClick
+        end
+        object ViewRoot2Item: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Sqrt(2)'
+          OnClick = ViewRoot2ItemClick
+        end
+        object ViewGoldenRatioItem: TMenuItem
+          Locked = True
+          GroupIndex = 1
+          RadioItem = True
+          Text = 'Golden Ratio'
+          OnClick = ViewGoldenRatioItemClick
+        end
+        object CameraSeparatorItem1: TMenuItem
+          Locked = True
+          Text = '-'
         end
         object ViewHeadOnItem: TMenuItem
           Locked = True
