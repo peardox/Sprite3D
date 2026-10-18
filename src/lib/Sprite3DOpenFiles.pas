@@ -445,7 +445,7 @@ procedure TSprite3DFileOpenRequests.StartPlatform;
 begin
   {$IFDEF ANDROID}
   // Later VIEW intents reach the running activity as messages
-  TAndroidHelper.Activity.registerIntentAction(TJIntent.JavaClass.ACTION_VIEW);
+  MainActivity.registerIntentAction(TJIntent.JavaClass.ACTION_VIEW);
   FMessageId := TMessageManager.DefaultManager.SubscribeToMessage(
     TMessageReceivedNotification, HandleMessage);
   RequestFromIntent(TAndroidHelper.Activity.getIntent);
@@ -498,7 +498,8 @@ initialization
   GOpenDocuments := TOpenDocumentsHandler.Create;
   try
     GOpenDocuments.Install;
-    GOpenDocuments.ObserveLaunch;
+    // The next line crashes Macs
+    // GOpenDocuments.ObserveLaunch;
   except
     // Without the handler, Finder requests are lost but the application runs
   end;

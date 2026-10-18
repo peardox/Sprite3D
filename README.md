@@ -105,4 +105,5 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 
 ## Further reading
 
-- [Notes](notes.md): how the viewport background is drawn, and why it is built the way it is.
+- [Viewport](viewport.md): how the viewport background is drawn, and why it is built the way it is.
+- [OffScreen](offscreen.md): how the offscreen rendering works, and why it is built the way it is.

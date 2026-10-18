@@ -1556,8 +1556,8 @@ begin
 //  Dialog.Spec := FSettings.BackgroundSpec;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
-  Dialog.OnAccept := BackgroundDialogAccept;
-  Dialog.ShowAndFree;
+//  Dialog.OnAccept := BackgroundDialogAccept;
+//  Dialog.ShowAndFree;
   {$ELSE}
 {
   try
