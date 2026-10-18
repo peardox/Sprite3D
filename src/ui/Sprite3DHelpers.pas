@@ -520,11 +520,12 @@ implementation
 uses
   System.Classes, System.Math, System.IOUtils,
   OSPaths,
+  Gorilla.DefTypes,
   Gorilla.Animation,
   Gorilla.GLB.Loader,
   Gorilla.GLTF.Loader,
   Gorilla.OBJ.Loader,
-  Gorilla.USD.Loader,
+//  Gorilla.USD.Loader,
   Gorilla.FBX.Loader,
   Gorilla.DAE.Loader,
   Gorilla.STL.Loader,
@@ -722,17 +723,17 @@ function LoadModelFile(const AModel: TGorillaModel; const AFileName: String;
   out ABox: TBoundingBox): TArray<String>;
 var
   Names: TStringList;
+  I: Integer;
+  Ani: TArray<TGorillaAnimation>;
 begin
   AModel.Clear;
-  AModel.LoadFromFile(nil, AFileName, []);
+  AModel.LoadFromFile(nil, AFileName, [TAnimationCachingFlag.VertexPosition]);
 
   Names := TStringList.Create;
   try
-    Names.Sorted := True;
-    for var AnimName in AModel.AnimationManager.Animations.Keys do
-      Names.Add(AnimName);
-//    if Names.Count > 0 then
-//      AModel.AnimationManager.PlayAnimation(Names[Names.Count - 1]);
+    Ani := AModel.AnimationManager.GetSortedAnimations();
+    for I := 0 to Length(Ani) - 1 do
+      Names.Add(Ani[I].Id);
     Result := Names.ToStringArray;
   finally
     Names.Free;

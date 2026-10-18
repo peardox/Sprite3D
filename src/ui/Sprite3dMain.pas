@@ -1032,7 +1032,6 @@ end;
 procedure TMainForm.AnimationListBoxClick(Sender: TObject);
 var
   ani: String;
-  lbi: TListBoxItem ;
 begin
   if Assigned(GorillaModel) then
     begin
@@ -1044,6 +1043,8 @@ begin
       else if AnimationListBox.ItemIndex = 0 then
         begin
           // Show base model
+          if Assigned(GorillaModel.AnimationManager) and Assigned(GorillaModel.AnimationManager.Current) then
+            GorillaModel.AnimationManager.Current.Stop();
         end;
     end;
 end;
