@@ -802,9 +802,11 @@ type
     procedure ViewSideItemClick(Sender: TObject);
   private
     { Private declarations }
+    FSetupComplete: Boolean;
     FAzimuth: Single;
     FRoll: Single;
     FPolarAngle: Single;
+    FFactor: Single;
     // Camera Distance and OrthoHeight from the last fit, before the test
     // distance factor is applied
     FFitDistance: Single;
@@ -929,6 +931,7 @@ begin
   FAzimuth := 0;
   FRoll := 0;
   FPolarAngle := 0;
+  FFactor := 1.0;
 
   GorillaViewport := TGorillaViewport.Create(ViewportLayout);
   GorillaViewport.OnResize := GorillaViewportResize;
@@ -1169,7 +1172,7 @@ const
 //  DEFAULT_MODEL = 'models/TestAnimatedCharacter.glb';
 //  DEFAULT_MODEL = 'models/TestStaticCharacter.glb';
 begin
-
+  FSetupComplete := True;
   if FStarted then
     Exit;   // the form can be shown again; the model stays as it is
   FStarted := True;
@@ -1549,26 +1552,40 @@ begin
 end;
 
 procedure TMainForm.ViewVariableItemClick(Sender: TObject);
-// var
-//  Dialog: TOrbitalSettingsForm;
+var
+  Dialog: TOrbitalSettingsForm;
+  CameraSpec: TCameraSettings;
 begin
-//  Dialog := TOrbitalSettingsForm.Create(nil);
-//  Dialog.Spec := FSettings.BackgroundSpec;
+  Dialog := TOrbitalSettingsForm.Create(nil);
+  CameraSpec.Azimuth := FAzimuth;
+  CameraSpec.Roll := FRoll;
+  CameraSpec.PolarAngle := FPolarAngle;
+  CameraSpec.Distance := FFactor;
+  CameraSpec.Height := GorillaCamera.OrthoHeight;
+
+  Dialog.CameraSpec := CameraSpec;
+  Dialog.Camera := GorillaCamera;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
-//  Dialog.OnAccept := BackgroundDialogAccept;
-//  Dialog.ShowAndFree;
+  Dialog.OnAccept := BackgroundDialogAccept;
+  Dialog.ShowAndFree;
   {$ELSE}
-{
+
   try
-    if Dialog.ShowModal = mrOk then
+    if FSetupComplete and (Dialog.ShowModal = mrOk) then
       begin
-//      ApplyBackground(Dialog.Spec, True);
+        FAzimuth := CameraSpec.Azimuth;
+        FRoll := CameraSpec.Roll;
+        FPolarAngle := CameraSpec.PolarAngle;
+        FFactor := CameraSpec.Distance;
+        FFitOrthoHeight := CameraSpec.Height;
+        ApplyAngles;
+        ApplyDistance;
       end;
   finally
     Dialog.Free;
   end;
-}
+
   {$ENDIF}
   ClearViewChecks;
   AzimuthDial.Enabled := True;
@@ -1666,7 +1683,7 @@ procedure TMainForm.ApplyDistance;
 var
   Factor: Single;
 begin
-  Factor := DistanceTrack.Value;
+  Factor := FFactor; // DistanceTrack.Value;
   DistanceLabel.Text := Format('Distance x%.1f', [Factor]);
   if not Assigned(GorillaCamera) or (FFitDistance <= 0) then
     Exit;

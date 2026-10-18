@@ -2,135 +2,186 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 422
+  ClientHeight = 450
   ClientWidth = 350
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
   OnClose = FormClose
+  OnShow = FormShow
   DesignerMasterStyle = 0
-  object OrbitalLayout: TLayout
+  object Layout1: TLayout
     Align = Client
     Size.Width = 350.000000000000000000
-    Size.Height = 422.000000000000000000
+    Size.Height = 413.000000000000000000
     Size.PlatformDefault = False
-    TabOrder = 0
-    object AngleDial: TArcDial
-      Position.X = 192.000000000000000000
-      Position.Y = 8.000000000000000000
-      RotationAngle = -90.000000000000000000
-      Size.Width = 144.000000000000000000
-      Size.Height = 144.000000000000000000
+    TabOrder = 97
+    object OrbitalLayout: TLayout
+      Align = Client
+      Size.Width = 350.000000000000000000
+      Size.Height = 413.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
+      object AngleDial: TArcDial
+        Position.X = 192.000000000000000000
+        Position.Y = 8.000000000000000000
+        RotationAngle = -90.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 144.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        OnChange = AngleDialChange
+      end
+      object AngleLabel: TLabel
+        Position.X = 192.000000000000000000
+        Position.Y = 160.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Center
+        Text = 'Inclination'
+        TabOrder = 5
+      end
+      object AngleText: TLabel
+        StyledSettings = [FontColor]
+        Position.X = 200.000000000000000000
+        Position.Y = 16.000000000000000000
+        Size.Width = 132.000000000000000000
+        Size.Height = 132.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Family = 'Roboto'
+        TextSettings.Font.Size = 72.000000000000000000
+        TextSettings.Font.StyleExt = {00070000000000000004000000}
+        TextSettings.HorzAlign = Center
+        Text = '0'
+        TabOrder = 93
+      end
+      object AzimuthDial: TArcDial
+        Position.X = 8.000000000000000000
+        Position.Y = 8.000000000000000000
+        RotationAngle = -90.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 144.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        OnChange = AzimuthDialChange
+      end
+      object AzimuthLabel: TLabel
+        Position.X = 8.000000000000000000
+        Position.Y = 160.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Center
+        Text = 'Azimuth'
+        TabOrder = 7
+      end
+      object AzimuthText: TLabel
+        StyledSettings = [FontColor]
+        Position.X = 16.000000000000000000
+        Position.Y = 16.000000000000000000
+        Size.Width = 132.000000000000000000
+        Size.Height = 132.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Family = 'Roboto'
+        TextSettings.Font.Size = 72.000000000000000000
+        TextSettings.Font.StyleExt = {00070000000000000004000000}
+        TextSettings.HorzAlign = Center
+        Text = '0'
+        TabOrder = 95
+      end
+      object RollDial: TArcDial
+        Position.X = 6.000000000000000000
+        Position.Y = 200.000000000000000000
+        RotationAngle = -90.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 144.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        OnChange = RollDialChange
+      end
+      object RollLabel: TLabel
+        Position.X = 8.000000000000000000
+        Position.Y = 352.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Center
+        Text = 'Roll'
+        TabOrder = 6
+      end
+      object RollText: TLabel
+        StyledSettings = [FontColor]
+        Position.X = 16.000000000000000000
+        Position.Y = 208.000000000000000000
+        Size.Width = 132.000000000000000000
+        Size.Height = 132.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Family = 'Roboto'
+        TextSettings.Font.Size = 72.000000000000000000
+        TextSettings.Font.StyleExt = {00070000000000000004000000}
+        TextSettings.HorzAlign = Center
+        Text = '0'
+        TabOrder = 94
+      end
+      object DistanceLayout: TLayout
+        Align = Bottom
+        Position.Y = 381.000000000000000000
+        Size.Width = 350.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        object DistanceLabel: TLabel
+          Align = Left
+          Margins.Left = 8.000000000000000000
+          Position.X = 8.000000000000000000
+          Size.Width = 96.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          Text = 'Distance x1.0'
+          TabOrder = 0
+        end
+        object DistanceTrack: TTrackBar
+          Align = Client
+          CanParentFocus = True
+          Max = 20.000000000000000000
+          Min = 1.000000000000000000
+          Orientation = Horizontal
+          Margins.Right = 8.000000000000000000
+          Size.Width = 238.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          Value = 1.000000000000000000
+          OnChange = DistanceTrackChange
+        end
+      end
     end
-    object AngleLabel: TLabel
-      Position.X = 192.000000000000000000
-      Position.Y = 160.000000000000000000
-      Size.Width = 144.000000000000000000
-      Size.Height = 17.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.HorzAlign = Center
-      Text = 'Inclination'
-      TabOrder = 4
-    end
-    object AngleText: TLabel
-      StyledSettings = [FontColor]
-      Position.X = 200.000000000000000000
-      Position.Y = 16.000000000000000000
-      Size.Width = 132.000000000000000000
-      Size.Height = 132.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.Font.Family = 'Roboto'
-      TextSettings.Font.Size = 72.000000000000000000
-      TextSettings.Font.StyleExt = {00070000000000000004000000}
-      TextSettings.HorzAlign = Center
-      Text = '0'
-      TabOrder = 92
-    end
-    object AzimuthDial: TArcDial
-      Position.X = 8.000000000000000000
-      Position.Y = 8.000000000000000000
-      RotationAngle = -90.000000000000000000
-      Size.Width = 144.000000000000000000
-      Size.Height = 144.000000000000000000
-      Size.PlatformDefault = False
-      TabOrder = 2
-    end
-    object AzimuthLabel: TLabel
-      Position.X = 8.000000000000000000
-      Position.Y = 160.000000000000000000
-      Size.Width = 144.000000000000000000
-      Size.Height = 17.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.HorzAlign = Center
-      Text = 'Azimuth'
-      TabOrder = 6
-    end
-    object AzimuthText: TLabel
-      StyledSettings = [FontColor]
-      Position.X = 16.000000000000000000
-      Position.Y = 16.000000000000000000
-      Size.Width = 132.000000000000000000
-      Size.Height = 132.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.Font.Family = 'Roboto'
-      TextSettings.Font.Size = 72.000000000000000000
-      TextSettings.Font.StyleExt = {00070000000000000004000000}
-      TextSettings.HorzAlign = Center
-      Text = '0'
-      TabOrder = 94
-    end
-    object RollDial: TArcDial
-      Position.X = 6.000000000000000000
-      Position.Y = 200.000000000000000000
-      RotationAngle = -90.000000000000000000
-      Size.Width = 144.000000000000000000
-      Size.Height = 144.000000000000000000
-      Size.PlatformDefault = False
-      TabOrder = 1
-    end
-    object RollLabel: TLabel
-      Position.X = 8.000000000000000000
-      Position.Y = 352.000000000000000000
-      Size.Width = 144.000000000000000000
-      Size.Height = 17.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.HorzAlign = Center
-      Text = 'Roll'
-      TabOrder = 5
-    end
-    object RollText: TLabel
-      StyledSettings = [FontColor]
-      Position.X = 16.000000000000000000
-      Position.Y = 208.000000000000000000
-      Size.Width = 132.000000000000000000
-      Size.Height = 132.000000000000000000
-      Size.PlatformDefault = False
-      TextSettings.Font.Family = 'Roboto'
-      TextSettings.Font.Size = 72.000000000000000000
-      TextSettings.Font.StyleExt = {00070000000000000004000000}
-      TextSettings.HorzAlign = Center
-      Text = '0'
-      TabOrder = 93
+  end
+  object Layout2: TLayout
+    Align = Bottom
+    Position.Y = 413.000000000000000000
+    Size.Width = 350.000000000000000000
+    Size.Height = 37.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 96
+    object CancelButton: TButton
+      Anchors = [akLeft, akBottom]
+      ModalResult = 2
+      Position.X = 24.000000000000000000
+      Position.Y = 7.000000000000000000
+      TabOrder = 97
+      Text = 'Cancel'
     end
     object OkButton: TButton
       Anchors = [akRight, akBottom]
       ModalResult = 1
-      Position.X = 252.000000000000000000
-      Position.Y = 384.000000000000000000
-      TabOrder = 95
+      Position.X = 244.000000000000000000
+      Position.Y = 7.000000000000000000
+      TabOrder = 96
       Text = 'Ok'
       OnClick = OkButtonClick
-    end
-    object CancelButton: TButton
-      Anchors = [akLeft, akBottom]
-      ModalResult = 2
-      Position.X = 32.000000000000000000
-      Position.Y = 384.000000000000000000
-      TabOrder = 96
-      Text = 'Cancel'
     end
   end
 end

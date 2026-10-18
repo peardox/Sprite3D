@@ -221,8 +221,8 @@ object MainForm: TMainForm
         Size.Height = 694.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
-        Viewport.Width = 772.000000000000000000
-        Viewport.Height = 690.000000000000000000
+        Viewport.Width = 776.000000000000000000
+        Viewport.Height = 694.000000000000000000
       end
     end
   end
