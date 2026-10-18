@@ -731,8 +731,8 @@ begin
     Names.Sorted := True;
     for var AnimName in AModel.AnimationManager.Animations.Keys do
       Names.Add(AnimName);
-    if Names.Count > 0 then
-      AModel.AnimationManager.PlayAnimation(Names[Names.Count - 1]);
+//    if Names.Count > 0 then
+//      AModel.AnimationManager.PlayAnimation(Names[Names.Count - 1]);
     Result := Names.ToStringArray;
   finally
     Names.Free;

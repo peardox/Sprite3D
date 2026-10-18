@@ -49,38 +49,6 @@ object MainForm: TMainForm
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
-          object DistanceLayout: TLayout
-            Align = Bottom
-            Position.Y = 662.000000000000000000
-            Size.Width = 626.000000000000000000
-            Size.Height = 32.000000000000000000
-            Size.PlatformDefault = False
-            TabOrder = 0
-            object DistanceLabel: TLabel
-              Align = Left
-              Margins.Left = 8.000000000000000000
-              Position.X = 8.000000000000000000
-              Size.Width = 96.000000000000000000
-              Size.Height = 32.000000000000000000
-              Size.PlatformDefault = False
-              Text = 'Distance x1.0'
-              TabOrder = 0
-            end
-            object DistanceTrack: TTrackBar
-              Align = Client
-              CanParentFocus = True
-              Max = 20.000000000000000000
-              Min = 1.000000000000000000
-              Orientation = Horizontal
-              Margins.Right = 8.000000000000000000
-              Size.Width = 514.000000000000000000
-              Size.Height = 19.000000000000000000
-              Size.PlatformDefault = False
-              TabOrder = 1
-              Value = 1.000000000000000000
-              OnChange = DistanceTrackChange
-            end
-          end
         end
         object ControlsLayout: TLayout
           Align = Right
@@ -89,107 +57,19 @@ object MainForm: TMainForm
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
-          object AzimuthDial: TArcDial
-            Position.X = 6.000000000000000000
-            Position.Y = 8.000000000000000000
-            RotationAngle = -90.000000000000000000
-            Size.Width = 144.000000000000000000
-            Size.Height = 144.000000000000000000
+          object AnimationListBox: TListBox
+            Align = Client
+            Size.Width = 150.000000000000000000
+            Size.Height = 694.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 2
-            OnChange = AzimuthDialChange
-          end
-          object AzimuthLabel: TLabel
-            Position.X = 8.000000000000000000
-            Position.Y = 160.000000000000000000
-            Size.Width = 144.000000000000000000
-            Size.Height = 17.000000000000000000
-            Size.PlatformDefault = False
-            TextSettings.HorzAlign = Center
-            Text = 'Azimuth'
-            TabOrder = 6
-          end
-          object AzimuthText: TLabel
-            StyledSettings = [FontColor]
-            Position.X = 16.000000000000000000
-            Position.Y = 16.000000000000000000
-            Size.Width = 132.000000000000000000
-            Size.Height = 132.000000000000000000
-            Size.PlatformDefault = False
-            TextSettings.Font.Family = 'Roboto'
-            TextSettings.Font.Size = 72.000000000000000000
-            TextSettings.Font.StyleExt = {00070000000000000004000000}
-            TextSettings.HorzAlign = Center
-            Text = '0'
-            TabOrder = 94
-          end
-          object AngleDial: TArcDial
-            Position.X = 6.000000000000000000
-            Position.Y = 390.000000000000000000
-            RotationAngle = -90.000000000000000000
-            Size.Width = 144.000000000000000000
-            Size.Height = 144.000000000000000000
-            Size.PlatformDefault = False
-            TabOrder = 0
-            OnChange = AngleDialChange
-          end
-          object AngleLabel: TLabel
-            Position.X = 8.000000000000000000
-            Position.Y = 536.000000000000000000
-            Size.Width = 144.000000000000000000
-            Size.Height = 17.000000000000000000
-            Size.PlatformDefault = False
-            TextSettings.HorzAlign = Center
-            Text = 'Inclination'
-            TabOrder = 4
-          end
-          object AngleText: TLabel
-            StyledSettings = [FontColor]
-            Position.X = 16.000000000000000000
-            Position.Y = 398.000000000000000000
-            Size.Width = 132.000000000000000000
-            Size.Height = 132.000000000000000000
-            Size.PlatformDefault = False
-            TextSettings.Font.Family = 'Roboto'
-            TextSettings.Font.Size = 72.000000000000000000
-            TextSettings.Font.StyleExt = {00070000000000000004000000}
-            TextSettings.HorzAlign = Center
-            Text = '0'
-            TabOrder = 92
-          end
-          object RollDial: TArcDial
-            Position.X = 6.000000000000000000
-            Position.Y = 200.000000000000000000
-            RotationAngle = -90.000000000000000000
-            Size.Width = 144.000000000000000000
-            Size.Height = 144.000000000000000000
-            Size.PlatformDefault = False
-            TabOrder = 1
-            OnChange = RollDialChange
-          end
-          object RollLabel: TLabel
-            Position.X = 8.000000000000000000
-            Position.Y = 352.000000000000000000
-            Size.Width = 144.000000000000000000
-            Size.Height = 17.000000000000000000
-            Size.PlatformDefault = False
-            TextSettings.HorzAlign = Center
-            Text = 'Roll'
-            TabOrder = 5
-          end
-          object RollText: TLabel
-            StyledSettings = [FontColor]
-            Position.X = 16.000000000000000000
-            Position.Y = 208.000000000000000000
-            Size.Width = 132.000000000000000000
-            Size.Height = 132.000000000000000000
-            Size.PlatformDefault = False
-            TextSettings.Font.Family = 'Roboto'
-            TextSettings.Font.Size = 72.000000000000000000
-            TextSettings.Font.StyleExt = {00070000000000000004000000}
-            TextSettings.HorzAlign = Center
-            Text = '0'
-            TabOrder = 93
+            TabOrder = 86
+            OnClick = AnimationListBoxClick
+            DisableFocusEffect = True
+            DefaultItemStyles.ItemStyle = ''
+            DefaultItemStyles.GroupHeaderStyle = ''
+            DefaultItemStyles.GroupFooterStyle = ''
+            Viewport.Width = 146.000000000000000000
+            Viewport.Height = 690.000000000000000000
           end
         end
       end
@@ -221,8 +101,8 @@ object MainForm: TMainForm
         Size.Height = 694.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
-        Viewport.Width = 776.000000000000000000
-        Viewport.Height = 694.000000000000000000
+        Viewport.Width = 772.000000000000000000
+        Viewport.Height = 690.000000000000000000
       end
     end
   end

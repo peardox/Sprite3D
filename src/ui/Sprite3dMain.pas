@@ -191,7 +191,8 @@ uses
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
-  Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground
+  Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
+  FMX.ListBox
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView, FMX.ListBox
   {$ENDIF}
@@ -234,48 +235,9 @@ type
     /// <summary>The area left of the control panel; owns the TGorillaViewport made in
     /// FormCreate.</summary>
     ViewportLayout: TLayout;
-    //** @abstract(Test strip along the bottom of the 3D view holding the distance slider.)
-    //**
-    //** For testing only; delete it, with DistanceLabel, DistanceTrack and
-    //** DistanceTrackChange, when it is no longer needed. The model is then always shown at
-    //** the fitted distance.
-    /// <summary>Test strip along the bottom of the 3D view holding the distance
-    /// slider.</summary>
-    /// <remarks>For testing only; delete it, with DistanceLabel, DistanceTrack and
-    /// DistanceTrackChange, when it is no longer needed. The model is then always shown at
-    /// the fitted distance.</remarks>
-    DistanceLayout: TLayout;
-    //** @abstract(Shows the distance slider's factor, such as "Distance x2.5".)
-    /// <summary>Shows the distance slider's factor, such as "Distance x2.5".</summary>
-    DistanceLabel: TLabel;
-    //** @abstract(Moves the camera out from the fitted distance, from x1 to x20; test only.)
-    //**
-    //** See DistanceTrackChange.
-    /// <summary>Moves the camera out from the fitted distance, from x1 to x20; test
-    /// only.</summary>
-    /// <remarks>See <see cref="DistanceTrackChange"/>.</remarks>
-    DistanceTrack: TTrackBar;
     //** @abstract(The right-hand control panel holding the dials and their labels.)
     /// <summary>The right-hand control panel holding the dials and their labels.</summary>
     ControlsLayout: TLayout;
-    //** @abstract(Sets the camera's Azimuth; see AzimuthDialChange.)
-    /// <summary>Sets the camera's Azimuth; see <see cref="AzimuthDialChange"/>.</summary>
-    AzimuthDial: TArcDial;
-    //** @abstract(The caption "Azimuth" above AzimuthDial.)
-    /// <summary>The caption "Azimuth" above AzimuthDial.</summary>
-    AzimuthLabel: TLabel;
-    //** @abstract(Shows the current azimuth in whole degrees.)
-    /// <summary>Shows the current azimuth in whole degrees.</summary>
-    AzimuthText: TLabel;
-    //** @abstract(Sets the camera's PolarAngle; see AngleDialChange.)
-    /// <summary>Sets the camera's PolarAngle; see <see cref="AngleDialChange"/>.</summary>
-    AngleDial: TArcDial;
-    //** @abstract(The caption "Inclination" above AngleDial.)
-    /// <summary>The caption "Inclination" above AngleDial.</summary>
-    AngleLabel: TLabel;
-    //** @abstract(Shows the current polar angle in whole degrees.)
-    /// <summary>Shows the current polar angle in whole degrees.</summary>
-    AngleText: TLabel;
     //** @abstract(An FMX TModel3D placed at design time; the code does not use it.)
     //**
     //** The model on screen is a TGorillaModel created at run time by SwitchModel.
@@ -283,15 +245,6 @@ type
     /// <remarks>The model on screen is a TGorillaModel created at run time by
     /// SwitchModel.</remarks>
     Model3D1: TModel3D;
-    //** @abstract(Sets the camera's Roll; see RollDialChange.)
-    /// <summary>Sets the camera's Roll; see <see cref="RollDialChange"/>.</summary>
-    RollDial: TArcDial;
-    //** @abstract(The caption "Roll" above RollDial.)
-    /// <summary>The caption "Roll" above RollDial.</summary>
-    RollLabel: TLabel;
-    //** @abstract(Shows the current roll in whole degrees.)
-    /// <summary>Shows the current roll in whole degrees.</summary>
-    RollText: TLabel;
     //** @abstract(Asks for the model file that File, OpenModel loads.)
     //**
     //** Its filter, set in the form designer, offers only the formats the unit has loaders
@@ -432,6 +385,7 @@ type
     //** @abstract(The "Side View" view; see ViewSideItemClick.)
     /// <summary>The "Side View" view; see <see cref="ViewSideItemClick"/>.</summary>
     ViewSideItem: TMenuItem;
+    AnimationListBox: TListBox;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
     //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
@@ -507,32 +461,6 @@ type
     /// saved as soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
-    //** @abstract(Copies AzimuthDial to the camera's Azimuth.)
-    //**
-    //** The dial value is negated, wrapped into 0 to 360 and shown in AzimuthText. The camera
-    //** gets the angle reversed, 360 minus the readout, so the view turns the right way for the
-    //** dial. The model is not refitted; see FitAnyAngleItem.
-    //**
-    //** @param(Sender AzimuthDial.)
-    /// <summary>Copies AzimuthDial to the camera's Azimuth.</summary>
-    /// <remarks>The dial value is negated, wrapped into 0 to 360 and shown in AzimuthText. The
-    /// camera gets the angle reversed, 360 minus the readout, so the view turns the right way
-    /// for the dial. The model is not refitted; see <see cref="FitAnyAngleItem"/>.</remarks>
-    /// <param name="Sender">AzimuthDial.</param>
-    procedure AzimuthDialChange(Sender: TObject);
-    //** @abstract(Copies AngleDial to the camera's PolarAngle.)
-    //**
-    //** The dial value is negated and wrapped into 0 to 360, shown in AngleText and written to
-    //** the camera. Values past 90 take the camera over the pole. The model is not refitted;
-    //** see FitAnyAngleItem.
-    //**
-    //** @param(Sender AngleDial.)
-    /// <summary>Copies AngleDial to the camera's PolarAngle.</summary>
-    /// <remarks>The dial value is negated and wrapped into 0 to 360, shown in AngleText and
-    /// written to the camera. Values past 90 take the camera over the pole. The model is not
-    /// refitted; see <see cref="FitAnyAngleItem"/>.</remarks>
-    /// <param name="Sender">AngleDial.</param>
-    procedure AngleDialChange(Sender: TObject);
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
     //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
@@ -800,6 +728,7 @@ type
     /// turn from View, Camera, Head On.</remarks>
     /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
+    procedure AnimationListBoxClick(Sender: TObject);
   private
     { Private declarations }
     FSetupComplete: Boolean;
@@ -970,15 +899,6 @@ begin
   // Fill the space the bottom test strip (DistanceLayout) leaves
   GorillaViewport.Align := TAlignLayout.Client;
 
-  // Point the dials at the starting angles, then show those angles and give
-  // them to the camera. Setting a dial fires its OnChange, which reads the
-  // same angle back, so the fields keep their values; ApplyAngles covers a
-  // dial that was already in place and so fired nothing.
-  AzimuthDial.Value := -FAzimuth;
-  AngleDial.Value := -FPolarAngle;
-  RollDial.Value := FRoll;
-  ApplyAngles;
-
   // The camera view as it was left last session; Isometric the first time
   RestoreCameraView;
 
@@ -1109,29 +1029,33 @@ end;
 // minus the readout) so the view turns the right way for the dial.
 // Dials do not refit: with "Fit any angle" off, turning one can push the
 // model past the edge until the next refit; with it on, it never does.
+procedure TMainForm.AnimationListBoxClick(Sender: TObject);
+var
+  ani: String;
+  lbi: TListBoxItem ;
+begin
+  if Assigned(GorillaModel) then
+    begin
+      if AnimationListBox.ItemIndex > 0 then
+        begin
+          ani := AnimationListBox.Items[AnimationListBox.ItemIndex];
+          GorillaModel.AnimationManager.PlayAnimation(ani);
+        end
+      else if AnimationListBox.ItemIndex = 0 then
+        begin
+          // Show base model
+        end;
+    end;
+end;
+
 procedure TMainForm.ApplyAngles;
 begin
-  AzimuthText.Text := DegreesText(FAzimuth);
-  AngleText.Text := DegreesText(FPolarAngle);
-  RollText.Text := DegreesText(FRoll);
   if Assigned(GorillaCamera) then
   begin
     GorillaCamera.Azimuth := Wrap360(-FAzimuth);
     GorillaCamera.PolarAngle := FPolarAngle;
     GorillaCamera.Roll := FRoll;
   end;
-end;
-
-procedure TMainForm.AngleDialChange(Sender: TObject);
-begin
-  FPolarAngle := Wrap360(-AngleDial.Value);
-  ApplyAngles;
-end;
-
-procedure TMainForm.AzimuthDialChange(Sender: TObject);
-begin
-  FAzimuth := Wrap360(-AzimuthDial.Value);
-  ApplyAngles;
 end;
 
 procedure TMainForm.OrthographicItemClick(Sender: TObject);
@@ -1159,8 +1083,6 @@ end;
 
 procedure TMainForm.RollDialChange(Sender: TObject);
 begin
-  FRoll := Wrap360(RollDial.Value);
-  ApplyAngles;
 end;
 
 // On startup load a default Model as specified by DefaultLoadType
@@ -1257,9 +1179,6 @@ begin
     FAzimuth := Wrap360(FSettings.VariableAzimuth);
     FPolarAngle := Wrap360(FSettings.VariableInclination);
     FRoll := Wrap360(FSettings.VariableRoll);
-    AzimuthDial.Value := -FAzimuth;
-    AngleDial.Value := -FPolarAngle;
-    RollDial.Value := FRoll;
     ApplyAngles;
     ViewVariableItemClick(ViewVariableItem);
   end
@@ -1574,11 +1493,11 @@ begin
   try
     if FSetupComplete and (Dialog.ShowModal = mrOk) then
       begin
-        FAzimuth := CameraSpec.Azimuth;
-        FRoll := CameraSpec.Roll;
-        FPolarAngle := CameraSpec.PolarAngle;
-        FFactor := CameraSpec.Distance;
-        FFitOrthoHeight := CameraSpec.Height;
+        FAzimuth := Dialog.CameraSpec.Azimuth;
+        FRoll := Dialog.CameraSpec.Roll;
+        FPolarAngle := Dialog.CameraSpec.PolarAngle;
+        FFactor := Dialog.CameraSpec.Distance;
+        FFitOrthoHeight := Dialog.CameraSpec.Height;
         ApplyAngles;
         ApplyDistance;
       end;
@@ -1588,9 +1507,6 @@ begin
 
   {$ENDIF}
   ClearViewChecks;
-  AzimuthDial.Enabled := True;
-  AngleDial.Enabled := True;
-  RollDial.Enabled := True;
   ViewVariableItem.IsChecked := True;
 end;
 
@@ -1647,13 +1563,7 @@ begin
   FPolarAngle := APolarAngle;
   FRoll := FIXED_ROLL;
   // Turn the dials to match; their OnChange reads the same angles back
-  AzimuthDial.Value := -FAzimuth;
-  AngleDial.Value := -FPolarAngle;
-  RollDial.Value := FRoll;
   ApplyAngles;
-  AzimuthDial.Enabled := False;
-  AngleDial.Enabled := False;
-  RollDial.Enabled := False;
   FitModel;   // a deliberate change of view, so frame the model for it
 end;
 
@@ -1684,7 +1594,6 @@ var
   Factor: Single;
 begin
   Factor := FFactor; // DistanceTrack.Value;
-  DistanceLabel.Text := Format('Distance x%.1f', [Factor]);
   if not Assigned(GorillaCamera) or (FFitDistance <= 0) then
     Exit;
   if GorillaCamera.IsOrthographic then
@@ -1767,16 +1676,18 @@ begin
       GorillaModel.Parent := GorillaViewport;
     end;
 
+  AnimationListBox.Items.Clear;
+  AnimationListBox.Items.Add('Static');
   try
     Anims := LoadModelFile(GorillaModel, AModel, BBox);
     // The model's own bounds, before any helper is added: the grid's floor
     FModelBox := BBox;
     if Length(Anims) > 0 then
       begin
-        DebugMemo.Lines.Add('---------- anims ---------------');
         for var AnimName in Anims do
-          DebugMemo.Lines.Add(AnimName);
-        DebugMemo.Lines.Add('--------------------------------');
+        begin
+          AnimationListBox.Items.Add(AnimName);
+        end;
       end;
 
     GorillaCamera.Roll := FRoll;
