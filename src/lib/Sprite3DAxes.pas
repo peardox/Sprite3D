@@ -41,7 +41,7 @@
 //**
 //** @preformatted(
 //** ShowModelAxes@(GorillaModel1@);                // after the model is loaded; drawn on top
-//** ShowModelAxes@(GorillaModel1@, 2, False@);      // shader lines 2 pixels wide
+//** ShowModelAxes@(GorillaModel1, 2, False@);       // shader lines 2 pixels wide
 //** HideModelAxes@(GorillaModel1@);
 //** )
 unit Sprite3DAxes;

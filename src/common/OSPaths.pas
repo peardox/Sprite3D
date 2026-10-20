@@ -1,29 +1,79 @@
+//** @abstract(Where the program and its assets are, on each platform.)
+//**
+//** GetAssetsPath gives the folder a program's own files, such as models, are deployed to, and
+//** GetBinaryPath the folder its executable is in, for loading libraries shipped with it. On
+//** Windows, when the program was started from the RAD Studio IDE, either can instead give a
+//** folder relative to the executable, such as the repository root, so a build run from the
+//** source tree finds the files there.
+//**
+//** Every path returned ends with the platform's path delimiter, so a folder name can be
+//** appended directly. iOS is not handled yet.
 unit OSPaths;
+
+{
+  Where the program and its assets are, on each platform.
+
+  GetAssetsPath gives the folder a program's own files, such as models, are
+  deployed to, and GetBinaryPath the folder its executable is in, for
+  loading libraries shipped with it. On Windows, when the program was
+  started from the RAD Studio IDE, either can instead give a folder relative
+  to the executable, such as the repository root, so a build run from the
+  source tree finds the files there.
+
+  Every path returned ends with the platform's path delimiter, so a folder
+  name can be appended directly. iOS is not handled yet.
+}
 
 interface
 
+//** @abstract(The folder a program's own files are deployed to.)
+//**
+//** Windows and Linux: the executable's folder. macOS: the application bundle's Resources
+//** folder. Android: the app's private files folder. On Windows, when started from the IDE,
+//** whether under the debugger or not, DevelopmentPath is taken relative to the executable's
+//** folder instead, for example @code('../../../') for the repository root from
+//** @code(src/Win64/Debug). iOS: not handled yet; the result is undefined.
+//**
+//** @param(DevelopmentPath A folder relative to the executable's, used on Windows when started
+//** from the IDE; empty to always use the executable's folder.)
+//**
+//** @returns(The folder, ending with a path delimiter.)
+//**
+//** @raises(EOSError If Windows or Linux cannot report the executable's path.)
+/// <summary>The folder a program's own files are deployed to.</summary>
+/// <remarks>Windows and Linux: the executable's folder. macOS: the application bundle's
+/// Resources folder. Android: the app's private files folder. On Windows, when started from
+/// the IDE, whether under the debugger or not, DevelopmentPath is taken relative to the
+/// executable's folder instead, for example <c>'../../../'</c> for the repository root from
+/// <c>src/Win64/Debug</c>. iOS: not handled yet; the result is undefined.</remarks>
+/// <param name="DevelopmentPath">A folder relative to the executable's, used on Windows when
+/// started from the IDE; empty to always use the executable's folder.</param>
+/// <returns>The folder, ending with a path delimiter.</returns>
+/// <exception cref="EOSError">If Windows or Linux cannot report the executable's
+/// path.</exception>
 function GetAssetsPath(const DevelopmentPath: string = ''): string;
-// GetAssetsPath is a multi-OS (Currently Win/Mac/Linux) path
-// resolver that will ...
-// Linux  - Return application directory
-// Window - Return application directory
-// MacOS  - Return application bundle Resources directory
-//
-// Window (Running from IDE) - Returns a directory relative application
-//                             directory as passed in DevelopmentPath for
-//                             example '../..' that is within the build tree
-//
-// All returned paths will have the OS relevant path delimeter at the end
-// therefore appending e.g. 'assets' + pathdelim to this would return a
-// consistent folder layout accross systems that will be relevant for
-// application deployment as well
-//
-// ToDo: Android + iOS
 
+//** @abstract(The folder the program's executable is in, for libraries shipped with it.)
+//**
+//** As GetAssetsPath, except that on macOS it is the bundle's executable folder,
+//** @code(Contents/MacOS), and on Android nothing is returned yet.
+//**
+//** @param(DevelopmentPath A folder relative to the executable's, used on Windows when started
+//** from the IDE; empty to always use the executable's folder.)
+//**
+//** @returns(The folder, ending with a path delimiter.)
+//**
+//** @raises(EOSError If Windows or Linux cannot report the executable's path.)
+/// <summary>The folder the program's executable is in, for libraries shipped with
+/// it.</summary>
+/// <remarks>As GetAssetsPath, except that on macOS it is the bundle's executable folder,
+/// <c>Contents/MacOS</c>, and on Android nothing is returned yet.</remarks>
+/// <param name="DevelopmentPath">A folder relative to the executable's, used on Windows when
+/// started from the IDE; empty to always use the executable's folder.</param>
+/// <returns>The folder, ending with a path delimiter.</returns>
+/// <exception cref="EOSError">If Windows or Linux cannot report the executable's
+/// path.</exception>
 function GetBinaryPath(const DevelopmentPath: string = ''): string;
-// See GetAssetsPath
-// This is intended to allow development dynamic libraries
-// to be flexibly loaded (not as widely useful)
 
 implementation
 

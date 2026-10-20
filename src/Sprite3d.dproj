@@ -4,7 +4,7 @@
         <ProjectVersion>20.5</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>2790547</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -111,7 +111,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_UnitSearchPath>..\delphi-neon\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>ffmpeg;..\delphi-neon\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
@@ -376,16 +376,17 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DStyles.pas"/>
         <DCCReference Include="lib\Sprite3DTitleBar.pas"/>
         <DCCReference Include="lib\Sprite3DFlatColour.pas"/>
+        <DCCReference Include="ui\Sprite3DSettingsForm.pas">
+            <Form>GeneralSettingsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <DCCReference Include="lib\Sprite3DSpriteSheet.pas"/>
         <DCCReference Include="lib\Sprite3DAnimCapture.pas"/>
         <DCCReference Include="ui\Sprite3DAnimationForm.pas">
             <Form>AnimationSettingsForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
-        <DCCReference Include="ui\Sprite3DSettingsForm.pas">
-            <Form>GeneralSettingsForm</Form>
-            <FormType>fmx</FormType>
-        </DCCReference>
+        <DCCReference Include="lib\Sprite3DVideo.pas"/>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>

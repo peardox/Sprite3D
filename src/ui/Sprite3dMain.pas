@@ -13,8 +13,9 @@
 //** the view turns the right way for the dial. View, Camera, Variable lets the dials set the
 //** angles; View, Camera, Isometric, the default for now, sets the readouts to inclination
 //** 35.264, azimuth 45 and roll 0, the true isometric view, and switches the dials off; View,
-//** Camera, Pixel 2:1 does the same with an inclination of about 26.565; View, Camera, 3/4 View
-//** uses 45 degrees through the orthographic camera; View, Camera, Head On and View, Camera,
+//** Camera, Pixel 2:1 does the same with an inclination of about 26.565; View, Camera, 1/4
+//** View, 3/4 View, Sqrt@(2@) and Golden Ratio use about 22.5, 45, 54.736 and 58.283; View,
+//** Camera, Head On and View, Camera,
 //** Top Down use inclinations of 0 and 90 at azimuth 0; and View, Camera, Side View uses
 //** inclination 0 at azimuth 90. A test slider along the bottom of the 3D view moves the camera
 //** out from the fitted distance, x1 to x20.
@@ -48,24 +49,27 @@
 //** off by default and kept in settings.json.
 //**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu
-//** with Save as sprite strip, Save as Texture Atlas and Save as AniGif. Each grabs every frame
-//** of that animation off screen, from the first to the last, at the grab size and with one
-//** framing that fits every frame, and saves them in SaveFolder: side by side in one row as
-//** @code(<animation>_strip<frames>.png), in a square grid read left to right and top to bottom
-//** as @code(<animation>.png), or as a looping @code(<animation>.gif). The @code(@(None@))
-//** entry, which has no animation, captures instead one full turn of the model in one second,
-//** at the File, Animation frame rate, named after the model with @code(_rotate) added. On Android and iOS, which have
-//** no right-click, the same three items are in an Animation group of the menu drawer and act on
-//** the selected entry.
+//** with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4 video. Each
+//** grabs every frame of that animation off screen, from the first to the last, at the grab
+//** size and with one framing that fits every frame, and saves them in SaveFolder: side by side
+//** in one row as @code(<animation>_strip<frames>.png), in a square grid read left to right and
+//** top to bottom as @code(<animation>.png), as a looping @code(<animation>.gif), or as a
+//** video-only MPEG-4 @code(<animation>.mp4) through Sprite3DVideo. MP4 is offered only when
+//** the FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The
+//** @code(@(None@)) entry, which has no animation, captures instead one full turn of the model
+//** in one second, at the File, Animation frame rate, named after the model with
+//** @code(_rotate) added. On Android and iOS, which have no right-click, the same items are in
+//** an Animation group of the menu drawer and act on the selected entry.
 //**
 //** File, Animation... sets the frame rate every saved animation uses, 30 frames a second
 //** unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it:
 //** one cycle is cut into the whole number of equal steps nearest that rate, so the saved
 //** frames still loop exactly; see TSprite3DAnimationFrames.
 //**
-//** Each entry also has a tick box. Below the list, All ticks or clears every entry, a drop-down
-//** chooses Sprite strip, Texture Atlas or AniGif, and Export saves every ticked entry that
-//** way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so
+//** Each entry also has a tick box. Below the list, All ticks every animation, leaving
+//** @code(@(None@)) as it is so the turn is exported only when ticked by hand, or clears every
+//** entry; a drop-down chooses Sprite strip, Texture Atlas, AniGif or, when FFmpeg loaded, MP4
+//** video, and Export saves every ticked entry that way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so
 //** a new sub-folder can be made there for the batch. SaveFolder itself is not changed. A
 //** failed entry is reported at the end and does not stop the others. Each entry is unticked as
 //** soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while
@@ -115,7 +119,10 @@
 //**     |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
 //**     |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
 //**     |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+//**     |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
+//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+//**     |   |-- ViewRoot2Item "Sqrt@(2@)"       fixed, inclination about 54.736
+//**     |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
 //**     |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
 //**     |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
 //**     |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
@@ -147,7 +154,8 @@ unit Sprite3dMain;
   default for now, sets the readouts to inclination 35.264, azimuth 45 and
   roll 0, the true isometric view, and switches the dials off; View, Camera,
   Pixel 2:1 does the same with an inclination of about 26.565; View, Camera,
-  3/4 View uses 45 degrees through the orthographic camera; View, Camera, Head
+  1/4 View, 3/4 View, Sqrt(2) and Golden Ratio use about 22.5, 45, 54.736 and
+  58.283; View, Camera, Head
   On and View, Camera, Top Down use inclinations of 0 and 90 at azimuth 0; and
   View, Camera, Side View uses inclination 0 at azimuth 90. A test slider
   along the bottom of the 3D view moves the camera out from the fitted
@@ -188,17 +196,19 @@ unit Sprite3dMain;
   settings.json.
 
   Right-clicking an entry in the Animations list selects and plays it, and
-  opens a pop-up menu with Save as sprite strip, Save as Texture Atlas and
-  Save as AniGif. Each grabs every frame of that animation off screen, from
-  the first to the last, at the grab size and with one framing that fits
-  every frame, and saves them in SaveFolder: side by side in one row as
-  <animation>_strip<frames>.png, in a square grid read left to right and top
-  to bottom as <animation>.png, or as a looping <animation>.gif. The (None)
-  entry, which has no animation, captures instead one full turn of the model
-  in one second, at the File, Animation frame rate, named after the model
-  with _rotate added. On
-  Android and iOS, which have no right-click, the same three items are in an
-  Animation group of the menu drawer and act on the selected entry.
+  opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save
+  as AniGif and Save as MP4 video. Each grabs every frame of that animation
+  off screen, from the first to the last, at the grab size and with one
+  framing that fits every frame, and saves them in SaveFolder: side by side
+  in one row as <animation>_strip<frames>.png, in a square grid read left to
+  right and top to bottom as <animation>.png, as a looping <animation>.gif,
+  or as a video-only MPEG-4 <animation>.mp4 through Sprite3DVideo. MP4 is
+  offered only when the FFmpeg libraries load; DebugMemo says at start-up
+  whether they did and from where. The (None) entry, which has no animation,
+  captures instead one full turn of the model in one second, at the File,
+  Animation frame rate, named after the model with _rotate added. On Android
+  and iOS, which have no right-click, the same items are in an Animation
+  group of the menu drawer and act on the selected entry.
 
   File, Animation... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
@@ -206,9 +216,10 @@ unit Sprite3dMain;
   equal steps nearest that rate, so the saved frames still loop exactly; see
   TSprite3DAnimationFrames.
 
-  Each entry also has a tick box. Below the list, All ticks or clears every
-  entry, a drop-down chooses Sprite strip, Texture Atlas or AniGif, and
-  Export saves every ticked entry that way, one after another, in a folder
+  Each entry also has a tick box. Below the list, All ticks every animation,
+  leaving (None) as it is so the turn is exported only when ticked by hand,
+  or clears every entry; a drop-down chooses Sprite strip, Texture Atlas,
+  AniGif or, when FFmpeg loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a folder
   chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can
   be made there for the batch. SaveFolder itself is not changed. A failed
   entry is reported at the end and does not stop the others. Each entry is
@@ -263,7 +274,10 @@ unit Sprite3dMain;
         |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
         |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
         |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+        |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
+        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+        |   |-- ViewRoot2Item "Sqrt(2)"         fixed, inclination about 54.736
+        |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
         |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
         |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
         |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
@@ -287,7 +301,7 @@ uses
   FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
-  Sprite3DAnimationForm,
+  Sprite3DAnimationForm, Sprite3DVideo,
   Sprite3DSpriteSheet
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -306,7 +320,12 @@ type
     skAtlas,
     //** @abstract(A looping animated GIF, saved as @code(<name>.gif).)
     /// <summary>A looping animated GIF, saved as <c>&lt;name&gt;.gif</c>.</summary>
-    skGif);
+    skGif,
+    //** @abstract(A video-only MPEG-4 MP4, saved as @code(<name>.mp4); only offered when the
+    //** FFmpeg libraries load.)
+    /// <summary>A video-only MPEG-4 MP4, saved as <c>&lt;name&gt;.mp4</c>; only offered when
+    /// the FFmpeg libraries load.</summary>
+    skMp4);
 
   //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
   //**
@@ -516,10 +535,20 @@ type
     /// it as a sprite strip, a texture atlas or an animated GIF; see the unit
     /// description.</remarks>
     AnimationListBox: TListBox;
+    //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
+    /// <summary>The "1/4 View" view; see <see cref="ViewOneQuarterItemClick"/>.</summary>
     ViewOneQuarterItem: TMenuItem;
+    //** @abstract(The "Sqrt@(2@)" view; see ViewRoot2ItemClick.)
+    /// <summary>The "Sqrt(2)" view; see <see cref="ViewRoot2ItemClick"/>.</summary>
     ViewRoot2Item: TMenuItem;
+    //** @abstract(The "Golden Ratio" view; see ViewGoldenRatioItemClick.)
+    /// <summary>The "Golden Ratio" view; see <see cref="ViewGoldenRatioItemClick"/>.</summary>
     ViewGoldenRatioItem: TMenuItem;
+    //** @abstract(A separator line in the View, Camera menu, between groups of views.)
+    /// <summary>A separator line in the View, Camera menu, between groups of views.</summary>
     CameraSeparatorItem1: TMenuItem;
+    //** @abstract(A separator line in the View, Camera menu, between groups of views.)
+    /// <summary>A separator line in the View, Camera menu, between groups of views.</summary>
     CameraSeparatorItem2: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
@@ -848,17 +877,17 @@ type
     /// pixel art.</remarks>
     /// <param name="Sender">ViewPixel2To1Item.</param>
     procedure ViewPixel2To1ItemClick(Sender: TObject);
-    //** @abstract(Sets the 3/4 view, through the orthographic camera, and fixes it.)
+    //** @abstract(Sets the 3/4 view and fixes it.)
     //**
-    //** The angle of military projection: inclination 45 degrees at azimuth 45. It also ticks
-    //** OrthographicItem, switching the camera to orthographic, which gives the flat look of
-    //** 3/4-view game art. Other views leave the projection as it is.
+    //** The angle of military projection: inclination 45 degrees at azimuth 45. The projection
+    //** is applied again as it stands, so View, Orthographic gives the flat look of 3/4-view
+    //** game art; the view no longer switches it on by itself.
     //**
     //** @param(Sender ViewThreeQuarterItem.)
-    /// <summary>Sets the 3/4 view, through the orthographic camera, and fixes it.</summary>
-    /// <remarks>The angle of military projection: inclination 45 degrees at azimuth 45. It also
-    /// ticks OrthographicItem, switching the camera to orthographic, which gives the flat look of
-    /// 3/4-view game art. Other views leave the projection as it is.</remarks>
+    /// <summary>Sets the 3/4 view and fixes it.</summary>
+    /// <remarks>The angle of military projection: inclination 45 degrees at azimuth 45. The
+    /// projection is applied again as it stands, so View, Orthographic gives the flat look of
+    /// 3/4-view game art; the view no longer switches it on by itself.</remarks>
     /// <param name="Sender">ViewThreeQuarterItem.</param>
     procedure ViewThreeQuarterItemClick(Sender: TObject);
     //** @abstract(Sets the head-on view and fixes it.)
@@ -901,8 +930,38 @@ type
     /// started.</remarks>
     /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxClick(Sender: TObject);
+    //** @abstract(Sets the 1/4 view and fixes it.)
+    //**
+    //** Inclination 22.5 degrees at azimuth 45: a lower look than View, Camera, 3/4 View. The
+    //** projection is applied again as it stands, and the model refitted.
+    //**
+    //** @param(Sender ViewOneQuarterItem.)
+    /// <summary>Sets the 1/4 view and fixes it.</summary>
+    /// <remarks>Inclination 22.5 degrees at azimuth 45: a lower look than View, Camera, 3/4
+    /// View. The projection is applied again as it stands, and the model refitted.</remarks>
+    /// <param name="Sender">ViewOneQuarterItem.</param>
     procedure ViewOneQuarterItemClick(Sender: TObject);
+    //** @abstract(Sets the Sqrt@(2@) view and fixes it.)
+    //**
+    //** As View, Camera, Isometric, but with the inclination ArcTan@(Sqrt@(2@)@), about 54.736
+    //** degrees, the complement of the isometric angle.
+    //**
+    //** @param(Sender ViewRoot2Item.)
+    /// <summary>Sets the Sqrt(2) view and fixes it.</summary>
+    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(Sqrt(2)), about
+    /// 54.736 degrees, the complement of the isometric angle.</remarks>
+    /// <param name="Sender">ViewRoot2Item.</param>
     procedure ViewRoot2ItemClick(Sender: TObject);
+    //** @abstract(Sets the golden-ratio view and fixes it.)
+    //**
+    //** As View, Camera, Isometric, but with the inclination ArcTan@(1.618...@), the golden
+    //** ratio, about 58.283 degrees.
+    //**
+    //** @param(Sender ViewGoldenRatioItem.)
+    /// <summary>Sets the golden-ratio view and fixes it.</summary>
+    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(1.618...), the
+    /// golden ratio, about 58.283 degrees.</remarks>
+    /// <param name="Sender">ViewGoldenRatioItem.</param>
     procedure ViewGoldenRatioItemClick(Sender: TObject);
   private
     { Private declarations }
@@ -1037,6 +1096,7 @@ type
     procedure SaveStripItemClick(Sender: TObject);
     procedure SaveAtlasItemClick(Sender: TObject);
     procedure SaveGifItemClick(Sender: TObject);
+    procedure SaveMp4ItemClick(Sender: TObject);
     procedure StartSingleCapture(const AKind: TSheetKind);
     function StartCapture(const AKind: TSheetKind; const AIndex: Integer;
       const AFolder: String; const AOnFinished: TProc<String>;
@@ -1055,7 +1115,7 @@ type
       const AWidth, AHeight: Integer): Boolean;
     procedure EndCapture;
     function SaveSheet(const AKind: TSheetKind; const AFrames: TArray<TSprite3DImage>;
-      const AFolder, AStem: String; const ADelay: Integer): String;
+      const AFolder, AStem: String; const ACycleSeconds: Double): String;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -2387,15 +2447,13 @@ end;
 // of the drawer; they act on the selected entry.
 procedure TMainForm.BuildAnimationMenu;
 
-  procedure AddItem(const AParent: TFmxObject; const AText: String;
-    const AOnClick: TNotifyEvent);
-  var
-    Item: TMenuItem;
+  function AddItem(const AParent: TFmxObject; const AText: String;
+    const AOnClick: TNotifyEvent): TMenuItem;
   begin
-    Item := TMenuItem.Create(Self);
-    Item.Text := AText;
-    Item.OnClick := AOnClick;
-    AParent.AddObject(Item);
+    Result := TMenuItem.Create(Self);
+    Result.Text := AText;
+    Result.OnClick := AOnClick;
+    AParent.AddObject(Result);
   end;
 
 begin
@@ -2407,6 +2465,9 @@ begin
   AddItem(FAnimationPopup, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationPopup, 'Save as Texture Atlas', SaveAtlasItemClick);
   AddItem(FAnimationPopup, 'Save as AniGif', SaveGifItemClick);
+  // MP4 needs the FFmpeg libraries: offered only if they load
+  AddItem(FAnimationPopup, 'Save as MP4 video', SaveMp4ItemClick).Enabled := VideoAvailable;
+  DebugMemo.Lines.Add(VideoStatus);
   BuildBatchControls;
 
   // File, Animation..., just above Settings...
@@ -2421,6 +2482,8 @@ begin
   AddItem(FAnimationMenu, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationMenu, 'Save as Texture Atlas', SaveAtlasItemClick);
   AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
+  if VideoAvailable then
+    AddItem(FAnimationMenu, 'Save as MP4 video', SaveMp4ItemClick);
   {$ENDIF}
 end;
 
@@ -2536,6 +2599,11 @@ begin
   StartSingleCapture(skGif);
 end;
 
+procedure TMainForm.SaveMp4ItemClick(Sender: TObject);
+begin
+  StartSingleCapture(skMp4);
+end;
+
 // True from the start of a single capture or a batch until it has saved
 // everything; between a batch's entries FCapture is briefly nil
 function TMainForm.Capturing: Boolean;
@@ -2579,7 +2647,8 @@ function TMainForm.StartCapture(const AKind: TSheetKind; const AIndex: Integer;
   const AFolder: String; const AOnFinished: TProc<String>;
   out AError: String): Boolean;
 var
-  Count, Delay: Integer;
+  Count: Integer;
+  CycleSeconds: Double;
   Anim: TGorillaAnimation;
   Source: TSprite3DFrameSource;
   Capture: TSprite3DFrameCapture;
@@ -2603,6 +2672,11 @@ begin
   if (AIndex < 0) or (AIndex >= AnimationListBox.Count) then
   begin
     AError := 'There is no such entry in the animation list.';
+    Exit;
+  end;
+  if (AKind = skMp4) and not VideoAvailable then
+  begin
+    AError := 'MP4 video is not available: ' + VideoStatus;
     Exit;
   end;
 
@@ -2629,7 +2703,7 @@ begin
   end;
 
   Count := Source.FrameCount;
-  Delay := Source.FrameDelay;
+  CycleSeconds := Source.Duration;
   // The frames, and the strip or atlas made from them
   Bytes := Int64(Count) * FOffscreen.Width * FOffscreen.Height * 4 * 2;
   if Bytes > MAX_CAPTURE_BYTES then
@@ -2665,7 +2739,7 @@ begin
         Outcome := Stem + ': capture failed: ' + ACaptureError
       else
         try
-          FileName := SaveSheet(Kind, AFrames, Folder, Stem, Delay);
+          FileName := SaveSheet(Kind, AFrames, Folder, Stem, CycleSeconds);
           DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [FileName, Length(AFrames)]));
         except
           on E: Exception do
@@ -2734,6 +2808,8 @@ begin
   FBatchKindBox.Items.Add('Sprite strip');
   FBatchKindBox.Items.Add('Texture Atlas');
   FBatchKindBox.Items.Add('AniGif');
+  if VideoAvailable then
+    FBatchKindBox.Items.Add('MP4 video');
   FBatchKindBox.ItemIndex := Ord(skStrip);
 
   // Second row: Export, and Abort beside it
@@ -2767,7 +2843,9 @@ begin
   UpdateBatchControls;
 end;
 
-// All ticks every entry, or clears them all
+// All ticks every animation, or clears every entry. (None), entry 0, is not
+// an animation, so ticking All leaves it as it is; it is only exported when
+// ticked by hand. Clearing All clears it too.
 procedure TMainForm.BatchAllChange(Sender: TObject);
 var
   I: Integer;
@@ -2777,13 +2855,15 @@ begin
   FSyncingChecks := True;
   try
     for I := 0 to AnimationListBox.Count - 1 do
-      AnimationListBox.ListItems[I].IsChecked := FBatchAll.IsChecked;
+      if (I > 0) or not FBatchAll.IsChecked then
+        AnimationListBox.ListItems[I].IsChecked := FBatchAll.IsChecked;
   finally
     FSyncingChecks := False;
   end;
 end;
 
-// A tick changed by hand: All shows whether every entry is ticked
+// A tick changed by hand: All shows whether every animation is ticked,
+// whatever (None), entry 0, is set to
 procedure TMainForm.AnimationListBoxChangeCheck(Sender: TObject);
 var
   I: Integer;
@@ -2791,8 +2871,8 @@ var
 begin
   if FSyncingChecks or (FBatchAll = nil) then
     Exit;
-  Every := AnimationListBox.Count > 0;
-  for I := 0 to AnimationListBox.Count - 1 do
+  Every := AnimationListBox.Count > 1;
+  for I := 1 to AnimationListBox.Count - 1 do
     if not AnimationListBox.ListItems[I].IsChecked then
     begin
       Every := False;
@@ -3019,7 +3099,7 @@ end;
 // name is replaced. Returns the file written; raises if it cannot be.
 function TMainForm.SaveSheet(const AKind: TSheetKind;
   const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
-  const ADelay: Integer): String;
+  const ACycleSeconds: Double): String;
 var
   Cells: Integer;
 begin
@@ -3036,10 +3116,17 @@ begin
         Result := TPath.Combine(AFolder, AStem + '.png');
         SavePng(ComposeAtlas(AFrames, Cells), Result);
       end;
+    skGif:
+      begin
+        // Each frame's share of the cycle, in hundredths of a second
+        Result := TPath.Combine(AFolder, AStem + '.gif');
+        SaveAnimatedGif(AFrames, Result,
+          Max(1, Round(100 * ACycleSeconds / Max(1, Length(AFrames)))));
+      end;
   else
     begin
-      Result := TPath.Combine(AFolder, AStem + '.gif');
-      SaveAnimatedGif(AFrames, Result, ADelay);
+      Result := TPath.Combine(AFolder, AStem + '.mp4');
+      SaveMpeg4Video(AFrames, Result, ACycleSeconds);
     end;
   end;
 end;

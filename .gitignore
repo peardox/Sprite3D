@@ -46,6 +46,7 @@ Linux64/
 *.bpi
 *.dcp
 *.so
+*.dylib
 *.apk
 *.drc
 *.map

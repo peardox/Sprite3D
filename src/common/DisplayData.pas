@@ -1,4 +1,22 @@
+//** @abstract(The displays attached to a Windows PC, with their names, sizes and modes.)
+//**
+//** TPeardoxDisplays lists every monitor Windows knows of when it is created: its device
+//** name, the monitor's own name and physical size where its EDID gives them, its desktop
+//** and work areas, its current mode and every mode it offers. Not used by Sprite3D yet.
+//**
+//** Windows only. For the main thread.
 unit DisplayData;
+
+{
+  The displays attached to a Windows PC, with their names, sizes and modes.
+
+  TPeardoxDisplays lists every monitor Windows knows of when it is created:
+  its device name, the monitor's own name and physical size where its EDID
+  gives them, its desktop and work areas, its current mode and every mode it
+  offers. Not used by Sprite3D yet.
+
+  Windows only. For the main thread.
+}
 
 interface
 
@@ -7,32 +25,80 @@ uses
   Winapi.Windows, Winapi.MultiMon;
 
 type
+  //** @abstract(One display mode: resolution, colour depth and refresh rate.)
+  /// <summary>One display mode: resolution, colour depth and refresh rate.</summary>
   TDisplayMode = record
+    //** @abstract(The width in pixels.)
+    /// <summary>The width in pixels.</summary>
     Width: Integer;
+    //** @abstract(The height in pixels.)
+    /// <summary>The height in pixels.</summary>
     Height: Integer;
+    //** @abstract(Bits per pixel.)
+    /// <summary>Bits per pixel.</summary>
     BitsPerPixel: Integer;
+    //** @abstract(The refresh rate in hertz.)
+    /// <summary>The refresh rate in hertz.</summary>
     RefreshRate: Integer; // Hz
+    //** @abstract(The mode as text, such as @code(2560 x 1440, 32-bit, 144 Hz).)
+    //**
+    //** @returns(The text.)
+    /// <summary>The mode as text, such as <c>2560 x 1440, 32-bit, 144 Hz</c>.</summary>
+    /// <returns>The text.</returns>
     function ToString: string;
   end;
 
+  //** @abstract(A list of display modes.)
+  /// <summary>A list of display modes.</summary>
   TDisplayModeList = TList<TDisplayMode>;
 
+  //** @abstract(One monitor, as Windows and its EDID describe it.)
+  //**
+  //** AvailableModes belongs to the TPeardoxDisplays that made the record; a copy shares it.
+  /// <summary>One monitor, as Windows and its EDID describe it.</summary>
+  /// <remarks>AvailableModes belongs to the TPeardoxDisplays that made the record; a copy
+  /// shares it.</remarks>
   TDisplayInfo = record
+      //** @abstract(Windows' device name, such as @code(\\.\DISPLAY1).)
+      /// <summary>Windows' device name, such as <c>\\.\DISPLAY1</c>.</summary>
       DeviceName: string;
+      //** @abstract(The monitor's own name from its EDID, else the adapter's description.)
+      /// <summary>The monitor's own name from its EDID, else the adapter's
+      /// description.</summary>
       FriendlyName: string;
+      //** @abstract(The monitor's area of the desktop, in desktop pixels.)
+      /// <summary>The monitor's area of the desktop, in desktop pixels.</summary>
       MonitorRect: TRect;
+      //** @abstract(The monitor's area less the taskbar and docked toolbars.)
+      /// <summary>The monitor's area less the taskbar and docked toolbars.</summary>
       WorkRect: TRect;
+      //** @abstract(Whether this is the primary monitor.)
+      /// <summary>Whether this is the primary monitor.</summary>
       IsPrimary: Boolean;
+      //** @abstract(The mode the monitor is in.)
+      /// <summary>The mode the monitor is in.</summary>
       CurrentMode: TDisplayMode;
+      //** @abstract(Every mode the monitor offers, without duplicates.)
+      /// <summary>Every mode the monitor offers, without duplicates.</summary>
       AvailableModes: TDisplayModeList;
       // Physical size from EDID
+      //** @abstract(The image's width in millimetres from the EDID; 0 if unknown.)
+      /// <summary>The image's width in millimetres from the EDID; 0 if unknown.</summary>
       WidthMm: Integer;      // horizontal image size, millimetres
+      //** @abstract(The image's height in millimetres from the EDID; 0 if unknown.)
+      /// <summary>The image's height in millimetres from the EDID; 0 if unknown.</summary>
       HeightMm: Integer;     // vertical image size, millimetres
+      //** @abstract(The diagonal in inches, from WidthMm and HeightMm; 0 if unknown.)
+      /// <summary>The diagonal in inches, from WidthMm and HeightMm; 0 if unknown.</summary>
       DiagonalInches: Double; // computed diagonal, 0 if unknown
     end;
 
+  //** @abstract(A list of monitors.)
+  /// <summary>A list of monitors.</summary>
   TDisplayInfoList = TList<TDisplayInfo>;
 
+  //** @abstract(Every monitor attached, read when the object is created.)
+  /// <summary>Every monitor attached, read when the object is created.</summary>
   TPeardoxDisplays = class
   private
     FDisplays: TDisplayInfoList;
@@ -41,12 +107,22 @@ type
     procedure Refresh;
     procedure ClearDisplays;
   public
+    //** @abstract(Reads every monitor from Windows.)
+    /// <summary>Reads every monitor from Windows.</summary>
     constructor Create;
+    //** @abstract(Frees the list and every monitor's mode list.)
+    /// <summary>Frees the list and every monitor's mode list.</summary>
     destructor Destroy; override;
 
+    //** @abstract(The number of monitors.)
+    /// <summary>The number of monitors.</summary>
     property Count: Integer read GetCount;
+    //** @abstract(A monitor by position, from 0 to Count - 1.)
+    /// <summary>A monitor by position, from 0 to Count - 1.</summary>
     property Displays[AIndex: Integer]: TDisplayInfo
       read GetDisplay; default;
+    //** @abstract(The list itself, owned by this object.)
+    /// <summary>The list itself, owned by this object.</summary>
     property List: TDisplayInfoList read FDisplays;
   end;
 
