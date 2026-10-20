@@ -5,10 +5,11 @@
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
-        <Platform Condition="'$(Platform)'==''">iOSDevice64</Platform>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>2790547</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>Sprite3d.dpr</MainSource>
+        <ProjectName Condition="'$(ProjectName)'==''">Sprite3d</ProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
@@ -387,6 +388,9 @@ $(PreBuildEvent)]]></PreBuildEvent>
         </DCCReference>
         <DCCReference Include="lib\Sprite3DVideo.pas"/>
         <DCCReference Include="lib\Sprite3DOpenH264.pas"/>
+        <DCCReference Include="lib\Sprite3DNativeLibs.pas"/>
+        <DCCReference Include="lib\Sprite3DBzip2.pas"/>
+        <DCCReference Include="lib\Sprite3DLibraryUpdate.pas"/>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>
@@ -801,6 +805,362 @@ $(PreBuildEvent)]]></PreBuildEvent>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="..\README.md" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android32\libavcodec.so" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libavcodec.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android32\libavformat.so" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libavformat.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android32\libavutil.so" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libavutil.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android32\libswresample.so" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libswresample.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android32\libswscale.so" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libswscale.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android64\libavcodec.so" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libavcodec.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android64\libavformat.so" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libavformat.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android64\libavutil.so" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libavutil.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android64\libswresample.so" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libswresample.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\android64\libswscale.so" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libswscale.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iosarm64\libavcodec.62.dylib" Class="File">
+                    <Platform Name="iOSDevice64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libavcodec.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iosarm64\libavformat.62.dylib" Class="File">
+                    <Platform Name="iOSDevice64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libavformat.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iosarm64\libavutil.60.dylib" Class="File">
+                    <Platform Name="iOSDevice64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libavutil.60.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iosarm64\libswresample.6.dylib" Class="File">
+                    <Platform Name="iOSDevice64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libswresample.6.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iosarm64\libswscale.9.dylib" Class="File">
+                    <Platform Name="iOSDevice64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libswscale.9.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iossimarm64\libavcodec.62.dylib" Class="File">
+                    <Platform Name="iOSSimARM64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libavcodec.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iossimarm64\libavformat.62.dylib" Class="File">
+                    <Platform Name="iOSSimARM64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libavformat.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iossimarm64\libavutil.60.dylib" Class="File">
+                    <Platform Name="iOSSimARM64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libavutil.60.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iossimarm64\libswresample.6.dylib" Class="File">
+                    <Platform Name="iOSSimARM64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libswresample.6.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\iossimarm64\libswscale.9.dylib" Class="File">
+                    <Platform Name="iOSSimARM64">
+                        <RemoteDir>Frameworks\</RemoteDir>
+                        <RemoteName>libswscale.9.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\linux64\libavcodec.so.62" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\lib\</RemoteDir>
+                        <RemoteName>libavcodec.so.62</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\linux64\libavformat.so.62" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\lib\</RemoteDir>
+                        <RemoteName>libavformat.so.62</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\linux64\libavutil.so.60" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\lib\</RemoteDir>
+                        <RemoteName>libavutil.so.60</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\linux64\libswresample.so.6" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\lib\</RemoteDir>
+                        <RemoteName>libswresample.so.6</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\linux64\libswscale.so.9" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\lib\</RemoteDir>
+                        <RemoteName>libswscale.so.9</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macarm\libavcodec.62.dylib" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libavcodec.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macarm\libavformat.62.dylib" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libavformat.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macarm\libavutil.60.dylib" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libavutil.60.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macarm\libswresample.6.dylib" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libswresample.6.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macarm\libswscale.9.dylib" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libswscale.9.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macx64\libavcodec.62.dylib" Class="File">
+                    <Platform Name="OSX64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libavcodec.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macx64\libavformat.62.dylib" Class="File">
+                    <Platform Name="OSX64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libavformat.62.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macx64\libavutil.60.dylib" Class="File">
+                    <Platform Name="OSX64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libavutil.60.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macx64\libswresample.6.dylib" Class="File">
+                    <Platform Name="OSX64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libswresample.6.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\macx64\libswscale.9.dylib" Class="File">
+                    <Platform Name="OSX64">
+                        <RemoteDir>Contents\Frameworks\</RemoteDir>
+                        <RemoteName>libswscale.9.dylib</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win32\avcodec-62.dll" Class="File">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avcodec-62.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win32\avformat-62.dll" Class="File">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avformat-62.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win32\avutil-60.dll" Class="File">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avutil-60.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win32\swresample-6.dll" Class="File">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>swresample-6.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win32\swscale-9.dll" Class="File">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>swscale-9.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64\avcodec-62.dll" Class="File">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avcodec-62.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64\avformat-62.dll" Class="File">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avformat-62.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64\avutil-60.dll" Class="File">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avutil-60.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64\swresample-6.dll" Class="File">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>swresample-6.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64\swscale-9.dll" Class="File">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>swscale-9.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64arm\avcodec-62.dll" Class="File">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avcodec-62.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64arm\avformat-62.dll" Class="File">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avformat-62.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64arm\avutil-60.dll" Class="File">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>avutil-60.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64arm\swresample-6.dll" Class="File">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>swresample-6.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\dlls\win64arm\swscale-9.dll" Class="File">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>swscale-9.dll</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="..\models\uvcube.glb" Configuration="Debug" Class="File">
                     <Platform Name="Android64">
                         <RemoteDir>assets\internal\models\</RemoteDir>
@@ -840,6 +1200,62 @@ $(PreBuildEvent)]]></PreBuildEvent>
                     <Platform Name="OSXARM64">
                         <RemoteDir>Contents\Resources\models\</RemoteDir>
                         <RemoteName>uvcube.glb</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>assets\internal\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>assets\internal\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="Linux64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="OSX64">
+                        <RemoteDir>Contents\Resources\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="OSXARM64">
+                        <RemoteDir>Contents\Resources\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="..\openh264.json" Class="File">
+                    <Platform Name="WinARM64EC">
+                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>openh264.json</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -1051,6 +1467,12 @@ $(PreBuildEvent)]]></PreBuildEvent>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="WinARM64EC\Release\Sprite3d.exe" Configuration="Release" Class="ProjectOutput">
+                    <Platform Name="WinARM64EC">
+                        <RemoteName>Sprite3d.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="styles\buildstyles.cmd" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Linux64">
                         <RemoteDir>.\</RemoteDir>
@@ -1065,6 +1487,12 @@ $(PreBuildEvent)]]></PreBuildEvent>
                 </DeployFile>
                 <DeployFile LocalName="styles\buildstyles.cmd" Configuration="Release" Class="ProjectFile">
                     <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="styles\buildstyles.cmd" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="WinARM64EC">
                         <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>

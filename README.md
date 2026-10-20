@@ -63,39 +63,80 @@ MP4 export uses the FFmpeg 8.1 shared libraries. They are not in the repository;
 
 **<https://peardox.com/Sprite3d-dlls.zip>** (about 32 MB; Windows 64-bit only for now)
 
-and extract it in the project root, the folder holding `README.md`. It creates the `dlls` folder:
+and extract it in the project root, the folder holding `README.md`. It creates the `dlls` folder, with one folder per platform:
 
 ```
 Sprite3D/
 `-- dlls/
-    `-- win64/       avutil-60.dll, avcodec-62.dll, avformat-62.dll and the libraries they need
+    |-- win32/  win64/  win64arm/      Windows 32-bit, 64-bit, ARM64EC
+    |-- macx64/  macarm/               macOS Intel, Apple silicon
+    |-- linux64/                       Linux
+    |-- android32/  android64/         Android
+    `-- iosarm64/  iossimarm64/        iOS device, simulator
 ```
 
-macOS (`dlls/macarm`) and Linux (`dlls/linux64`) libraries will follow in the same pack. The `.gitignore` already keeps `.dll` and `.so` files out of Git, so the extracted libraries are never committed.
+Only `win64` is in the pack so far. The `.gitignore` keeps `.dll`, `.so` and `.dylib` files out of Git, so the extracted libraries are never committed.
 
-Sprite3D loads the libraries only when it starts, and only to offer MP4: if they are missing or the wrong version, the program runs exactly as before and MP4 is not offered. The Debug tab says at start-up which happened, and from where the libraries were loaded. They are looked for, in order:
+Each folder holds five libraries: avutil, swresample, swscale, avcodec and avformat. Their names follow each platform's own rules:
 
-1. beside the executable;
-2. in `dlls/<platform>` beside the executable;
-3. in a macOS bundle's `Contents/Frameworks` folder;
-4. in `dlls/<platform>` in any of the six folders above the executable, so a build run from `src/Win64/Debug` finds the repository's `dlls/win64`;
-5. wherever the system looks for shared libraries.
+| Platform | Names |
+|---|---|
+| Windows | `avutil-60.dll`, `swresample-6.dll`, `swscale-9.dll`, `avcodec-62.dll`, `avformat-62.dll` |
+| macOS, iOS | `libavutil.60.dylib`, `libswresample.6.dylib`, `libswscale.9.dylib`, `libavcodec.62.dylib`, `libavformat.62.dylib` |
+| Linux | `libavutil.so.60`, `libswresample.so.6`, `libswscale.so.9`, `libavcodec.so.62`, `libavformat.so.62` |
+| Android | `libavutil.so`, `libswresample.so`, `libswscale.so`, `libavcodec.so`, `libavformat.so` (Android only unpacks `lib*.so` files from an APK) |
 
-`<platform>` is `win64`, `macarm`, `macx64` or `linux64`. The libraries must be FFmpeg 8.1's (avutil 60, avcodec 62, avformat 62) and include the MPEG-4 encoder, which every standard build does. To ship Sprite3D with MP4 export, deploy the contents of the platform's folder beside the executable, or in `Contents/Frameworks` on macOS.
+They must be FFmpeg 8.1's (avutil 60, avcodec 62, avformat 62) and include the MPEG-4 encoder, which every standard build does. Sprite3D loads them only to offer MP4: if they are missing or the wrong version, the program runs exactly as before and MP4 is not offered. The Debug tab says at start-up which happened, and from where they were loaded.
+
+#### Deployment
+
+The project's deployment entries copy each platform's libraries from `dlls/<platform>` to that platform's usual place for an application's own libraries, which is also the first place Sprite3D looks:
+
+| Platform | Deployed to |
+|---|---|
+| Windows (32-bit, 64-bit, ARM64EC) | beside `Sprite3d.exe` |
+| macOS | `Sprite3d.app/Contents/Frameworks` |
+| Linux | a `lib` folder beside the executable |
+| Android | the APK's `lib/armeabi-v7a` or `lib/arm64-v8a`, unpacked by the system |
+| iOS | `Sprite3d.app/Frameworks` |
+
+After that it looks beside the executable, in `dlls/<platform>` beside it, and in `dlls/<platform>` in each of the six folders above it, so a build run from `src/Win64/Debug` finds the repository's `dlls/win64` without deploying; and last wherever the system looks for shared libraries.
+
+An ARM64EC build (Windows on ARM) can load x64 and ARM64EC libraries but not plain ARM64 ones, so `dlls/win64arm` normally holds a copy of the x64 libraries in `dlls/win64`. Run from the source tree, it also looks in `dlls/win64` after `dlls/win64arm`, so the copy is only needed for deploying.
+
+Until a platform's folder has its libraries, deploying for that platform reports them as missing; untick them in Project, Deployment, or add the libraries. On macOS and iOS the libraries are signed with the app when it is signed, and the hardened runtime must allow libraries from other developers (`com.apple.security.cs.disable-library-validation`) unless they are signed with the app's own team ID.
 
 ### OpenH264 (optional, for H.264 MP4 files)
 
-On its own, FFmpeg's MP4 export writes MPEG-4 Part 2 video, which desktop players handle but web browsers do not. If Cisco's [OpenH264](https://github.com/cisco/openh264) library is present as well, MP4 files are H.264 instead, which plays everywhere.
+On its own, FFmpeg's MP4 export writes MPEG-4 Part 2 video, which desktop players handle but web browsers do not. With Cisco's [OpenH264](https://github.com/cisco/openh264) library as well, MP4 files are H.264 instead, which plays everywhere.
 
-OpenH264 is not in the DLL pack and should not be added to it. Cisco pays the H.264 patent royalties only for copies of its library downloaded from Cisco, so each user should download it themselves from the [OpenH264 releases](https://github.com/cisco/openh264/releases), which link to Cisco's binaries:
+OpenH264 is never shipped with Sprite3D: Cisco pays the H.264 patent royalties only for copies of its library downloaded from Cisco. Instead, Sprite3D downloads it itself, from the address given for the platform in **`openh264.json`**, in the project root:
 
-| Platform | File (version 2.0 or later) |
-|---|---|
-| Windows 64-bit | `openh264-<version>-win64.dll` |
-| macOS Apple silicon | `libopenh264-<version>-mac-arm64.dylib` |
-| Linux 64-bit | `libopenh264-<version>-linux64.<n>.so` |
+```json
+{
+  "win32": "",
+  "win64": "https://.../openh264-2.6.0-win64.dll.bz2",
+  "win64arm": "https://.../openh264-2.6.0-win64.dll.bz2",
+  "macx64": "",
+  "macarm": "",
+  "linux64": "",
+  "android32": "",
+  "android64": ""
+}
+```
 
-Unpack it (the downloads are `.bz2` files) and put it in the folder the FFmpeg libraries are in, such as `dlls/win64`; the file name can stay as it is. Sprite3D also looks in every other folder it looks in for FFmpeg, and last for the system's own copy. If several copies are in one folder, the one whose name sorts last, normally the newest, is tried first. The Debug tab says at start-up which OpenH264 was loaded and from where, or, if none was, each file it found and why it could not be used (for example a 32-bit DLL in a 64-bit program), or the folders it looked in if it found none. If OpenH264 loads but then fails on a video, that file is written as MPEG-4 Part 2 instead and the Debug tab gives OpenH264's reason.
+- **An empty address means no H.264 on that platform**: MP4 files are MPEG-4 Part 2 there. Every address starts empty.
+- **Downloaded once, then kept.** At start-up Sprite3D checks whether the copy it has came from the address now given. If it did, it is used straight away, with no network. If not, or there is no copy yet, it is downloaded in the background while Sprite3D starts, and used as soon as it arrives.
+- **Updates.** Change an address, for example from 2.6.0 to 2.6.1, and the next start downloads the new version, which replaces the old one.
+- **Failures.** A 404, any other HTTP error, no network, a timeout, or a download that is not a library for the platform means OpenH264 is not available this time; MP4 files are MPEG-4 Part 2 and the download is tried again at the next start. The Debug tab says what happened.
+- **Formats.** Cisco's `.bz2` files can be used as they are; `.gz` and plain libraries work too. Use Cisco's 2.0 or later; `https` addresses are best, as macOS, iOS and Android refuse plain `http` by default.
+- **Where it goes.** An `openh264` folder in the settings folder (see *Settings*), with an `installed.json` recording the address each copy came from. Delete the folder to force a fresh download.
+- **`win64arm`** is Windows on ARM (ARM64EC). It can load x64 libraries but not Cisco's plain ARM64 build, so give it the same x64 (`win64`) address as `win64`.
+- **iOS** does not allow downloaded code to be loaded, so it has no entry and never has H.264.
+
+`openh264.json` is deployed beside the executable on Windows and Linux, in `Contents/Resources` on macOS and in the app's files on Android, so a shipped Sprite3D can be pointed at a new version by updating that one file. Run from the source tree, Sprite3D reads the repository's copy.
+
+Only the copy downloaded from the address in `openh264.json` is ever loaded: an OpenH264 placed in `dlls` or elsewhere by hand is not used.
 
 ### First run
 
@@ -111,6 +152,7 @@ Sprite3D/
 |-- docs/                     generated API help (PasDoc)
 |-- models/                   sample model: uvcube.glb
 |-- dlls/                     FFmpeg libraries, from the DLL pack; not in Git
+|-- openh264.json             where to download OpenH264 for each platform
 `-- src/
     |-- Sprite3d.dpr, .dproj, .res, Sprite3d_Icon.ico
     |-- ffmpeg/               DelphiFFmpeg.com FFmpeg 8.1 headers, unchanged, with their licence
@@ -133,7 +175,10 @@ Sprite3D/
     |   |-- Sprite3DAnimCapture.pas  grabs every frame of an animation, or of a turn
     |   |-- Sprite3DSpriteSheet.pas  strips, atlases, PNG and animated GIF writers
     |   |-- Sprite3DVideo.pas        MP4 writer, loading FFmpeg only when present
-    |   `-- Sprite3DOpenH264.pas     H.264 encoder, loading OpenH264 only when present
+    |   |-- Sprite3DOpenH264.pas     H.264 encoder, loading the downloaded OpenH264
+    |   |-- Sprite3DLibraryUpdate.pas downloads and updates a library from a JSON address
+    |   |-- Sprite3DBzip2.pas        bzip2 decompression, for Cisco's .bz2 downloads
+    |   `-- Sprite3DNativeLibs.pas   each platform's folders for an app's own libraries
     |-- common/               small cross-project helpers
     |   |-- OSPaths.pas              where the program and its assets are
     |   |-- GpuPreference.pas        Windows' per-program GPU preference
@@ -284,6 +329,7 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 - On macOS and iOS, animation frames are screenshots, as grabs are there, so they share the limits above.
 - MP4 export has been tested on Windows 64-bit; the macOS and Linux libraries are not in the DLL pack yet.
 - H.264 export through OpenH264 has been tested on Windows 64-bit with OpenH264 2.6.0. Versions 2.0 to 2.5 lay out the encoder's output differently; Sprite3D allows for that, but has not been tested with them.
+- The OpenH264 download and the deployment entries for platforms other than Windows 64-bit are new and untested.
 
 ## Further reading
 

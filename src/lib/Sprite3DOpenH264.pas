@@ -2,20 +2,13 @@
 //**
 //** OpenH264 is Cisco's open-source H.264 encoder. Cisco publishes ready-built copies of it
 //** for each platform, and pays the H.264 patent royalties for copies downloaded from Cisco,
-//** which is why it is not shipped with Sprite3D: the user downloads it, and Sprite3D uses it
-//** if it finds it. Without it, Sprite3DVideo writes MPEG-4 Part 2 instead.
+//** which is why it is not shipped with Sprite3D: Sprite3DLibraryUpdate downloads it from the
+//** address given for the platform, and this unit loads that copy and no other. Without it,
+//** Sprite3DVideo writes MPEG-4 Part 2 instead.
 //**
-//** OpenH264Available looks for the library once, in the folders it is given, and loads the
-//** newest copy that works: version 2.0 or later, with the encoder's entry points. The names
-//** looked for are those Cisco's downloads and OpenH264's own builds use:
-//**
-//** @preformatted(
-//** Windows   openh264*.dll           e.g. openh264-2.6.0-win64.dll, openh264-7.dll
-//** macOS     libopenh264*.dylib      e.g. libopenh264-2.6.0-mac-arm64.dylib
-//** Linux     libopenh264*.so*        e.g. libopenh264-2.6.0-linux64.8.so
-//** )
-//**
-//** and, last, the plain names the system's own copy would have.
+//** SetPreferredOpenH264 names the copy; OpenH264Available loads it the first time it is asked,
+//** if it is version 2.0 or later and has the encoder's entry points, and OpenH264Retry tries
+//** again after a download. No other folder, and no copy the system may have, is ever tried.
 //**
 //** TSprite3DH264Encoder then turns YUV 4:2:0 pictures into H.264 Annex B access units, ready
 //** for an MP4 muxer, with its parameter sets available separately for the MP4's header.
@@ -35,19 +28,14 @@ unit Sprite3DOpenH264;
   OpenH264 is Cisco's open-source H.264 encoder. Cisco publishes ready-built
   copies of it for each platform, and pays the H.264 patent royalties for
   copies downloaded from Cisco, which is why it is not shipped with
-  Sprite3D: the user downloads it, and Sprite3D uses it if it finds it.
-  Without it, Sprite3DVideo writes MPEG-4 Part 2 instead.
+  Sprite3D: Sprite3DLibraryUpdate downloads it from the address given for
+  the platform, and this unit loads that copy and no other. Without it,
+  Sprite3DVideo writes MPEG-4 Part 2 instead.
 
-  OpenH264Available looks for the library once, in the folders it is given,
-  and loads the newest copy that works: version 2.0 or later, with the
-  encoder's entry points. The names looked for are those Cisco's downloads
-  and OpenH264's own builds use:
-
-    Windows   openh264*.dll           e.g. openh264-2.6.0-win64.dll, openh264-7.dll
-    macOS     libopenh264*.dylib      e.g. libopenh264-2.6.0-mac-arm64.dylib
-    Linux     libopenh264*.so*        e.g. libopenh264-2.6.0-linux64.8.so
-
-  and, last, the plain names the system's own copy would have.
+  SetPreferredOpenH264 names the copy; OpenH264Available loads it the first
+  time it is asked, if it is version 2.0 or later and has the encoder's
+  entry points, and OpenH264Retry tries again after a download. No other
+  folder, and no copy the system may have, is ever tried.
 
   TSprite3DH264Encoder then turns YUV 4:2:0 pictures into H.264 Annex B
   access units, ready for an MP4 muxer, with its parameter sets available
@@ -158,24 +146,51 @@ type
       out AData: TBytes; out AKey: Boolean);
   end;
 
-//** @abstract(Whether OpenH264 is loaded, looking for it the first time.)
+//** @abstract(Whether OpenH264 is loaded, loading it the first time.)
 //**
-//** The first call looks in each of AFolders in turn, then on the system's library path, and
-//** loads the first copy that is version 2.0 or later and has the encoder; later calls return
-//** the same answer at once, whatever folders they are given. The library stays loaded until
-//** the program ends.
-//**
-//** @param(AFolders The folders to look in, best first.)
+//** The first call loads the copy SetPreferredOpenH264 named, if it is version 2.0 or later
+//** and has the encoder; later calls return the same answer at once. With no copy named, the
+//** answer is False. The library stays loaded until the program ends.
 //**
 //** @returns(True if TSprite3DH264Encoder can be used.)
-/// <summary>Whether OpenH264 is loaded, looking for it the first time.</summary>
-/// <remarks>The first call looks in each of AFolders in turn, then on the system's library
-/// path, and loads the first copy that is version 2.0 or later and has the encoder; later
-/// calls return the same answer at once, whatever folders they are given. The library stays
-/// loaded until the program ends.</remarks>
-/// <param name="AFolders">The folders to look in, best first.</param>
+/// <summary>Whether OpenH264 is loaded, loading it the first time.</summary>
+/// <remarks>The first call loads the copy SetPreferredOpenH264 named, if it is version 2.0 or
+/// later and has the encoder; later calls return the same answer at once. With no copy named,
+/// the answer is False. The library stays loaded until the program ends.</remarks>
 /// <returns>True if TSprite3DH264Encoder can be used.</returns>
-function OpenH264Available(const AFolders: array of String): Boolean;
+function OpenH264Available: Boolean;
+
+//** @abstract(Names the copy of OpenH264 to load: the one downloaded for this platform.)
+//**
+//** Call it before OpenH264Available, or before OpenH264Retry once a copy has been
+//** downloaded. An empty string means there is none, and H.264 is not offered.
+//**
+//** @param(APath The library's full path.)
+/// <summary>Names the copy of OpenH264 to load: the one downloaded for this
+/// platform.</summary>
+/// <remarks>Call it before OpenH264Available, or before OpenH264Retry once a copy has been
+/// downloaded. An empty string means there is none, and H.264 is not offered.</remarks>
+/// <param name="APath">The library's full path.</param>
+procedure SetPreferredOpenH264(const APath: String);
+
+//** @abstract(Loads the named OpenH264 again unless a copy is already loaded.)
+//**
+//** As OpenH264Available, but a failed earlier attempt does not stop a new one. A loaded copy
+//** stays in use until the program ends.
+//**
+//** @returns(True if TSprite3DH264Encoder can be used.)
+/// <summary>Loads the named OpenH264 again unless a copy is already loaded.</summary>
+/// <remarks>As OpenH264Available, but a failed earlier attempt does not stop a new one. A
+/// loaded copy stays in use until the program ends.</remarks>
+/// <returns>True if TSprite3DH264Encoder can be used.</returns>
+function OpenH264Retry: Boolean;
+
+//** @abstract(The full path of the OpenH264 loaded, or empty if none is.)
+//**
+//** @returns(The path, as it was loaded.)
+/// <summary>The full path of the OpenH264 loaded, or empty if none is.</summary>
+/// <returns>The path, as it was loaded.</returns>
+function OpenH264LoadedLibrary: String;
 
 //** @abstract(Which OpenH264 was loaded and from where, or why none was.)
 //**
@@ -195,7 +210,7 @@ uses
   {$ELSE}
   Posix.Dlfcn,
   {$ENDIF}
-  System.Classes, System.IOUtils, System.Math, System.Types, System.Generics.Collections;
+  System.Classes, System.IOUtils, System.Math;
 
 // The structures below must be laid out as OpenH264's C compiler lays them
 // out: natural alignment, enumerations as 4-byte ints
@@ -323,6 +338,9 @@ var
   Tried: Boolean;
   Loaded: Boolean;
   Status: String;
+  // The only copy ever loaded; see SetPreferredOpenH264
+  PreferredLibrary: String;
+  LoadedLibrary: String;
 
 { Loading }
 
@@ -366,43 +384,6 @@ begin
   {$ELSE}
   System.SysUtils.FreeLibrary(AModule);
   {$ENDIF}
-end;
-
-const
-  // The names Cisco's downloads and OpenH264's own builds use
-  {$IF DEFINED(MSWINDOWS)}
-  LIBRARY_PATTERN = 'openh264*.dll';
-  {$ELSEIF DEFINED(MACOS)}
-  LIBRARY_PATTERN = 'libopenh264*.dylib';
-  {$ELSE}
-  LIBRARY_PATTERN = 'libopenh264*.so*';
-  {$IFEND}
-
-// The copies of the library in AFolder, newest name first
-function LibrariesIn(const AFolder: String): TArray<String>;
-var
-  Files: TStringDynArray;
-  I: Integer;
-begin
-  Result := nil;
-  if (AFolder = String.Empty) or not TDirectory.Exists(AFolder) then
-    Exit;
-  Files := TDirectory.GetFiles(AFolder, LIBRARY_PATTERN);
-  TArray.Sort<String>(Files);
-  for I := High(Files) downto 0 do
-    Result := Result + [Files[I]];
-end;
-
-// The names the system's own copy would have
-function SystemNames: TArray<String>;
-begin
-  {$IF DEFINED(MSWINDOWS)}
-  Result := ['openh264-7.dll', 'openh264.dll'];
-  {$ELSEIF DEFINED(MACOS)}
-  Result := ['libopenh264.8.dylib', 'libopenh264.7.dylib', 'libopenh264.dylib'];
-  {$ELSE}
-  Result := ['libopenh264.so.8', 'libopenh264.so.7', 'libopenh264.so'];
-  {$IFEND}
 end;
 
 // Loads APath if it is a usable OpenH264; True and the entry points set if
@@ -453,59 +434,66 @@ begin
   Result := True;
 end;
 
-function OpenH264Available(const AFolders: array of String): Boolean;
+function OpenH264Available: Boolean;
 var
-  Folder, Path, Reason: String;
+  Reason: String;
   Version: TOpenH264Version;
-  Found, Searched, Failures: TArray<String>;
 begin
   if Tried then
     Exit(Loaded);
   Tried := True;
   Loaded := False;
-  Found := nil;
-  Searched := nil;
-  Failures := nil;
-  for Folder in AFolders do
-    if (Folder <> String.Empty) and TDirectory.Exists(Folder) then
-    begin
-      Searched := Searched + [Folder];
-      Found := Found + LibrariesIn(Folder);
-    end;
-  // Files found in the folders are reported when they fail; the system's
-  // names are only tried quietly, as they are normally absent
-  for Path in Found + SystemNames do
+  if PreferredLibrary = String.Empty then
   begin
-    try
-      if TryLibrary(Path, Version, Reason) then
-      begin
-        Loaded := True;
-        Status := Format('OpenH264 %d.%d.%d loaded from %s; MP4 video is H.264',
-          [Version.uMajor, Version.uMinor, Version.uRevision, Path]);
-        Break;
-      end;
-    except
-      on E: Exception do
-        Reason := 'failed while loading: ' + E.Message;
-    end;
-    if ExtractFilePath(Path) <> String.Empty then
-      Failures := Failures + [ExtractFileName(Path) + ' ' + Reason];
+    Status := 'No OpenH264 has been downloaded for this platform, so MP4 video is ' +
+      'MPEG-4 Part 2';
+    Exit(False);
   end;
-  if not Loaded then
+  if not TFile.Exists(PreferredLibrary) then
   begin
-    if Length(Failures) > 0 then
-      Status := 'OpenH264 was found but not usable, so MP4 video is MPEG-4 Part 2: ' +
-        String.Join('; ', Failures)
-    else
-      Status := 'OpenH264 was not found, so MP4 video is MPEG-4 Part 2. Looked for ' +
-        LIBRARY_PATTERN + ' in: ' + String.Join('; ', Searched);
+    Status := 'OpenH264 is missing from ' + PreferredLibrary +
+      ', so MP4 video is MPEG-4 Part 2';
+    Exit(False);
   end;
+  try
+    Loaded := TryLibrary(PreferredLibrary, Version, Reason);
+  except
+    on E: Exception do
+      Reason := 'failed while loading: ' + E.Message;
+  end;
+  if Loaded then
+  begin
+    LoadedLibrary := PreferredLibrary;
+    Status := Format('OpenH264 %d.%d.%d loaded from %s; MP4 video is H.264',
+      [Version.uMajor, Version.uMinor, Version.uRevision, PreferredLibrary]);
+  end
+  else
+    Status := 'OpenH264 was downloaded but is not usable, so MP4 video is MPEG-4 Part 2: ' +
+      ExtractFileName(PreferredLibrary) + ' ' + Reason;
   Result := Loaded;
 end;
 
 function OpenH264Status: String;
 begin
   Result := Status;
+end;
+
+procedure SetPreferredOpenH264(const APath: String);
+begin
+  PreferredLibrary := APath;
+end;
+
+function OpenH264Retry: Boolean;
+begin
+  if Loaded then
+    Exit(True);
+  Tried := False;
+  Result := OpenH264Available;
+end;
+
+function OpenH264LoadedLibrary: String;
+begin
+  Result := LoadedLibrary;
 end;
 
 { TSprite3DH264Encoder }

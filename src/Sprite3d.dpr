@@ -26,7 +26,10 @@ uses
   Sprite3DAnimCapture in 'lib\Sprite3DAnimCapture.pas',
   Sprite3DAnimationForm in 'ui\Sprite3DAnimationForm.pas' {AnimationSettingsForm},
   Sprite3DVideo in 'lib\Sprite3DVideo.pas',
-  Sprite3DOpenH264 in 'lib\Sprite3DOpenH264.pas';
+  Sprite3DOpenH264 in 'lib\Sprite3DOpenH264.pas',
+  Sprite3DNativeLibs in 'lib\Sprite3DNativeLibs.pas',
+  Sprite3DBzip2 in 'lib\Sprite3DBzip2.pas',
+  Sprite3DLibraryUpdate in 'lib\Sprite3DLibraryUpdate.pas';
 
 {$R *.res}
 // The themes' FMX styles, inside the program on every platform. The .res

@@ -608,6 +608,40 @@ function DefaultModelDir: String;
 /// platforms.</returns>
 function DefaultGrabFolder: String;
 
+//** @abstract(The @code(openh264.json) that gives OpenH264's download address for each
+//** platform, or empty if there is none.)
+//**
+//** Looked for where it is deployed, the folder GetAssetsPath gives (beside the executable on
+//** Windows and Linux, the bundle's Resources folder on macOS, the app's files folder on
+//** Android), then beside the executable and in each of the six folders above it, which finds
+//** the repository's copy when run from the source tree. iOS does not allow downloaded code
+//** to be loaded, so there it is always empty.
+//**
+//** @returns(The file's full path, or an empty string.)
+/// <summary>The <c>openh264.json</c> that gives OpenH264's download address for each
+/// platform, or empty if there is none.</summary>
+/// <remarks>Looked for where it is deployed, the folder GetAssetsPath gives (beside the
+/// executable on Windows and Linux, the bundle's Resources folder on macOS, the app's files
+/// folder on Android), then beside the executable and in each of the six folders above it,
+/// which finds the repository's copy when run from the source tree. iOS does not allow
+/// downloaded code to be loaded, so there it is always empty.</remarks>
+/// <returns>The file's full path, or an empty string.</returns>
+function OpenH264ConfigFile: String;
+
+//** @abstract(Where downloaded copies of OpenH264 are kept: an @code(openh264) folder in
+//** SupportFolder.)
+//**
+//** Per user and private to the application on every platform; created when the first copy
+//** is saved.
+//**
+//** @returns(The folder's full path.)
+/// <summary>Where downloaded copies of OpenH264 are kept: an <c>openh264</c> folder in
+/// SupportFolder.</summary>
+/// <remarks>Per user and private to the application on every platform; created when the first
+/// copy is saved.</remarks>
+/// <returns>The folder's full path.</returns>
+function OpenH264Folder: String;
+
 //** @abstract(The first free numbered file name in a folder, such as grab001.png.)
 //**
 //** Starts at ANumber and moves it past every name already taken, so an existing file is
@@ -1108,6 +1142,44 @@ begin
   {$ELSE}
   Result := String.Empty;   // desktop: the user chooses
   {$ENDIF}
+end;
+
+const
+  OPENH264_CONFIG_NAME = 'openh264.json';
+
+function OpenH264ConfigFile: String;
+{$IFNDEF IOS}
+var
+  Dir, Parent: String;
+  Level: Integer;
+{$ENDIF}
+begin
+  Result := String.Empty;
+  {$IFNDEF IOS}
+  Result := TPath.Combine(GetAssetsPath, OPENH264_CONFIG_NAME);
+  if TFile.Exists(Result) then
+    Exit;
+  {$IFNDEF ANDROID}
+  // Run from the source tree: the repository's copy, a few levels up
+  Dir := ExcludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
+  for Level := 0 to 6 do
+  begin
+    Result := TPath.Combine(Dir, OPENH264_CONFIG_NAME);
+    if TFile.Exists(Result) then
+      Exit;
+    Parent := ExtractFileDir(Dir);
+    if (Parent = String.Empty) or (Parent = Dir) then
+      Break;
+    Dir := Parent;
+  end;
+  {$ENDIF}
+  Result := String.Empty;
+  {$ENDIF}
+end;
+
+function OpenH264Folder: String;
+begin
+  Result := TPath.Combine(TSprite3DAppSettings.SupportFolder, 'openh264');
 end;
 
 function NextNumberedFileName(const AFolder, APrefix, AExtension: String;

@@ -62,6 +62,12 @@
 //** @code(_rotate) added. On Android and iOS, which have no right-click, the same items are in
 //** an Animation group of the menu drawer and act on the selected entry.
 //**
+//** At start-up the OpenH264 library, which makes MP4 files H.264, is taken from
+//** @code(openh264.json): an address for each platform, from which a copy is downloaded in
+//** the background into OpenH264Folder the first time, and again whenever the address changes.
+//** An empty address, or a failed download, leaves MP4 files as MPEG-4 Part 2. DebugMemo says
+//** which happened.
+//**
 //** File, Animation... sets the frame rate every saved animation uses, 30 frames a second
 //** unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it:
 //** one cycle is cut into the whole number of equal steps nearest that rate, so the saved
@@ -221,6 +227,12 @@ unit Sprite3dMain;
   and iOS, which have no right-click, the same items are in an Animation
   group of the menu drawer and act on the selected entry.
 
+  At start-up the OpenH264 library, which makes MP4 files H.264, is taken
+  from openh264.json: an address for each platform, from which a copy is
+  downloaded in the background into OpenH264Folder the first time, and again
+  whenever the address changes. An empty address, or a failed download,
+  leaves MP4 files as MPEG-4 Part 2. DebugMemo says which happened.
+
   File, Animation... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
   animation is resampled to it: one cycle is cut into the whole number of
@@ -322,7 +334,7 @@ uses
   FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
-  Sprite3DAnimationForm, Sprite3DVideo,
+  Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
   Sprite3DSpriteSheet
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -1031,6 +1043,8 @@ type
     FAnimationPopup: TPopupMenu;
     // File, Animation...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
+    // Keeps the downloaded OpenH264 in step with openh264.json
+    FOpenH264Update: TSprite3DLibraryUpdate;
     // View, Camera, Lock Camera, and the line above it
     FLockCameraItem: TMenuItem;
     FLockSeparatorItem: TMenuItem;
@@ -1121,6 +1135,8 @@ type
     procedure OffscreenBeforeGrab(Sender: TObject; const AWidth, AHeight: Integer);
     procedure OffscreenAfterGrab(Sender: TObject);
     procedure BuildAnimationMenu;
+    procedure PrepareOpenH264;
+    procedure StartOpenH264Update;
     procedure BuildLockCameraItem;
     procedure LockCameraItemClick(Sender: TObject);
     function CameraLocked: Boolean;
@@ -1306,9 +1322,16 @@ begin
   // The View menu's on/off items as they were left last session
   RestoreViewToggles;
 
+  // The OpenH264 already downloaded, if it is the one openh264.json asks
+  // for; before BuildAnimationMenu first loads the video libraries
+  PrepareOpenH264;
+
   // The animation list's right-click menu; on mobile, also the drawer's
   // Animation group, so it must come before BuildMobileMenu
   BuildAnimationMenu;
+
+  // Fetches OpenH264 in the background if it is missing or out of date
+  StartOpenH264Update;
   // View, Camera, Lock Camera; before the menu is moved or mirrored
   BuildLockCameraItem;
 
@@ -1586,6 +1609,8 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  // Stops a download under way and waits for it
+  FreeAndNil(FOpenH264Update);
   FBatchActive := False;   // no further batch entries
   if Assigned(FCapture) then
   begin
@@ -2499,6 +2524,41 @@ begin
         FreeAndNil(GorillaModel);
       end;
   end;
+end;
+
+// Reads openh264.json and what has been downloaded, without the network,
+// and tells Sprite3DOpenH264 which copy to load, if any
+procedure TMainForm.PrepareOpenH264;
+begin
+  FOpenH264Update := TSprite3DLibraryUpdate.Create(OpenH264ConfigFile, 'OpenH264',
+    OpenH264Folder);
+  SetPreferredOpenH264(FOpenH264Update.CurrentLibrary);
+  DebugMemo.Lines.Add(FOpenH264Update.Message);
+end;
+
+// Downloads OpenH264 if openh264.json gives an address this copy does not
+// come from. Only worth doing when FFmpeg can write MP4 files. When the new
+// copy arrives it is loaded straight away, so H.264 is offered without a
+// restart; a failure, 404s included, leaves MP4 files as MPEG-4 Part 2.
+procedure TMainForm.StartOpenH264Update;
+begin
+  if not VideoAvailable then
+    Exit;
+  FOpenH264Update.Start(
+    procedure(const ALibrary, AMessage: String)
+    begin
+      DebugMemo.Lines.Add(AMessage);
+      if ALibrary = String.Empty then
+        Exit;
+      if OpenH264LoadedLibrary <> String.Empty then
+      begin
+        DebugMemo.Lines.Add('The new OpenH264 is used from the next start');
+        Exit;
+      end;
+      SetPreferredOpenH264(ALibrary);
+      RecheckH264;
+      DebugMemo.Lines.Add(OpenH264Status);
+    end);
 end;
 
 // The animation list's pop-up menu, made here rather than in the form

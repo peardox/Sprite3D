@@ -6,8 +6,8 @@
 //** included. MPEG-4 Part 2 is FFmpeg's own @code(mpeg4) encoder, which every FFmpeg build has
 //** and which needs no library beyond FFmpeg's own under its LGPL licence; it plays in desktop
 //** players such as VLC, QuickTime and the Windows players, but not in web browsers. In both
-//** cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is looked for in the
-//** same folders as FFmpeg, once FFmpeg has loaded.
+//** cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is used only as
+//** Sprite3DOpenH264 is told, from the copy downloaded for the platform.
 //**
 //** The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers in the
 //** @code(ffmpeg) folder, used as they are. Those headers bind every function statically, so
@@ -18,17 +18,20 @@
 //** offers video only when VideoAvailable says they loaded.
 //**
 //** The libraries must be FFmpeg 8.1's major versions, as the headers are: avutil 60,
-//** avcodec 62 and avformat 62. They are looked for, in order, next to the executable, in a
-//** @code(dlls/<platform>) folder beside it or in any folder above it (so a build run from the
-//** source tree finds the repository's @code(dlls) folder), in a macOS bundle's Frameworks
-//** folder, and last wherever the system looks for libraries. @code(<platform>) is
-//** @code(win64), @code(macarm), @code(macx64) or @code(linux64).
+//** avcodec 62 and avformat 62. They are looked for in the folders NativeLibraryFolders in
+//** Sprite3DNativeLibs gives, first the platform's usual place for an application's own
+//** libraries, then a @code(dlls/<platform>) folder beside the executable or above it, and
+//** last wherever the system looks for libraries.
 //**
 //** @preformatted(
-//** Windows   avutil-60.dll         avcodec-62.dll         avformat-62.dll
-//** macOS     libavutil.60.dylib    libavcodec.62.dylib    libavformat.62.dylib
-//** Linux     libavutil.so.60       libavcodec.so.62       libavformat.so.62
+//** Windows     avutil-60.dll         avcodec-62.dll         avformat-62.dll
+//** macOS, iOS  libavutil.60.dylib    libavcodec.62.dylib    libavformat.62.dylib
+//** Linux       libavutil.so.60       libavcodec.so.62       libavformat.so.62
+//** Android     libavutil.so          libavcodec.so          libavformat.so
 //** )
+//**
+//** Android only unpacks libraries named @code(lib*.so) from an APK, so there the names have
+//** no version.
 //**
 //** Any other FFmpeg library one of those needs, such as swresample, must be in the same
 //** folder; it is loaded first if it is there.
@@ -47,7 +50,8 @@ unit Sprite3DVideo;
   FFmpeg's own under its LGPL licence; it plays in desktop players such as
   VLC, QuickTime and the Windows players, but not in web browsers. In both
   cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is
-  looked for in the same folders as FFmpeg, once FFmpeg has loaded.
+  used only as Sprite3DOpenH264 is told, from the copy downloaded for the
+  platform.
 
   The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers
   in the ffmpeg folder, used as they are. Those headers bind every function
@@ -59,16 +63,19 @@ unit Sprite3DVideo;
   offers video only when VideoAvailable says they loaded.
 
   The libraries must be FFmpeg 8.1's major versions, as the headers are:
-  avutil 60, avcodec 62 and avformat 62. They are looked for, in order, next
-  to the executable, in a dlls/<platform> folder beside it or in any folder
-  above it (so a build run from the source tree finds the repository's dlls
-  folder), in a macOS bundle's Frameworks folder, and last wherever the
-  system looks for libraries. <platform> is win64, macarm, macx64 or
-  linux64.
+  avutil 60, avcodec 62 and avformat 62. They are looked for in the folders
+  NativeLibraryFolders in Sprite3DNativeLibs gives, first the platform's
+  usual place for an application's own libraries, then a dlls/<platform>
+  folder beside the executable or above it, and last wherever the system
+  looks for libraries.
 
-    Windows   avutil-60.dll         avcodec-62.dll         avformat-62.dll
-    macOS     libavutil.60.dylib    libavcodec.62.dylib    libavformat.62.dylib
-    Linux     libavutil.so.60       libavcodec.so.62       libavformat.so.62
+    Windows     avutil-60.dll         avcodec-62.dll         avformat-62.dll
+    macOS, iOS  libavutil.60.dylib    libavcodec.62.dylib    libavformat.62.dylib
+    Linux       libavutil.so.60       libavcodec.so.62       libavformat.so.62
+    Android     libavutil.so          libavcodec.so          libavformat.so
+
+  Android only unpacks libraries named lib*.so from an APK, so there the
+  names have no version.
 
   Any other FFmpeg library one of those needs, such as swresample, must be
   in the same folder; it is loaded first if it is there.
@@ -170,6 +177,22 @@ procedure SaveMpeg4Video(const AFrames: TArray<TSprite3DImage>; const AFileName:
 /// nothing.</returns>
 function H264Available: Boolean;
 
+//** @abstract(Looks for OpenH264 again, after a copy may have been added, unless one is
+//** loaded.)
+//**
+//** For when OpenH264 has been downloaded while the program runs; tell Sprite3DOpenH264
+//** where with SetPreferredOpenH264 first. A copy already loaded stays in use until the
+//** program ends, as a loaded library cannot be swapped safely.
+//**
+//** @returns(True if H.264 is available now.)
+/// <summary>Looks for OpenH264 again, after a copy may have been added, unless one is
+/// loaded.</summary>
+/// <remarks>For when OpenH264 has been downloaded while the program runs; tell
+/// Sprite3DOpenH264 where with SetPreferredOpenH264 first. A copy already loaded stays in use
+/// until the program ends, as a loaded library cannot be swapped safely.</remarks>
+/// <returns>True if H.264 is available now.</returns>
+function RecheckH264: Boolean;
+
 //** @abstract(Writes the frames as a video-only H.264 MP4 file with OpenH264.)
 //**
 //** As SaveMpeg4Video in every way but the codec: H.264 Constrained Baseline from OpenH264,
@@ -251,7 +274,7 @@ uses
   {$IFDEF MSWINDOWS}
   Winapi.Windows,
   {$ENDIF}
-  System.Classes, System.IOUtils, System.Math,
+  System.Classes, System.IOUtils, System.Math, Sprite3DNativeLibs,
   // The DelphiFFmpeg.com headers: types and constants only, see above
   libavutil, libavutil_error, libavutil_frame, libavutil_pixfmt, libavutil_rational,
   libavcodec, libavcodec_codec, libavcodec_codec_id, libavcodec_codec_par,
@@ -264,15 +287,6 @@ const
   AVCODEC_MAJOR = 62;
   AVFORMAT_MAJOR = 62;
 
-  {$IF DEFINED(MSWINDOWS)}
-  PLATFORM_FOLDER = 'win64';
-  {$ELSEIF DEFINED(MACOS) and DEFINED(CPUARM64)}
-  PLATFORM_FOLDER = 'macarm';
-  {$ELSEIF DEFINED(MACOS)}
-  PLATFORM_FOLDER = 'macx64';
-  {$ELSE}
-  PLATFORM_FOLDER = 'linux64';
-  {$IFEND}
 
   // AVERROR(EAGAIN): the headers give it for Windows and macOS only
   {$IF DEFINED(MACOS)}
@@ -359,8 +373,6 @@ var
   Tried: Boolean;
   Loaded: Boolean;
   Status: String;
-  // The folder FFmpeg was loaded from, where OpenH264 is looked for first
-  LoadedFolder: String;
 
 { Loading }
 
@@ -369,6 +381,8 @@ function LibraryFile(const AName: String; const AMajor: Integer): String;
 begin
   {$IF DEFINED(MSWINDOWS)}
   Result := Format('%s-%d.dll', [AName, AMajor]);
+  {$ELSEIF DEFINED(ANDROID)}
+  Result := Format('lib%s.so', [AName]);
   {$ELSEIF DEFINED(MACOS)}
   Result := Format('lib%s.%d.dylib', [AName, AMajor]);
   {$ELSE}
@@ -403,28 +417,8 @@ end;
 // The folders to look in, best first; the last, empty, means the system's
 // own search path
 function CandidateFolders: TArray<String>;
-var
-  ExeDir, Dir, Parent: String;
-  Level: Integer;
 begin
-  ExeDir := ExtractFilePath(ParamStr(0));
-  Result := [ExeDir, TPath.Combine(ExeDir, TPath.Combine('dlls', PLATFORM_FOLDER))];
-  {$IFDEF MACOS}
-  // Inside an application bundle: Contents/MacOS/../Frameworks
-  Result := Result + [TPath.GetFullPath(TPath.Combine(ExeDir, '../Frameworks'))];
-  {$ENDIF}
-  // A build run from the source tree, such as src/Win64/Debug, finds the
-  // repository's dlls folder a few levels up
-  Dir := ExcludeTrailingPathDelimiter(ExeDir);
-  for Level := 1 to 6 do
-  begin
-    Parent := ExtractFileDir(Dir);
-    if (Parent = String.Empty) or (Parent = Dir) then
-      Break;
-    Dir := Parent;
-    Result := Result + [TPath.Combine(Dir, TPath.Combine('dlls', PLATFORM_FOLDER))];
-  end;
-  Result := Result + [String.Empty];
+  Result := NativeLibraryFolders + [String.Empty];
 end;
 
 function LoadApi(out AError: String): Boolean;
@@ -488,11 +482,11 @@ begin
   if Format_ = 0 then
   begin
     if AError = String.Empty then
-      AError := Format('FFmpeg %s libraries (%s, %s, %s) were not found next to the ' +
-        'program, in a dlls%s%s folder or on the system library path.',
+      AError := Format('FFmpeg %s libraries (%s, %s, %s) were not found in %s or on the ' +
+        'system library path.',
         [FFMPEG_VERSION, LibraryFile('avutil', AVUTIL_MAJOR),
          LibraryFile('avcodec', AVCODEC_MAJOR), LibraryFile('avformat', AVFORMAT_MAJOR),
-         PathDelim, PLATFORM_FOLDER]);
+         String.Join('; ', NativeLibraryFolders)]);
     Exit;
   end;
 
@@ -553,7 +547,6 @@ begin
     Path := 'the system library path'
   else
     Path := Folder;
-  LoadedFolder := Folder;
   AError := Format('FFmpeg loaded from %s (avutil %d.%d, avcodec %d.%d, avformat %d.%d)',
     [Path, Api.avutil_version shr 16, (Api.avutil_version shr 8) and $FF,
      Api.avcodec_version shr 16, (Api.avcodec_version shr 8) and $FF,
@@ -562,8 +555,6 @@ begin
 end;
 
 function VideoAvailable: Boolean;
-var
-  Folders: TArray<String>;
 begin
   if not Tried then
   begin
@@ -577,15 +568,9 @@ begin
         Status := 'The FFmpeg libraries could not be loaded: ' + E.Message;
       end;
     end;
-    // OpenH264 only matters once FFmpeg can write the file: look beside
-    // FFmpeg first, then everywhere FFmpeg was looked for
+    // OpenH264 only matters once FFmpeg can write the file
     if Loaded then
-    begin
-      Folders := nil;
-      if LoadedFolder <> String.Empty then
-        Folders := [LoadedFolder];
-      OpenH264Available(Folders + CandidateFolders);
-    end;
+      OpenH264Available;
   end;
   Result := Loaded;
 end;
@@ -600,7 +585,12 @@ end;
 
 function H264Available: Boolean;
 begin
-  Result := VideoAvailable and OpenH264Available([]);
+  Result := VideoAvailable and OpenH264Available;
+end;
+
+function RecheckH264: Boolean;
+begin
+  Result := VideoAvailable and OpenH264Retry;
 end;
 
 { Writing }
@@ -780,7 +770,7 @@ var
   var
     Code: Integer;
   begin
-    Result := False;
+    // Every way out sets the result
     repeat
       Code := Api.avcodec_receive_packet(Context, Packet);
       if Code = ERROR_AGAIN then
