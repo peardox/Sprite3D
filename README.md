@@ -166,6 +166,7 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 
 ## Known issues
 
+- On macOS and iOS, where Gorilla3D renders through Metal, grabs and icons are screenshots of the view as shown, cropped to the grab's shape and scaled: the model is not refitted for them, and they are opaque, with the viewport's own background.
 - In orthographic projection the viewport background is not drawn, as Gorilla3D draws it black over the whole scene there. Grabs are not affected.
 - Background colours in the viewport show about 1.25 times brighter than chosen. Grabs and icons use the exact colours.
 - Android would need intent filters, and iOS document types, added to their manifest and Info.plist for Open With; neither is set up yet.

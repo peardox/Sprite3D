@@ -17,10 +17,17 @@
 //** OnAfterGrab; the screen never shows the grab's framing.
 //**
 //** Read-back uses OpenGL directly, with the GL functions looked up at run time in the
-//** platform's library, so it works on every platform Gorilla renders with OpenGL, its
-//** default: Windows, macOS and Linux with desktop OpenGL, Android and iOS with OpenGL ES 3.
-//** If a project switches Gorilla to its optional Vulkan backend, grabs fail with an error
-//** saying an OpenGL function is not available.
+//** platform's library, so it works on every platform Gorilla renders with OpenGL: Windows
+//** and Linux with desktop OpenGL, Android with OpenGL ES 3. If a project switches Gorilla
+//** to its optional Vulkan backend, grabs fail with an error saying an OpenGL function is not
+//** available.
+//**
+//** On macOS and iOS Gorilla renders through Metal, so there a grab is instead a screenshot of
+//** the viewport as it is shown, from TGorillaViewport.MakeScreenshot, cropped about its
+//** centre to the target's shape and scaled to the target's size. OnBeforeGrab and
+//** OnAfterGrab are not called, so the framing is the screen's, and the image is opaque: it
+//** shows the viewport's own background, and Backdrop and TransparentBackground are not
+//** used.
 //**
 //** @preformatted(
 //** TGorillaRenderPassController @(Gorilla.Controller@)
@@ -52,14 +59,28 @@ unit Sprite3DOffscreen;
 
   Read-back uses OpenGL directly, with the GL functions looked up at run
   time in the platform's library, so it works on every platform Gorilla
-  renders with OpenGL, its default: Windows, macOS and Linux with desktop
-  OpenGL, Android and iOS with OpenGL ES 3. If a project switches Gorilla
-  to its optional Vulkan backend, grabs fail with an error saying an OpenGL
-  function is not available.
+  renders with OpenGL: Windows and Linux with desktop OpenGL, Android with
+  OpenGL ES 3. If a project switches Gorilla to its optional Vulkan
+  backend, grabs fail with an error saying an OpenGL function is not
+  available.
+
+  On macOS and iOS Gorilla renders through Metal, so there a grab is
+  instead a screenshot of the viewport as it is shown, from
+  TGorillaViewport.MakeScreenshot, cropped about its centre to the target's
+  shape and scaled to the target's size. OnBeforeGrab and OnAfterGrab are
+  not called, so the framing is the screen's, and the image is opaque: it
+  shows the viewport's own background, and Backdrop and
+  TransparentBackground are not used.
 
     TGorillaRenderPassController (Gorilla.Controller)
     `-- TSprite3DOffscreen   pre-pass into a Width x Height frame buffer
 }
+
+// Gorilla3D renders through Metal on macOS and iOS, where OpenGL read-back
+// cannot work; grabs there are screenshots of the viewport instead
+{$IF DEFINED(MACOS)}
+  {$DEFINE S3D_SCREENSHOT_GRAB}
+{$ENDIF}
 
 interface
 
@@ -215,6 +236,9 @@ type
     function ReadPixels(out APixels: TBytes; out AWidth, AHeight: Integer;
       out AError: String): Boolean;
     procedure Deliver(const ABitmap: TBitmap; const AError: String);
+    {$IFDEF S3D_SCREENSHOT_GRAB}
+    procedure GrabScreenshot;
+    {$ENDIF}
   protected
     //** @abstract(Returns nil: this pass draws every object with its own materials.)
     //**
@@ -906,6 +930,10 @@ begin
     Exit;
   FOnGrabbed := AOnGrabbed;
   FBusy := True;
+  {$IFDEF S3D_SCREENSHOT_GRAB}
+  GrabScreenshot;   // reports through Deliver, as the render does
+  Exit;
+  {$ENDIF}
   ApplyTargetSize;   // pick up any size change made while busy
   FReads := nil;
   FTriedFrames := False;
@@ -937,6 +965,56 @@ begin
   Enabled := True;
   Viewport.Invalidate;
 end;
+
+{$IFDEF S3D_SCREENSHOT_GRAB}
+// Metal: the viewport as last shown, cropped about its centre to the
+// target's shape and drawn at the target's size, then handed to Deliver,
+// which reports it on the main thread and frees it. Any failure is reported
+// the same way, as an error.
+procedure TSprite3DOffscreen.GrabScreenshot;
+var
+  Shot, Image: TBitmap;
+  Source: TRectF;
+  W, H: Single;
+begin
+  Shot := nil;
+  Image := nil;
+  try
+    try
+      Shot := Viewport.MakeScreenshot;
+      if (Shot = nil) or (Shot.Width = 0) or (Shot.Height = 0) then
+        raise Exception.Create('The view gave no image.');
+      // The largest rectangle of the target's shape, centred
+      W := Shot.Width;
+      H := Shot.Height;
+      if W / H > FWidth / FHeight then
+        W := H * FWidth / FHeight
+      else
+        H := W * FHeight / FWidth;
+      Source := TRectF.Create(0, 0, W, H);
+      Source.Offset((Shot.Width - W) / 2, (Shot.Height - H) / 2);
+      Image := TBitmap.Create(FWidth, FHeight);
+      if Image.Canvas.BeginScene then
+      try
+        Image.Canvas.Clear(TAlphaColors.Null);
+        Image.Canvas.DrawBitmap(Shot, Source, TRectF.Create(0, 0, FWidth, FHeight), 1, False);
+      finally
+        Image.Canvas.EndScene;
+      end;
+    finally
+      Shot.Free;
+    end;
+  except
+    on E: Exception do
+    begin
+      FreeAndNil(Image);
+      Deliver(nil, 'The view could not be captured: ' + E.Message);
+      Exit;
+    end;
+  end;
+  Deliver(Image, String.Empty);
+end;
+{$ENDIF}
 
 // Lets the owner fit the scene to the target; Restore puts it back
 procedure TSprite3DOffscreen.Prepare;
