@@ -21,6 +21,10 @@
 //** per frame. Changing a grid property rewrites the shader once, with the new values written
 //** into it as constants.
 //**
+//** On macOS and iOS, where Gorilla3D draws through Metal and does not support a material's
+//** SurfaceShader, the grid is instead one thin plane per line, reaching at most 20 cells
+//** each side of the centre, without the fade.
+//**
 //** The plane is not a child of the model, so it never counts in the model's bounding box,
 //** and FitToBounds is unaffected. It sits in a frame beside the model that copies the
 //** model's position, rotation, scale and centre of rotation whenever they change, so the
@@ -73,6 +77,10 @@ unit Sprite3DGrid;
   recalculated per frame. Changing a grid property rewrites the shader once,
   with the new values written into it as constants.
 
+  On macOS and iOS, where Gorilla3D draws through Metal and does not support
+  a material's SurfaceShader, the grid is instead one thin plane per line,
+  reaching at most 20 cells each side of the centre, without the fade.
+
   The plane is not a child of the model, so it never counts in the model's
   bounding box, and FitToBounds is unaffected. It sits in a frame beside the
   model that copies the model's position, rotation, scale and centre of
@@ -92,6 +100,13 @@ unit Sprite3DGrid;
       Grid.GridSize := 0.5;
     HideModelGrid(GorillaModel1);
 }
+
+
+// Gorilla3D draws through Metal on macOS and iOS, where a material's
+// SurfaceShader is not supported; there the grid is built from thin planes
+{$IF DEFINED(MACOS)}
+  {$DEFINE S3D_NO_SURFACE_SHADER}
+{$ENDIF}
 
 interface
 
@@ -154,7 +169,12 @@ type
     procedure RebuildGrid;
     procedure SyncFrame;
     function FloorLevel: Single;
+    {$IFNDEF S3D_NO_SURFACE_SHADER}
     function SurfaceCode: string;
+    {$ELSE}
+    procedure AddLinePlanes(const AHolder: TControl3D;
+      const AMaterial: TGorillaDefaultMaterialSource);
+    {$ENDIF}
     procedure SetGridAxis(const Value: TGridAxis);
     procedure SetGridSize(const Value: Single);
     procedure SetGridColor(const Value: TAlphaColor);
@@ -405,6 +425,12 @@ const
   // an unsplit plane drift differently, so the grid lines jump where they
   // meet. Small triangles keep it exact; 64 x 64 is 8192 triangles.
   GRID_SUBDIVISIONS = 64;
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  // Without a shader: the most cells drawn each side of the centre, as one
+  // plane per line, and a line's width as a fraction of a cell
+  METAL_GRID_CELLS = 20;
+  METAL_LINE_WIDTH = 0.02;
+  {$ENDIF}
   // Lines fade out as a grid cell shrinks on screen from DENSE_FULL to
   // DENSE_GONE pixels across, so far-off lines dissolve instead of turning
   // to moire, well before the plane's edge comes into view
@@ -567,6 +593,7 @@ begin
   Frame.Free;   // frees the plane, its child, then the material it owns
 end;
 
+{$IFNDEF S3D_NO_SURFACE_SHADER}
 function TModelGrid.SurfaceCode: string;
 var
   C: TAlphaColorRec;
@@ -606,15 +633,54 @@ begin
     '  DATA.Alpha = a;' + sLineBreak +
     '}';
 end;
+{$ELSE}
+// Metal: a line plane for every cell boundary within METAL_GRID_CELLS of the
+// centre, in AHolder's own X-Y plane, as the shader's plane would be. All
+// share AMaterial. The lines do not fade with distance; the grid simply ends.
+procedure TModelGrid.AddLinePlanes(const AHolder: TControl3D;
+  const AMaterial: TGorillaDefaultMaterialSource);
+
+  procedure AddLine(const AX, AY, AWidth, AHeight: Single);
+  var
+    Line: TGorillaPlane;
+  begin
+    Line := TGorillaPlane.Create(nil);
+    Line.Stored := False;
+    Line.Locked := True;
+    Line.HitTest := False;
+    Line.Parent := AHolder;   // freed with it
+    Line.TwoSide := True;     // seen from above and below
+    Line.Width := AWidth;
+    Line.Height := AHeight;
+    Line.Position.Point := Point3D(AX, AY, 0);
+    Line.MaterialSource := AMaterial;
+  end;
+
+var
+  Cells, I: Integer;
+  Reach, Thick: Single;
+begin
+  Cells := Min(FGridCells, METAL_GRID_CELLS);
+  Reach := Cells * FGridSize;
+  Thick := FGridSize * METAL_LINE_WIDTH;
+  for I := -Cells to Cells do
+  begin
+    AddLine(I * FGridSize, 0, Thick, 2 * Reach);   // along Y
+    AddLine(0, I * FGridSize, 2 * Reach, Thick);   // along X
+  end;
+end;
+{$ENDIF}
 
 procedure TModelGrid.RebuildGrid;
 var
   Model: TControl3D;
-  Plane: TGorillaPlane;
+  Plane: TControl3D;   // a TGorillaPlane, or without a shader a TDummy
   Mat: TGorillaDefaultMaterialSource;
+  {$IFNDEF S3D_NO_SURFACE_SHADER}
   Code: TStringList;
-  P: TPoint3D;
   Half: Single;
+  {$ENDIF}
+  P: TPoint3D;
 begin
   FreeGrid;
   if (FGridSize <= 0) or not FHasExtent or not (Parent is TControl3D)
@@ -632,8 +698,13 @@ begin
   FFrame.Parent := Model.Parent;
   SyncFrame;
 
-  // The plane, parented before anything else, as in Gorilla's examples
+  // The plane, parented before anything else, as in Gorilla's examples.
+  // Without a shader it only holds the line planes, and is not drawn itself.
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  Plane := TDummy.Create(nil);
+  {$ELSE}
   Plane := TGorillaPlane.Create(nil);
+  {$ENDIF}
   Plane.Stored := False;
   Plane.Locked := True;
   Plane.HitTest := False;
@@ -641,11 +712,13 @@ begin
 
   // TGorillaPlane lies in its local X-Y plane, like FMX's TPlane, sized by
   // Width and Height; turn it onto GridAxis
+  {$IFNDEF S3D_NO_SURFACE_SHADER}
   Half := FGridCells * FGridSize;
-  Plane.SubdivisionsWidth := GRID_SUBDIVISIONS;
-  Plane.SubdivisionsHeight := GRID_SUBDIVISIONS;
+  TGorillaPlane(Plane).SubdivisionsWidth := GRID_SUBDIVISIONS;
+  TGorillaPlane(Plane).SubdivisionsHeight := GRID_SUBDIVISIONS;
   Plane.Width := 2 * Half;
   Plane.Height := 2 * Half;
+  {$ENDIF}
   case FGridAxis of
     gaX: Plane.RotationAngle.Point := Point3D(0, 90, 0);   // X-Y into Y-Z
     gaY: Plane.RotationAngle.Point := Point3D(90, 0, 0);   // X-Y into X-Z
@@ -664,6 +737,9 @@ begin
   // The grid colour as the material's own colour too, so even if the
   // shader's BaseColor is not what reaches the screen the lines are this
   Mat.Diffuse := FGridColor;
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  AddLinePlanes(Plane, Mat);
+  {$ELSE}
   // The shader property takes a TStrings instance; setting .Text at runtime
   // would not trigger Gorilla's shader update
   Code := TStringList.Create;
@@ -673,7 +749,8 @@ begin
   finally
     Code.Free;
   end;
-  Plane.MaterialSource := Mat;
+  TGorillaPlane(Plane).MaterialSource := Mat;
+  {$ENDIF}
 end;
 
 procedure TModelGrid.UpdateGrid;

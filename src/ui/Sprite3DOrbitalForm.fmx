@@ -3,8 +3,8 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
   Top = 0
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
-  Caption = 'Camera'
-  ClientHeight = 450
+  Caption = 'Variable Camera'
+  ClientHeight = 554
   ClientWidth = 350
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -16,13 +16,13 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
   object Layout1: TLayout
     Align = Client
     Size.Width = 350.000000000000000000
-    Size.Height = 413.000000000000000000
+    Size.Height = 517.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 97
     object OrbitalLayout: TLayout
       Align = Client
       Size.Width = 350.000000000000000000
-      Size.Height = 413.000000000000000000
+      Size.Height = 517.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
       object AngleDial: TArcDial
@@ -47,15 +47,17 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
       end
       object AngleText: TLabel
         StyledSettings = [FontColor]
-        Position.X = 200.000000000000000000
-        Position.Y = 16.000000000000000000
-        Size.Width = 132.000000000000000000
-        Size.Height = 132.000000000000000000
+        Position.X = 192.000000000000000000
+        Position.Y = 8.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 144.000000000000000000
         Size.PlatformDefault = False
         TextSettings.Font.Family = 'Roboto'
         TextSettings.Font.Size = 72.000000000000000000
         TextSettings.Font.StyleExt = {00070000000000000004000000}
         TextSettings.HorzAlign = Center
+        TextSettings.Trimming = None
+        TextSettings.WordWrap = False
         Text = '0'
         TabOrder = 93
       end
@@ -81,15 +83,17 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
       end
       object AzimuthText: TLabel
         StyledSettings = [FontColor]
-        Position.X = 16.000000000000000000
-        Position.Y = 16.000000000000000000
-        Size.Width = 132.000000000000000000
-        Size.Height = 132.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 8.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 144.000000000000000000
         Size.PlatformDefault = False
         TextSettings.Font.Family = 'Roboto'
         TextSettings.Font.Size = 72.000000000000000000
         TextSettings.Font.StyleExt = {00070000000000000004000000}
         TextSettings.HorzAlign = Center
+        TextSettings.Trimming = None
+        TextSettings.WordWrap = False
         Text = '0'
         TabOrder = 95
       end
@@ -115,21 +119,23 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
       end
       object RollText: TLabel
         StyledSettings = [FontColor]
-        Position.X = 16.000000000000000000
-        Position.Y = 208.000000000000000000
-        Size.Width = 132.000000000000000000
-        Size.Height = 132.000000000000000000
+        Position.X = 6.000000000000000000
+        Position.Y = 200.000000000000000000
+        Size.Width = 144.000000000000000000
+        Size.Height = 144.000000000000000000
         Size.PlatformDefault = False
         TextSettings.Font.Family = 'Roboto'
         TextSettings.Font.Size = 72.000000000000000000
         TextSettings.Font.StyleExt = {00070000000000000004000000}
         TextSettings.HorzAlign = Center
+        TextSettings.Trimming = None
+        TextSettings.WordWrap = False
         Text = '0'
         TabOrder = 94
       end
       object DistanceLayout: TLayout
         Align = Bottom
-        Position.Y = 381.000000000000000000
+        Position.Y = 485.000000000000000000
         Size.Width = 350.000000000000000000
         Size.Height = 32.000000000000000000
         Size.PlatformDefault = False
@@ -159,11 +165,183 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
           OnChange = DistanceTrackChange
         end
       end
+      object ExactLayout: TLayout
+        Position.X = 192.000000000000000000
+        Position.Y = 204.000000000000000000
+        Size.Width = 150.000000000000000000
+        Size.Height = 164.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 5
+        object AzimuthExactLabel: TLabel
+          Position.Y = 0.000000000000000000
+          Size.Width = 150.000000000000000000
+          Size.Height = 18.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.HorzAlign = Trailing
+          Text = 'Azimuth'
+          TabOrder = 0
+        end
+        object AzimuthExactText: TLabel
+          StyledSettings = [Family, FontColor]
+          Position.Y = 18.000000000000000000
+          Size.Width = 150.000000000000000000
+          Size.Height = 28.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Size = 18.000000000000000000
+          TextSettings.HorzAlign = Trailing
+          Text = '0.000000'
+          TabOrder = 1
+        end
+        object AngleExactLabel: TLabel
+          Position.Y = 56.000000000000000000
+          Size.Width = 150.000000000000000000
+          Size.Height = 18.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.HorzAlign = Trailing
+          Text = 'Inclination'
+          TabOrder = 2
+        end
+        object AngleExactText: TLabel
+          StyledSettings = [Family, FontColor]
+          Position.Y = 74.000000000000000000
+          Size.Width = 150.000000000000000000
+          Size.Height = 28.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Size = 18.000000000000000000
+          TextSettings.HorzAlign = Trailing
+          Text = '0.000000'
+          TabOrder = 3
+        end
+        object RollExactLabel: TLabel
+          Position.Y = 112.000000000000000000
+          Size.Width = 150.000000000000000000
+          Size.Height = 18.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.HorzAlign = Trailing
+          Text = 'Roll'
+          TabOrder = 4
+        end
+        object RollExactText: TLabel
+          StyledSettings = [Family, FontColor]
+          Position.Y = 130.000000000000000000
+          Size.Width = 150.000000000000000000
+          Size.Height = 28.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Size = 18.000000000000000000
+          TextSettings.HorzAlign = Trailing
+          Text = '0.000000'
+          TabOrder = 5
+        end
+      end
+      object PanLayout: TLayout
+        Align = Bottom
+        Position.Y = 381.000000000000000000
+        Size.Width = 350.000000000000000000
+        Size.Height = 104.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 4
+        object PanTopLayout: TLayout
+          Align = Top
+          Size.Width = 350.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          object PanCheck: TCheckBox
+            Align = Left
+            Margins.Left = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Size.Width = 240.000000000000000000
+            Size.Height = 32.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 0
+            Text = 'Pan (along the model'#39's X and Z axes)'
+            OnChange = PanCheckChange
+          end
+          object PanResetButton: TButton
+            Align = Right
+            Margins.Top = 4.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Margins.Bottom = 4.000000000000000000
+            Position.X = 262.000000000000000000
+            Position.Y = 4.000000000000000000
+            Size.Width = 80.000000000000000000
+            Size.Height = 24.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 1
+            Text = 'Centre'
+            OnClick = PanResetButtonClick
+          end
+        end
+        object PanXLayout: TLayout
+          Align = Top
+          Position.Y = 32.000000000000000000
+          Size.Width = 350.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          object PanXLabel: TLabel
+            Align = Left
+            Margins.Left = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Size.Width = 96.000000000000000000
+            Size.Height = 32.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'X +0.00'
+            TabOrder = 0
+          end
+          object PanXTrack: TTrackBar
+            Align = Client
+            CanParentFocus = True
+            Frequency = 0.009999999776482582
+            Max = 2.000000000000000000
+            Min = -2.000000000000000000
+            Orientation = Horizontal
+            Margins.Right = 8.000000000000000000
+            Size.Width = 238.000000000000000000
+            Size.Height = 19.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 1
+            OnChange = PanTrackChange
+          end
+        end
+        object PanZLayout: TLayout
+          Align = Top
+          Position.Y = 64.000000000000000000
+          Size.Width = 350.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          object PanZLabel: TLabel
+            Align = Left
+            Margins.Left = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Size.Width = 96.000000000000000000
+            Size.Height = 32.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Z +0.00'
+            TabOrder = 0
+          end
+          object PanZTrack: TTrackBar
+            Align = Client
+            CanParentFocus = True
+            Frequency = 0.009999999776482582
+            Max = 2.000000000000000000
+            Min = -2.000000000000000000
+            Orientation = Horizontal
+            Margins.Right = 8.000000000000000000
+            Size.Width = 238.000000000000000000
+            Size.Height = 19.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 1
+            OnChange = PanTrackChange
+          end
+        end
+      end
     end
   end
   object Layout2: TLayout
     Align = Bottom
-    Position.Y = 413.000000000000000000
+    Position.Y = 517.000000000000000000
     Size.Width = 350.000000000000000000
     Size.Height = 37.000000000000000000
     Size.PlatformDefault = False

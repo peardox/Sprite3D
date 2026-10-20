@@ -9,13 +9,13 @@
 //** #RRGGBB and takes one typed in. None and Transparent need no colour, so the panel is
 //** disabled then; for Transparent a slider sets the size of the checker that stands for
 //** transparency on screen. A preview shows the result, with the checker at a quarter of its
-//** size and None as black, as the viewport shows it. Given a background with LivePreview,
-//** the dialog also shows every change on it at once; Cancel puts it back as it was.
+//** size and None as black, as the viewport shows it.
 //**
 //** The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it
-//** back after OK. On the desktop show it with ShowModal and free it afterwards; on Android
-//** and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK and
-//** frees the form when it closes.
+//** back after OK. Each change also calls OnPreview, so the owner can show it in the viewport
+//** at once, and undo it if the dialog is cancelled. On the desktop show it with ShowModal and
+//** free it afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which
+//** calls OnAccept on OK, OnCancel otherwise, and frees the form when it closes.
 //**
 //** @preformatted(
 //** TBackgroundSettingsForm
@@ -47,14 +47,14 @@ unit Sprite3DBackgroundForm;
   no colour, so the panel is disabled then; for Transparent a slider sets
   the size of the checker that stands for transparency on screen. A
   preview shows the result, with the checker at a quarter of its size and
-  None as black, as the viewport shows it. Given a background with
-  LivePreview, the dialog also shows every change on it at once; Cancel
-  puts it back as it was.
+  None as black, as the viewport shows it.
 
   The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing
-  it and read it back after OK. On the desktop show it with ShowModal and
-  free it afterwards; on Android and iOS, which cannot block, show it with
-  ShowAndFree, which calls OnAccept on OK and frees the form when it
+  it and read it back after OK. Each change also calls OnPreview, so the
+  owner can show it in the viewport at once, and undo it if the dialog is
+  cancelled. On the desktop show it with ShowModal and free it afterwards;
+  on Android and iOS, which cannot block, show it with ShowAndFree, which
+  calls OnAccept on OK, OnCancel otherwise, and frees the form when it
   closes.
 
     TBackgroundSettingsForm
@@ -250,8 +250,8 @@ type
     FChecker: TBitmap;
     FFreeOnClose: Boolean;
     FOnAccept: TNotifyEvent;
-    FLive: TSprite3DBackground;          // previewed on; not owned
-    FLiveOriginal: TSprite3DBackgroundSpec;   // its spec before, for Cancel
+    FOnCancel: TNotifyEvent;
+    FOnPreview: TNotifyEvent;
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
     procedure LoadColourPanel;
     function EditedColour: TAlphaColor;
@@ -287,26 +287,23 @@ type
     /// <summary>Called after ShowAndFree when the dialog closes with OK; read Spec in
     /// it.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
-    //** @abstract(Shows every change on ABackground as it is made, and puts it back on
-    //** Cancel.)
+    //** @abstract(Called after ShowAndFree when the dialog closes any way but OK.)
     //**
-    //** Call it after setting Spec and before showing the dialog. ABackground's spec at that
-    //** moment is remembered; unless the dialog closes with OK, including by Esc or the
-    //** window's close box, it is put back. On OK ABackground keeps the dialog's spec, which
-    //** the caller still reads from Spec to save or pass on. ABackground is not owned and
-    //** must outlive the dialog.
+    //** The owner puts back the background it had before, undoing the previews.
+    /// <summary>Called after ShowAndFree when the dialog closes any way but OK.</summary>
+    /// <remarks>The owner puts back the background it had before, undoing the
+    /// previews.</remarks>
+    property OnCancel: TNotifyEvent read FOnCancel write FOnCancel;
+    //** @abstract(Called after every change, with the dialog as Sender, so the owner can show
+    //** Spec in the viewport at once.)
     //**
-    //** @param(ABackground The background in view, or nil for no live preview.)
-    /// <summary>Shows every change on ABackground as it is made, and puts it back on
-    /// Cancel.</summary>
-    /// <remarks>Call it after setting Spec and before showing the dialog. ABackground's spec
-    /// at that moment is remembered; unless the dialog closes with OK, including by Esc or the
-    /// window's close box, it is put back. On OK ABackground keeps the dialog's spec, which the
-    /// caller still reads from Spec to save or pass on. ABackground is not owned and must
-    /// outlive the dialog.</remarks>
-    /// <param name="ABackground">The background in view, or nil for no live
-    /// preview.</param>
-    procedure LivePreview(const ABackground: TSprite3DBackground);
+    //** The dialog never changes the viewport itself; on Cancel the owner undoes what the
+    //** previews showed.
+    /// <summary>Called after every change, with the dialog as Sender, so the owner can show
+    /// Spec in the viewport at once.</summary>
+    /// <remarks>The dialog never changes the viewport itself; on Cancel the owner undoes what
+    /// the previews showed.</remarks>
+    property OnPreview: TNotifyEvent read FOnPreview write FOnPreview;
   end;
 
 implementation
@@ -339,14 +336,15 @@ end;
 
 procedure TBackgroundSettingsForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  // Anything but OK, including Esc and the window's close box, undoes the
-  // live preview
-  if (FLive <> nil) and (ModalResult <> mrOk) then
-    FLive.Spec := FLiveOriginal;
   if not FFreeOnClose then
     Exit;   // shown with ShowModal: the caller frees it
-  if (ModalResult = mrOk) and Assigned(FOnAccept) then
-    FOnAccept(Self);
+  if ModalResult = mrOk then
+  begin
+    if Assigned(FOnAccept) then
+      FOnAccept(Self);
+  end
+  else if Assigned(FOnCancel) then
+    FOnCancel(Self);
   Action := TCloseAction.caFree;
 end;
 
@@ -524,21 +522,8 @@ begin
   end;
 end;
 
-procedure TBackgroundSettingsForm.LivePreview(const ABackground: TSprite3DBackground);
-begin
-  FLive := ABackground;
-  if FLive <> nil then
-  begin
-    FLiveOriginal := FLive.Spec;
-    FLive.Spec := FSpec;
-  end;
-end;
-
-// The preview rectangle, and the live background if there is one
 procedure TBackgroundSettingsForm.UpdatePreview;
 begin
-  if FLive <> nil then
-    FLive.Spec := FSpec;
   case FSpec.Kind of
     TSprite3DBackgroundKind.Solid:
       begin
@@ -588,6 +573,9 @@ begin
       PreviewRect.Fill.Color := TAlphaColors.Black;
     end;
   end;
+  // The viewport shows the same, live
+  if Assigned(FOnPreview) then
+    FOnPreview(Self);
 end;
 
 procedure TBackgroundSettingsForm.StyleChange(Sender: TObject);

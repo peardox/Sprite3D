@@ -1,56 +1,67 @@
-//** @abstract(The Camera dialog: three dials and a distance slider that move the camera
-//** live.)
+//** @abstract(The Variable camera dialog: dials for the camera's angles, a distance slider and
+//** an optional pan.)
 //**
-//** A small modal form, laid out in its .fmx file with standard FMX controls. The Azimuth,
-//** Inclination and Roll dials turn the camera round the model, and the Distance slider
-//** moves it out from the distance the model was fitted at, x1 to x20, so it can never come
-//** closer than the fit and end up inside the model. Every change is shown at once on the
-//** camera given in Camera, as a live preview. OK keeps the result; Cancel, Esc or closing
-//** the window puts the camera back as it was when the dialog opened.
+//** Three dials set Azimuth, Inclination and Roll, whose readouts show whole degrees and,
+//** beside the Roll dial, the same three angles to six decimal places; a slider moves the
+//** camera out from the fitted distance, and, below them, the Pan box switches on two sliders
+//** that move the view along the model's own X and Z axes, the directions that are not the
+//** model's up. Pan is off by default and is meant for the odd case where the model should sit
+//** off centre; it moves the point the camera orbits, on top of the fit, and leaves the angles
+//** and the distance alone. Centre puts both sliders back to 0.
 //**
-//** The dialog only edits a TCameraSettings: set CameraSpec, Camera, FitDistance and
-//** FitOrthoHeight before showing it and read CameraSpec back after OK. On the desktop show
-//** it with ShowModal and free it afterwards; on Android and iOS, which cannot block, show it
-//** with ShowAndFree, which calls OnAccept on OK and frees the form when it closes.
+//** The dialog only edits a TCameraSettings. It never touches the camera itself: each change
+//** calls OnPreview, so the owner can show it at once, and the owner keeps or undoes the
+//** change when the dialog closes. On the desktop show it with ShowModal and free it
+//** afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which calls
+//** OnAccept on OK, OnCancel otherwise, and frees the form when it closes.
 //**
 //** @preformatted(
 //** TOrbitalSettingsForm
 //** |-- Layout1
 //** |   `-- OrbitalLayout
-//** |       |-- AzimuthDial, AzimuthText, AzimuthLabel
-//** |       |-- AngleDial, AngleText, AngleLabel      inclination
-//** |       |-- RollDial, RollText, RollLabel
-//** |       `-- DistanceLayout: DistanceLabel, DistanceTrack
-//** `-- Layout2: CancelButton, OkButton
+//** |       |-- AzimuthDial, AngleDial, RollDial   with their labels and readouts
+//** |       |-- ExactLayout          the three angles to six decimal places
+//** |       |-- PanLayout
+//** |       |   |-- PanTopLayout     PanCheck, PanResetButton
+//** |       |   |-- PanXLayout       PanXLabel, PanXTrack
+//** |       |   `-- PanZLayout       PanZLabel, PanZTrack
+//** |       `-- DistanceLayout       DistanceLabel, DistanceTrack
+//** `-- Layout2                      CancelButton, OkButton
 //** )
 unit Sprite3DOrbitalForm;
 
 {
-  The Camera dialog: three dials and a distance slider that move the camera
-  live.
+  The Variable camera dialog: dials for the camera's angles, a distance
+  slider and an optional pan.
 
-  A small modal form, laid out in its .fmx file with standard FMX controls.
-  The Azimuth, Inclination and Roll dials turn the camera round the model,
-  and the Distance slider moves it out from the distance the model was
-  fitted at, x1 to x20, so it can never come closer than the fit and end up
-  inside the model. Every change is shown at once on the camera given in
-  Camera, as a live preview. OK keeps the result; Cancel, Esc or closing the
-  window puts the camera back as it was when the dialog opened.
+  Three dials set Azimuth, Inclination and Roll, whose readouts show whole
+  degrees and, beside the Roll dial, the same three angles to six decimal
+  places; a slider moves the camera out from the fitted distance, and, below
+  them, the Pan box switches on two sliders that move the view along the
+  model's own X and Z axes, the directions that are not the model's up. Pan
+  is off by default and is meant for the odd case where the model should sit
+  off centre; it moves the point the camera orbits, on top of the fit, and
+  leaves the angles and the distance alone. Centre puts both sliders back to
+  0.
 
-  The dialog only edits a TCameraSettings: set CameraSpec, Camera,
-  FitDistance and FitOrthoHeight before showing it and read CameraSpec back
-  after OK. On the desktop show it with ShowModal and free it afterwards; on
-  Android and iOS, which cannot block, show it with ShowAndFree, which calls
-  OnAccept on OK and frees the form when it closes.
+  The dialog only edits a TCameraSettings. It never touches the camera
+  itself: each change calls OnPreview, so the owner can show it at once,
+  and the owner keeps or undoes the change when the dialog closes. On the
+  desktop show it with ShowModal and free it afterwards; on Android and
+  iOS, which cannot block, show it with ShowAndFree, which calls OnAccept
+  on OK, OnCancel otherwise, and frees the form when it closes.
 
     TOrbitalSettingsForm
     |-- Layout1
     |   `-- OrbitalLayout
-    |       |-- AzimuthDial, AzimuthText, AzimuthLabel
-    |       |-- AngleDial, AngleText, AngleLabel      inclination
-    |       |-- RollDial, RollText, RollLabel
-    |       `-- DistanceLayout: DistanceLabel, DistanceTrack
-    `-- Layout2: CancelButton, OkButton
+    |       |-- AzimuthDial, AngleDial, RollDial   with their labels and readouts
+    |       |-- ExactLayout          the three angles to six decimal places
+    |       |-- PanLayout
+    |       |   |-- PanTopLayout     PanCheck, PanResetButton
+    |       |   |-- PanXLayout       PanXLabel, PanXTrack
+    |       |   `-- PanZLayout       PanZLabel, PanZTrack
+    |       `-- DistanceLayout       DistanceLabel, DistanceTrack
+    `-- Layout2                      CancelButton, OkButton
 }
 
 interface
@@ -58,211 +69,251 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.StdCtrls,
-  FMX.Controls.Presentation, FMX.Layouts, Sprite3DCamera;
+  FMX.Controls.Presentation, FMX.Layouts;
 
 type
-  //** @abstract(The camera angles and distance the Camera dialog edits.)
-  //**
-  //** Angles are as the dials' readouts show them, in degrees from 0 to 359. Azimuth goes to
-  //** the camera reversed, 360 minus the readout, so the view turns the right way for the
-  //** dial.
-  /// <summary>The camera angles and distance the Camera dialog edits.</summary>
-  /// <remarks>Angles are as the dials' readouts show them, in degrees from 0 to 359. Azimuth
-  /// goes to the camera reversed, 360 minus the readout, so the view turns the right way for
-  /// the dial.</remarks>
+  //** @abstract(Everything the Variable camera dialog edits.)
+  /// <summary>Everything the Variable camera dialog edits.</summary>
   TCameraSettings = record
-    //** @abstract(The Azimuth readout, in degrees.)
-    /// <summary>The Azimuth readout, in degrees.</summary>
+    //** @abstract(The Azimuth readout, in degrees, 0 to 360.)
+    /// <summary>The Azimuth readout, in degrees, 0 to 360.</summary>
     Azimuth: Single;
-    //** @abstract(The Roll readout, in degrees.)
-    /// <summary>The Roll readout, in degrees.</summary>
+    //** @abstract(The Roll readout, in degrees, 0 to 360.)
+    /// <summary>The Roll readout, in degrees, 0 to 360.</summary>
     Roll: Single;
-    //** @abstract(The Inclination readout, the camera's PolarAngle, in degrees.)
-    /// <summary>The Inclination readout, the camera's PolarAngle, in degrees.</summary>
+    //** @abstract(The Inclination readout, in degrees, 0 to 360.)
+    /// <summary>The Inclination readout, in degrees, 0 to 360.</summary>
     PolarAngle: Single;
-    //** @abstract(How far out from the fitted view the camera is, x1 to x20.)
-    //**
-    //** In perspective it multiplies the fitted distance; in orthographic projection, the
-    //** fitted view height. 1 is the fit itself; values below 1 count as 1.
-    /// <summary>How far out from the fitted view the camera is, x1 to x20.</summary>
-    /// <remarks>In perspective it multiplies the fitted distance; in orthographic projection,
-    /// the fitted view height. 1 is the fit itself; values below 1 count as 1.</remarks>
-    DistanceFactor: Single;
+    //** @abstract(How far the camera is moved out from the fitted distance, 1 to 20.)
+    /// <summary>How far the camera is moved out from the fitted distance, 1 to 20.</summary>
+    Distance: Single;
+    //** @abstract(Whether the pan is applied.)
+    /// <summary>Whether the pan is applied.</summary>
+    PanEnabled: Boolean;
+    //** @abstract(The pan along the model's X axis, as a multiple of its radius.)
+    /// <summary>The pan along the model's X axis, as a multiple of its radius.</summary>
+    PanX: Single;
+    //** @abstract(The pan along the model's Z axis, as a multiple of its radius.)
+    /// <summary>The pan along the model's Z axis, as a multiple of its radius.</summary>
+    PanZ: Single;
   end;
 
-  //** @abstract(The Camera dialog; edits a TCameraSettings with a live preview.)
+  //** @abstract(The Variable camera dialog.)
   //**
-  //** Create it and set CameraSpec, Camera, FitDistance and FitOrthoHeight. On the desktop,
-  //** call ShowModal and, if it returns mrOk, read CameraSpec, then free the form; on any
-  //** other result the camera has already been put back. Where ShowModal cannot block, as on
-  //** Android and iOS, set OnAccept and call ShowAndFree instead.
-  /// <summary>The Camera dialog; edits a TCameraSettings with a live preview.</summary>
-  /// <remarks>Create it and set CameraSpec, Camera, FitDistance and FitOrthoHeight. On the
-  /// desktop, call ShowModal and, if it returns mrOk, read CameraSpec, then free the form; on
-  /// any other result the camera has already been put back. Where ShowModal cannot block, as
-  /// on Android and iOS, set OnAccept and call ShowAndFree instead.</remarks>
+  //** Set CameraSpec and OnPreview before showing it, and read CameraSpec back after OK.
+  /// <summary>The Variable camera dialog.</summary>
+  /// <remarks>Set CameraSpec and OnPreview before showing it, and read CameraSpec back after
+  /// OK.</remarks>
   TOrbitalSettingsForm = class(TForm)
-    //** @abstract(Fills the form above the buttons; holds OrbitalLayout.)
-    /// <summary>Fills the form above the buttons; holds OrbitalLayout.</summary>
+    //** @abstract(Holds everything above the buttons.)
+    /// <summary>Holds everything above the buttons.</summary>
     Layout1: TLayout;
-    //** @abstract(The strip along the bottom holding CancelButton and OkButton.)
-    /// <summary>The strip along the bottom holding CancelButton and OkButton.</summary>
+    //** @abstract(Holds the OK and Cancel buttons.)
+    /// <summary>Holds the OK and Cancel buttons.</summary>
     Layout2: TLayout;
-    //** @abstract(Holds the dials, their readouts and labels, and DistanceLayout.)
-    /// <summary>Holds the dials, their readouts and labels, and DistanceLayout.</summary>
+    //** @abstract(Holds the dials, the pan and the distance slider.)
+    /// <summary>Holds the dials, the pan and the distance slider.</summary>
     OrbitalLayout: TLayout;
-    //** @abstract(Sets the inclination, the camera's PolarAngle; see AngleDialChange.)
-    /// <summary>Sets the inclination, the camera's PolarAngle; see
-    /// <see cref="AngleDialChange"/>.</summary>
+    //** @abstract(Sets the inclination.)
+    /// <summary>Sets the inclination.</summary>
     AngleDial: TArcDial;
-    //** @abstract(The caption "Inclination" under AngleDial.)
-    /// <summary>The caption "Inclination" under AngleDial.</summary>
+    //** @abstract(Names the inclination dial.)
+    /// <summary>Names the inclination dial.</summary>
     AngleLabel: TLabel;
-    //** @abstract(Shows the inclination in whole degrees.)
-    /// <summary>Shows the inclination in whole degrees.</summary>
+    //** @abstract(Shows the inclination in degrees.)
+    /// <summary>Shows the inclination in degrees.</summary>
     AngleText: TLabel;
-    //** @abstract(Sets the camera's Azimuth; see AzimuthDialChange.)
-    /// <summary>Sets the camera's Azimuth; see <see cref="AzimuthDialChange"/>.</summary>
+    //** @abstract(Sets the azimuth.)
+    /// <summary>Sets the azimuth.</summary>
     AzimuthDial: TArcDial;
-    //** @abstract(The caption "Azimuth" under AzimuthDial.)
-    /// <summary>The caption "Azimuth" under AzimuthDial.</summary>
+    //** @abstract(Names the azimuth dial.)
+    /// <summary>Names the azimuth dial.</summary>
     AzimuthLabel: TLabel;
-    //** @abstract(Shows the azimuth in whole degrees.)
-    /// <summary>Shows the azimuth in whole degrees.</summary>
+    //** @abstract(Shows the azimuth in degrees.)
+    /// <summary>Shows the azimuth in degrees.</summary>
     AzimuthText: TLabel;
-    //** @abstract(Sets the camera's Roll; see RollDialChange.)
-    /// <summary>Sets the camera's Roll; see <see cref="RollDialChange"/>.</summary>
+    //** @abstract(Sets the roll.)
+    /// <summary>Sets the roll.</summary>
     RollDial: TArcDial;
-    //** @abstract(The caption "Roll" under RollDial.)
-    /// <summary>The caption "Roll" under RollDial.</summary>
+    //** @abstract(Names the roll dial.)
+    /// <summary>Names the roll dial.</summary>
     RollLabel: TLabel;
-    //** @abstract(Shows the roll in whole degrees.)
-    /// <summary>Shows the roll in whole degrees.</summary>
+    //** @abstract(Shows the roll in degrees.)
+    /// <summary>Shows the roll in degrees.</summary>
     RollText: TLabel;
-    //** @abstract(The strip holding DistanceLabel and DistanceTrack.)
-    /// <summary>The strip holding DistanceLabel and DistanceTrack.</summary>
+    //** @abstract(Holds the exact angles, right of the Roll dial.)
+    /// <summary>Holds the exact angles, right of the Roll dial.</summary>
+    ExactLayout: TLayout;
+    //** @abstract(Names AzimuthExactText.)
+    /// <summary>Names AzimuthExactText.</summary>
+    AzimuthExactLabel: TLabel;
+    //** @abstract(The azimuth in degrees to six decimal places.)
+    /// <summary>The azimuth in degrees to six decimal places.</summary>
+    AzimuthExactText: TLabel;
+    //** @abstract(Names AngleExactText.)
+    /// <summary>Names AngleExactText.</summary>
+    AngleExactLabel: TLabel;
+    //** @abstract(The inclination in degrees to six decimal places.)
+    /// <summary>The inclination in degrees to six decimal places.</summary>
+    AngleExactText: TLabel;
+    //** @abstract(Names RollExactText.)
+    /// <summary>Names RollExactText.</summary>
+    RollExactLabel: TLabel;
+    //** @abstract(The roll in degrees to six decimal places.)
+    /// <summary>The roll in degrees to six decimal places.</summary>
+    RollExactText: TLabel;
+    //** @abstract(Holds the pan's controls.)
+    /// <summary>Holds the pan's controls.</summary>
+    PanLayout: TLayout;
+    //** @abstract(Holds PanCheck and PanResetButton.)
+    /// <summary>Holds PanCheck and PanResetButton.</summary>
+    PanTopLayout: TLayout;
+    //** @abstract(Switches the pan on or off; off by default.)
+    /// <summary>Switches the pan on or off; off by default.</summary>
+    PanCheck: TCheckBox;
+    //** @abstract(Puts both pan sliders back to 0.)
+    /// <summary>Puts both pan sliders back to 0.</summary>
+    PanResetButton: TButton;
+    //** @abstract(Holds the X pan slider and its label.)
+    /// <summary>Holds the X pan slider and its label.</summary>
+    PanXLayout: TLayout;
+    //** @abstract(Shows the X pan.)
+    /// <summary>Shows the X pan.</summary>
+    PanXLabel: TLabel;
+    //** @abstract(Sets the pan along the model's X axis.)
+    /// <summary>Sets the pan along the model's X axis.</summary>
+    PanXTrack: TTrackBar;
+    //** @abstract(Holds the Z pan slider and its label.)
+    /// <summary>Holds the Z pan slider and its label.</summary>
+    PanZLayout: TLayout;
+    //** @abstract(Shows the Z pan.)
+    /// <summary>Shows the Z pan.</summary>
+    PanZLabel: TLabel;
+    //** @abstract(Sets the pan along the model's Z axis.)
+    /// <summary>Sets the pan along the model's Z axis.</summary>
+    PanZTrack: TTrackBar;
+    //** @abstract(Holds the distance slider and its label.)
+    /// <summary>Holds the distance slider and its label.</summary>
     DistanceLayout: TLayout;
-    //** @abstract(Shows the distance factor, as "Distance x1.0".)
-    /// <summary>Shows the distance factor, as "Distance x1.0".</summary>
+    //** @abstract(Shows the distance factor.)
+    /// <summary>Shows the distance factor.</summary>
     DistanceLabel: TLabel;
-    //** @abstract(Sets the distance factor, x1 to x20; see DistanceTrackChange.)
-    /// <summary>Sets the distance factor, x1 to x20; see
-    /// <see cref="DistanceTrackChange"/>.</summary>
+    //** @abstract(Sets the distance factor, 1 to 20.)
+    /// <summary>Sets the distance factor, 1 to 20.</summary>
     DistanceTrack: TTrackBar;
-    //** @abstract(Closes the dialog with mrCancel, putting the camera back; also Esc.)
-    /// <summary>Closes the dialog with mrCancel, putting the camera back; also
-    /// Esc.</summary>
+    //** @abstract(Closes the dialog and drops the changes.)
+    /// <summary>Closes the dialog and drops the changes.</summary>
     CancelButton: TButton;
-    //** @abstract(Closes the dialog with mrOk, keeping the camera as it is; also Enter.)
-    /// <summary>Closes the dialog with mrOk, keeping the camera as it is; also
-    /// Enter.</summary>
+    //** @abstract(Closes the dialog and keeps the changes.)
+    /// <summary>Closes the dialog and keeps the changes.</summary>
     OkButton: TButton;
-    //** @abstract(Puts the camera back unless the dialog closed with OK; after ShowAndFree,
-    //** also calls OnAccept on OK and frees the form.)
+    //** @abstract(Reports OK or Cancel when shown with ShowAndFree, and frees the form then.)
     //**
     //** @param(Sender The form.)
     //**
-    //** @param(Action Set to caFree after ShowAndFree.)
-    /// <summary>Puts the camera back unless the dialog closed with OK; after ShowAndFree,
-    /// also calls OnAccept on OK and frees the form.</summary>
+    //** @param(Action Set to caFree when shown with ShowAndFree.)
+    /// <summary>Reports OK or Cancel when shown with ShowAndFree, and frees the form
+    /// then.</summary>
     /// <param name="Sender">The form.</param>
-    /// <param name="Action">Set to caFree after ShowAndFree.</param>
+    /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    //** @abstract(Turns the dials and slider to CameraSpec and remembers it, to put back on
-    //** Cancel.)
+    //** @abstract(Closes the dialog with the button's result.)
+    //**
+    //** @param(Sender The button clicked.)
+    /// <summary>Closes the dialog with the button's result.</summary>
+    /// <param name="Sender">The button clicked.</param>
+    procedure ButtonClick(Sender: TObject);
+    //** @abstract(Takes the azimuth from its dial.)
+    //**
+    //** @param(Sender The dial.)
+    /// <summary>Takes the azimuth from its dial.</summary>
+    /// <param name="Sender">The dial.</param>
+    procedure AzimuthDialChange(Sender: TObject);
+    //** @abstract(Takes the inclination from its dial.)
+    //**
+    //** @param(Sender The dial.)
+    /// <summary>Takes the inclination from its dial.</summary>
+    /// <param name="Sender">The dial.</param>
+    procedure AngleDialChange(Sender: TObject);
+    //** @abstract(Takes the roll from its dial.)
+    //**
+    //** @param(Sender The dial.)
+    /// <summary>Takes the roll from its dial.</summary>
+    /// <param name="Sender">The dial.</param>
+    procedure RollDialChange(Sender: TObject);
+    //** @abstract(Sets every control from CameraSpec.)
     //**
     //** @param(Sender The form.)
-    /// <summary>Turns the dials and slider to CameraSpec and remembers it, to put back on
-    /// Cancel.</summary>
+    /// <summary>Sets every control from CameraSpec.</summary>
     /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
-    //** @abstract(After ShowAndFree, closes the dialog with the button's ModalResult.)
+    //** @abstract(Takes the distance factor from its slider.)
     //**
-    //** Under ShowModal the buttons' ModalResult closes the dialog by itself; a form shown
-    //** with Show needs closing explicitly.
-    //**
-    //** @param(Sender OkButton or CancelButton.)
-    /// <summary>After ShowAndFree, closes the dialog with the button's ModalResult.</summary>
-    /// <remarks>Under ShowModal the buttons' ModalResult closes the dialog by itself; a form
-    /// shown with Show needs closing explicitly.</remarks>
-    /// <param name="Sender">OkButton or CancelButton.</param>
-    procedure ButtonClick(Sender: TObject);
-    //** @abstract(Takes AzimuthDial's angle and shows it on the camera.)
-    //**
-    //** @param(Sender AzimuthDial.)
-    /// <summary>Takes AzimuthDial's angle and shows it on the camera.</summary>
-    /// <param name="Sender">AzimuthDial.</param>
-    procedure AzimuthDialChange(Sender: TObject);
-    //** @abstract(Takes AngleDial's angle and shows it on the camera.)
-    //**
-    //** @param(Sender AngleDial.)
-    /// <summary>Takes AngleDial's angle and shows it on the camera.</summary>
-    /// <param name="Sender">AngleDial.</param>
-    procedure AngleDialChange(Sender: TObject);
-    //** @abstract(Takes RollDial's angle and shows it on the camera.)
-    //**
-    //** @param(Sender RollDial.)
-    /// <summary>Takes RollDial's angle and shows it on the camera.</summary>
-    /// <param name="Sender">RollDial.</param>
-    procedure RollDialChange(Sender: TObject);
-    //** @abstract(Takes DistanceTrack's factor and moves the camera out to match.)
-    //**
-    //** @param(Sender DistanceTrack.)
-    /// <summary>Takes DistanceTrack's factor and moves the camera out to match.</summary>
-    /// <param name="Sender">DistanceTrack.</param>
+    //** @param(Sender The slider.)
+    /// <summary>Takes the distance factor from its slider.</summary>
+    /// <param name="Sender">The slider.</param>
     procedure DistanceTrackChange(Sender: TObject);
-  private
+    //** @abstract(Switches the pan on or off.)
+    //**
+    //** @param(Sender The check box.)
+    /// <summary>Switches the pan on or off.</summary>
+    /// <param name="Sender">The check box.</param>
+    procedure PanCheckChange(Sender: TObject);
+    //** @abstract(Takes the pan from both sliders.)
+    //**
+    //** @param(Sender The slider moved.)
+    /// <summary>Takes the pan from both sliders.</summary>
+    /// <param name="Sender">The slider moved.</param>
+    procedure PanTrackChange(Sender: TObject);
+    //** @abstract(Puts both pan sliders back to 0.)
+    //**
+    //** @param(Sender The button.)
+    /// <summary>Puts both pan sliders back to 0.</summary>
+    /// <param name="Sender">The button.</param>
+    procedure PanResetButtonClick(Sender: TObject);
+  strict private
     FFreeOnClose: Boolean;
+    FUpdating: Boolean;   // set while code sets the controls, to hold back previews
     FOnAccept: TNotifyEvent;
+    FOnCancel: TNotifyEvent;
+    FOnPreview: TNotifyEvent;
     FCameraSettings: TCameraSettings;
-    FOriginal: TCameraSettings;   // as the dialog opened, put back on Cancel
-    FUpdating: Boolean;           // set while the dials are turned in code
-    FGorillaCamera: TSprite3DCamera;
-    FFitDistance: Single;
-    FFitOrthoHeight: Single;
     procedure SetSpec(const ASettings: TCameraSettings);
-    procedure ShowSettings;
-    procedure ApplyAngles;
-    procedure ApplyDistance;
+    procedure ShowReadouts;
+    procedure UpdatePanControls;
+    procedure Preview;
   public
-    //** @abstract(Shows the dialog without blocking, and frees it when it closes.)
+    //** @abstract(Shows the dialog without blocking, for Android and iOS, and frees it when it
+    //** closes.)
     //**
-    //** For platforms where ShowModal cannot block, such as Android and iOS. When the dialog
-    //** closes with OK, OnAccept is called while CameraSpec can still be read; then the form
-    //** frees itself, so do not use it after that.
-    /// <summary>Shows the dialog without blocking, and frees it when it closes.</summary>
-    /// <remarks>For platforms where ShowModal cannot block, such as Android and iOS. When the
-    /// dialog closes with OK, OnAccept is called while CameraSpec can still be read; then the
-    /// form frees itself, so do not use it after that.</remarks>
+    //** OnAccept is called if it closes with OK, OnCancel otherwise.
+    /// <summary>Shows the dialog without blocking, for Android and iOS, and frees it when it
+    /// closes.</summary>
+    /// <remarks>OnAccept is called if it closes with OK, OnCancel otherwise.</remarks>
     procedure ShowAndFree;
-    //** @abstract(Called after ShowAndFree when the dialog closes with OK; read CameraSpec
-    //** in it.)
-    /// <summary>Called after ShowAndFree when the dialog closes with OK; read CameraSpec in
-    /// it.</summary>
+    //** @abstract(Called on OK when shown with ShowAndFree.)
+    /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
-    //** @abstract(The angles and distance being edited: set before showing, read after OK.)
-    /// <summary>The angles and distance being edited: set before showing, read after
-    /// OK.</summary>
-    property CameraSpec: TCameraSettings read FCameraSettings write SetSpec;
-    //** @abstract(The camera the dialog previews on; nil for no preview.)
+    //** @abstract(Called on Cancel, or any close but OK, when shown with ShowAndFree.)
+    /// <summary>Called on Cancel, or any close but OK, when shown with ShowAndFree.</summary>
+    property OnCancel: TNotifyEvent read FOnCancel write FOnCancel;
+    //** @abstract(Called after every change, with the dialog as Sender, so the owner can show
+    //** CameraSpec at once.)
+    /// <summary>Called after every change, with the dialog as Sender, so the owner can show
+    /// CameraSpec at once.</summary>
+    property OnPreview: TNotifyEvent read FOnPreview write FOnPreview;
+    //** @abstract(The settings being edited.)
     //**
-    //** Not owned. Every dial and slider change is applied to it at once, and Cancel puts it
-    //** back.
-    /// <summary>The camera the dialog previews on; nil for no preview.</summary>
-    /// <remarks>Not owned. Every dial and slider change is applied to it at once, and Cancel
-    /// puts it back.</remarks>
-    property Camera: TSprite3DCamera read FGorillaCamera write FGorillaCamera;
-    //** @abstract(The camera distance the model was fitted at, which the factor multiplies
-    //** in perspective.)
-    /// <summary>The camera distance the model was fitted at, which the factor multiplies in
-    /// perspective.</summary>
-    property FitDistance: Single read FFitDistance write FFitDistance;
-    //** @abstract(The view height the model was fitted at, which the factor multiplies in
-    //** orthographic projection.)
-    /// <summary>The view height the model was fitted at, which the factor multiplies in
-    /// orthographic projection.</summary>
-    property FitOrthoHeight: Single read FFitOrthoHeight write FFitOrthoHeight;
+    //** Set it before the dialog is shown; read it after OK.
+    /// <summary>The settings being edited.</summary>
+    /// <remarks>Set it before the dialog is shown; read it after OK.</remarks>
+    property CameraSpec: TCameraSettings read FCameraSettings write SetSpec;
   end;
+
+var
+  //** @abstract(The instance the project file creates; the main form makes its own.)
+  /// <summary>The instance the project file creates; the main form makes its own.</summary>
+  OrbitalSettingsForm: TOrbitalSettingsForm;
 
 implementation
 
@@ -271,36 +322,46 @@ implementation
 uses
   System.Math, Sprite3DHelpers;
 
-procedure TOrbitalSettingsForm.AzimuthDialChange(Sender: TObject);
+// An angle from 0 to 360 as the same direction from -180 to 180: above 180
+// it counts back from 360, so 359 is -1
+function Signed180(const ADegrees: Single): Single;
 begin
-  if FUpdating then
-    Exit;
-  FCameraSettings.Azimuth := Wrap360(-AzimuthDial.Value);
-  ApplyAngles;
+  Result := Wrap360(ADegrees);
+  if Result > 180 then
+    Result := Result - 360;
 end;
 
-procedure TOrbitalSettingsForm.AngleDialChange(Sender: TObject);
+// Shows AText in a dial's readout, which covers its dial exactly and centres
+// its text on the dial's middle. The text is never trimmed: the font starts
+// at the readout's full size and steps down only while the text is too wide,
+// as a sign makes -100 and beyond.
+procedure ShowReadout(const ALabel: TLabel; const AText: String);
+const
+  FULL_SIZE = 72;
+  SMALLEST_SIZE = 24;
+  SIDE_ROOM = 8;   // pixels kept clear at the edges, so the text stays inside
+var
+  Canvas: TCanvas;
+  Size: Single;
 begin
-  if FUpdating then
-    Exit;
-  FCameraSettings.PolarAngle := Wrap360(-AngleDial.Value);
-  ApplyAngles;
+  ALabel.Text := AText;
+  Canvas := TCanvasManager.MeasureCanvas;
+  Size := FULL_SIZE;
+  Canvas.Font.Assign(ALabel.TextSettings.Font);
+  Canvas.Font.Size := Size;
+  while (Size > SMALLEST_SIZE) and
+    (Canvas.TextWidth(AText) > ALabel.Width - 2 * SIDE_ROOM) do
+  begin
+    Size := Size - 2;
+    Canvas.Font.Size := Size;
+  end;
+  ALabel.TextSettings.Font.Size := Size;
 end;
 
-procedure TOrbitalSettingsForm.RollDialChange(Sender: TObject);
+// An angle in degrees to six decimal places, with the degree sign
+function ExactDegreesText(const ADegrees: Single): String;
 begin
-  if FUpdating then
-    Exit;
-  FCameraSettings.Roll := Wrap360(RollDial.Value);
-  ApplyAngles;
-end;
-
-procedure TOrbitalSettingsForm.DistanceTrackChange(Sender: TObject);
-begin
-  if FUpdating then
-    Exit;
-  FCameraSettings.DistanceFactor := DistanceTrack.Value;
-  ApplyDistance;
+  Result := FormatFloat('0.000000', ADegrees) + #$00B0;
 end;
 
 procedure TOrbitalSettingsForm.ButtonClick(Sender: TObject);
@@ -311,34 +372,110 @@ begin
   Close;
 end;
 
-procedure TOrbitalSettingsForm.FormShow(Sender: TObject);
+procedure TOrbitalSettingsForm.RollDialChange(Sender: TObject);
 begin
-  FOriginal := FCameraSettings;
-  ShowSettings;
+  // Negated like the other two dials, so the angle grows clockwise
+  FCameraSettings.Roll := Wrap360(-RollDial.Value);
+  ShowReadouts;
+  Preview;
 end;
 
-procedure TOrbitalSettingsForm.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TOrbitalSettingsForm.AngleDialChange(Sender: TObject);
 begin
-  // Anything but OK, including Esc and the window's close box, undoes the
-  // preview
-  if ModalResult <> mrOk then
-  begin
-    FCameraSettings := FOriginal;
-    ApplyAngles;
-    ApplyDistance;
+  FCameraSettings.PolarAngle := Wrap360(-AngleDial.Value);
+  ShowReadouts;
+  Preview;
+end;
+
+procedure TOrbitalSettingsForm.AzimuthDialChange(Sender: TObject);
+begin
+  FCameraSettings.Azimuth := Wrap360(-AzimuthDial.Value);
+  ShowReadouts;
+  Preview;
+end;
+
+procedure TOrbitalSettingsForm.DistanceTrackChange(Sender: TObject);
+begin
+  FCameraSettings.Distance := DistanceTrack.Value;
+  ShowReadouts;
+  Preview;
+end;
+
+procedure TOrbitalSettingsForm.PanCheckChange(Sender: TObject);
+begin
+  FCameraSettings.PanEnabled := PanCheck.IsChecked;
+  UpdatePanControls;
+  Preview;
+end;
+
+procedure TOrbitalSettingsForm.PanTrackChange(Sender: TObject);
+begin
+  FCameraSettings.PanX := PanXTrack.Value;
+  FCameraSettings.PanZ := PanZTrack.Value;
+  ShowReadouts;
+  Preview;
+end;
+
+procedure TOrbitalSettingsForm.PanResetButtonClick(Sender: TObject);
+begin
+  FUpdating := True;
+  try
+    PanXTrack.Value := 0;
+    PanZTrack.Value := 0;
+  finally
+    FUpdating := False;
   end;
+  PanTrackChange(Sender);
+end;
+
+procedure TOrbitalSettingsForm.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
   if not FFreeOnClose then
     Exit;   // shown with ShowModal: the caller frees it
-  if (ModalResult = mrOk) and Assigned(FOnAccept) then
-    FOnAccept(Self);
+  if ModalResult = mrOk then
+  begin
+    if Assigned(FOnAccept) then
+      FOnAccept(Self);
+  end
+  else if Assigned(FOnCancel) then
+    FOnCancel(Self);
   Action := TCloseAction.caFree;
+end;
+
+procedure TOrbitalSettingsForm.FormShow(Sender: TObject);
+var
+  Spec: TCameraSettings;
+begin
+  // Setting a control's value fires its OnChange, which reads the value
+  // back; work from a copy so the angles round-trip exactly
+  Spec := FCameraSettings;
+  FUpdating := True;
+  try
+    AzimuthDial.Value := Wrap360(-Spec.Azimuth);
+    RollDial.Value := Wrap360(-Spec.Roll);
+    AngleDial.Value := Wrap360(-Spec.PolarAngle);
+    DistanceTrack.Value := Spec.Distance;
+    PanXTrack.Min := -PAN_LIMIT;
+    PanXTrack.Max := PAN_LIMIT;
+    PanZTrack.Min := -PAN_LIMIT;
+    PanZTrack.Max := PAN_LIMIT;
+    PanXTrack.Value := EnsureRange(Spec.PanX, -PAN_LIMIT, PAN_LIMIT);
+    PanZTrack.Value := EnsureRange(Spec.PanZ, -PAN_LIMIT, PAN_LIMIT);
+    PanCheck.IsChecked := Spec.PanEnabled;
+  finally
+    FUpdating := False;
+  end;
+  FCameraSettings := Spec;
+  FCameraSettings.PanX := PanXTrack.Value;
+  FCameraSettings.PanZ := PanZTrack.Value;
+  ShowReadouts;
+  UpdatePanControls;
 end;
 
 procedure TOrbitalSettingsForm.SetSpec(const ASettings: TCameraSettings);
 begin
   FCameraSettings := ASettings;
-  FCameraSettings.DistanceFactor := Max(FCameraSettings.DistanceFactor, 1);
-  FOriginal := FCameraSettings;
 end;
 
 procedure TOrbitalSettingsForm.ShowAndFree;
@@ -347,58 +484,36 @@ begin
   Show;
 end;
 
-// Turns the dials and slider to the settings without their OnChange
-// echoing back, then shows the settings on the camera
-procedure TOrbitalSettingsForm.ShowSettings;
+procedure TOrbitalSettingsForm.ShowReadouts;
 begin
-  FUpdating := True;
-  try
-    AzimuthDial.Value := -FCameraSettings.Azimuth;
-    AngleDial.Value := -FCameraSettings.PolarAngle;
-    RollDial.Value := FCameraSettings.Roll;
-    DistanceTrack.Value := EnsureRange(FCameraSettings.DistanceFactor, DistanceTrack.Min,
-      DistanceTrack.Max);
-  finally
-    FUpdating := False;
-  end;
-  ApplyAngles;
-  ApplyDistance;
+  // Trimmed: DegreesText pads to three places, which would push a short
+  // number off the dial's centre
+  ShowReadout(AzimuthText, Trim(DegreesText(FCameraSettings.Azimuth)));
+  // Inclination reads as -180 to 180, so just below level is -1, not 359
+  ShowReadout(AngleText, Trim(DegreesText(Signed180(FCameraSettings.PolarAngle))));
+  ShowReadout(RollText, Trim(DegreesText(FCameraSettings.Roll)));
+  // The same angles in full, as the camera gets them
+  AzimuthExactText.Text := ExactDegreesText(FCameraSettings.Azimuth);
+  AngleExactText.Text := ExactDegreesText(Signed180(FCameraSettings.PolarAngle));
+  RollExactText.Text := ExactDegreesText(FCameraSettings.Roll);
+  DistanceLabel.Text := Format('Distance x%.1f', [FCameraSettings.Distance]);
+  PanXLabel.Text := Format('X %+.2f', [FCameraSettings.PanX]);
+  PanZLabel.Text := Format('Z %+.2f', [FCameraSettings.PanZ]);
 end;
 
-// The readouts, and the camera's angles; azimuth goes to the camera
-// reversed, as on the main form
-procedure TOrbitalSettingsForm.ApplyAngles;
+// The sliders keep their values while the pan is off, so switching it back
+// on returns to the same place
+procedure TOrbitalSettingsForm.UpdatePanControls;
 begin
-  AzimuthText.Text := DegreesText(FCameraSettings.Azimuth);
-  AngleText.Text := DegreesText(FCameraSettings.PolarAngle);
-  RollText.Text := DegreesText(FCameraSettings.Roll);
-  if Assigned(FGorillaCamera) then
-  begin
-    FGorillaCamera.Azimuth := Wrap360(-FCameraSettings.Azimuth);
-    FGorillaCamera.PolarAngle := FCameraSettings.PolarAngle;
-    FGorillaCamera.Roll := FCameraSettings.Roll;
-  end;
+  PanXLayout.Enabled := FCameraSettings.PanEnabled;
+  PanZLayout.Enabled := FCameraSettings.PanEnabled;
+  PanResetButton.Enabled := FCameraSettings.PanEnabled;
 end;
 
-// The label, and the camera moved out from the fitted view by the factor:
-// the fitted distance times it in perspective, the fitted view height
-// times it in orthographic projection. The factor is never below 1, so the
-// camera never comes closer than the fit, which keeps it outside the model.
-procedure TOrbitalSettingsForm.ApplyDistance;
-var
-  Factor: Single;
+procedure TOrbitalSettingsForm.Preview;
 begin
-  Factor := Max(FCameraSettings.DistanceFactor, 1);
-  DistanceLabel.Text := Format('Distance x%.1f', [Factor]);
-  if not Assigned(FGorillaCamera) then
-    Exit;
-  if FGorillaCamera.IsOrthographic then
-  begin
-    if FFitOrthoHeight > 0 then
-      FGorillaCamera.OrthoHeight := FFitOrthoHeight * Factor;
-  end
-  else if FFitDistance > 0 then
-    FGorillaCamera.Distance := FFitDistance * Factor;
+  if not FUpdating and Assigned(FOnPreview) then
+    FOnPreview(Self);
 end;
 
 end.

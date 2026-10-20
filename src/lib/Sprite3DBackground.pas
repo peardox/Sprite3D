@@ -7,9 +7,11 @@
 //** every frame to fill the view exactly, whatever the projection, field of view or window
 //** size. Its colour comes from a short GLSL SurfaceShader: one colour for Solid, a blend down
 //** the plane for Gradient, with the plane turned in the view, and enlarged to cover it, to
-//** point the blend in the chosen GradientDirection. It hangs from the camera's RollPivot, the
-//** dummy the camera itself hangs from; every plane is a pair facing opposite ways, so one
-//** always faces the camera however Gorilla culls back faces.
+//** point the blend in the chosen GradientDirection. On macOS and iOS, where Gorilla3D draws
+//** through Metal and does not support a material's SurfaceShader, the colour is the
+//** material's own instead, and the gradient a small texture. It hangs from the camera's
+//** RollPivot, the dummy the camera itself hangs from; every plane is a pair facing opposite
+//** ways, so one always faces the camera however Gorilla culls back faces.
 //**
 //** The None kind, the default, draws nothing at all, leaving whatever the viewport shows
 //** behind the scene, and grabs transparent. The Transparent kind draws a checker of two
@@ -54,7 +56,9 @@ unit Sprite3DBackground;
   Its colour comes from a short GLSL SurfaceShader: one colour for Solid, a
   blend down the plane for Gradient, with the plane turned in the view, and
   enlarged to cover it, to point the blend in the chosen GradientDirection.
-  It hangs from the camera's RollPivot,
+  On macOS and iOS, where Gorilla3D draws through Metal and does not support
+  a material's SurfaceShader, the colour is the material's own instead, and
+  the gradient a small texture. It hangs from the camera's RollPivot,
   the dummy the camera itself hangs from; every plane is a pair facing
   opposite ways, so one always faces the camera however Gorilla culls back
   faces.
@@ -89,6 +93,13 @@ unit Sprite3DBackground;
         |-- TGorillaPlane (x2)          the whole view; colour or gradient
         `-- TGorillaPlane (x2 each)     the checker's squares, while Transparent
 }
+
+// Gorilla3D draws through Metal on macOS and iOS, where a material's
+// SurfaceShader is not supported; there the background is coloured through
+// the material's own colour and texture instead
+{$IF DEFINED(MACOS)}
+  {$DEFINE S3D_NO_SURFACE_SHADER}
+{$ENDIF}
 
 interface
 
@@ -284,7 +295,9 @@ type
     procedure FitSquares(const AZ: Single; const AShow: Boolean);
     procedure TurnPlane(const APlane: TGorillaPlane; const AFlipped: Boolean;
       const AAngle, ADX, ADY: Single);
+    {$IFNDEF S3D_NO_SURFACE_SHADER}
     function SurfaceCode: String;
+    {$ENDIF}
     function AwayZ: Single;
     procedure Stow(const APlane: TGorillaPlane);
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
@@ -340,7 +353,11 @@ type
 implementation
 
 uses
-  System.Types, System.Math, FMX.Viewport3D;
+  System.Types, System.Math, FMX.Viewport3D
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  , FMX.Graphics
+  {$ENDIF}
+  ;
 
 const
   // The background sits this far along the far plane's distance, so
@@ -356,6 +373,7 @@ const
   // How far away stowed planes go, in far-plane distances from the camera
   STOW_DEPTH_FACTOR = 10.0;
 
+{$IFNDEF S3D_NO_SURFACE_SHADER}
 // A GLSL float literal: always with a decimal point, whatever the locale
 function GlslFloat(const AValue: Single): String;
 begin
@@ -397,6 +415,58 @@ begin
     Code.Free;
   end;
 end;
+{$ELSE}
+// Metal: the material's own colour, with no texture
+procedure SetPlainColour(const AMaterial: TGorillaDefaultMaterialSource;
+  const AColour: TAlphaColor);
+begin
+  AMaterial.UseTexturing := False;
+  AMaterial.Diffuse := AColour or TAlphaColors.Black;   // opaque
+end;
+
+// Metal: a gradient from AFrom at the top of the plane to ATo at the bottom,
+// as a texture one band per row. The plane is turned for the direction, as
+// with the shader, so only top to bottom is needed. The Diffuse colour is
+// white, so it leaves the texture's colours as they are.
+procedure SetGradientTexture(const AMaterial: TGorillaDefaultMaterialSource;
+  const AFrom, ATo: TAlphaColor);
+const
+  ROWS = 256;
+  COLUMNS = 4;
+var
+  Bitmap: TBitmap;
+  Data: TBitmapData;
+  F, T, C: TAlphaColorRec;
+  X, Y: Integer;
+  K: Single;
+begin
+  F := TAlphaColorRec(AFrom);
+  T := TAlphaColorRec(ATo);
+  Bitmap := TBitmap.Create(COLUMNS, ROWS);
+  try
+    if Bitmap.Map(TMapAccess.Write, Data) then
+    try
+      for Y := 0 to ROWS - 1 do
+      begin
+        K := Y / (ROWS - 1);
+        C.R := Round(F.R + (T.R - F.R) * K);
+        C.G := Round(F.G + (T.G - F.G) * K);
+        C.B := Round(F.B + (T.B - F.B) * K);
+        C.A := 255;
+        for X := 0 to COLUMNS - 1 do
+          Data.SetPixel(X, Y, C.Color);
+      end;
+    finally
+      Bitmap.Unmap(Data);
+    end;
+    AMaterial.Texture := Bitmap;   // the material keeps its own copy
+  finally
+    Bitmap.Free;
+  end;
+  AMaterial.Diffuse := TAlphaColors.White;
+  AMaterial.UseTexturing := True;
+end;
+{$ENDIF}
 
 // An unlit material with a black Diffuse colour: even unlit, Gorilla adds
 // part of the Diffuse colour to what the shader gives (#808080 showed as
@@ -562,6 +632,7 @@ begin
   UpdateMaterials;
 end;
 
+{$IFNDEF S3D_NO_SURFACE_SHADER}
 // The colour of the whole-view plane, per pixel, from the plane's own
 // position, v_VertPos, which runs from -0.5 at the top to 0.5 at the bottom.
 // It is not shown while Transparent; the checker's squares are planes of
@@ -584,6 +655,7 @@ begin
     Result := SolidCode(FSpec.CheckerLight);
   end;
 end;
+{$ENDIF}
 
 // Builds the shaders for the present spec. Changes the materials, so it must
 // not run during rendering.
@@ -591,9 +663,22 @@ procedure TSprite3DBackground.UpdateMaterials;
 begin
   if FMaterial = nil then
     Exit;
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  case FSpec.Kind of
+    TSprite3DBackgroundKind.Solid:
+      SetPlainColour(FMaterial, FSpec.Colour);
+    TSprite3DBackgroundKind.Gradient:
+      SetGradientTexture(FMaterial, FSpec.GradientFrom, FSpec.GradientTo);
+  else
+    SetPlainColour(FMaterial, FSpec.CheckerLight);
+  end;
+  SetPlainColour(FDarkMaterial, FSpec.CheckerDark);
+  SetPlainColour(FLightMaterial, FSpec.CheckerLight);
+  {$ELSE}
   SetShader(FMaterial, SurfaceCode);
   SetShader(FDarkMaterial, SolidCode(FSpec.CheckerDark));
   SetShader(FLightMaterial, SolidCode(FSpec.CheckerLight));
+  {$ENDIF}
 end;
 
 // Tiles the view with the checker's squares at local depth AZ, the same

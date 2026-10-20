@@ -203,7 +203,18 @@ end;
 // installed when the unit is initialised and again when the application is
 // about to finish launching, because AppKit installs its own handlers then;
 // the launch-time event comes after that.
+//
+// The "about to finish launching" notification is observed through
+// CoreFoundation with a plain C callback, not through an Objective-C method
+// on the handler: the Objective-C observer crashed on Apple silicon, and the
+// callback needs no Objective-C class or method dispatch at all. The local
+// CoreFoundation centre is the one NSNotificationCenter posts to.
 const
+  libCoreFoundation = '/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation';
+  kCFStringEncodingUTF8 = $08000100;
+  kCFNotificationDeliverImmediately = 4;
+  WILL_FINISH_LAUNCHING = 'NSApplicationWillFinishLaunchingNotification';
+
   kCoreEventClass = $61657674;    // 'aevt'
   kAEOpenDocuments = $6F646F63;   // 'odoc'
   keyDirectObject = $2D2D2D2D;    // '----'
@@ -214,7 +225,6 @@ type
     ['{8E0C1D52-4C5B-4F0B-9E2B-6C3A2D1F7A44}']
     procedure handleOpenDocuments(event: NSAppleEventDescriptor;
       withReplyEvent: NSAppleEventDescriptor); cdecl;
-    procedure appWillFinishLaunching(notification: NSNotification); cdecl;
   end;
 
   TOpenDocumentsHandler = class(TOCLocal)
@@ -224,13 +234,29 @@ type
     function GetObjectiveCClass: PTypeInfo; override;
     procedure handleOpenDocuments(event: NSAppleEventDescriptor;
       withReplyEvent: NSAppleEventDescriptor); cdecl;
-    procedure appWillFinishLaunching(notification: NSNotification); cdecl;
     procedure Install;
-    procedure ObserveLaunch;
   end;
+
+// Declared here with plain pointers, so nothing depends on how the RTL's
+// own headers type them
+function CFNotificationCenterGetLocalCenter: Pointer; cdecl;
+  external libCoreFoundation name 'CFNotificationCenterGetLocalCenter';
+procedure CFNotificationCenterAddObserver(ACenter, AObserver, ACallBack, AName,
+  AObject: Pointer; ASuspensionBehavior: NativeInt); cdecl;
+  external libCoreFoundation name 'CFNotificationCenterAddObserver';
+procedure CFNotificationCenterRemoveObserver(ACenter, AObserver, AName,
+  AObject: Pointer); cdecl;
+  external libCoreFoundation name 'CFNotificationCenterRemoveObserver';
+function CFStringCreateWithBytes(AAlloc, ABytes: Pointer; ANumBytes: NativeInt;
+  AEncoding: UInt32; AIsExternal: Boolean): Pointer; cdecl;
+  external libCoreFoundation name 'CFStringCreateWithBytes';
+procedure CFRelease(AObject: Pointer); cdecl;
+  external libCoreFoundation name 'CFRelease';
 
 var
   GOpenDocuments: TOpenDocumentsHandler;
+  // The notification's name, kept while the observer is registered
+  GLaunchName: Pointer;
 
 function TOpenDocumentsHandler.GetObjectiveCClass: PTypeInfo;
 begin
@@ -244,20 +270,42 @@ begin
       kCoreEventClass, kAEOpenDocuments);
 end;
 
-procedure TOpenDocumentsHandler.ObserveLaunch;
-begin
-  TNSNotificationCenter.Wrap(TNSNotificationCenter.OCClass.defaultCenter)
-    .addObserver(GetObjectID, sel_getUid('appWillFinishLaunching:'),
-      StrToNSStr('NSApplicationWillFinishLaunchingNotification'), nil);
-end;
-
-procedure TOpenDocumentsHandler.appWillFinishLaunching(notification: NSNotification);
+// Called by CoreFoundation, on the main thread, as the application is about
+// to finish launching: AppKit has just installed its own Apple event
+// handlers, so this one goes back in over them
+procedure WillFinishLaunching(ACenter, AObserver, AName, AObject,
+  AUserInfo: Pointer); cdecl;
 begin
   try
-    Install;
+    if GOpenDocuments <> nil then
+      GOpenDocuments.Install;
   except
-    // Never let an exception reach Objective-C
+    // Never let an exception reach the operating system
   end;
+end;
+
+procedure ObserveLaunch;
+var
+  Bytes: TBytes;
+begin
+  Bytes := TEncoding.UTF8.GetBytes(WILL_FINISH_LAUNCHING);
+  GLaunchName := CFStringCreateWithBytes(nil, @Bytes[0], Length(Bytes),
+    kCFStringEncodingUTF8, False);
+  if GLaunchName = nil then
+    Exit;
+  // The observer pointer only identifies the registration
+  CFNotificationCenterAddObserver(CFNotificationCenterGetLocalCenter, @GLaunchName,
+    @WillFinishLaunching, GLaunchName, nil, kCFNotificationDeliverImmediately);
+end;
+
+procedure StopObservingLaunch;
+begin
+  if GLaunchName = nil then
+    Exit;
+  CFNotificationCenterRemoveObserver(CFNotificationCenterGetLocalCenter, @GLaunchName,
+    GLaunchName, nil);
+  CFRelease(GLaunchName);
+  GLaunchName := nil;
 end;
 
 procedure TOpenDocumentsHandler.AddDescriptor(const ADescriptor: NSAppleEventDescriptor);
@@ -498,8 +546,7 @@ initialization
   GOpenDocuments := TOpenDocumentsHandler.Create;
   try
     GOpenDocuments.Install;
-    // The next line crashes Macs
-    // GOpenDocuments.ObserveLaunch;
+    ObserveLaunch;
   except
     // Without the handler, Finder requests are lost but the application runs
   end;
@@ -507,6 +554,7 @@ initialization
 
 finalization
   {$IF DEFINED(MACOS) and not DEFINED(IOS)}
+  StopObservingLaunch;
   FreeAndNil(GOpenDocuments);
   {$ENDIF}
   FreeAndNil(GRequests);

@@ -21,10 +21,12 @@
 //** of a TGorillaDefaultMaterialSource, which Gorilla converts for Vulkan and Metal. Each line
 //** is drawn on two thin TGorillaPlane strips that cross along it, so it is seen from any
 //** angle; the shader keeps only the pixels within LineWidth / 2 of the strip's middle. The
-//** width works on every backend. The lines are ordinary geometry, so the model hides the
-//** parts inside it or behind it. The strips are not children of the model, so they never
-//** count in its bounding box; they sit in a frame beside the model that copies its position,
-//** rotation, scale and centre of rotation whenever they change.
+//** width works on every backend, except on macOS and iOS, where Gorilla3D's Metal backend does
+//** not support SurfaceShader: there each strip is a thin plane of the line's colour, its width
+//** a fraction of its length. The lines are ordinary geometry, so the model hides the parts
+//** inside it or behind it. The strips are not children of the model, so they never count in
+//** its bounding box; they sit in a frame beside the model that copies its position, rotation,
+//** scale and centre of rotation whenever they change.
 //**
 //** @preformatted(
 //** <model's parent>
@@ -73,11 +75,13 @@ unit Sprite3DAxes;
   converts for Vulkan and Metal. Each line is drawn on two thin
   TGorillaPlane strips that cross along it, so it is seen from any angle;
   the shader keeps only the pixels within LineWidth / 2 of the strip's
-  middle. The width works on every backend. The lines are ordinary geometry,
-  so the model hides the parts inside it or behind it. The strips are not
-  children of the model, so they never count in its bounding box; they sit
-  in a frame beside the model that copies its position, rotation, scale and
-  centre of rotation whenever they change.
+  middle. The width works on every backend, except on macOS and iOS, where
+  Gorilla3D's Metal backend does not support SurfaceShader: there each strip
+  is a thin plane of the line's colour, its width a fraction of its length.
+  The lines are ordinary geometry, so the model hides the parts inside it or
+  behind it. The strips are not children of the model, so they never count
+  in its bounding box; they sit in a frame beside the model that copies its
+  position, rotation, scale and centre of rotation whenever they change.
 
     <model's parent>
     |-- TGorillaModel
@@ -91,6 +95,14 @@ unit Sprite3DAxes;
     ShowModelAxes(GorillaModel1, 2, False);      // shader lines 2 pixels wide
     HideModelAxes(GorillaModel1);
 }
+
+
+// Gorilla3D draws through Metal on macOS and iOS, where a material's
+// SurfaceShader is not supported; there OnTop False draws each strip as a
+// thin plane of the line's colour instead
+{$IF DEFINED(MACOS)}
+  {$DEFINE S3D_NO_SURFACE_SHADER}
+{$ENDIF}
 
 interface
 
@@ -147,7 +159,9 @@ type
     procedure AddStrip(const ACentre: TPoint3D; const ALength: Single;
       const ARotation: TPoint3D; const AAlongY: Boolean; const AColor: TAlphaColor);
     procedure SyncFrame;
+    {$IFNDEF S3D_NO_SURFACE_SHADER}
     function StripCode(const AAlongY: Boolean; const AColor: TAlphaColor): string;
+    {$ENDIF}
     procedure SetXColor(const Value: TAlphaColor);
     procedure SetYColor(const Value: TAlphaColor);
     procedure SetZColor(const Value: TAlphaColor);
@@ -342,6 +356,11 @@ const
   // A strip is never thinner than this, so a flat model still gets a
   // valid plane
   MIN_STRIP = 0.001;
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  // Without a shader, a strip's width as a fraction of its length per pixel
+  // of LineWidth
+  METAL_STRIP_WIDTH = 0.004;
+  {$ENDIF}
 
 { Copy ASource to ATarget only if it differs, so an unchanged transform
   never triggers a repaint }
@@ -508,6 +527,7 @@ begin
   Frame.Free;   // frees the strips, then the materials it owns
 end;
 
+{$IFNDEF S3D_NO_SURFACE_SHADER}
 function TModelAxes.StripCode(const AAlongY: Boolean; const AColor: TAlphaColor): string;
 var
   C: TAlphaColorRec;
@@ -534,13 +554,16 @@ begin
     '  DATA.Alpha = ' + GlslFloat(C.A / 255) + ';' + sLineBreak +
     '}';
 end;
+{$ENDIF}
 
 procedure TModelAxes.AddStrip(const ACentre: TPoint3D; const ALength: Single;
   const ARotation: TPoint3D; const AAlongY: Boolean; const AColor: TAlphaColor);
 var
   Plane: TGorillaPlane;
   Mat: TGorillaDefaultMaterialSource;
+  {$IFNDEF S3D_NO_SURFACE_SHADER}
   Code: TStringList;
+  {$ENDIF}
   Len: Single;
 begin
   // The plane, parented before anything else, as in Gorilla's examples
@@ -551,12 +574,28 @@ begin
   Plane.Parent := FFrame;   // freed with the frame
   Plane.TwoSide := True;    // seen from either side
 
+  Len := Max(ALength, MIN_STRIP);
+  {$IFDEF S3D_NO_SURFACE_SHADER}
+  // No shader to cut the line out of the strip, so the strip is the line:
+  // as long as the axis and a small fraction of it wide, scaled by
+  // LineWidth. The width is in model units, not pixels.
+  if AAlongY then
+  begin
+    Plane.Width := Max(Len * METAL_STRIP_WIDTH * FLineWidth, MIN_STRIP);
+    Plane.Height := Len;
+  end
+  else
+  begin
+    Plane.Width := Len;
+    Plane.Height := Max(Len * METAL_STRIP_WIDTH * FLineWidth, MIN_STRIP);
+  end;
+  {$ELSE}
   // Square, so the line is exactly as long as the strip whichever way it
   // runs; only the line's pixels survive the shader. The line is centred
   // on the strip, so the turn's direction does not matter.
-  Len := Max(ALength, MIN_STRIP);
   Plane.Width := Len;
   Plane.Height := Len;
+  {$ENDIF}
   Plane.RotationAngle.Point := ARotation;
   Plane.Position.Point := ACentre;
 
@@ -565,6 +604,7 @@ begin
   Mat.UseLighting := False;
   Mat.UseSpecular := False;
   Mat.Diffuse := AColor;
+  {$IFNDEF S3D_NO_SURFACE_SHADER}
   // The shader property takes a TStrings instance; setting .Text at runtime
   // would not trigger Gorilla's shader update
   Code := TStringList.Create;
@@ -574,6 +614,7 @@ begin
   finally
     Code.Free;
   end;
+  {$ENDIF}
   Plane.MaterialSource := Mat;
 end;
 

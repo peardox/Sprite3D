@@ -57,10 +57,32 @@ object MainForm: TMainForm
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
+          object AnimationsHeader: TRectangle
+            Align = Top
+            Fill.Color = xFF2B2B2B
+            Size.Width = 150.000000000000000000
+            Size.Height = 26.000000000000000000
+            Size.PlatformDefault = False
+            Stroke.Kind = None
+            object AnimationsLabel: TLabel
+              Align = Client
+              StyledSettings = [Family]
+              Size.Width = 150.000000000000000000
+              Size.Height = 26.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.Font.StyleExt = {00070000000000000004000000}
+              TextSettings.FontColor = claYellow
+              TextSettings.HorzAlign = Center
+              Text = 'Animations'
+              TabOrder = 0
+            end
+          end
           object AnimationListBox: TListBox
             Align = Client
+            Position.Y = 26.000000000000000000
             Size.Width = 150.000000000000000000
-            Size.Height = 694.000000000000000000
+            Size.Height = 668.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 86
             OnClick = AnimationListBoxClick
@@ -69,7 +91,7 @@ object MainForm: TMainForm
             DefaultItemStyles.GroupHeaderStyle = ''
             DefaultItemStyles.GroupFooterStyle = ''
             Viewport.Width = 146.000000000000000000
-            Viewport.Height = 690.000000000000000000
+            Viewport.Height = 666.000000000000000000
           end
         end
       end
@@ -148,6 +170,11 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Background Settings...'
         OnClick = BackgroundSettingsMenuItemClick
+      end
+      object SettingsMenuItem: TMenuItem
+        Locked = True
+        Text = 'Settings...'
+        OnClick = SettingsMenuItemClick
       end
       object FileSeparatorItem: TMenuItem
         Locked = True

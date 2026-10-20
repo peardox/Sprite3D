@@ -131,6 +131,9 @@
         <Icon_MainIcon>Sprite3d_Icon.ico</Icon_MainIcon>
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
         <SanitizedProjectName>Sprite3d</SanitizedProjectName>
+        <PreBuildEvent><![CDATA[call "$(PROJECTDIR)\styles\buildstyles.cmd" "$(BDS)"
+$(PreBuildEvent)]]></PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android)'!=''">
         <DCC_UsePackage>P4DPandas;FMXTMSFNCUIPackPkg;P4DPyQT5;fmx;DbxCommonDriver;bindengine;IndyIPCommon;emsclient;IndyProtocols;dbxcds;FmxTeeUI;P4DONNXRuntime;P4DTikToken;Gorilla3D_Delphi_13_1_0_Florence;FireDACSqliteDriver;DbxClientDriver;soapmidas;dbexpress;Python;inet;P4DOpenCV;FireDACDBXDriver;P4DRemBG;CustomIPTransport;P4DSciPy;P4DTQDM;Native.FmxStd.Package;IndySystem;TMSFNCCorePkg;P4DWhisper;P4DNumba;FireDACCommon;emsserverresource;P4DScikitLearn;P4DPyTorch;bindcompdbx;rtl;P4DPSUtil;DBXSqliteDriver;FMXTMSFNCChartPkg;FMXTMSFNCBloxToolBarsPkg;DataSnapFireDAC;FireDAC;P4DPillow;xmlrtl;P4DEnvironment;dsnap;FMXTMSFNCWebSocketPkg;DataSnapNativeClient;FMXTMSFNCMapsPkg;FMXTMSFNCCorePkg;P4DMatplotLib;FMXTMSFNCChartGridAdapterPkg;emshosting;FireDACCommonDriver;IndyIPClient;FMXTMSFNCCloudPackPkg;P4DMoreItertools;emsedge;bindcompfmx;P4DMoviePy;FMXTMSFNCWXPackPkg;fmxFireDAC;P4DPyPackage;DataSnapCommon;fmxase;dbrtl;P4DTensorFlow;P4DKeras;DBXInterBaseDriver;FMXTMSFNCGanttChartPkg;FMXTMSFNCDashboardPackPkg;bindcomp;P4DH5Py;inetstn;IndyCore;RESTBackendComponents;RESTComponents;IndyIPServer;dsnapxml;DataSnapClient;DataSnapProviderClient;P4DNLTK;FMXTMSFNCRESTClientEditorPkg;TMSFNCPushNotificationsPkg;FMXTMSFNCBloxPkg;emsclientfiredac;FireDACDSDriver;tethering;P4DBoto3;CloudService;P4DNumPy;FMXTee;PythonFmx;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
@@ -368,6 +371,16 @@
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="common\OSPaths.pas"/>
+        <DCCReference Include="common\GpuPreference.pas"/>
+        <DCCReference Include="lib\Sprite3DFileAssoc.pas"/>
+        <DCCReference Include="lib\Sprite3DStyles.pas"/>
+        <DCCReference Include="lib\Sprite3DTitleBar.pas"/>
+        <DCCReference Include="ui\Sprite3DSettingsForm.pas">
+            <Form>GeneralSettingsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <None Include="styles\Sprite3DThemes.rc"/>
+        <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
@@ -1993,4 +2006,164 @@
     <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
     <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
     <Import Project="$(MSBuildProjectName).deployproj" Condition="Exists('$(MSBuildProjectName).deployproj')"/>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Android'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Android64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='iOSDevice64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='iOSSimARM64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Linux64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='OSX64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='OSXARM64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Win32'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Win64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='WinARM64EC'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Android'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Android64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='iOSDevice64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='iOSSimARM64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Linux64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='OSX64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='OSXARM64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Win32'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Win64'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='WinARM64EC'">
+        <PreBuildEvent>call &quot;$(PROJECTDIR)\styles\buildstyles.cmd&quot; &quot;$(BDS)&quot;</PreBuildEvent>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent/>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
 </Project>

@@ -1,0 +1,14 @@
+// The FMX styles Sprite3D's themes use, linked into the program as RCDATA
+// resources so they are inside it on every platform, with nothing to deploy.
+// ApplyTheme in Sprite3DHelpers looks for these names first.
+//
+// The .style files are the ones RAD Studio ships in $(BDS)\Redist\styles\Fmx.
+// buildstyles.cmd, run by the project's pre-build event, copies any that are
+// missing into this folder and compiles this file, from this folder, into
+// Sprite3DThemes.res, which Sprite3d.dpr links in. The IDE does not compile
+// this file itself, as it may do so before the pre-build event has run.
+
+Sprite3DDarkStyle            RCDATA "Dark.style"
+Sprite3DAquaGraphiteStyle    RCDATA "AquaGraphite.style"
+Sprite3DRubyGraphiteStyle    RCDATA "RubyGraphite.style"
+Sprite3DGoldenGraphiteStyle  RCDATA "GoldenGraphite.style"

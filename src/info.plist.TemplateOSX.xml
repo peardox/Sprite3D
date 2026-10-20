@@ -4,5 +4,27 @@
 <dict>
 <%VersionInfoPListKeys%>
 <%ExtraInfoPListKeys%>
+<key>CFBundleDocumentTypes</key>
+<array>
+	<dict>
+		<key>CFBundleTypeName</key>
+		<string>3D model</string>
+		<key>CFBundleTypeRole</key>
+		<string>Viewer</string>
+		<key>LSHandlerRank</key>
+		<string>Alternate</string>
+		<key>CFBundleTypeExtensions</key>
+		<array>
+			<string>glb</string>
+			<string>gltf</string>
+			<string>fbx</string>
+			<string>obj</string>
+			<string>usdc</string>
+			<string>dae</string>
+			<string>stl</string>
+			<string>ply</string>
+		</array>
+	</dict>
+</array>
 </dict>
 </plist>

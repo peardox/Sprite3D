@@ -41,7 +41,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
-  Gorilla.Model, Sprite3DStorage, Sprite3DBackground;
+  Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc;
 
 const
   //** @abstract(The application's name, used for its per-user folder.)
@@ -50,8 +50,100 @@ const
   //** @abstract(The name of the settings file in SupportFolder.)
   /// <summary>The name of the settings file in SupportFolder.</summary>
   SETTINGS_FILE_NAME = 'settings.json';
+  //** @abstract(The largest camera pan either way, as a multiple of the model's radius.)
+  //**
+  //** The radius is half the diagonal of the model's bounding box, so a pan of 1 moves the
+  //** orbit centre out to where the model's farthest corner was.
+  /// <summary>The largest camera pan either way, as a multiple of the model's
+  /// radius.</summary>
+  /// <remarks>The radius is half the diagonal of the model's bounding box, so a pan of 1
+  /// moves the orbit centre out to where the model's farthest corner was.</remarks>
+  PAN_LIMIT = 2.0;
+  //** @abstract(The smallest width or height File, Grab renders, in pixels.)
+  /// <summary>The smallest width or height File, Grab renders, in pixels.</summary>
+  GRAB_SIZE_MIN = 8;
+  //** @abstract(The largest width or height File, Grab renders, in pixels.)
+  /// <summary>The largest width or height File, Grab renders, in pixels.</summary>
+  GRAB_SIZE_MAX = 1024;
+  //** @abstract(The width and height File, Grab renders until another size is chosen.)
+  /// <summary>The width and height File, Grab renders until another size is
+  /// chosen.</summary>
+  GRAB_SIZE_DEFAULT = 256;
+  //** @abstract(The square grab sizes File, Settings offers, in pixels, smallest first.)
+  //**
+  //** Any other size, square or not, is a custom size.
+  /// <summary>The square grab sizes File, Settings offers, in pixels, smallest
+  /// first.</summary>
+  /// <remarks>Any other size, square or not, is a custom size.</remarks>
+  GRAB_PRESET_SIZES: array[0..11] of Integer =
+    (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);
 
 type
+  //** @abstract(What the application loads when it starts and no file was asked for.)
+  //**
+  //** @code(saNone) loads nothing; @code(saDefaultModel) loads the sample model;
+  //** @code(saLastModel) loads the model last opened, or the sample model if that file has
+  //** gone. A file the operating system asks the application to open always comes first.
+  /// <summary>What the application loads when it starts and no file was asked for.</summary>
+  /// <remarks><c>saNone</c> loads nothing; <c>saDefaultModel</c> loads the sample model;
+  /// <c>saLastModel</c> loads the model last opened, or the sample model if that file has
+  /// gone. A file the operating system asks the application to open always comes
+  /// first.</remarks>
+  TSprite3DStartupAction = (saNone, saDefaultModel, saLastModel);
+
+  //** @abstract(The application's look: FMX's own default style, or one of the FMX styles
+  //** that come with RAD Studio.)
+  //**
+  //** @code(thDefault) is the platform's own style. @code(thDark) is Dark.style; the others
+  //** are the coloured Graphite styles, dark grey with an accent: @code(thAquaGraphite) blue,
+  //** @code(thRubyGraphite) red and @code(thGoldenGraphite) gold.
+  /// <summary>The application's look: FMX's own default style, or one of the FMX styles that
+  /// come with RAD Studio.</summary>
+  /// <remarks><c>thDefault</c> is the platform's own style. <c>thDark</c> is Dark.style; the
+  /// others are the coloured Graphite styles, dark grey with an accent:
+  /// <c>thAquaGraphite</c> blue, <c>thRubyGraphite</c> red and <c>thGoldenGraphite</c>
+  /// gold.</remarks>
+  TSprite3DTheme = (thDefault, thDark, thAquaGraphite, thRubyGraphite, thGoldenGraphite);
+
+  //** @abstract(Which graphics processor Windows gives the application.)
+  //**
+  //** @code(gmSystem) lets Windows decide; @code(gmPowerSaving) asks for the low-power GPU and
+  //** @code(gmHighPerformance) for the high-performance one. Used on Windows only, and only
+  //** after the application is restarted.
+  /// <summary>Which graphics processor Windows gives the application.</summary>
+  /// <remarks><c>gmSystem</c> lets Windows decide; <c>gmPowerSaving</c> asks for the
+  /// low-power GPU and <c>gmHighPerformance</c> for the high-performance one. Used on Windows
+  /// only, and only after the application is restarted.</remarks>
+  TSprite3DGpuMode = (gmSystem, gmPowerSaving, gmHighPerformance);
+
+  //** @abstract(The choices made in File, Settings, together.)
+  /// <summary>The choices made in File, Settings, together.</summary>
+  TSprite3DGeneralSettings = record
+    //** @abstract(Whether the application is offered under Open With for model files.)
+    /// <summary>Whether the application is offered under Open With for model files.</summary>
+    OpenWith: Boolean;
+    //** @abstract(Whether the application opens model files by default.)
+    /// <summary>Whether the application opens model files by default.</summary>
+    AlwaysOpenWith: Boolean;
+    //** @abstract(What is loaded at start-up.)
+    /// <summary>What is loaded at start-up.</summary>
+    StartupAction: TSprite3DStartupAction;
+    //** @abstract(The application's look.)
+    /// <summary>The application's look.</summary>
+    Theme: TSprite3DTheme;
+    //** @abstract(The graphics processor asked for; Windows only.)
+    /// <summary>The graphics processor asked for; Windows only.</summary>
+    GpuMode: TSprite3DGpuMode;
+    //** @abstract(The width of off-screen grabs, in pixels, GRAB_SIZE_MIN to GRAB_SIZE_MAX.)
+    /// <summary>The width of off-screen grabs, in pixels, GRAB_SIZE_MIN to
+    /// GRAB_SIZE_MAX.</summary>
+    GrabWidth: Integer;
+    //** @abstract(The height of off-screen grabs, in pixels, GRAB_SIZE_MIN to GRAB_SIZE_MAX.)
+    /// <summary>The height of off-screen grabs, in pixels, GRAB_SIZE_MIN to
+    /// GRAB_SIZE_MAX.</summary>
+    GrabHeight: Integer;
+  end;
+
   //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
   //**
   //** Casting a TControl3D to this class exposes its protected members inside the unit that
@@ -97,9 +189,24 @@ type
     FVariableAzimuth: Single;
     FVariableInclination: Single;
     FVariableRoll: Single;
-    FDistanceFactor: Single;
+    FPanEnabled: Boolean;
+    FPanX: Single;
+    FPanZ: Single;
+    FStartupAction: TSprite3DStartupAction;
+    FLastModel: String;
+    FTheme: String;
+    FGpuMode: TSprite3DGpuMode;
+    FOpenWith: Boolean;
+    FAlwaysOpenWith: Boolean;
+    FAssociationBackup: String;
+    FGrabWidth: Integer;
+    FGrabHeight: Integer;
+    procedure SetGrabWidth(const Value: Integer);
+    procedure SetGrabHeight(const Value: Integer);
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
     procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
+    function GetThemeKind: TSprite3DTheme;
+    procedure SetThemeKind(const Value: TSprite3DTheme);
   public
     //** @abstract(Creates the settings with their defaults, for settings.json in
     //** SupportFolder.)
@@ -143,6 +250,14 @@ type
     /// them.</remarks>
     property BackgroundSpec: TSprite3DBackgroundSpec read GetBackgroundSpec
       write SetBackgroundSpec;
+    //** @abstract(Theme as a TSprite3DTheme.)
+    //**
+    //** A name in settings.json that is not one of the themes, such as one from an older
+    //** version, reads as thDefault.
+    /// <summary>Theme as a TSprite3DTheme.</summary>
+    /// <remarks>A name in settings.json that is not one of the themes, such as one from an
+    /// older version, reads as thDefault.</remarks>
+    property ThemeKind: TSprite3DTheme read GetThemeKind write SetThemeKind;
   published
     //** @abstract(The folder grabs are saved in; empty until one is chosen.)
     //**
@@ -294,15 +409,107 @@ type
     /// <remarks>Stored as <c>variableRoll</c>. Kept whenever the session ends in the Variable
     /// view, and restored with it.</remarks>
     property VariableRoll: Single read FVariableRoll write FVariableRoll;
-    //** @abstract(How far out from the fitted view the camera is, x1 to x20; 1 by default.)
+    //** @abstract(Whether the camera pan is applied; False by default.)
     //**
-    //** Stored as @code(distanceFactor). Set with the Camera dialog's Distance slider and used
-    //** in every view; values below 1 count as 1.
-    /// <summary>How far out from the fitted view the camera is, x1 to x20; 1 by
+    //** Stored as @code(panEnabled). Set by the Pan box in the Variable camera dialog. While
+    //** False, PanX and PanZ are kept but have no effect.
+    /// <summary>Whether the camera pan is applied; False by default.</summary>
+    /// <remarks>Stored as <c>panEnabled</c>. Set by the Pan box in the Variable camera dialog.
+    /// While False, PanX and PanZ are kept but have no effect.</remarks>
+    property PanEnabled: Boolean read FPanEnabled write FPanEnabled;
+    //** @abstract(The camera pan along the model's X axis, as a multiple of its radius; 0 by
+    //** default.)
+    //**
+    //** Stored as @code(panX). Values beyond PAN_LIMIT either way are limited to it.
+    /// <summary>The camera pan along the model's X axis, as a multiple of its radius; 0 by
     /// default.</summary>
-    /// <remarks>Stored as <c>distanceFactor</c>. Set with the Camera dialog's Distance slider
-    /// and used in every view; values below 1 count as 1.</remarks>
-    property DistanceFactor: Single read FDistanceFactor write FDistanceFactor;
+    /// <remarks>Stored as <c>panX</c>. Values beyond PAN_LIMIT either way are limited to
+    /// it.</remarks>
+    property PanX: Single read FPanX write FPanX;
+    //** @abstract(The camera pan along the model's Z axis, as a multiple of its radius; 0 by
+    //** default.)
+    //**
+    //** Stored as @code(panZ). Values beyond PAN_LIMIT either way are limited to it.
+    /// <summary>The camera pan along the model's Z axis, as a multiple of its radius; 0 by
+    /// default.</summary>
+    /// <remarks>Stored as <c>panZ</c>. Values beyond PAN_LIMIT either way are limited to
+    /// it.</remarks>
+    property PanZ: Single read FPanZ write FPanZ;
+    //** @abstract(What is loaded at start-up; the sample model by default.)
+    //**
+    //** Stored as @code(startupAction), by name.
+    /// <summary>What is loaded at start-up; the sample model by default.</summary>
+    /// <remarks>Stored as <c>startupAction</c>, by name.</remarks>
+    property StartupAction: TSprite3DStartupAction read FStartupAction write FStartupAction;
+    //** @abstract(The full path of the model last loaded; empty until one is.)
+    //**
+    //** Stored as @code(lastModel). Used when StartupAction is saLastModel.
+    /// <summary>The full path of the model last loaded; empty until one is.</summary>
+    /// <remarks>Stored as <c>lastModel</c>. Used when StartupAction is saLastModel.</remarks>
+    property LastModel: String read FLastModel write FLastModel;
+    //** @abstract(The application's look, by name; Default by default.)
+    //**
+    //** Stored as @code(theme): one of Default, Dark, AquaGraphite, RubyGraphite and
+    //** GoldenGraphite. Kept as text rather than as an enumeration so that a name this version
+    //** does not know can never stop settings.json loading; use ThemeKind in code.
+    /// <summary>The application's look, by name; Default by default.</summary>
+    /// <remarks>Stored as <c>theme</c>: one of Default, Dark, AquaGraphite, RubyGraphite and
+    /// GoldenGraphite. Kept as text rather than as an enumeration so that a name this version
+    /// does not know can never stop settings.json loading; use ThemeKind in code.</remarks>
+    property Theme: String read FTheme write FTheme;
+    //** @abstract(The graphics processor last chosen in File, Settings; Windows only.)
+    //**
+    //** Stored as @code(gpuMode), by name. Windows keeps the choice itself, per program file;
+    //** the dialog shows what Windows has, so this is a record of the last choice.
+    /// <summary>The graphics processor last chosen in File, Settings; Windows only.</summary>
+    /// <remarks>Stored as <c>gpuMode</c>, by name. Windows keeps the choice itself, per program
+    /// file; the dialog shows what Windows has, so this is a record of the last
+    /// choice.</remarks>
+    property GpuMode: TSprite3DGpuMode read FGpuMode write FGpuMode;
+    //** @abstract(Whether the application was last registered for Open With.)
+    //**
+    //** Stored as @code(openWith). The system's registration is what counts; the dialog reads
+    //** it afresh.
+    /// <summary>Whether the application was last registered for Open With.</summary>
+    /// <remarks>Stored as <c>openWith</c>. The system's registration is what counts; the
+    /// dialog reads it afresh.</remarks>
+    property OpenWith: Boolean read FOpenWith write FOpenWith;
+    //** @abstract(Whether the application was last made the default for model files.)
+    //**
+    //** Stored as @code(alwaysOpenWith).
+    /// <summary>Whether the application was last made the default for model
+    /// files.</summary>
+    /// <remarks>Stored as <c>alwaysOpenWith</c>.</remarks>
+    property AlwaysOpenWith: Boolean read FAlwaysOpenWith write FAlwaysOpenWith;
+    //** @abstract(The default applications model files had before this one was made the
+    //** default, for putting them back.)
+    //**
+    //** Stored as @code(associationBackup): one @code(key=value) line per type, as
+    //** TSprite3DFileAssociations.MakeDefault writes it. Empty when nothing needs putting back.
+    /// <summary>The default applications model files had before this one was made the
+    /// default, for putting them back.</summary>
+    /// <remarks>Stored as <c>associationBackup</c>: one <c>key=value</c> line per type, as
+    /// TSprite3DFileAssociations.MakeDefault writes it. Empty when nothing needs putting
+    /// back.</remarks>
+    property AssociationBackup: String read FAssociationBackup write FAssociationBackup;
+    //** @abstract(The width of off-screen grabs, in pixels; GRAB_SIZE_DEFAULT by default.)
+    //**
+    //** Stored as @code(grabWidth). Written values are limited to GRAB_SIZE_MIN to
+    //** GRAB_SIZE_MAX.
+    /// <summary>The width of off-screen grabs, in pixels; GRAB_SIZE_DEFAULT by
+    /// default.</summary>
+    /// <remarks>Stored as <c>grabWidth</c>. Written values are limited to GRAB_SIZE_MIN to
+    /// GRAB_SIZE_MAX.</remarks>
+    property GrabWidth: Integer read FGrabWidth write SetGrabWidth;
+    //** @abstract(The height of off-screen grabs, in pixels; GRAB_SIZE_DEFAULT by default.)
+    //**
+    //** Stored as @code(grabHeight). Written values are limited to GRAB_SIZE_MIN to
+    //** GRAB_SIZE_MAX.
+    /// <summary>The height of off-screen grabs, in pixels; GRAB_SIZE_DEFAULT by
+    /// default.</summary>
+    /// <remarks>Stored as <c>grabHeight</c>. Written values are limited to GRAB_SIZE_MIN to
+    /// GRAB_SIZE_MAX.</remarks>
+    property GrabHeight: Integer read FGrabHeight write SetGrabHeight;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -525,11 +732,180 @@ function StartupModelFile(const ARequested: TArray<String>;
 /// <returns>The full path on Android and iOS; an empty string on other platforms.</returns>
 function AutoIconFileName(const AExtension: String): String;
 
+//** @abstract(How far to move the orbit centre for a camera pan.)
+//**
+//** The pan runs along the model's own X and Z axes, as View, Show axes draws them, so it
+//** never moves the view up or down the model's Y axis. Each amount is a multiple of the
+//** model's radius, half the diagonal of ABox, so a pan looks the same for a model of any
+//** size. The camera's angles and distance are not involved.
+//**
+//** @param(AModel The model; nil gives no offset.)
+//**
+//** @param(ABox The model's own bounds as loaded, for its size.)
+//**
+//** @param(APanX The pan along the model's X axis; limited to PAN_LIMIT either way.)
+//**
+//** @param(APanZ The pan along the model's Z axis; limited to PAN_LIMIT either way.)
+//**
+//** @returns(The offset to add to the fitted orbit centre, in the viewport's space.)
+/// <summary>How far to move the orbit centre for a camera pan.</summary>
+/// <remarks>The pan runs along the model's own X and Z axes, as View, Show axes draws them, so
+/// it never moves the view up or down the model's Y axis. Each amount is a multiple of the
+/// model's radius, half the diagonal of ABox, so a pan looks the same for a model of any
+/// size. The camera's angles and distance are not involved.</remarks>
+/// <param name="AModel">The model; nil gives no offset.</param>
+/// <param name="ABox">The model's own bounds as loaded, for its size.</param>
+/// <param name="APanX">The pan along the model's X axis; limited to PAN_LIMIT either
+/// way.</param>
+/// <param name="APanZ">The pan along the model's Z axis; limited to PAN_LIMIT either
+/// way.</param>
+/// <returns>The offset to add to the fitted orbit centre, in the viewport's space.</returns>
+function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
+  const APanX, APanZ: Single): TPoint3D;
+
+//** @abstract(Gives the whole application, title bars included, the look ATheme names.)
+//**
+//** thDefault puts back FMX's own platform style and the system's title bars. The other
+//** themes are the FMX styles that come with RAD Studio: Dark.style, AquaGraphite.style,
+//** RubyGraphite.style and GoldenGraphite.style. Each is looked for as a linked-in RCDATA
+//** resource called @code(Sprite3D<Name>Style), such as @code(Sprite3DDarkStyle), which
+//** @code(styles\Sprite3DThemes.rc) links into every build, then, should that be missing, as a
+//** file in a @code(styles) folder beside the program or its assets, beside the program,
+//** in a @code(styles) folder in SupportFolder, or, on Windows, in RAD Studio's
+//** @code(Redist\styles\Fmx) folder when the BDS environment variable is set, as it is when
+//** run from the IDE. Once the style is in use, the title bars take its form background
+//** colour, with the theme's accent as the window border, where the system allows; see
+//** Sprite3DTitleBar.
+//**
+//** @param(ATheme The look to use.)
+//**
+//** @param(AError On failure, why, including where it looked.)
+//**
+//** @returns(True if the look is now in use; False leaves the current one, title bars
+//** included.)
+/// <summary>Gives the whole application, title bars included, the look ATheme
+/// names.</summary>
+/// <remarks>thDefault puts back FMX's own platform style and the system's title bars. The
+/// other themes are the FMX styles that come with RAD Studio: Dark.style, AquaGraphite.style,
+/// RubyGraphite.style and GoldenGraphite.style. Each is looked for as a linked-in RCDATA
+/// resource called <c>Sprite3D&lt;Name&gt;Style</c>, such as <c>Sprite3DDarkStyle</c>, which
+/// <c>styles\Sprite3DThemes.rc</c> links into every build, then, should that be missing,
+/// as a file in a <c>styles</c> folder beside the program or its assets, beside the program,
+/// in a <c>styles</c> folder in SupportFolder, or, on Windows, in RAD Studio's
+/// <c>Redist\styles\Fmx</c> folder when the BDS environment variable is set, as it is when
+/// run from the IDE. Once the style is in use, the title bars take its form background
+/// colour, with the theme's accent as the window border, where the system allows; see
+/// Sprite3DTitleBar.</remarks>
+/// <param name="ATheme">The look to use.</param>
+/// <param name="AError">On failure, why, including where it looked.</param>
+/// <returns>True if the look is now in use; False leaves the current one, title bars
+/// included.</returns>
+function ApplyTheme(const ATheme: TSprite3DTheme; out AError: String): Boolean;
+
+//** @abstract(A new TSprite3DFileAssociations for the model files this application opens.)
+//**
+//** The caller owns the result and frees it.
+//**
+//** @returns(The associations object, set up for every extension IsModelFile accepts.)
+/// <summary>A new TSprite3DFileAssociations for the model files this application
+/// opens.</summary>
+/// <remarks>The caller owns the result and frees it.</remarks>
+/// <returns>The associations object, set up for every extension IsModelFile
+/// accepts.</returns>
+function CreateModelAssociations: TSprite3DFileAssociations;
+
+//** @abstract(Registers or unregisters the application for model files as asked, keeping
+//** what is needed to undo it in ASettings.)
+//**
+//** In order: registers for Open With if AOpenWith; makes the application the default if
+//** AAlways, recording the old defaults in ASettings.AssociationBackup, or otherwise puts
+//** back the recorded defaults if it was the default; and unregisters if not AOpenWith.
+//** AAlways counts only with AOpenWith, except on macOS, where Open With is fixed by the
+//** bundle. Where the user has to confirm a default in the system's own settings, that page
+//** is opened and AMessage says so. ASettings.OpenWith and AlwaysOpenWith are updated to
+//** the result; the caller saves ASettings.
+//**
+//** @param(ASettings The application's settings, for the backup.)
+//**
+//** @param(AOpenWith Whether to be offered under Open With.)
+//**
+//** @param(AAlways Whether to be the default for model files.)
+//**
+//** @param(AMessage Anything the user should be told, failures included; empty if
+//** nothing.)
+//**
+//** @returns(True if every step succeeded.)
+/// <summary>Registers or unregisters the application for model files as asked, keeping what
+/// is needed to undo it in ASettings.</summary>
+/// <remarks>In order: registers for Open With if AOpenWith; makes the application the default
+/// if AAlways, recording the old defaults in ASettings.AssociationBackup, or otherwise puts
+/// back the recorded defaults if it was the default; and unregisters if not AOpenWith.
+/// AAlways counts only with AOpenWith, except on macOS, where Open With is fixed by the
+/// bundle. Where the user has to confirm a default in the system's own settings, that page is
+/// opened and AMessage says so. ASettings.OpenWith and AlwaysOpenWith are updated to the
+/// result; the caller saves ASettings.</remarks>
+/// <param name="ASettings">The application's settings, for the backup.</param>
+/// <param name="AOpenWith">Whether to be offered under Open With.</param>
+/// <param name="AAlways">Whether to be the default for model files.</param>
+/// <param name="AMessage">Anything the user should be told, failures included; empty if
+/// nothing.</param>
+/// <returns>True if every step succeeded.</returns>
+function ApplyFileAssociations(const ASettings: TSprite3DAppSettings;
+  const AOpenWith, AAlways: Boolean; out AMessage: String): Boolean;
+
+//** @abstract(True where the GPU preference can be set: Windows only.)
+//**
+//** @returns(True on Windows.)
+/// <summary>True where the GPU preference can be set: Windows only.</summary>
+/// <returns>True on Windows.</returns>
+function GpuModeSupported: Boolean;
+
+//** @abstract(The GPU preference Windows has for this program file now.)
+//**
+//** @returns(The preference, or gmSystem where there is none or the platform has none.)
+/// <summary>The GPU preference Windows has for this program file now.</summary>
+/// <returns>The preference, or gmSystem where there is none or the platform has
+/// none.</returns>
+function ReadGpuMode: TSprite3DGpuMode;
+
+//** @abstract(Asks Windows for a GPU for this program file, from the next start.)
+//**
+//** gmSystem removes the program's entry, handing the choice back to Windows. Uses
+//** GpuPreference.SetGpuPreference.
+//**
+//** @param(AMode The preference.)
+//**
+//** @returns(True if it was stored; always False where GpuModeSupported is False.)
+/// <summary>Asks Windows for a GPU for this program file, from the next start.</summary>
+/// <remarks>gmSystem removes the program's entry, handing the choice back to Windows. Uses
+/// GpuPreference.SetGpuPreference.</remarks>
+/// <param name="AMode">The preference.</param>
+/// <returns>True if it was stored; always False where GpuModeSupported is False.</returns>
+function WriteGpuMode(const AMode: TSprite3DGpuMode): Boolean;
+
+//** @abstract(The File, Settings choices as they stand now.)
+//**
+//** Open With, the default application and the GPU preference are read from the system,
+//** where it can say; the rest come from ASettings.
+//**
+//** @param(ASettings The application's settings.)
+//**
+//** @returns(The choices.)
+/// <summary>The File, Settings choices as they stand now.</summary>
+/// <remarks>Open With, the default application and the GPU preference are read from the
+/// system, where it can say; the rest come from ASettings.</remarks>
+/// <param name="ASettings">The application's settings.</param>
+/// <returns>The choices.</returns>
+function ReadGeneralSettings(const ASettings: TSprite3DAppSettings): TSprite3DGeneralSettings;
+
 implementation
 
 uses
   System.Classes, System.Math, System.IOUtils,
-  OSPaths,
+  OSPaths, Sprite3DStyles, Sprite3DTitleBar,
+  {$IF DEFINED(MSWINDOWS)}
+  GpuPreference,
+  {$ENDIF}
   Gorilla.DefTypes,
   Gorilla.Animation,
   Gorilla.GLB.Loader,
@@ -565,7 +941,32 @@ begin
   FVariableAzimuth := 0;
   FVariableInclination := 0;
   FVariableRoll := 0;
-  FDistanceFactor := 1;
+  // Panning is rare: off, and centred, until chosen
+  FPanEnabled := False;
+  FPanX := 0;
+  FPanZ := 0;
+  // File, Settings: as the application behaved before it had them
+  FStartupAction := saDefaultModel;
+  FLastModel := String.Empty;
+  SetThemeKind(thDefault);
+  FGpuMode := gmSystem;
+  FOpenWith := False;
+  FAlwaysOpenWith := False;
+  FAssociationBackup := String.Empty;
+  FGrabWidth := GRAB_SIZE_DEFAULT;
+  FGrabHeight := GRAB_SIZE_DEFAULT;
+end;
+
+// Neon writes through the setters too, so a hand-edited settings.json can't
+// ask for a size outside the limits
+procedure TSprite3DAppSettings.SetGrabWidth(const Value: Integer);
+begin
+  FGrabWidth := EnsureRange(Value, GRAB_SIZE_MIN, GRAB_SIZE_MAX);
+end;
+
+procedure TSprite3DAppSettings.SetGrabHeight(const Value: Integer);
+begin
+  FGrabHeight := EnsureRange(Value, GRAB_SIZE_MIN, GRAB_SIZE_MAX);
 end;
 
 // A colour as #AARRGGBB, which people can read and edit in settings.json
@@ -763,6 +1164,266 @@ begin
   AModel.RotationAngle.X := MODEL_ROTATION.X;
   AModel.RotationAngle.Y := MODEL_ROTATION.Y;
   AModel.RotationAngle.Z := MODEL_ROTATION.Z;
+end;
+
+function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
+  const APanX, APanZ: Single): TPoint3D;
+var
+  Origin, AxisX, AxisZ: TPoint3D;
+  Radius: Single;
+begin
+  Result := TPoint3D.Zero;
+  if AModel = nil then
+    Exit;
+  Radius := 0.5 * Sqrt(Sqr(ABox.Width) + Sqr(ABox.Height) + Sqr(ABox.Depth));
+  if Radius <= 0 then
+    Radius := 1;
+  // The model's own X and Z directions in the viewport's space, which is
+  // where the camera's rig lives; scale is taken out, the radius puts it back
+  Origin := AModel.LocalToAbsolute3D(TPoint3D.Zero);
+  AxisX := AModel.LocalToAbsolute3D(Point3D(1, 0, 0)) - Origin;
+  AxisZ := AModel.LocalToAbsolute3D(Point3D(0, 0, 1)) - Origin;
+  if AxisX.Length > 0 then
+    AxisX := AxisX.Normalize;
+  if AxisZ.Length > 0 then
+    AxisZ := AxisZ.Normalize;
+  Result := AxisX * (EnsureRange(APanX, -PAN_LIMIT, PAN_LIMIT) * Radius) +
+    AxisZ * (EnsureRange(APanZ, -PAN_LIMIT, PAN_LIMIT) * Radius);
+end;
+
+type
+  // What the application knows about each theme
+  TThemeInfo = record
+    Key: String;             // in settings.json, and the style's file name
+    Fallback: TAlphaColor;   // caption colour if the style's background can't be read
+    Accent: TAlphaColor;     // window border; Null for the system's
+  end;
+
+const
+  THEMES: array[TSprite3DTheme] of TThemeInfo = (
+    (Key: 'Default';        Fallback: TAlphaColors.White; Accent: TAlphaColors.Null),
+    (Key: 'Dark';           Fallback: $FF2B2B2B;          Accent: TAlphaColors.Null),
+    (Key: 'AquaGraphite';   Fallback: $FF3A3A3A;          Accent: $FF2A9FD6),
+    (Key: 'RubyGraphite';   Fallback: $FF3A3A3A;          Accent: $FFC0262C),
+    (Key: 'GoldenGraphite'; Fallback: $FF3A3A3A;          Accent: $FFD4A017));
+
+function TSprite3DAppSettings.GetThemeKind: TSprite3DTheme;
+begin
+  for var Kind := Low(TSprite3DTheme) to High(TSprite3DTheme) do
+    if SameText(FTheme, THEMES[Kind].Key) then
+      Exit(Kind);
+  Result := thDefault;
+end;
+
+procedure TSprite3DAppSettings.SetThemeKind(const Value: TSprite3DTheme);
+begin
+  FTheme := THEMES[Value].Key;
+end;
+
+function ApplyTheme(const ATheme: TSprite3DTheme; out AError: String): Boolean;
+var
+  Folders: TArray<String>;
+  Assets, Bds, StyleName, ResourceName: String;
+begin
+  Assets := GetAssetsPath('../../../');
+  Folders := [];
+  if Assets <> String.Empty then
+    Folders := Folders + [TPath.Combine(Assets, 'styles'), Assets];
+  Folders := Folders + [TPath.Combine(TSprite3DAppSettings.SupportFolder, 'styles')];
+  {$IF DEFINED(MSWINDOWS)}
+  // Set by the IDE for programs it runs, so a development build finds the
+  // styles that come with RAD Studio without copying them
+  Bds := GetEnvironmentVariable('BDS');
+  if Bds <> String.Empty then
+    Folders := Folders + [TPath.Combine(Bds, 'Redist\styles\Fmx')];
+  {$ELSE}
+  Bds := String.Empty;
+  {$ENDIF}
+
+  if ATheme = thDefault then
+  begin
+    StyleName := String.Empty;
+    ResourceName := String.Empty;
+  end
+  else
+  begin
+    StyleName := THEMES[ATheme].Key;
+    ResourceName := 'Sprite3D' + StyleName + 'Style';
+  end;
+
+  Result := ApplyFmxStyle(StyleName, ResourceName, Folders, AError);
+  if not Result then
+    Exit;   // the old style is still in use; so are its title bars
+
+  if ATheme = thDefault then
+    SetTitleBarSpec(TSprite3DTitleBarSpec.System)
+  else
+    SetTitleBarSpec(TitleBarSpecFromStyle(THEMES[ATheme].Fallback, THEMES[ATheme].Accent));
+end;
+
+const
+  // The MIME types Linux knows the model files by; each pairs with an
+  // extension in MODEL_EXTENSIONS
+  MODEL_MIME_TYPES: array[0..7] of String =
+    ('model/gltf-binary', 'model/gltf+json', 'model/x-fbx', 'model/obj',
+     'model/x-usdc', 'model/vnd.collada+xml', 'model/stl', 'model/x-ply');
+  MODEL_DESCRIPTIONS: array[0..7] of String =
+    ('glTF binary model', 'glTF model', 'FBX model', 'Wavefront OBJ model',
+     'USD binary model', 'Collada model', 'STL model', 'PLY model');
+
+function CreateModelAssociations: TSprite3DFileAssociations;
+var
+  Types: TArray<TSprite3DFileType>;
+  I: Integer;
+begin
+  SetLength(Types, Length(MODEL_EXTENSIONS));
+  for I := 0 to High(MODEL_EXTENSIONS) do
+    Types[I] := TSprite3DFileType.Create(MODEL_EXTENSIONS[I], MODEL_MIME_TYPES[I],
+      MODEL_DESCRIPTIONS[I]);
+  Result := TSprite3DFileAssociations.Create(APP_NAME, APP_NAME + '.Model',
+    '3D model', Types);
+end;
+
+function ApplyFileAssociations(const ASettings: TSprite3DAppSettings;
+  const AOpenWith, AAlways: Boolean; out AMessage: String): Boolean;
+var
+  Assoc: TSprite3DFileAssociations;
+  Support: TSprite3DAssocSupport;
+  Backup: String;
+  Always: Boolean;
+  Notes: TStringList;
+  AllOk: Boolean;
+
+  procedure Step(const AOk: Boolean);
+  begin
+    if not AOk then
+    begin
+      AllOk := False;
+      if Assoc.LastError <> String.Empty then
+        Notes.Add(Assoc.LastError);
+    end;
+  end;
+
+begin
+  AMessage := String.Empty;
+  AllOk := True;
+  Support := TSprite3DFileAssociations.Support;
+  if Support = asNone then
+  begin
+    AMessage := 'File associations can''t be changed on this platform.';
+    Exit(False);
+  end;
+
+  Notes := TStringList.Create;
+  Assoc := CreateModelAssociations;
+  try
+    Backup := ASettings.AssociationBackup;
+    // Being the default without being offered at all makes no sense, except
+    // on macOS, where being offered is fixed by the bundle
+    Always := AAlways and (AOpenWith or (Support = asDefaultOnly));
+
+    if AOpenWith or (Support = asDefaultOnly) then
+      Step(Assoc.Register);
+
+    if Always then
+    begin
+      if not Assoc.IsDefault then
+        Step(Assoc.MakeDefault(Backup));
+    end
+    else if (Backup <> String.Empty) or Assoc.IsDefault then
+      Step(Assoc.RestoreDefaults(Backup));
+
+    if Assoc.NeedsUserConfirmation then
+    begin
+      {$IF DEFINED(MSWINDOWS)}
+      Notes.Add('Windows keeps a default you chose yourself, and only you can change it. ' +
+        'Default apps is now open: pick the application for each model file type there.');
+      Assoc.OpenSystemDefaults;
+      {$ELSEIF DEFINED(MACOS) and not DEFINED(IOS)}
+      Notes.Add('To choose another application, use Get Info on a model file in Finder ' +
+        'and change "Open with".');
+      {$ENDIF}
+    end;
+
+    if not AOpenWith and (Support = asFull) and Assoc.IsRegistered then
+      Step(Assoc.Unregister);
+
+    ASettings.AssociationBackup := Backup;
+    ASettings.OpenWith := Assoc.IsRegistered;
+    ASettings.AlwaysOpenWith := Always;
+    AMessage := Notes.Text.Trim;
+  finally
+    Assoc.Free;
+    Notes.Free;
+  end;
+  Result := AllOk;
+end;
+
+function GpuModeSupported: Boolean;
+begin
+  {$IF DEFINED(MSWINDOWS)}
+  Result := True;
+  {$ELSE}
+  Result := False;
+  {$ENDIF}
+end;
+
+function ReadGpuMode: TSprite3DGpuMode;
+{$IF DEFINED(MSWINDOWS)}
+var
+  Preference: TGpuPreference;
+{$ENDIF}
+begin
+  Result := gmSystem;
+  {$IF DEFINED(MSWINDOWS)}
+  if GetGpuPreference(Preference, gpAutomatic) then
+    case Preference of
+      gpPowerSaving: Result := gmPowerSaving;
+      gpHighPerformance: Result := gmHighPerformance;
+    end;
+  {$ENDIF}
+end;
+
+function WriteGpuMode(const AMode: TSprite3DGpuMode): Boolean;
+begin
+  {$IF DEFINED(MSWINDOWS)}
+  case AMode of
+    gmPowerSaving: Result := SetGpuPreference(gpPowerSaving);
+    gmHighPerformance: Result := SetGpuPreference(gpHighPerformance);
+  else
+    Result := SetGpuPreference(gpAutomatic);
+  end;
+  {$ELSE}
+  Result := False;
+  {$ENDIF}
+end;
+
+function ReadGeneralSettings(const ASettings: TSprite3DAppSettings): TSprite3DGeneralSettings;
+var
+  Assoc: TSprite3DFileAssociations;
+begin
+  Result.StartupAction := ASettings.StartupAction;
+  Result.Theme := ASettings.ThemeKind;
+  Result.OpenWith := ASettings.OpenWith;
+  Result.AlwaysOpenWith := ASettings.AlwaysOpenWith;
+  if TSprite3DFileAssociations.Support <> asNone then
+  begin
+    // The system's own state wins over what was last saved: the user may
+    // have changed it outside the application
+    Assoc := CreateModelAssociations;
+    try
+      Result.OpenWith := Assoc.IsRegistered;
+      Result.AlwaysOpenWith := Assoc.IsDefault;
+    finally
+      Assoc.Free;
+    end;
+  end;
+  Result.GrabWidth := ASettings.GrabWidth;
+  Result.GrabHeight := ASettings.GrabHeight;
+  if GpuModeSupported then
+    Result.GpuMode := ReadGpuMode
+  else
+    Result.GpuMode := ASettings.GpuMode;
 end;
 
 end.

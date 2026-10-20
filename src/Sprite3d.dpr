@@ -15,9 +15,18 @@ uses
   Sprite3DBackground in 'lib\Sprite3DBackground.pas',
   Sprite3DBackgroundForm in 'ui\Sprite3DBackgroundForm.pas' {BackgroundSettingsForm},
   Sprite3DOrbitalForm in 'ui\Sprite3DOrbitalForm.pas' {OrbitalSettingsForm},
-  OSPaths in 'common\OSPaths.pas';
+  OSPaths in 'common\OSPaths.pas',
+  GpuPreference in 'common\GpuPreference.pas',
+  Sprite3DFileAssoc in 'lib\Sprite3DFileAssoc.pas',
+  Sprite3DStyles in 'lib\Sprite3DStyles.pas',
+  Sprite3DTitleBar in 'lib\Sprite3DTitleBar.pas',
+  Sprite3DSettingsForm in 'ui\Sprite3DSettingsForm.pas' {GeneralSettingsForm};
 
 {$R *.res}
+// The themes' FMX styles, inside the program on every platform. The .res
+// is built by styles\buildstyles.cmd in the pre-build event; see
+// styles\Sprite3DThemes.rc
+{$R 'styles\Sprite3DThemes.res'}
 
 begin
   { Report any dumb memory leaks - switch to false for release }
@@ -25,5 +34,6 @@ begin
 
   Application.Initialize;
  Application.CreateForm(TMainForm, MainForm);
+  Application.CreateForm(TOrbitalSettingsForm, OrbitalSettingsForm);
   Application.Run;
 end.
