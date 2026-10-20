@@ -11,20 +11,21 @@
 //**     |   |-- AssocGroup             OpenWithCheck, AlwaysCheck, AssocNote
 //**     |   |-- StartupGroup           None, Load default model, Load last model
 //**     |   |-- ThemeGroup             Default @(no theme@), Dark, Aqua, Ruby and Golden Graphite
-//**     |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox
+//**     |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
+//**     |   |                          GrabFolderText, GrabFolderResetButton
 //**     |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
 //**     `-- ButtonLayout               OkButton, CancelButton
 //** )
 //**
 //** Open With offers Sprite3D for model files in the system's Open With list; Always makes it
-//** their default application, and needs Open With, except on macOS, where Open With is set
-//** by the app bundle and the box only shows it. Clearing either puts back what was there
-//** before, as far as it is still valid. On Android and iOS the group is disabled, as those
-//** systems decide such things when the app is built. Grab size sets the size of every
-//** off-screen grab: one of the square sizes in GRAB_PRESET_SIZES, or Custom, which lets the
-//** width and height be typed, each from GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels. The GPU
-//** group is shown on Windows only; a change there takes effect the next time Sprite3D
-//** starts.
+//** their default application, and needs Open With, except on macOS, where Open With is set by
+//** the app bundle and the box only shows it. Clearing either puts back what was there before,
+//** as far as it is still valid. On Android and iOS the group is disabled, as those systems
+//** decide such things when the app is built. Grab size sets the size of every off-screen grab:
+//** one of the square sizes in GRAB_PRESET_SIZES, or Custom, which lets the width and height be
+//** typed, each from GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels; Reset beside the grab folder
+//** empties it, so the next grab asks for a folder again. The GPU group is shown on Windows
+//** only; a change there takes effect the next time Sprite3D starts.
 //**
 //** The dialog only edits a TSprite3DGeneralSettings: set Values before showing it and read
 //** it back after OK; applying the choices is the caller's job. On the desktop show it with
@@ -45,20 +46,22 @@ unit Sprite3DSettingsForm;
         |   |-- AssocGroup             OpenWithCheck, AlwaysCheck, AssocNote
         |   |-- StartupGroup           None, Load default model, Load last model
         |   |-- ThemeGroup             Default (no theme), Dark, Aqua, Ruby and Golden Graphite
-        |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox
+        |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
+        |   |                          GrabFolderText, GrabFolderResetButton
         |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
         `-- ButtonLayout               OkButton, CancelButton
 
   Open With offers Sprite3D for model files in the system's Open With list;
   Always makes it their default application, and needs Open With, except on
-  macOS, where Open With is set by the app bundle and the box only shows
-  it. Clearing either puts back what was there before, as far as it is
-  still valid. On Android and iOS the group is disabled, as those systems
-  decide such things when the app is built. Grab size sets the size of every
+  macOS, where Open With is set by the app bundle and the box only shows it.
+  Clearing either puts back what was there before, as far as it is still
+  valid. On Android and iOS the group is disabled, as those systems decide
+  such things when the app is built. Grab size sets the size of every
   off-screen grab: one of the square sizes in GRAB_PRESET_SIZES, or Custom,
   which lets the width and height be typed, each from GRAB_SIZE_MIN to
-  GRAB_SIZE_MAX pixels. The GPU group is shown on Windows only; a change
-  there takes effect the next time Sprite3D starts.
+  GRAB_SIZE_MAX pixels; Reset beside the grab folder empties it, so the next
+  grab asks for a folder again. The GPU group is shown on Windows only; a
+  change there takes effect the next time Sprite3D starts.
 
   The dialog only edits a TSprite3DGeneralSettings: set Values before
   showing it and read it back after OK; applying the choices is the
@@ -155,6 +158,16 @@ type
     //** @abstract(The custom height, GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels.)
     /// <summary>The custom height, GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels.</summary>
     GrabHeightBox: TSpinBox;
+    //** @abstract(Names the grab folder.)
+    /// <summary>Names the grab folder.</summary>
+    GrabFolderLabel: TLabel;
+    //** @abstract(The folder File, Grab saves into, or a note that it will be asked for.)
+    /// <summary>The folder File, Grab saves into, or a note that it will be asked
+    /// for.</summary>
+    GrabFolderText: TLabel;
+    //** @abstract(Clears the grab folder, so the next grab asks for one.)
+    /// <summary>Clears the grab folder, so the next grab asks for one.</summary>
+    GrabFolderResetButton: TButton;
     //** @abstract(Let Windows choose the GPU.)
     /// <summary>Let Windows choose the GPU.</summary>
     GpuSystemRadio: TRadioButton;
@@ -210,6 +223,12 @@ type
     /// <summary>Shows a preset's size in the boxes, or enables them for Custom.</summary>
     /// <param name="Sender">The drop-down.</param>
     procedure GrabSizeComboChange(Sender: TObject);
+    //** @abstract(Clears the grab folder; it takes effect on OK.)
+    //**
+    //** @param(Sender The button.)
+    /// <summary>Clears the grab folder; it takes effect on OK.</summary>
+    /// <param name="Sender">The button.</param>
+    procedure GrabFolderResetButtonClick(Sender: TObject);
   private
     FValues: TSprite3DGeneralSettings;
     FFreeOnClose: Boolean;
@@ -219,6 +238,7 @@ type
     procedure UpdateAssocControls;
     procedure FitHeight;
     function CustomIndex: Integer;
+    procedure ShowGrabFolder;
   public
     //** @abstract(Shows the dialog without blocking, for Android and iOS, and frees it when it
     //** closes.)
@@ -324,6 +344,24 @@ begin
   Result := GrabSizeCombo.Count - 1;
 end;
 
+// The folder as kept, or what happens with none. Values.SaveFolder holds the
+// choice; the dialog only empties it.
+procedure TGeneralSettingsForm.ShowGrabFolder;
+begin
+  if FValues.SaveFolder = String.Empty then
+    GrabFolderText.Text := '(none: asked for at the next grab)'
+  else
+    GrabFolderText.Text := FValues.SaveFolder;
+  GrabFolderText.Hint := GrabFolderText.Text;
+  GrabFolderResetButton.Enabled := FValues.SaveFolder <> String.Empty;
+end;
+
+procedure TGeneralSettingsForm.GrabFolderResetButtonClick(Sender: TObject);
+begin
+  FValues.SaveFolder := String.Empty;
+  ShowGrabFolder;
+end;
+
 procedure TGeneralSettingsForm.GrabSizeComboChange(Sender: TObject);
 var
   Index: Integer;
@@ -390,6 +428,7 @@ begin
   GrabWidthBox.Value := Value.GrabWidth;
   GrabHeightBox.Value := Value.GrabHeight;
   GrabCustomLayout.Enabled := GrabSizeCombo.ItemIndex = CustomIndex;
+  ShowGrabFolder;
 
   case Value.GpuMode of
     gmPowerSaving: GpuLowRadio.IsChecked := True;

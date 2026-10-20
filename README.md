@@ -21,7 +21,7 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 - **File, Settings...** A dialog for:
   - **Open model files.** Offer Sprite3D under Open With for model files and, optionally, make it their default application. Before changing a default, the one in use is recorded; clearing the box puts it back, if that application is still installed, and otherwise just removes Sprite3D's claim. Everything is per user. On Windows a default the user picked in Windows' own dialog can only be changed there, so Settings, Default apps is opened when that happens. On macOS, Open With comes from the app bundle (see below) and only the default can be changed. Android and iOS decide these things when the app is built, so the group is disabled there.
   - **Startup action.** None (no model is loaded), Load default model, or Load last model, which falls back to the default model if the last one has gone. A file the system asks Sprite3D to open always comes first.
-  - **Grab size.** The size of every off-screen grab: 8 × 8, 16 × 16, 24 × 24, 32 × 32, 64 × 64, 96 × 96, 128 × 128, 160 × 160, 192 × 192, 256 × 256, 384 × 384 or 512 × 512, or Custom, where width and height are typed separately, each from 8 to 1024 pixels. Kept as `grabWidth` and `grabHeight`. Icons keep the sizes their file format needs.
+  - **Grab size.** The size of every off-screen grab: 8 × 8, 16 × 16, 24 × 24, 32 × 32, 64 × 64, 96 × 96, 128 × 128, 160 × 160, 192 × 192, 256 × 256, 384 × 384 or 512 × 512, or Custom, where width and height are typed separately, each from 8 to 1024 pixels. Kept as `grabWidth` and `grabHeight`. Icons keep the sizes their file format needs. Below it, the grab folder in use is shown with a Reset button, which empties it so the next grab asks for a folder again.
   - **Theme.** Default (FMX's own platform style), Dark, or one of three coloured styles, Aqua Graphite, Ruby Graphite and Golden Graphite, applied at once. Title bars follow the theme where the system allows. See *Themes* below.
   - **Graphics processor**, Windows only: let Windows decide, low power or high power, through `common/GpuPreference.pas`. It takes effect the next time Sprite3D starts.
 - **Settings kept between sessions** in `settings.json`: the grab folder, the icon folder, the background, the camera view, the pan, the View menu's on/off items, and the choices in File, Settings.
@@ -80,6 +80,7 @@ Sprite3D/
     |   |-- Sprite3DFileAssoc.pas    Open With and default-application registration
     |   |-- Sprite3DStyles.pas       switching FMX styles at run time
     |   |-- Sprite3DTitleBar.pas     title bars coloured to match the style
+    |   |-- Sprite3DFlatColour.pas   colours as textures, for Metal (macOS, iOS)
     |   `-- Sprite3DStorage.pas      per-user app folder and JSON settings
     |-- common/               small cross-project helpers
     |   |-- OSPaths.pas              where the program and its assets are

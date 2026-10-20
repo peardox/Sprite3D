@@ -806,6 +806,24 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="OSXARM64\Debug\Sprite3d.dSYM" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d.app\..\$(PROJECTNAME).app.dSYM\Contents\Resources\DWARF\</RemoteDir>
+            <RemoteName>Sprite3d</RemoteName>
+            <DeployClass>ProjectOSXDebug</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="OSXARM64\Debug\Sprite3d.info.plist" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d.app\Contents\</RemoteDir>
             <RemoteName>Info.plist</RemoteName>
@@ -906,6 +924,15 @@
         <DeployFile Include="..\README.md" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>README.md</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
             <DeployClass>ProjectFile</DeployClass>
             <Operation>0</Operation>
             <LocalCommand/>

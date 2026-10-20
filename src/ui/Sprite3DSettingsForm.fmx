@@ -4,7 +4,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Settings'
-  ClientHeight = 734
+  ClientHeight = 790
   ClientWidth = 440
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -16,17 +16,17 @@ object GeneralSettingsForm: TGeneralSettingsForm
   object BackPanel: TPanel
     Align = Client
     Size.Width = 440.000000000000000000
-    Size.Height = 734.000000000000000000
+    Size.Height = 790.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object ScrollBox: TVertScrollBox
       Align = Client
       Size.Width = 440.000000000000000000
-      Size.Height = 690.000000000000000000
+      Size.Height = 746.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
       Viewport.Width = 440.000000000000000000
-      Viewport.Height = 690.000000000000000000
+      Viewport.Height = 746.000000000000000000
       object AssocGroup: TGroupBox
         Align = Top
         Margins.Left = 8.000000000000000000
@@ -184,7 +184,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
         Position.X = 8.000000000000000000
         Position.Y = 440.000000000000000000
         Size.Width = 424.000000000000000000
-        Size.Height = 96.000000000000000000
+        Size.Height = 152.000000000000000000
         Size.PlatformDefault = False
         Text = 'Grab size (pixels)'
         TabOrder = 3
@@ -246,6 +246,37 @@ object GeneralSettingsForm: TGeneralSettingsForm
             Size.PlatformDefault = False
           end
         end
+        object GrabFolderLabel: TLabel
+          Position.X = 16.000000000000000000
+          Position.Y = 94.000000000000000000
+          Size.Width = 384.000000000000000000
+          Size.Height = 18.000000000000000000
+          Size.PlatformDefault = False
+          Text = 'Grab folder'
+          TabOrder = 2
+        end
+        object GrabFolderText: TLabel
+          Position.X = 16.000000000000000000
+          Position.Y = 116.000000000000000000
+          Size.Width = 292.000000000000000000
+          Size.Height = 22.000000000000000000
+          Size.PlatformDefault = False
+          ShowHint = True
+          TextSettings.WordWrap = False
+          TextSettings.Trimming = Character
+          Text = '(none: asked for at the next grab)'
+          TabOrder = 3
+        end
+        object GrabFolderResetButton: TButton
+          Position.X = 316.000000000000000000
+          Position.Y = 115.000000000000000000
+          Size.Width = 84.000000000000000000
+          Size.Height = 24.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 4
+          Text = 'Reset'
+          OnClick = GrabFolderResetButtonClick
+        end
       end
       object GpuGroup: TGroupBox
         Align = Top
@@ -253,7 +284,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
         Margins.Top = 8.000000000000000000
         Margins.Right = 8.000000000000000000
         Position.X = 8.000000000000000000
-        Position.Y = 544.000000000000000000
+        Position.Y = 600.000000000000000000
         Size.Width = 424.000000000000000000
         Size.Height = 138.000000000000000000
         Size.PlatformDefault = False
@@ -304,7 +335,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
     end
     object ButtonLayout: TLayout
       Align = Bottom
-      Position.Y = 690.000000000000000000
+      Position.Y = 746.000000000000000000
       Size.Width = 440.000000000000000000
       Size.Height = 44.000000000000000000
       Size.PlatformDefault = False

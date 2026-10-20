@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 0
   Caption = 'Form1'
   ClientHeight = 720
-  ClientWidth = 776
+  ClientWidth = 800
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
@@ -13,16 +13,16 @@ object MainForm: TMainForm
   DesignerMasterStyle = 0
   object TabControl1: TTabControl
     Align = Client
-    Size.Width = 776.000000000000000000
+    Size.Width = 800.000000000000000000
     Size.Height = 720.000000000000000000
     Size.PlatformDefault = False
     TabIndex = 0
     TabOrder = 0
     TabPosition = PlatformDefault
     Sizes = (
-      776s
+      800s
       694s
-      776s
+      800s
       694s)
     object GorillaTab: TTabItem
       CustomIcon = <
@@ -39,20 +39,20 @@ object MainForm: TMainForm
       ExplicitSize.cy = 26.000000000000000000
       object MainLayout: TLayout
         Align = Client
-        Size.Width = 776.000000000000000000
+        Size.Width = 800.000000000000000000
         Size.Height = 694.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         object ViewportLayout: TLayout
           Align = Client
-          Size.Width = 626.000000000000000000
+          Size.Width = 650.000000000000000000
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
         end
         object ControlsLayout: TLayout
           Align = Right
-          Position.X = 626.000000000000000000
+          Position.X = 650.000000000000000000
           Size.Width = 150.000000000000000000
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
@@ -80,7 +80,6 @@ object MainForm: TMainForm
           end
           object AnimationListBox: TListBox
             Align = Client
-            Position.Y = 26.000000000000000000
             Size.Width = 150.000000000000000000
             Size.Height = 668.000000000000000000
             Size.PlatformDefault = False
@@ -91,7 +90,7 @@ object MainForm: TMainForm
             DefaultItemStyles.GroupHeaderStyle = ''
             DefaultItemStyles.GroupFooterStyle = ''
             Viewport.Width = 146.000000000000000000
-            Viewport.Height = 666.000000000000000000
+            Viewport.Height = 664.000000000000000000
           end
         end
       end
@@ -119,11 +118,11 @@ object MainForm: TMainForm
         Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
         DataDetectorTypes = []
         Align = Client
-        Size.Width = 776.000000000000000000
+        Size.Width = 800.000000000000000000
         Size.Height = 694.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
-        Viewport.Width = 772.000000000000000000
+        Viewport.Width = 796.000000000000000000
         Viewport.Height = 690.000000000000000000
       end
     end

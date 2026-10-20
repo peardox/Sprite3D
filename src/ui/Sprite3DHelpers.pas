@@ -142,6 +142,10 @@ type
     /// <summary>The height of off-screen grabs, in pixels, GRAB_SIZE_MIN to
     /// GRAB_SIZE_MAX.</summary>
     GrabHeight: Integer;
+    //** @abstract(The folder File, Grab saves into; empty to be asked at the next grab.)
+    /// <summary>The folder File, Grab saves into; empty to be asked at the next
+    /// grab.</summary>
+    SaveFolder: String;
   end;
 
   //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
@@ -1420,6 +1424,7 @@ begin
   end;
   Result.GrabWidth := ASettings.GrabWidth;
   Result.GrabHeight := ASettings.GrabHeight;
+  Result.SaveFolder := ASettings.SaveFolder;
   if GpuModeSupported then
     Result.GpuMode := ReadGpuMode
   else

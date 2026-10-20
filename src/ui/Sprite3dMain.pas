@@ -1603,6 +1603,15 @@ begin
         [FSettings.GrabWidth, FSettings.GrabHeight]));
     end;
 
+    if ANew.SaveFolder <> AOld.SaveFolder then
+    begin
+      // Only ever emptied by the dialog: the next grab asks for a folder,
+      // and numbering starts again at 1 there
+      FSettings.SaveFolder := ANew.SaveFolder;
+      FGrabNumber := 1;
+      DebugMemo.Lines.Add('Grab folder cleared; the next grab asks for one');
+    end;
+
     FSettings.StartupAction := ANew.StartupAction;
     try
       FSettings.Save;

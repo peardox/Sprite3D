@@ -20,6 +20,7 @@ uses
   Sprite3DFileAssoc in 'lib\Sprite3DFileAssoc.pas',
   Sprite3DStyles in 'lib\Sprite3DStyles.pas',
   Sprite3DTitleBar in 'lib\Sprite3DTitleBar.pas',
+  Sprite3DFlatColour in 'lib\Sprite3DFlatColour.pas',
   Sprite3DSettingsForm in 'ui\Sprite3DSettingsForm.pas' {GeneralSettingsForm};
 
 {$R *.res}
