@@ -1,10 +1,13 @@
 //** @abstract(Writes a sequence of frames as a video-only MP4 file with the FFmpeg libraries,
 //** loaded only when first needed.)
 //**
-//** The video is MPEG-4 Part 2, FFmpeg's own @code(mpeg4) encoder, which every FFmpeg build
-//** has and which needs no library beyond FFmpeg's own under its LGPL licence. It plays in
-//** desktop players such as VLC, QuickTime and the Windows players, but not in web browsers.
-//** There is no sound track.
+//** SaveMp4Video writes H.264 when Cisco's OpenH264 library is present, through
+//** Sprite3DOpenH264, and MPEG-4 Part 2 otherwise. H.264 plays everywhere, web browsers
+//** included. MPEG-4 Part 2 is FFmpeg's own @code(mpeg4) encoder, which every FFmpeg build has
+//** and which needs no library beyond FFmpeg's own under its LGPL licence; it plays in desktop
+//** players such as VLC, QuickTime and the Windows players, but not in web browsers. In both
+//** cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is looked for in the
+//** same folders as FFmpeg, once FFmpeg has loaded.
 //**
 //** The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers in the
 //** @code(ffmpeg) folder, used as they are. Those headers bind every function statically, so
@@ -37,10 +40,14 @@ unit Sprite3DVideo;
   Writes a sequence of frames as a video-only MP4 file with the FFmpeg
   libraries, loaded only when first needed.
 
-  The video is MPEG-4 Part 2, FFmpeg's own mpeg4 encoder, which every FFmpeg
-  build has and which needs no library beyond FFmpeg's own under its LGPL
-  licence. It plays in desktop players such as VLC, QuickTime and the
-  Windows players, but not in web browsers. There is no sound track.
+  SaveMp4Video writes H.264 when Cisco's OpenH264 library is present,
+  through Sprite3DOpenH264, and MPEG-4 Part 2 otherwise. H.264 plays
+  everywhere, web browsers included. MPEG-4 Part 2 is FFmpeg's own mpeg4
+  encoder, which every FFmpeg build has and which needs no library beyond
+  FFmpeg's own under its LGPL licence; it plays in desktop players such as
+  VLC, QuickTime and the Windows players, but not in web browsers. In both
+  cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is
+  looked for in the same folders as FFmpeg, once FFmpeg has loaded.
 
   The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers
   in the ffmpeg folder, used as they are. Those headers bind every function
@@ -72,7 +79,7 @@ unit Sprite3DVideo;
 interface
 
 uses
-  System.SysUtils, Sprite3DSpriteSheet;
+  System.SysUtils, Sprite3DSpriteSheet, Sprite3DOpenH264;
 
 type
   //** @abstract(Raised when a video cannot be written.)
@@ -102,11 +109,12 @@ function VideoAvailable: Boolean;
 //**
 //** Loads the libraries if VideoAvailable has not yet been called.
 //**
-//** @returns(Where the libraries were loaded from and their versions, or what was missing.)
+//** @returns(Where the libraries were loaded from and their versions, or what was missing,
+//** with a second line saying whether OpenH264 was found.)
 /// <summary>Why video is or is not available, for a log or a hint.</summary>
 /// <remarks>Loads the libraries if VideoAvailable has not yet been called.</remarks>
-/// <returns>Where the libraries were loaded from and their versions, or what was
-/// missing.</returns>
+/// <returns>Where the libraries were loaded from and their versions, or what was missing,
+/// with a second line saying whether OpenH264 was found.</returns>
 function VideoStatus: String;
 
 //** @abstract(Writes the frames as a video-only MPEG-4 Part 2 MP4 file.)
@@ -151,6 +159,92 @@ function VideoStatus: String;
 procedure SaveMpeg4Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ACycleSeconds: Double);
 
+//** @abstract(Whether MP4 video will be H.264: FFmpeg and OpenH264 both loaded.)
+//**
+//** Loads the libraries if VideoAvailable has not yet been called.
+//**
+//** @returns(True if SaveMp4Video writes H.264; False if it writes MPEG-4 Part 2, or nothing.)
+/// <summary>Whether MP4 video will be H.264: FFmpeg and OpenH264 both loaded.</summary>
+/// <remarks>Loads the libraries if VideoAvailable has not yet been called.</remarks>
+/// <returns>True if SaveMp4Video writes H.264; False if it writes MPEG-4 Part 2, or
+/// nothing.</returns>
+function H264Available: Boolean;
+
+//** @abstract(Writes the frames as a video-only H.264 MP4 file with OpenH264.)
+//**
+//** As SaveMpeg4Video in every way but the codec: H.264 Constrained Baseline from OpenH264,
+//** aiming at a constant quality with about a quarter of a bit per pixel per frame and never
+//** dropping a frame, a key frame every twelfth frame, no B-frames. The width and height must
+//** reach 16 pixels after rounding up to even numbers.
+//**
+//** @param(AFrames The frames, in order; at least one, all the same size.)
+//**
+//** @param(AFileName The file to write, normally ending in @code(.mp4).)
+//**
+//** @param(ACycleSeconds How long all the frames last together, in seconds; more than 0.)
+//**
+//** @raises(ESprite3DVideoError If FFmpeg is not available, or FFmpeg fails at any step; a
+//** part-written file may be left behind.)
+//**
+//** @raises(ESprite3DH264Error If OpenH264 is not available or fails.)
+//**
+//** @raises(EArgumentException If there are no frames, they differ in size, or
+//** ACycleSeconds is not more than 0.)
+/// <summary>Writes the frames as a video-only H.264 MP4 file with OpenH264.</summary>
+/// <remarks>As SaveMpeg4Video in every way but the codec: H.264 Constrained Baseline from
+/// OpenH264, aiming at a constant quality with about a quarter of a bit per pixel per frame
+/// and never dropping a frame, a key frame every twelfth frame, no B-frames. The width and
+/// height must reach 16 pixels after rounding up to even numbers.</remarks>
+/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
+/// <param name="AFileName">The file to write, normally ending in <c>.mp4</c>.</param>
+/// <param name="ACycleSeconds">How long all the frames last together, in seconds; more than
+/// 0.</param>
+/// <exception cref="ESprite3DVideoError">If FFmpeg is not available, or FFmpeg fails at any
+/// step; a part-written file may be left behind.</exception>
+/// <exception cref="ESprite3DH264Error">If OpenH264 is not available or fails.</exception>
+/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
+/// ACycleSeconds is not more than 0.</exception>
+procedure SaveH264Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
+  const ACycleSeconds: Double);
+
+//** @abstract(Writes the frames as a video-only MP4 file, H.264 if it can, else MPEG-4 Part 2.)
+//**
+//** Uses SaveH264Video when H264Available, and SaveMpeg4Video otherwise; see those for the
+//** details. Frames that would be smaller than 16 pixels across or down are always MPEG-4
+//** Part 2, as OpenH264 cannot take them. If OpenH264 itself fails, the file is written again
+//** as MPEG-4 Part 2, and the result says why.
+//**
+//** @param(AFrames The frames, in order; at least one, all the same size.)
+//**
+//** @param(AFileName The file to write, normally ending in @code(.mp4).)
+//**
+//** @param(ACycleSeconds How long all the frames last together, in seconds; more than 0.)
+//**
+//** @returns(The codec written, @code('H.264') or @code('MPEG-4 Part 2'), with the reason
+//** after it if H.264 was tried and failed, for a log.)
+//**
+//** @raises(ESprite3DVideoError If FFmpeg is not available or fails.)
+//**
+//** @raises(EArgumentException If there are no frames, they differ in size, or
+//** ACycleSeconds is not more than 0.)
+/// <summary>Writes the frames as a video-only MP4 file, H.264 if it can, else MPEG-4 Part
+/// 2.</summary>
+/// <remarks>Uses SaveH264Video when H264Available, and SaveMpeg4Video otherwise; see those for
+/// the details. Frames that would be smaller than 16 pixels across or down are always MPEG-4
+/// Part 2, as OpenH264 cannot take them. If OpenH264 itself fails, the file is written again
+/// as MPEG-4 Part 2, and the result says why.</remarks>
+/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
+/// <param name="AFileName">The file to write, normally ending in <c>.mp4</c>.</param>
+/// <param name="ACycleSeconds">How long all the frames last together, in seconds; more than
+/// 0.</param>
+/// <returns>The codec written, <c>'H.264'</c> or <c>'MPEG-4 Part 2'</c>, with the reason after
+/// it if H.264 was tried and failed, for a log.</returns>
+/// <exception cref="ESprite3DVideoError">If FFmpeg is not available or fails.</exception>
+/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
+/// ACycleSeconds is not more than 0.</exception>
+function SaveMp4Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
+  const ACycleSeconds: Double): String;
+
 implementation
 
 uses
@@ -161,7 +255,7 @@ uses
   // The DelphiFFmpeg.com headers: types and constants only, see above
   libavutil, libavutil_error, libavutil_frame, libavutil_pixfmt, libavutil_rational,
   libavcodec, libavcodec_codec, libavcodec_codec_id, libavcodec_codec_par,
-  libavcodec_packet, libavformat, libavformat_avio;
+  libavcodec_codec_defs, libavcodec_packet, libavformat, libavformat_avio;
 
 const
   // The major versions the headers describe; the libraries must match, or
@@ -216,6 +310,8 @@ type
   TAvPacketAlloc = function: PAVPacket; cdecl;
   TAvPacketFree = procedure(pkt: PPAVPacket); cdecl;
   TAvPacketUnref = procedure(pkt: PAVPacket); cdecl;
+  TAvNewPacket = function(pkt: PAVPacket; size: Integer): Integer; cdecl;
+  TAvMallocz = function(size: NativeUInt): Pointer; cdecl;
   TAvformatVersion = function: Cardinal; cdecl;
   TAvformatAllocOutputContext2 = function(ctx: PPAVFormatContext; oformat: PAVOutputFormat;
     const format_name, filename: PAnsiChar): Integer; cdecl;
@@ -245,6 +341,8 @@ type
     av_packet_alloc: TAvPacketAlloc;
     av_packet_free: TAvPacketFree;
     av_packet_unref: TAvPacketUnref;
+    av_new_packet: TAvNewPacket;
+    av_mallocz: TAvMallocz;
     avformat_version: TAvformatVersion;
     avformat_alloc_output_context2: TAvformatAllocOutputContext2;
     avformat_new_stream: TAvformatNewStream;
@@ -261,6 +359,8 @@ var
   Tried: Boolean;
   Loaded: Boolean;
   Status: String;
+  // The folder FFmpeg was loaded from, where OpenH264 is looked for first
+  LoadedFolder: String;
 
 { Loading }
 
@@ -414,6 +514,8 @@ begin
   Need(Api.av_packet_alloc, Codec, 'av_packet_alloc');
   Need(Api.av_packet_free, Codec, 'av_packet_free');
   Need(Api.av_packet_unref, Codec, 'av_packet_unref');
+  Need(Api.av_new_packet, Codec, 'av_new_packet');
+  Need(Api.av_mallocz, Util, 'av_mallocz');
   Need(Api.avformat_version, Format_, 'avformat_version');
   Need(Api.avformat_alloc_output_context2, Format_, 'avformat_alloc_output_context2');
   Need(Api.avformat_new_stream, Format_, 'avformat_new_stream');
@@ -451,6 +553,7 @@ begin
     Path := 'the system library path'
   else
     Path := Folder;
+  LoadedFolder := Folder;
   AError := Format('FFmpeg loaded from %s (avutil %d.%d, avcodec %d.%d, avformat %d.%d)',
     [Path, Api.avutil_version shr 16, (Api.avutil_version shr 8) and $FF,
      Api.avcodec_version shr 16, (Api.avcodec_version shr 8) and $FF,
@@ -459,6 +562,8 @@ begin
 end;
 
 function VideoAvailable: Boolean;
+var
+  Folders: TArray<String>;
 begin
   if not Tried then
   begin
@@ -472,6 +577,15 @@ begin
         Status := 'The FFmpeg libraries could not be loaded: ' + E.Message;
       end;
     end;
+    // OpenH264 only matters once FFmpeg can write the file: look beside
+    // FFmpeg first, then everywhere FFmpeg was looked for
+    if Loaded then
+    begin
+      Folders := nil;
+      if LoadedFolder <> String.Empty then
+        Folders := [LoadedFolder];
+      OpenH264Available(Folders + CandidateFolders);
+    end;
   end;
   Result := Loaded;
 end;
@@ -480,6 +594,13 @@ function VideoStatus: String;
 begin
   VideoAvailable;
   Result := Status;
+  if Loaded then
+    Result := Result + sLineBreak + OpenH264Status;
+end;
+
+function H264Available: Boolean;
+begin
+  Result := VideoAvailable and OpenH264Available([]);
 end;
 
 { Writing }
@@ -619,6 +740,26 @@ begin
   end;
 end;
 
+// The common checks on a set of frames; their size
+procedure CheckFrames(const AFrames: TArray<TSprite3DImage>; const ACycleSeconds: Double;
+  out AWidth, AHeight: Integer);
+var
+  I: Integer;
+begin
+  if not VideoAvailable then
+    raise ESprite3DVideoError.Create(VideoStatus);
+  if Length(AFrames) = 0 then
+    raise EArgumentException.Create('There are no frames.');
+  if ACycleSeconds <= 0 then
+    raise EArgumentException.Create('The video must last some time.');
+  AWidth := AFrames[0].Width;
+  AHeight := AFrames[0].Height;
+  for I := 0 to High(AFrames) do
+    if (AFrames[I].Width <> AWidth) or (AFrames[I].Height <> AHeight) or
+      (Length(AFrames[I].Pixels) <> Int64(AWidth) * AHeight * 4) then
+      raise EArgumentException.Create('The frames are not all the same size.');
+end;
+
 procedure SaveMpeg4Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ACycleSeconds: Double);
 var
@@ -659,18 +800,7 @@ var
   end;
 
 begin
-  if not VideoAvailable then
-    raise ESprite3DVideoError.Create(VideoStatus);
-  if Length(AFrames) = 0 then
-    raise EArgumentException.Create('There are no frames.');
-  if ACycleSeconds <= 0 then
-    raise EArgumentException.Create('The video must last some time.');
-  W := AFrames[0].Width;
-  H := AFrames[0].Height;
-  for I := 0 to High(AFrames) do
-    if (AFrames[I].Width <> W) or (AFrames[I].Height <> H) or
-      (Length(AFrames[I].Pixels) <> Int64(W) * H * 4) then
-      raise EArgumentException.Create('The frames are not all the same size.');
+  CheckFrames(AFrames, ACycleSeconds, W, H);
 
   Output := nil;
   Context := nil;
@@ -771,6 +901,153 @@ begin
     if Output <> nil then
       Api.avformat_free_context(Output);
   end;
+end;
+
+procedure SaveH264Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
+  const ACycleSeconds: Double);
+var
+  Output: PAVFormatContext;
+  Stream: PAVStream;
+  Frame: PAVFrame;
+  Packet: PAVPacket;
+  Encoder: TSprite3DH264Encoder;
+  FileName: UTF8String;
+  W, H, EvenW, EvenH, I: Integer;
+  TimeBase: TAVRational;
+  Opened, HeaderWritten, Key: Boolean;
+  Header, Data: TBytes;
+  Written: Integer;
+begin
+  CheckFrames(AFrames, ACycleSeconds, W, H);
+  if not H264Available then
+    raise ESprite3DH264Error.Create(OpenH264Status);
+
+  Output := nil;
+  Frame := nil;
+  Packet := nil;
+  Encoder := nil;
+  Opened := False;
+  HeaderWritten := False;
+  FileName := UTF8String(AFileName);
+  TimeBase := FrameTimeBase(ACycleSeconds, Length(AFrames));
+  EvenW := W + (W and 1);
+  EvenH := H + (H and 1);
+  try
+    // The MP4 file, with one H.264 stream that FFmpeg only stores; OpenH264
+    // does the encoding
+    Check(Api.avformat_alloc_output_context2(@Output, nil, 'mp4', PAnsiChar(FileName)),
+      'Setting up the MP4 file');
+    if Output = nil then
+      raise ESprite3DVideoError.Create('Setting up the MP4 file failed.');
+    Stream := Api.avformat_new_stream(Output, nil);
+    if Stream = nil then
+      raise ESprite3DVideoError.Create('Adding the video stream failed.');
+
+    Encoder := TSprite3DH264Encoder.Create(EvenW, EvenH,
+      Length(AFrames) / ACycleSeconds, KEY_INTERVAL);
+
+    Stream.codecpar.codec_type := AVMEDIA_TYPE_VIDEO;
+    Stream.codecpar.codec_id := AV_CODEC_ID_H264;
+    Stream.codecpar.format := Ord(AV_PIX_FMT_YUV420P);
+    Stream.codecpar.width := EvenW;
+    Stream.codecpar.height := EvenH;
+    // The SPS and PPS, from which the muxer writes the avcC description;
+    // FFmpeg frees extra data, so it is allocated with FFmpeg's allocator
+    Header := Encoder.ParameterSets;
+    if Length(Header) = 0 then
+      raise ESprite3DH264Error.Create('OpenH264 gave no parameter sets.');
+    Stream.codecpar.extradata := Api.av_mallocz(Length(Header) + AV_INPUT_BUFFER_PADDING_SIZE);
+    if Stream.codecpar.extradata = nil then
+      raise ESprite3DVideoError.Create('Out of memory for the stream header.');
+    Move(Header[0], Stream.codecpar.extradata^, Length(Header));
+    Stream.codecpar.extradata_size := Length(Header);
+    Stream.time_base := TimeBase;
+    Stream.avg_frame_rate.num := TimeBase.den;
+    Stream.avg_frame_rate.den := TimeBase.num;
+
+    if (Output.oformat.flags and AVFMT_NOFILE) = 0 then
+    begin
+      Check(Api.avio_open(@Output.pb, PAnsiChar(FileName), AVIO_FLAG_WRITE),
+        'Creating ' + AFileName);
+      Opened := True;
+    end;
+    // The muxer may choose its own time base for the stream here
+    Check(Api.avformat_write_header(Output, nil), 'Writing the MP4 header');
+    HeaderWritten := True;
+
+    // A YUV frame to convert into, as for MPEG-4, which OpenH264 reads
+    Frame := Api.av_frame_alloc;
+    Packet := Api.av_packet_alloc;
+    if (Frame = nil) or (Packet = nil) then
+      raise ESprite3DVideoError.Create('Out of memory for the video frames.');
+    Frame.format := Ord(AV_PIX_FMT_YUV420P);
+    Frame.width := EvenW;
+    Frame.height := EvenH;
+    Check(Api.av_frame_get_buffer(Frame, 0), 'Allocating a video frame');
+
+    Written := 0;
+    for I := 0 to High(AFrames) do
+    begin
+      // The encoder may still hold the last frame's buffer
+      Check(Api.av_frame_make_writable(Frame), 'Preparing a video frame');
+      FillYuv(AFrames[I], Frame);
+      Encoder.Encode([Frame.data[0], Frame.data[1], Frame.data[2]],
+        [Frame.linesize[0], Frame.linesize[1], Frame.linesize[2]], Data, Key);
+      if Length(Data) = 0 then
+        Continue;   // skipped; frame skipping is off, so this should not happen
+      Check(Api.av_new_packet(Packet, Length(Data)), 'Allocating a packet');
+      Move(Data[0], Packet.data^, Length(Data));
+      // No B-frames: decoding order is display order
+      Packet.pts := Rescale(I, TimeBase, Stream.time_base);
+      Packet.dts := Packet.pts;
+      Packet.duration := Rescale(1, TimeBase, Stream.time_base);
+      if Key then
+        Packet.flags := Packet.flags or AV_PKT_FLAG_KEY;
+      Packet.stream_index := Stream.index;
+      // The muxer takes the packet's contents, turning the Annex B start
+      // codes into MP4's lengths, and leaves it blank
+      Check(Api.av_interleaved_write_frame(Output, Packet), 'Writing a frame');
+      Inc(Written);
+    end;
+    if Written = 0 then
+      raise ESprite3DH264Error.Create('OpenH264 skipped every frame.');
+
+    Check(Api.av_write_trailer(Output), 'Finishing the MP4 file');
+    HeaderWritten := False;
+  finally
+    if HeaderWritten then
+      Api.av_write_trailer(Output);   // after an error: close the file tidily
+    Encoder.Free;
+    if Packet <> nil then
+      Api.av_packet_free(@Packet);
+    if Frame <> nil then
+      Api.av_frame_free(@Frame);
+    if Opened then
+      Api.avio_closep(@Output.pb);
+    if Output <> nil then
+      Api.avformat_free_context(Output);
+  end;
+end;
+
+function SaveMp4Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
+  const ACycleSeconds: Double): String;
+begin
+  // OpenH264 needs at least 16 x 16 once rounded up to even sizes; tiny
+  // grabs fall back to MPEG-4 Part 2
+  if H264Available and (Length(AFrames) > 0) and (AFrames[0].Width >= 15) and
+    (AFrames[0].Height >= 15) then
+    try
+      SaveH264Video(AFrames, AFileName, ACycleSeconds);
+      Exit('H.264');
+    except
+      // OpenH264 refused: the MPEG-4 Part 2 file below replaces whatever
+      // was written, and the reason goes in the result for the log
+      on E: ESprite3DH264Error do
+        Result := 'MPEG-4 Part 2, as H.264 failed: ' + E.Message;
+    end
+  else
+    Result := 'MPEG-4 Part 2';
+  SaveMpeg4Video(AFrames, AFileName, ACycleSeconds);
 end;
 
 end.

@@ -493,6 +493,7 @@ type
     FPolarAngle: Single;
     FRoll: Single;
     FDistance: Single;
+    FLocked: Boolean;
     function CreatePivot(const AParent: TFmxObject): TDummy;
     function GetOrbitCenter: TPosition3D;
     function GetOrientation: TQuat;
@@ -1286,6 +1287,23 @@ type
     /// change the apparent size; <see cref="FitToBounds"/> still sets it to keep the near plane
     /// clear of the framed object.</remarks>
     property Distance: Single read FDistance write SetDistance;
+    //** @abstract(While True, nothing done through this class moves or turns the camera.)
+    //**
+    //** Setting Azimuth, PolarAngle, Roll, Distance or Orientation, and calling LookAt, Orbit,
+    //** Zoom, MoveCenterTo or RestoreFraming, then do nothing, and every FitToBounds and
+    //** FitToBoundsMax returns False without changing anything. Reading is unaffected, so
+    //** SaveFraming still works. It does not stop code writing straight to the inherited
+    //** properties, such as ProjectionMode and OrthoHeight, or to OrbitCenter's position;
+    //** callers that honour the lock must check it before they do. False by default.
+    /// <summary>While True, nothing done through this class moves or turns the
+    /// camera.</summary>
+    /// <remarks>Setting Azimuth, PolarAngle, Roll, Distance or Orientation, and calling LookAt,
+    /// Orbit, Zoom, MoveCenterTo or RestoreFraming, then do nothing, and every FitToBounds and
+    /// FitToBoundsMax returns False without changing anything. Reading is unaffected, so
+    /// SaveFraming still works. It does not stop code writing straight to the inherited
+    /// properties, such as ProjectionMode and OrthoHeight, or to OrbitCenter's position;
+    /// callers that honour the lock must check it before they do. False by default.</remarks>
+    property Locked: Boolean read FLocked write FLocked;
   end;
 
 implementation
@@ -1551,6 +1569,8 @@ var
   Cost: array[0..1] of Double;
   I, Best: Integer;
 begin
+  if FLocked then
+    Exit;
   // Q = Qy(a) * Qx(b) * Qz(c), with b = -PolarAngle.
   // As a rotation matrix (column vectors), the third column is the view
   // direction:  (sin a cos b, -sin b, cos a cos b).
@@ -1627,6 +1647,8 @@ end;
 
 procedure TSprite3DCamera.RestoreFraming(const AFraming: TSprite3DFraming);
 begin
+  if FLocked then
+    Exit;
   OrbitCenter.Point := AFraming.OrbitCenter;
   Distance := AFraming.Distance;
   OrthoHeight := AFraming.OrthoHeight;
@@ -1809,6 +1831,9 @@ var
   end;
 
 begin
+  // Every FitToBounds and FitToBoundsMax comes through here
+  if FLocked then
+    Exit(False);
   Result := IsValidBox(ABox);
   if not Result then
     Exit;
@@ -1982,6 +2007,8 @@ var
   Eye, Diff, FromDir, ToDir, UpDir: TPoint3D;
   Len: Single;
 begin
+  if FLocked then
+    Exit;
   Q := GetOrientation;
   Eye := CameraPosition;
   Diff := APoint - Eye;
@@ -2006,6 +2033,8 @@ end;
 
 procedure TSprite3DCamera.SetAzimuth(const Value: Single);
 begin
+  if FLocked then
+    Exit;
   // Keep it in [0, 360) so it doesn't grow unbounded while orbiting
   FAzimuth := Value - 360 * Floor(Value / 360);
   UpdatePivots;
@@ -2013,18 +2042,24 @@ end;
 
 procedure TSprite3DCamera.SetPolarAngle(const Value: Single);
 begin
+  if FLocked then
+    Exit;
   FPolarAngle := Value;  // unrestrained
   UpdatePivots;
 end;
 
 procedure TSprite3DCamera.SetRoll(const Value: Single);
 begin
+  if FLocked then
+    Exit;
   FRoll := Value;
   UpdatePivots;
 end;
 
 procedure TSprite3DCamera.SetDistance(const Value: Single);
 begin
+  if FLocked then
+    Exit;
   FDistance := Max(Value, 0.001);
   UpdateDistance;
 end;
@@ -2052,6 +2087,8 @@ end;
 
 procedure TSprite3DCamera.Orbit(const DeltaAzimuth, DeltaPolar: Single);
 begin
+  if FLocked then
+    Exit;
   FAzimuth := FAzimuth + DeltaAzimuth;
   FAzimuth := FAzimuth - 360 * Floor(FAzimuth / 360);
   FPolarAngle := FPolarAngle + DeltaPolar;
@@ -2060,12 +2097,16 @@ end;
 
 procedure TSprite3DCamera.Zoom(const Factor: Single);
 begin
+  if FLocked then
+    Exit;
   if Factor > 0 then
     Distance := FDistance * Factor;
 end;
 
 procedure TSprite3DCamera.MoveCenterTo(const APoint: TPoint3D);
 begin
+  if FLocked then
+    Exit;
   FAzimuthPivot.Position.Point := APoint;
 end;
 

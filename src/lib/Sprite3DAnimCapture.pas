@@ -268,14 +268,16 @@ type
   //** first again. The light rides on Sprite3D's camera, so the model is lit from the viewer's
   //** side in every frame, exactly as if the model itself had been turned in front of a still
   //** camera. Only the azimuth changes; the inclination, roll and framing are left as they
-  //** are.
+  //** are. A camera whose Locked is True does not turn, so every frame comes out the same;
+  //** check it before capturing.
   /// <summary>One turn of the camera round the model, in equal steps.</summary>
   /// <remarks>Frame I is the camera's azimuth at Start plus I * 360 / FrameCount degrees, so
   /// the model appears to turn once round its vertical axis, and the frame after the last is
   /// the first again. The light rides on Sprite3D's camera, so the model is lit from the
   /// viewer's side in every frame, exactly as if the model itself had been turned in front of
   /// a still camera. Only the azimuth changes; the inclination, roll and framing are left as
-  /// they are.</remarks>
+  /// they are. A camera whose Locked is True does not turn, so every frame comes out the same;
+  /// check it before capturing.</remarks>
   TSprite3DTurntableFrames = class(TSprite3DFrameSource)
   private
     FCamera: TSprite3DCamera;

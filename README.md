@@ -9,7 +9,8 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 ## Features
 
 - **Orbit camera.** Three dials set azimuth, inclination and roll. The camera turns on a chain of single-axis pivots, so it passes over the poles without gimbal lock.
-- **Fixed views.** View, Camera offers Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View, or Variable to use the dials. The chosen view, and the dials' angles in Variable, are restored next session.
+- **Fixed views.** View, Camera offers Isometric, Pixel 2:1, 1/4 View, 3/4 View, Sqrt(2), Golden Ratio, Head On, Top Down and Side View, or Variable to use the dials. The chosen view, and the dials' angles in Variable, are restored next session.
+- **Lock Camera.** View, Camera, Lock Camera fixes the camera exactly where it is. While it is ticked nothing moves or turns it: the views, Orthographic and Fit any angle are disabled, loading a model or resizing the window does not refit, and grabs, icons and animation exports use the view as it stands rather than fitting the model to their own size. The `(None)` turn can't be exported while the camera is locked, since it works by turning the camera. Unticking it leaves the camera where it is until something else changes it. The lock can't be changed during an export, and starts off each session.
 - **Pan.** View, Camera, Variable also has a Pan box, off by default. Ticked, two sliders move the view along the model's own X and Z axes, up to twice the model's radius either way, for the odd model that should sit off centre. The pan sits on top of the fit and never changes the angles or the distance; it applies in every view, and in grabs and icons, until it is switched off, and the window title says "(panned)" while it is in use. Centre puts it back to 0.
 - **Fitting.** Each model is centred and the camera fitted so the model fills the view. With "Fit any angle" checked, the fit holds for every angle, so the dials can never push the model out of view.
 - **Perspective or orthographic** projection.
@@ -82,6 +83,20 @@ Sprite3D loads the libraries only when it starts, and only to offer MP4: if they
 
 `<platform>` is `win64`, `macarm`, `macx64` or `linux64`. The libraries must be FFmpeg 8.1's (avutil 60, avcodec 62, avformat 62) and include the MPEG-4 encoder, which every standard build does. To ship Sprite3D with MP4 export, deploy the contents of the platform's folder beside the executable, or in `Contents/Frameworks` on macOS.
 
+### OpenH264 (optional, for H.264 MP4 files)
+
+On its own, FFmpeg's MP4 export writes MPEG-4 Part 2 video, which desktop players handle but web browsers do not. If Cisco's [OpenH264](https://github.com/cisco/openh264) library is present as well, MP4 files are H.264 instead, which plays everywhere.
+
+OpenH264 is not in the DLL pack and should not be added to it. Cisco pays the H.264 patent royalties only for copies of its library downloaded from Cisco, so each user should download it themselves from the [OpenH264 releases](https://github.com/cisco/openh264/releases), which link to Cisco's binaries:
+
+| Platform | File (version 2.0 or later) |
+|---|---|
+| Windows 64-bit | `openh264-<version>-win64.dll` |
+| macOS Apple silicon | `libopenh264-<version>-mac-arm64.dylib` |
+| Linux 64-bit | `libopenh264-<version>-linux64.<n>.so` |
+
+Unpack it (the downloads are `.bz2` files) and put it in the folder the FFmpeg libraries are in, such as `dlls/win64`; the file name can stay as it is. Sprite3D also looks in every other folder it looks in for FFmpeg, and last for the system's own copy. If several copies are in one folder, the one whose name sorts last, normally the newest, is tried first. The Debug tab says at start-up which OpenH264 was loaded and from where, or, if none was, each file it found and why it could not be used (for example a 32-bit DLL in a 64-bit program), or the folders it looked in if it found none. If OpenH264 loads but then fails on a video, that file is written as MPEG-4 Part 2 instead and the Debug tab gives OpenH264's reason.
+
 ### First run
 
 On start-up the application loads `models/uvcube.glb`, a cube with its faces labelled, from the repository's `models` folder. On Windows it looks for `models` in the current folder first, then three levels up, which is the repository root when run from `src/<platform>/<config>`. On macOS the folder is expected in the user's Library folder and on Linux in the home folder.
@@ -117,7 +132,8 @@ Sprite3D/
     |   |-- Sprite3DStorage.pas      per-user app folder and JSON settings
     |   |-- Sprite3DAnimCapture.pas  grabs every frame of an animation, or of a turn
     |   |-- Sprite3DSpriteSheet.pas  strips, atlases, PNG and animated GIF writers
-    |   `-- Sprite3DVideo.pas        MP4 writer, loading FFmpeg only when present
+    |   |-- Sprite3DVideo.pas        MP4 writer, loading FFmpeg only when present
+    |   `-- Sprite3DOpenH264.pas     H.264 encoder, loading OpenH264 only when present
     |-- common/               small cross-project helpers
     |   |-- OSPaths.pas              where the program and its assets are
     |   |-- GpuPreference.pas        Windows' per-program GPU preference
@@ -144,7 +160,7 @@ Right-click an entry to select and play it and open a menu:
 | Save as sprite strip | every frame side by side in one row | `<animation>_strip<frames>.png` |
 | Save as Texture Atlas | every frame in a square grid, left to right then top to bottom; any cells after the last frame are transparent | `<animation>.png` |
 | Save as AniGif | an animated GIF that loops for ever | `<animation>.gif` |
-| Save as MP4 video | a video-only MPEG-4 MP4 file; offered only when the FFmpeg libraries load | `<animation>.mp4` |
+| Save as MP4 video | a video-only MP4 file, H.264 when OpenH264 is present and MPEG-4 Part 2 otherwise; offered only when the FFmpeg libraries load | `<animation>.mp4` |
 
 Files go to the grab folder, which is asked for the first time, as for File, Grab. A file with the same name is replaced. Characters that are not allowed in file names become underscores.
 
@@ -171,7 +187,15 @@ Each entry has a tick box. Below the list:
 
 ### MP4 video
 
-MP4 files are video only, MPEG-4 Part 2 (FFmpeg's own `mpeg4` encoder) at a fixed high quality, with a key frame every 12 frames. They play in desktop players such as VLC, QuickTime and the Windows players, but not in web browsers, which expect H.264. Odd widths and heights get one black row or column added, as the encoder needs even sizes. MP4 needs the FFmpeg libraries; see *FFmpeg libraries* above.
+MP4 files are video only, with a key frame every 12 frames and no B-frames. Which codec they use depends on the libraries found; the Debug tab names the codec of each file saved.
+
+| Libraries found | Codec | Plays in |
+|---|---|---|
+| FFmpeg and OpenH264 | H.264 Constrained Baseline, from OpenH264, at a constant quality of about a quarter of a bit per pixel per frame | everything, web browsers included |
+| FFmpeg only | MPEG-4 Part 2, FFmpeg's own `mpeg4` encoder, at a fixed high quality | desktop players such as VLC, QuickTime and the Windows players, but not web browsers |
+| neither | MP4 is not offered | |
+
+Odd widths and heights get one black row or column added, as both encoders need even sizes. Grabs smaller than 16 pixels across or down are always MPEG-4 Part 2, as OpenH264 cannot take them. See *FFmpeg libraries* and *OpenH264* above.
 
 ## Settings
 
@@ -247,6 +271,7 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 
 - `src/ffmpeg` holds the FFmpeg Delphi/Pascal headers from [DelphiFFmpeg.com](http://www.delphiffmpeg.com/headers/), unchanged. They are under DelphiFFmpeg.com's BSD-style licence, in `src/ffmpeg/LICENSE.txt`: the notice must stay with the source, and binaries must reproduce it in their documentation.
 - The FFmpeg libraries in the DLL pack are under FFmpeg's own licence, the LGPL for the builds used. Shipping them with Sprite3D brings the LGPL's conditions for those libraries.
+- `src/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API headers, Copyright (c) 2013, Cisco Systems, under the BSD 2-clause licence: the notice stays with the source, and binaries must reproduce it in their documentation. The OpenH264 library itself is not distributed with Sprite3D; Cisco's binary licence and its H.264 patent cover apply to copies downloaded from Cisco.
 
 ## Known issues
 
@@ -258,6 +283,7 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 - Animations are all treated as loops: for one that does not loop, the last pose is left out of the export.
 - On macOS and iOS, animation frames are screenshots, as grabs are there, so they share the limits above.
 - MP4 export has been tested on Windows 64-bit; the macOS and Linux libraries are not in the DLL pack yet.
+- H.264 export through OpenH264 has been tested on Windows 64-bit with OpenH264 2.6.0. Versions 2.0 to 2.5 lay out the encoder's output differently; Sprite3D allows for that, but has not been tested with them.
 
 ## Further reading
 

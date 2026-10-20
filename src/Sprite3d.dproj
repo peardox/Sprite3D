@@ -387,6 +387,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="lib\Sprite3DVideo.pas"/>
+        <DCCReference Include="lib\Sprite3DOpenH264.pas"/>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>

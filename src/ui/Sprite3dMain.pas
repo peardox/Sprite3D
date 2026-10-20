@@ -54,7 +54,8 @@
 //** size and with one framing that fits every frame, and saves them in SaveFolder: side by side
 //** in one row as @code(<animation>_strip<frames>.png), in a square grid read left to right and
 //** top to bottom as @code(<animation>.png), as a looping @code(<animation>.gif), or as a
-//** video-only MPEG-4 @code(<animation>.mp4) through Sprite3DVideo. MP4 is offered only when
+//** video-only @code(<animation>.mp4) through Sprite3DVideo, H.264 when Cisco's OpenH264
+//** library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when
 //** the FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The
 //** @code(@(None@)) entry, which has no animation, captures instead one full turn of the model
 //** in one second, at the File, Animation frame rate, named after the model with
@@ -75,6 +76,13 @@
 //** soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while
 //** a batch runs, lets the entry being captured finish and save, then drops the rest. On
 //** Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
+//**
+//** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
+//** turns the camera: the views, Orthographic, Fit any angle and the pan are switched off, a
+//** new model or a resized view is not refitted, and grabs, icons and animation captures use
+//** the view exactly as it stands instead of fitting the model to their own size. The
+//** @code(@(None@)) turn cannot be captured while it is locked, as it turns the camera. The lock
+//** is not kept between sessions.
 //**
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
@@ -125,7 +133,9 @@
 //**     |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
 //**     |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
 //**     |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-//**     |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//**     |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//**     |   |-- FLockSeparatorItem "-"
+//**     |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
 //**     |-- ViewSeparatorItem "-"
 //**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
 //**     |-- ShowGridItem "Show grid"        ticked at start-up
@@ -202,7 +212,8 @@ unit Sprite3dMain;
   framing that fits every frame, and saves them in SaveFolder: side by side
   in one row as <animation>_strip<frames>.png, in a square grid read left to
   right and top to bottom as <animation>.png, as a looping <animation>.gif,
-  or as a video-only MPEG-4 <animation>.mp4 through Sprite3DVideo. MP4 is
+  or as a video-only <animation>.mp4 through Sprite3DVideo, H.264 when
+  Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is
   offered only when the FFmpeg libraries load; DebugMemo says at start-up
   whether they did and from where. The (None) entry, which has no animation,
   captures instead one full turn of the model in one second, at the File,
@@ -227,6 +238,14 @@ unit Sprite3dMain;
   try. Abort, enabled only while a batch runs, lets the entry being captured
   finish and save, then drops the rest. On Android and iOS, which have no
   folder dialog, the batch goes to the Grabs folder.
+
+  View, Camera, Lock Camera fixes the camera where it is. While it is ticked
+  nothing moves or turns the camera: the views, Orthographic, Fit any angle
+  and the pan are switched off, a new model or a resized view is not
+  refitted, and grabs, icons and animation captures use the view exactly as
+  it stands instead of fitting the model to their own size. The (None) turn
+  cannot be captured while it is locked, as it turns the camera. The lock is
+  not kept between sessions.
 
   Each model replaces the last: it plays its last animation by name if it has
   any, is centred and turned 180 degrees about X, and the camera is fitted so
@@ -280,7 +299,9 @@ unit Sprite3dMain;
         |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
         |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
         |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-        |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+        |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+        |   |-- FLockSeparatorItem "-"
+        |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
         |-- ViewSeparatorItem "-"
         |-- ShowBoundsItem "Show bounding box"  ticked at start-up
         |-- ShowGridItem "Show grid"        ticked at start-up
@@ -639,32 +660,38 @@ type
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
     //**
-    //** Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is loaded.
+    //** Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is loaded,
+    //** or while View, Camera, Lock Camera is ticked.
     //**
     //** @param(Sender The TGorillaViewport.)
     /// <summary>Refits the camera to the model when the viewport changes size.</summary>
     /// <remarks>Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is
-    /// loaded.</remarks>
+    /// loaded, or while View, Camera, Lock Camera is ticked.</remarks>
     /// <param name="Sender">The TGorillaViewport.</param>
     procedure GorillaViewportResize(Sender: TObject);
     //** @abstract(Ticks or unticks OrthographicItem, then switches the projection to match
     //** and refits the model.)
     //**
     //** Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the form
-    //** caption, and refits, since the two modes size the view differently.
+    //** caption, and refits, since the two modes size the view differently. Does nothing while
+    //** View, Camera, Lock Camera is ticked, when the item is disabled.
     //**
     //** @param(Sender OrthographicItem.)
     /// <summary>Ticks or unticks OrthographicItem, then switches the projection to match and
     /// refits the model.</summary>
     /// <remarks>Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in
-    /// the form caption, and refits, since the two modes size the view
-    /// differently.</remarks>
+    /// the form caption, and refits, since the two modes size the view differently. Does
+    /// nothing while View, Camera, Lock Camera is ticked, when the item is disabled.</remarks>
     /// <param name="Sender">OrthographicItem.</param>
     procedure OrthographicItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks FitAnyAngleItem, then refits the model.)
     //**
+    //** Does nothing while View, Camera, Lock Camera is ticked, when the item is disabled.
+    //**
     //** @param(Sender FitAnyAngleItem.)
     /// <summary>Ticks or unticks FitAnyAngleItem, then refits the model.</summary>
+    /// <remarks>Does nothing while View, Camera, Lock Camera is ticked, when the item is
+    /// disabled.</remarks>
     /// <param name="Sender">FitAnyAngleItem.</param>
     procedure FitAnyAngleItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
@@ -722,7 +749,8 @@ type
     //** longer exists, a "Save Location" folder dialog asks for it first, and SaveFolder is set
     //** to the choice and saved; if the dialog is cancelled nothing is grabbed. The image comes
     //** from Offscreen at its Width and Height, the grab size set in File, Settings, with the
-    //** camera refitted by FitToBounds for that size so the model fills it, and is saved a
+    //** camera refitted by FitToBounds for that size so the model fills it, unless View, Camera,
+    //** Lock Camera is ticked, when the view is grabbed as it stands, and is saved a
     //** frame later as grab001.png, grab002.png and so on: the number starts at 1 when the
     //** folder is chosen and goes up by one for every file saved, skipping any name already in
     //** the folder, so earlier grabs are never overwritten. Each saved file is logged in
@@ -736,7 +764,8 @@ type
     /// SaveFolder is set to the choice and saved; if the dialog is cancelled nothing is
     /// grabbed. The image comes from Offscreen at its Width and Height, the grab size set in
     /// File, Settings, with the camera refitted by FitToBounds for that size so the model fills
-    /// it, and is saved a frame later as grab001.png, grab002.png and so on: the number starts
+    /// it, unless View, Camera, Lock Camera is ticked, when the view is grabbed as it stands,
+    /// and is saved a frame later as grab001.png, grab002.png and so on: the number starts
     /// at 1 when the folder is chosen and goes up by one for every file saved, skipping any
     /// name already in the folder, so earlier grabs are never overwritten. Each saved file is
     /// logged in DebugMemo; a failed grab or save is reported with a message. A click while the
@@ -1002,6 +1031,13 @@ type
     FAnimationPopup: TPopupMenu;
     // File, Animation...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
+    // View, Camera, Lock Camera, and the line above it
+    FLockCameraItem: TMenuItem;
+    FLockSeparatorItem: TMenuItem;
+    // True while a grab or a capture has its own framing on the camera,
+    // which must be put back even if the camera is locked meanwhile
+    FGrabFramed: Boolean;
+    FCaptureFramed: Boolean;
     // The capture under way, or nil; it frees itself when it reports
     FCapture: TSprite3DFrameCapture;
     // The on-screen framing, put back when a capture ends
@@ -1085,6 +1121,11 @@ type
     procedure OffscreenBeforeGrab(Sender: TObject; const AWidth, AHeight: Integer);
     procedure OffscreenAfterGrab(Sender: TObject);
     procedure BuildAnimationMenu;
+    procedure BuildLockCameraItem;
+    procedure LockCameraItemClick(Sender: TObject);
+    function CameraLocked: Boolean;
+    function IsCameraViewItem(const AItem: TMenuItem): Boolean;
+    procedure UpdateCameraLockControls;
     procedure AnimationSettingsItemClick(Sender: TObject);
     procedure ApplyAnimationFps(const AFps: Integer);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
@@ -1268,6 +1309,8 @@ begin
   // The animation list's right-click menu; on mobile, also the drawer's
   // Animation group, so it must come before BuildMobileMenu
   BuildAnimationMenu;
+  // View, Camera, Lock Camera; before the menu is moved or mirrored
+  BuildLockCameraItem;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   BuildMobileMenu;
@@ -1443,6 +1486,8 @@ end;
 
 procedure TMainForm.ApplyAngles;
 begin
+  if CameraLocked then
+    Exit;
   if Assigned(GorillaCamera) then
   begin
     GorillaCamera.Azimuth := Wrap360(-FAzimuth);
@@ -1453,6 +1498,8 @@ end;
 
 procedure TMainForm.OrthographicItemClick(Sender: TObject);
 begin
+  if CameraLocked then
+    Exit;   // the projection is part of the camera
   OrthographicItem.IsChecked := not OrthographicItem.IsChecked;
   ApplyProjection;
 end;
@@ -1461,6 +1508,11 @@ end;
 // the two modes size the view differently
 procedure TMainForm.ApplyProjection;
 begin
+  if CameraLocked then
+  begin
+    Caption := ProjectionCaption;
+    Exit;
+  end;
   if OrthographicItem.IsChecked then
     GorillaCamera.ProjectionMode := TGorillaCameraProjection.cpOrthographic
   else
@@ -1583,7 +1635,8 @@ begin
   if AKey = String.Empty then
     Exit;
   for I := 0 to CameraMenu.ItemsCount - 1 do
-    if SameText(CameraViewKey(CameraMenu.Items[I]), AKey) then
+    if IsCameraViewItem(CameraMenu.Items[I]) and
+      SameText(CameraViewKey(CameraMenu.Items[I]), AKey) then
       Exit(CameraMenu.Items[I]);
 end;
 
@@ -1623,7 +1676,7 @@ begin
   if FSettings = nil then
     Exit;
   for I := 0 to CameraMenu.ItemsCount - 1 do
-    if CameraMenu.Items[I].IsChecked then
+    if IsCameraViewItem(CameraMenu.Items[I]) and CameraMenu.Items[I].IsChecked then
       FSettings.CameraView := CameraViewKey(CameraMenu.Items[I]);
   if ViewVariableItem.IsChecked then
   begin
@@ -1700,34 +1753,32 @@ end;
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
-  if Assigned(FCapture) then
-  begin
-    // The capture framed the camera once for every frame; only the
-    // viewport's background has to go
-    FBackground.Hidden := True;
+  // Grabs add their own backdrop after matting; the viewport's would make
+  // every pixel opaque
+  FBackground.Hidden := True;
+  // The capture framed the camera once for every frame, and a locked camera
+  // is grabbed exactly as it stands
+  FGrabFramed := False;
+  if Assigned(FCapture) or CameraLocked then
     Exit;
-  end;
   FSavedFraming := GorillaCamera.SaveFraming;
+  FGrabFramed := True;
   if Assigned(GorillaModel) and
     GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight) and FPanEnabled then
     // The pan as on screen, on top of the grab's own fit
     GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
       ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
-  // Grabs add their own backdrop after matting; the viewport's would make
-  // every pixel opaque
-  FBackground.Hidden := True;
 end;
 
 // Put the on-screen framing back before the main pass draws
 procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
 begin
-  if Assigned(FCapture) then
-  begin
-    FBackground.Hidden := False;
-    Exit;
-  end;
-  GorillaCamera.RestoreFraming(FSavedFraming);
   FBackground.Hidden := False;
+  // Only a framing this grab set is put back
+  if not FGrabFramed then
+    Exit;
+  FGrabFramed := False;
+  GorillaCamera.RestoreFraming(FSavedFraming);
 end;
 
 procedure TMainForm.BackgroundSettingsMenuItemClick(Sender: TObject);
@@ -2032,7 +2083,8 @@ var
   I: Integer;
 begin
   for I := 0 to CameraMenu.ItemsCount - 1 do
-    CameraMenu.Items[I].IsChecked := False;
+    if IsCameraViewItem(CameraMenu.Items[I]) then
+      CameraMenu.Items[I].IsChecked := False;
 end;
 
 // The pattern for every fixed view: clear all the checks, set the view,
@@ -2040,6 +2092,8 @@ end;
 procedure TMainForm.SelectFixedView(const AItem: TMenuItem;
   const APolarAngle, AAzimuth: Single);
 begin
+  if CameraLocked then
+    Exit;   // the views are switched off while the camera is locked
   ClearViewChecks;
   SetPolarViewAngle(APolarAngle, AAzimuth);
   AItem.IsChecked := True;
@@ -2049,6 +2103,8 @@ procedure TMainForm.ViewVariableItemClick(Sender: TObject);
 var
   Dialog: TOrbitalSettingsForm;
 begin
+  if CameraLocked then
+    Exit;   // the views are switched off while the camera is locked
   // While the form is being created (RestoreCameraView) there is nothing to
   // show the dialog over; the angles are already set
   if FSetupComplete then
@@ -2093,7 +2149,7 @@ end;
 // stay as they are, so RestoreCamera can undo it
 procedure TMainForm.ShowCameraSpec(const ASpec: TCameraSettings);
 begin
-  if not Assigned(GorillaCamera) then
+  if CameraLocked or not Assigned(GorillaCamera) then
     Exit;
   GorillaCamera.Azimuth := Wrap360(-ASpec.Azimuth);
   GorillaCamera.PolarAngle := ASpec.PolarAngle;
@@ -2162,6 +2218,8 @@ begin
     Result := 'Some other projection';
   if FPanEnabled and ((FPanX <> 0) or (FPanZ <> 0)) then
     Result := Result + ' (panned)';
+  if CameraLocked then
+    Result := Result + ' (camera locked)';
 end;
 
 procedure TMainForm.ViewIsometricItemClick(Sender: TObject);
@@ -2246,7 +2304,7 @@ end;
 // FitToBounds a dial turn is allowed to push the model past the edge.
 function TMainForm.FitModel: Boolean;
 begin
-  Result := Assigned(GorillaCamera) and Assigned(GorillaModel);
+  Result := not CameraLocked and Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
     Exit;
   if FitAnyAngleItem.IsChecked then
@@ -2274,7 +2332,7 @@ end;
 
 procedure TMainForm.ShowDistanceFactor(const AFactor: Single);
 begin
-  if not Assigned(GorillaCamera) or (FFitDistance <= 0) then
+  if CameraLocked or not Assigned(GorillaCamera) or (FFitDistance <= 0) then
     Exit;
   if GorillaCamera.IsOrthographic then
     GorillaCamera.OrthoHeight := FFitOrthoHeight * AFactor
@@ -2293,7 +2351,7 @@ procedure TMainForm.ShowPan(const AEnabled: Boolean; const APanX, APanZ: Single)
 var
   Center: TPoint3D;
 begin
-  if not Assigned(GorillaCamera) or not FFitted then
+  if CameraLocked or not Assigned(GorillaCamera) or not FFitted then
     Exit;
   Center := FFitCenter;
   if AEnabled then
@@ -2308,6 +2366,8 @@ end;
 
 procedure TMainForm.FitAnyAngleItemClick(Sender: TObject);
 begin
+  if CameraLocked then
+    Exit;   // it only chooses how the camera is fitted
   FitAnyAngleItem.IsChecked := not FitAnyAngleItem.IsChecked;
   FitModel;
 end;
@@ -2405,9 +2465,8 @@ begin
       end;
     end;
 
-    GorillaCamera.Roll := Wrap360(-FRoll);   // reversed, as is Azimuth
-    GorillaCamera.Azimuth := Wrap360(-FAzimuth);
-    GorillaCamera.PolarAngle := FPolarAngle;
+    // The angles as the dials have them, unless the camera is locked
+    ApplyAngles;
 
     // Draw the box that FitToBounds and FitToBoundsMax fit, if wanted: the
     // bounds of the current pose, in Gorilla's default orange
@@ -2422,7 +2481,8 @@ begin
     if ShowGridItem.IsChecked then
       ShowModelGrid(GorillaModel, FModelBox);
 
-    if not FitModel then
+    // A locked camera stays where it is, whatever the new model's size
+    if not CameraLocked and not FitModel then
       Caption := 'Problem fitting Camera'
     else
       Caption := ProjectionCaption;
@@ -2531,6 +2591,72 @@ begin
       ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
         E.Message);
   end;
+end;
+
+// View, Camera, Lock Camera, below the views and a line. It is not one of
+// the views: IsCameraViewItem leaves it out, so choosing a view never clears
+// its tick and settings.json never keeps it as the view.
+procedure TMainForm.BuildLockCameraItem;
+begin
+  FLockSeparatorItem := TMenuItem.Create(Self);
+  FLockSeparatorItem.Text := '-';
+  CameraMenu.AddObject(FLockSeparatorItem);
+  FLockCameraItem := TMenuItem.Create(Self);
+  FLockCameraItem.Text := 'Lock Camera';
+  FLockCameraItem.IsChecked := False;
+  FLockCameraItem.OnClick := LockCameraItemClick;
+  CameraMenu.AddObject(FLockCameraItem);
+end;
+
+// True while View, Camera, Lock Camera is ticked
+function TMainForm.CameraLocked: Boolean;
+begin
+  Result := Assigned(FLockCameraItem) and FLockCameraItem.IsChecked;
+end;
+
+// One of the View, Camera views, rather than Lock Camera or a line
+function TMainForm.IsCameraViewItem(const AItem: TMenuItem): Boolean;
+begin
+  Result := (AItem <> FLockCameraItem) and (AItem <> FLockSeparatorItem) and
+    (AItem.Text <> '-');
+end;
+
+// Ticks or unticks Lock Camera. The camera keeps exactly what it has; on
+// unlocking nothing is refitted, so the view stays put until something
+// changes it. Not while a grab or capture has its own framing on the camera,
+// which it must be free to put back.
+procedure TMainForm.LockCameraItemClick(Sender: TObject);
+begin
+  if Capturing or FOffscreen.Busy then
+    Exit;
+  FLockCameraItem.IsChecked := not FLockCameraItem.IsChecked;
+  UpdateCameraLockControls;
+  Caption := ProjectionCaption;
+  if CameraLocked then
+    DebugMemo.Lines.Add('Camera locked')
+  else
+    DebugMemo.Lines.Add('Camera unlocked');
+end;
+
+// Everything that would move the camera is switched off while it is
+// locked, and the camera itself refuses changes as well, so nothing slips
+// through
+procedure TMainForm.UpdateCameraLockControls;
+var
+  I: Integer;
+  Locked: Boolean;
+begin
+  if FLockCameraItem = nil then
+    Exit;
+  Locked := CameraLocked;
+  if Assigned(GorillaCamera) then
+    GorillaCamera.Locked := Locked;
+  for I := 0 to CameraMenu.ItemsCount - 1 do
+    if IsCameraViewItem(CameraMenu.Items[I]) then
+      CameraMenu.Items[I].Enabled := not Locked;
+  OrthographicItem.Enabled := not Locked;
+  FitAnyAngleItem.Enabled := not Locked;
+  FLockCameraItem.Enabled := not Capturing;
 end;
 
 // The list's entries are hooked as well as the list itself: depending on
@@ -2680,6 +2806,13 @@ begin
     Exit;
   end;
 
+  if (AIndex = 0) and CameraLocked then
+  begin
+    AError := 'The (None) turn turns the camera, which is locked. Untick View, Camera, ' +
+      'Lock Camera to capture it.';
+    Exit;
+  end;
+
   if AIndex = 0 then
   begin
     // No animation: one turn of the model, named after the model
@@ -2715,11 +2848,15 @@ begin
     Exit;
   end;
 
-  // One framing for every frame, from here until EndCapture
-  FCaptureRestore := GorillaCamera.SaveFraming;
+  // One framing for every frame, from here until EndCapture; a locked
+  // camera is captured exactly as it stands
   FRefitAfterCapture := False;
+  FCaptureFramed := not CameraLocked;
+  if FCaptureFramed then
+    FCaptureRestore := GorillaCamera.SaveFraming;
   Source.Start;
-  if not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
+  if FCaptureFramed and
+    not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
     DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
 
   // Locals, not parameters, for the procedures below to capture
@@ -2895,6 +3032,8 @@ begin
   FBatchKindBox.Enabled := not Capturing;
   FBatchAll.Enabled := not Capturing;
   FAbortButton.Enabled := FBatchActive and not FBatchAborted;
+  // The lock cannot change while a capture has its own framing on the camera
+  UpdateCameraLockControls;
   if FBatchActive and FBatchAborted then
     FExportButton.Text := 'Stopping...'
   else if FBatchActive then
@@ -3086,7 +3225,10 @@ end;
 // viewport changed size meanwhile
 procedure TMainForm.EndCapture;
 begin
-  GorillaCamera.RestoreFraming(FCaptureRestore);
+  // Only a framing the capture set is put back
+  if FCaptureFramed then
+    GorillaCamera.RestoreFraming(FCaptureRestore);
+  FCaptureFramed := False;
   ApplyAngles;
   if FRefitAfterCapture then
     FitModel;
@@ -3096,7 +3238,8 @@ end;
 
 // Lays out and writes the captured frames in AFolder, creating it if need
 // be; names follow the pop-up menu's rules, and an existing file of the same
-// name is replaced. Returns the file written; raises if it cannot be.
+// name is replaced. Returns the file written, with the codec in brackets
+// for an MP4, for the log; raises if it cannot be written.
 function TMainForm.SaveSheet(const AKind: TSheetKind;
   const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
   const ACycleSeconds: Double): String;
@@ -3125,8 +3268,9 @@ begin
       end;
   else
     begin
+      // H.264 when OpenH264 is present, otherwise MPEG-4 Part 2
       Result := TPath.Combine(AFolder, AStem + '.mp4');
-      SaveMpeg4Video(AFrames, Result, ACycleSeconds);
+      Result := Result + ' (' + SaveMp4Video(AFrames, Result, ACycleSeconds) + ')';
     end;
   end;
 end;
