@@ -939,6 +939,53 @@ type
     /// there is no viewport, or it has zero width or height.</returns>
     function FitToBounds(const ABox: TBoundingBox; const ASpace: TControl3D;
       const AMargin: Single = 0): Boolean; overload;
+    { Same, for an explicit view size (e.g. an off-screen target), so a box
+      gathered by the caller, such as the union of an animation's poses, can
+      be fitted to a grab }
+    //** @abstract(Fits a box given in ASpace's local coordinates for the current angles and
+    //** an explicit view size.)
+    //**
+    //** Works like the overload that takes a box and a space, but frames it for AViewWidth by
+    //** AViewHeight instead of the viewport's size; only their ratio matters. Use it to frame a
+    //** box the caller has gathered, such as the union of every pose of an animation, for an
+    //** off-screen target whose shape differs from the viewport's. The camera is changed as by
+    //** every fit, so the on-screen view changes too until it is refitted or restored.
+    //**
+    //** @param(ABox The box to frame, in ASpace's local coordinates.)
+    //**
+    //** @param(ASpace The object whose local space ABox is in. If nil, ABox is taken to be in
+    //** absolute viewport space.)
+    //**
+    //** @param(AViewWidth The width of the view, in the same units as AViewHeight.)
+    //**
+    //** @param(AViewHeight The height of the view, in the same units as AViewWidth.)
+    //**
+    //** @param(AMargin Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view
+    //** on the tighter axis.)
+    //**
+    //** @returns(True if the box was framed; False, with nothing changed, if the box is empty
+    //** or either size is zero or less.)
+    /// <summary>Fits a box given in ASpace's local coordinates for the current angles and an
+    /// explicit view size.</summary>
+    /// <remarks>Works like the overload that takes a box and a space, but frames it for
+    /// AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use
+    /// it to frame a box the caller has gathered, such as the union of every pose of an
+    /// animation, for an off-screen target whose shape differs from the viewport's. The camera
+    /// is changed as by every fit, so the on-screen view changes too until it is refitted or
+    /// restored.</remarks>
+    /// <param name="ABox">The box to frame, in ASpace's local coordinates.</param>
+    /// <param name="ASpace">The object whose local space ABox is in. If nil, ABox is taken to be
+    /// in absolute viewport space.</param>
+    /// <param name="AViewWidth">The width of the view, in the same units as
+    /// AViewHeight.</param>
+    /// <param name="AViewHeight">The height of the view, in the same units as
+    /// AViewWidth.</param>
+    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
+    /// view on the tighter axis.</param>
+    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty or
+    /// either size is zero or less.</returns>
+    function FitToBounds(const ABox: TBoundingBox; const ASpace: TControl3D;
+      const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
 
     { Make ABox as large as possible in the viewport while staying fully
       visible for EVERY Azimuth, PolarAngle and Roll. The orbit centre
@@ -1686,6 +1733,14 @@ begin
   VP := FindViewport;
   Result := (VP <> nil) and
     FitBox(ABox, ASpace, False, VP.Width, VP.Height, AMargin, False);
+end;
+
+function TSprite3DCamera.FitToBounds(const ABox: TBoundingBox;
+  const ASpace: TControl3D; const AViewWidth, AViewHeight: Single;
+  const AMargin: Single): Boolean;
+begin
+  // As the overload above, for a view of a given size
+  Result := FitBox(ABox, ASpace, False, AViewWidth, AViewHeight, AMargin, False);
 end;
 
 function TSprite3DCamera.FitToBoundsMax(const ABox: TBoundingBox;

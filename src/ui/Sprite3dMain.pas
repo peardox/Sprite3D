@@ -47,6 +47,31 @@
 //** chosen, until it is switched off; it never changes the angles or the distance. It is
 //** off by default and kept in settings.json.
 //**
+//** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu
+//** with Save as sprite strip, Save as Texture Atlas and Save as AniGif. Each grabs every frame
+//** of that animation off screen, from the first to the last, at the grab size and with one
+//** framing that fits every frame, and saves them in SaveFolder: side by side in one row as
+//** @code(<animation>_strip<frames>.png), in a square grid read left to right and top to bottom
+//** as @code(<animation>.png), or as a looping @code(<animation>.gif). The @code(@(None@))
+//** entry, which has no animation, captures instead one full turn of the model in one second,
+//** at the File, Animation frame rate, named after the model with @code(_rotate) added. On Android and iOS, which have
+//** no right-click, the same three items are in an Animation group of the menu drawer and act on
+//** the selected entry.
+//**
+//** File, Animation... sets the frame rate every saved animation uses, 30 frames a second
+//** unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it:
+//** one cycle is cut into the whole number of equal steps nearest that rate, so the saved
+//** frames still loop exactly; see TSprite3DAnimationFrames.
+//**
+//** Each entry also has a tick box. Below the list, All ticks or clears every entry, a drop-down
+//** chooses Sprite strip, Texture Atlas or AniGif, and Export saves every ticked entry that
+//** way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so
+//** a new sub-folder can be made there for the batch. SaveFolder itself is not changed. A
+//** failed entry is reported at the end and does not stop the others. Each entry is unticked as
+//** soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while
+//** a batch runs, lets the entry being captured finish and save, then drops the rest. On
+//** Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
+//**
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
 //** refitted when the viewport is resized, the projection changes or View, Fit any angle is
@@ -82,6 +107,7 @@
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+//** |   |-- FAnimationSettingsItem "Animation..."  frame rate for saved animations
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
@@ -161,6 +187,36 @@ unit Sprite3dMain;
   changes the angles or the distance. It is off by default and kept in
   settings.json.
 
+  Right-clicking an entry in the Animations list selects and plays it, and
+  opens a pop-up menu with Save as sprite strip, Save as Texture Atlas and
+  Save as AniGif. Each grabs every frame of that animation off screen, from
+  the first to the last, at the grab size and with one framing that fits
+  every frame, and saves them in SaveFolder: side by side in one row as
+  <animation>_strip<frames>.png, in a square grid read left to right and top
+  to bottom as <animation>.png, or as a looping <animation>.gif. The (None)
+  entry, which has no animation, captures instead one full turn of the model
+  in one second, at the File, Animation frame rate, named after the model
+  with _rotate added. On
+  Android and iOS, which have no right-click, the same three items are in an
+  Animation group of the menu drawer and act on the selected entry.
+
+  File, Animation... sets the frame rate every saved animation uses, 30
+  frames a second unless changed, from 1 to 60, kept in settings.json. Each
+  animation is resampled to it: one cycle is cut into the whole number of
+  equal steps nearest that rate, so the saved frames still loop exactly; see
+  TSprite3DAnimationFrames.
+
+  Each entry also has a tick box. Below the list, All ticks or clears every
+  entry, a drop-down chooses Sprite strip, Texture Atlas or AniGif, and
+  Export saves every ticked entry that way, one after another, in a folder
+  chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can
+  be made there for the batch. SaveFolder itself is not changed. A failed
+  entry is reported at the end and does not stop the others. Each entry is
+  unticked as soon as it is saved, so a failed one stays ticked for another
+  try. Abort, enabled only while a batch runs, lets the entry being captured
+  finish and save, then drops the rest. On Android and iOS, which have no
+  folder dialog, the batch goes to the Grabs folder.
+
   Each model replaces the last: it plays its last animation by name if it has
   any, is centred and turned 180 degrees about X, and the camera is fitted so
   it fills the view. The model is refitted when the viewport is resized, the
@@ -199,6 +255,7 @@ unit Sprite3dMain;
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+    |   |-- FAnimationSettingsItem "Animation..."  frame rate for saved animations
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"                   its ticks are kept in settings.json
@@ -229,13 +286,28 @@ uses
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
-  Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox
+  Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
+  Sprite3DAnimationForm,
+  Sprite3DSpriteSheet
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
   ;
 
 type
+  //** @abstract(What the animation list's pop-up menu saves a capture as.)
+  /// <summary>What the animation list's pop-up menu saves a capture as.</summary>
+  TSheetKind = (
+    //** @abstract(One row of frames, saved as @code(<name>_strip<count>.png).)
+    /// <summary>One row of frames, saved as <c>&lt;name&gt;_strip&lt;count&gt;.png</c>.</summary>
+    skStrip,
+    //** @abstract(A square grid of frames, saved as @code(<name>.png).)
+    /// <summary>A square grid of frames, saved as <c>&lt;name&gt;.png</c>.</summary>
+    skAtlas,
+    //** @abstract(A looping animated GIF, saved as @code(<name>.gif).)
+    /// <summary>A looping animated GIF, saved as <c>&lt;name&gt;.gif</c>.</summary>
+    skGif);
+
   //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
   //**
   //** The viewport, light, model and TSprite3DCamera are created at run time, not at design
@@ -435,8 +507,14 @@ type
     AnimationsLabel: TLabel;
     //** @abstract(The model's animations, by name, after a first entry, @code(@(None@)), that
     //** stops any animation; see AnimationListBoxClick.)
+    //**
+    //** Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a
+    //** sprite strip, a texture atlas or an animated GIF; see the unit description.
     /// <summary>The model's animations, by name, after a first entry, <c>(None)</c>, that stops
     /// any animation; see <see cref="AnimationListBoxClick"/>.</summary>
+    /// <remarks>Right-clicking an entry selects and plays it and opens a pop-up menu that saves
+    /// it as a sprite strip, a texture atlas or an animated GIF; see the unit
+    /// description.</remarks>
     AnimationListBox: TListBox;
     ViewOneQuarterItem: TMenuItem;
     ViewRoot2Item: TMenuItem;
@@ -813,6 +891,15 @@ type
     /// turn from View, Camera, Head On.</remarks>
     /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
+    //** @abstract(Plays the chosen animation, or stops any for @code(@(None@)).)
+    //**
+    //** Ignored while an animation is being saved, which needs the animation it started.
+    //**
+    //** @param(Sender AnimationListBox.)
+    /// <summary>Plays the chosen animation, or stops any for <c>(None)</c>.</summary>
+    /// <remarks>Ignored while an animation is being saved, which needs the animation it
+    /// started.</remarks>
+    /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxClick(Sender: TObject);
     procedure ViewOneQuarterItemClick(Sender: TObject);
     procedure ViewRoot2ItemClick(Sender: TObject);
@@ -851,6 +938,40 @@ type
     // The orbit centre from the last fit, before the pan is added
     FFitCenter: TPoint3D;
     FFitted: Boolean;
+    // The animation list's pop-up menu: Save as sprite strip, Save as
+    // Texture Atlas, Save as AniGif
+    FAnimationPopup: TPopupMenu;
+    // File, Animation...: the frame rate saved animations use
+    FAnimationSettingsItem: TMenuItem;
+    // The capture under way, or nil; it frees itself when it reports
+    FCapture: TSprite3DFrameCapture;
+    // The on-screen framing, put back when a capture ends
+    FCaptureRestore: TSprite3DFraming;
+    // The viewport was resized during the capture: refit when it ends
+    FRefitAfterCapture: Boolean;
+    // Batch export, below the animation list: All, what to save, Export
+    FBatchLayout: TLayout;
+    FBatchAll: TCheckBox;
+    FBatchKindBox: TComboBox;
+    FExportButton: TButton;
+    FAbortButton: TButton;
+    // Abort was clicked: the batch stops once the current entry is saved
+    FBatchAborted: Boolean;
+    // True while the code changes ticks, so the tick handlers ignore it
+    FSyncingChecks: Boolean;
+    // The batch under way: the entries still to capture, as list indices,
+    // what to save them as, where, and how it is going
+    FBatchActive: Boolean;
+    FBatchItems: TArray<Integer>;
+    FBatchPos: Integer;
+    FBatchKind: TSheetKind;
+    FBatchFolder: String;
+    FBatchSaved: Integer;
+    FBatchErrors: TArray<String>;
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    // Mobile only: the pop-up menu's items, offered in the menu drawer
+    FAnimationMenu: TMenuItem;
+    {$ENDIF}
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     // The Settings dialog's starting values, for comparing on OK
     FSettingsBefore: TSprite3DGeneralSettings;
@@ -904,6 +1025,37 @@ type
     procedure SetSaveFolder(const Value: String);
     procedure OffscreenBeforeGrab(Sender: TObject; const AWidth, AHeight: Integer);
     procedure OffscreenAfterGrab(Sender: TObject);
+    procedure BuildAnimationMenu;
+    procedure AnimationSettingsItemClick(Sender: TObject);
+    procedure ApplyAnimationFps(const AFps: Integer);
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    procedure AnimationDialogAccept(Sender: TObject);
+    {$ENDIF}
+    procedure HookAnimationItems;
+    procedure AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
+    procedure SaveStripItemClick(Sender: TObject);
+    procedure SaveAtlasItemClick(Sender: TObject);
+    procedure SaveGifItemClick(Sender: TObject);
+    procedure StartSingleCapture(const AKind: TSheetKind);
+    function StartCapture(const AKind: TSheetKind; const AIndex: Integer;
+      const AFolder: String; const AOnFinished: TProc<String>;
+      out AError: String): Boolean;
+    function Capturing: Boolean;
+    procedure BuildBatchControls;
+    procedure BatchAllChange(Sender: TObject);
+    procedure AnimationListBoxChangeCheck(Sender: TObject);
+    procedure ExportButtonClick(Sender: TObject);
+    procedure AbortButtonClick(Sender: TObject);
+    function ChooseExportFolder(out AFolder: String): Boolean;
+    procedure RunNextBatchItem;
+    procedure FinishBatch;
+    procedure UpdateBatchControls;
+    function FrameCaptureFraming(const ASource: TSprite3DFrameSource;
+      const AWidth, AHeight: Integer): Boolean;
+    procedure EndCapture;
+    function SaveSheet(const AKind: TSheetKind; const AFrames: TArray<TSprite3DImage>;
+      const AFolder, AStem: String; const ADelay: Integer): String;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -967,8 +1119,8 @@ var
 implementation
 
 uses
-  FMX.Platform,
-  Gorilla.DefTypes, System.Math,
+  FMX.Platform, System.IOUtils,
+  Gorilla.DefTypes, Gorilla.Animation, System.Math,
   Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm;
 
 {$R *.fmx}
@@ -977,6 +1129,13 @@ const
   // The first entry of AnimationListBox, which stops any animation and
   // shows the model as loaded
   NO_ANIMATION = '(None)';
+  // What the (None) entry captures instead of an animation: one full turn
+  // of the model in TURNTABLE_SECONDS, at the File, Animation frame rate
+  TURNTABLE_SECONDS = 1.0;
+  // The most memory a capture may use for its frames and the image made
+  // from them, so a long animation at a large grab size is refused with a
+  // message instead of running the device out of memory
+  MAX_CAPTURE_BYTES = Int64(1024) * 1024 * 1024;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
@@ -1045,6 +1204,10 @@ begin
 
   // The View menu's on/off items as they were left last session
   RestoreViewToggles;
+
+  // The animation list's right-click menu; on mobile, also the drawer's
+  // Animation group, so it must come before BuildMobileMenu
+  BuildAnimationMenu;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   BuildMobileMenu;
@@ -1200,6 +1363,8 @@ procedure TMainForm.AnimationListBoxClick(Sender: TObject);
 var
   ani: String;
 begin
+  if Capturing then
+    Exit;   // a capture is driving the animation
   if Assigned(GorillaModel) then
     begin
       if AnimationListBox.ItemIndex > 0 then
@@ -1309,6 +1474,12 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  FBatchActive := False;   // no further batch entries
+  if Assigned(FCapture) then
+  begin
+    FCapture.Cancel;   // nothing is saved; the model is going too
+    FCapture := nil;
+  end;
   FileOpenRequests.OnOpenFile := nil;
   SaveViewState;
   FreeAndNil(FSettings);
@@ -1417,6 +1588,12 @@ end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
 begin
+  if Assigned(FCapture) then
+  begin
+    // The capture's framing stays until it ends; EndCapture refits then
+    FRefitAfterCapture := True;
+    Exit;
+  end;
   FitModel;
 end;
 
@@ -1428,6 +1605,8 @@ end;
 
 procedure TMainForm.GrabMenuItemClick(Sender: TObject);
 begin
+  if Capturing then
+    Exit;   // an animation is being saved
   if FOffscreen.Busy then
     Exit;   // the last grab has not been saved yet
   if not FSettings.HasSaveFolder and not ChooseSaveFolder then
@@ -1461,6 +1640,13 @@ end;
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
+  if Assigned(FCapture) then
+  begin
+    // The capture framed the camera once for every frame; only the
+    // viewport's background has to go
+    FBackground.Hidden := True;
+    Exit;
+  end;
   FSavedFraming := GorillaCamera.SaveFraming;
   if Assigned(GorillaModel) and
     GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight) and FPanEnabled then
@@ -1475,6 +1661,11 @@ end;
 // Put the on-screen framing back before the main pass draws
 procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
 begin
+  if Assigned(FCapture) then
+  begin
+    FBackground.Hidden := False;
+    Exit;
+  end;
   GorillaCamera.RestoreFraming(FSavedFraming);
   FBackground.Hidden := False;
 end;
@@ -1673,6 +1864,8 @@ var
   FileName: String;
   Writer: TSprite3DIconWriterClass;
 begin
+  if Capturing then
+    Exit;   // an animation is being saved
   if FOffscreen.Busy then
     Exit;   // a grab is still under way
   if not ChooseIconFile(FileName, Writer) then
@@ -2115,6 +2308,11 @@ begin
       ShowMessage('Model Not Found ' + AModel);
       Exit;
     end;
+  if Capturing then
+    begin
+      ShowMessage('An animation is being saved; open the model again when it is done.');
+      Exit;
+    end;
 
   if GorillaModel = Nil then
     begin
@@ -2135,6 +2333,17 @@ begin
           AnimationListBox.Items.Add(AnimName);
         end;
       end;
+    HookAnimationItems;
+    // A new list starts with nothing ticked
+    if Assigned(FBatchAll) then
+    begin
+      FSyncingChecks := True;
+      try
+        FBatchAll.IsChecked := False;
+      finally
+        FSyncingChecks := False;
+      end;
+    end;
 
     GorillaCamera.Roll := Wrap360(-FRoll);   // reversed, as is Azimuth
     GorillaCamera.Azimuth := Wrap360(-FAzimuth);
@@ -2172,5 +2381,667 @@ begin
   end;
 end;
 
+// The animation list's pop-up menu, made here rather than in the form
+// designer. On Android and iOS, which have no right-click, the same items
+// are also put in an Animation menu, which BuildMobileMenu shows as a group
+// of the drawer; they act on the selected entry.
+procedure TMainForm.BuildAnimationMenu;
+
+  procedure AddItem(const AParent: TFmxObject; const AText: String;
+    const AOnClick: TNotifyEvent);
+  var
+    Item: TMenuItem;
+  begin
+    Item := TMenuItem.Create(Self);
+    Item.Text := AText;
+    Item.OnClick := AOnClick;
+    AParent.AddObject(Item);
+  end;
+
+begin
+  FAnimationPopup := TPopupMenu.Create(Self);
+  FAnimationPopup.Parent := Self;
+  // Clicks on an entry usually reach the list, not the entry; see
+  // HookAnimationItems
+  AnimationListBox.OnMouseUp := AnimationItemMouseUp;
+  AddItem(FAnimationPopup, 'Save as sprite strip', SaveStripItemClick);
+  AddItem(FAnimationPopup, 'Save as Texture Atlas', SaveAtlasItemClick);
+  AddItem(FAnimationPopup, 'Save as AniGif', SaveGifItemClick);
+  BuildBatchControls;
+
+  // File, Animation..., just above Settings...
+  FAnimationSettingsItem := TMenuItem.Create(Self);
+  FAnimationSettingsItem.Text := 'Animation...';
+  FAnimationSettingsItem.OnClick := AnimationSettingsItemClick;
+  FileMenu.InsertObject(SettingsMenuItem.Index, FAnimationSettingsItem);
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  FAnimationMenu := TMenuItem.Create(Self);
+  FAnimationMenu.Text := 'Animation';
+  MainMenu1.AddObject(FAnimationMenu);
+  AddItem(FAnimationMenu, 'Save as sprite strip', SaveStripItemClick);
+  AddItem(FAnimationMenu, 'Save as Texture Atlas', SaveAtlasItemClick);
+  AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
+  {$ENDIF}
+end;
+
+// File, Animation...: the frame rate saved animations use. OK keeps the
+// new rate and saves it; Cancel leaves the old one.
+procedure TMainForm.AnimationSettingsItemClick(Sender: TObject);
+var
+  Dialog: TAnimationSettingsForm;
+begin
+  Dialog := TAnimationSettingsForm.Create(nil);
+  Dialog.Fps := FSettings.AnimationFps;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports OK and frees itself
+  Dialog.OnAccept := AnimationDialogAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal = mrOk then
+      ApplyAnimationFps(Dialog.Fps);
+  finally
+    Dialog.Free;
+  end;
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.AnimationDialogAccept(Sender: TObject);
+begin
+  ApplyAnimationFps(TAnimationSettingsForm(Sender).Fps);
+end;
+{$ENDIF}
+
+// Keeps the frame rate and writes settings.json straight away
+procedure TMainForm.ApplyAnimationFps(const AFps: Integer);
+begin
+  if AFps = FSettings.AnimationFps then
+    Exit;
+  FSettings.AnimationFps := AFps;   // limited to the allowed range
+  DebugMemo.Lines.Add(Format('Animations are now saved at %d frames per second',
+    [FSettings.AnimationFps]));
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
+// The list's entries are hooked as well as the list itself: depending on
+// the style, a click on an entry reaches either the entry or the list, and
+// FMX does not pass mouse events on to a parent, so only one of the two
+// handlers runs for any click
+procedure TMainForm.HookAnimationItems;
+var
+  I: Integer;
+begin
+  for I := 0 to AnimationListBox.Count - 1 do
+    AnimationListBox.ListItems[I].OnMouseUp := AnimationItemMouseUp;
+end;
+
+// A right-click selects and plays the entry under the mouse, as a left
+// click would, then opens the pop-up menu there. Sender is either the list,
+// whose coordinates find the entry, or an entry itself. On macOS a
+// Control-click counts as a right-click.
+procedure TMainForm.AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+var
+  Item: TListBoxItem;
+  At: TPointF;
+  I: Integer;
+  RightClick: Boolean;
+begin
+  RightClick := Button = TMouseButton.mbRight;
+  {$IFDEF MACOS}
+  RightClick := RightClick or ((Button = TMouseButton.mbLeft) and (ssCtrl in Shift));
+  {$ENDIF}
+  if not RightClick or not (Sender is TControl) then
+    Exit;
+  if Capturing then
+    Exit;   // one capture at a time
+
+  if Sender is TListBoxItem then
+    Item := TListBoxItem(Sender)
+  else
+    Item := AnimationListBox.ItemByPoint(X, Y);
+  if Item = nil then
+    Exit;   // below the last entry
+
+  for I := 0 to AnimationListBox.Count - 1 do
+    if (AnimationListBox.ListItems[I] = Item) and (AnimationListBox.ItemIndex <> I) then
+    begin
+      AnimationListBox.ItemIndex := I;
+      AnimationListBoxClick(AnimationListBox);
+      Break;
+    end;
+  At := TControl(Sender).LocalToScreen(TPointF.Create(X, Y));
+  FAnimationPopup.Popup(At.X, At.Y);
+end;
+
+procedure TMainForm.SaveStripItemClick(Sender: TObject);
+begin
+  StartSingleCapture(skStrip);
+end;
+
+procedure TMainForm.SaveAtlasItemClick(Sender: TObject);
+begin
+  StartSingleCapture(skAtlas);
+end;
+
+procedure TMainForm.SaveGifItemClick(Sender: TObject);
+begin
+  StartSingleCapture(skGif);
+end;
+
+// True from the start of a single capture or a batch until it has saved
+// everything; between a batch's entries FCapture is briefly nil
+function TMainForm.Capturing: Boolean;
+begin
+  Result := Assigned(FCapture) or FBatchActive;
+end;
+
+// The pop-up menu's action: the selected entry, saved in SaveFolder
+procedure TMainForm.StartSingleCapture(const AKind: TSheetKind);
+var
+  Error: String;
+begin
+  if Capturing or FOffscreen.Busy then
+    Exit;   // a capture or a grab is under way
+  if GorillaModel = nil then
+  begin
+    ShowMessage('Open a model first.');
+    Exit;
+  end;
+  if not FSettings.HasSaveFolder and not ChooseSaveFolder then
+    Exit;   // no folder, no capture
+  if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), SaveFolder,
+    procedure(AResult: String)
+    begin
+      if AResult <> String.Empty then
+        ShowMessage(AResult);
+    end, Error) then
+    ShowMessage(Error);
+end;
+
+// Grabs every frame of the list entry AIndex, then saves them as AKind in
+// AFolder. An animation is stepped through its own frames; (None), entry 0,
+// turns the model once instead. The camera is framed once for the whole
+// run, so every frame is drawn at the same scale and the frames line up,
+// and the on-screen framing is put back when the capture ends.
+// AOnFinished is called once the capture has ended, with an empty string if
+// the file was saved, or else what went wrong; it is not called when this
+// returns False, which it does, with AError set, if the capture could not
+// start at all.
+function TMainForm.StartCapture(const AKind: TSheetKind; const AIndex: Integer;
+  const AFolder: String; const AOnFinished: TProc<String>;
+  out AError: String): Boolean;
+var
+  Count, Delay: Integer;
+  Anim: TGorillaAnimation;
+  Source: TSprite3DFrameSource;
+  Capture: TSprite3DFrameCapture;
+  Stem, Folder: String;
+  Bytes: Int64;
+  Kind: TSheetKind;
+  OnFinished: TProc<String>;
+begin
+  Result := False;
+  AError := String.Empty;
+  if Assigned(FCapture) or FOffscreen.Busy then
+  begin
+    AError := 'A capture or a grab is already under way.';
+    Exit;
+  end;
+  if GorillaModel = nil then
+  begin
+    AError := 'Open a model first.';
+    Exit;
+  end;
+  if (AIndex < 0) or (AIndex >= AnimationListBox.Count) then
+  begin
+    AError := 'There is no such entry in the animation list.';
+    Exit;
+  end;
+
+  if AIndex = 0 then
+  begin
+    // No animation: one turn of the model, named after the model
+    Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel) +
+      '_rotate');
+    Source := TSprite3DTurntableFrames.Create(GorillaCamera,
+      Max(1, Round(FSettings.AnimationFps * TURNTABLE_SECONDS)), TURNTABLE_SECONDS);
+  end
+  else
+  begin
+    Anim := nil;
+    if Assigned(GorillaModel.AnimationManager) then
+      Anim := GorillaModel.AnimationManager.GetAnimation(AnimationListBox.Items[AIndex]);
+    if Anim = nil then
+    begin
+      AError := 'The model has no animation called ' + AnimationListBox.Items[AIndex];
+      Exit;
+    end;
+    Stem := SafeFileStem(AnimationListBox.Items[AIndex]);
+    Source := TSprite3DAnimationFrames.Create(GorillaModel, Anim, FSettings.AnimationFps);
+  end;
+
+  Count := Source.FrameCount;
+  Delay := Source.FrameDelay;
+  // The frames, and the strip or atlas made from them
+  Bytes := Int64(Count) * FOffscreen.Width * FOffscreen.Height * 4 * 2;
+  if Bytes > MAX_CAPTURE_BYTES then
+  begin
+    Source.Free;
+    AError := Format('%s: %d frames of %d x %d pixels need more memory than a ' +
+      'capture may use. Choose a smaller grab size in File, Settings.',
+      [Stem, Count, FOffscreen.Width, FOffscreen.Height]);
+    Exit;
+  end;
+
+  // One framing for every frame, from here until EndCapture
+  FCaptureRestore := GorillaCamera.SaveFraming;
+  FRefitAfterCapture := False;
+  Source.Start;
+  if not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
+    DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
+
+  // Locals, not parameters, for the procedures below to capture
+  Kind := AKind;
+  Folder := AFolder;
+  OnFinished := AOnFinished;
+  Capture := TSprite3DFrameCapture.Create(FOffscreen, Source,
+    procedure(const AFrames: TArray<TSprite3DImage>; const ACaptureError: String)
+    var
+      Outcome, FileName: String;
+    begin
+      FCapture := nil;
+      EndCapture;
+      UpdateBatchControls;
+      Outcome := String.Empty;
+      if ACaptureError <> String.Empty then
+        Outcome := Stem + ': capture failed: ' + ACaptureError
+      else
+        try
+          FileName := SaveSheet(Kind, AFrames, Folder, Stem, Delay);
+          DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [FileName, Length(AFrames)]));
+        except
+          on E: Exception do
+            Outcome := 'Can''t save ' + Stem + ' in ' + Folder + sLineBreak + E.Message;
+        end;
+      if Outcome <> String.Empty then
+        DebugMemo.Lines.Add(Outcome);
+      if Assigned(OnFinished) then
+        OnFinished(Outcome);
+    end,
+    procedure(const ADone, ATotal: Integer)
+    begin
+      Caption := Format('Capturing %s: frame %d of %d', [Stem, ADone, ATotal]);
+    end);
+  Capture.SourceStarted;
+  FCapture := Capture;
+  UpdateBatchControls;
+  DebugMemo.Lines.Add(Format('Capturing %s: %d frames of %d x %d',
+    [Stem, Count, FOffscreen.Width, FOffscreen.Height]));
+  Result := Capture.Run;
+  if not Result then
+  begin
+    // Run has finished the source and freed the capture
+    FCapture := nil;
+    EndCapture;
+    UpdateBatchControls;
+    AError := Stem + ': the capture could not start.';
+  end;
+end;
+
+// The batch controls under the animation list, made here rather than in the
+// form designer, and tick boxes on the list's entries. FMX's list box draws
+// each entry's tick box to the left of its text.
+procedure TMainForm.BuildBatchControls;
+var
+  Row: TLayout;
+begin
+  AnimationListBox.ShowCheckboxes := True;
+  AnimationListBox.OnChangeCheck := AnimationListBoxChangeCheck;
+
+  FBatchLayout := TLayout.Create(Self);
+  FBatchLayout.Parent := ControlsLayout;
+  FBatchLayout.Align := TAlignLayout.Bottom;
+  FBatchLayout.Height := 64;
+  FBatchLayout.Padding.Rect := TRectF.Create(4, 4, 4, 4);
+
+  // First row: All, then what to save
+  Row := TLayout.Create(Self);
+  Row.Parent := FBatchLayout;
+  Row.Align := TAlignLayout.Top;
+  Row.Height := 26;
+
+  FBatchAll := TCheckBox.Create(Self);
+  FBatchAll.Parent := Row;
+  FBatchAll.Align := TAlignLayout.Left;
+  FBatchAll.Width := 44;
+  FBatchAll.Text := 'All';
+  FBatchAll.Hint := 'Tick or clear every animation';
+  FBatchAll.ShowHint := True;
+  FBatchAll.OnChange := BatchAllChange;
+
+  FBatchKindBox := TComboBox.Create(Self);
+  FBatchKindBox.Parent := Row;
+  FBatchKindBox.Align := TAlignLayout.Client;
+  // In TSheetKind's order: the item index is the kind
+  FBatchKindBox.Items.Add('Sprite strip');
+  FBatchKindBox.Items.Add('Texture Atlas');
+  FBatchKindBox.Items.Add('AniGif');
+  FBatchKindBox.ItemIndex := Ord(skStrip);
+
+  // Second row: Export, and Abort beside it
+  Row := TLayout.Create(Self);
+  Row.Parent := FBatchLayout;
+  Row.Align := TAlignLayout.Top;
+  Row.Margins.Top := 4;
+  Row.Height := 26;
+  Row.Position.Y := 100;   // below the first row
+
+  FAbortButton := TButton.Create(Self);
+  FAbortButton.Parent := Row;
+  FAbortButton.Align := TAlignLayout.Right;
+  FAbortButton.Margins.Left := 4;
+  FAbortButton.Width := 56;
+  FAbortButton.Text := 'Abort';
+  FAbortButton.Hint := 'Stop the export once the current animation is saved';
+  FAbortButton.ShowHint := True;
+  FAbortButton.OnClick := AbortButtonClick;
+
+  FExportButton := TButton.Create(Self);
+  FExportButton.Parent := Row;
+  FExportButton.Align := TAlignLayout.Client;
+  FExportButton.Text := 'Export';
+  FExportButton.Hint := 'Save every ticked animation as chosen above';
+  FExportButton.ShowHint := True;
+  FExportButton.OnClick := ExportButtonClick;
+
+  // Put the strip below the list, whatever the creation order did
+  FBatchLayout.Position.Y := ControlsLayout.Height;
+  UpdateBatchControls;
+end;
+
+// All ticks every entry, or clears them all
+procedure TMainForm.BatchAllChange(Sender: TObject);
+var
+  I: Integer;
+begin
+  if FSyncingChecks then
+    Exit;
+  FSyncingChecks := True;
+  try
+    for I := 0 to AnimationListBox.Count - 1 do
+      AnimationListBox.ListItems[I].IsChecked := FBatchAll.IsChecked;
+  finally
+    FSyncingChecks := False;
+  end;
+end;
+
+// A tick changed by hand: All shows whether every entry is ticked
+procedure TMainForm.AnimationListBoxChangeCheck(Sender: TObject);
+var
+  I: Integer;
+  Every: Boolean;
+begin
+  if FSyncingChecks or (FBatchAll = nil) then
+    Exit;
+  Every := AnimationListBox.Count > 0;
+  for I := 0 to AnimationListBox.Count - 1 do
+    if not AnimationListBox.ListItems[I].IsChecked then
+    begin
+      Every := False;
+      Break;
+    end;
+  FSyncingChecks := True;
+  try
+    FBatchAll.IsChecked := Every;
+  finally
+    FSyncingChecks := False;
+  end;
+end;
+
+// Export is offered only when there is a model and nothing is being saved
+procedure TMainForm.UpdateBatchControls;
+begin
+  if FExportButton = nil then
+    Exit;
+  FExportButton.Enabled := not Capturing;
+  FBatchKindBox.Enabled := not Capturing;
+  FBatchAll.Enabled := not Capturing;
+  FAbortButton.Enabled := FBatchActive and not FBatchAborted;
+  if FBatchActive and FBatchAborted then
+    FExportButton.Text := 'Stopping...'
+  else if FBatchActive then
+    FExportButton.Text := 'Exporting...'
+  else
+    FExportButton.Text := 'Export';
+end;
+
+// Where a batch goes: a folder dialog opening at SaveFolder, in which a new
+// sub-folder can be made. Android and iOS have no folder dialog, so there
+// the fixed Grabs folder is used. SaveFolder itself is left as it is.
+function TMainForm.ChooseExportFolder(out AFolder: String): Boolean;
+begin
+  AFolder := DefaultGrabFolder;
+  if AFolder <> String.Empty then
+    Exit(True);
+  AFolder := SaveFolder;
+  if (AFolder = String.Empty) or not TDirectory.Exists(AFolder) then
+    AFolder := TPath.GetDocumentsPath;
+  Result := SelectDirectory('Export Location', String.Empty, AFolder) and
+    (AFolder <> String.Empty);
+end;
+
+// Saves every ticked entry as the drop-down says, one after another
+procedure TMainForm.ExportButtonClick(Sender: TObject);
+var
+  I: Integer;
+  Items: TArray<Integer>;
+  Folder: String;
+begin
+  if Capturing or FOffscreen.Busy then
+    Exit;
+  if GorillaModel = nil then
+  begin
+    ShowMessage('Open a model first.');
+    Exit;
+  end;
+  Items := nil;
+  for I := 0 to AnimationListBox.Count - 1 do
+    if AnimationListBox.ListItems[I].IsChecked then
+      Items := Items + [I];
+  if Length(Items) = 0 then
+  begin
+    ShowMessage('Tick the animations to export first.');
+    Exit;
+  end;
+  if not ChooseExportFolder(Folder) then
+    Exit;   // cancelled
+
+  FBatchItems := Items;
+  FBatchPos := 0;
+  FBatchKind := TSheetKind(EnsureRange(FBatchKindBox.ItemIndex, Ord(Low(TSheetKind)),
+    Ord(High(TSheetKind))));
+  FBatchFolder := Folder;
+  FBatchSaved := 0;
+  FBatchErrors := nil;
+  FBatchAborted := False;
+  FBatchActive := True;
+  UpdateBatchControls;
+  DebugMemo.Lines.Add(Format('Exporting %d animations as %s to %s',
+    [Length(Items), FBatchKindBox.Items[Ord(FBatchKind)], Folder]));
+  RunNextBatchItem;
+end;
+
+// Starts the batch's next entry, or ends the batch after the last. Each
+// entry starts from a fresh main-loop turn, after the last capture has
+// freed itself.
+procedure TMainForm.RunNextBatchItem;
+var
+  Error: String;
+  Started: Boolean;
+begin
+  Started := False;
+  while not Started and not FBatchAborted and (FBatchPos <= High(FBatchItems)) do
+  begin
+    Started := StartCapture(FBatchKind, FBatchItems[FBatchPos], FBatchFolder,
+      procedure(AResult: String)
+      var
+        Entry: Integer;
+      begin
+        if AResult = String.Empty then
+        begin
+          Inc(FBatchSaved);
+          // Done: untick it, and let All follow
+          Entry := FBatchItems[FBatchPos];
+          if Entry < AnimationListBox.Count then
+            AnimationListBox.ListItems[Entry].IsChecked := False;
+          AnimationListBoxChangeCheck(AnimationListBox);
+        end
+        else
+          FBatchErrors := FBatchErrors + [AResult];
+        Inc(FBatchPos);
+        TThread.ForceQueue(nil,
+          procedure
+          begin
+            if FBatchActive then   // cleared if the form is closing
+              RunNextBatchItem;
+          end);
+      end, Error);
+    if not Started then
+    begin
+      FBatchErrors := FBatchErrors + [Error];
+      DebugMemo.Lines.Add(Error);
+      Inc(FBatchPos);
+    end;
+  end;
+  if not Started then
+    FinishBatch;
+end;
+
+// Reports the batch and gives the list back its own animation
+procedure TMainForm.FinishBatch;
+var
+  Report: String;
+begin
+  FBatchActive := False;
+  UpdateBatchControls;
+  // The batch left its last animation playing; play the selected one again
+  AnimationListBoxClick(AnimationListBox);
+  Report := Format('Exported %d of %d animations to %s',
+    [FBatchSaved, Length(FBatchItems), FBatchFolder]);
+  if FBatchAborted then
+    Report := Report + sLineBreak + Format('Aborted: %d not exported',
+      [Length(FBatchItems) - FBatchPos]);
+  DebugMemo.Lines.Add(Report);
+  if Length(FBatchErrors) > 0 then
+    ShowMessage(Report + sLineBreak + sLineBreak + String.Join(sLineBreak, FBatchErrors))
+  else
+    ShowMessage(Report);
+  FBatchErrors := nil;
+  FBatchItems := nil;
+  FBatchAborted := False;
+  UpdateBatchControls;
+end;
+
+// Stops the batch after the entry being captured; that one still finishes
+// and is saved, as a half-made capture has nothing worth keeping
+procedure TMainForm.AbortButtonClick(Sender: TObject);
+begin
+  if not FBatchActive or FBatchAborted then
+    Exit;
+  FBatchAborted := True;
+  DebugMemo.Lines.Add('Export aborted; stopping after the current animation');
+  UpdateBatchControls;
+end;
+
+// Frames the camera once for every frame of ASource, for a target of
+// AWidth x AHeight, with the pan on top as for every fit. A turn is fitted
+// for every angle about the model's centre of rotation, so no frame of the
+// turn can leave the target. An animation is fitted, at the current angles,
+// to the union of its frames' boxes, so the widest pose still fits; the
+// source must already be started.
+function TMainForm.FrameCaptureFraming(const ASource: TSprite3DFrameSource;
+  const AWidth, AHeight: Integer): Boolean;
+var
+  I: Integer;
+  Box, Union: TBoundingBox;
+begin
+  if ASource is TSprite3DTurntableFrames then
+    Result := GorillaCamera.FitToBoundsMax(GorillaModel, AWidth, AHeight)
+  else
+  begin
+    for I := 0 to ASource.FrameCount - 1 do
+    begin
+      ASource.ShowFrame(I);
+      Box := GorillaModel.GetAnimatedBoundingBox();
+      if I = 0 then
+        Union := Box
+      else
+      begin
+        Union.TopLeftNear := Point3D(
+          Min(Union.TopLeftNear.X, Min(Box.TopLeftNear.X, Box.BottomRightFar.X)),
+          Min(Union.TopLeftNear.Y, Min(Box.TopLeftNear.Y, Box.BottomRightFar.Y)),
+          Min(Union.TopLeftNear.Z, Min(Box.TopLeftNear.Z, Box.BottomRightFar.Z)));
+        Union.BottomRightFar := Point3D(
+          Max(Union.BottomRightFar.X, Max(Box.TopLeftNear.X, Box.BottomRightFar.X)),
+          Max(Union.BottomRightFar.Y, Max(Box.TopLeftNear.Y, Box.BottomRightFar.Y)),
+          Max(Union.BottomRightFar.Z, Max(Box.TopLeftNear.Z, Box.BottomRightFar.Z)));
+      end;
+    end;
+    Result := GorillaCamera.FitToBounds(Union, GorillaModel, AWidth, AHeight);
+  end;
+  if Result and FPanEnabled then
+    GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
+      ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
+end;
+
+// The on-screen view as it was before the capture, refitted if the
+// viewport changed size meanwhile
+procedure TMainForm.EndCapture;
+begin
+  GorillaCamera.RestoreFraming(FCaptureRestore);
+  ApplyAngles;
+  if FRefitAfterCapture then
+    FitModel;
+  FRefitAfterCapture := False;
+  Caption := ProjectionCaption;
+end;
+
+// Lays out and writes the captured frames in AFolder, creating it if need
+// be; names follow the pop-up menu's rules, and an existing file of the same
+// name is replaced. Returns the file written; raises if it cannot be.
+function TMainForm.SaveSheet(const AKind: TSheetKind;
+  const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
+  const ADelay: Integer): String;
+var
+  Cells: Integer;
+begin
+  ForceDirectories(AFolder);
+  case AKind of
+    skStrip:
+      begin
+        Result := TPath.Combine(AFolder,
+          Format('%s_strip%d.png', [AStem, Length(AFrames)]));
+        SavePng(ComposeStrip(AFrames), Result);
+      end;
+    skAtlas:
+      begin
+        Result := TPath.Combine(AFolder, AStem + '.png');
+        SavePng(ComposeAtlas(AFrames, Cells), Result);
+      end;
+  else
+    begin
+      Result := TPath.Combine(AFolder, AStem + '.gif');
+      SaveAnimatedGif(AFrames, Result, ADelay);
+    end;
+  end;
+end;
 
 end.

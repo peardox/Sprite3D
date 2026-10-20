@@ -1,0 +1,109 @@
+object AnimationSettingsForm: TAnimationSettingsForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Animation'
+  ClientHeight = 150
+  ClientWidth = 360
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnClose = FormClose
+  DesignerMasterStyle = 0
+  object MainLayout: TLayout
+    Align = Client
+    Padding.Left = 12.000000000000000000
+    Padding.Top = 12.000000000000000000
+    Padding.Right = 12.000000000000000000
+    Size.Width = 360.000000000000000000
+    Size.Height = 106.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object FpsLayout: TLayout
+      Align = Top
+      Position.X = 12.000000000000000000
+      Position.Y = 12.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      object FpsLabel: TLabel
+        Align = Left
+        Size.Width = 40.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'FPS'
+        TabOrder = 0
+      end
+      object FpsValueLabel: TLabel
+        Align = Right
+        Position.X = 296.000000000000000000
+        Size.Width = 40.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Trailing
+        Text = '30'
+        TabOrder = 2
+      end
+      object FpsTrack: TTrackBar
+        Align = Client
+        CanParentFocus = True
+        Frequency = 1.000000000000000000
+        Max = 60.000000000000000000
+        Min = 1.000000000000000000
+        Orientation = Horizontal
+        Size.Width = 256.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Value = 30.000000000000000000
+        OnChange = FpsTrackChange
+      end
+    end
+    object NoteLabel: TLabel
+      Align = Top
+      AutoSize = True
+      Margins.Top = 8.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 52.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      Text = 
+        'Frames per second for animations saved as strips, atlases and GI' +
+        'Fs.'
+      TabOrder = 1
+    end
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 106.000000000000000000
+    Size.Width = 360.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object CancelButton: TButton
+      Anchors = [akLeft, akBottom]
+      Cancel = True
+      ModalResult = 2
+      Position.X = 12.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 1
+      Text = 'Cancel'
+      OnClick = ButtonClick
+    end
+    object OkButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      ModalResult = 1
+      Position.X = 268.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'OK'
+      OnClick = ButtonClick
+    end
+  end
+end

@@ -21,7 +21,10 @@ uses
   Sprite3DStyles in 'lib\Sprite3DStyles.pas',
   Sprite3DTitleBar in 'lib\Sprite3DTitleBar.pas',
   Sprite3DFlatColour in 'lib\Sprite3DFlatColour.pas',
-  Sprite3DSettingsForm in 'ui\Sprite3DSettingsForm.pas' {GeneralSettingsForm};
+  Sprite3DSettingsForm in 'ui\Sprite3DSettingsForm.pas' {GeneralSettingsForm},
+  Sprite3DSpriteSheet in 'lib\Sprite3DSpriteSheet.pas',
+  Sprite3DAnimCapture in 'lib\Sprite3DAnimCapture.pas',
+  Sprite3DAnimationForm in 'ui\Sprite3DAnimationForm.pas' {AnimationSettingsForm};
 
 {$R *.res}
 // The themes' FMX styles, inside the program on every platform. The .res

@@ -59,6 +59,25 @@ const
   /// <remarks>The radius is half the diagonal of the model's bounding box, so a pan of 1
   /// moves the orbit centre out to where the model's farthest corner was.</remarks>
   PAN_LIMIT = 2.0;
+  //** @abstract(The lowest frame rate File, Animation offers for saved animations, in frames
+  //** per second.)
+  /// <summary>The lowest frame rate File, Animation offers for saved animations, in frames per
+  /// second.</summary>
+  ANIMATION_FPS_MIN = 1;
+  //** @abstract(The highest frame rate File, Animation offers for saved animations, in frames
+  //** per second.)
+  //**
+  //** Gorilla bakes animations at 60 frames a second on desktop, so a higher rate would only
+  //** repeat frames.
+  /// <summary>The highest frame rate File, Animation offers for saved animations, in frames
+  /// per second.</summary>
+  /// <remarks>Gorilla bakes animations at 60 frames a second on desktop, so a higher rate
+  /// would only repeat frames.</remarks>
+  ANIMATION_FPS_MAX = 60;
+  //** @abstract(The frame rate saved animations use until File, Animation changes it.)
+  /// <summary>The frame rate saved animations use until File, Animation changes
+  /// it.</summary>
+  ANIMATION_FPS_DEFAULT = 30;
   //** @abstract(The smallest width or height File, Grab renders, in pixels.)
   /// <summary>The smallest width or height File, Grab renders, in pixels.</summary>
   GRAB_SIZE_MIN = 8;
@@ -205,6 +224,8 @@ type
     FAssociationBackup: String;
     FGrabWidth: Integer;
     FGrabHeight: Integer;
+    FAnimationFps: Integer;
+    procedure SetAnimationFps(const Value: Integer);
     procedure SetGrabWidth(const Value: Integer);
     procedure SetGrabHeight(const Value: Integer);
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
@@ -514,6 +535,16 @@ type
     /// <remarks>Stored as <c>grabHeight</c>. Written values are limited to GRAB_SIZE_MIN to
     /// GRAB_SIZE_MAX.</remarks>
     property GrabHeight: Integer read FGrabHeight write SetGrabHeight;
+    //** @abstract(The frame rate animations are saved at, in frames per second;
+    //** ANIMATION_FPS_DEFAULT by default.)
+    //**
+    //** Set in File, Animation. Stored as @code(animationFps). Written values are limited to
+    //** ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.
+    /// <summary>The frame rate animations are saved at, in frames per second;
+    /// ANIMATION_FPS_DEFAULT by default.</summary>
+    /// <remarks>Set in File, Animation. Stored as <c>animationFps</c>. Written values are
+    /// limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
+    property AnimationFps: Integer read FAnimationFps write SetAnimationFps;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -959,6 +990,12 @@ begin
   FAssociationBackup := String.Empty;
   FGrabWidth := GRAB_SIZE_DEFAULT;
   FGrabHeight := GRAB_SIZE_DEFAULT;
+  FAnimationFps := ANIMATION_FPS_DEFAULT;
+end;
+
+procedure TSprite3DAppSettings.SetAnimationFps(const Value: Integer);
+begin
+  FAnimationFps := EnsureRange(Value, ANIMATION_FPS_MIN, ANIMATION_FPS_MAX);
 end;
 
 // Neon writes through the setters too, so a hand-edited settings.json can't
