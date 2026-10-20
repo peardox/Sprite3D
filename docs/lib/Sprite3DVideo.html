@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DVideo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DVideo</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Writes a sequence of frames as a video-only MP4 file with the FFmpeg libraries, loaded only when first needed.</p>
+<p>
+
+
+<p>SaveMp4Video writes H.264 when Cisco's OpenH264 library is present, through Sprite3DOpenH264, and MPEG-4 Part 2 otherwise. H.264 plays everywhere, web browsers included. MPEG-4 Part 2 is FFmpeg's own <code>mpeg4</code> encoder, which every FFmpeg build has and which needs no library beyond FFmpeg's own under its LGPL licence; it plays in desktop players such as VLC, QuickTime and the Windows players, but not in web browsers. In both cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is used only as Sprite3DOpenH264 is told, from the copy downloaded for the platform.
+
+<p>The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers in the <code>ffmpeg</code> folder, used as they are. Those headers bind every function statically, so calling any of them would make the program fail to start where the libraries are missing. This unit calls none of them: it loads avutil, avcodec and avformat itself with LoadLibrary or dlopen and looks up the two dozen functions it needs, with the headers' signatures, so Sprite3D starts and runs whether or not the libraries are there, and offers video only when VideoAvailable says they loaded.
+
+<p>The libraries must be FFmpeg 8.1's major versions, as the headers are: avutil 60, avcodec 62 and avformat 62. They are looked for in the folders NativeLibraryFolders in Sprite3DNativeLibs gives, first the platform's usual place for an application's own libraries, then a <code>dlls/&lt;platform&gt;</code> folder beside the executable or above it, and last wherever the system looks for libraries.
+
+<p></p>
+
+<pre class="preformatted">
+Windows     avutil-60.dll         avcodec-62.dll         avformat-62.dll
+macOS, iOS  libavutil.60.dylib    libavcodec.62.dylib    libavformat.62.dylib
+Linux       libavutil.so.60       libavcodec.so.62       libavformat.so.62
+Android     libavutil.so          libavcodec.so          libavformat.so</pre>
+
+<p>
+
+<p>Android only unpacks libraries named <code>lib*.so</code> from an APK, so there the names have no version.
+
+<p>Any other FFmpeg library one of those needs, such as swresample, must be in the same folder; it is loaded first if it is there.
+
+<p>For the main thread, or any one thread at a time.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DVideo.ESprite3DVideoError.html"><code>ESprite3DVideoError</code></a></td>
+<td class="itemdesc">Raised when a video cannot be written.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DVideo.html#VideoAvailable">VideoAvailable</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DVideo.html#VideoStatus">VideoStatus</a></strong>: String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DVideo.html#SaveMpeg4Video-TArrayTSprite3DImage-String-Double-">SaveMpeg4Video</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ACycleSeconds: Double);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DVideo.html#H264Available">H264Available</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DVideo.html#RecheckH264">RecheckH264</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DVideo.html#SaveH264Video-TArrayTSprite3DImage-String-Double-">SaveH264Video</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ACycleSeconds: Double);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DVideo.html#SaveMp4Video-TArrayTSprite3DImage-String-Double-">SaveMp4Video</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ACycleSeconds: Double): String;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="VideoAvailable"></span><code>function <strong>VideoAvailable</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether MP4 video can be written: the FFmpeg libraries loaded and have the encoder.</p>
+<p>
+
+
+<p>The first call looks for and loads the libraries, which takes a moment; later calls return the same answer at once. The libraries stay loaded until the program ends.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if SaveMpeg4Video can be used.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="VideoStatus"></span><code>function <strong>VideoStatus</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Why video is or is not available, for a log or a hint.</p>
+<p>
+
+
+<p>Loads the libraries if VideoAvailable has not yet been called.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Where the libraries were loaded from and their versions, or what was missing, with a second line saying whether OpenH264 was found.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveMpeg4Video-TArrayTSprite3DImage-String-Double-"></span><code>procedure <strong>SaveMpeg4Video</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ACycleSeconds: Double);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes the frames as a video-only MPEG-4 Part 2 MP4 file.</p>
+<p>
+
+
+<p>One cycle of ACycleSeconds is shown as Length(AFrames) equal frames, so the video lasts exactly one cycle; the frame rate is carried as an exact fraction where it can be. MP4 has no transparency, so each frame is laid over black, which a Solid or Gradient background will already have covered. The width and height are rounded up to even numbers, as the encoder's colour format needs, with black in the extra row or column. Quality is fixed and high (quantiser 3), every twelfth frame is a key frame and there are no B-frames. The file replaces any of that name; the folder must exist. Blocks while it encodes.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size.</dd>
+<dt>AFileName</dt>
+<dd>The file to write, normally ending in <code>.mp4</code>.</dd>
+<dt>ACycleSeconds</dt>
+<dd>How long all the frames last together, in seconds; more than 0.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DVideo.ESprite3DVideoError.html">ESprite3DVideoError</a></dt>
+<dd>If the libraries are not available, or FFmpeg fails at any step; a part-written file may be left behind.</dd>
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size, or ACycleSeconds is not more than 0.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="H264Available"></span><code>function <strong>H264Available</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether MP4 video will be H.264: FFmpeg and OpenH264 both loaded.</p>
+<p>
+
+
+<p>Loads the libraries if VideoAvailable has not yet been called.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if SaveMp4Video writes H.264; False if it writes MPEG-4 Part 2, or nothing.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="RecheckH264"></span><code>function <strong>RecheckH264</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Looks for OpenH264 again, after a copy may have been added, unless one is loaded.</p>
+<p>
+
+
+<p>For when OpenH264 has been downloaded while the program runs; tell Sprite3DOpenH264 where with SetPreferredOpenH264 first. A copy already loaded stays in use until the program ends, as a loaded library cannot be swapped safely.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if H.264 is available now.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveH264Video-TArrayTSprite3DImage-String-Double-"></span><code>procedure <strong>SaveH264Video</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ACycleSeconds: Double);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes the frames as a video-only H.264 MP4 file with OpenH264.</p>
+<p>
+
+
+<p>As SaveMpeg4Video in every way but the codec: H.264 Constrained Baseline from OpenH264, aiming at a constant quality with about a quarter of a bit per pixel per frame and never dropping a frame, a key frame every twelfth frame, no B-frames. The width and height must reach 16 pixels after rounding up to even numbers.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size.</dd>
+<dt>AFileName</dt>
+<dd>The file to write, normally ending in <code>.mp4</code>.</dd>
+<dt>ACycleSeconds</dt>
+<dd>How long all the frames last together, in seconds; more than 0.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DVideo.ESprite3DVideoError.html">ESprite3DVideoError</a></dt>
+<dd>If FFmpeg is not available, or FFmpeg fails at any step; a part-written file may be left behind.</dd>
+<dt><a class="normal" href="Sprite3DOpenH264.ESprite3DH264Error.html">ESprite3DH264Error</a></dt>
+<dd>If OpenH264 is not available or fails.</dd>
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size, or ACycleSeconds is not more than 0.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveMp4Video-TArrayTSprite3DImage-String-Double-"></span><code>function <strong>SaveMp4Video</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ACycleSeconds: Double): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes the frames as a video-only MP4 file, H.264 if it can, else MPEG-4 Part 2.</p>
+<p>
+
+
+<p>Uses SaveH264Video when H264Available, and SaveMpeg4Video otherwise; see those for the details. Frames that would be smaller than 16 pixels across or down are always MPEG-4 Part 2, as OpenH264 cannot take them. If OpenH264 itself fails, the file is written again as MPEG-4 Part 2, and the result says why.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size.</dd>
+<dt>AFileName</dt>
+<dd>The file to write, normally ending in <code>.mp4</code>.</dd>
+<dt>ACycleSeconds</dt>
+<dd>How long all the frames last together, in seconds; more than 0.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The codec written, <code>'H.264'</code> or <code>'MPEG-4 Part 2'</code>, with the reason after it if H.264 was tried and failed, for a log.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DVideo.ESprite3DVideoError.html">ESprite3DVideoError</a></dt>
+<dd>If FFmpeg is not available or fails.</dd>
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size, or ACycleSeconds is not more than 0.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

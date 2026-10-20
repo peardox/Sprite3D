@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DAnimCapture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DAnimCapture</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Grabs every frame of a model's animation, or of a turn of the camera round it, one off-screen grab after another.</p>
+<p>
+
+
+<p>A frame source says how many frames there are, how long they last together, and how to show frame N. TSprite3DAnimationFrames shows the frames of one of a Gorilla model's animations, from the first to the last; TSprite3DTurntableFrames turns a TSprite3DCamera once round the model, for a model or a moment with no animation to play.
+
+<p>TSprite3DFrameCapture then shows each frame in turn and grabs it with a TSprite3DOffscreen, starting the next grab from inside the previous one's procedure, as TSprite3DOffscreen.GrabSizes does. The grabs are copied into TSprite3DImage records straight away, so the whole run holds no FMX bitmaps, and the caller gets them all at the end in one procedure, ready for Sprite3DSpriteSheet to lay out and save.
+
+<p>The capture does not frame the model; the owner of the camera sets one framing for the whole run before starting it, so every frame is drawn at the same scale, and puts its own back afterwards.
+
+<p>Everything here is for the main thread. A capture runs over many frames of the main loop; the application stays responsive meanwhile, and should not start other grabs, load another model or change the animation until the capture reports.
+
+<p></p>
+
+<pre class="preformatted">
+TSprite3DFrameSource (abstract)
+|-- TSprite3DAnimationFrames   a TGorillaAnimation, frame by frame
+`-- TSprite3DTurntableFrames   the camera's azimuth, once round
+
+TSprite3DFrameCapture   ShowFrame (N) -&gt; TSprite3DOffscreen.Grab -&gt; copy -&gt; N + 1</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAnimCapture.TSprite3DFrameSource.html"><code>TSprite3DFrameSource</code></a></td>
+<td class="itemdesc">Something that can be shown one frame at a time for capture.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAnimCapture.TSprite3DAnimationFrames.html"><code>TSprite3DAnimationFrames</code></a></td>
+<td class="itemdesc">One cycle of a Gorilla model's animation, resampled at a chosen frame rate.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAnimCapture.TSprite3DTurntableFrames.html"><code>TSprite3DTurntableFrames</code></a></td>
+<td class="itemdesc">One turn of the camera round the model, in equal steps.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAnimCapture.TSprite3DFrameCapture.html"><code>TSprite3DFrameCapture</code></a></td>
+<td class="itemdesc">One capture run: every frame of a source, grabbed in turn.</td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DAnimCapture.html#TSprite3DFramesProc">TSprite3DFramesProc</a></strong> = reference to procedure(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;;
+    const AError: String);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DAnimCapture.html#TSprite3DCaptureProgress">TSprite3DCaptureProgress</a></strong> = reference to procedure(const ADone, ATotal: Integer);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DFramesProc"></span><code><strong>TSprite3DFramesProc</strong> = reference to procedure(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;;
+    const AError: String);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reports a finished capture: every frame, in order, or an error.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, first to last, all the grab's size; empty if AError is set. They belong to the procedure.</dd>
+<dt>AError</dt>
+<dd>Empty on success; otherwise why the capture stopped.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DCaptureProgress"></span><code><strong>TSprite3DCaptureProgress</strong> = reference to procedure(const ADone, ATotal: Integer);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reports progress after each frame is grabbed.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ADone</dt>
+<dd>How many frames have been grabbed so far.</dd>
+<dt>ATotal</dt>
+<dd>How many frames there are in all.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

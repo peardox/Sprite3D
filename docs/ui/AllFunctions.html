@@ -77,24 +77,44 @@ function pasdocUpdateMembers(className) {
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ApplyFileAssociations-TSprite3DAppSettings-Boolean-Boolean-String-">ApplyFileAssociations</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Registers or unregisters the application for model files as asked, keeping what is needed to undo it in ASettings.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ApplyTheme-TSprite3DTheme-String-">ApplyTheme</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Gives the whole application, title bars included, the look ATheme names.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The file an icon is saved to without asking, or empty where the user should choose.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreateModelAssociations">CreateModelAssociations</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>A new TSprite3DFileAssociations for the model files this application opens.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder grabs are saved in without asking, or empty where the user should choose.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultModelDir">DefaultModelDir</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder that holds the application's models folder, for this platform.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Formats an angle from Wrap360 as whole degrees for a readout.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#GpuModeSupported">GpuModeSupported</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>True where the GPU preference can be set: Windows only.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsModelFile-String-">IsModelFile</a></td>
@@ -107,29 +127,59 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Replaces a model's contents with a model file and starts its last animation.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-">ModelPanOffset</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>How far to move the orbit centre for a camera pan.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The first free numbered file name in a folder, such as grab001.png.</p></td>
 </tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OpenH264ConfigFile">OpenH264ConfigFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The <code>openh264.json</code> that gives OpenH264's download address for each platform, or empty if there is none.</p></td>
+</tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OpenH264Folder">OpenH264Folder</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Where downloaded copies of OpenH264 are kept: an <code>openh264</code> folder in SupportFolder.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlaceModel-TGorillaModel-TBoundingBox-">PlaceModel</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Centres a loaded model on its bounding box and turns it right way up.</p></td>
 </tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGeneralSettings-TSprite3DAppSettings-">ReadGeneralSettings</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The File, Settings choices as they stand now.</p></td>
+</tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGpuMode">ReadGpuMode</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The GPU preference Windows has for this program file now.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Saves a grab as the next free grabNNN.png in a folder.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The model to load at start-up: the first one the system asked to open, or ADefault.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#Wrap360-Single-">Wrap360</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Shifts an angle in degrees by whole turns into the range 0 to 360.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#WriteGpuMode-TSprite3DGpuMode-">WriteGpuMode</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Asks Windows for a GPU for this program file, from the next start.</p></td>
 </tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

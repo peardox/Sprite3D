@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DTitleBar: Record TSprite3DTitleBarSpec</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DTitleBarSpec"></span><h1 class="cio">Record TSprite3DTitleBarSpec</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DTitleBarSpec = record</code></p>
+<h2 class="description">Description</h2>
+<p>
+How title bars should look.</p>
+<div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#UseSystem">UseSystem</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#Caption">Caption</a></strong>: TAlphaColor;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#Text">Text</a></strong>: TAlphaColor;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#Border">Border</a></strong>: TAlphaColor;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#System">System</a></strong>: <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>; static;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#Coloured-TAlphaColor-TAlphaColor-">Coloured</a></strong>(const ACaption: TAlphaColor; const ABorder: TAlphaColor = TAlphaColors.Null): <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>; static;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html#IsDark">IsDark</a></strong>: Boolean;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="UseSystem"></span><code><strong>UseSystem</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True to leave title bars as the system draws them; the colours are then ignored.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Caption"></span><code><strong>Caption</strong>: TAlphaColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption's background colour; its brightness also picks dark or light where colours are not possible.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Text"></span><code><strong>Text</strong>: TAlphaColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption text's colour.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Border"></span><code><strong>Border</strong>: TAlphaColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The window border's colour, or TAlphaColors.Null for the system's.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="System"></span><code>class function <strong>System</strong>: <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A spec that leaves title bars to the system.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The spec, with UseSystem True.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Coloured-TAlphaColor-TAlphaColor-"></span><code>class function <strong>Coloured</strong>(const ACaption: TAlphaColor; const ABorder: TAlphaColor = TAlphaColors.Null): <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A spec with ACaption behind the caption, text in black or white, whichever reads better, and ABorder round the window.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACaption</dt>
+<dd>The caption's background colour.</dd>
+<dt>ABorder</dt>
+<dd>The border's colour; TAlphaColors.Null for the system's.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The spec.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="IsDark"></span><code>function <strong>IsDark</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True if Caption is darker than mid grey.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Whether a dark title bar suits the caption colour.</p></td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

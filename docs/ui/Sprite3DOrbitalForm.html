@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DOrbitalForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DOrbitalForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Variables">Variables</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+The Variable camera dialog: dials for the camera's angles, a distance slider and an optional pan.</p>
+<p>
+
+
+<p>Three dials set Azimuth, Inclination and Roll, whose readouts show whole degrees and, beside the Roll dial, the same three angles to six decimal places; a slider moves the camera out from the fitted distance, and, below them, the Pan box switches on two sliders that move the view along the model's own X and Z axes, the directions that are not the model's up. Pan is off by default and is meant for the odd case where the model should sit off centre; it moves the point the camera orbits, on top of the fit, and leaves the angles and the distance alone. Centre puts both sliders back to 0.
+
+<p>The dialog only edits a TCameraSettings. It never touches the camera itself: each change calls OnPreview, so the owner can show it at once, and the owner keeps or undoes the change when the dialog closes. On the desktop show it with ShowModal and free it afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK, OnCancel otherwise, and frees the form when it closes.
+
+<p></p>
+
+<pre class="preformatted">
+TOrbitalSettingsForm
+|-- Layout1
+|   `-- OrbitalLayout
+|       |-- AzimuthDial, AngleDial, RollDial   with their labels and readouts
+|       |-- ExactLayout          the three angles to six decimal places
+|       |-- PanLayout
+|       |   |-- PanTopLayout     PanCheck, PanResetButton
+|       |   |-- PanXLayout       PanXLabel, PanXTrack
+|       |   `-- PanZLayout       PanZLabel, PanZTrack
+|       `-- DistanceLayout       DistanceLabel, DistanceTrack
+`-- Layout2                      CancelButton, OkButton</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DOrbitalForm.TCameraSettings.html"><code>TCameraSettings</code></a></td>
+<td class="itemdesc">Everything the Variable camera dialog edits.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html"><code>TOrbitalSettingsForm</code></a></td>
+<td class="itemdesc">The Variable camera dialog.</td>
+</tr>
+</table>
+<span id="PasDoc-Variables"></span><h3 class="summary">Variables</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.html#OrbitalSettingsForm">OrbitalSettingsForm</a></strong>: <a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html">TOrbitalSettingsForm</a>;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Variables</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OrbitalSettingsForm"></span><code><strong>OrbitalSettingsForm</strong>: <a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html">TOrbitalSettingsForm</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The instance the project file creates; the main form makes its own.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

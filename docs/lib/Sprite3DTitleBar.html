@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DTitleBar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DTitleBar</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Colours the windows' title bars to go with the application's FMX style, where the operating system allows it.</p>
+<p>
+
+
+<p>SetTitleBarSpec stores how title bars should look and applies it at once to every form on screen; forms shown later get it as they are shown. TitleBarSpecFromStyle works out a spec from the FMX style in use, taking the colour of its form background.
+
+<p></p>
+
+<pre class="preformatted">
+Windows 11   caption, caption text and border colours (DWM)
+Windows 10   dark or light title bar only (DWM immersive dark mode, build 17763 on)
+macOS 10.14  dark or light appearance for the whole application (NSApp.appearance)
+Linux        nothing: the window manager draws the title bar
+Android, iOS nothing: there is no title bar</pre>
+
+<p>
+
+<p>Where only dark or light is possible, a caption colour darker than mid grey gives dark. Calls on a system without the feature are ignored. The unit knows nothing of any particular application. Call it on the main thread only.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html"><code>TSprite3DTitleBarSpec</code></a></td>
+<td class="itemdesc">How title bars should look.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DTitleBar.html#StyleBackgroundColour-TAlphaColor-">StyleBackgroundColour</a></strong>(var AColour: TAlphaColor): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DTitleBar.html#TitleBarSpecFromStyle-TAlphaColor-TAlphaColor-">TitleBarSpecFromStyle</a></strong>(const AFallback: TAlphaColor; const ABorder: TAlphaColor = TAlphaColors.Null): <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DTitleBar.html#SetTitleBarSpec-TSprite3DTitleBarSpec-">SetTitleBarSpec</a></strong>(const ASpec: <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DTitleBar.html#ApplyTitleBar-TCommonCustomForm-">ApplyTitleBar</a></strong>(const AForm: TCommonCustomForm);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="StyleBackgroundColour-TAlphaColor-"></span><code>function <strong>StyleBackgroundColour</strong>(var AColour: TAlphaColor): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The colour of the form background in the FMX style in use.</p>
+<p>
+
+
+<p>Reads the <code>backgroundstyle</code> resource that every FMX style draws behind a form; for a gradient, its first colour.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AColour</dt>
+<dd>The colour found; unchanged if none is.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the style has a background with a colour.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TitleBarSpecFromStyle-TAlphaColor-TAlphaColor-"></span><code>function <strong>TitleBarSpecFromStyle</strong>(const AFallback: TAlphaColor; const ABorder: TAlphaColor = TAlphaColors.Null): <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+A title bar spec to go with the FMX style in use.</p>
+<p>
+
+
+<p>The caption takes the style's form background colour, as StyleBackgroundColour reads it, or AFallback if the style has none.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFallback</dt>
+<dd>The caption colour to use if the style's cannot be read.</dd>
+<dt>ABorder</dt>
+<dd>The border colour, often the style's accent; TAlphaColors.Null for the system's.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The spec.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SetTitleBarSpec-TSprite3DTitleBarSpec-"></span><code>procedure <strong>SetTitleBarSpec</strong>(const ASpec: <a href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a>);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Makes ASpec the look of every title bar, now and for forms shown later.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ASpec</dt>
+<dd>How title bars should look.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ApplyTitleBar-TCommonCustomForm-"></span><code>procedure <strong>ApplyTitleBar</strong>(const AForm: TCommonCustomForm);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Gives one form's title bar the current spec.</p>
+<p>
+
+
+<p>SetTitleBarSpec already does this for every form; call it only for a form whose window has been made again. A form whose window does not exist yet is skipped.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AForm</dt>
+<dd>The form.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

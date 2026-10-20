@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DAnimCapture: Class TSprite3DFrameCapture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DFrameCapture"></span><h1 class="cio">Class TSprite3DFrameCapture</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DFrameCapture = class(TObject)</code></p>
+<h2 class="description">Description</h2>
+<p>
+One capture run: every frame of a source, grabbed in turn.</p>
+<p>
+
+
+<p>Create it, then call Run. Run starts the source, shows frame 0 and asks the off-screen renderer for a grab; each grab is copied, the next frame shown and grabbed, and so on. When the last frame is in, or a grab fails, the source is finished, the procedure given to Create is called once with every frame or the error, and the capture frees itself and its source. While it runs, the off-screen renderer is busy for most of the time but not all of it, so the owner should refuse other grabs on its own account.
+
+<p>The capture changes nothing about the framing: the owner frames the camera for the whole run first and restores it in its procedure. Where TSprite3DOffscreen grabs by screenshot (macOS and iOS), each frame is left on screen for SettleTime milliseconds before it is grabbed, so the screenshot shows it.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TObject</li>
+<li class="thisitem">TSprite3DFrameCapture</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#Create-TSprite3DOffscreen-TSprite3DFrameSource-TSprite3DFramesProc-TSprite3DCaptureProgress-">Create</a></strong>(const AOffscreen: <a href="Sprite3DOffscreen.TSprite3DOffscreen.html">TSprite3DOffscreen</a>; const ASource: <a href="Sprite3DAnimCapture.TSprite3DFrameSource.html">TSprite3DFrameSource</a>; const AOnDone: <a href="Sprite3DAnimCapture.html#TSprite3DFramesProc">TSprite3DFramesProc</a>; const AOnProgress: <a href="Sprite3DAnimCapture.html#TSprite3DCaptureProgress">TSprite3DCaptureProgress</a> = nil);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#Run">Run</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#Cancel">Cancel</a></strong>;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#SourceStarted">SourceStarted</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#Source">Source</a></strong>: <a href="Sprite3DAnimCapture.TSprite3DFrameSource.html">TSprite3DFrameSource</a> read FSource;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DFrameCapture.html#SettleTime">SettleTime</a></strong>: Integer read FSettleTime write FSettleTime;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TSprite3DOffscreen-TSprite3DFrameSource-TSprite3DFramesProc-TSprite3DCaptureProgress-"></span><code>constructor <strong>Create</strong>(const AOffscreen: <a href="Sprite3DOffscreen.TSprite3DOffscreen.html">TSprite3DOffscreen</a>; const ASource: <a href="Sprite3DAnimCapture.TSprite3DFrameSource.html">TSprite3DFrameSource</a>; const AOnDone: <a href="Sprite3DAnimCapture.html#TSprite3DFramesProc">TSprite3DFramesProc</a>; const AOnProgress: <a href="Sprite3DAnimCapture.html#TSprite3DCaptureProgress">TSprite3DCaptureProgress</a> = nil);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Prepares a capture of ASource with AOffscreen.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOffscreen</dt>
+<dd>The off-screen renderer; it must outlive the capture. Its Width and Height are the frame size.</dd>
+<dt>ASource</dt>
+<dd>The frames; the capture owns it from here on and frees it.</dd>
+<dt>AOnDone</dt>
+<dd>Called once when the capture ends, unless it is cancelled.</dd>
+<dt>AOnProgress</dt>
+<dd>Called after each frame is grabbed; may be nil.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frees the source and any frames not handed over.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Run"></span><code>function <strong>Run</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Starts the capture; returns at once.</p>
+<p>
+
+
+<p>The source has already been started if the owner called its Start itself, for example to measure every frame before framing; Run then does not start it again.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if it started; False if the off-screen renderer is busy or has no viewport, in which case the capture has finished its source, called nothing and freed itself.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Cancel"></span><code>procedure <strong>Cancel</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Stops the capture without calling its procedure.</p>
+<p>
+
+
+<p>Use it when the owner is going away. The source is finished, and the capture frees itself the next time it would have gone on, or at once if nothing is pending.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SourceStarted"></span><code>procedure <strong>SourceStarted</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Marks the source as already started by the owner, so Run does not start it again.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Source"></span><code>property <strong>Source</strong>: <a href="Sprite3DAnimCapture.TSprite3DFrameSource.html">TSprite3DFrameSource</a> read FSource;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The frames being captured.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SettleTime"></span><code>property <strong>SettleTime</strong>: Integer read FSettleTime write FSettleTime;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Milliseconds each frame is left on screen before it is grabbed.</p>
+<p>
+
+
+<p>0 where grabs render off screen, which draws the frame as it is set; about four display frames where grabs are screenshots.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DSettingsForm: Class TGeneralSettingsForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TGeneralSettingsForm"></span><h1 class="cio">Class TGeneralSettingsForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DSettingsForm.html">Sprite3DSettingsForm</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TGeneralSettingsForm = class(TForm)</code></p>
+<h2 class="description">Description</h2>
+<p>
+The Settings dialog.</p>
+<p>
+
+
+<p>Set Values before showing it, and read Values back after OK.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TForm</li>
+<li class="thisitem">TGeneralSettingsForm</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#BackPanel">BackPanel</a></strong>: TPanel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ScrollBox">ScrollBox</a></strong>: TVertScrollBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#AssocGroup">AssocGroup</a></strong>: TGroupBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#OpenWithCheck">OpenWithCheck</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#AlwaysCheck">AlwaysCheck</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#AssocNote">AssocNote</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#StartupGroup">StartupGroup</a></strong>: TGroupBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#StartupNoneRadio">StartupNoneRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#StartupDefaultRadio">StartupDefaultRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#StartupLastRadio">StartupLastRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ThemeGroup">ThemeGroup</a></strong>: TGroupBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ThemeDefaultRadio">ThemeDefaultRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ThemeDarkRadio">ThemeDarkRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ThemeAquaRadio">ThemeAquaRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ThemeRubyRadio">ThemeRubyRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ThemeGoldenRadio">ThemeGoldenRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GpuGroup">GpuGroup</a></strong>: TGroupBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabGroup">GrabGroup</a></strong>: TGroupBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabSizeCombo">GrabSizeCombo</a></strong>: TComboBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabCustomLayout">GrabCustomLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabWidthLabel">GrabWidthLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabWidthBox">GrabWidthBox</a></strong>: TSpinBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabHeightLabel">GrabHeightLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabHeightBox">GrabHeightBox</a></strong>: TSpinBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabFolderLabel">GrabFolderLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabFolderText">GrabFolderText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabFolderResetButton">GrabFolderResetButton</a></strong>: TButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GpuSystemRadio">GpuSystemRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GpuLowRadio">GpuLowRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GpuHighRadio">GpuHighRadio</a></strong>: TRadioButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GpuNote">GpuNote</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ButtonLayout">ButtonLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#OkButton">OkButton</a></strong>: TButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#CancelButton">CancelButton</a></strong>: TButton;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FormCreate-TObject-">FormCreate</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FormClose-TObject-TCloseAction-">FormClose</a></strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#OpenWithCheckChange-TObject-">OpenWithCheckChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ButtonClick-TObject-">ButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabSizeComboChange-TObject-">GrabSizeComboChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabFolderResetButtonClick-TObject-">GrabFolderResetButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ShowAndFree">ShowAndFree</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#Values">Values</a></strong>: <a href="Sprite3DHelpers.TSprite3DGeneralSettings.html">TSprite3DGeneralSettings</a> read FValues write SetValues;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#OnAccept">OnAccept</a></strong>: TNotifyEvent read FOnAccept write FOnAccept;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="BackPanel"></span><code><strong>BackPanel</strong>: TPanel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The form's opaque background.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ScrollBox"></span><code><strong>ScrollBox</strong>: TVertScrollBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Scrolls the groups on screens too small for them.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AssocGroup"></span><code><strong>AssocGroup</strong>: TGroupBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The file association choices.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OpenWithCheck"></span><code><strong>OpenWithCheck</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Offers Sprite3D under Open With for model files.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AlwaysCheck"></span><code><strong>AlwaysCheck</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes Sprite3D the default application for model files.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AssocNote"></span><code><strong>AssocNote</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Explains what the platform allows.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="StartupGroup"></span><code><strong>StartupGroup</strong>: TGroupBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The start-up choices.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="StartupNoneRadio"></span><code><strong>StartupNoneRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Start with no model.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="StartupDefaultRadio"></span><code><strong>StartupDefaultRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Start with the sample model.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="StartupLastRadio"></span><code><strong>StartupLastRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Start with the model last opened.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ThemeGroup"></span><code><strong>ThemeGroup</strong>: TGroupBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The theme choices.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ThemeDefaultRadio"></span><code><strong>ThemeDefaultRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+FMX's own platform style.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ThemeDarkRadio"></span><code><strong>ThemeDarkRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Dark FMX style.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ThemeAquaRadio"></span><code><strong>ThemeAquaRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Aqua Graphite FMX style: dark grey with blue.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ThemeRubyRadio"></span><code><strong>ThemeRubyRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Ruby Graphite FMX style: dark grey with red.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ThemeGoldenRadio"></span><code><strong>ThemeGoldenRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The Golden Graphite FMX style: dark grey with gold.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GpuGroup"></span><code><strong>GpuGroup</strong>: TGroupBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The GPU choices; Windows only.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabGroup"></span><code><strong>GrabGroup</strong>: TGroupBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The off-screen grab size choices.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabSizeCombo"></span><code><strong>GrabSizeCombo</strong>: TComboBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Chooses a square grab size, or Custom; filled in by FormCreate.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabCustomLayout"></span><code><strong>GrabCustomLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the custom width and height; enabled for Custom only.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabWidthLabel"></span><code><strong>GrabWidthLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names GrabWidthBox.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabWidthBox"></span><code><strong>GrabWidthBox</strong>: TSpinBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The custom width, GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabHeightLabel"></span><code><strong>GrabHeightLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names GrabHeightBox.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabHeightBox"></span><code><strong>GrabHeightBox</strong>: TSpinBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The custom height, GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabFolderLabel"></span><code><strong>GrabFolderLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names the grab folder.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabFolderText"></span><code><strong>GrabFolderText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The folder File, Grab saves into, or a note that it will be asked for.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabFolderResetButton"></span><code><strong>GrabFolderResetButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Clears the grab folder, so the next grab asks for one.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GpuSystemRadio"></span><code><strong>GpuSystemRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Let Windows choose the GPU.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GpuLowRadio"></span><code><strong>GpuLowRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Ask for the low-power GPU.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GpuHighRadio"></span><code><strong>GpuHighRadio</strong>: TRadioButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Ask for the high-performance GPU.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GpuNote"></span><code><strong>GpuNote</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Says that a GPU change needs a restart.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ButtonLayout"></span><code><strong>ButtonLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the OK and Cancel buttons.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OkButton"></span><code><strong>OkButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog and keeps the choices.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CancelButton"></span><code><strong>CancelButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog and drops the choices.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormCreate-TObject-"></span><code>procedure <strong>FormCreate</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets up the groups for this platform and sizes the form to fit them.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormClose-TObject-TCloseAction-"></span><code>procedure <strong>FormClose</strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Reports OK when shown with ShowAndFree, and frees the form then.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+<dt>Action</dt>
+<dd>Set to caFree when shown with ShowAndFree.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OpenWithCheckChange-TObject-"></span><code>procedure <strong>OpenWithCheckChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Keeps Always in step with Open With.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The check box.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ButtonClick-TObject-"></span><code>procedure <strong>ButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Reads the controls into Values on OK, then closes the dialog.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The button clicked.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabSizeComboChange-TObject-"></span><code>procedure <strong>GrabSizeComboChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows a preset's size in the boxes, or enables them for Custom.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The drop-down.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="GrabFolderResetButtonClick-TObject-"></span><code>procedure <strong>GrabFolderResetButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Clears the grab folder; it takes effect on OK.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The button.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowAndFree"></span><code>procedure <strong>ShowAndFree</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the dialog without blocking, for Android and iOS, and frees it when it closes.</p>
+<p>
+
+
+<p>OnAccept is called if it closes with OK.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Values"></span><code>property <strong>Values</strong>: <a href="Sprite3DHelpers.TSprite3DGeneralSettings.html">TSprite3DGeneralSettings</a> read FValues write SetValues;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The choices being edited.</p>
+<p>
+
+
+<p>Set it before the dialog is shown; read it after OK.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnAccept"></span><code>property <strong>OnAccept</strong>: TNotifyEvent read FOnAccept write FOnAccept;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called on OK when shown with ShowAndFree.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DFileAssoc</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DFileAssoc</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Registers an application with the operating system as an Open With choice for file types, and as their default application, and puts things back afterwards.</p>
+<p>
+
+
+<p>TSprite3DFileAssociations is given an application name, a programmatic identifier, a description and a list of file types, and works for the current user only; nothing needs administrator rights. Before it makes the application the default for a type it records what the default was, in a backup string the caller keeps, so RestoreDefaults can put the old default back. An old default is only put back if it is still valid: the program it names must still be registered or installed. Otherwise the type is left with no per-user default, and the system's own choice applies again.
+
+<p></p>
+
+<pre class="preformatted">
+Windows   HKCU\Software\Classes: a ProgID, Applications\&lt;exe&gt;, &lt;ext&gt;\OpenWithProgids,
+          and &lt;ext&gt;'s default value for &quot;always&quot;; Capabilities and RegisteredApplications
+          so the app is listed in Settings, Default apps. A choice the user made in
+          Windows' own dialog (UserChoice) cannot be changed by a program; then
+          NeedsUserConfirmation is set and OpenSystemDefaults shows that page.
+Linux     a .desktop file in $XDG_DATA_HOME/applications and a shared-mime-info package
+          for the types; &quot;always&quot; is the [Default Applications] group of
+          $XDG_CONFIG_HOME/mimeapps.list.
+macOS     Open With comes from CFBundleDocumentTypes in the bundle's Info.plist and
+          cannot be removed at run time; &quot;always&quot; is set through Launch Services.
+Android,  not supported: the app declares what it opens when it is built, and the user
+iOS       picks the default in the system's chooser.</pre>
+
+<p>
+
+<p>The unit knows nothing of any particular application. All methods are for the main thread and may block briefly while files, the registry or helper programs are used.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DFileAssoc.TSprite3DFileType.html"><code>TSprite3DFileType</code></a></td>
+<td class="itemdesc">One file type an application opens.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DFileAssoc.TSprite3DFileAssociations.html"><code>TSprite3DFileAssociations</code></a></td>
+<td class="itemdesc">Registers the running program for a set of file types, for the current user.</td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DFileAssoc.html#TSprite3DAssocSupport">TSprite3DAssocSupport</a></strong> = (...);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DAssocSupport"></span><code><strong>TSprite3DAssocSupport</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+How much of the file associations this platform lets a program change.</p>
+<p>
+
+
+<p><code>asNone</code>: nothing, as on Android and iOS. <code>asDefaultOnly</code>: only which application is the default; Open With is fixed when the app is built, as on macOS. <code>asFull</code>: both, as on Windows and Linux.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="asNone">asNone</span></li>
+<li>
+<span id="asDefaultOnly">asDefaultOnly</span></li>
+<li>
+<span id="asFull">asFull</span></li>
+</ul>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

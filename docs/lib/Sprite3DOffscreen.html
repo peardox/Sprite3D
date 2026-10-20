@@ -84,7 +84,9 @@ Renders a Gorilla3D viewport's scene to an off-screen target of any size.</p>
 
 <p>The camera's projection is worked out for the target's size. To make the model fill the target, fit the camera to the target's shape in OnBeforeGrab and put it back in OnAfterGrab; the screen never shows the grab's framing.
 
-<p>Read-back uses OpenGL directly, with the GL functions looked up at run time in the platform's library, so it works on every platform Gorilla renders with OpenGL, its default: Windows, macOS and Linux with desktop OpenGL, Android and iOS with OpenGL ES 3. If a project switches Gorilla to its optional Vulkan backend, grabs fail with an error saying an OpenGL function is not available.
+<p>Read-back uses OpenGL directly, with the GL functions looked up at run time in the platform's library, so it works on every platform Gorilla renders with OpenGL: Windows and Linux with desktop OpenGL, Android with OpenGL ES 3. If a project switches Gorilla to its optional Vulkan backend, grabs fail with an error saying an OpenGL function is not available.
+
+<p>On macOS and iOS Gorilla renders through Metal, so there a grab is instead a screenshot of the viewport as it is shown, from TGorillaViewport.MakeScreenshot, cropped about its centre to the target's shape and scaled to the target's size. OnBeforeGrab and OnAfterGrab are not called, so the framing is the screen's, and the image is opaque: it shows the viewport's own background, and Backdrop and TransparentBackground are not used.
 
 <p></p>
 

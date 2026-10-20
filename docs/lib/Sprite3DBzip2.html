@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DBzip2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DBzip2</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Decompresses bzip2 data in plain Pascal, on every platform.</p>
+<p>
+
+
+<p>Cisco publishes its OpenH264 libraries as <code>.bz2</code> files, and the RTL reads only zlib and gzip, so this unit decodes bzip2 itself. Bzip2Decompress takes a whole compressed file in memory and returns the whole original; concatenated streams, as <code>pbzip2</code> writes, come back joined. Every block's checksum and each stream's combined checksum are checked, so damaged data raises an error rather than coming back wrong.
+
+<p>Blocks marked &quot;randomised&quot;, which no bzip2 since version 0.9.5 of 1999 writes, are refused. Memory use is about five times the largest block, at most 4.5 MB, plus the output.
+
+<p>No state is kept between calls, so it can be used from any thread.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DBzip2.EBzip2Error.html"><code>EBzip2Error</code></a></td>
+<td class="itemdesc">Raised when data is not bzip2, or is damaged or cut short.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DBzip2.html#IsBzip2-TBytes-">IsBzip2</a></strong>(const AData: TBytes): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DBzip2.html#Bzip2Decompress-TBytes-">Bzip2Decompress</a></strong>(const AData: TBytes): TBytes;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IsBzip2-TBytes-"></span><code>function <strong>IsBzip2</strong>(const AData: TBytes): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether data starts as a bzip2 stream does.</p>
+<p>
+
+
+<p>Only the four-byte header is checked: <code>BZh</code> and a block size from 1 to 9.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AData</dt>
+<dd>The data to look at.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if it looks like bzip2.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="Bzip2Decompress-TBytes-"></span><code>function <strong>Bzip2Decompress</strong>(const AData: TBytes): TBytes;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Decompresses a whole bzip2 file held in memory.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AData</dt>
+<dd>The compressed data: one or more bzip2 streams, one after another.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The original data.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DBzip2.EBzip2Error.html">EBzip2Error</a></dt>
+<dd>If the data is not bzip2, is damaged, fails a checksum or ends too soon.</dd>
+<dt><code>EOutOfMemory</code></dt>
+<dd>If the output cannot be held in memory.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

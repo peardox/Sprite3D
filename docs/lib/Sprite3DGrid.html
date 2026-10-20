@@ -82,6 +82,8 @@ Draws a far-reaching grid on a model's floor with a GLSL shader.</p>
 
 <p>The grid is a single TGorillaPlane. The lines are worked out per pixel by GLSL code in its TGorillaDefaultMaterialSource, through its documented SurfaceShader hook, which Gorilla converts for Vulkan and Metal. The plane is split into 64 by 64 squares so that the position the shader reads stays exact across it; the cost is the same however far the grid reaches, the lines stay about two pixels wide at any distance, and nothing is recalculated per frame. Changing a grid property rewrites the shader once, with the new values written into it as constants.
 
+<p>On macOS and iOS, where Gorilla3D draws through Metal and does not support a material's SurfaceShader, the grid is instead one thin plane per line, reaching at most 20 cells each side of the centre, without the fade.
+
 <p>The plane is not a child of the model, so it never counts in the model's bounding box, and FitToBounds is unaffected. It sits in a frame beside the model that copies the model's position, rotation, scale and centre of rotation whenever they change, so the grid is in the model's units and moves with it.
 
 <p></p>

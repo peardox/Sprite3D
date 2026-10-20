@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DOrbitalForm: Class TOrbitalSettingsForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TOrbitalSettingsForm"></span><h1 class="cio">Class TOrbitalSettingsForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DOrbitalForm.html">Sprite3DOrbitalForm</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TOrbitalSettingsForm = class(TForm)</code></p>
+<h2 class="description">Description</h2>
+<p>
+The Variable camera dialog.</p>
+<p>
+
+
+<p>Set CameraSpec and OnPreview before showing it, and read CameraSpec back after OK.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TForm</li>
+<li class="thisitem">TOrbitalSettingsForm</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#Layout1">Layout1</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#Layout2">Layout2</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#OrbitalLayout">OrbitalLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AngleDial">AngleDial</a></strong>: TArcDial;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AngleLabel">AngleLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AngleText">AngleText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AzimuthDial">AzimuthDial</a></strong>: TArcDial;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AzimuthLabel">AzimuthLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AzimuthText">AzimuthText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#RollDial">RollDial</a></strong>: TArcDial;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#RollLabel">RollLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#RollText">RollText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#ExactLayout">ExactLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AzimuthExactLabel">AzimuthExactLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AzimuthExactText">AzimuthExactText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AngleExactLabel">AngleExactLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AngleExactText">AngleExactText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#RollExactLabel">RollExactLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#RollExactText">RollExactText</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanLayout">PanLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanTopLayout">PanTopLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanCheck">PanCheck</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanResetButton">PanResetButton</a></strong>: TButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanXLayout">PanXLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanXLabel">PanXLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanXTrack">PanXTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanZLayout">PanZLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanZLabel">PanZLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanZTrack">PanZTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#DistanceLayout">DistanceLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#DistanceLabel">DistanceLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#DistanceTrack">DistanceTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#CancelButton">CancelButton</a></strong>: TButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#OkButton">OkButton</a></strong>: TButton;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#FormClose-TObject-TCloseAction-">FormClose</a></strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#ButtonClick-TObject-">ButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AzimuthDialChange-TObject-">AzimuthDialChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#AngleDialChange-TObject-">AngleDialChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#RollDialChange-TObject-">RollDialChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#FormShow-TObject-">FormShow</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#DistanceTrackChange-TObject-">DistanceTrackChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanCheckChange-TObject-">PanCheckChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanTrackChange-TObject-">PanTrackChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#PanResetButtonClick-TObject-">PanResetButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#ShowAndFree">ShowAndFree</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#OnAccept">OnAccept</a></strong>: TNotifyEvent read FOnAccept write FOnAccept;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#OnCancel">OnCancel</a></strong>: TNotifyEvent read FOnCancel write FOnCancel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#OnPreview">OnPreview</a></strong>: TNotifyEvent read FOnPreview write FOnPreview;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html#CameraSpec">CameraSpec</a></strong>: <a href="Sprite3DOrbitalForm.TCameraSettings.html">TCameraSettings</a> read FCameraSettings write SetSpec;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Layout1"></span><code><strong>Layout1</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds everything above the buttons.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Layout2"></span><code><strong>Layout2</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the OK and Cancel buttons.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OrbitalLayout"></span><code><strong>OrbitalLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the dials, the pan and the distance slider.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleDial"></span><code><strong>AngleDial</strong>: TArcDial;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the inclination.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleLabel"></span><code><strong>AngleLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names the inclination dial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleText"></span><code><strong>AngleText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the inclination in degrees.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthDial"></span><code><strong>AzimuthDial</strong>: TArcDial;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the azimuth.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthLabel"></span><code><strong>AzimuthLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names the azimuth dial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthText"></span><code><strong>AzimuthText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the azimuth in degrees.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollDial"></span><code><strong>RollDial</strong>: TArcDial;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the roll.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollLabel"></span><code><strong>RollLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names the roll dial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollText"></span><code><strong>RollText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the roll in degrees.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ExactLayout"></span><code><strong>ExactLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the exact angles, right of the Roll dial.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthExactLabel"></span><code><strong>AzimuthExactLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names AzimuthExactText.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthExactText"></span><code><strong>AzimuthExactText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The azimuth in degrees to six decimal places.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleExactLabel"></span><code><strong>AngleExactLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names AngleExactText.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleExactText"></span><code><strong>AngleExactText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The inclination in degrees to six decimal places.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollExactLabel"></span><code><strong>RollExactLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Names RollExactText.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollExactText"></span><code><strong>RollExactText</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The roll in degrees to six decimal places.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanLayout"></span><code><strong>PanLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the pan's controls.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanTopLayout"></span><code><strong>PanTopLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds PanCheck and PanResetButton.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanCheck"></span><code><strong>PanCheck</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Switches the pan on or off; off by default.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanResetButton"></span><code><strong>PanResetButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Puts both pan sliders back to 0.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanXLayout"></span><code><strong>PanXLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the X pan slider and its label.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanXLabel"></span><code><strong>PanXLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the X pan.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanXTrack"></span><code><strong>PanXTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the pan along the model's X axis.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanZLayout"></span><code><strong>PanZLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the Z pan slider and its label.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanZLabel"></span><code><strong>PanZLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the Z pan.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanZTrack"></span><code><strong>PanZTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the pan along the model's Z axis.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceLayout"></span><code><strong>DistanceLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the distance slider and its label.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceLabel"></span><code><strong>DistanceLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the distance factor.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceTrack"></span><code><strong>DistanceTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the distance factor, 1 to 20.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CancelButton"></span><code><strong>CancelButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog and drops the changes.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OkButton"></span><code><strong>OkButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog and keeps the changes.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormClose-TObject-TCloseAction-"></span><code>procedure <strong>FormClose</strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Reports OK or Cancel when shown with ShowAndFree, and frees the form then.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+<dt>Action</dt>
+<dd>Set to caFree when shown with ShowAndFree.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ButtonClick-TObject-"></span><code>procedure <strong>ButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog with the button's result.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The button clicked.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AzimuthDialChange-TObject-"></span><code>procedure <strong>AzimuthDialChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Takes the azimuth from its dial.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The dial.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AngleDialChange-TObject-"></span><code>procedure <strong>AngleDialChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Takes the inclination from its dial.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The dial.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RollDialChange-TObject-"></span><code>procedure <strong>RollDialChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Takes the roll from its dial.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The dial.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormShow-TObject-"></span><code>procedure <strong>FormShow</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets every control from CameraSpec.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DistanceTrackChange-TObject-"></span><code>procedure <strong>DistanceTrackChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Takes the distance factor from its slider.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The slider.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanCheckChange-TObject-"></span><code>procedure <strong>PanCheckChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Switches the pan on or off.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The check box.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanTrackChange-TObject-"></span><code>procedure <strong>PanTrackChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Takes the pan from both sliders.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The slider moved.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="PanResetButtonClick-TObject-"></span><code>procedure <strong>PanResetButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Puts both pan sliders back to 0.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The button.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowAndFree"></span><code>procedure <strong>ShowAndFree</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the dialog without blocking, for Android and iOS, and frees it when it closes.</p>
+<p>
+
+
+<p>OnAccept is called if it closes with OK, OnCancel otherwise.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnAccept"></span><code>property <strong>OnAccept</strong>: TNotifyEvent read FOnAccept write FOnAccept;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called on OK when shown with ShowAndFree.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnCancel"></span><code>property <strong>OnCancel</strong>: TNotifyEvent read FOnCancel write FOnCancel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called on Cancel, or any close but OK, when shown with ShowAndFree.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnPreview"></span><code>property <strong>OnPreview</strong>: TNotifyEvent read FOnPreview write FOnPreview;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called after every change, with the dialog as Sender, so the owner can show CameraSpec at once.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CameraSpec"></span><code>property <strong>CameraSpec</strong>: <a href="Sprite3DOrbitalForm.TCameraSettings.html">TCameraSettings</a> read FCameraSettings write SetSpec;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The settings being edited.</p>
+<p>
+
+
+<p>Set it before the dialog is shown; read it after OK.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

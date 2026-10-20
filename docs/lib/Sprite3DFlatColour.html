@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DFlatColour</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DFlatColour</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Flat colours and simple gradients for Gorilla3D materials without a shader, for Metal.</p>
+<p>
+
+
+<p>On macOS and iOS Gorilla3D draws through Metal, where a material's SurfaceShader is not supported and a plain material colour is not reliably drawn. These routines colour a TGorillaDefaultMaterialSource through a small texture instead: one colour, or a blend from the top of the texture to the bottom.
+
+<p>Texturing must be switched on before a texture is given and before the material is first drawn, or Gorilla reports &quot;Texture0 not activated in material&quot;. So call PrepareFlatMaterial once, as the material is made and before any object uses it; SetFlatColour and SetFlatGradient then only change the texture's pixels.
+
+<p>The unit compiles on every platform; the rest of the project uses it only where Metal is in use. For the main thread only.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DFlatColour.html#PrepareFlatMaterial-TGorillaDefaultMaterialSource-">PrepareFlatMaterial</a></strong>(const AMaterial: TGorillaDefaultMaterialSource);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DFlatColour.html#SetFlatColour-TGorillaDefaultMaterialSource-TAlphaColor-">SetFlatColour</a></strong>(const AMaterial: TGorillaDefaultMaterialSource; const AColour: TAlphaColor);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DFlatColour.html#SetFlatGradient-TGorillaDefaultMaterialSource-TAlphaColor-TAlphaColor-">SetFlatGradient</a></strong>(const AMaterial: TGorillaDefaultMaterialSource; const ATop, ABottom: TAlphaColor);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PrepareFlatMaterial-TGorillaDefaultMaterialSource-"></span><code>procedure <strong>PrepareFlatMaterial</strong>(const AMaterial: TGorillaDefaultMaterialSource);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Sets a new material up to take its colour from a texture.</p>
+<p>
+
+
+<p>Unlit, without specular light, with texturing on, a white Diffuse colour so the texture's colours are left as they are, and a black texture to begin with. Call it before the material is given to any object.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AMaterial</dt>
+<dd>The material, newly made.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SetFlatColour-TGorillaDefaultMaterialSource-TAlphaColor-"></span><code>procedure <strong>SetFlatColour</strong>(const AMaterial: TGorillaDefaultMaterialSource; const AColour: TAlphaColor);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Colours a material prepared by PrepareFlatMaterial with one opaque colour.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AMaterial</dt>
+<dd>The material.</dd>
+<dt>AColour</dt>
+<dd>The colour; its alpha is ignored.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SetFlatGradient-TGorillaDefaultMaterialSource-TAlphaColor-TAlphaColor-"></span><code>procedure <strong>SetFlatGradient</strong>(const AMaterial: TGorillaDefaultMaterialSource; const ATop, ABottom: TAlphaColor);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Colours a material prepared by PrepareFlatMaterial with a blend from ATop to ABottom.</p>
+<p>
+
+
+<p>The blend runs down the texture, from its first row to its last, in 256 steps. Alpha is ignored.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AMaterial</dt>
+<dd>The material.</dd>
+<dt>ATop</dt>
+<dd>The colour at the top of the texture.</dd>
+<dt>ABottom</dt>
+<dd>The colour at the bottom of the texture.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

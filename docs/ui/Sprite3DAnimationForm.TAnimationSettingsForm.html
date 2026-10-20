@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DAnimationForm: Class TAnimationSettingsForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TAnimationSettingsForm"></span><h1 class="cio">Class TAnimationSettingsForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DAnimationForm.html">Sprite3DAnimationForm</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TAnimationSettingsForm = class(TForm)</code></p>
+<h2 class="description">Description</h2>
+<p>
+The File, Animation dialog; see the unit description.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TForm</li>
+<li class="thisitem">TAnimationSettingsForm</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#MainLayout">MainLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FpsLayout">FpsLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FpsLabel">FpsLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FpsTrack">FpsTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FpsValueLabel">FpsValueLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#NoteLabel">NoteLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#ButtonLayout">ButtonLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OkButton">OkButton</a></strong>: TButton;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#CancelButton">CancelButton</a></strong>: TButton;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FormCreate-TObject-">FormCreate</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FpsTrackChange-TObject-">FpsTrackChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#ButtonClick-TObject-">ButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FormClose-TObject-TCloseAction-">FormClose</a></strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#ShowAndFree">ShowAndFree</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#Fps">Fps</a></strong>: Integer read GetFps write SetFps;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OnAccept">OnAccept</a></strong>: TNotifyEvent read FOnAccept write FOnAccept;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OnCancel">OnCancel</a></strong>: TNotifyEvent read FOnCancel write FOnCancel;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MainLayout"></span><code><strong>MainLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the FPS row and the explanation.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FpsLayout"></span><code><strong>FpsLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The row with FpsLabel, FpsTrack and FpsValueLabel.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FpsLabel"></span><code><strong>FpsLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption &quot;FPS&quot;.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FpsTrack"></span><code><strong>FpsTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The frame rate, in whole frames per second.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FpsValueLabel"></span><code><strong>FpsValueLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The slider's value as a number.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="NoteLabel"></span><code><strong>NoteLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A line explaining what the rate is used for.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ButtonLayout"></span><code><strong>ButtonLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The strip holding the Cancel and OK buttons.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OkButton"></span><code><strong>OkButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog with mrOk.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CancelButton"></span><code><strong>CancelButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog with mrCancel.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormCreate-TObject-"></span><code>procedure <strong>FormCreate</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets the slider's range and shows the starting value.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FpsTrackChange-TObject-"></span><code>procedure <strong>FpsTrackChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the slider's value beside it.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>FpsTrack.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ButtonClick-TObject-"></span><code>procedure <strong>ButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog with the button's ModalResult.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>OkButton or CancelButton.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormClose-TObject-TCloseAction-"></span><code>procedure <strong>FormClose</strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Reports OK or Cancel when shown with ShowAndFree, and frees the form then.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+<dt>Action</dt>
+<dd>Set to caFree when shown with ShowAndFree.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowAndFree"></span><code>procedure <strong>ShowAndFree</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the dialog without blocking and frees it when it closes.</p>
+<p>
+
+
+<p>For Android and iOS, where ShowModal cannot block. OnAccept is called if it closes with OK, OnCancel otherwise.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Fps"></span><code>property <strong>Fps</strong>: Integer read GetFps write SetFps;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The frame rate shown, in frames per second.</p>
+<p>
+
+
+<p>Set it before showing the dialog; read it after OK. Values are limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnAccept"></span><code>property <strong>OnAccept</strong>: TNotifyEvent read FOnAccept write FOnAccept;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called on OK when shown with ShowAndFree.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnCancel"></span><code>property <strong>OnCancel</strong>: TNotifyEvent read FOnCancel write FOnCancel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called on Cancel, or any close but OK, when shown with ShowAndFree.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

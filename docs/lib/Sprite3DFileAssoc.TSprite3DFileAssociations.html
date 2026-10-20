@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DFileAssoc: Class TSprite3DFileAssociations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DFileAssociations"></span><h1 class="cio">Class TSprite3DFileAssociations</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DFileAssoc.html">Sprite3DFileAssoc</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DFileAssociations = class(TObject)</code></p>
+<h2 class="description">Description</h2>
+<p>
+Registers the running program for a set of file types, for the current user.</p>
+<p>
+
+
+<p>Create it, use it and free it; it holds no system resources between calls. Each method that changes something returns False on failure and leaves the reason in LastError.
+
+<p></p>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DFileAssoc.TSprite3DFileType.html">TSprite3DFileType</a></dt>
+  <dd>One file type an application opens.</dd>
+</dl>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TObject</li>
+<li class="thisitem">TSprite3DFileAssociations</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#Create-String-String-String-TArrayTSprite3DFileType-">Create</a></strong>(const AAppName, AProgId, ADescription: String; const AFileTypes: TArray&lt;<a href="Sprite3DFileAssoc.TSprite3DFileType.html">TSprite3DFileType</a>&gt;);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>class function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#Support">Support</a></strong>: <a href="Sprite3DFileAssoc.html#TSprite3DAssocSupport">TSprite3DAssocSupport</a>; static;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#IsRegistered">IsRegistered</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#IsDefault">IsDefault</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#Register">Register</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#Unregister">Unregister</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#MakeDefault-String-">MakeDefault</a></strong>(var ABackup: String): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#RestoreDefaults-String-">RestoreDefaults</a></strong>(var ABackup: String): Boolean;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#OpenSystemDefaults">OpenSystemDefaults</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#LastError">LastError</a></strong>: String read FLastError;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#NeedsUserConfirmation">NeedsUserConfirmation</a></strong>: Boolean read FNeedsUserConfirmation;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#ExePath">ExePath</a></strong>: String read FExePath;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-String-String-String-TArrayTSprite3DFileType-"></span><code>constructor <strong>Create</strong>(const AAppName, AProgId, ADescription: String; const AFileTypes: TArray&lt;<a href="Sprite3DFileAssoc.TSprite3DFileType.html">TSprite3DFileType</a>&gt;);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Prepares to register the running program for AFileTypes.</p>
+<p>
+
+
+<p>Nothing is changed until a method is called.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AAppName</dt>
+<dd>The application's name, as people see it; also used for its keys and files, so it should not change between versions.</dd>
+<dt>AProgId</dt>
+<dd>A programmatic identifier, such as <code>Sprite3D.Model</code>, used on Windows for the registry and in the backup string.</dd>
+<dt>ADescription</dt>
+<dd>A short description of what the application opens.</dd>
+<dt>AFileTypes</dt>
+<dd>The types to register.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Support"></span><code>class function <strong>Support</strong>: <a href="Sprite3DFileAssoc.html#TSprite3DAssocSupport">TSprite3DAssocSupport</a>; static;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How much this platform lets a program change.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">asFull on Windows and Linux, asDefaultOnly on macOS, asNone elsewhere.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="IsRegistered"></span><code>function <strong>IsRegistered</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the application is offered under Open With for the types.</p>
+<p>
+
+
+<p>On Windows and Linux, true when this unit's registration is present, whichever copy of the program it points to; Register points it at this one. On macOS, true when the bundle declares document types.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if registered.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="IsDefault"></span><code>function <strong>IsDefault</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether this program opens every one of the types by default.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True only if it is the default for all of them.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Register"></span><code>function <strong>Register</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Offers this program under Open With for the types.</p>
+<p>
+
+
+<p>Registers again over an older registration, so the entries point at this copy of the program. On macOS it asks Launch Services to read the bundle again.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True on success; False, with LastError set, on failure or where the platform does not allow it.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Unregister"></span><code>function <strong>Unregister</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Removes what Register added.</p>
+<p>
+
+
+<p>Call RestoreDefaults first if the program was made the default. Not possible on macOS, where the bundle declares the types.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True on success; False, with LastError set, otherwise.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MakeDefault-String-"></span><code>function <strong>MakeDefault</strong>(var ABackup: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes this program the default for every type, recording the old defaults.</p>
+<p>
+
+
+<p>For each type not yet in ABackup, the current per-user default is added to it first, so calling this again never loses the original. On Windows a choice the user made in Windows' own dialog still wins; NeedsUserConfirmation is then set.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABackup</dt>
+<dd>The caller's backup string, which this adds to; keep it for RestoreDefaults.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True on success; False, with LastError set, otherwise.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#RestoreDefaults-String-">RestoreDefaults</a></dt>
+  <dd>Puts back the defaults recorded by MakeDefault.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RestoreDefaults-String-"></span><code>function <strong>RestoreDefaults</strong>(var ABackup: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Puts back the defaults recorded by MakeDefault.</p>
+<p>
+
+
+<p>Only types still defaulting to this program are changed, so a choice the user has made since is kept. A recorded default is put back only if it is still valid; otherwise the per-user default is removed. On macOS, where a default cannot be removed, a type with no valid old default keeps this program and the reason is put in LastError. The entries dealt with are taken out of ABackup.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABackup</dt>
+<dd>The backup string from MakeDefault; on return, what is left of it, normally empty.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if every type was dealt with; False, with LastError set, otherwise.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OpenSystemDefaults"></span><code>procedure <strong>OpenSystemDefaults</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Opens the system's own page for choosing default applications.</p>
+<p>
+
+
+<p>Windows only, where it opens Settings, Default apps, at this application if Windows supports that. Does nothing elsewhere.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="LastError"></span><code>property <strong>LastError</strong>: String read FLastError;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The reason the last failing method failed; empty after success.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="NeedsUserConfirmation"></span><code>property <strong>NeedsUserConfirmation</strong>: Boolean read FNeedsUserConfirmation;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True when a default could not be changed by a program and the user has to choose it in the system's settings.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ExePath"></span><code>property <strong>ExePath</strong>: String read FExePath;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The full path of the running program, which the registration points at.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

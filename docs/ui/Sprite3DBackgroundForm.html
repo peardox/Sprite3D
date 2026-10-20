@@ -80,7 +80,7 @@ The Background Settings dialog: choose no background, or a transparent, solid or
 
 <p>A small modal form, laid out in its .fmx file with standard FMX controls. On the right a group of four radio buttons chooses the background image style: None, Transparent, Solid or Gradient. On the left a TColorPanel sets the colour: for Solid, the one colour; for Gradient, the end chosen under it, From or To, whose swatches show both, with a drop-down list below them for the gradient's direction; under it a Hex box shows the same colour as #RRGGBB and takes one typed in. None and Transparent need no colour, so the panel is disabled then; for Transparent a slider sets the size of the checker that stands for transparency on screen. A preview shows the result, with the checker at a quarter of its size and None as black, as the viewport shows it.
 
-<p>The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it back after OK. On the desktop show it with ShowModal and free it afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK and frees the form when it closes.
+<p>The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it back after OK. Each change also calls OnPreview, so the owner can show it in the viewport at once, and undo it if the dialog is cancelled. On the desktop show it with ShowModal and free it afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK, OnCancel otherwise, and frees the form when it closes.
 
 <p></p>
 

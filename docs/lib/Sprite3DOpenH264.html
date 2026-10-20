@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DOpenH264</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DOpenH264</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+H.264 encoding with Cisco's OpenH264 library, loaded only when it is present.</p>
+<p>
+
+
+<p>OpenH264 is Cisco's open-source H.264 encoder. Cisco publishes ready-built copies of it for each platform, and pays the H.264 patent royalties for copies downloaded from Cisco, which is why it is not shipped with Sprite3D: Sprite3DLibraryUpdate downloads it from the address given for the platform, and this unit loads that copy and no other. Without it, Sprite3DVideo writes MPEG-4 Part 2 instead.
+
+<p>SetPreferredOpenH264 names the copy; OpenH264Available loads it the first time it is asked, if it is version 2.0 or later and has the encoder's entry points, and OpenH264Retry tries again after a download. No other folder, and no copy the system may have, is ever tried.
+
+<p>TSprite3DH264Encoder then turns YUV 4:2:0 pictures into H.264 Annex B access units, ready for an MP4 muxer, with its parameter sets available separately for the MP4's header.
+
+<p>The declarations used to call the library are translated from OpenH264's <code>codec_api.h</code>, <code>codec_app_def.h</code> and <code>codec_def.h</code>, Copyright (c) 2013, Cisco Systems, under the BSD 2-clause licence: redistributions of source must keep that notice and binaries must reproduce it in their documentation.
+
+<p>For the main thread, or any one thread at a time.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DOpenH264.ESprite3DH264Error.html"><code>ESprite3DH264Error</code></a></td>
+<td class="itemdesc">Raised when OpenH264 cannot set up or encode.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DOpenH264.TSprite3DH264Encoder.html"><code>TSprite3DH264Encoder</code></a></td>
+<td class="itemdesc">One OpenH264 encoder, for pictures of one size.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DOpenH264.html#OpenH264Available">OpenH264Available</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOpenH264.html#SetPreferredOpenH264-String-">SetPreferredOpenH264</a></strong>(const APath: String);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DOpenH264.html#OpenH264Retry">OpenH264Retry</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DOpenH264.html#OpenH264LoadedLibrary">OpenH264LoadedLibrary</a></strong>: String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DOpenH264.html#OpenH264Status">OpenH264Status</a></strong>: String;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OpenH264Available"></span><code>function <strong>OpenH264Available</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether OpenH264 is loaded, loading it the first time.</p>
+<p>
+
+
+<p>The first call loads the copy SetPreferredOpenH264 named, if it is version 2.0 or later and has the encoder; later calls return the same answer at once. With no copy named, the answer is False. The library stays loaded until the program ends.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if TSprite3DH264Encoder can be used.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SetPreferredOpenH264-String-"></span><code>procedure <strong>SetPreferredOpenH264</strong>(const APath: String);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Names the copy of OpenH264 to load: the one downloaded for this platform.</p>
+<p>
+
+
+<p>Call it before OpenH264Available, or before OpenH264Retry once a copy has been downloaded. An empty string means there is none, and H.264 is not offered.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APath</dt>
+<dd>The library's full path.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OpenH264Retry"></span><code>function <strong>OpenH264Retry</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Loads the named OpenH264 again unless a copy is already loaded.</p>
+<p>
+
+
+<p>As OpenH264Available, but a failed earlier attempt does not stop a new one. A loaded copy stays in use until the program ends.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if TSprite3DH264Encoder can be used.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OpenH264LoadedLibrary"></span><code>function <strong>OpenH264LoadedLibrary</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The full path of the OpenH264 loaded, or empty if none is.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The path, as it was loaded.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OpenH264Status"></span><code>function <strong>OpenH264Status</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Which OpenH264 was loaded and from where, or why none was.</p>
+<p>
+
+
+<p>Empty until OpenH264Available has been called.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">A line for a log or a hint.</p></td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

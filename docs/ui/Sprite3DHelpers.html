@@ -71,7 +71,7 @@ function pasdocUpdateMembers(className) {
 <div class="container-fluid py-3 px-4">
 <h1 class="unit">Unit Sprite3DHelpers</h1>
 <div class="sections">
-<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
 Support routines for the Sprite3D application that are neither UI nor library.</p>
@@ -93,10 +93,14 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DGeneralSettings.html"><code>TSprite3DGeneralSettings</code></a></td>
+<td class="itemdesc">The choices made in File, Settings, together.</td>
+</tr>
+<tr class="list2">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TControl3DAccess.html"><code>TControl3DAccess</code></a></td>
 <td class="itemdesc">Protected-access helper for TControl3D; nothing in the project uses it yet.</td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DAppSettings.html"><code>TSprite3DAppSettings</code></a></td>
 <td class="itemdesc">The application's settings, kept between sessions in settings.json.</td>
 </tr>
@@ -114,6 +118,12 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></strong>: String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#OpenH264ConfigFile">OpenH264ConfigFile</a></strong>: String;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#OpenH264Folder">OpenH264Folder</a></strong>: String;</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></strong>(const AFolder, APrefix, AExtension: String; var ANumber: Integer): String;</code></td>
@@ -136,6 +146,42 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></strong>(const AExtension: String): String;</code></td>
 </tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-">ModelPanOffset</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const APanX, APanZ: Single): TPoint3D;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ApplyTheme-TSprite3DTheme-String-">ApplyTheme</a></strong>(const ATheme: <a href="Sprite3DHelpers.html#TSprite3DTheme">TSprite3DTheme</a>; out AError: String): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#CreateModelAssociations">CreateModelAssociations</a></strong>: TSprite3DFileAssociations;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ApplyFileAssociations-TSprite3DAppSettings-Boolean-Boolean-String-">ApplyFileAssociations</a></strong>(const ASettings: <a href="Sprite3DHelpers.TSprite3DAppSettings.html">TSprite3DAppSettings</a>; const AOpenWith, AAlways: Boolean; out AMessage: String): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#GpuModeSupported">GpuModeSupported</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ReadGpuMode">ReadGpuMode</a></strong>: <a href="Sprite3DHelpers.html#TSprite3DGpuMode">TSprite3DGpuMode</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#WriteGpuMode-TSprite3DGpuMode-">WriteGpuMode</a></strong>(const AMode: <a href="Sprite3DHelpers.html#TSprite3DGpuMode">TSprite3DGpuMode</a>): Boolean;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ReadGeneralSettings-TSprite3DAppSettings-">ReadGeneralSettings</a></strong>(const ASettings: <a href="Sprite3DHelpers.TSprite3DAppSettings.html">TSprite3DAppSettings</a>): <a href="Sprite3DHelpers.TSprite3DGeneralSettings.html">TSprite3DGeneralSettings</a>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#TSprite3DStartupAction">TSprite3DStartupAction</a></strong> = (...);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#TSprite3DTheme">TSprite3DTheme</a></strong> = (...);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#TSprite3DGpuMode">TSprite3DGpuMode</a></strong> = (...);</code></td>
+</tr>
 </table>
 <span id="PasDoc-Constants"></span><h3 class="summary">Constants</h3>
 <table class="summary wide_list">
@@ -144,6 +190,31 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#SETTINGS_FILE_NAME">SETTINGS_FILE_NAME</a></strong> = 'settings.json';</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#PAN_LIMIT">PAN_LIMIT</a></strong> = 2.0;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#ANIMATION_FPS_MIN">ANIMATION_FPS_MIN</a></strong> = 1;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#ANIMATION_FPS_MAX">ANIMATION_FPS_MAX</a></strong> = 60;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#ANIMATION_FPS_DEFAULT">ANIMATION_FPS_DEFAULT</a></strong> = 30;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_PRESET_SIZES">GRAB_PRESET_SIZES</a></strong>: array[0..11] of Integer =
+    (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
@@ -223,6 +294,38 @@ The folder grabs are saved in without asking, or empty where the user should cho
 <p></p>
 <h6 class="description_section">Returns</h6>
 <p class="return">The fixed grab folder on Android and iOS; an empty string on other platforms.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OpenH264ConfigFile"></span><code>function <strong>OpenH264ConfigFile</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The <code>openh264.json</code> that gives OpenH264's download address for each platform, or empty if there is none.</p>
+<p>
+
+
+<p>Looked for where it is deployed, the folder GetAssetsPath gives (beside the executable on Windows and Linux, the bundle's Resources folder on macOS, the app's files folder on Android), then beside the executable and in each of the six folders above it, which finds the repository's copy when run from the source tree. iOS does not allow downloaded code to be loaded, so there it is always empty.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The file's full path, or an empty string.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OpenH264Folder"></span><code>function <strong>OpenH264Folder</strong>: String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Where downloaded copies of OpenH264 are kept: an <code>openh264</code> folder in SupportFolder.</p>
+<p>
+
+
+<p>Per user and private to the application on every platform; created when the first copy is saved.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The folder's full path.</p></td></tr>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
@@ -430,6 +533,264 @@ The file an icon is saved to without asking, or empty where the user should choo
 <h6 class="description_section">Returns</h6>
 <p class="return">The full path on Android and iOS; an empty string on other platforms.</p></td></tr>
 </table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-"></span><code>function <strong>ModelPanOffset</strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const APanX, APanZ: Single): TPoint3D;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+How far to move the orbit centre for a camera pan.</p>
+<p>
+
+
+<p>The pan runs along the model's own X and Z axes, as View, Show axes draws them, so it never moves the view up or down the model's Y axis. Each amount is a multiple of the model's radius, half the diagonal of ABox, so a pan looks the same for a model of any size. The camera's angles and distance are not involved.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model; nil gives no offset.</dd>
+<dt>ABox</dt>
+<dd>The model's own bounds as loaded, for its size.</dd>
+<dt>APanX</dt>
+<dd>The pan along the model's X axis; limited to PAN_LIMIT either way.</dd>
+<dt>APanZ</dt>
+<dd>The pan along the model's Z axis; limited to PAN_LIMIT either way.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The offset to add to the fitted orbit centre, in the viewport's space.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ApplyTheme-TSprite3DTheme-String-"></span><code>function <strong>ApplyTheme</strong>(const ATheme: <a href="Sprite3DHelpers.html#TSprite3DTheme">TSprite3DTheme</a>; out AError: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Gives the whole application, title bars included, the look ATheme names.</p>
+<p>
+
+
+<p>thDefault puts back FMX's own platform style and the system's title bars. The other themes are the FMX styles that come with RAD Studio: Dark.style, AquaGraphite.style, RubyGraphite.style and GoldenGraphite.style. Each is looked for as a linked-in RCDATA resource called <code>Sprite3D&lt;Name&gt;Style</code>, such as <code>Sprite3DDarkStyle</code>, which <code>styles\Sprite3DThemes.rc</code> links into every build, then, should that be missing, as a file in a <code>styles</code> folder beside the program or its assets, beside the program, in a <code>styles</code> folder in SupportFolder, or, on Windows, in RAD Studio's <code>Redist\styles\Fmx</code> folder when the BDS environment variable is set, as it is when run from the IDE. Once the style is in use, the title bars take its form background colour, with the theme's accent as the window border, where the system allows; see Sprite3DTitleBar.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ATheme</dt>
+<dd>The look to use.</dd>
+<dt>AError</dt>
+<dd>On failure, why, including where it looked.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the look is now in use; False leaves the current one, title bars included.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="CreateModelAssociations"></span><code>function <strong>CreateModelAssociations</strong>: TSprite3DFileAssociations;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+A new TSprite3DFileAssociations for the model files this application opens.</p>
+<p>
+
+
+<p>The caller owns the result and frees it.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The associations object, set up for every extension IsModelFile accepts.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ApplyFileAssociations-TSprite3DAppSettings-Boolean-Boolean-String-"></span><code>function <strong>ApplyFileAssociations</strong>(const ASettings: <a href="Sprite3DHelpers.TSprite3DAppSettings.html">TSprite3DAppSettings</a>; const AOpenWith, AAlways: Boolean; out AMessage: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Registers or unregisters the application for model files as asked, keeping what is needed to undo it in ASettings.</p>
+<p>
+
+
+<p>In order: registers for Open With if AOpenWith; makes the application the default if AAlways, recording the old defaults in ASettings.AssociationBackup, or otherwise puts back the recorded defaults if it was the default; and unregisters if not AOpenWith. AAlways counts only with AOpenWith, except on macOS, where Open With is fixed by the bundle. Where the user has to confirm a default in the system's own settings, that page is opened and AMessage says so. ASettings.OpenWith and AlwaysOpenWith are updated to the result; the caller saves ASettings.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ASettings</dt>
+<dd>The application's settings, for the backup.</dd>
+<dt>AOpenWith</dt>
+<dd>Whether to be offered under Open With.</dd>
+<dt>AAlways</dt>
+<dd>Whether to be the default for model files.</dd>
+<dt>AMessage</dt>
+<dd>Anything the user should be told, failures included; empty if nothing.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if every step succeeded.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="GpuModeSupported"></span><code>function <strong>GpuModeSupported</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+True where the GPU preference can be set: Windows only.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True on Windows.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ReadGpuMode"></span><code>function <strong>ReadGpuMode</strong>: <a href="Sprite3DHelpers.html#TSprite3DGpuMode">TSprite3DGpuMode</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The GPU preference Windows has for this program file now.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The preference, or gmSystem where there is none or the platform has none.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="WriteGpuMode-TSprite3DGpuMode-"></span><code>function <strong>WriteGpuMode</strong>(const AMode: <a href="Sprite3DHelpers.html#TSprite3DGpuMode">TSprite3DGpuMode</a>): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Asks Windows for a GPU for this program file, from the next start.</p>
+<p>
+
+
+<p>gmSystem removes the program's entry, handing the choice back to Windows. Uses GpuPreference.SetGpuPreference.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AMode</dt>
+<dd>The preference.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if it was stored; always False where GpuModeSupported is False.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ReadGeneralSettings-TSprite3DAppSettings-"></span><code>function <strong>ReadGeneralSettings</strong>(const ASettings: <a href="Sprite3DHelpers.TSprite3DAppSettings.html">TSprite3DAppSettings</a>): <a href="Sprite3DHelpers.TSprite3DGeneralSettings.html">TSprite3DGeneralSettings</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The File, Settings choices as they stand now.</p>
+<p>
+
+
+<p>Open With, the default application and the GPU preference are read from the system, where it can say; the rest come from ASettings.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ASettings</dt>
+<dd>The application's settings.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The choices.</p></td></tr>
+</table>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DStartupAction"></span><code><strong>TSprite3DStartupAction</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+What the application loads when it starts and no file was asked for.</p>
+<p>
+
+
+<p><code>saNone</code> loads nothing; <code>saDefaultModel</code> loads the sample model; <code>saLastModel</code> loads the model last opened, or the sample model if that file has gone. A file the operating system asks the application to open always comes first.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="saNone">saNone</span></li>
+<li>
+<span id="saDefaultModel">saDefaultModel</span></li>
+<li>
+<span id="saLastModel">saLastModel</span></li>
+</ul>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DTheme"></span><code><strong>TSprite3DTheme</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The application's look: FMX's own default style, or one of the FMX styles that come with RAD Studio.</p>
+<p>
+
+
+<p><code>thDefault</code> is the platform's own style. <code>thDark</code> is Dark.style; the others are the coloured Graphite styles, dark grey with an accent: <code>thAquaGraphite</code> blue, <code>thRubyGraphite</code> red and <code>thGoldenGraphite</code> gold.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="thDefault">thDefault</span></li>
+<li>
+<span id="thDark">thDark</span></li>
+<li>
+<span id="thAquaGraphite">thAquaGraphite</span></li>
+<li>
+<span id="thRubyGraphite">thRubyGraphite</span></li>
+<li>
+<span id="thGoldenGraphite">thGoldenGraphite</span></li>
+</ul>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DGpuMode"></span><code><strong>TSprite3DGpuMode</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Which graphics processor Windows gives the application.</p>
+<p>
+
+
+<p><code>gmSystem</code> lets Windows decide; <code>gmPowerSaving</code> asks for the low-power GPU and <code>gmHighPerformance</code> for the high-performance one. Used on Windows only, and only after the application is restarted.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="gmSystem">gmSystem</span></li>
+<li>
+<span id="gmPowerSaving">gmPowerSaving</span></li>
+<li>
+<span id="gmHighPerformance">gmHighPerformance</span></li>
+</ul>
+</td></tr>
+</table>
 <h3 class="detail">Constants</h3>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
@@ -447,6 +808,91 @@ The application's name, used for its per-user folder.</p>
 <tr><td colspan="1">
 <p>
 The name of the settings file in SupportFolder.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PAN_LIMIT"></span><code><strong>PAN_LIMIT</strong> = 2.0;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The largest camera pan either way, as a multiple of the model's radius.</p>
+<p>
+
+
+<p>The radius is half the diagonal of the model's bounding box, so a pan of 1 moves the orbit centre out to where the model's farthest corner was.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ANIMATION_FPS_MIN"></span><code><strong>ANIMATION_FPS_MIN</strong> = 1;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The lowest frame rate File, Animation offers for saved animations, in frames per second.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ANIMATION_FPS_MAX"></span><code><strong>ANIMATION_FPS_MAX</strong> = 60;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The highest frame rate File, Animation offers for saved animations, in frames per second.</p>
+<p>
+
+
+<p>Gorilla bakes animations at 60 frames a second on desktop, so a higher rate would only repeat frames.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ANIMATION_FPS_DEFAULT"></span><code><strong>ANIMATION_FPS_DEFAULT</strong> = 30;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The frame rate saved animations use until File, Animation changes it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="GRAB_SIZE_MIN"></span><code><strong>GRAB_SIZE_MIN</strong> = 8;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The smallest width or height File, Grab renders, in pixels.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="GRAB_SIZE_MAX"></span><code><strong>GRAB_SIZE_MAX</strong> = 1024;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The largest width or height File, Grab renders, in pixels.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="GRAB_SIZE_DEFAULT"></span><code><strong>GRAB_SIZE_DEFAULT</strong> = 256;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The width and height File, Grab renders until another size is chosen.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="GRAB_PRESET_SIZES"></span><code><strong>GRAB_PRESET_SIZES</strong>: array[0..11] of Integer =
+    (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The square grab sizes File, Settings offers, in pixels, smallest first.</p>
+<p>
+
+
+<p>Any other size, square or not, is a custom size.</p>
 </td></tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

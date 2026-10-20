@@ -82,6 +82,36 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The per-user folder an application should keep its own files in.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DStyles.html#ApplyFmxStyle-String-String-arrayofString-String-">ApplyFmxStyle</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DStyles.html">Sprite3DStyles</a></td>
+<td class="itemdesc"><p>Applies a named FMX style to the whole application, or puts back the default.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#ApplyTitleBar-TCommonCustomForm-">ApplyTitleBar</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
+<td class="itemdesc"><p>Gives one form's title bar the current spec.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DBzip2.html#Bzip2Decompress-TBytes-">Bzip2Decompress</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DBzip2.html">Sprite3DBzip2</a></td>
+<td class="itemdesc"><p>Decompresses a whole bzip2 file held in memory.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeAtlas-TArrayTSprite3DImage-Integer-">ComposeAtlas</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Puts the frames in a square grid: a texture atlas.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeStrip-TArrayTSprite3DImage-">ComposeStrip</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Puts the frames side by side in one row: a sprite strip.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#DeployedLibraryFolder">DeployedLibraryFolder</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
+<td class="itemdesc"><p>The platform's usual folder for an application's own libraries.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenFiles.html#FileOpenRequests">FileOpenRequests</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenFiles.html">Sprite3DOpenFiles</a></td>
 <td class="itemdesc"><p>The application's one queue of files to open.</p></td>
@@ -102,44 +132,169 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Returns the grid ShowModelGrid added to AModel, or nil.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#H264Available">H264Available</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Whether MP4 video will be H.264: FFmpeg and OpenH264 both loaded.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.html#HideModelAxes-TGorillaModel-">HideModelAxes</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
 <td class="itemdesc"><p>Removes the axes ShowModelAxes added to AModel.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Removes the grid ShowModelGrid added to AModel.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.html#IconDialogFilter">IconDialogFilter</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>A file dialog Filter offering every registered icon format.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.html#IconWriters">IconWriters</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>Every registered icon format, in the order registered.</p></td>
 </tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ImageFromBitmap-TBitmap-">ImageFromBitmap</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Copies an FMX bitmap into a TSprite3DImage, removing premultiplied alpha.</p></td>
+</tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DBzip2.html#IsBzip2-TBytes-">IsBzip2</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DBzip2.html">Sprite3DBzip2</a></td>
+<td class="itemdesc"><p>Whether data starts as a bzip2 stream does.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#NativeLibraryFolders">NativeLibraryFolders</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
+<td class="itemdesc"><p>The folders to look for the program's own libraries in, best first.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#NativePlatformKey">NativePlatformKey</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
+<td class="itemdesc"><p>The platform's name, as used for <code>dlls</code> folders and <code>openh264.json</code>.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Available">OpenH264Available</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
+<td class="itemdesc"><p>Whether OpenH264 is loaded, loading it the first time.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264LoadedLibrary">OpenH264LoadedLibrary</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
+<td class="itemdesc"><p>The full path of the OpenH264 loaded, or empty if none is.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Retry">OpenH264Retry</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
+<td class="itemdesc"><p>Loads the named OpenH264 again unless a copy is already loaded.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Status">OpenH264Status</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
+<td class="itemdesc"><p>Which OpenH264 was loaded and from where, or why none was.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DFlatColour.html#PrepareFlatMaterial-TGorillaDefaultMaterialSource-">PrepareFlatMaterial</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DFlatColour.html">Sprite3DFlatColour</a></td>
+<td class="itemdesc"><p>Sets a new material up to take its colour from a texture.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#RecheckH264">RecheckH264</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Looks for OpenH264 again, after a copy may have been added, unless one is loaded.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.html#RegisterIconWriter-TSprite3DIconWriterClass-">RegisterIconWriter</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>Adds an icon format to those IconWriters lists.</p></td>
 </tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SafeFileStem-String-">SafeFileStem</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>A name made safe to use as a file name on every platform.</p></td>
+</tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SaveAnimatedGif-TArrayTSprite3DImage-String-Integer-">SaveAnimatedGif</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Writes the frames as an animated GIF that loops for ever.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#SaveH264Video-TArrayTSprite3DImage-String-Double-">SaveH264Video</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Writes the frames as a video-only H.264 MP4 file with OpenH264.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#SaveMp4Video-TArrayTSprite3DImage-String-Double-">SaveMp4Video</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Writes the frames as a video-only MP4 file, H.264 if it can, else MPEG-4 Part 2.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#SaveMpeg4Video-TArrayTSprite3DImage-String-Double-">SaveMpeg4Video</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Writes the frames as a video-only MPEG-4 Part 2 MP4 file.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SavePng-TSprite3DImage-String-">SavePng</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Writes an image as a 32-bit RGBA PNG file.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DFlatColour.html#SetFlatColour-TGorillaDefaultMaterialSource-TAlphaColor-">SetFlatColour</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DFlatColour.html">Sprite3DFlatColour</a></td>
+<td class="itemdesc"><p>Colours a material prepared by PrepareFlatMaterial with one opaque colour.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DFlatColour.html#SetFlatGradient-TGorillaDefaultMaterialSource-TAlphaColor-TAlphaColor-">SetFlatGradient</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DFlatColour.html">Sprite3DFlatColour</a></td>
+<td class="itemdesc"><p>Colours a material prepared by PrepareFlatMaterial with a blend from ATop to ABottom.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#SetPreferredOpenH264-String-">SetPreferredOpenH264</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
+<td class="itemdesc"><p>Names the copy of OpenH264 to load: the one downloaded for this platform.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#SetTitleBarSpec-TSprite3DTitleBarSpec-">SetTitleBarSpec</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
+<td class="itemdesc"><p>Makes ASpec the look of every title bar, now and for forms shown later.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.html#ShowModelAxes-TGorillaModel-Single-Boolean-">ShowModelAxes</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
 <td class="itemdesc"><p>Draws AModel's X, Y and Z axes through its centre of rotation.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Shows a shader-drawn grid on AModel's floor, from its current bounds.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-TBoundingBox-">ShowModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#StyleBackgroundColour-TAlphaColor-">StyleBackgroundColour</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
+<td class="itemdesc"><p>The colour of the form background in the FMX style in use.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#TitleBarSpecFromStyle-TAlphaColor-TAlphaColor-">TitleBarSpecFromStyle</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
+<td class="itemdesc"><p>A title bar spec to go with the FMX style in use.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#VideoAvailable">VideoAvailable</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Whether MP4 video can be written: the FFmpeg libraries loaded and have the encoder.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DVideo.html#VideoStatus">VideoStatus</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
+<td class="itemdesc"><p>Why video is or is not available, for a log or a hint.</p></td>
 </tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

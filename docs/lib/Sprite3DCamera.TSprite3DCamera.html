@@ -99,8 +99,8 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
   <dd>The root of the pivot chain; set <code>Rig.Parent</code> to place the camera in a scene.</dd>
   <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#LookAt-TPoint3D-TLookAtMode-">LookAt</a></dt>
   <dd>Turns the camera, from where it stands, to face APoint.</dd>
-  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
-  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles and an explicit view size.</dd>
 </dl>
 <span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
 <ul class="hierarchy"><li class="ancestor">TGorillaCamera</li>
@@ -185,21 +185,25 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-">FitToBounds</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TGorillaModel-Single-">FitToBoundsMax</a></strong>(const AModel: TGorillaModel; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-Single-Single-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TGorillaModel-Single-Single-Single-">FitToBoundsMax</a></strong>(const AModel: TGorillaModel; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-TControl3D-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
@@ -245,6 +249,10 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 <tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Distance">Distance</a></strong>: Single read FDistance write SetDistance;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DCamera.TSprite3DCamera.html#Locked">Locked</a></strong>: Boolean read FLocked write FLocked;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
@@ -749,6 +757,46 @@ Fits a box given in ASpace's local coordinates for the current angles.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-"></span><code>function <strong>FitToBounds</strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Fits a box given in ASpace's local coordinates for the current angles and an explicit view size.</p>
+<p>
+
+
+<p>Works like the overload that takes a box and a space, but frames it for AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use it to frame a box the caller has gathered, such as the union of every pose of an animation, for an off-screen target whose shape differs from the viewport's. The camera is changed as by every fit, so the on-screen view changes too until it is refitted or restored.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box to frame, in ASpace's local coordinates.</dd>
+<dt>ASpace</dt>
+<dd>The object whose local space ABox is in. If nil, ABox is taken to be in absolute viewport space.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the box was framed; False, with nothing changed, if the box is empty or either size is zero or less.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="FitToBoundsMax-TBoundingBox-Single-"></span><code>function <strong>FitToBoundsMax</strong>(const ABox: TBoundingBox; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -778,8 +826,8 @@ Makes ABox as large as possible while it stays visible at every angle.</p>
 <h6 class="description_section">Returns</h6>
 <p class="return">True if the box was framed; False, with nothing changed, if the box is empty, there is no viewport, or it has zero width or height.</p><h6 class="description_section">See also</h6>
 <dl class="see_also">
-  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
-  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles and an explicit view size.</dd>
 </dl>
 </td></tr>
 </table>
@@ -813,8 +861,8 @@ Makes a Gorilla model's bounding box as large as possible while it stays visible
 <h6 class="description_section">Returns</h6>
 <p class="return">True if the model was framed; False, with nothing changed, if AModel is nil, it has no vertices, there is no viewport, or the viewport has zero width or height.</p><h6 class="description_section">See also</h6>
 <dl class="see_also">
-  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
-  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles and an explicit view size.</dd>
 </dl>
 </td></tr>
 </table>
@@ -892,8 +940,8 @@ Makes a Gorilla model's bounding box as large as possible in a view of the given
 <h6 class="description_section">Returns</h6>
 <p class="return">True if the model was framed; False, with nothing changed, if AModel is nil, it has no vertices, or either size is zero or less.</p><h6 class="description_section">See also</h6>
 <dl class="see_also">
-  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-">FitToBounds</a></dt>
-  <dd>Fits a box given in ASpace's local coordinates for the current angles.</dd>
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles and an explicit view size.</dd>
 </dl>
 </td></tr>
 </table>
@@ -1075,6 +1123,20 @@ Distance from the orbit centre to the camera, in scene units.</p>
 
 
 <p>Defaults to 10 and is clamped to at least 0.001. In orthographic mode it does not change the apparent size; FitToBounds still sets it to keep the near plane clear of the framed object.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Locked"></span><code>property <strong>Locked</strong>: Boolean read FLocked write FLocked;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+While True, nothing done through this class moves or turns the camera.</p>
+<p>
+
+
+<p>Setting Azimuth, PolarAngle, Roll, Distance or Orientation, and calling LookAt, Orbit, Zoom, MoveCenterTo or RestoreFraming, then do nothing, and every FitToBounds and FitToBoundsMax returns False without changing anything. Reading is unaffected, so SaveFraming still works. It does not stop code writing straight to the inherited properties, such as ProjectionMode and OrthoHeight, or to OrbitCenter's position; callers that honour the lock must check it before they do. False by default.</p>
 </td></tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

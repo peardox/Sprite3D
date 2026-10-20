@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DSpriteSheet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DSpriteSheet</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Lays out a sequence of frames as a sprite strip, a texture atlas or an animated GIF, and writes them to files.</p>
+<p>
+
+
+<p>The frames are TSprite3DImage records: plain RGBA pixels with straight (not premultiplied) alpha, top row first, all the same size. ImageFromBitmap makes one from an FMX bitmap, such as a grab from TSprite3DOffscreen, so the frames take no GPU resources and no canvas is involved.
+
+<p>ComposeStrip puts the frames side by side in one row; ComposeAtlas puts them in a square grid, left to right and then top to bottom. SavePng writes such an image as a PNG file and SaveAnimatedGif writes the frames as a looping GIF. Both writers are plain Pascal over streams, using only System.ZLib, so they behave the same on every platform and are not limited by the largest bitmap the GPU or FMX canvas accepts: a strip of a hundred frames of 256 pixels is written as easily as a single frame.
+
+<p>GIF keeps 256 colours per frame and on/off transparency, so each frame gets its own palette of up to 255 colours, chosen by median cut, plus one transparent entry; pixels less than half opaque become transparent. Every frame replaces the last (disposal &quot;restore to background&quot;), so transparent sprites animate cleanly.
+
+<p>Nothing here keeps state, and every routine may be called on any thread, except ImageFromBitmap, which reads an FMX bitmap and so belongs on the main thread.
+
+<p></p>
+
+<pre class="preformatted">
+frames: TArray&lt;TSprite3DImage&gt;
+|-- ComposeStrip  -&gt; TSprite3DImage, Count x 1 frames  -&gt; SavePng
+|-- ComposeAtlas  -&gt; TSprite3DImage, N x N frames      -&gt; SavePng
+`-- SaveAnimatedGif                                    -&gt; .gif</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DImage.html"><code>TSprite3DImage</code></a></td>
+<td class="itemdesc">An image as plain RGBA bytes with straight alpha, top row first.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ImageFromBitmap-TBitmap-">ImageFromBitmap</a></strong>(const ABitmap: TBitmap): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeStrip-TArrayTSprite3DImage-">ComposeStrip</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeAtlas-TArrayTSprite3DImage-Integer-">ComposeAtlas</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; out ACells: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SavePng-TSprite3DImage-String-">SavePng</a></strong>(const AImage: <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>; const AFileName: String);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SaveAnimatedGif-TArrayTSprite3DImage-String-Integer-">SaveAnimatedGif</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ADelay: Integer);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#SafeFileStem-String-">SafeFileStem</a></strong>(const AName: String): String;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ImageFromBitmap-TBitmap-"></span><code>function <strong>ImageFromBitmap</strong>(const ABitmap: TBitmap): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Copies an FMX bitmap into a TSprite3DImage, removing premultiplied alpha.</p>
+<p>
+
+
+<p>FMX bitmaps hold their colour premultiplied by alpha; the copy divides it back out, so a half-transparent edge keeps its true colour. Works with whichever byte order the platform's bitmaps use. For the main thread only. The bitmap is not changed or freed.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABitmap</dt>
+<dd>The bitmap to copy; not nil and not empty.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The copy.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If ABitmap is nil or empty.</dd>
+<dt><code>EInvalidOperation</code></dt>
+<dd>If the bitmap cannot be mapped for reading.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ComposeStrip-TArrayTSprite3DImage-"></span><code>function <strong>ComposeStrip</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Puts the frames side by side in one row: a sprite strip.</p>
+<p>
+
+
+<p>Frame I is at X = I * frame width. The result is one frame high and Length(AFrames) frames long.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The strip.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames or they differ in size.</dd>
+<dt><code>EOutOfMemory</code></dt>
+<dd>If the strip is too large to allocate.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ComposeAtlas-TArrayTSprite3DImage-Integer-"></span><code>function <strong>ComposeAtlas</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; out ACells: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Puts the frames in a square grid: a texture atlas.</p>
+<p>
+
+
+<p>The grid has ACells columns and ACells rows, where ACells is the smallest number whose square holds every frame, so 30 frames make a 6 by 6 grid. Frame I is in column <code>I mod ACells</code> and row <code>I div ACells</code>: the frames run left to right along a row, then carry on at the start of the next row down. Cells after the last frame are left fully transparent.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size.</dd>
+<dt>ACells</dt>
+<dd>On return, the number of columns, which is also the number of rows.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The atlas.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames or they differ in size.</dd>
+<dt><code>EOutOfMemory</code></dt>
+<dd>If the atlas is too large to allocate.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SavePng-TSprite3DImage-String-"></span><code>procedure <strong>SavePng</strong>(const AImage: <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>; const AFileName: String);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes an image as a 32-bit RGBA PNG file.</p>
+<p>
+
+
+<p>The file is written in full, replacing any file of that name, with 8-bit RGBA, no interlacing and zlib compression. The folder must exist. Blocks while it writes.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AImage</dt>
+<dd>The image to write.</dd>
+<dt>AFileName</dt>
+<dd>The file to write.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If the image is empty.</dd>
+<dt><code>EFCreateError</code></dt>
+<dd>If the file cannot be created.</dd>
+<dt><code>EWriteError</code></dt>
+<dd>If writing fails part way.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveAnimatedGif-TArrayTSprite3DImage-String-Integer-"></span><code>procedure <strong>SaveAnimatedGif</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ADelay: Integer);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes the frames as an animated GIF that loops for ever.</p>
+<p>
+
+
+<p>Each frame gets its own palette of up to 255 colours, chosen by median cut, and one transparent entry; a pixel less than half opaque is written as transparent. Every frame is shown for ADelay hundredths of a second and then cleared, so transparent frames do not build up on each other. The file replaces any of that name; the folder must exist. Blocks while it writes.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size and each at most 65535 pixels wide and high.</dd>
+<dt>AFileName</dt>
+<dd>The file to write.</dd>
+<dt>ADelay</dt>
+<dd>How long each frame shows, in hundredths of a second. Values below 2 are written as 2, since browsers slow down shorter delays to a tenth of a second.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size or they are too large for GIF.</dd>
+<dt><code>EFCreateError</code></dt>
+<dd>If the file cannot be created.</dd>
+<dt><code>EWriteError</code></dt>
+<dd>If writing fails part way.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SafeFileStem-String-"></span><code>function <strong>SafeFileStem</strong>(const AName: String): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+A name made safe to use as a file name on every platform.</p>
+<p>
+
+
+<p>Characters that Windows, macOS, Linux, Android or iOS reject or treat specially in file names, such as <code>/ \ : * ? &quot; &lt; &gt; |</code> and control characters, become underscores, and leading and trailing spaces and dots are removed. An empty result becomes <code>'animation'</code>.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AName</dt>
+<dd>The name, such as an animation's name.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The safe name, without a folder or extension.</p></td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DOpenH264: Class TSprite3DH264Encoder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DH264Encoder"></span><h1 class="cio">Class TSprite3DH264Encoder</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DH264Encoder = class(TObject)</code></p>
+<h2 class="description">Description</h2>
+<p>
+One OpenH264 encoder, for pictures of one size.</p>
+<p>
+
+
+<p>Create it with the size and frame rate, feed it every picture in order with Encode, then free it. Every picture is encoded on its own, without frames held back, so each Encode returns that picture's access unit straight away; there are no B-frames, so the decoding order is the display order. Rate control aims at a constant quality, and the encoder never drops a frame.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TObject</li>
+<li class="thisitem">TSprite3DH264Encoder</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DOpenH264.TSprite3DH264Encoder.html#Create-Integer-Integer-Single-Integer-">Create</a></strong>(const AWidth, AHeight: Integer; const AFrameRate: Single; const AKeyInterval: Integer);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DOpenH264.TSprite3DH264Encoder.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DOpenH264.TSprite3DH264Encoder.html#ParameterSets">ParameterSets</a></strong>: TBytes;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DOpenH264.TSprite3DH264Encoder.html#Encode-arrayofPByte-arrayofInteger-TBytes-Boolean-">Encode</a></strong>(const APlanes: array of PByte; const AStrides: array of Integer; out AData: TBytes; out AKey: Boolean);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-Integer-Integer-Single-Integer-"></span><code>constructor <strong>Create</strong>(const AWidth, AHeight: Integer; const AFrameRate: Single; const AKeyInterval: Integer);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Sets up an encoder for AWidth x AHeight pictures at AFrameRate.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AWidth</dt>
+<dd>The picture width in pixels; even, at least 16.</dd>
+<dt>AHeight</dt>
+<dd>The picture height in pixels; even, at least 16.</dd>
+<dt>AFrameRate</dt>
+<dd>Frames per second, which sets the bit budget; more than 0.</dd>
+<dt>AKeyInterval</dt>
+<dd>Frames between key frames; 0 for only the first.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DOpenH264.ESprite3DH264Error.html">ESprite3DH264Error</a></dt>
+<dd>If OpenH264 is not available or refuses the settings.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Releases the encoder.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ParameterSets"></span><code>function <strong>ParameterSets</strong>: TBytes;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The sequence and picture parameter sets, as an Annex B byte stream.</p>
+<p>
+
+
+<p>This is what an MP4 muxer needs, as the stream's extra data, to write the stream's <code>avcC</code> description before any frame.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The SPS and PPS NAL units, each after a start code.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DOpenH264.ESprite3DH264Error.html">ESprite3DH264Error</a></dt>
+<dd>If OpenH264 fails.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Encode-arrayofPByte-arrayofInteger-TBytes-Boolean-"></span><code>procedure <strong>Encode</strong>(const APlanes: array of PByte; const AStrides: array of Integer; out AData: TBytes; out AKey: Boolean);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Encodes one YUV 4:2:0 picture.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APlanes</dt>
+<dd>The Y, U and V planes, in that order; U and V are half the width and height.</dd>
+<dt>AStrides</dt>
+<dd>The bytes from one row to the next in each plane.</dd>
+<dt>AData</dt>
+<dd>On return, the picture as an Annex B access unit; empty if the encoder skipped it.</dd>
+<dt>AKey</dt>
+<dd>On return, True if it is a key frame, which a player can start from.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DOpenH264.ESprite3DH264Error.html">ESprite3DH264Error</a></dt>
+<dd>If OpenH264 fails.</dd>
+</dl>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>
