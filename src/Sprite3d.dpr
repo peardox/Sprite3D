@@ -25,6 +25,5 @@ begin
 
   Application.Initialize;
  Application.CreateForm(TMainForm, MainForm);
-  Application.CreateForm(TOrbitalSettingsForm, OrbitalSettingsForm);
   Application.Run;
 end.

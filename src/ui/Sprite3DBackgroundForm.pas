@@ -9,7 +9,8 @@
 //** #RRGGBB and takes one typed in. None and Transparent need no colour, so the panel is
 //** disabled then; for Transparent a slider sets the size of the checker that stands for
 //** transparency on screen. A preview shows the result, with the checker at a quarter of its
-//** size and None as black, as the viewport shows it.
+//** size and None as black, as the viewport shows it. Given a background with LivePreview,
+//** the dialog also shows every change on it at once; Cancel puts it back as it was.
 //**
 //** The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it
 //** back after OK. On the desktop show it with ShowModal and free it afterwards; on Android
@@ -46,7 +47,9 @@ unit Sprite3DBackgroundForm;
   no colour, so the panel is disabled then; for Transparent a slider sets
   the size of the checker that stands for transparency on screen. A
   preview shows the result, with the checker at a quarter of its size and
-  None as black, as the viewport shows it.
+  None as black, as the viewport shows it. Given a background with
+  LivePreview, the dialog also shows every change on it at once; Cancel
+  puts it back as it was.
 
   The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing
   it and read it back after OK. On the desktop show it with ShowModal and
@@ -247,6 +250,8 @@ type
     FChecker: TBitmap;
     FFreeOnClose: Boolean;
     FOnAccept: TNotifyEvent;
+    FLive: TSprite3DBackground;          // previewed on; not owned
+    FLiveOriginal: TSprite3DBackgroundSpec;   // its spec before, for Cancel
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
     procedure LoadColourPanel;
     function EditedColour: TAlphaColor;
@@ -282,6 +287,26 @@ type
     /// <summary>Called after ShowAndFree when the dialog closes with OK; read Spec in
     /// it.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
+    //** @abstract(Shows every change on ABackground as it is made, and puts it back on
+    //** Cancel.)
+    //**
+    //** Call it after setting Spec and before showing the dialog. ABackground's spec at that
+    //** moment is remembered; unless the dialog closes with OK, including by Esc or the
+    //** window's close box, it is put back. On OK ABackground keeps the dialog's spec, which
+    //** the caller still reads from Spec to save or pass on. ABackground is not owned and
+    //** must outlive the dialog.
+    //**
+    //** @param(ABackground The background in view, or nil for no live preview.)
+    /// <summary>Shows every change on ABackground as it is made, and puts it back on
+    /// Cancel.</summary>
+    /// <remarks>Call it after setting Spec and before showing the dialog. ABackground's spec
+    /// at that moment is remembered; unless the dialog closes with OK, including by Esc or the
+    /// window's close box, it is put back. On OK ABackground keeps the dialog's spec, which the
+    /// caller still reads from Spec to save or pass on. ABackground is not owned and must
+    /// outlive the dialog.</remarks>
+    /// <param name="ABackground">The background in view, or nil for no live
+    /// preview.</param>
+    procedure LivePreview(const ABackground: TSprite3DBackground);
   end;
 
 implementation
@@ -314,6 +339,10 @@ end;
 
 procedure TBackgroundSettingsForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  // Anything but OK, including Esc and the window's close box, undoes the
+  // live preview
+  if (FLive <> nil) and (ModalResult <> mrOk) then
+    FLive.Spec := FLiveOriginal;
   if not FFreeOnClose then
     Exit;   // shown with ShowModal: the caller frees it
   if (ModalResult = mrOk) and Assigned(FOnAccept) then
@@ -495,8 +524,21 @@ begin
   end;
 end;
 
+procedure TBackgroundSettingsForm.LivePreview(const ABackground: TSprite3DBackground);
+begin
+  FLive := ABackground;
+  if FLive <> nil then
+  begin
+    FLiveOriginal := FLive.Spec;
+    FLive.Spec := FSpec;
+  end;
+end;
+
+// The preview rectangle, and the live background if there is one
 procedure TBackgroundSettingsForm.UpdatePreview;
 begin
+  if FLive <> nil then
+    FLive.Spec := FSpec;
   case FSpec.Kind of
     TSprite3DBackgroundKind.Solid:
       begin

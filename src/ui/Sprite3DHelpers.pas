@@ -97,6 +97,7 @@ type
     FVariableAzimuth: Single;
     FVariableInclination: Single;
     FVariableRoll: Single;
+    FDistanceFactor: Single;
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
     procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
   public
@@ -293,6 +294,15 @@ type
     /// <remarks>Stored as <c>variableRoll</c>. Kept whenever the session ends in the Variable
     /// view, and restored with it.</remarks>
     property VariableRoll: Single read FVariableRoll write FVariableRoll;
+    //** @abstract(How far out from the fitted view the camera is, x1 to x20; 1 by default.)
+    //**
+    //** Stored as @code(distanceFactor). Set with the Camera dialog's Distance slider and used
+    //** in every view; values below 1 count as 1.
+    /// <summary>How far out from the fitted view the camera is, x1 to x20; 1 by
+    /// default.</summary>
+    /// <remarks>Stored as <c>distanceFactor</c>. Set with the Camera dialog's Distance slider
+    /// and used in every view; values below 1 count as 1.</remarks>
+    property DistanceFactor: Single read FDistanceFactor write FDistanceFactor;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -555,6 +565,7 @@ begin
   FVariableAzimuth := 0;
   FVariableInclination := 0;
   FVariableRoll := 0;
+  FDistanceFactor := 1;
 end;
 
 // A colour as #AARRGGBB, which people can read and edit in settings.json

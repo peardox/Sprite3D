@@ -1,13 +1,15 @@
 object OrbitalSettingsForm: TOrbitalSettingsForm
   Left = 0
   Top = 0
-  Caption = 'Form1'
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Camera'
   ClientHeight = 450
   ClientWidth = 350
+  Position = MainFormCenter
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
-  OnCreate = FormCreate
   OnClose = FormClose
   OnShow = FormShow
   DesignerMasterStyle = 0
@@ -168,20 +170,23 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
     TabOrder = 96
     object CancelButton: TButton
       Anchors = [akLeft, akBottom]
+      Cancel = True
       ModalResult = 2
       Position.X = 24.000000000000000000
       Position.Y = 7.000000000000000000
       TabOrder = 97
       Text = 'Cancel'
+      OnClick = ButtonClick
     end
     object OkButton: TButton
       Anchors = [akRight, akBottom]
+      Default = True
       ModalResult = 1
       Position.X = 244.000000000000000000
       Position.Y = 7.000000000000000000
       TabOrder = 96
-      Text = 'Ok'
-      OnClick = OkButtonClick
+      Text = 'OK'
+      OnClick = ButtonClick
     end
   end
 end

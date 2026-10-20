@@ -1,23 +1,23 @@
-//** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
+//** @abstract(Demo form for TSprite3DCamera: loads a model and points the camera at it.)
 //**
 //** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
-//** panel of three dials for Azimuth, inclination and Roll. The Debug tab holds a memo for log
-//** output. Below the Camera submenu, the View menu has five items that are ticked or not, each
-//** switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid
-//** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Fit
-//** any angle chooses how the model is fitted, and Orthographic switches between perspective
-//** and orthographic projection.
+//** list of the model's animations, AnimationListBox, whose first entry stops them. The Debug
+//** tab holds a memo for log output. Below the Camera submenu, the View menu has five items
+//** that are ticked or not, each switched by choosing it: Show bounding box shows the model's
+//** bounding box, Show grid a grid on the model's floor, Show axes its own X, Y and Z axes
+//** through its centre of rotation, Fit any angle chooses how the model is fitted, and
+//** Orthographic switches between perspective and orthographic projection.
 //**
-//** The camera starts in the isometric view, and each readout always shows its dial's angle,
-//** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
-//** the view turns the right way for the dial. View, Camera, Variable lets the dials set the
-//** angles; View, Camera, Isometric, the default for now, sets the readouts to inclination
-//** 35.264, azimuth 45 and roll 0, the true isometric view, and switches the dials off; View,
-//** Camera, Pixel 2:1 does the same with an inclination of about 26.565; View, Camera, 3/4 View
-//** uses 45 degrees through the orthographic camera; View, Camera, Head On and View, Camera,
-//** Top Down use inclinations of 0 and 90 at azimuth 0; and View, Camera, Side View uses
-//** inclination 0 at azimuth 90. A test slider along the bottom of the 3D view moves the camera
-//** out from the fitted distance, x1 to x20.
+//** The camera starts in the view kept in settings.json, the isometric view the first time.
+//** View, Camera, Variable opens the Camera dialog, TOrbitalSettingsForm, whose dials set the
+//** azimuth, inclination and roll and whose slider moves the camera out from the fitted
+//** distance, x1 to x20, all shown on the camera as they change; OK keeps them and Cancel puts
+//** the camera back. Azimuth is sent to the camera reversed, 360 minus the readout, so the view
+//** turns the right way for the dial. The fixed views set roll 0 and azimuth 45 with their own
+//** inclination: 1/4 View 22.5 degrees; Isometric about 35.264, the true isometric view; Pixel
+//** 2:1 about 26.565; 3/4 View 45; Sqrt@(2@) about 54.736; and Golden Ratio about 58.283. Head On
+//** and Top Down use inclinations of 0 and 90 at azimuth 0, and Side View uses inclination 0 at
+//** azimuth 90. The distance factor applies in every view and is kept in settings.json.
 //**
 //** On show, the form loads the model the operating system asked it to open, as when a .glb or
 //** .gltf file is double-clicked in Explorer or Finder, or else the model whose file FormShow
@@ -56,8 +56,7 @@
 //** |-- GorillaTab "View"
 //** |   `-- MainLayout
 //** |       |-- ViewportLayout   owns the TGorillaViewport
-//** |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
-//** |       `-- ControlsLayout   dials and their labels
+//** |       `-- ControlsLayout   AnimationListBox
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
 //**
@@ -70,10 +69,15 @@
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
-//**     |   |-- ViewVariableItem "Variable"     dials set the angles
+//**     |   |-- ViewVariableItem "Variable"     the Camera dialog sets the angles
+//**     |   |-- CameraSeparatorItem2 "-"
+//**     |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
 //**     |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
 //**     |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+//**     |   |-- ViewRoot2Item "Sqrt@(2@)"       fixed, inclination about 54.736
+//**     |   |-- ViewGoldenRatioItem "Golden Ratio"  fixed, inclination about 58.283
+//**     |   |-- CameraSeparatorItem1 "-"
 //**     |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
 //**     |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
 //**     |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
@@ -86,30 +90,31 @@
 //** )
 unit Sprite3dMain;
 {
-  Demo form for TSprite3DCamera: loads a model and drives the camera with
-  dials.
+  Demo form for TSprite3DCamera: loads a model and points the camera at it.
 
   The form has two tabs. The View tab holds a TGorillaViewport, created at run
-  time, and a panel of three dials for Azimuth, inclination and Roll. The
-  Debug tab holds a memo for log output. Below the Camera submenu, the View
-  menu has five items that are ticked or not, each switched by choosing it:
-  Show bounding box shows the model's bounding box, Show grid a grid on the
-  model's floor, Show axes its own X, Y and Z axes through its centre of
-  rotation, Fit any angle chooses how the model is fitted, and Orthographic
-  switches between perspective and orthographic projection.
+  time, and a list of the model's animations, AnimationListBox, whose first
+  entry stops them. The Debug tab holds a memo for log output. Below the
+  Camera submenu, the View menu has five items that are ticked or not, each
+  switched by choosing it: Show bounding box shows the model's bounding box,
+  Show grid a grid on the model's floor, Show axes its own X, Y and Z axes
+  through its centre of rotation, Fit any angle chooses how the model is
+  fitted, and Orthographic switches between perspective and orthographic
+  projection.
 
-  The camera starts in the isometric view, and each readout always shows its
-  dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed,
-  360 minus the readout, so the view turns the right way for the dial. View,
-  Camera, Variable lets the dials set the angles; View, Camera, Isometric, the
-  default for now, sets the readouts to inclination 35.264, azimuth 45 and
-  roll 0, the true isometric view, and switches the dials off; View, Camera,
-  Pixel 2:1 does the same with an inclination of about 26.565; View, Camera,
-  3/4 View uses 45 degrees through the orthographic camera; View, Camera, Head
-  On and View, Camera, Top Down use inclinations of 0 and 90 at azimuth 0; and
-  View, Camera, Side View uses inclination 0 at azimuth 90. A test slider
-  along the bottom of the 3D view moves the camera out from the fitted
-  distance, x1 to x20.
+  The camera starts in the view kept in settings.json, the isometric view the
+  first time. View, Camera, Variable opens the Camera dialog,
+  TOrbitalSettingsForm, whose dials set the azimuth, inclination and roll and
+  whose slider moves the camera out from the fitted distance, x1 to x20, all
+  shown on the camera as they change; OK keeps them and Cancel puts the camera
+  back. Azimuth is sent to the camera reversed, 360 minus the readout, so the
+  view turns the right way for the dial. The fixed views set roll 0 and
+  azimuth 45 with their own inclination: 1/4 View 22.5 degrees; Isometric
+  about 35.264, the true isometric view; Pixel 2:1 about 26.565; 3/4 View 45;
+  Sqrt(2) about 54.736; and Golden Ratio about 58.283. Head On and Top Down
+  use inclinations of 0 and 90 at azimuth 0, and Side View uses inclination 0
+  at azimuth 90. The distance factor applies in every view and is kept in
+  settings.json.
 
   On show, the form loads the model the operating system asked it to open, as
   when a .glb or .gltf file is double-clicked in Explorer or Finder, or else
@@ -152,8 +157,7 @@ unit Sprite3dMain;
     |-- GorillaTab "View"
     |   `-- MainLayout
     |       |-- ViewportLayout   owns the TGorillaViewport
-    |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
-    |       `-- ControlsLayout   dials and their labels
+    |       `-- ControlsLayout   AnimationListBox
     `-- DebugTab "Debug"
         `-- DebugMemo
 
@@ -166,10 +170,15 @@ unit Sprite3dMain;
     |   `-- ExitMenuItem "Exit"             closes the application
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
-        |   |-- ViewVariableItem "Variable"     dials set the angles
+        |   |-- ViewVariableItem "Variable"     the Camera dialog sets the angles
+        |   |-- CameraSeparatorItem2 "-"
+        |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
         |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
         |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45, orthographic
+        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+        |   |-- ViewRoot2Item "Sqrt(2)"       fixed, inclination about 54.736
+        |   |-- ViewGoldenRatioItem "Golden Ratio"  fixed, inclination about 58.283
+        |   |-- CameraSeparatorItem1 "-"
         |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
         |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
         |   `-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
@@ -192,20 +201,21 @@ uses
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
+  Sprite3DOrbitalForm,
   FMX.ListBox
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
-  , FMX.MultiView, FMX.ListBox
+  , FMX.MultiView
   {$ENDIF}
   ;
 
 type
-  //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
+  //** @abstract(The main form: a Gorilla3D view of one model, with menus for the camera.)
   //**
   //** The viewport, light, model and TSprite3DCamera are created at run time, not at design
   //** time; the form owns none of them directly. All event handlers run on the main thread.
   //**
   //** @seealso(TSprite3DCamera)
-  /// <summary>The main form: a Gorilla3D view of one model, with dials for the camera.</summary>
+  /// <summary>The main form: a Gorilla3D view of one model, with menus for the camera.</summary>
   /// <remarks>The viewport, light, model and TSprite3DCamera are created at run time, not at
   /// design time; the form owns none of them directly. All event handlers run on the main
   /// thread.</remarks>
@@ -235,8 +245,8 @@ type
     /// <summary>The area left of the control panel; owns the TGorillaViewport made in
     /// FormCreate.</summary>
     ViewportLayout: TLayout;
-    //** @abstract(The right-hand control panel holding the dials and their labels.)
-    /// <summary>The right-hand control panel holding the dials and their labels.</summary>
+    //** @abstract(The right-hand panel holding AnimationListBox.)
+    /// <summary>The right-hand panel holding <see cref="AnimationListBox"/>.</summary>
     ControlsLayout: TLayout;
     //** @abstract(An FMX TModel3D placed at design time; the code does not use it.)
     //**
@@ -296,18 +306,19 @@ type
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
     //**
-    //** Its items form one radio group: Variable, where the dials set the angles, and the
-    //** fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View. Choosing
-    //** an item clears every check in the submenu, sets the view, then checks that item. The
-    //** checked item, and the dials' angles while Variable is checked, are kept in
+    //** Its items form one radio group: Variable, which opens the Camera dialog to set the
+    //** angles, and the fixed views 1/4 View, Isometric, Pixel 2:1, 3/4 View, Sqrt@(2@), Golden
+    //** Ratio, Head On, Top Down and Side View. Choosing a fixed view clears every check in the
+    //** submenu, sets the view, then checks that item; Variable is checked only when its dialog
+    //** closes with OK. The checked item, and the angles while Variable is checked, are kept in
     //** settings.json and restored at start-up.
-    /// <summary>The "Camera" submenu of View, choosing how the camera angles are
-    /// set.</summary>
-    /// <remarks>Its items form one radio group: Variable, where the dials set the angles, and
-    /// the fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View.
-    /// Choosing an item clears every check in the submenu, sets the view, then checks that
-    /// item. The checked item, and the dials' angles while Variable is checked, are kept in
-    /// settings.json and restored at start-up.</remarks>
+    /// <summary>The "Camera" submenu of View, choosing how the camera angles are set.</summary>
+    /// <remarks>Its items form one radio group: Variable, which opens the Camera dialog to set
+    /// the angles, and the fixed views 1/4 View, Isometric, Pixel 2:1, 3/4 View, Sqrt(2),
+    /// Golden Ratio, Head On, Top Down and Side View. Choosing a fixed view clears every check
+    /// in the submenu, sets the view, then checks that item; Variable is checked only when its
+    /// dialog closes with OK. The checked item, and the angles while Variable is checked, are
+    /// kept in settings.json and restored at start-up.</remarks>
     CameraMenu: TMenuItem;
     //** @abstract(The line between CameraMenu and the View menu's on/off items.)
     /// <summary>The line between CameraMenu and the View menu's on/off items.</summary>
@@ -343,17 +354,17 @@ type
     //** @abstract(Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.)
     //**
     //** Ticked, the model is framed for every possible Azimuth, inclination and Roll, so
-    //** turning the dials only moves the camera round it and the model always stays in view.
-    //** Not ticked, the model is framed exactly for the angles at the time of the fit; turning
-    //** a dial afterwards can push part of it past the edge until the next refit, which
-    //** happens on a resize, a projection change or choosing this item.
+    //** turning the Camera dialog's dials only moves the camera round it and the model always
+    //** stays in view. Not ticked, the model is framed exactly for the angles at the time of
+    //** the fit; turning a dial afterwards can push part of it past the edge until the next
+    //** refit, which happens on a resize, a projection change or choosing this item.
     /// <summary>Chooses FitToBoundsMax over FitToBounds, so the model fits at every
     /// angle.</summary>
     /// <remarks>Ticked, the model is framed for every possible Azimuth, inclination and Roll,
-    /// so turning the dials only moves the camera round it and the model always stays in view.
-    /// Not ticked, the model is framed exactly for the angles at the time of the fit; turning
-    /// a dial afterwards can push part of it past the edge until the next refit, which happens
-    /// on a resize, a projection change or choosing this item.</remarks>
+    /// so turning the Camera dialog's dials only moves the camera round it and the model always
+    /// stays in view. Not ticked, the model is framed exactly for the angles at the time of the
+    /// fit; turning a dial afterwards can push part of it past the edge until the next refit,
+    /// which happens on a resize, a projection change or choosing this item.</remarks>
     FitAnyAngleItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
     //**
@@ -385,11 +396,25 @@ type
     //** @abstract(The "Side View" view; see ViewSideItemClick.)
     /// <summary>The "Side View" view; see <see cref="ViewSideItemClick"/>.</summary>
     ViewSideItem: TMenuItem;
+    //** @abstract(Lists the model's animations, after a first entry that stops them; see
+    //** AnimationListBoxClick.)
+    /// <summary>Lists the model's animations, after a first entry that stops them; see
+    /// <see cref="AnimationListBoxClick"/>.</summary>
     AnimationListBox: TListBox;
+    //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
+    /// <summary>The "1/4 View" view; see <see cref="ViewOneQuarterItemClick"/>.</summary>
     ViewOneQuarterItem: TMenuItem;
+    //** @abstract(The "Sqrt@(2@)" view; see ViewRoot2ItemClick.)
+    /// <summary>The "Sqrt(2)" view; see <see cref="ViewRoot2ItemClick"/>.</summary>
     ViewRoot2Item: TMenuItem;
+    //** @abstract(The "Golden Ratio" view; see ViewGoldenRatioItemClick.)
+    /// <summary>The "Golden Ratio" view; see <see cref="ViewGoldenRatioItemClick"/>.</summary>
     ViewGoldenRatioItem: TMenuItem;
+    //** @abstract(The line in CameraMenu before Head On.)
+    /// <summary>The line in CameraMenu before Head On.</summary>
     CameraSeparatorItem1: TMenuItem;
+    //** @abstract(The line in CameraMenu after Variable.)
+    /// <summary>The line in CameraMenu after Variable.</summary>
     CameraSeparatorItem2: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
@@ -401,10 +426,10 @@ type
     //** origin, so it sits where the camera is and points where it looks. The viewport runs
     //** at a fixed 60 frames per second without VSync.
     //**
-    //** The dials start at 0, then the camera view kept in settings.json is chosen, as its
-    //** View, Camera item would choose it: a fixed view turns the dials to its angles and
-    //** switches them off, and Variable turns them to the angles kept with it and leaves them
-    //** on. Isometric is chosen when none is kept. Last, the View menu's five on/off items are
+    //** The angles start at 0 and the distance factor is the one kept in settings.json; then
+    //** the camera view kept there is chosen, as its View, Camera item would choose it, except
+    //** that Variable takes the angles kept with it without opening the Camera dialog.
+    //** Isometric is chosen when none is kept. Last, the View menu's five on/off items are
     //** ticked as settings.json says they were left, and applied, which also sets the
     //** projection.
     //**
@@ -417,10 +442,10 @@ type
     /// FOV, which becomes the viewport's camera, and a point light parented to the camera at
     /// its origin, so it sits where the camera is and points where it looks. The viewport
     /// runs at a fixed 60 frames per second without VSync.</para>
-    /// <para>The dials start at 0, then the camera view kept in settings.json is chosen, as
-    /// its View, Camera item would choose it: a fixed view turns the dials to its angles and
-    /// switches them off, and Variable turns them to the angles kept with it and leaves them
-    /// on. Isometric is chosen when none is kept. Last, the View menu's five on/off items are
+    /// <para>The angles start at 0 and the distance factor is the one kept in settings.json;
+    /// then the camera view kept there is chosen, as its View, Camera item would choose it,
+    /// except that Variable takes the angles kept with it without opening the Camera dialog.
+    /// Isometric is chosen when none is kept. Last, the View menu's five on/off items are
     /// ticked as settings.json says they were left, and applied, which also sets the
     /// projection.</para></remarks>
     /// <param name="Sender">The form.</param>
@@ -452,32 +477,20 @@ type
     procedure FormShow(Sender: TObject);
     //** @abstract(Stops taking open requests, saves the view state and frees the settings.)
     //**
-    //** The checked View, Camera item, the dials' angles if that is Variable, and the ticks of
-    //** the View menu's five on/off items are written to settings.json for the next session;
-    //** a failed save is ignored, as no message can be shown here. Other settings are saved as
-    //** soon as they change.
+    //** The checked View, Camera item, the angles if that is Variable, the distance factor and
+    //** the ticks of the View menu's five on/off items are written to settings.json for the
+    //** next session; a failed save is ignored, as no message can be shown here. Other settings
+    //** are saved as soon as they change.
     //**
     //** @param(Sender The form.)
     /// <summary>Stops taking open requests, saves the view state and frees the
     /// settings.</summary>
-    /// <remarks>The checked View, Camera item, the dials' angles if that is Variable, and the
-    /// ticks of the View menu's five on/off items are written to settings.json for the next
-    /// session; a failed save is ignored, as no message can be shown here. Other settings are
-    /// saved as soon as they change.</remarks>
+    /// <remarks>The checked View, Camera item, the angles if that is Variable, the distance
+    /// factor and the ticks of the View menu's five on/off items are written to settings.json
+    /// for the next session; a failed save is ignored, as no message can be shown here. Other
+    /// settings are saved as soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
-    //** @abstract(Copies RollDial to the camera's Roll.)
-    //**
-    //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
-    //** to the camera. The model is not refitted; see FitAnyAngleItem.
-    //**
-    //** @param(Sender RollDial.)
-    /// <summary>Copies RollDial to the camera's Roll.</summary>
-    /// <remarks>The dial value is wrapped into 0 to 360, without negating, shown in RollText
-    /// and written to the camera. The model is not refitted; see
-    /// <see cref="FitAnyAngleItem"/>.</remarks>
-    /// <param name="Sender">RollDial.</param>
-    procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
     //**
     //** Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is loaded.
@@ -610,16 +623,18 @@ type
     //** @abstract(Opens the Background Settings dialog and applies what is chosen.)
     //**
     //** The dialog, TBackgroundSettingsForm, opens modally, centred on this form, showing the
-    //** background in use. If it is closed with OK, the chosen background is shown in the
-    //** viewport, used for grabs and icons, and saved to settings.json; Cancel changes
-    //** nothing. On Android and iOS, where a dialog cannot block, it opens as an ordinary
-    //** form and OK is applied when it closes.
+    //** background in use, and shows every change in the viewport as it is made. If it is
+    //** closed with OK, the chosen background is kept, used for grabs and icons, and saved to
+    //** settings.json; Cancel puts the viewport's background back and changes nothing. On
+    //** Android and iOS, where a dialog cannot block, it opens as an ordinary form and OK is
+    //** applied when it closes.
     //**
     //** @param(Sender BackgroundSettingsMenuItem.)
     /// <summary>Opens the Background Settings dialog and applies what is chosen.</summary>
     /// <remarks>The dialog, TBackgroundSettingsForm, opens modally, centred on this form,
-    /// showing the background in use. If it is closed with OK, the chosen background is shown
-    /// in the viewport, used for grabs and icons, and saved to settings.json; Cancel changes
+    /// showing the background in use, and shows every change in the viewport as it is made. If
+    /// it is closed with OK, the chosen background is kept, used for grabs and icons, and saved
+    /// to settings.json; Cancel puts the viewport's background back and changes
     /// nothing. On Android and iOS, where a dialog cannot block, it opens as an ordinary form
     /// and OK is applied when it closes.</remarks>
     /// <param name="Sender">BackgroundSettingsMenuItem.</param>
@@ -635,48 +650,38 @@ type
     /// and everything it owns are freed as usual.</remarks>
     /// <param name="Sender">ExitMenuItem.</param>
     procedure ExitMenuItemClick(Sender: TObject);
-    //** @abstract(Hands the camera angles back to the dials.)
+    //** @abstract(Opens the Camera dialog to set the angles and distance by hand.)
     //**
-    //** Clears every View check, turns the three dials back on and checks the Variable item.
-    //** The camera keeps its current angles until a dial is turned.
+    //** Opens the Camera dialog, TOrbitalSettingsForm, on the current angles and distance
+    //** factor, which shows every change on the camera as it is made. OK keeps the dialog's
+    //** angles and distance and checks the Variable item; Cancel puts the camera back and
+    //** leaves the checked view as it was.
     //**
     //** @param(Sender ViewVariableItem.)
-    /// <summary>Hands the camera angles back to the dials.</summary>
-    /// <remarks>Clears every View check, turns the three dials back on and checks the Variable
-    /// item. The camera keeps its current angles until a dial is turned.</remarks>
+    /// <summary>Opens the Camera dialog to set the angles and distance by hand.</summary>
+    /// <remarks>Opens the Camera dialog, TOrbitalSettingsForm, on the current angles and
+    /// distance factor, which shows every change on the camera as it is made. OK keeps the
+    /// dialog's angles and distance and checks the Variable item; Cancel puts the camera back
+    /// and leaves the checked view as it was.</remarks>
     /// <param name="Sender">ViewVariableItem.</param>
     procedure ViewVariableItemClick(Sender: TObject);
     //** @abstract(Sets the isometric view and fixes it.)
     //**
     //** Clears every View check, sets the inclination to ArcTan@(1/Sqrt@(2@)@), about 35.264
     //** degrees, the true isometric elevation, the azimuth to 45 and the roll to 0, as shown on
-    //** the readouts, turns the dials to match and switches them off, refits the model for the
-    //** new view, then checks the Isometric item. As with the dial, the azimuth reaches the
-    //** camera reversed. The other fixed views work the same way with their own inclination.
+    //** the readouts, refits the model for the new view, then checks the Isometric item. As in
+    //** the Camera dialog, the azimuth reaches the camera reversed. The other fixed views work
+    //** the same way with their own inclination.
     //**
     //** @param(Sender ViewIsometricItem.)
     /// <summary>Sets the isometric view and fixes it.</summary>
     /// <remarks>Clears every View check, sets the inclination to ArcTan(1/Sqrt(2)), about
     /// 35.264 degrees, the true isometric elevation, the azimuth to 45 and the roll to 0, as
-    /// shown on the readouts, turns the dials to match and switches them off, refits the model
-    /// for the new view, then checks the Isometric item. As with the dial, the azimuth reaches
-    /// the camera reversed. The other fixed views work the same way with their own
-    /// inclination.</remarks>
+    /// shown on the readouts, refits the model for the new view, then checks the Isometric
+    /// item. As in the Camera dialog, the azimuth reaches the camera reversed. The other fixed
+    /// views work the same way with their own inclination.</remarks>
     /// <param name="Sender">ViewIsometricItem.</param>
     procedure ViewIsometricItemClick(Sender: TObject);
-    //** @abstract(Moves the camera out by the slider's factor; test only.)
-    //**
-    //** In perspective mode the camera's Distance becomes the fitted distance times the
-    //** factor; in orthographic mode, where distance does not change the size, OrthoHeight
-    //** is scaled instead. The factor is kept when the model is refitted.
-    //**
-    //** @param(Sender DistanceTrack.)
-    /// <summary>Moves the camera out by the slider's factor; test only.</summary>
-    /// <remarks>In perspective mode the camera's Distance becomes the fitted distance times
-    /// the factor; in orthographic mode, where distance does not change the size, OrthoHeight
-    /// is scaled instead. The factor is kept when the model is refitted.</remarks>
-    /// <param name="Sender">DistanceTrack.</param>
-    procedure DistanceTrackChange(Sender: TObject);
     //** @abstract(Sets the pixel-art 2:1 view and fixes it.)
     //**
     //** As View, Camera, Isometric, but with the inclination ArcTan@(1/2@), about 26.565
@@ -733,18 +738,60 @@ type
     /// turn from View, Camera, Head On.</remarks>
     /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
+    //** @abstract(Plays the animation chosen in AnimationListBox, or stops the one playing.)
+    //**
+    //** The first entry stops the current animation; any other plays the animation of that
+    //** name. Does nothing until a model is loaded.
+    //**
+    //** @param(Sender AnimationListBox.)
+    /// <summary>Plays the animation chosen in AnimationListBox, or stops the one
+    /// playing.</summary>
+    /// <remarks>The first entry stops the current animation; any other plays the animation of
+    /// that name. Does nothing until a model is loaded.</remarks>
+    /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxClick(Sender: TObject);
+    //** @abstract(Sets the 1/4 view and fixes it.)
+    //**
+    //** As View, Camera, Isometric, but with the inclination 22.5 degrees, half of the 3/4
+    //** view's.
+    //**
+    //** @param(Sender ViewOneQuarterItem.)
+    /// <summary>Sets the 1/4 view and fixes it.</summary>
+    /// <remarks>As View, Camera, Isometric, but with the inclination 22.5 degrees, half of the
+    /// 3/4 view's.</remarks>
+    /// <param name="Sender">ViewOneQuarterItem.</param>
     procedure ViewOneQuarterItemClick(Sender: TObject);
+    //** @abstract(Sets the Sqrt@(2@) view and fixes it.)
+    //**
+    //** As View, Camera, Isometric, but with the inclination ArcTan@(Sqrt@(2@)@), about 54.736
+    //** degrees.
+    //**
+    //** @param(Sender ViewRoot2Item.)
+    /// <summary>Sets the Sqrt(2) view and fixes it.</summary>
+    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(Sqrt(2)), about
+    /// 54.736 degrees.</remarks>
+    /// <param name="Sender">ViewRoot2Item.</param>
     procedure ViewRoot2ItemClick(Sender: TObject);
+    //** @abstract(Sets the golden-ratio view and fixes it.)
+    //**
+    //** As View, Camera, Isometric, but with the inclination ArcTan of the golden ratio,
+    //** about 58.283 degrees.
+    //**
+    //** @param(Sender ViewGoldenRatioItem.)
+    /// <summary>Sets the golden-ratio view and fixes it.</summary>
+    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan of the golden
+    /// ratio, about 58.283 degrees.</remarks>
+    /// <param name="Sender">ViewGoldenRatioItem.</param>
     procedure ViewGoldenRatioItemClick(Sender: TObject);
   private
     { Private declarations }
-    FSetupComplete: Boolean;
     FAzimuth: Single;
     FRoll: Single;
     FPolarAngle: Single;
+    // How far out from the fitted view the camera is, x1 to x20, as the
+    // Camera dialog sets it; kept in settings.json
     FFactor: Single;
-    // Camera Distance and OrthoHeight from the last fit, before the test
+    // Camera Distance and OrthoHeight from the last fit, before the
     // distance factor is applied
     FFitDistance: Single;
     FFitOrthoHeight: Single;
@@ -784,12 +831,15 @@ type
     procedure ApplyShowBounds;
     procedure ApplyShowGrid;
     procedure RestoreCameraView;
+    procedure SelectVariableView;
     procedure SaveViewState;
     function CameraViewKey(const AItem: TMenuItem): String;
     function CameraViewItem(const AKey: String): TMenuItem;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     procedure BackgroundDialogAccept(Sender: TObject);
+    procedure CameraDialogAccept(Sender: TObject);
     {$ENDIF}
+    procedure TakeCameraSpec(const ASpec: TCameraSettings);
     function ChooseIconFile(out AFileName: String;
       out AWriter: TSprite3DIconWriterClass): Boolean;
     function GetSaveFolder: String;
@@ -854,8 +904,7 @@ implementation
 uses
   FMX.Platform,
   Gorilla.DefTypes, System.Math,
-  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm,
-  Sprite3DOrbitalForm;
+  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm;
 
 {$R *.fmx}
 
@@ -899,6 +948,7 @@ begin
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
+  FFactor := Max(FSettings.DistanceFactor, 1);
   FGrabNumber := 1;
   // The background behind the model, as last chosen; the camera frees it
   FBackground := TSprite3DBackground.Create(nil);
@@ -1032,11 +1082,6 @@ end;
 {$ENDIF}
 
 
-// The single place where dial changes reach the readouts and the camera,
-// so they can never disagree. Azimuth goes to the camera reversed (360
-// minus the readout) so the view turns the right way for the dial.
-// Dials do not refit: with "Fit any angle" off, turning one can push the
-// model past the edge until the next refit; with it on, it never does.
 procedure TMainForm.AnimationListBoxClick(Sender: TObject);
 var
   ani: String;
@@ -1057,6 +1102,10 @@ begin
     end;
 end;
 
+// The form's angles to the camera. Azimuth goes to the camera reversed
+// (360 minus the readout) so the view turns the way the Camera dialog's
+// dial does. No refit: with "Fit any angle" off, a new angle can push the
+// model past the edge until the next refit; with it on, it never does.
 procedure TMainForm.ApplyAngles;
 begin
   if Assigned(GorillaCamera) then
@@ -1090,10 +1139,6 @@ begin
   FitModel;
 end;
 
-procedure TMainForm.RollDialChange(Sender: TObject);
-begin
-end;
-
 // On startup load a default Model as specified by DefaultLoadType
 // The directory layout of models/Orientation follows this pattern
 // to allow easy addition of new Model types
@@ -1103,7 +1148,6 @@ const
 //  DEFAULT_MODEL = 'models/TestAnimatedCharacter.glb';
 //  DEFAULT_MODEL = 'models/TestStaticCharacter.glb';
 begin
-  FSetupComplete := True;
   if FStarted then
     Exit;   // the form can be shown again; the model stays as it is
   FStarted := True;
@@ -1173,11 +1217,10 @@ begin
       Exit(CameraMenu.Items[I]);
 end;
 
-// Chooses the camera view kept in settings.json, as its menu item would.
-// For Variable the dials are first turned to the angles kept with it, each
-// dial's OnChange taking its angle, and ApplyAngles covering a dial that
-// was already there; a fixed view sets its own angles. Isometric is chosen
-// when no view, or an unknown one, is kept.
+// Chooses the camera view kept in settings.json, as its menu item would,
+// except that Variable takes the angles kept with it without opening the
+// Camera dialog; a fixed view sets its own angles. Isometric is chosen when
+// no view, or an unknown one, is kept.
 procedure TMainForm.RestoreCameraView;
 var
   Item: TMenuItem;
@@ -1188,8 +1231,7 @@ begin
     FAzimuth := Wrap360(FSettings.VariableAzimuth);
     FPolarAngle := Wrap360(FSettings.VariableInclination);
     FRoll := Wrap360(FSettings.VariableRoll);
-    ApplyAngles;
-    ViewVariableItemClick(ViewVariableItem);
+    SelectVariableView;
   end
   else if (Item <> nil) and Assigned(Item.OnClick) then
     Item.OnClick(Item)
@@ -1197,9 +1239,9 @@ begin
     ViewIsometricItemClick(ViewIsometricItem);
 end;
 
-// Keeps the camera view and the View menu's on/off items in settings.json for
-// the next session. The dials' angles are kept only while Variable is
-// checked, so a fixed view leaves the last Variable angles in place. Runs as
+// Keeps the camera view, the distance factor and the View menu's on/off
+// items in settings.json for the next session. The angles are kept only
+// while Variable is checked, so a fixed view leaves the last Variable angles in place. Runs as
 // the form is destroyed, where a message box cannot be shown, so a failed
 // save is ignored and the next session starts from the last saved state.
 procedure TMainForm.SaveViewState;
@@ -1217,6 +1259,7 @@ begin
     FSettings.VariableInclination := FPolarAngle;
     FSettings.VariableRoll := FRoll;
   end;
+  FSettings.DistanceFactor := FFactor;
   FSettings.ShowBoundingBox := ShowBoundsItem.IsChecked;
   FSettings.ShowGrid := ShowGridItem.IsChecked;
   FSettings.ShowAxes := ShowAxesItem.IsChecked;
@@ -1296,6 +1339,8 @@ var
 begin
   Dialog := TBackgroundSettingsForm.Create(nil);
   Dialog.Spec := FSettings.BackgroundSpec;
+  // Every change shows on the viewport at once; Cancel puts it back
+  Dialog.LivePreview(FBackground);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
   Dialog.OnAccept := BackgroundDialogAccept;
@@ -1479,44 +1524,64 @@ begin
   AItem.IsChecked := True;
 end;
 
+// Opens the Camera dialog on the current angles and distance, previewing
+// on the camera as it goes. Only OK changes anything: the angles and
+// distance are taken and Variable is checked. On Cancel the dialog has
+// already put the camera back, and the checked view stays as it was.
 procedure TMainForm.ViewVariableItemClick(Sender: TObject);
 var
   Dialog: TOrbitalSettingsForm;
-  CameraSpec: TCameraSettings;
+  Spec: TCameraSettings;
 begin
+  Spec.Azimuth := FAzimuth;
+  Spec.Roll := FRoll;
+  Spec.PolarAngle := FPolarAngle;
+  Spec.DistanceFactor := FFactor;
   Dialog := TOrbitalSettingsForm.Create(nil);
-  CameraSpec.Azimuth := FAzimuth;
-  CameraSpec.Roll := FRoll;
-  CameraSpec.PolarAngle := FPolarAngle;
-  CameraSpec.Distance := FFactor;
-  CameraSpec.Height := GorillaCamera.OrthoHeight;
-
-  Dialog.CameraSpec := CameraSpec;
+  Dialog.CameraSpec := Spec;
   Dialog.Camera := GorillaCamera;
+  Dialog.FitDistance := FFitDistance;
+  Dialog.FitOrthoHeight := FFitOrthoHeight;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
-  Dialog.OnAccept := BackgroundDialogAccept;
+  Dialog.OnAccept := CameraDialogAccept;
   Dialog.ShowAndFree;
   {$ELSE}
-
   try
-    if FSetupComplete and (Dialog.ShowModal = mrOk) then
-      begin
-        FAzimuth := Dialog.CameraSpec.Azimuth;
-        FRoll := Dialog.CameraSpec.Roll;
-        FPolarAngle := Dialog.CameraSpec.PolarAngle;
-        FFactor := Dialog.CameraSpec.Distance;
-        FFitOrthoHeight := Dialog.CameraSpec.Height;
-        ApplyAngles;
-        ApplyDistance;
-      end;
+    if Dialog.ShowModal = mrOk then
+      TakeCameraSpec(Dialog.CameraSpec);
   finally
     Dialog.Free;
   end;
-
   {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.CameraDialogAccept(Sender: TObject);
+begin
+  TakeCameraSpec(TOrbitalSettingsForm(Sender).CameraSpec);
+end;
+{$ENDIF}
+
+// The Camera dialog's result: its angles and distance factor become the
+// form's, are applied to the camera, and Variable is checked
+procedure TMainForm.TakeCameraSpec(const ASpec: TCameraSettings);
+begin
+  FAzimuth := Wrap360(ASpec.Azimuth);
+  FPolarAngle := Wrap360(ASpec.PolarAngle);
+  FRoll := Wrap360(ASpec.Roll);
+  FFactor := Max(ASpec.DistanceFactor, 1);
+  SelectVariableView;
+end;
+
+// Checks Variable and applies the form's angles and distance factor, with
+// no refit, so the camera stays exactly where they put it
+procedure TMainForm.SelectVariableView;
+begin
   ClearViewChecks;
   ViewVariableItem.IsChecked := True;
+  ApplyAngles;
+  ApplyDistance;
 end;
 
 procedure TMainForm.ViewIsometricItemClick(Sender: TObject);
@@ -1527,8 +1592,7 @@ end;
 
 procedure TMainForm.ViewOneQuarterItemClick(Sender: TObject);
 begin
-  // Military projection's 45 degrees, through the orthographic camera. The
-  // projection is switched, and the model refitted, to match.
+  // Half the 3/4 view's 45 degrees
   ApplyProjection;
   SelectFixedView(ViewOneQuarterItem, 22.5);
 end;
@@ -1579,19 +1643,17 @@ begin
 end;
 
 // Sets a fixed view: the given inclination and azimuth (45 unless given)
-// with roll 0, all as shown on the readouts, with the dials turned to
-// match and switched off, then refits. The View menu checks are the
-// caller's job.
+// with roll 0, all as the Camera dialog's readouts would show them, then
+// refits. The View menu checks are the caller's job.
 procedure TMainForm.SetPolarViewAngle(const APolarAngle, AAzimuth: Single);
 const
   FIXED_ROLL = 0;
 begin
-  // The dial fields hold the readout values; ApplyAngles sends azimuth to
-  // the camera reversed, as it does for the dial
+  // The fields hold readout values; ApplyAngles sends azimuth to the camera
+  // reversed, as the Camera dialog does
   FAzimuth := AAzimuth;
   FPolarAngle := APolarAngle;
   FRoll := FIXED_ROLL;
-  // Turn the dials to match; their OnChange reads the same angles back
   ApplyAngles;
   FitModel;   // a deliberate change of view, so frame the model for it
 end;
@@ -1610,30 +1672,28 @@ begin
     Result := GorillaCamera.FitToBounds(GorillaModel);
   if Result then
   begin
-    // Remember the fit, then apply the test distance factor on top of it
+    // Remember the fit, then apply the distance factor on top of it
     FFitDistance := GorillaCamera.Distance;
     FFitOrthoHeight := GorillaCamera.OrthoHeight;
     ApplyDistance;
   end;
 end;
 
-// Test only: the fitted view moved out by the distance slider's factor
+// The fitted view moved out by the distance factor: the fitted distance
+// times it in perspective, the fitted view height times it in orthographic
+// projection. The factor is never below 1, so the camera never comes closer
+// than the fit, which keeps it outside the model.
 procedure TMainForm.ApplyDistance;
 var
   Factor: Single;
 begin
-  Factor := FFactor; // DistanceTrack.Value;
+  Factor := Max(FFactor, 1);
   if not Assigned(GorillaCamera) or (FFitDistance <= 0) then
     Exit;
   if GorillaCamera.IsOrthographic then
     GorillaCamera.OrthoHeight := FFitOrthoHeight * Factor
   else
     GorillaCamera.Distance := FFitDistance * Factor;
-end;
-
-procedure TMainForm.DistanceTrackChange(Sender: TObject);
-begin
-  ApplyDistance;
 end;
 
 procedure TMainForm.FitAnyAngleItemClick(Sender: TObject);
