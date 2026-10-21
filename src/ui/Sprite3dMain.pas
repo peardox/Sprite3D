@@ -591,7 +591,8 @@ type
     //** TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree FOV,
     //** which becomes the viewport's camera, and a point light parented to the camera at its
     //** origin, so it sits where the camera is and points where it looks. The viewport runs
-    //** at a fixed 60 frames per second without VSync.
+    //** at a fixed 60 frames per second without VSync. A TSprite3DBackground is put behind
+    //** the viewport, showing the background kept in settings.json.
     //**
     //** The dials start at 0, then the camera view kept in settings.json is chosen, as its
     //** View, Camera item would choose it: a fixed view turns the dials to its angles and
@@ -608,7 +609,8 @@ type
     /// creates a TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree
     /// FOV, which becomes the viewport's camera, and a point light parented to the camera at
     /// its origin, so it sits where the camera is and points where it looks. The viewport
-    /// runs at a fixed 60 frames per second without VSync.</para>
+    /// runs at a fixed 60 frames per second without VSync. A TSprite3DBackground is put
+    /// behind the viewport, showing the background kept in settings.json.</para>
     /// <para>The dials start at 0, then the camera view kept in settings.json is chosen, as
     /// its View, Camera item would choose it: a fixed view turns the dials to its angles and
     /// switches them off, and Variable turns them to the angles kept with it and leaves them
@@ -1026,7 +1028,7 @@ type
     FSettings: TSprite3DAppSettings;
     // True once FormShow has loaded the first model
     FStarted: Boolean;
-    // The viewport's background, fixed to the camera
+    // The viewport's background: a 2D control behind the transparent viewport
     FBackground: TSprite3DBackground;
     FModelBox: TBoundingBox;   // the model's own bounds, measured as loaded
     // The on-screen framing, kept while a grab is fitted to its target
@@ -1309,12 +1311,14 @@ begin
   FPanEnabled := FSettings.PanEnabled;
   FPanX := EnsureRange(FSettings.PanX, -PAN_LIMIT, PAN_LIMIT);
   FPanZ := EnsureRange(FSettings.PanZ, -PAN_LIMIT, PAN_LIMIT);
-  // The background behind the model, as last chosen; the camera frees it
-  FBackground := TSprite3DBackground.Create(nil);
-  FBackground.AttachTo(GorillaCamera);
-  ApplyBackground(FSettings.BackgroundSpec, False);
   // Fill the space the bottom test strip (DistanceLayout) leaves
   GorillaViewport.Align := TAlignLayout.Client;
+  // The background behind the model, as last chosen: a 2D control behind
+  // the viewport, which it makes see-through. It takes the viewport's
+  // alignment, so it comes after that is set; its parent frees it.
+  FBackground := TSprite3DBackground.Create(nil);
+  FBackground.AttachTo(GorillaViewport);
+  ApplyBackground(FSettings.BackgroundSpec, False);
 
   // The camera view as it was left last session; Isometric the first time
   RestoreCameraView;
@@ -1778,9 +1782,9 @@ end;
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
-  // Grabs add their own backdrop after matting; the viewport's would make
-  // every pixel opaque
-  FBackground.Hidden := True;
+  // The on-screen background is a 2D control behind the viewport, so it is
+  // never in the grab's frame buffer; grabs add their own backdrop after
+  // matting
   // The capture framed the camera once for every frame, and a locked camera
   // is grabbed exactly as it stands
   FGrabFramed := False;
@@ -1798,7 +1802,6 @@ end;
 // Put the on-screen framing back before the main pass draws
 procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
 begin
-  FBackground.Hidden := False;
   // Only a framing this grab set is put back
   if not FGrabFramed then
     Exit;

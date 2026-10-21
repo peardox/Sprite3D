@@ -9,9 +9,165 @@
         <DeviceId Condition="'$(Platform)'=='iOSDevice64'"/>
         <DeviceId Condition="'$(Platform)'=='iOSSimARM64'">9CA6C703-4434-4DF2-B262-F3FD9F1BDAF9</DeviceId>
     </PropertyGroup>
-    <ItemGroup Condition="'$(Platform)'=='WinARM64EC'"/>
-    <ItemGroup Condition="'$(Platform)'=='OSX64'"/>
+    <ItemGroup Condition="'$(Platform)'=='WinARM64EC'">
+        <DeployFile Include="..\dlls\win64arm\avformat-62.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avformat-62.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="WinARM64EC\Release\Sprite3d.exe" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>Sprite3d.exe</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64arm\avutil-60.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avutil-60.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64arm\swresample-6.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>swresample-6.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64arm\avcodec-62.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avcodec-62.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\README.md" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>README.md</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64arm\swscale-9.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>swscale-9.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='OSX64'">
+        <DeployFile Include="..\dlls\macx64\libswscale.9.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libswscale.9.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macx64\libswresample.6.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libswresample.6.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macx64\libavformat.62.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libavformat.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macx64\libavcodec.62.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libavcodec.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macx64\libavutil.60.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libavutil.60.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
     <ItemGroup Condition="'$(Platform)'=='Win32'">
+        <DeployFile Include="..\dlls\win32\avcodec-62.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avcodec-62.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win32\avutil-60.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avutil-60.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="Win32\Debug\Sprite3d.exe" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>Sprite3d.exe</RemoteName>
@@ -22,39 +178,48 @@
             <Overwrite>True</Overwrite>
             <Required>True</Required>
         </DeployFile>
-    </ItemGroup>
-    <ItemGroup Condition="'$(Platform)'=='Android64'">
-        <DeployFile Include="Android64\Release\splash_image_def-v21.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-anydpi-v21\</RemoteDir>
-            <RemoteName>splash_image_def.xml</RemoteName>
-            <DeployClass>AndroidSplashImageDefV21</DeployClass>
-            <Operation>1</Operation>
+        <DeployFile Include="..\dlls\win32\swresample-6.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>swresample-6.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
+        <DeployFile Include="..\dlls\win32\swscale-9.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>swscale-9.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win32\avformat-62.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avformat-62.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='Android64'">
         <DeployFile Include="Android64\Release\strings.xml" Condition="'$(Config)'=='Release'">
             <RemoteDir>Sprite3d\res\values\</RemoteDir>
             <RemoteName>strings.xml</RemoteName>
             <DeployClass>Android_Strings</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="Android64\Debug\ic_launcher.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-anydpi-v26\</RemoteDir>
-            <RemoteName>ic_launcher.xml</RemoteName>
-            <DeployClass>Android_AdaptiveIcon</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="Android64\Release\styles-v31.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\values-v31\</RemoteDir>
-            <RemoteName>styles.xml</RemoteName>
-            <DeployClass>AndroidSplashStylesV31</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -78,37 +243,10 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="Android64\Release\colors.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\values\</RemoteDir>
-            <RemoteName>colors.xml</RemoteName>
-            <DeployClass>Android_Colors</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="Android64\Release\splash_image_def.xml" Condition="'$(Config)'=='Release'">
             <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
             <RemoteName>splash_image_def.xml</RemoteName>
             <DeployClass>AndroidSplashImageDef</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_144x144.png" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-xxhdpi\</RemoteDir>
-            <RemoteName>ic_launcher.png</RemoteName>
-            <DeployClass>Android_LauncherIcon144</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_144x144.png" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-xxhdpi\</RemoteDir>
-            <RemoteName>ic_launcher.png</RemoteName>
-            <DeployClass>Android_LauncherIcon144</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -187,24 +325,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_NotificationIcon_96x96.png" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-xxxhdpi\</RemoteDir>
-            <RemoteName>ic_notification.png</RemoteName>
-            <DeployClass>Android_NotificationIcon96</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_NotificationIcon_96x96.png" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-xxxhdpi\</RemoteDir>
-            <RemoteName>ic_notification.png</RemoteName>
-            <DeployClass>Android_NotificationIcon96</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="$(BDS)\lib\android\debug\mips\libnative-activity.so" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\library\lib\mips\</RemoteDir>
             <RemoteName>libSprite3d.so</RemoteName>
@@ -259,46 +379,19 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
+        <DeployFile Include="..\dlls\android64\libswscale.so">
+            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
+            <RemoteName>libswscale.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="Android64\Release\styles-v21.xml" Condition="'$(Config)'=='Release'">
             <RemoteDir>Sprite3d\res\values-v21\</RemoteDir>
             <RemoteName>styles.xml</RemoteName>
             <DeployClass>AndroidSplashStylesV21</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_36x36.png" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-ldpi\</RemoteDir>
-            <RemoteName>ic_launcher.png</RemoteName>
-            <DeployClass>Android_LauncherIcon36</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_36x36.png" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-ldpi\</RemoteDir>
-            <RemoteName>ic_launcher.png</RemoteName>
-            <DeployClass>Android_LauncherIcon36</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedSplashV31Dark.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-night-anydpi-v31\</RemoteDir>
-            <RemoteName>splash_vector.xml</RemoteName>
-            <DeployClass>Android_VectorizedSplashV31Dark</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedSplashV31Dark.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-night-anydpi-v31\</RemoteDir>
-            <RemoteName>splash_vector.xml</RemoteName>
-            <DeployClass>Android_VectorizedSplashV31Dark</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -313,29 +406,11 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="Android64\Release\ic_launcher-v33.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-anydpi-v33\</RemoteDir>
-            <RemoteName>ic_launcher.xml</RemoteName>
-            <DeployClass>Android_AdaptiveIconV33</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedNotificationIcon.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-anydpi-v24\</RemoteDir>
-            <RemoteName>ic_notification.xml</RemoteName>
-            <DeployClass>Android_VectorizedNotificationIcon</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedNotificationIcon.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-anydpi-v24\</RemoteDir>
-            <RemoteName>ic_notification.xml</RemoteName>
-            <DeployClass>Android_VectorizedNotificationIcon</DeployClass>
-            <Operation>1</Operation>
+        <DeployFile Include="..\dlls\android64\libavcodec.so">
+            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
+            <RemoteName>libavcodec.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
@@ -349,46 +424,10 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Foreground.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
-            <RemoteName>ic_launcher_foreground.xml</RemoteName>
-            <DeployClass>Android_AdaptiveIconForeground</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Foreground.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
-            <RemoteName>ic_launcher_foreground.xml</RemoteName>
-            <DeployClass>Android_AdaptiveIconForeground</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="Android64\Release\colors-night-v21.xml" Condition="'$(Config)'=='Release'">
             <RemoteDir>Sprite3d\res\values-night-v21\</RemoteDir>
             <RemoteName>colors.xml</RemoteName>
             <DeployClass>Android_ColorsDark</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Background.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
-            <RemoteName>ic_launcher_background.xml</RemoteName>
-            <DeployClass>Android_AdaptiveIconBackground</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Background.xml" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
-            <RemoteName>ic_launcher_background.xml</RemoteName>
-            <DeployClass>Android_AdaptiveIconBackground</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -520,15 +559,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="Android64\Debug\splash_image_def-v21.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-anydpi-v21\</RemoteDir>
-            <RemoteName>splash_image_def.xml</RemoteName>
-            <DeployClass>AndroidSplashImageDefV21</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\library\lib\armeabi\</RemoteDir>
             <RemoteName>libSprite3d.so</RemoteName>
@@ -551,6 +581,250 @@
             <RemoteDir>Sprite3d\res\values\</RemoteDir>
             <RemoteName>colors.xml</RemoteName>
             <DeployClass>Android_Colors</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Release\libSprite3d.so" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
+            <RemoteName>libSprite3d.so</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="Android64\Debug\strings.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\values\</RemoteDir>
+            <RemoteName>strings.xml</RemoteName>
+            <DeployClass>Android_Strings</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\android64\libswresample.so">
+            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
+            <RemoteName>libswresample.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\android64\libavutil.so">
+            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
+            <RemoteName>libavutil.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_SplashImage_470x320.png" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-normal\</RemoteDir>
+            <RemoteName>splash_image.png</RemoteName>
+            <DeployClass>Android_SplashImage470</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_SplashImage_470x320.png" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-normal\</RemoteDir>
+            <RemoteName>splash_image.png</RemoteName>
+            <DeployClass>Android_SplashImage470</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Release\splash_image_def-v21.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-anydpi-v21\</RemoteDir>
+            <RemoteName>splash_image_def.xml</RemoteName>
+            <DeployClass>AndroidSplashImageDefV21</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Debug\ic_launcher.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-anydpi-v26\</RemoteDir>
+            <RemoteName>ic_launcher.xml</RemoteName>
+            <DeployClass>Android_AdaptiveIcon</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Release\styles-v31.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\values-v31\</RemoteDir>
+            <RemoteName>styles.xml</RemoteName>
+            <DeployClass>AndroidSplashStylesV31</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Release\colors.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\values\</RemoteDir>
+            <RemoteName>colors.xml</RemoteName>
+            <DeployClass>Android_Colors</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_144x144.png" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-xxhdpi\</RemoteDir>
+            <RemoteName>ic_launcher.png</RemoteName>
+            <DeployClass>Android_LauncherIcon144</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_144x144.png" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-xxhdpi\</RemoteDir>
+            <RemoteName>ic_launcher.png</RemoteName>
+            <DeployClass>Android_LauncherIcon144</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_NotificationIcon_96x96.png" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-xxxhdpi\</RemoteDir>
+            <RemoteName>ic_notification.png</RemoteName>
+            <DeployClass>Android_NotificationIcon96</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_NotificationIcon_96x96.png" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-xxxhdpi\</RemoteDir>
+            <RemoteName>ic_notification.png</RemoteName>
+            <DeployClass>Android_NotificationIcon96</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_36x36.png" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-ldpi\</RemoteDir>
+            <RemoteName>ic_launcher.png</RemoteName>
+            <DeployClass>Android_LauncherIcon36</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_LauncherIcon_36x36.png" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-ldpi\</RemoteDir>
+            <RemoteName>ic_launcher.png</RemoteName>
+            <DeployClass>Android_LauncherIcon36</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedSplashV31Dark.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-night-anydpi-v31\</RemoteDir>
+            <RemoteName>splash_vector.xml</RemoteName>
+            <DeployClass>Android_VectorizedSplashV31Dark</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedSplashV31Dark.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-night-anydpi-v31\</RemoteDir>
+            <RemoteName>splash_vector.xml</RemoteName>
+            <DeployClass>Android_VectorizedSplashV31Dark</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Release\ic_launcher-v33.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-anydpi-v33\</RemoteDir>
+            <RemoteName>ic_launcher.xml</RemoteName>
+            <DeployClass>Android_AdaptiveIconV33</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedNotificationIcon.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-anydpi-v24\</RemoteDir>
+            <RemoteName>ic_notification.xml</RemoteName>
+            <DeployClass>Android_VectorizedNotificationIcon</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_VectorizedNotificationIcon.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable-anydpi-v24\</RemoteDir>
+            <RemoteName>ic_notification.xml</RemoteName>
+            <DeployClass>Android_VectorizedNotificationIcon</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Foreground.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
+            <RemoteName>ic_launcher_foreground.xml</RemoteName>
+            <DeployClass>Android_AdaptiveIconForeground</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Foreground.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
+            <RemoteName>ic_launcher_foreground.xml</RemoteName>
+            <DeployClass>Android_AdaptiveIconForeground</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Background.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
+            <RemoteName>ic_launcher_background.xml</RemoteName>
+            <DeployClass>Android_AdaptiveIconBackground</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_AdaptiveIcon_Background.xml" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\res\drawable\</RemoteDir>
+            <RemoteName>ic_launcher_background.xml</RemoteName>
+            <DeployClass>Android_AdaptiveIconBackground</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d\assets\internal\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Android64\Debug\splash_image_def-v21.xml" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\res\drawable-anydpi-v21\</RemoteDir>
+            <RemoteName>splash_image_def.xml</RemoteName>
+            <DeployClass>AndroidSplashImageDefV21</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -637,16 +911,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="Android64\Release\libSprite3d.so" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
-            <RemoteName>libSprite3d.so</RemoteName>
-            <DeployClass>ProjectOutput</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-            <Required>True</Required>
-        </DeployFile>
         <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_NotificationIcon_24x24.png" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\res\drawable-mdpi\</RemoteDir>
             <RemoteName>ic_notification.png</RemoteName>
@@ -710,15 +974,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="Android64\Debug\strings.xml" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\values\</RemoteDir>
-            <RemoteName>strings.xml</RemoteName>
-            <DeployClass>Android_Strings</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="Android64\Debug\styles-v21.xml" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\res\values-v21\</RemoteDir>
             <RemoteName>styles.xml</RemoteName>
@@ -746,27 +1001,91 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_SplashImage_470x320.png" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d\res\drawable-normal\</RemoteDir>
-            <RemoteName>splash_image.png</RemoteName>
-            <DeployClass>Android_SplashImage470</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\Artwork\Android\FM_SplashImage_470x320.png" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d\res\drawable-normal\</RemoteDir>
-            <RemoteName>splash_image.png</RemoteName>
-            <DeployClass>Android_SplashImage470</DeployClass>
-            <Operation>1</Operation>
+        <DeployFile Include="..\dlls\android64\libavformat.so">
+            <RemoteDir>Sprite3d\library\lib\arm64-v8a\</RemoteDir>
+            <RemoteName>libavformat.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
     </ItemGroup>
-    <ItemGroup Condition="'$(Platform)'=='Android'"/>
+    <ItemGroup Condition="'$(Platform)'=='Android'">
+        <DeployFile Include="..\dlls\android32\libswresample.so">
+            <RemoteDir>Sprite3d\library\lib\armeabi-v7a\</RemoteDir>
+            <RemoteName>libswresample.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\android32\libswscale.so">
+            <RemoteDir>Sprite3d\library\lib\armeabi-v7a\</RemoteDir>
+            <RemoteName>libswscale.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\android32\libavutil.so">
+            <RemoteDir>Sprite3d\library\lib\armeabi-v7a\</RemoteDir>
+            <RemoteName>libavutil.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\android32\libavformat.so">
+            <RemoteDir>Sprite3d\library\lib\armeabi-v7a\</RemoteDir>
+            <RemoteName>libavformat.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\android32\libavcodec.so">
+            <RemoteDir>Sprite3d\library\lib\armeabi-v7a\</RemoteDir>
+            <RemoteName>libavcodec.so</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d\assets\internal\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
     <ItemGroup Condition="'$(Platform)'=='Win64'">
+        <DeployFile Include="..\dlls\win64\swscale-9.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>swscale-9.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="Win64\Debug\Sprite3d.exe" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>Sprite3d.exe</RemoteName>
@@ -786,31 +1105,77 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-    </ItemGroup>
-    <ItemGroup Condition="'$(Platform)'=='OSXARM64'">
-        <DeployFile Include="OSXARM64\Release\Sprite3d.info.plist" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d.app\Contents\</RemoteDir>
-            <RemoteName>Info.plist</RemoteName>
-            <DeployClass>ProjectOSXInfoPList</DeployClass>
-            <Operation>1</Operation>
+        <DeployFile Include="..\README.md" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>README.md</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="Win64\Release\Sprite3d.exe" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>Sprite3d.exe</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64\swresample-6.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>swresample-6.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64\avformat-62.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avformat-62.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64\avutil-60.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avutil-60.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\win64\avcodec-62.dll">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>avcodec-62.dll</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='OSXARM64'">
         <DeployFile Include="OSXARM64\Debug\Sprite3d.entitlements" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d.app\..\</RemoteDir>
             <RemoteName>Sprite3d.entitlements</RemoteName>
             <DeployClass>ProjectOSXEntitlements</DeployClass>
             <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Sprite3d.app\Contents\Resources\StartUp\</RemoteDir>
-            <RemoteName>buildstyles.cmd</RemoteName>
-            <DeployClass>ProjectFile</DeployClass>
-            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
@@ -824,11 +1189,101 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
+        <DeployFile Include="$(BDS)\bin\delphi_PROJECTICNS.icns" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
+            <RemoteName>Sprite3d.icns</RemoteName>
+            <DeployClass>ProjectOSXResource</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="$(BDS)\bin\delphi_PROJECTICNS.icns" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
+            <RemoteName>Sprite3d.icns</RemoteName>
+            <DeployClass>ProjectOSXResource</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macarm\libswresample.6.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libswresample.6.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="OSXARM64\Release\Sprite3d.info.plist" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d.app\Contents\</RemoteDir>
+            <RemoteName>Info.plist</RemoteName>
+            <DeployClass>ProjectOSXInfoPList</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macarm\libavutil.60.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libavutil.60.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d.app\Contents\Resources\StartUp\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macarm\libswscale.9.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libswscale.9.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="OSXARM64\Debug\Sprite3d.info.plist" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d.app\Contents\</RemoteDir>
             <RemoteName>Info.plist</RemoteName>
             <DeployClass>ProjectOSXInfoPList</DeployClass>
             <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macarm\libavformat.62.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libavformat.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\macarm\libavcodec.62.dylib">
+            <RemoteDir>Sprite3d.app\Contents\Frameworks\</RemoteDir>
+            <RemoteName>libavcodec.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
@@ -853,20 +1308,11 @@
             <Overwrite>True</Overwrite>
             <Required>True</Required>
         </DeployFile>
-        <DeployFile Include="$(BDS)\bin\delphi_PROJECTICNS.icns" Condition="'$(Config)'=='Debug'">
+        <DeployFile Include="..\openh264.json">
             <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
-            <RemoteName>Sprite3d.icns</RemoteName>
-            <DeployClass>ProjectOSXResource</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\bin\delphi_PROJECTICNS.icns" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
-            <RemoteName>Sprite3d.icns</RemoteName>
-            <DeployClass>ProjectOSXResource</DeployClass>
-            <Operation>1</Operation>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
@@ -917,14 +1363,116 @@
             <Overwrite>True</Overwrite>
         </DeployFile>
     </ItemGroup>
-    <ItemGroup Condition="'$(Platform)'=='iOSDevice64'"/>
-    <ItemGroup Condition="'$(Platform)'=='iOSSimARM64'"/>
+    <ItemGroup Condition="'$(Platform)'=='iOSDevice64'">
+        <DeployFile Include="..\dlls\iosarm64\libavcodec.62.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libavcodec.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iosarm64\libavformat.62.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libavformat.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iosarm64\libswresample.6.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libswresample.6.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iosarm64\libswscale.9.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libswscale.9.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iosarm64\libavutil.60.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libavutil.60.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='iOSSimARM64'">
+        <DeployFile Include="..\dlls\iossimarm64\libswscale.9.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libswscale.9.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iossimarm64\libavcodec.62.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libavcodec.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iossimarm64\libavutil.60.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libavutil.60.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iossimarm64\libavformat.62.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libavformat.62.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\iossimarm64\libswresample.6.dylib">
+            <RemoteDir>Sprite3d.app\Frameworks\</RemoteDir>
+            <RemoteName>libswresample.6.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+    </ItemGroup>
     <ItemGroup Condition="'$(Platform)'=='Win64x'"/>
     <ItemGroup Condition="'$(Platform)'=='Linux64'">
-        <DeployFile Include="..\README.md" Condition="'$(Config)'=='Debug'">
+        <DeployFile Include="Linux64\Release\Sprite3d" Condition="'$(Config)'=='Release'">
             <RemoteDir>Sprite3d\</RemoteDir>
-            <RemoteName>README.md</RemoteName>
-            <DeployClass>ProjectFile</DeployClass>
+            <RemoteName>Sprite3d</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="..\openh264.json">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>openh264.json</RemoteName>
+            <DeployClass>File</DeployClass>
             <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -934,6 +1482,78 @@
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>buildstyles.cmd</RemoteName>
             <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\linux64\libavformat.so.62">
+            <RemoteDir>Sprite3d\lib\</RemoteDir>
+            <RemoteName>libavformat.so.62</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>buildstyles.cmd</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\linux64\libavcodec.so.62">
+            <RemoteDir>Sprite3d\lib\</RemoteDir>
+            <RemoteName>libavcodec.so.62</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\linux64\libswscale.so.9">
+            <RemoteDir>Sprite3d\lib\</RemoteDir>
+            <RemoteName>libswscale.so.9</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\linux64\libavutil.so.60">
+            <RemoteDir>Sprite3d\lib\</RemoteDir>
+            <RemoteName>libavutil.so.60</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\README.md" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>README.md</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\README.md" Condition="'$(Config)'=='Release'">
+            <RemoteDir>Sprite3d\</RemoteDir>
+            <RemoteName>README.md</RemoteName>
+            <DeployClass>ProjectFile</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="..\dlls\linux64\libswresample.so.6">
+            <RemoteDir>Sprite3d\lib\</RemoteDir>
+            <RemoteName>libswresample.so.6</RemoteName>
+            <DeployClass>File</DeployClass>
             <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
