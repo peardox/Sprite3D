@@ -64,16 +64,33 @@ object MainForm: TMainForm
             Size.Height = 26.000000000000000000
             Size.PlatformDefault = False
             Stroke.Kind = None
-            object AnimationsLabel: TLabel
-              Align = Client
+            Padding.Left = 8.000000000000000000
+            Padding.Right = 8.000000000000000000
+            object FramesLabel: TLabel
+              Align = Right
               StyledSettings = [Family]
-              Size.Width = 150.000000000000000000
+              Position.X = 92.000000000000000000
+              Size.Width = 50.000000000000000000
               Size.Height = 26.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Size = 14.000000000000000000
               TextSettings.Font.StyleExt = {00070000000000000004000000}
               TextSettings.FontColor = claYellow
-              TextSettings.HorzAlign = Center
+              TextSettings.HorzAlign = Trailing
+              Text = 'Frames'
+              TabOrder = 1
+            end
+            object AnimationsLabel: TLabel
+              Align = Client
+              StyledSettings = [Family]
+              Position.X = 8.000000000000000000
+              Size.Width = 84.000000000000000000
+              Size.Height = 26.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.Font.StyleExt = {00070000000000000004000000}
+              TextSettings.FontColor = claYellow
+              TextSettings.HorzAlign = Leading
               Text = 'Animations'
               TabOrder = 0
             end
@@ -85,6 +102,7 @@ object MainForm: TMainForm
             Size.PlatformDefault = False
             TabOrder = 86
             OnClick = AnimationListBoxClick
+            OnChange = AnimationListBoxChange
             DisableFocusEffect = True
             DefaultItemStyles.ItemStyle = ''
             DefaultItemStyles.GroupHeaderStyle = ''
@@ -183,6 +201,14 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Exit'
         OnClick = ExitMenuItemClick
+      end
+    end
+    object ModelMenu: TMenuItem
+      Text = 'Model'
+      object AnimationsUsedItem: TMenuItem
+        Locked = True
+        Text = 'Animations Used...'
+        OnClick = AnimationsUsedItemClick
       end
     end
     object ViewMenu: TMenuItem
@@ -291,10 +317,17 @@ object MainForm: TMainForm
         Text = 'Show axes'
         OnClick = ShowAxesItemClick
       end
-      object FitAnyAngleItem: TMenuItem
+      object ShowSweepItem: TMenuItem
         Locked = True
-        Text = 'Fit any angle'
-        OnClick = FitAnyAngleItemClick
+        IsChecked = True
+        Text = 'Show swept volume'
+        OnClick = ShowSweepItemClick
+      end
+      object FitSweptItem: TMenuItem
+        Locked = True
+        IsChecked = True
+        Text = 'Fit swept volume'
+        OnClick = FitSweptItemClick
       end
       object OrthographicItem: TMenuItem
         Locked = True

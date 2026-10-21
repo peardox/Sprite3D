@@ -206,7 +206,8 @@ type
     FShowBoundingBox: Boolean;
     FShowGrid: Boolean;
     FShowAxes: Boolean;
-    FFitAnyAngle: Boolean;
+    FShowSweptVolume: Boolean;
+    FFitSweptVolume: Boolean;
     FOrthographic: Boolean;
     FCameraView: String;
     FVariableAzimuth: Single;
@@ -378,14 +379,22 @@ type
     /// default.</summary>
     /// <remarks>Stored as <c>showAxes</c>.</remarks>
     property ShowAxes: Boolean read FShowAxes write FShowAxes;
-    //** @abstract(Whether View, Fit any angle is ticked on the main form; False by
+    //** @abstract(Whether View, Show swept volume is ticked on the main form; True by
     //** default.)
     //**
-    //** Stored as @code(fitAnyAngle).
-    /// <summary>Whether View, Fit any angle is ticked on the main form; False by
+    //** Stored as @code(showSweptVolume).
+    /// <summary>Whether View, Show swept volume is ticked on the main form; True by
     /// default.</summary>
-    /// <remarks>Stored as <c>fitAnyAngle</c>.</remarks>
-    property FitAnyAngle: Boolean read FFitAnyAngle write FFitAnyAngle;
+    /// <remarks>Stored as <c>showSweptVolume</c>.</remarks>
+    property ShowSweptVolume: Boolean read FShowSweptVolume write FShowSweptVolume;
+    //** @abstract(Whether View, Fit swept volume is ticked on the main form; True by
+    //** default.)
+    //**
+    //** Stored as @code(fitSweptVolume).
+    /// <summary>Whether View, Fit swept volume is ticked on the main form; True by
+    /// default.</summary>
+    /// <remarks>Stored as <c>fitSweptVolume</c>.</remarks>
+    property FitSweptVolume: Boolean read FFitSweptVolume write FFitSweptVolume;
     //** @abstract(Whether View, Orthographic is ticked on the main form; False by default.)
     //**
     //** Stored as @code(orthographic).
@@ -1003,7 +1012,8 @@ begin
   FShowBoundingBox := True;
   FShowGrid := True;
   FShowAxes := True;
-  FFitAnyAngle := False;
+  FShowSweptVolume := True;
+  FFitSweptVolume := True;
   FOrthographic := False;
   // The main form's view as it starts
   FCameraView := 'Isometric';

@@ -2,11 +2,13 @@
 //**
 //** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
 //** panel of three dials for Azimuth, inclination and Roll. The Debug tab holds a memo for log
-//** output. Below the Camera submenu, the View menu has five items that are ticked or not, each
+//** output. Below the Camera submenu, the View menu has six items that are ticked or not, each
 //** switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid
-//** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Fit
-//** any angle chooses how the model is fitted, and Orthographic switches between perspective
-//** and orthographic projection.
+//** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation,
+//** Show swept volume the space it sweeps turning about its up axis, Fit swept volume chooses
+//** how the model is fitted, and Orthographic switches between perspective and orthographic
+//** projection. Model, Animations Used chooses which of the model's animations are listed and
+//** count towards the swept volume.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
@@ -48,6 +50,13 @@
 //** chosen, until it is switched off; it never changes the angles or the distance. It is
 //** off by default and kept in settings.json.
 //**
+//** The Animations list shows, to the right of each entry under the Frames title, how many
+//** frames saving it makes at the File, Animation frame rate: the animation's length times
+//** the rate, rounded, or for @code(@(None@)) one turn of TURNTABLE_SECONDS. Model, Animations
+//** Used opens a dialog that ticks which animations are used; the others are left out of the
+//** list, so they are not played, saved or exported, and out of the swept volume that View,
+//** Fit swept volume frames. A new model starts with every animation used.
+//**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu
 //** with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4 video. Each
 //** grabs every frame of that animation off screen, from the first to the last, at the grab
@@ -84,7 +93,7 @@
 //** Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
-//** turns the camera: the views, Orthographic, Fit any angle and the pan are switched off, a
+//** turns the camera: the views, Orthographic, Fit swept volume and the pan are switched off, a
 //** new model or a resized view is not refitted, and grabs, icons and animation captures use
 //** the view exactly as it stands instead of fitting the model to their own size. The
 //** @code(@(None@)) turn cannot be captured while it is locked, as it turns the camera. The lock
@@ -92,16 +101,18 @@
 //**
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
-//** refitted when the viewport is resized, the projection changes or View, Fit any angle is
-//** chosen, but not when a dial turns. Ticked, that item uses FitToBoundsMax, which frames the
-//** model for every angle at once, so the dials can never push it out of view. Not ticked,
-//** FitToBounds frames it exactly for the angles at the time of the fit, and turning a dial
+//** refitted when the viewport is resized, the projection changes, View, Fit swept volume is
+//** chosen or the animations used change, but not when a dial turns. Ticked, the default, that
+//** item frames the volume the model sweeps turning about its up axis, over its rest pose and
+//** every animation used, centred on its centre of rotation and changing only the camera's
+//** distance, so turning the azimuth dial keeps the model in view. Not ticked, FitToBounds
+//** frames the current pose exactly for the angles at the time of the fit, and turning a dial
 //** afterwards can push part of it past the edge until the next refit.
 //**
 //** The form only handles the user interface. The 3D work is done by the library units in
-//** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and Sprite3DOffscreen. The
-//** application's other rules, such as where models are found, how a model is loaded and
-//** placed, and how grabs are named and saved, are in Sprite3DHelpers.
+//** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and
+//** Sprite3DOffscreen. The application's other rules, such as where models are found, how a
+//** model is loaded and placed, and how grabs are named and saved, are in Sprite3DHelpers.
 //**
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
 //** hamburger button on a toolbar at the top, which opens a drawer listing every item in
@@ -128,6 +139,8 @@
 //** |   |-- FAnimationSettingsItem "Animation..."  frame rate for saved animations
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
+//** |-- ModelMenu "Model"
+//** |   `-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
 //**     |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
@@ -146,7 +159,9 @@
 //**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
 //**     |-- ShowGridItem "Show grid"        ticked at start-up
 //**     |-- ShowAxesItem "Show axes"        ticked at start-up
-//**     |-- FitAnyAngleItem "Fit any angle" FitToBoundsMax instead of FitToBounds
+//**     |-- ShowSweepItem "Show swept volume"  ticked at start-up; the space swept turning
+//**     |                                      about the up axis
+//**     |-- FitSweptItem "Fit swept volume"  ticked at start-up; else FitToBounds
 //**     `-- OrthographicItem "Orthographic" orthographic instead of perspective
 //** )
 unit Sprite3dMain;
@@ -157,11 +172,14 @@ unit Sprite3dMain;
   The form has two tabs. The View tab holds a TGorillaViewport, created at run
   time, and a panel of three dials for Azimuth, inclination and Roll. The
   Debug tab holds a memo for log output. Below the Camera submenu, the View
-  menu has five items that are ticked or not, each switched by choosing it:
+  menu has six items that are ticked or not, each switched by choosing it:
   Show bounding box shows the model's bounding box, Show grid a grid on the
   model's floor, Show axes its own X, Y and Z axes through its centre of
-  rotation, Fit any angle chooses how the model is fitted, and Orthographic
-  switches between perspective and orthographic projection.
+  rotation, Show swept volume the space it sweeps turning about its up axis,
+  Fit swept volume chooses how the model is fitted, and Orthographic switches
+  between perspective and orthographic projection. Model, Animations Used
+  chooses which of the model's animations are listed and count towards the
+  swept volume.
 
   The camera starts in the isometric view, and each readout always shows its
   dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed,
@@ -211,6 +229,14 @@ unit Sprite3dMain;
   changes the angles or the distance. It is off by default and kept in
   settings.json.
 
+  The Animations list shows, to the right of each entry under the Frames
+  title, how many frames saving it makes at the File, Animation frame rate:
+  the animation's length times the rate, rounded, or for (None) one turn of
+  TURNTABLE_SECONDS. Model, Animations Used opens a dialog that ticks which
+  animations are used; the others are left out of the list, so they are not
+  played, saved or exported, and out of the swept volume that View, Fit
+  swept volume frames. A new model starts with every animation used.
+
   Right-clicking an entry in the Animations list selects and plays it, and
   opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save
   as AniGif and Save as MP4 video. Each grabs every frame of that animation
@@ -252,8 +278,8 @@ unit Sprite3dMain;
   folder dialog, the batch goes to the Grabs folder.
 
   View, Camera, Lock Camera fixes the camera where it is. While it is ticked
-  nothing moves or turns the camera: the views, Orthographic, Fit any angle
-  and the pan are switched off, a new model or a resized view is not
+  nothing moves or turns the camera: the views, Orthographic, Fit swept
+  volume and the pan are switched off, a new model or a resized view is not
   refitted, and grabs, icons and animation captures use the view exactly as
   it stands instead of fitting the model to their own size. The (None) turn
   cannot be captured while it is locked, as it turns the camera. The lock is
@@ -262,16 +288,18 @@ unit Sprite3dMain;
   Each model replaces the last: it plays its last animation by name if it has
   any, is centred and turned 180 degrees about X, and the camera is fitted so
   it fills the view. The model is refitted when the viewport is resized, the
-  projection changes or View, Fit any angle is chosen, but not when a dial
-  turns. Ticked, that item uses FitToBoundsMax, which frames the model for
-  every angle at once, so the dials can never push it out of view. Not ticked,
-  FitToBounds frames it exactly for the angles at the time of the fit, and
-  turning a dial afterwards can push part of it past the edge until the next
-  refit.
+  projection changes, View, Fit swept volume is chosen or the animations
+  used change, but not when a dial turns. Ticked, the default, that item
+  frames the volume the model sweeps turning about its up axis, over its rest
+  pose and every animation used, centred on its centre of rotation and
+  changing only the camera's distance, so turning the azimuth dial keeps the
+  model in view. Not ticked, FitToBounds frames the current pose exactly for
+  the angles at the time of the fit, and turning a dial afterwards can push
+  part of it past the edge until the next refit.
 
   The form only handles the user interface. The 3D work is done by the library
-  units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and
-  Sprite3DOffscreen. The application's other rules, such as where models are
+  units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep
+  and Sprite3DOffscreen. The application's other rules, such as where models are
   found, how a model is loaded and placed, and how grabs are named and saved,
   are in Sprite3DHelpers.
 
@@ -300,6 +328,8 @@ unit Sprite3dMain;
     |   |-- FAnimationSettingsItem "Animation..."  frame rate for saved animations
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   `-- ExitMenuItem "Exit"             closes the application
+    |-- ModelMenu "Model"
+    |   `-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
         |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
@@ -318,7 +348,9 @@ unit Sprite3dMain;
         |-- ShowBoundsItem "Show bounding box"  ticked at start-up
         |-- ShowGridItem "Show grid"        ticked at start-up
         |-- ShowAxesItem "Show axes"        ticked at start-up
-        |-- FitAnyAngleItem "Fit any angle" FitToBoundsMax instead of FitToBounds
+        |-- ShowSweepItem "Show swept volume"  ticked at start-up; the space swept turning
+        |                                      about the up axis
+        |-- FitSweptItem "Fit swept volume"  ticked at start-up; else FitToBounds
         `-- OrthographicItem "Orthographic" orthographic instead of perspective
 }
 
@@ -335,7 +367,7 @@ uses
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
-  Sprite3DSpriteSheet
+  Sprite3DSpriteSheet, Sprite3DSweep
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -455,6 +487,13 @@ type
     //** @abstract(The "Exit" item; see ExitMenuItemClick.)
     /// <summary>The "Exit" item; see <see cref="ExitMenuItemClick"/>.</summary>
     ExitMenuItem: TMenuItem;
+    //** @abstract(The "Model" menu; holds AnimationsUsedItem.)
+    /// <summary>The "Model" menu; holds <see cref="AnimationsUsedItem"/>.</summary>
+    ModelMenu: TMenuItem;
+    //** @abstract(The "Animations Used..." item; see AnimationsUsedItemClick.)
+    /// <summary>The "Animations Used..." item; see
+    /// <see cref="AnimationsUsedItemClick"/>.</summary>
+    AnimationsUsedItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     /// <summary>The "View" menu; holds <see cref="CameraMenu"/>.</summary>
     ViewMenu: TMenuItem;
@@ -504,21 +543,58 @@ type
     /// draws red, green and blue lines through its centre of rotation. See
     /// <see cref="ShowAxesItemClick"/>.</remarks>
     ShowAxesItem: TMenuItem;
-    //** @abstract(Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.)
+    //** @abstract(Shows or hides the volume the model sweeps turning about its up axis;
+    //** ticked at start-up.)
     //**
-    //** Ticked, the model is framed for every possible Azimuth, inclination and Roll, so
-    //** turning the dials only moves the camera round it and the model always stays in view.
-    //** Not ticked, the model is framed exactly for the angles at the time of the fit; turning
-    //** a dial afterwards can push part of it past the edge until the next refit, which
-    //** happens on a resize, a projection change or choosing this item.
-    /// <summary>Chooses FitToBoundsMax over FitToBounds, so the model fits at every
-    /// angle.</summary>
-    /// <remarks>Ticked, the model is framed for every possible Azimuth, inclination and Roll,
-    /// so turning the dials only moves the camera round it and the model always stays in view.
-    /// Not ticked, the model is framed exactly for the angles at the time of the fit; turning
-    /// a dial afterwards can push part of it past the edge until the next refit, which happens
-    /// on a resize, a projection change or choosing this item.</remarks>
-    FitAnyAngleItem: TMenuItem;
+    //** Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out
+    //** the space the model's bounds pass through in a full turn about the line through its
+    //** centre of rotation parallel to its Y axis, and draws it: the swept box in aqua, and
+    //** the tube it holds, with the axis, in yellow. There is one volume for the rest pose,
+    //** from the bounds as loaded, and one per animation, from the bounds of all its poses,
+    //** measured with MeasureAnimationBounds the first time the item is ticked for a model,
+    //** which blocks while every pose is stepped through. Whichever animation the model plays,
+    //** its volume is drawn; with none playing, the rest pose's. The radii, length and volumes
+    //** of each go to DebugMemo. See ShowSweepItemClick.
+    /// <summary>Shows or hides the volume the model sweeps turning about its up axis; ticked at
+    /// start-up.</summary>
+    /// <remarks>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which
+    /// works out the space the model's bounds pass through in a full turn about the line
+    /// through its centre of rotation parallel to its Y axis, and draws it: the swept box in
+    /// aqua, and the tube it holds, with the axis, in yellow. There is one volume for the rest
+    /// pose, from the bounds as loaded, and one per animation, from the bounds of all its
+    /// poses, measured with MeasureAnimationBounds the first time the item is ticked for a
+    /// model, which blocks while every pose is stepped through. Whichever animation the model
+    /// plays, its volume is drawn; with none playing, the rest pose's. The radii, length and
+    /// volumes of each go to DebugMemo. See <see cref="ShowSweepItemClick"/>.</remarks>
+    ShowSweepItem: TMenuItem;
+    //** @abstract(Fits the model's swept volume, or its bounds when not ticked; ticked at
+    //** start-up.)
+    //**
+    //** Ticked, every fit, on screen, for a grab and for a capture, uses FitCameraToSweep from
+    //** Sprite3DSweep on the volume the model sweeps turning about its up axis, joined over its
+    //** rest pose and every animation ticked in Model, Animations Used. The view is centred on
+    //** the model's centre of rotation and only the camera's distance, or the orthographic
+    //** size, changes; the dial angles are left alone. Because the volume holds every
+    //** animation used and every turn about the axis, the framing is the same whichever of
+    //** them plays, and turning the azimuth dial keeps the model in view. The animations are
+    //** measured the first time it is needed for a model, which blocks while every pose is
+    //** stepped through. Not ticked, every fit is FitToBounds, for the current pose and
+    //** angles; the @code(@(None@)) turn is still fitted for every angle. See
+    //** FitSweptItemClick.
+    /// <summary>Fits the model's swept volume, or its bounds when not ticked; ticked at
+    /// start-up.</summary>
+    /// <remarks>Ticked, every fit, on screen, for a grab and for a capture, uses
+    /// FitCameraToSweep from Sprite3DSweep on the volume the model sweeps turning about its up
+    /// axis, joined over its rest pose and every animation ticked in Model, Animations Used.
+    /// The view is centred on the model's centre of rotation and only the camera's distance,
+    /// or the orthographic size, changes; the dial angles are left alone. Because the volume
+    /// holds every animation used and every turn about the axis, the framing is the same
+    /// whichever of them plays, and turning the azimuth dial keeps the model in view. The
+    /// animations are measured the first time it is needed for a model, which blocks while
+    /// every pose is stepped through. Not ticked, every fit is FitToBounds, for the current
+    /// pose and angles; the <c>(None)</c> turn is still fitted for every angle. See
+    /// <see cref="FitSweptItemClick"/>.</remarks>
+    FitSweptItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
     //**
     //** Ticked, the camera is orthographic; see OrthographicItemClick.
@@ -549,24 +625,38 @@ type
     //** @abstract(The "Side View" view; see ViewSideItemClick.)
     /// <summary>The "Side View" view; see <see cref="ViewSideItemClick"/>.</summary>
     ViewSideItem: TMenuItem;
-    //** @abstract(A dark strip above AnimationListBox that holds AnimationsLabel, so the
-    //** title stands out whatever the theme.)
-    /// <summary>A dark strip above AnimationListBox that holds AnimationsLabel, so the title
-    /// stands out whatever the theme.</summary>
+    //** @abstract(A dark strip above AnimationListBox that holds AnimationsLabel and
+    //** FramesLabel, so the titles stand out whatever the theme.)
+    /// <summary>A dark strip above AnimationListBox that holds AnimationsLabel and FramesLabel,
+    /// so the titles stand out whatever the theme.</summary>
     AnimationsHeader: TRectangle;
-    //** @abstract(The "Animations" title: bold yellow on AnimationsHeader.)
-    /// <summary>The "Animations" title: bold yellow on AnimationsHeader.</summary>
+    //** @abstract(The "Animations" title: bold yellow on AnimationsHeader, at its left, inside
+    //** the header's padding.)
+    /// <summary>The "Animations" title: bold yellow on AnimationsHeader, at its left, inside the
+    /// header's padding.</summary>
     AnimationsLabel: TLabel;
+    //** @abstract(The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
+    //** header's padding, over the frame counts in AnimationListBox.)
+    /// <summary>The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
+    /// header's padding, over the frame counts in AnimationListBox.</summary>
+    FramesLabel: TLabel;
     //** @abstract(The model's animations, by name, after a first entry, @code(@(None@)), that
     //** stops any animation; see AnimationListBoxClick.)
     //**
-    //** Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a
-    //** sprite strip, a texture atlas or an animated GIF; see the unit description.
+    //** Only the animations ticked in Model, Animations Used are listed. Each entry shows, at
+    //** its right, the number of frames saving it makes at the File, Animation frame rate.
+    //** Choosing an entry plays it, whether by a click or by moving the selection with the Up
+    //** and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry selects and
+    //** plays it and opens a pop-up menu that saves it as a sprite strip, a texture atlas or an
+    //** animated GIF; see the unit description.
     /// <summary>The model's animations, by name, after a first entry, <c>(None)</c>, that stops
     /// any animation; see <see cref="AnimationListBoxClick"/>.</summary>
-    /// <remarks>Right-clicking an entry selects and plays it and opens a pop-up menu that saves
-    /// it as a sprite strip, a texture atlas or an animated GIF; see the unit
-    /// description.</remarks>
+    /// <remarks>Only the animations ticked in Model, Animations Used are listed. Each entry
+    /// shows, at its right, the number of frames saving it makes at the File, Animation frame
+    /// rate. Choosing an entry plays it, whether by a click or by moving the selection with
+    /// the Up and Down arrow keys; see <see cref="AnimationListBoxChange"/>. Right-clicking an
+    /// entry selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
+    /// texture atlas or an animated GIF; see the unit description.</remarks>
     AnimationListBox: TListBox;
     //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
     /// <summary>The "1/4 View" view; see <see cref="ViewOneQuarterItemClick"/>.</summary>
@@ -663,13 +753,13 @@ type
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
     //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
-    //** to the camera. The model is not refitted; see FitAnyAngleItem.
+    //** to the camera. The model is not refitted; see FitSweptItem.
     //**
     //** @param(Sender RollDial.)
     /// <summary>Copies RollDial to the camera's Roll.</summary>
     /// <remarks>The dial value is wrapped into 0 to 360, without negating, shown in RollText
     /// and written to the camera. The model is not refitted; see
-    /// <see cref="FitAnyAngleItem"/>.</remarks>
+    /// <see cref="FitSweptItem"/>.</remarks>
     /// <param name="Sender">RollDial.</param>
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
@@ -698,16 +788,16 @@ type
     /// nothing while View, Camera, Lock Camera is ticked, when the item is disabled.</remarks>
     /// <param name="Sender">OrthographicItem.</param>
     procedure OrthographicItemClick(Sender: TObject);
-    //** @abstract(Ticks or unticks FitAnyAngleItem, then refits the model.)
+    //** @abstract(Ticks or unticks FitSweptItem, then refits the model.)
     //**
     //** Does nothing while View, Camera, Lock Camera is ticked, when the item is disabled.
     //**
-    //** @param(Sender FitAnyAngleItem.)
-    /// <summary>Ticks or unticks FitAnyAngleItem, then refits the model.</summary>
+    //** @param(Sender FitSweptItem.)
+    /// <summary>Ticks or unticks FitSweptItem, then refits the model.</summary>
     /// <remarks>Does nothing while View, Camera, Lock Camera is ticked, when the item is
     /// disabled.</remarks>
-    /// <param name="Sender">FitAnyAngleItem.</param>
-    procedure FitAnyAngleItemClick(Sender: TObject);
+    /// <param name="Sender">FitSweptItem.</param>
+    procedure FitSweptItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
     //** match.)
     //**
@@ -730,6 +820,17 @@ type
     /// <remarks>Only the tick changes until a model is loaded.</remarks>
     /// <param name="Sender">ShowBoundsItem.</param>
     procedure ShowBoundsItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks ShowSweepItem, then adds or removes the model's swept
+    //** volume to match.)
+    //**
+    //** Only the tick changes until a model is loaded.
+    //**
+    //** @param(Sender ShowSweepItem.)
+    /// <summary>Ticks or unticks ShowSweepItem, then adds or removes the model's swept volume
+    /// to match.</summary>
+    /// <remarks>Only the tick changes until a model is loaded.</remarks>
+    /// <param name="Sender">ShowSweepItem.</param>
+    procedure ShowSweepItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowGridItem, then adds or removes the floor grid to
     //** match.)
     //**
@@ -965,14 +1066,58 @@ type
     procedure ViewSideItemClick(Sender: TObject);
     //** @abstract(Plays the chosen animation, or stops any for @code(@(None@)).)
     //**
+    //** A click that moved the selection has already been played by AnimationListBoxChange,
+    //** so it is not played twice; a click on the entry already selected plays it again.
     //** Ignored while an animation is being saved, which needs the animation it started.
     //**
     //** @param(Sender AnimationListBox.)
     /// <summary>Plays the chosen animation, or stops any for <c>(None)</c>.</summary>
-    /// <remarks>Ignored while an animation is being saved, which needs the animation it
-    /// started.</remarks>
+    /// <remarks>A click that moved the selection has already been played by
+    /// <see cref="AnimationListBoxChange"/>, so it is not played twice; a click on the entry
+    /// already selected plays it again. Ignored while an animation is being saved, which needs
+    /// the animation it started.</remarks>
     /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxClick(Sender: TObject);
+    //** @abstract(Plays the newly selected animation, or stops any for @code(@(None@)),
+    //** whatever moved the selection.)
+    //**
+    //** Runs whenever the selection moves: the Up and Down arrow keys, Home, End and the page
+    //** keys, a click on another entry, or code setting ItemIndex. So stepping through the list
+    //** with the keys plays each animation as a click does. Ignored while an animation is
+    //** being saved, and when the list is emptied for another model.
+    //**
+    //** @param(Sender AnimationListBox.)
+    /// <summary>Plays the newly selected animation, or stops any for <c>(None)</c>, whatever
+    /// moved the selection.</summary>
+    /// <remarks>Runs whenever the selection moves: the Up and Down arrow keys, Home, End and
+    /// the page keys, a click on another entry, or code setting ItemIndex. So stepping through
+    /// the list with the keys plays each animation as a click does. Ignored while an animation
+    /// is being saved, and when the list is emptied for another model.</remarks>
+    /// <param name="Sender">AnimationListBox.</param>
+    procedure AnimationListBoxChange(Sender: TObject);
+    //** @abstract(Opens the Animations Used dialog, and on OK lists only the animations ticked
+    //** there and refits to their swept volume.)
+    //**
+    //** The dialog lists every animation of the model, ticked if it is used now; Cancel
+    //** changes nothing. On OK the animations list is rebuilt with only those ticked, keeping
+    //** the selection if it is still listed; if the animation playing is left out, the model
+    //** is shown at rest, as @code(@(None@)) does. With View, Fit swept volume ticked, the
+    //** model is then refitted to the swept volume joined over the rest pose and the animations
+    //** used. Does nothing without a model, or while an animation is being saved. On Android
+    //** and iOS the dialog does not block, and the choice is applied when it closes.
+    //**
+    //** @param(Sender AnimationsUsedItem.)
+    /// <summary>Opens the Animations Used dialog, and on OK lists only the animations ticked
+    /// there and refits to their swept volume.</summary>
+    /// <remarks>The dialog lists every animation of the model, ticked if it is used now; Cancel
+    /// changes nothing. On OK the animations list is rebuilt with only those ticked, keeping
+    /// the selection if it is still listed; if the animation playing is left out, the model is
+    /// shown at rest, as <c>(None)</c> does. With View, Fit swept volume ticked, the model is
+    /// then refitted to the swept volume joined over the rest pose and the animations used.
+    /// Does nothing without a model, or while an animation is being saved. On Android and iOS
+    /// the dialog does not block, and the choice is applied when it closes.</remarks>
+    /// <param name="Sender">AnimationsUsedItem.</param>
+    procedure AnimationsUsedItemClick(Sender: TObject);
     //** @abstract(Sets the 1/4 view and fixes it.)
     //**
     //** Inclination 22.5 degrees at azimuth 45: a lower look than View, Camera, 3/4 View. The
@@ -1031,6 +1176,21 @@ type
     // The viewport's background: a 2D control behind the transparent viewport
     FBackground: TSprite3DBackground;
     FModelBox: TBoundingBox;   // the model's own bounds, measured as loaded
+    // Each animation's bounds over all its poses, for the swept volume;
+    // measured the first time the sweep is shown for the loaded model
+    FAnimationBounds: TArray<TAnimationBounds>;
+    FAnimationBoundsMeasured: Boolean;
+    // Set when AnimationListBoxChange has played FChangePlayedIndex, so the
+    // click that moved the selection there does not play it a second time
+    FChangePlayed: Boolean;
+    FChangePlayedIndex: Integer;
+    // Every animation of the loaded model, sorted, and those Model,
+    // Animations Used ticks: only these are listed and count towards the
+    // swept volume View, Fit swept volume frames. All, for a new model.
+    FAnimationNames: TArray<String>;
+    FUsedAnimations: TArray<String>;
+    // True while AnimationListBox is refilled, so its OnChange plays nothing
+    FRebuildingList: Boolean;
     // The on-screen framing, kept while a grab is fitted to its target
     FSavedFraming: TSprite3DFraming;
     // The camera pan, applied on top of every fit while FPanEnabled
@@ -1090,6 +1250,9 @@ type
     ModelDir: String;
     procedure SwitchModel(const AModel: String);
     function FitModel: Boolean;
+    procedure PlaySelectedAnimation;
+    function SweepFitVolume: TSweptVolume;
+    function GrabFit(const AWidth, AHeight: Integer): Boolean;
     procedure ApplyAngles;
     procedure ApplyDistance;
     procedure ApplyPan;
@@ -1118,6 +1281,8 @@ type
     procedure ApplyShowAxes;
     procedure ApplyShowBounds;
     procedure ApplyShowGrid;
+    procedure ApplyShowSweep;
+    procedure MeasureAnimationSweeps;
     procedure RestoreCameraView;
     procedure SaveViewState;
     function CameraViewKey(const AItem: TMenuItem): String;
@@ -1150,6 +1315,15 @@ type
     procedure AnimationDialogAccept(Sender: TObject);
     {$ENDIF}
     procedure HookAnimationItems;
+    procedure RebuildAnimationList;
+    function IsUsedAnimation(const AName: String): Boolean;
+    procedure UpdateFrameCounts;
+    function AnimationFrameCount(const AIndex: Integer): Integer;
+    function FrameCountLabel(const AItem: TListBoxItem): TLabel;
+    procedure ApplyUsedAnimations(const AUsed: TArray<String>);
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    procedure AnimationsUsedAccept(Sender: TObject);
+    {$ENDIF}
     procedure AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure SaveStripItemClick(Sender: TObject);
@@ -1240,7 +1414,8 @@ implementation
 uses
   FMX.Platform, System.IOUtils,
   Gorilla.DefTypes, Gorilla.Animation, System.Math,
-  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm;
+  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm,
+  Sprite3DAnimationsUsedForm;
 
 {$R *.fmx}
 
@@ -1251,6 +1426,8 @@ const
   // What the (None) entry captures instead of an animation: one full turn
   // of the model in TURNTABLE_SECONDS, at the File, Animation frame rate
   TURNTABLE_SECONDS = 1.0;
+  // Marks the frame-count label FrameCountLabel puts on each list entry
+  FRAME_LABEL_TAG = 3001;
   // The most memory a capture may use for its frames and the image made
   // from them, so a long animation at a large grab size is refused with a
   // message instead of running the device out of memory
@@ -1487,9 +1664,39 @@ end;
 // The single place where dial changes reach the readouts and the camera,
 // so they can never disagree. Azimuth and Roll go to the camera reversed
 // (360 minus the readout) so the view turns the right way for the dial.
-// Dials do not refit: with "Fit any angle" off, turning one can push the
-// model past the edge until the next refit; with it on, it never does.
+// Dials do not refit: with FitToBounds, turning one can push the model
+// past the edge until the next refit; the swept volume fit allows for any
+// azimuth.
 procedure TMainForm.AnimationListBoxClick(Sender: TObject);
+begin
+  // A click on another entry moves the selection first, and
+  // AnimationListBoxChange has played it already
+  if FChangePlayed and (AnimationListBox.ItemIndex = FChangePlayedIndex) then
+  begin
+    FChangePlayed := False;
+    Exit;
+  end;
+  FChangePlayed := False;
+  PlaySelectedAnimation;
+end;
+
+// The selection moved, by the arrow keys, a click or code: play the new
+// entry at once, as a click on it would
+procedure TMainForm.AnimationListBoxChange(Sender: TObject);
+begin
+  FChangePlayed := False;
+  if FRebuildingList then
+    Exit;   // RebuildAnimationList keeps the selection; nothing new to play
+  if Capturing or (AnimationListBox.ItemIndex < 0) then
+    Exit;   // a capture drives the animation; or the list is being emptied
+  PlaySelectedAnimation;
+  FChangePlayed := True;
+  FChangePlayedIndex := AnimationListBox.ItemIndex;
+end;
+
+// Plays the selected animation, or stops any for (None); nothing while a
+// capture is driving the animation
+procedure TMainForm.PlaySelectedAnimation;
 var
   ani: String;
 begin
@@ -1628,19 +1835,21 @@ end;
 
 // Ticks the View menu's on/off items as settings.json says, then applies
 // each, as choosing it would: the projection and caption, the fit, and the
-// grid, axes and box, which SwitchModel also adds to each model as the items
-// say. Before the first model is loaded, those find no model and do nothing.
+// grid, axes, box and swept volume, which SwitchModel also adds to each model
+// as the items say. Before the first model is loaded, those find no model and do nothing.
 procedure TMainForm.RestoreViewToggles;
 begin
   ShowBoundsItem.IsChecked := FSettings.ShowBoundingBox;
   ShowGridItem.IsChecked := FSettings.ShowGrid;
   ShowAxesItem.IsChecked := FSettings.ShowAxes;
-  FitAnyAngleItem.IsChecked := FSettings.FitAnyAngle;
+  ShowSweepItem.IsChecked := FSettings.ShowSweptVolume;
+  FitSweptItem.IsChecked := FSettings.FitSweptVolume;
   OrthographicItem.IsChecked := FSettings.Orthographic;
   ApplyShowBounds;
   ApplyShowGrid;
   ApplyShowAxes;
-  ApplyProjection;   // refits too, for FitAnyAngleItem
+  ApplyShowSweep;
+  ApplyProjection;   // refits too, for FitSweptItem
 end;
 
 // The name settings.json keeps for a View, Camera item: its component name
@@ -1716,7 +1925,8 @@ begin
   FSettings.ShowBoundingBox := ShowBoundsItem.IsChecked;
   FSettings.ShowGrid := ShowGridItem.IsChecked;
   FSettings.ShowAxes := ShowAxesItem.IsChecked;
-  FSettings.FitAnyAngle := FitAnyAngleItem.IsChecked;
+  FSettings.ShowSweptVolume := ShowSweepItem.IsChecked;
+  FSettings.FitSweptVolume := FitSweptItem.IsChecked;
   FSettings.Orthographic := OrthographicItem.IsChecked;
   FSettings.PanEnabled := FPanEnabled;
   FSettings.PanX := FPanX;
@@ -1777,8 +1987,9 @@ begin
 end;
 
 // Fit the model to the grab's own shape, as large as it will go for the
-// current angles (FitToBounds, whatever "Fit any angle" says, and without
-// the test distance factor), keeping the on-screen framing to put back
+// current angles (the swept volume if "Fit swept volume" is ticked,
+// otherwise FitToBounds, and without the test distance factor), keeping the
+// on-screen framing to put back
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
@@ -1792,8 +2003,7 @@ begin
     Exit;
   FSavedFraming := GorillaCamera.SaveFraming;
   FGrabFramed := True;
-  if Assigned(GorillaModel) and
-    GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight) and FPanEnabled then
+  if Assigned(GorillaModel) and GrabFit(AWidth, AHeight) and FPanEnabled then
     // The pan as on screen, on top of the grab's own fit
     GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
       ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
@@ -2327,16 +2537,17 @@ begin
   FitModel;   // a deliberate change of view, so frame the model for it
 end;
 
-// Refit after a change of model, size, projection or fit mode. The dials do
-// not call this: FitToBoundsMax already allows for every angle, and with
-// FitToBounds a dial turn is allowed to push the model past the edge.
+// Refit after a change of model, size, projection, fit mode or animations
+// used. The dials do not call this: the swept volume already allows for any
+// azimuth, and with FitToBounds a dial turn is allowed to push the model
+// past the edge.
 function TMainForm.FitModel: Boolean;
 begin
   Result := not CameraLocked and Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
     Exit;
-  if FitAnyAngleItem.IsChecked then
-    Result := GorillaCamera.FitToBoundsMax(GorillaModel)
+  if FitSweptItem.IsChecked then
+    Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume)
   else
     Result := GorillaCamera.FitToBounds(GorillaModel);
   if Result then
@@ -2392,12 +2603,33 @@ begin
   ApplyDistance;
 end;
 
-procedure TMainForm.FitAnyAngleItemClick(Sender: TObject);
+procedure TMainForm.FitSweptItemClick(Sender: TObject);
 begin
   if CameraLocked then
     Exit;   // it only chooses how the camera is fitted
-  FitAnyAngleItem.IsChecked := not FitAnyAngleItem.IsChecked;
+  FitSweptItem.IsChecked := not FitSweptItem.IsChecked;
   FitModel;
+end;
+
+// The volume View, Fit swept volume frames: the rest pose's and that of
+// each animation used, measuring them first if this model's have not been.
+// During a capture nothing can be measured, so only what is already known
+// is used.
+function TMainForm.SweepFitVolume: TSweptVolume;
+begin
+  MeasureAnimationSweeps;
+  Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds,
+    FUsedAnimations, True, saY);
+end;
+
+// The grab's own fit, for OffscreenBeforeGrab: the swept volume or the
+// model's current box, for a view of AWidth by AHeight
+function TMainForm.GrabFit(const AWidth, AHeight: Integer): Boolean;
+begin
+  if FitSweptItem.IsChecked then
+    Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume, AWidth, AHeight)
+  else
+    Result := GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight);
 end;
 
 procedure TMainForm.ShowAxesItemClick(Sender: TObject);
@@ -2416,6 +2648,12 @@ procedure TMainForm.ShowGridItemClick(Sender: TObject);
 begin
   ShowGridItem.IsChecked := not ShowGridItem.IsChecked;
   ApplyShowGrid;
+end;
+
+procedure TMainForm.ShowSweepItemClick(Sender: TObject);
+begin
+  ShowSweepItem.IsChecked := not ShowSweepItem.IsChecked;
+  ApplyShowSweep;
 end;
 
 // The model's axes to match ShowAxesItem; nothing without a model
@@ -2444,6 +2682,56 @@ begin
     HideModelGrid(GorillaModel);
 end;
 
+// The volume swept turning about the model's up axis, to match
+// ShowSweepItem: the rest pose's from the model's own bounds as loaded, and
+// one per animation, so the wireframe follows whichever animation plays. The
+// animations are measured the first time the sweep is shown for a model;
+// the figures go to the debug log. Nothing without a model.
+procedure TMainForm.ApplyShowSweep;
+var
+  Sweep: TModelSweep;
+  Volume: TSweptVolume;
+  Entry: TAnimationBounds;
+begin
+  if not ShowSweepItem.IsChecked then
+  begin
+    HideModelSweep(GorillaModel);
+    Exit;
+  end;
+  if GorillaModel = nil then
+    Exit;
+
+  MeasureAnimationSweeps;
+  Sweep := ShowModelSweep(GorillaModel, FModelBox, FAnimationBounds, saY);
+  if Sweep = nil then
+    Exit;
+  DebugMemo.Lines.Add('Rest pose: ' + Sweep.Volume.ToString);
+  for Entry in FAnimationBounds do
+    if Sweep.TryGetAnimationVolume(Entry.Name, Volume) then
+      DebugMemo.Lines.Add(Format('%s (%d poses): %s',
+        [Entry.Name, Entry.Poses, Volume.ToString]));
+end;
+
+// Measures every animation's bounds once per model, for ApplyShowSweep.
+// Gorilla counts the model's children in its animated bounds, so the axes,
+// the one helper that is a child, come off while the poses are measured and
+// go back on afterwards. Measuring drives the animations, so it waits while
+// a capture is doing that; the sweep then has the rest pose only, until it
+// is next shown.
+procedure TMainForm.MeasureAnimationSweeps;
+begin
+  if FAnimationBoundsMeasured or (GorillaModel = nil) or Capturing then
+    Exit;
+  HideModelAxes(GorillaModel);
+  try
+    FAnimationBounds := MeasureAnimationBounds(GorillaModel);
+    FAnimationBoundsMeasured := True;
+  finally
+    if ShowAxesItem.IsChecked then
+      ShowModelAxes(GorillaModel);
+  end;
+end;
+
 // Load a Model Clearing any old model first (so it Switches them)
 // GorillaModel will be Nil on first call but set on subsequent calls
 procedure TMainForm.SwitchModel(const AModel: String);
@@ -2470,28 +2758,19 @@ begin
 
   AnimationListBox.Items.Clear;
   AnimationListBox.Items.Add(NO_ANIMATION);
+  FAnimationNames := nil;
+  FUsedAnimations := nil;
   try
     Anims := LoadModelFile(GorillaModel, AModel, BBox);
     // The model's own bounds, before any helper is added: the grid's floor
     FModelBox := BBox;
-    if Length(Anims) > 0 then
-      begin
-        for var AnimName in Anims do
-        begin
-          AnimationListBox.Items.Add(AnimName);
-        end;
-      end;
-    HookAnimationItems;
-    // A new list starts with nothing ticked
-    if Assigned(FBatchAll) then
-    begin
-      FSyncingChecks := True;
-      try
-        FBatchAll.IsChecked := False;
-      finally
-        FSyncingChecks := False;
-      end;
-    end;
+    // A new model's animations are measured when its sweep is first shown
+    FAnimationBounds := nil;
+    FAnimationBoundsMeasured := False;
+    // Every animation is used until Model, Animations Used says otherwise
+    FAnimationNames := Anims;
+    FUsedAnimations := Copy(Anims);
+    RebuildAnimationList;
 
     // The angles as the dials have them, unless the camera is locked
     ApplyAngles;
@@ -2508,6 +2787,10 @@ begin
     // depends on which way up it is
     if ShowGridItem.IsChecked then
       ShowModelGrid(GorillaModel, FModelBox);
+
+    // The volume swept turning about the up axis, for the new bounds
+    if ShowSweepItem.IsChecked then
+      ApplyShowSweep;
 
     // A locked camera stays where it is, whatever the new model's size
     if not CameraLocked and not FitModel then
@@ -2645,6 +2928,7 @@ begin
   if AFps = FSettings.AnimationFps then
     Exit;
   FSettings.AnimationFps := AFps;   // limited to the allowed range
+  UpdateFrameCounts;
   DebugMemo.Lines.Add(Format('Animations are now saved at %d frames per second',
     [FSettings.AnimationFps]));
   try
@@ -2718,7 +3002,7 @@ begin
     if IsCameraViewItem(CameraMenu.Items[I]) then
       CameraMenu.Items[I].Enabled := not Locked;
   OrthographicItem.Enabled := not Locked;
-  FitAnyAngleItem.Enabled := not Locked;
+  FitSweptItem.Enabled := not Locked;
   FLockCameraItem.Enabled := not Capturing;
 end;
 
@@ -2732,6 +3016,192 @@ var
 begin
   for I := 0 to AnimationListBox.Count - 1 do
     AnimationListBox.ListItems[I].OnMouseUp := AnimationItemMouseUp;
+end;
+
+// Fills AnimationListBox with (None) and the animations used, in the
+// model's order, with their frame counts and no batch ticks. The selected
+// entry stays selected if it is still listed, without being played again.
+// If the animation playing is no longer listed, the model is shown at rest,
+// as choosing (None) would.
+procedure TMainForm.RebuildAnimationList;
+var
+  Previous, Name: String;
+  WasNone: Boolean;
+  Current: TGorillaAnimation;
+begin
+  WasNone := AnimationListBox.ItemIndex = 0;
+  if AnimationListBox.ItemIndex > 0 then
+    Previous := AnimationListBox.Items[AnimationListBox.ItemIndex]
+  else
+    Previous := String.Empty;
+
+  FRebuildingList := True;
+  try
+    AnimationListBox.BeginUpdate;
+    try
+      AnimationListBox.Items.Clear;
+      AnimationListBox.Items.Add(NO_ANIMATION);
+      for Name in FAnimationNames do
+        if IsUsedAnimation(Name) then
+          AnimationListBox.Items.Add(Name);
+    finally
+      AnimationListBox.EndUpdate;
+    end;
+    HookAnimationItems;
+    // A new list starts with nothing ticked
+    if Assigned(FBatchAll) then
+    begin
+      FSyncingChecks := True;
+      try
+        FBatchAll.IsChecked := False;
+      finally
+        FSyncingChecks := False;
+      end;
+    end;
+    if Previous <> String.Empty then
+      AnimationListBox.ItemIndex := AnimationListBox.Items.IndexOf(Previous)
+    else if WasNone then
+      AnimationListBox.ItemIndex := 0;
+  finally
+    FRebuildingList := False;
+  end;
+  UpdateFrameCounts;
+
+  if Assigned(GorillaModel) and Assigned(GorillaModel.AnimationManager) then
+  begin
+    Current := GorillaModel.AnimationManager.Current;
+    if Assigned(Current) and Current.IsRunning and not IsUsedAnimation(Current.Id) then
+    begin
+      FRebuildingList := True;
+      try
+        AnimationListBox.ItemIndex := 0;
+      finally
+        FRebuildingList := False;
+      end;
+      FChangePlayed := False;
+      PlaySelectedAnimation;   // (None): stops it
+    end;
+  end;
+end;
+
+function TMainForm.IsUsedAnimation(const AName: String): Boolean;
+var
+  Name: String;
+begin
+  for Name in FUsedAnimations do
+    if Name = AName then
+      Exit(True);
+  Result := False;
+end;
+
+// The frames saving entry AIndex makes at the File, Animation rate, worked
+// out as a capture does: one turn for (None), otherwise the animation's
+// length times the rate, rounded. 0 if the animation cannot be found.
+function TMainForm.AnimationFrameCount(const AIndex: Integer): Integer;
+var
+  Anim: TGorillaAnimation;
+  Source: TSprite3DAnimationFrames;
+begin
+  Result := 0;
+  if AIndex = 0 then
+    Exit(Max(1, Round(FSettings.AnimationFps * TURNTABLE_SECONDS)));
+  if (GorillaModel = nil) or (GorillaModel.AnimationManager = nil) then
+    Exit;
+  Anim := GorillaModel.AnimationManager.GetAnimation(AnimationListBox.Items[AIndex]);
+  if Anim = nil then
+    Exit;
+  Source := TSprite3DAnimationFrames.Create(GorillaModel, Anim, FSettings.AnimationFps);
+  try
+    Result := Source.FrameCount;
+  finally
+    Source.Free;
+  end;
+end;
+
+// The label at the right of a list entry that shows its frame count, made
+// the first time it is wanted. It ignores the mouse, so clicks still reach
+// the entry.
+function TMainForm.FrameCountLabel(const AItem: TListBoxItem): TLabel;
+var
+  I: Integer;
+begin
+  for I := 0 to AItem.ChildrenCount - 1 do
+    if (AItem.Children[I] is TLabel) and (TLabel(AItem.Children[I]).Tag = FRAME_LABEL_TAG) then
+      Exit(TLabel(AItem.Children[I]));
+  Result := TLabel.Create(AItem);
+  Result.Stored := False;
+  Result.Tag := FRAME_LABEL_TAG;
+  Result.Parent := AItem;
+  Result.Align := TAlignLayout.Right;
+  Result.Width := 50;
+  Result.Margins.Right := 6;   // with the list's border, level with FramesLabel
+  Result.HitTest := False;
+  Result.TextSettings.HorzAlign := TTextAlign.Trailing;
+end;
+
+// Every entry's frame count, for the File, Animation rate now
+procedure TMainForm.UpdateFrameCounts;
+var
+  I, Count: Integer;
+begin
+  for I := 0 to AnimationListBox.Count - 1 do
+  begin
+    Count := AnimationFrameCount(I);
+    if Count > 0 then
+      FrameCountLabel(AnimationListBox.ListItems[I]).Text := IntToStr(Count)
+    else
+      FrameCountLabel(AnimationListBox.ListItems[I]).Text := String.Empty;
+  end;
+end;
+
+// Model, Animations Used...: which animations are listed and swept. OK
+// applies the dialog's ticks; Cancel leaves everything as it was.
+procedure TMainForm.AnimationsUsedItemClick(Sender: TObject);
+var
+  Dialog: TAnimationsUsedForm;
+begin
+  if GorillaModel = nil then
+    Exit;
+  if Capturing then
+  begin
+    ShowMessage('An animation is being saved; choose the animations used when it is done.');
+    Exit;
+  end;
+  Dialog := TAnimationsUsedForm.Create(nil);
+  Dialog.SetAnimations(FAnimationNames, FUsedAnimations);
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports OK and frees itself
+  Dialog.OnAccept := AnimationsUsedAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal = mrOk then
+      ApplyUsedAnimations(Dialog.UsedAnimations);
+  finally
+    Dialog.Free;
+  end;
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.AnimationsUsedAccept(Sender: TObject);
+begin
+  ApplyUsedAnimations(TAnimationsUsedForm(Sender).UsedAnimations);
+end;
+{$ENDIF}
+
+// Lists only the animations used, then frames the swept volume joined over
+// them and the rest pose, if View, Fit swept volume is ticked
+procedure TMainForm.ApplyUsedAnimations(const AUsed: TArray<String>);
+begin
+  if Capturing then
+    Exit;   // the dialog does not block on Android and iOS
+  FUsedAnimations := AUsed;
+  RebuildAnimationList;
+  DebugMemo.Lines.Add(Format('Animations used: %d of %d',
+    [Length(FUsedAnimations), Length(FAnimationNames)]));
+  if FitSweptItem.IsChecked and FitModel then
+    DebugMemo.Lines.Add('Fitted to the animations used: ' + SweepFitVolume.ToString);
 end;
 
 // A right-click selects and plays the entry under the mouse, as a left
@@ -3215,7 +3685,8 @@ begin
   FBatchActive := False;
   UpdateBatchControls;
   // The batch left its last animation playing; play the selected one again
-  AnimationListBoxClick(AnimationListBox);
+  FChangePlayed := False;
+  PlaySelectedAnimation;
   Report := Format('Exported %d of %d animations to %s',
     [FBatchSaved, Length(FBatchItems), FBatchFolder]);
   if FBatchAborted then
@@ -3255,7 +3726,11 @@ var
   I: Integer;
   Box, Union: TBoundingBox;
 begin
-  if ASource is TSprite3DTurntableFrames then
+  if FitSweptItem.IsChecked then
+    // The swept volume holds every animation and every turn, so one fit
+    // serves both kinds of source, and every animation is framed alike
+    Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume, AWidth, AHeight)
+  else if ASource is TSprite3DTurntableFrames then
     Result := GorillaCamera.FitToBoundsMax(GorillaModel, AWidth, AHeight)
   else
   begin

@@ -357,6 +357,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DCamera.pas"/>
         <DCCReference Include="lib\Sprite3DAxes.pas"/>
         <DCCReference Include="lib\Sprite3DGrid.pas"/>
+        <DCCReference Include="lib\Sprite3DSweep.pas"/>
         <DCCReference Include="lib\Sprite3DOffscreen.pas"/>
         <DCCReference Include="lib\Sprite3DStorage.pas"/>
         <DCCReference Include="lib\Sprite3DIconWriter.pas"/>
@@ -383,6 +384,10 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DAnimCapture.pas"/>
         <DCCReference Include="ui\Sprite3DAnimationForm.pas">
             <Form>AnimationSettingsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DAnimationsUsedForm.pas">
+            <Form>AnimationsUsedForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="lib\Sprite3DVideo.pas"/>
