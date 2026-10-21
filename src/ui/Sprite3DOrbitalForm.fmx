@@ -13,7 +13,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
   OnClose = FormClose
   OnShow = FormShow
   DesignerMasterStyle = 0
-  object Layout1: TLayout
+  object ControlLayout: TLayout
     Align = Client
     Size.Width = 350.000000000000000000
     Size.Height = 517.000000000000000000
@@ -43,7 +43,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         Size.PlatformDefault = False
         TextSettings.HorzAlign = Center
         Text = 'Inclination'
-        TabOrder = 5
+        TabOrder = 6
       end
       object AngleText: TLabel
         StyledSettings = [FontColor]
@@ -56,10 +56,10 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         TextSettings.Font.Size = 72.000000000000000000
         TextSettings.Font.StyleExt = {00070000000000000004000000}
         TextSettings.HorzAlign = Center
-        TextSettings.Trimming = None
         TextSettings.WordWrap = False
+        TextSettings.Trimming = None
         Text = '0'
-        TabOrder = 93
+        TabOrder = 94
       end
       object AzimuthDial: TArcDial
         Position.X = 8.000000000000000000
@@ -79,7 +79,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         Size.PlatformDefault = False
         TextSettings.HorzAlign = Center
         Text = 'Azimuth'
-        TabOrder = 7
+        TabOrder = 8
       end
       object AzimuthText: TLabel
         StyledSettings = [FontColor]
@@ -92,10 +92,10 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         TextSettings.Font.Size = 72.000000000000000000
         TextSettings.Font.StyleExt = {00070000000000000004000000}
         TextSettings.HorzAlign = Center
-        TextSettings.Trimming = None
         TextSettings.WordWrap = False
+        TextSettings.Trimming = None
         Text = '0'
-        TabOrder = 95
+        TabOrder = 96
       end
       object RollDial: TArcDial
         Position.X = 6.000000000000000000
@@ -115,7 +115,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         Size.PlatformDefault = False
         TextSettings.HorzAlign = Center
         Text = 'Roll'
-        TabOrder = 6
+        TabOrder = 7
       end
       object RollText: TLabel
         StyledSettings = [FontColor]
@@ -128,10 +128,10 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         TextSettings.Font.Size = 72.000000000000000000
         TextSettings.Font.StyleExt = {00070000000000000004000000}
         TextSettings.HorzAlign = Center
-        TextSettings.Trimming = None
         TextSettings.WordWrap = False
+        TextSettings.Trimming = None
         Text = '0'
-        TabOrder = 94
+        TabOrder = 95
       end
       object DistanceLayout: TLayout
         Align = Bottom
@@ -173,7 +173,6 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         Size.PlatformDefault = False
         TabOrder = 5
         object AzimuthExactLabel: TLabel
-          Position.Y = 0.000000000000000000
           Size.Width = 150.000000000000000000
           Size.Height = 18.000000000000000000
           Size.PlatformDefault = False
@@ -339,7 +338,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
       end
     end
   end
-  object Layout2: TLayout
+  object ButtonLayout: TLayout
     Align = Bottom
     Position.Y = 517.000000000000000000
     Size.Width = 350.000000000000000000
