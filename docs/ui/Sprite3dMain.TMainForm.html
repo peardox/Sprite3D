@@ -870,7 +870,7 @@ Sets up the viewport, light and camera, and picks the models folder.</p>
 <p>
 
 
-<p>The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path on macOS, the home folder on Linux and <code>'../../../'</code> elsewhere; on Windows it is the current folder instead if that has a models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's camera, and a point light parented to the camera at its origin, so it sits where the camera is and points where it looks. The viewport runs at a fixed 60 frames per second without VSync.
+<p>The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path on macOS, the home folder on Linux and <code>'../../../'</code> elsewhere; on Windows it is the current folder instead if that has a models subfolder. The handler creates a TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree FOV, which becomes the viewport's camera, and a point light parented to the camera at its origin, so it sits where the camera is and points where it looks. The viewport runs at a fixed 60 frames per second without VSync. A TSprite3DBackground is put behind the viewport, showing the background kept in settings.json.
 
 <p>The dials start at 0, then the camera view kept in settings.json is chosen, as its View, Camera item would choose it: a fixed view turns the dials to its angles and switches them off, and Variable turns them to the angles kept with it and leaves them on. Isometric is chosen when none is kept. Last, the View menu's five on/off items are ticked as settings.json says they were left, and applied, which also sets the projection.
 

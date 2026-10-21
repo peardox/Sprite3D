@@ -374,7 +374,6 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DFileAssoc.pas"/>
         <DCCReference Include="lib\Sprite3DStyles.pas"/>
         <DCCReference Include="lib\Sprite3DTitleBar.pas"/>
-        <DCCReference Include="lib\Sprite3DFlatColour.pas"/>
         <DCCReference Include="ui\Sprite3DSettingsForm.pas">
             <Form>GeneralSettingsForm</Form>
             <FormType>fmx</FormType>

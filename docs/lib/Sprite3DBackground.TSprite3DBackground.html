@@ -77,16 +77,16 @@ function pasdocUpdateMembers(className) {
 <a href="Sprite3DBackground.html">Sprite3DBackground</a></p>
 <h2 class="declaration">Declaration</h2>
 <p class="declaration">
-<code>type TSprite3DBackground = class(TDummy)</code></p>
+<code>type TSprite3DBackground = class(TControl)</code></p>
 <h2 class="description">Description</h2>
 <p>
-Draws a background behind everything a TSprite3DCamera sees.</p>
+Shows a background behind a viewport, as a 2D control.</p>
 <p>
 
 
-<p>Create it and call AttachTo with the camera; it then hangs from the camera's RollPivot and is freed with the camera's rig. Each frame it fits its planes to the view at a depth just inside the far plane, so the scene is always in front of it. Set Spec to change what it shows. While the camera is orthographic the background is kept out of view for now, as it draws black over the scene there. For the main thread only.</p>
+<p>Create it and call AttachTo with the viewport. It becomes the viewport's sibling, directly behind it, with the same alignment and margins, so it covers the same area; if the viewport is not aligned, it copies the viewport's bounds once, and does not follow later moves. It makes the viewport's Color fully transparent while it has something to show. It takes no mouse or touch input and is never stored. Set Spec to change what it shows. For the main thread only.</p>
 <span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
-<ul class="hierarchy"><li class="ancestor">TDummy</li>
+<ul class="hierarchy"><li class="ancestor">TControl</li>
 <li class="thisitem">TSprite3DBackground</li></ul><div class="show-members-toggles">
 <span class="show-members-toggles-label">Show Additional Members:</span>
 <label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
@@ -96,22 +96,30 @@ Draws a background behind everything a TSprite3DCamera sees.</p>
 <table class="summary wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code><strong><a href="Sprite3DBackground.TSprite3DBackground.html#MaxCheckerSquares">MaxCheckerSquares</a></strong> = 150;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DBackground.TSprite3DBackground.html#MaxGradientPixels">MaxGradientPixels</a></strong> = 512;</code></td>
 </tr>
 </table>
 <span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
 <table class="summary wide_list">
 <tr class="list visibility-protected">
 <td class="visibility"><span class="badge vis-protected">Protected</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Render">Render</a></strong>; override;</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Paint">Paint</a></strong>; override;</code></td>
 </tr>
-<tr class="list2 visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>constructor <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+<tr class="list2 visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Notification-TComponent-TOperation-">Notification</a></strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3DBackground.TSprite3DBackground.html#AttachTo-TSprite3DCamera-">AttachTo</a></strong>(const ACamera: <a href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a>);</code></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DBackground.TSprite3DBackground.html#AttachTo-TGorillaViewport-">AttachTo</a></strong>(const AViewport: TGorillaViewport);</code></td>
 </tr>
 </table>
 <span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
@@ -120,36 +128,55 @@ Draws a background behind everything a TSprite3DCamera sees.</p>
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Spec">Spec</a></strong>: <a href="Sprite3DBackground.TSprite3DBackgroundSpec.html">TSprite3DBackgroundSpec</a> read FSpec write SetSpec;</code></td>
 </tr>
-<tr class="list2 visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>property <strong><a href="Sprite3DBackground.TSprite3DBackground.html#Hidden">Hidden</a></strong>: Boolean read FHidden write SetHidden;</code></td>
-</tr>
 </table>
 <h2 class="description">Description</h2>
 <h3 class="detail">Constants</h3>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="MaxCheckerSquares"></span><code><strong>MaxCheckerSquares</strong> = 150;</code></td>
+<td class="itemcode"><span id="MaxGradientPixels"></span><code><strong>MaxGradientPixels</strong> = 512;</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
-The most checker squares of each grey drawn in the view.</p>
+The most pixels a gradient's bitmap has along its longer side.</p>
 <p>
 
 
-<p>A checker that would need more has its squares enlarged by a whole multiple until it fits. Each square is a pair of planes, all made by AttachTo.</p>
+<p>A larger view stretches the bitmap smoothly to fit; a smooth blend loses nothing by it, and the bitmap is quick to remake while the window is resized.</p>
 </td></tr>
 </table>
 <h3 class="detail">Methods</h3>
 <table class="detail visibility-protected wide_list">
 <tr class="list visibility-protected">
 <td class="visibility"><span class="badge vis-protected">Protected</span></td>
-<td class="itemcode"><span id="Render"></span><code>procedure <strong>Render</strong>; override;</code></td>
+<td class="itemcode"><span id="Paint"></span><code>procedure <strong>Paint</strong>; override;</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
-Fits the planes to the view before each frame is drawn.</p>
+Paints the background over the control's whole area.</p>
+</td></tr>
+</table>
+<table class="detail visibility-protected wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Notification-TComponent-TOperation-"></span><code>procedure <strong>Notification</strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Forgets the viewport when it is freed.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AComponent</dt>
+<dd>The component being inserted or removed.</dd>
+<dt>Operation</dt>
+<dd>Whether it is being inserted or removed.</dd>
+</dl>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -167,28 +194,49 @@ Creates the background with the default spec, not yet attached.</p>
 <h6 class="description_section">Parameters</h6>
 <dl class="parameters">
 <dt>AOwner</dt>
-<dd>The owner; nil is usual, as the camera's rig frees it once attached.</dd>
+<dd>The owner, which frees it; nil is usual, as its parent frees it once attached.</dd>
 </dl>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="AttachTo-TSprite3DCamera-"></span><code>procedure <strong>AttachTo</strong>(const ACamera: <a href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a>);</code></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
-Puts the background behind everything ACamera sees.</p>
+Frees the background and its bitmap.</p>
 <p>
 
 
-<p>Makes it a child of ACamera's RollPivot, beside the camera, so it moves and turns with the camera and is freed with its rig. The first call also makes all its planes, so call it before the view is first drawn.
+<p>The viewport, if it still exists, keeps whatever Color it has at the time.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AttachTo-TGorillaViewport-"></span><code>procedure <strong>AttachTo</strong>(const AViewport: TGorillaViewport);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Puts the background behind AViewport.</p>
+<p>
+
+
+<p>Makes it a child of the viewport's parent, or of its owner if it has no parent yet, placed just before the viewport so it is painted first. It takes the viewport's Align and Margins, or its bounds if it is not aligned, so set the viewport's alignment first. The viewport's Color at this moment is kept as the colour shown for None; if it is already fully transparent, black is kept instead. Then the viewport's Color is set for the present spec. Call it once.
+
+<p>
 
 <p></p>
 <h6 class="description_section">Parameters</h6>
 <dl class="parameters">
-<dt>ACamera</dt>
-<dd>The camera to follow.</dd>
+<dt>AViewport</dt>
+<dd>The viewport to sit behind.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentNilException</code></dt>
+<dd>if AViewport is nil.</dd>
 </dl>
 </td></tr>
 </table>
@@ -200,21 +248,11 @@ Puts the background behind everything ACamera sees.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-What the background shows; setting it redraws it.</p>
-</td></tr>
-</table>
-<table class="detail visibility-public wide_list">
-<tr class="list visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="Hidden"></span><code>property <strong>Hidden</strong>: Boolean read FHidden write SetHidden;</code></td>
-</tr>
-<tr><td colspan="2">
-<p>
-True moves the background out of view, as while a grab is drawn.</p>
+What the background shows; setting it repaints it.</p>
 <p>
 
 
-<p>Its planes are shrunk to a speck and moved away rather than made invisible, so it takes effect for the next drawing even within a frame. False brings it back.</p>
+<p>Setting it also sets the viewport's Color: fully transparent for every kind but None, which hides this control and puts back the viewport's opaque Color.</p>
 </td></tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

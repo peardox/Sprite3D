@@ -1,4 +1,34 @@
+//** @abstract(Sprite3D: renders a 3D model from a chosen angle and saves it as images, icons,
+//** sprite sheets, animated GIFs or MP4 video.)
+//**
+//** The program loads a glTF, FBX, OBJ, USD, Collada, STL or PLY model into a Gorilla3D
+//** viewport, frames it with TSprite3DCamera and grabs it off screen with TSprite3DOffscreen.
+//** TMainForm, in Sprite3dMain, holds the view and every command. Leaks still allocated at
+//** shut-down are reported, as ReportMemoryLeaksOnShutdown is set; switch it off for a
+//** release build. Builds for Windows, macOS, Linux, Android and iOS.
+//**
+//** @preformatted(
+//** ui/    the forms and the settings kept between sessions
+//** lib/   the camera, background, off-screen grabs, exporters and platform helpers
+//** common/  display information, GPU preference and system folder helpers
+//** )
 program Sprite3d;
+
+{
+  Sprite3D: renders a 3D model from a chosen angle and saves it as images,
+  icons, sprite sheets, animated GIFs or MP4 video.
+
+  The program loads a glTF, FBX, OBJ, USD, Collada, STL or PLY model into a
+  Gorilla3D viewport, frames it with TSprite3DCamera and grabs it off screen
+  with TSprite3DOffscreen. TMainForm, in Sprite3dMain, holds the view and
+  every command. Leaks still allocated at shut-down are reported, as
+  ReportMemoryLeaksOnShutdown is set; switch it off for a release build.
+  Builds for Windows, macOS, Linux, Android and iOS.
+
+    ui/      the forms and the settings kept between sessions
+    lib/     the camera, background, off-screen grabs, exporters and platform helpers
+    common/  display information, GPU preference and system folder helpers
+}
 
 uses
   System.StartUpCopy,
@@ -20,7 +50,6 @@ uses
   Sprite3DFileAssoc in 'lib\Sprite3DFileAssoc.pas',
   Sprite3DStyles in 'lib\Sprite3DStyles.pas',
   Sprite3DTitleBar in 'lib\Sprite3DTitleBar.pas',
-  Sprite3DFlatColour in 'lib\Sprite3DFlatColour.pas',
   Sprite3DSettingsForm in 'ui\Sprite3DSettingsForm.pas' {GeneralSettingsForm},
   Sprite3DSpriteSheet in 'lib\Sprite3DSpriteSheet.pas',
   Sprite3DAnimCapture in 'lib\Sprite3DAnimCapture.pas',

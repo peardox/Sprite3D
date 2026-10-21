@@ -783,8 +783,8 @@ type
     /// at 1 when the folder is chosen and goes up by one for every file saved, skipping any
     /// name already in the folder, so earlier grabs are never overwritten. Each saved file is
     /// logged in DebugMemo; a failed grab or save is reported with a message. A click while the
-    /// previous grab is still under way is ignored.</remarks> <param
-    /// name="Sender">GrabMenuItem.</param>
+    /// previous grab is still under way is ignored.</remarks>
+    /// <param name="Sender">GrabMenuItem.</param>
     procedure GrabMenuItemClick(Sender: TObject);
     //** @abstract(Renders the view at every icon size and saves it as one icon file.)
     //**

@@ -172,7 +172,6 @@ Sprite3D/
     |   |-- Sprite3DFileAssoc.pas    Open With and default-application registration
     |   |-- Sprite3DStyles.pas       switching FMX styles at run time
     |   |-- Sprite3DTitleBar.pas     title bars coloured to match the style
-    |   |-- Sprite3DFlatColour.pas   colours as textures, for Metal (macOS, iOS)
     |   |-- Sprite3DStorage.pas      per-user app folder and JSON settings
     |   |-- Sprite3DAnimCapture.pas  grabs every frame of an animation, or of a turn
     |   |-- Sprite3DSpriteSheet.pas  strips, atlases, PNG and animated GIF writers

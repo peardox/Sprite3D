@@ -145,14 +145,6 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#ViewHalfExtents-Single-Single-Single-">ViewHalfExtents</a></strong>(const ADepth: Single; out AHalfWidth, AHalfHeight: Single): Boolean;</code></td>
-</tr>
-<tr class="list2 visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>class function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#MaxViewDepth">MaxViewDepth</a></strong>: Single; static;</code></td>
-</tr>
-<tr class="list visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#SaveFraming">SaveFraming</a></strong>: <a href="Sprite3DCamera.TSprite3DFraming.html">TSprite3DFraming</a>;</code></td>
 </tr>
 <tr class="list2 visibility-public">
@@ -443,60 +435,6 @@ Returns the camera's position in the rig parent's space.</p>
 <p></p>
 <h6 class="description_section">Returns</h6>
 <p class="return">The camera's position.</p></td></tr>
-</table>
-<table class="detail visibility-public wide_list">
-<tr class="list visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="ViewHalfExtents-Single-Single-Single-"></span><code>function <strong>ViewHalfExtents</strong>(const ADepth: Single; out AHalfWidth, AHalfHeight: Single): Boolean;</code></td>
-</tr>
-<tr><td colspan="2">
-<p>
-Half the width and height of the view at a depth in front of the camera.</p>
-<p>
-
-
-<p>Read from the camera's own projection for the viewport's size, so it holds in perspective and orthographic mode alike, with Gorilla's FOV convention and the viewport's aspect ratio. In orthographic mode the size is the same at every depth. Use it to size something that must fill the view, such as a background plane.
-
-<p>
-
-<p>
-
-<p>
-
-<p>
-
-<p></p>
-<h6 class="description_section">Parameters</h6>
-<dl class="parameters">
-<dt>ADepth</dt>
-<dd>The distance in front of the camera, along its view direction.</dd>
-<dt>AHalfWidth</dt>
-<dd>Half the visible width at that depth, in scene units.</dd>
-<dt>AHalfHeight</dt>
-<dd>Half the visible height at that depth, in scene units.</dd>
-</dl>
-<h6 class="description_section">Returns</h6>
-<p class="return">True if the sizes were worked out; False, with both 0, if there is no viewport or it has no size.</p><h6 class="description_section">See also</h6>
-<dl class="see_also">
-  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#MaxViewDepth">MaxViewDepth</a></dt>
-  <dd>The far plane: nothing farther from the camera than this is drawn.</dd>
-</dl>
-</td></tr>
-</table>
-<table class="detail visibility-public wide_list">
-<tr class="list visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="MaxViewDepth"></span><code>class function <strong>MaxViewDepth</strong>: Single; static;</code></td>
-</tr>
-<tr><td colspan="2">
-<p>
-The far plane: nothing farther from the camera than this is drawn.</p>
-<p>
-
-
-<p></p>
-<h6 class="description_section">Returns</h6>
-<p class="return">The distance, in scene units, of the far plane the fitting assumes.</p></td></tr>
 </table>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">

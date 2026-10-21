@@ -78,22 +78,20 @@ A background for a Gorilla3D view: none, a checker for transparency, a colour or
 <p>
 
 
-<p>TSprite3DBackgroundSpec describes a background: its kind, its colours and the size of the checker squares. TSprite3DBackground draws one behind everything a TSprite3DCamera sees. It is an unlit plane that moves with the camera, just inside the far plane, and is resized every frame to fill the view exactly, whatever the projection, field of view or window size. Its colour comes from a short GLSL SurfaceShader: one colour for Solid, a blend down the plane for Gradient, with the plane turned in the view, and enlarged to cover it, to point the blend in the chosen GradientDirection. On macOS and iOS, where Gorilla3D draws through Metal and does not support a material's SurfaceShader, the colour is the material's own instead, and the gradient a small texture. It hangs from the camera's RollPivot, the dummy the camera itself hangs from; every plane is a pair facing opposite ways, so one always faces the camera however Gorilla culls back faces.
+<p>TSprite3DBackgroundSpec describes a background: its kind, its colours and the size of the checker squares. TSprite3DBackground shows one behind a viewport. It is not part of the 3D scene: it is an ordinary 2D control, a sibling placed directly behind the viewport and covering the same area, and the viewport's Color is made fully transparent, so the background shows wherever the scene draws nothing. This needs a Gorilla3D whose viewport honours the alpha of its Color, as Gorilla3D 1.5.3 does.
 
-<p>The None kind, the default, draws nothing at all, leaving whatever the viewport shows behind the scene, and grabs transparent. The Transparent kind draws a checker of two greys, the usual sign that an image is transparent there. It is built from geometry: the whole-view plane is put away, and two pools of small planes, one sharing a material of the light grey and one of the dark grey, all made before the first frame, tile the view side by side at the background's depth. They never overlap, so the depth buffer never has to choose between two surfaces at almost the same depth. Each frame only moves them, as the scene is never changed in any other way once it is drawn. The squares are CheckerSize logical pixels on screen, counted from the view's top-left corner, which is light. To keep the number of planes reasonable, a checker that would need more than MaxCheckerSquares squares of either grey has its squares enlarged by a whole multiple until it fits. Every plane is left out of Gorilla's frustum culling, which wrongly skipped most of the squares.
+<p>Being 2D, the background does not depend on the camera at all: it is the same in perspective and orthographic projection, at any field of view or zoom, and it never appears in off-screen grabs, which draw the scene into a frame buffer of their own. It is painted from a bitmap, kept until the control's size, the display scale or the spec changes. The checker is drawn at the display's own pixel size, one bitmap pixel to one screen pixel, so its edges stay sharp. The gradient is drawn at no more than MaxGradientPixels pixels along its longer side and stretched smoothly to fit, as a smooth blend loses nothing by it. A Solid background needs no bitmap and is filled directly.
 
-<p>Every material has a black Diffuse colour: even unlit, Gorilla adds part of it to the colour a shader gives, which would brighten the background.
+<p>The None kind, the default, hides the control and gives the viewport back the opaque Color it had when the background was attached, so the view looks as it did before any background existed. The Transparent kind shows a checker of two greys, the usual sign that an image is transparent there. The squares are CheckerSize logical pixels on screen, counted from the view's top-left corner, which is light.
 
-<p>The same spec is meant for TSprite3DOffscreen.Backdrop, which gives grabs the same background: transparent for None and for Transparent, as the checker stands for, and the colour or gradient otherwise. Hide the background while a grab is drawn, with Hidden, so it does not end up in the grab.
+<p>The same spec is meant for TSprite3DOffscreen.Backdrop, which gives grabs the same background: transparent for None and for Transparent, as the checker stands for, and the colour or gradient otherwise. NewBitmap paints a spec into a bitmap of any size for such uses.
 
 <p></p>
 
 <pre class="preformatted">
-TSprite3DCamera.RollPivot (TDummy)
-|-- TSprite3DCamera                 at (0, 0, -Distance), looking along +Z
-`-- TSprite3DBackground (TDummy)   fitted to the view every frame
-    |-- TGorillaPlane (x2)          the whole view; colour or gradient
-    `-- TGorillaPlane (x2 each)     the checker's squares, while Transparent</pre>
+ViewportLayout (or whatever holds the viewport)
+|-- TSprite3DBackground   2D, behind; same area as the viewport
+`-- TGorillaViewport      Color fully transparent unless the kind is None</pre>
 
 <p></p>
 <span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
@@ -109,7 +107,7 @@ TSprite3DCamera.RollPivot (TDummy)
 </tr>
 <tr class="list2">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DBackground.TSprite3DBackground.html"><code>TSprite3DBackground</code></a></td>
-<td class="itemdesc">Draws a background behind everything a TSprite3DCamera sees.</td>
+<td class="itemdesc">Shows a background behind a viewport, as a 2D control.</td>
 </tr>
 </table>
 <span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
@@ -133,7 +131,7 @@ What a background shows.</p>
 <h6 class="description_section">Values</h6>
 <ul>
 <li>
-<span id="None">None</span>: No background is drawn: the viewport's own shows, and grabs are transparent. The default.</li>
+<span id="None">None</span>: No background is drawn: the viewport's own opaque colour shows, and grabs are transparent. The default.</li>
 <li>
 <span id="Transparent">Transparent</span>: A checker on screen, standing for transparency; transparency in grabs.</li>
 <li>
