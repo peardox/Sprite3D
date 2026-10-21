@@ -64,6 +64,13 @@
 //** model turns about, which stays put however an animation moves the box. The orbit centre
 //** goes to the ball's centre, and the angles can then change freely without refitting.
 //**
+//** FitPointsOnAxis frames a set of points the caller gives, such as an outline of a model's
+//** swept volume, as FitToBounds frames a box: as large as possible for the current angles,
+//** centred so they fill the tighter axis. The orbit centre is then put where the view axis
+//** meets a line the caller gives, such as the axis the model turns about, with Distance
+//** changed to match, so the view is the same but turning the azimuth keeps the points
+//** centred when that line is upright. The angles are not changed.
+//**
 //** Both read the frustum from the camera's own GetProjectionMatrix for the viewport's size, so
 //** the FOV convention, vertical or horizontal, and the aspect ratio come from Gorilla itself,
 //** never from guesses.
@@ -188,6 +195,14 @@ unit Sprite3DCamera;
   which stays put however an animation moves the box. The orbit centre goes
   to the ball's centre, and the angles can then change freely without
   refitting.
+
+  FitPointsOnAxis frames a set of points the caller gives, such as an
+  outline of a model's swept volume, as FitToBounds frames a box: as large
+  as possible for the current angles, centred so they fill the tighter axis.
+  The orbit centre is then put where the view axis meets a line the caller
+  gives, such as the axis the model turns about, with Distance changed to
+  match, so the view is the same but turning the azimuth keeps the points
+  centred when that line is upright. The angles are not changed.
 
   Both read the frustum from the camera's own GetProjectionMatrix for the
   viewport's size, so the FOV convention, vertical or horizontal, and the
@@ -511,6 +526,9 @@ type
       const AViewWidth, AViewHeight, AMargin: Single;
       const AAnyAngle: Boolean; const APivot: TPoint3D;
       const AUsePivot: Boolean): Boolean;
+    function FitOnAxis(const APoints: array of TPoint3D; const ALinePoint,
+      ALineDirection: TPoint3D; const ASpace: TControl3D; const AViewWidth, AViewHeight,
+      AMargin: Single): Boolean;
   public
     //** @abstract(Creates the camera and its pivot chain.)
     //**
@@ -1151,6 +1169,165 @@ type
     /// there is no viewport, or it has zero width or height.</returns>
     function FitToBoundsMax(const ABox: TBoundingBox; const ASpace: TControl3D;
       const AMargin: Single = 0): Boolean; overload;
+
+    //** @abstract(Frames a set of points as large as possible for the current angles, with the
+    //** orbit centre on a given line.)
+    //**
+    //** The points are framed as FitToBounds frames a box's corners: as large as they can be
+    //** in the view, centred, so they reach both edges of the tighter axis, left and right or
+    //** top and bottom, and in perspective mode at least 1 unit in front of the camera, FMX's
+    //** near plane. The view only holds their convex hull, so the points need only enclose the
+    //** shape to be framed. Azimuth, PolarAngle and Roll are not changed.
+    //**
+    //** OrbitCenter is then moved along the view axis to the point nearest the line through
+    //** ALinePoint along ALineDirection, and Distance changed by the same amount, so the
+    //** camera, and the view, stay exactly where the fit put them. For a shape that is round
+    //** about that line, such as a model's swept volume about its turning axis, the view axis
+    //** meets the line while Roll is 0, so the orbit centre is on it and turning the azimuth,
+    //** with the line upright, keeps the shape centred and in view. When the view axis runs
+    //** along the line, as seen from straight above, or the move would put the camera less
+    //** than 1 unit from the new centre, the orbit centre is left where the fit put it.
+    //**
+    //** The points and the line are carried through ASpace's position, rotation and scale into
+    //** the rig parent's space first.
+    //**
+    //** @param(APoints The points to keep in view, in ASpace's local coordinates.)
+    //**
+    //** @param(ALinePoint A point on the line the orbit centre is put on, in the same
+    //** coordinates.)
+    //**
+    //** @param(ALineDirection The line's direction, in the same coordinates; any length but 0.)
+    //**
+    //** @param(ASpace The object whose local space the points and line are in. If nil, they are
+    //** taken to be in absolute viewport space.)
+    //**
+    //** @param(AMargin Padding as a fraction of the view: 0.1 makes the points' extent 1/1.1 of
+    //** the view on the tighter axis. Negative values count as 0.)
+    //**
+    //** @returns(True if the points were framed; False, with nothing changed, if there are
+    //** none, the camera is locked, there is no viewport, or it has zero width or height.)
+    //**
+    //** @seealso(FitToBounds)
+    /// <summary>Frames a set of points as large as possible for the current angles, with the
+    /// orbit centre on a given line.</summary>
+    /// <remarks><para>The points are framed as <see cref="FitToBounds"/> frames a box's
+    /// corners: as large as they can be in the view, centred, so they reach both edges of the
+    /// tighter axis, left and right or top and bottom, and in perspective mode at least 1 unit
+    /// in front of the camera, FMX's near plane. The view only holds their convex hull, so the
+    /// points need only enclose the shape to be framed. Azimuth, PolarAngle and Roll are not
+    /// changed.</para>
+    /// <para>OrbitCenter is then moved along the view axis to the point nearest the line
+    /// through ALinePoint along ALineDirection, and Distance changed by the same amount, so the
+    /// camera, and the view, stay exactly where the fit put them. For a shape that is round
+    /// about that line, such as a model's swept volume about its turning axis, the view axis
+    /// meets the line while Roll is 0, so the orbit centre is on it and turning the azimuth,
+    /// with the line upright, keeps the shape centred and in view. When the view axis runs
+    /// along the line, as seen from straight above, or the move would put the camera less than
+    /// 1 unit from the new centre, the orbit centre is left where the fit put it.</para>
+    /// <para>The points and the line are carried through ASpace's position, rotation and scale
+    /// into the rig parent's space first.</para></remarks>
+    /// <param name="APoints">The points to keep in view, in ASpace's local
+    /// coordinates.</param>
+    /// <param name="ALinePoint">A point on the line the orbit centre is put on, in the same
+    /// coordinates.</param>
+    /// <param name="ALineDirection">The line's direction, in the same coordinates; any length
+    /// but 0.</param>
+    /// <param name="ASpace">The object whose local space the points and line are in. If nil,
+    /// they are taken to be in absolute viewport space.</param>
+    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the points' extent
+    /// 1/1.1 of the view on the tighter axis. Negative values count as 0.</param>
+    /// <returns>True if the points were framed; False, with nothing changed, if there are none,
+    /// the camera is locked, there is no viewport, or it has zero width or height.</returns>
+    /// <seealso cref="FitToBounds"/>
+    function FitPointsOnAxis(const APoints: array of TPoint3D; const ALinePoint,
+      ALineDirection: TPoint3D; const ASpace: TControl3D;
+      const AMargin: Single = 0): Boolean; overload;
+
+    //** @abstract(Frames a set of points with the orbit centre on a given line, for an explicit
+    //** view size.)
+    //**
+    //** Works like the overload without a view size, but frames the points for AViewWidth by
+    //** AViewHeight instead of the viewport's size; only their ratio matters. Use it for an
+    //** off-screen target whose shape differs from the viewport's.
+    //**
+    //** @param(APoints The points to keep in view, in ASpace's local coordinates.)
+    //**
+    //** @param(ALinePoint A point on the line the orbit centre is put on, in the same
+    //** coordinates.)
+    //**
+    //** @param(ALineDirection The line's direction, in the same coordinates; any length but 0.)
+    //**
+    //** @param(ASpace The object whose local space the points and line are in. If nil, they are
+    //** taken to be in absolute viewport space.)
+    //**
+    //** @param(AViewWidth The width of the view, in the same units as AViewHeight.)
+    //**
+    //** @param(AViewHeight The height of the view, in the same units as AViewWidth.)
+    //**
+    //** @param(AMargin Padding as a fraction of the view: 0.1 makes the points' extent 1/1.1 of
+    //** the view on the tighter axis.)
+    //**
+    //** @returns(True if the points were framed; False, with nothing changed, if there are
+    //** none, the camera is locked, or either size is zero or less.)
+    /// <summary>Frames a set of points with the orbit centre on a given line, for an explicit
+    /// view size.</summary>
+    /// <remarks>Works like the overload without a view size, but frames the points for
+    /// AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use
+    /// it for an off-screen target whose shape differs from the viewport's.</remarks>
+    /// <param name="APoints">The points to keep in view, in ASpace's local
+    /// coordinates.</param>
+    /// <param name="ALinePoint">A point on the line the orbit centre is put on, in the same
+    /// coordinates.</param>
+    /// <param name="ALineDirection">The line's direction, in the same coordinates; any length
+    /// but 0.</param>
+    /// <param name="ASpace">The object whose local space the points and line are in. If nil,
+    /// they are taken to be in absolute viewport space.</param>
+    /// <param name="AViewWidth">The width of the view, in the same units as
+    /// AViewHeight.</param>
+    /// <param name="AViewHeight">The height of the view, in the same units as
+    /// AViewWidth.</param>
+    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the points' extent
+    /// 1/1.1 of the view on the tighter axis.</param>
+    /// <returns>True if the points were framed; False, with nothing changed, if there are none,
+    /// the camera is locked, or either size is zero or less.</returns>
+    function FitPointsOnAxis(const APoints: array of TPoint3D; const ALinePoint,
+      ALineDirection: TPoint3D; const ASpace: TControl3D; const AViewWidth,
+      AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
+
+    //** @abstract(Slides the view by a number of pixels across and up, without turning it.)
+    //**
+    //** OrbitCenter, and so the camera, moves along the camera's own right and up directions
+    //** by as much as ARight and AUp pixels measure, in a view of AViewWidth by AViewHeight,
+    //** at the orbit centre's depth: so the picture moves the other way by that many pixels
+    //** there. In orthographic mode a pixel is the same size at every depth and the slide is
+    //** exact; in perspective, parts nearer or further than the orbit centre move a little
+    //** more or less, which for the fractions of a pixel it is meant for is negligible. The
+    //** angles, Distance and the orthographic size are not changed, and it works whether or
+    //** not the camera is Locked, as the caller is expected to put OrbitCenter back.
+    //**
+    //** @param(ARight Pixels to slide the view right; negative slides it left.)
+    //**
+    //** @param(AUp Pixels to slide the view up; negative slides it down.)
+    //**
+    //** @param(AViewWidth The width of the view the pixels are measured in.)
+    //**
+    //** @param(AViewHeight The height of the view the pixels are measured in.)
+    /// <summary>Slides the view by a number of pixels across and up, without turning
+    /// it.</summary>
+    /// <remarks>OrbitCenter, and so the camera, moves along the camera's own right and up
+    /// directions by as much as ARight and AUp pixels measure, in a view of AViewWidth by
+    /// AViewHeight, at the orbit centre's depth: so the picture moves the other way by that
+    /// many pixels there. In orthographic mode a pixel is the same size at every depth and the
+    /// slide is exact; in perspective, parts nearer or further than the orbit centre move a
+    /// little more or less, which for the fractions of a pixel it is meant for is negligible.
+    /// The angles, Distance and the orthographic size are not changed, and it works whether
+    /// or not the camera is Locked, as the caller is expected to put OrbitCenter
+    /// back.</remarks>
+    /// <param name="ARight">Pixels to slide the view right; negative slides it left.</param>
+    /// <param name="AUp">Pixels to slide the view up; negative slides it down.</param>
+    /// <param name="AViewWidth">The width of the view the pixels are measured in.</param>
+    /// <param name="AViewHeight">The height of the view the pixels are measured in.</param>
+    procedure ShiftView(const ARight, AUp, AViewWidth, AViewHeight: Single);
 
     { Root of the chain - set Rig.Parent to place the camera in a scene }
     //** @abstract(The root of the pivot chain; set @code(Rig.Parent) to place the camera in a
@@ -1922,6 +2099,119 @@ begin
 
   FAzimuthPivot.Position.Point := Center;
   Distance := Dist;
+end;
+
+function TSprite3DCamera.FitPointsOnAxis(const APoints: array of TPoint3D;
+  const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D;
+  const AMargin: Single): Boolean;
+var
+  VP: TViewport3D;
+begin
+  VP := FindViewport;
+  Result := (VP <> nil) and FitOnAxis(APoints, ALinePoint, ALineDirection, ASpace,
+    VP.Width, VP.Height, AMargin);
+end;
+
+function TSprite3DCamera.FitPointsOnAxis(const APoints: array of TPoint3D;
+  const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D;
+  const AViewWidth, AViewHeight: Single; const AMargin: Single): Boolean;
+begin
+  Result := FitOnAxis(APoints, ALinePoint, ALineDirection, ASpace, AViewWidth,
+    AViewHeight, AMargin);
+end;
+
+function TSprite3DCamera.FitOnAxis(const APoints: array of TPoint3D;
+  const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D;
+  const AViewWidth, AViewHeight, AMargin: Single): Boolean;
+var
+  RigParent: TFmxObject;
+  Rig: TArray<TPoint3D>;
+  LinePoint, LineDir, Center, AxF, W: TPoint3D;
+  B, D, E, Denom, S: Single;
+  I: Integer;
+
+  // ASpace local -> rig parent space, via FMX absolute (viewport) space
+  function ToRigSpace(const ALocal: TPoint3D): TPoint3D;
+  begin
+    if ASpace <> nil then
+      Result := ASpace.LocalToAbsolute3D(ALocal)
+    else
+      Result := ALocal;
+    if RigParent is TControl3D then
+      Result := TControl3D(RigParent).AbsoluteToLocal3D(Result);
+  end;
+
+begin
+  if FLocked then
+    Exit(False);
+  Result := Length(APoints) > 0;
+  if not Result then
+    Exit;
+
+  RigParent := FAzimuthPivot.Parent;
+  SetLength(Rig, Length(APoints));
+  for I := 0 to High(APoints) do
+    Rig[I] := ToRigSpace(APoints[I]);
+  LinePoint := ToRigSpace(ALinePoint);
+  LineDir := ToRigSpace(ALinePoint + ALineDirection) - LinePoint;
+
+  // The view FitToBounds would give the points: as large as they will go,
+  // centred, for the current angles
+  Result := FitCorners(Rig, AViewWidth, AViewHeight, AMargin, False, TPoint3D.Zero, False);
+  if not Result or (LineDir.Length < EPS) then
+    Exit;
+  LineDir := LineDir.Normalize;
+
+  // Slide the orbit centre along the view axis to the point nearest the
+  // line, and the distance with it, so the camera does not move. With the
+  // ray C + s F and the line P + t L (both unit), the nearest s is
+  // (b e - d) / (1 - b * b), with b = F.L, d = F.(C - P), e = L.(C - P).
+  Center := FAzimuthPivot.Position.Point;
+  AxF := GetOrientation.Rotate(Point3D(0, 0, 1));
+  W := Center - LinePoint;
+  B := AxF.DotProduct(LineDir);
+  D := AxF.DotProduct(W);
+  E := LineDir.DotProduct(W);
+  Denom := 1 - B * B;
+  if Denom < EPS then
+    Exit;   // looking along the line: any centre on the view axis will do
+  S := (B * E - D) / Denom;
+  if Distance + S < NEAR_CLEARANCE then
+    Exit;   // the line is behind or right in front of the camera
+  FAzimuthPivot.Position.Point := Center + AxF * S;
+  Distance := Distance + S;
+end;
+
+procedure TSprite3DCamera.ShiftView(const ARight, AUp, AViewWidth, AViewHeight: Single);
+var
+  M: TMatrix3D;
+  SX, SY, PX, PY: Single;
+  Q: TQuat;
+begin
+  if (AViewWidth <= 0) or (AViewHeight <= 0) or ((ARight = 0) and (AUp = 0)) then
+    Exit;
+  // The projection's diagonal is 1 / tan(half-angle) in perspective and
+  // 1 / (half the visible size) in orthographic mode, so one pixel measures
+  // 2 * Distance / (S * size) at the orbit centre, or 2 / (S * size)
+  M := GetProjectionMatrix(AViewWidth, AViewHeight, NEAR_CLEARANCE, FAR_PLANE);
+  SX := Abs(M.m11);
+  SY := Abs(M.m22);
+  if (SX < EPS) or (SY < EPS) then
+    Exit;
+  if IsOrthographic then
+  begin
+    PX := 2 / (SX * AViewWidth);
+    PY := 2 / (SY * AViewHeight);
+  end
+  else
+  begin
+    PX := 2 * FDistance / (SX * AViewWidth);
+    PY := 2 * FDistance / (SY * AViewHeight);
+  end;
+  // The camera's right, and its up, which is FMX's -Y
+  Q := GetOrientation;
+  FAzimuthPivot.Position.Point := FAzimuthPivot.Position.Point +
+    Q.Rotate(Point3D(1, 0, 0)) * (ARight * PX) - Q.Rotate(Point3D(0, 1, 0)) * (AUp * PY);
 end;
 
 procedure TSprite3DCamera.LookAt(const APoint: TPoint3D; const AMode: TLookAtMode);

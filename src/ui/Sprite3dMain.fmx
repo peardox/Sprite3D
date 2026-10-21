@@ -45,51 +45,69 @@ object MainForm: TMainForm
         TabOrder = 0
         object ViewportLayout: TLayout
           Align = Client
-          Size.Width = 650.000000000000000000
+          Size.Width = 560.000000000000000000
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
         end
         object ControlsLayout: TLayout
           Align = Right
-          Position.X = 650.000000000000000000
-          Size.Width = 150.000000000000000000
+          Position.X = 560.000000000000000000
+          Size.Width = 240.000000000000000000
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
           object AnimationsHeader: TRectangle
             Align = Top
             Fill.Color = xFF2B2B2B
-            Size.Width = 150.000000000000000000
+            Size.Width = 240.000000000000000000
             Size.Height = 26.000000000000000000
             Size.PlatformDefault = False
             Stroke.Kind = None
-            object AnimationsLabel: TLabel
-              Align = Client
+            Padding.Left = 8.000000000000000000
+            Padding.Right = 8.000000000000000000
+            object FramesLabel: TLabel
+              Align = Right
               StyledSettings = [Family]
-              Size.Width = 150.000000000000000000
+              Position.X = 182.000000000000000000
+              Size.Width = 50.000000000000000000
               Size.Height = 26.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Size = 14.000000000000000000
               TextSettings.Font.StyleExt = {00070000000000000004000000}
               TextSettings.FontColor = claYellow
-              TextSettings.HorzAlign = Center
+              TextSettings.HorzAlign = Trailing
+              Text = 'Frames'
+              TabOrder = 1
+            end
+            object AnimationsLabel: TLabel
+              Align = Client
+              StyledSettings = [Family]
+              Position.X = 8.000000000000000000
+              Size.Width = 174.000000000000000000
+              Size.Height = 26.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.Font.StyleExt = {00070000000000000004000000}
+              TextSettings.FontColor = claYellow
+              TextSettings.HorzAlign = Leading
               Text = 'Animations'
               TabOrder = 0
             end
           end
           object AnimationListBox: TListBox
             Align = Client
-            Size.Width = 150.000000000000000000
+            Size.Width = 240.000000000000000000
             Size.Height = 668.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 86
             OnClick = AnimationListBoxClick
+            OnChange = AnimationListBoxChange
             DisableFocusEffect = True
             DefaultItemStyles.ItemStyle = ''
             DefaultItemStyles.GroupHeaderStyle = ''
             DefaultItemStyles.GroupFooterStyle = ''
-            Viewport.Width = 146.000000000000000000
+            Viewport.Width = 236.000000000000000000
             Viewport.Height = 664.000000000000000000
           end
         end
@@ -183,6 +201,14 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Exit'
         OnClick = ExitMenuItemClick
+      end
+    end
+    object ModelMenu: TMenuItem
+      Text = 'Model'
+      object AnimationsUsedItem: TMenuItem
+        Locked = True
+        Text = 'Animations Used...'
+        OnClick = AnimationsUsedItemClick
       end
     end
     object ViewMenu: TMenuItem
@@ -291,10 +317,16 @@ object MainForm: TMainForm
         Text = 'Show axes'
         OnClick = ShowAxesItemClick
       end
-      object FitAnyAngleItem: TMenuItem
+      object ShowSweepItem: TMenuItem
         Locked = True
-        Text = 'Fit any angle'
-        OnClick = FitAnyAngleItemClick
+        IsChecked = True
+        Text = 'Show Model Volume'
+        OnClick = ShowSweepItemClick
+      end
+      object ShowCombinedSweepItem: TMenuItem
+        Locked = True
+        Text = 'Show Animation Volume'
+        OnClick = ShowCombinedSweepItemClick
       end
       object OrthographicItem: TMenuItem
         Locked = True

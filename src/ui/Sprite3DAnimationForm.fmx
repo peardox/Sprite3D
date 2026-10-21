@@ -4,7 +4,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Animation'
-  ClientHeight = 150
+  ClientHeight = 290
   ClientWidth = 360
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -19,7 +19,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
     Padding.Top = 12.000000000000000000
     Padding.Right = 12.000000000000000000
     Size.Width = 360.000000000000000000
-    Size.Height = 106.000000000000000000
+    Size.Height = 246.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object FpsLayout: TLayout
@@ -77,10 +77,91 @@ object AnimationSettingsForm: TAnimationSettingsForm
         'Fs.'
       TabOrder = 1
     end
+    object OverscanLayout: TLayout
+      Align = Top
+      Margins.Top = 12.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 96.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      object OverscanCheck: TCheckBox
+        Align = Left
+        Size.Width = 96.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Overscan'
+        OnChange = OverscanCheckChange
+      end
+      object OverscanValueLabel: TLabel
+        Align = Right
+        Position.X = 296.000000000000000000
+        Size.Width = 40.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Trailing
+        Text = '4x'
+        TabOrder = 2
+      end
+      object OverscanTrack: TTrackBar
+        Align = Client
+        CanParentFocus = True
+        Frequency = 1.000000000000000000
+        Max = 16.000000000000000000
+        Min = 2.000000000000000000
+        Orientation = Horizontal
+        Size.Width = 200.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Value = 4.000000000000000000
+        OnChange = OverscanTrackChange
+      end
+    end
+    object FilterLayout: TLayout
+      Align = Top
+      Margins.Top = 4.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 132.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+      object FilterLabel: TLabel
+        Align = Left
+        Size.Width = 96.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Resampling'
+        TabOrder = 0
+      end
+      object FilterCombo: TComboBox
+        Align = Client
+        Size.Width = 240.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+      end
+    end
+    object OverscanNoteLabel: TLabel
+      Align = Top
+      AutoSize = True
+      Margins.Top = 8.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 172.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 48.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.WordWrap = True
+      Text = ''
+      TabOrder = 4
+    end
   end
   object ButtonLayout: TLayout
     Align = Bottom
-    Position.Y = 106.000000000000000000
+    Position.Y = 246.000000000000000000
     Size.Width = 360.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False

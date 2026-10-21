@@ -10,11 +10,13 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 
 - **Orbit camera.** Three dials set azimuth, inclination and roll. The camera turns on a chain of single-axis pivots, so it passes over the poles without gimbal lock.
 - **Fixed views.** View, Camera offers Isometric, Pixel 2:1, 1/4 View, 3/4 View, Sqrt(2), Golden Ratio, Head On, Top Down and Side View, or Variable to use the dials. The chosen view, and the dials' angles in Variable, are restored next session.
-- **Lock Camera.** View, Camera, Lock Camera fixes the camera exactly where it is. While it is ticked nothing moves or turns it: the views, Orthographic and Fit any angle are disabled, loading a model or resizing the window does not refit, and grabs, icons and animation exports use the view as it stands rather than fitting the model to their own size. The `(None)` turn can't be exported while the camera is locked, since it works by turning the camera. Unticking it leaves the camera where it is until something else changes it. The lock can't be changed during an export, and starts off each session.
+- **Lock Camera.** View, Camera, Lock Camera fixes the camera exactly where it is. While it is ticked nothing moves or turns it: the views and Orthographic are disabled, loading a model or resizing the window does not refit, and grabs, icons and animation exports use the view as it stands rather than fitting the model to their own size. The `(None)` turn can't be exported while the camera is locked, since it works by turning the camera. Unticking it leaves the camera where it is until something else changes it. The lock can't be changed during an export, and starts off each session.
 - **Pan.** View, Camera, Variable also has a Pan box, off by default. Ticked, two sliders move the view along the model's own X and Z axes, up to twice the model's radius either way, for the odd model that should sit off centre. The pan sits on top of the fit and never changes the angles or the distance; it applies in every view, and in grabs and icons, until it is switched off, and the window title says "(panned)" while it is in use. Centre puts it back to 0.
-- **Fitting.** Each model is centred and the camera fitted so the model fills the view. With "Fit any angle" checked, the fit holds for every angle, so the dials can never push the model out of view.
+- **Fitting.** Each model is centred and the camera fitted to the volume it sweeps turning about its up axis, joined over its rest pose and every animation used. The volume fills the view on the tighter axis, and the camera orbits a point on the turning axis, so turning the azimuth dial never pushes the model out of view, and the rest pose, every animation and the `(None)` turn are framed at the same scale. Only the distance, or the orthographic size, changes; the angles are left alone. See [Volumes](volumes.md).
 - **Perspective or orthographic** projection.
-- **Bounding box, axes and grid.** The model's bounding box, its X, Y and Z axes through its centre of rotation, and a far-reaching grid on the model's floor, the lowest point of its own geometry, that fades out with distance. Each can be switched on or off in the View menu, as can "Fit any angle" and "Orthographic".
+- **Bounding box, axes and grid.** The model's bounding box, its X, Y and Z axes through its centre of rotation, and a far-reaching grid on the model's floor, the lowest point of its own geometry, that fades out with distance. Each can be switched on or off in the View menu, as can "Orthographic".
+- **Model Volume and Animation Volume.** Wireframes of the volume the model sweeps turning about its up axis. Show Model Volume, on by default, draws the volume of the animation playing, or of the rest pose, in aqua and yellow, and follows each animation as it plays. Show Animation Volume, off by default, draws the combined volume the camera frames, the rest pose and every animation used joined into one, in fuchsia and hot pink; it is not drawn for a model without animations. The radii, height and volumes of each go to the Debug tab. See [Volumes](volumes.md).
+- **Animations Used.** Model, Animations Used... lists the model's animations with tick boxes, and Select all / none. A column on the right gives each animation's own swept volume as a percentage of the combined volume of the rest pose and the animations ticked, updated as ticks change, so an animation that reaches much further than the rest, and would shrink every other in an export, stands out; an unticked one can show more than 100%. On OK, unticked animations leave the Animations list, so they are neither played nor exported, and leave the combined volume, and the camera is refitted; Cancel changes nothing. A new model starts with every animation used.
 - **Grab.** File, Grab renders the view off screen at the grab size chosen in File, Settings (256 × 256 pixels unless changed), with the model fitted to fill the image, and saves it as the next of `grab001.png`, `grab002.png` and so on. The background is transparent unless a solid colour or gradient is chosen.
 - **Save As Icon.** File, Save As Icon renders the view at each size Windows 10 and 11 use (16, 20, 24, 32, 40, 48, 64 and 256 pixels, 32-bit) and saves them as one `.ico` file. The icon writer is designed so other formats, such as macOS icons, can be added.
 - **Animation export.** Every animation in the model can be saved frame by frame as a sprite strip, a texture atlas, an animated GIF or an MP4 video, one at a time or in a batch. See *Animation export* below.
@@ -26,8 +28,10 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
   - **Grab size.** The size of every off-screen grab: 8 × 8, 16 × 16, 24 × 24, 32 × 32, 64 × 64, 96 × 96, 128 × 128, 160 × 160, 192 × 192, 256 × 256, 384 × 384 or 512 × 512, or Custom, where width and height are typed separately, each from 8 to 1024 pixels. Kept as `grabWidth` and `grabHeight`. Icons keep the sizes their file format needs. Below it, the grab folder in use is shown with a Reset button, which empties it so the next grab asks for a folder again.
   - **Theme.** Default (FMX's own platform style), Dark, or one of three coloured styles, Aqua Graphite, Ruby Graphite and Golden Graphite, applied at once. Title bars follow the theme where the system allows. See *Themes* below.
   - **Graphics processor**, Windows only: let Windows decide, low power or high power, through `common/GpuPreference.pas`. It takes effect the next time Sprite3D starts.
-- **File, Animation...** A slider sets the frame rate animations are exported at, from 1 to 60 frames a second, 30 unless changed. Kept as `animationFps`.
-- **Settings kept between sessions** in `settings.json`: the grab folder, the icon folder, the background, the camera view, the pan, the View menu's on/off items, the animation frame rate, and the choices in File, Settings.
+- **File, Animation...** A slider sets the frame rate animations are exported at, from 1 to 60 frames a second, 30 unless changed. Kept as `animationFps`. The same dialog has:
+  - **Overscan.** Ticked, every grab, icon and animation export is drawn 2 to 16 times larger each way, 4 unless changed, and scaled back down to its size, which smooths edges and fine detail far better than the renderer's own anti-aliasing. As much of the factor as the GPU can draw in one go is drawn in one go, never more than 8192 pixels across, which keeps a grab's memory under about 1 GB. On many systems that is little more than the size of the view itself. The rest is made up with shifted drawings: the image is drawn several times at that size, each time with the view slid by a different fraction of a pixel, each drawing scaled down, and the results averaged, so 8x at 256 × 256 on a GPU that can only draw 512 pixels across is sixteen drawings at 2x. That takes longer, but any factor works anywhere. Each drawing is scaled down as soon as it has been made, so only one enlarged image exists at a time, and what is saved is always the size asked for. If an enlarged drawing comes back smaller than asked for, or completely transparent, that size is not tried again that session, the grab is made again with smaller drawings and more of them, and the Debug tab says so. Animation exports throw away a few warm-up grabs first; those are made without overscan. The tick is not kept: overscan starts off each session. The factor is kept as `overscan`.
+  - **Resampling.** The filter overscanned images are scaled down with: Box (area average), the default and exact for a whole-number scale; Bilinear; Bicubic (Catmull-Rom); Bicubic (Mitchell); or Lanczos 3, the sharpest. Kept as `resampleFilter`.
+- **Settings kept between sessions** in `settings.json`: the grab folder, the icon folder, the background, the camera view, the pan, the View menu's on/off items, the animation frame rate, the overscan factor and resampling filter, and the choices in File, Settings. The animations used are chosen afresh for each model, and overscan starts off each session.
 - **Mobile layout.** On Android and iOS the menus are reached through a hamburger button.
 
 Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
@@ -150,6 +154,7 @@ On start-up the application loads `models/uvcube.glb`, a cube with its faces lab
 Sprite3D/
 |-- Sprite3DGroup.groupproj
 |-- README.md
+|-- viewport.md, offscreen.md, volumes.md  design notes
 |-- delphi-neon/              Neon JSON library (submodule)
 |-- docs/                     generated API help (PasDoc)
 |-- models/                   sample model: uvcube.glb
@@ -165,7 +170,9 @@ Sprite3D/
     |   |-- Sprite3DCamera.pas       orbit camera, fitting, view extents
     |   |-- Sprite3DAxes.pas         a model's X, Y and Z axes
     |   |-- Sprite3DGrid.pas         floor grid drawn by a GLSL shader
-    |   |-- Sprite3DOffscreen.pas    off-screen rendering with transparency
+    |   |-- Sprite3DSweep.pas        swept volumes: measuring, wireframes, camera fit
+    |   |-- Sprite3DOffscreen.pas    off-screen rendering with transparency and overscan
+    |   |-- Sprite3DResample.pas     resampling filters for scaling overscanned grabs down
     |   |-- Sprite3DBackground.pas   none, checker, colour or gradient background
     |   |-- Sprite3DIconWriter.pas   icon file writers (Windows .ico)
     |   |-- Sprite3DOpenFiles.pas    files the system asks the app to open
@@ -190,12 +197,13 @@ Sprite3D/
         |-- Sprite3DOrbitalForm.pas, .fmx    Variable camera dialog, with the pan
         |-- Sprite3DSettingsForm.pas, .fmx   Settings dialog
         |-- Sprite3DAnimationForm.pas, .fmx  Animation dialog: the export frame rate
+        |-- Sprite3DAnimationsUsedForm.pas, .fmx  Animations Used dialog
         `-- Sprite3DHelpers.pas              application rules and settings
 ```
 
 ## Animation export
 
-The Animations list on the right of the View tab shows the model's animations by name, after a first entry, `(None)`, which shows the model as loaded. Clicking an entry plays it.
+The Animations list on the right of the View tab shows the animations used, by name, after a first entry, `(None)`, which shows the model as loaded. Clicking an entry plays it, and so does moving to it with the Up and Down arrow keys, Home, End or the page keys. The Frames column beside each entry shows how many frames exporting it makes at the File, Animation frame rate, and is updated when the rate changes; for `(None)` it is the one-second turn. Model, Animations Used... chooses which animations are listed.
 
 ### One animation
 
@@ -225,8 +233,9 @@ Each entry has a tick box. Below the list:
 
 ### How the frames are made
 
-- **Size and framing.** Every frame is grabbed off screen at the grab size from File, Settings, with the background as chosen in File, Background Settings. The camera is framed once for the whole animation, around the union of every frame's bounding box, so the model is the same size and in the same place in every frame and the frames line up. The view on screen is put back afterwards.
+- **Size and framing.** Every frame is grabbed off screen at the grab size from File, Settings, with the background as chosen in File, Background Settings. The camera is framed once for the whole animation, so the model is the same size and in the same place in every frame and the frames line up. An animation saved on its own, from the right-click menu, is framed around its own swept volume, so it fills the image as far as its own poses allow. A batch, and the `(None)` turn, are framed around the combined swept volume of the rest pose and every animation used, so every animation of a batch is at the same scale. The view on screen is put back afterwards. See [Volumes](volumes.md).
 - **Frame rate.** File, Animation... sets it (30 frames a second unless changed). An animation lasting *D* seconds is cut into *N* = *D* × rate frames, rounded, and frame *i* shows the pose at *i* × *D* / *N* seconds. The frame after the last would be at *D*, which in a looping animation is the first pose again, so the frames loop with no jump and no repeated frame. To keep a whole number of frames in the cycle, the rate actually used is *N* / *D*: 8 frames a second on a 1.3-second walk gives 10 frames of 0.13 seconds. GIFs and MP4s play the frames at that rate, so they last exactly one cycle.
+- **Warm-up.** An animation that has just been started can take a few drawn frames to show its first pose, and until then the model can still be in the pose it had before, or sit at another height. So before each animation is captured, its first frame is grabbed three times and those grabs are thrown away; only then is it grabbed for keeping.
 - **Poses, not blended images.** Gorilla3D bakes each animation into poses about 60 times a second on desktop, interpolating between the file's keyframes. Each frame uses the baked pose nearest its time, within 1/120 of a second, and images are never blended, which would leave ghosts in a sprite. A rate above the baked rate repeats some poses.
 - **Transparency.** Strips, atlases and GIFs keep the transparent background. GIF allows only fully transparent or fully opaque pixels, so soft edges become one or the other, and each frame has its own palette of up to 255 colours. MP4 has no transparency: frames are laid over black, unless a solid or gradient background already fills them.
 - **Memory.** A capture is refused, with a message, if its frames would need more than 1 GB; choose a smaller grab size for very long animations.
@@ -331,8 +340,14 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 - MP4 export has been tested on Windows 64-bit; the macOS and Linux libraries are not in the DLL pack yet.
 - H.264 export through OpenH264 has been tested on Windows 64-bit with OpenH264 2.6.0. Versions 2.0 to 2.5 lay out the encoder's output differently; Sprite3D allows for that, but has not been tested with them.
 - The OpenH264 download and the deployment entries for platforms other than Windows 64-bit are new and untested.
+- The first time a model's volumes are needed, which is when it loads, every pose of every animation is measured, and the application does not respond until that is done. For a model with many long animations this can take a moment.
+- The swept volumes are built from bounding boxes, so a model that fills little of its box is framed with room to spare.
+- Overscan is done on the CPU, after each grab is read back. A high factor with a wide filter is slow, Lanczos 3 at 16x most of all, and an export makes one such grab per frame. Box is the quickest. Where the GPU cannot draw the whole factor at once, each grab is several drawings, which multiplies the time again: 8x at 256 × 256 with drawings of 512 pixels is sixteen drawings a frame.
+- Shifted drawings slide the camera rather than the projection. In orthographic views that is exact; in perspective, parts of the model much nearer or further than its centre are sampled a fraction of a pixel off, which only shows as slightly softer anti-aliasing there.
+- Overscan does not apply on macOS and iOS, where grabs are screenshots of the view.
 
 ## Further reading
 
 - [Viewport](viewport.md): how the viewport background is drawn, and why it is built the way it is.
 - [OffScreen](offscreen.md): how the offscreen rendering works, and why it is built the way it is.
+- [Volumes](volumes.md): the volume a model sweeps turning about its up axis, how it is measured for each animation, and how the camera is fitted to it.

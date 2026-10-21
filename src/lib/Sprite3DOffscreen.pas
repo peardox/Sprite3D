@@ -32,6 +32,23 @@
 //** otherwise the image keeps whatever transparency the screenshot has. Soft edges are not
 //** matted as on the other platforms, and TransparentBackground is not used.
 //**
+//** Overscan, 1 unless changed, renders each grab at that many times its size each way and
+//** scales the result back down to Width by Height with the Resample filter, from
+//** Sprite3DResample, which smooths edges far better than the renderer's own anti-aliasing.
+//** As much of the factor as the GPU can draw in one go is drawn in one go: a target up to
+//** what the GPU can draw and OVERSCAN_TARGET_LIMIT pixels across. Any more is made up with
+//** shifted drawings: the grab is drawn J by J times at that size, each time with the view
+//** slid by a different fraction of a drawn pixel through OnShiftView, every drawing is
+//** scaled down with Resample, and the results are averaged, which samples J times as finely
+//** each way. So any factor up to OVERSCAN_MAX can be used whatever the GPU, at the cost of
+//** more drawings. Each drawing is matted and scaled down before the next is made, so only
+//** one enlarged drawing exists at a time, and what is delivered is always Width by Height.
+//** A GPU or driver can report a size it then fails to draw at: if an overscanned drawing
+//** comes back smaller than asked for, or wholly transparent, that size is remembered as too
+//** large for the rest of the session, OnOverscanReduced is called, and the grab is made
+//** again with smaller drawings and more of them. Overscan does not apply on macOS and iOS,
+//** where grabs are screenshots.
+//**
 //** @preformatted(
 //** TGorillaRenderPassController @(Gorilla.Controller@)
 //** `-- TSprite3DOffscreen   pre-pass into a Width x Height frame buffer
@@ -79,6 +96,26 @@ unit Sprite3DOffscreen;
   transparency the screenshot has. Soft edges are not matted as on the
   other platforms, and TransparentBackground is not used.
 
+  Overscan, 1 unless changed, renders each grab at that many times its size
+  each way and scales the result back down to Width by Height with the
+  Resample filter, from Sprite3DResample, which smooths edges far better
+  than the renderer's own anti-aliasing. As much of the factor as the GPU
+  can draw in one go is drawn in one go: a target up to what the GPU can
+  draw and OVERSCAN_TARGET_LIMIT pixels across. Any more is made up with
+  shifted drawings: the grab is drawn J by J times at that size, each time
+  with the view slid by a different fraction of a drawn pixel through
+  OnShiftView, every drawing is scaled down with Resample, and the results
+  are averaged, which samples J times as finely each way. So any factor up
+  to OVERSCAN_MAX can be used whatever the GPU, at the cost of more
+  drawings. Each drawing is matted and scaled down before the next is made,
+  so only one enlarged drawing exists at a time, and what is delivered is
+  always Width by Height. A GPU or driver can report a size it then fails to
+  draw at: if an overscanned drawing comes back smaller than asked for, or
+  wholly transparent, that size is remembered as too large for the rest of
+  the session, OnOverscanReduced is called, and the grab is made again with
+  smaller drawings and more of them. Overscan does not apply on macOS and
+  iOS, where grabs are screenshots.
+
     TGorillaRenderPassController (Gorilla.Controller)
     `-- TSprite3DOffscreen   pre-pass into a Width x Height frame buffer
 }
@@ -95,7 +132,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.UITypes,
   FMX.Types, FMX.Types3D, FMX.Graphics,
   Gorilla.Viewport, Gorilla.Context.Rendering, Gorilla.Controller,
-  Sprite3DBackground;
+  Sprite3DBackground, Sprite3DResample;
 
 const
   //** @abstract(The width, in pixels, of a new TSprite3DOffscreen's target.)
@@ -104,6 +141,22 @@ const
   //** @abstract(The height, in pixels, of a new TSprite3DOffscreen's target.)
   /// <summary>The height, in pixels, of a new TSprite3DOffscreen's target.</summary>
   DEFAULT_OFFSCREEN_HEIGHT = 256;
+  //** @abstract(The largest Overscan factor TSprite3DOffscreen accepts.)
+  /// <summary>The largest Overscan factor TSprite3DOffscreen accepts.</summary>
+  OVERSCAN_MAX = 16;
+  //** @abstract(The most pixels across or down an overscanned target may have, whatever the
+  //** GPU allows.)
+  //**
+  //** Each drawing of a grab is held in memory at the target's size, four bytes a pixel, and
+  //** a transparent grab needs up to three of them at once and the matte made from them, so
+  //** this keeps a grab under about 1 GB: 8192 by 8192 pixels is 256 MB each.
+  /// <summary>The most pixels across or down an overscanned target may have, whatever the GPU
+  /// allows.</summary>
+  /// <remarks>Each drawing of a grab is held in memory at the target's size, four bytes a
+  /// pixel, and a transparent grab needs up to three of them at once and the matte made from
+  /// them, so this keeps a grab under about 1 GB: 8192 by 8192 pixels is 256 MB
+  /// each.</remarks>
+  OVERSCAN_TARGET_LIMIT = 8192;
 
 type
   //** @abstract(Receives the result of TSprite3DOffscreen.Grab.)
@@ -137,6 +190,39 @@ type
   /// <param name="AHeight">The target's height in pixels.</param>
   TSprite3DGrabSizeEvent = procedure(Sender: TObject; const AWidth,
     AHeight: Integer) of object;
+
+  //** @abstract(Signature of TSprite3DOffscreen.OnOverscanReduced.)
+  //**
+  //** @param(Sender The TSprite3DOffscreen.)
+  //**
+  //** @param(AFailedSize The target's larger side, in pixels, that could not be drawn.)
+  //**
+  //** @param(AMaxOverscan The factor the grab's size can now be drawn at in one go; the rest
+  //** of Overscan is made up with shifted drawings.)
+  /// <summary>Signature of TSprite3DOffscreen.OnOverscanReduced.</summary>
+  /// <param name="Sender">The TSprite3DOffscreen.</param>
+  /// <param name="AFailedSize">The target's larger side, in pixels, that could not be
+  /// drawn.</param>
+  /// <param name="AMaxOverscan">The factor the grab's size can now be drawn at in one go; the
+  /// rest of Overscan is made up with shifted drawings.</param>
+  TSprite3DOverscanEvent = procedure(Sender: TObject; const AFailedSize,
+    AMaxOverscan: Integer) of object;
+
+  //** @abstract(Signature of TSprite3DOffscreen.OnShiftView.)
+  //**
+  //** @param(Sender The TSprite3DOffscreen.)
+  //**
+  //** @param(ARight How far to slide the view right, in pixels of the grab's own size,
+  //** Width by Height; a fraction of a pixel, or 0.)
+  //**
+  //** @param(AUp How far to slide the view up, likewise.)
+  /// <summary>Signature of TSprite3DOffscreen.OnShiftView.</summary>
+  /// <param name="Sender">The TSprite3DOffscreen.</param>
+  /// <param name="ARight">How far to slide the view right, in pixels of the grab's own size,
+  /// Width by Height; a fraction of a pixel, or 0.</param>
+  /// <param name="AUp">How far to slide the view up, likewise.</param>
+  TSprite3DShiftViewEvent = procedure(Sender: TObject; const ARight,
+    AUp: Single) of object;
 
   //** @abstract(Receives the result of TSprite3DOffscreen.GrabSizes.)
   //**
@@ -225,7 +311,26 @@ type
     FPrepared: Boolean;  // OnBeforeGrab has run and OnAfterGrab has not
     FOnBeforeGrab: TSprite3DGrabSizeEvent;
     FOnAfterGrab: TNotifyEvent;
+    FOverscan: Integer;    // asked for; 1 is off
+    FResample: TSprite3DResampleFilter;
+    FScan: Integer;        // used for the grab under way
+    FGrabWidth: Integer;   // Width and Height when the grab started
+    FGrabHeight: Integer;
+    FPixelScale: Single;   // pixels read per target pixel, from display scaling
+    FOnOverscanReduced: TSprite3DOverscanEvent;
+    FOnShiftView: TSprite3DShiftViewEvent;
+    FJitter: Integer;       // shifted drawings each way for this grab; 1 for one
+    FJitterIndex: Integer;  // the drawing under way, 0 to FJitter * FJitter - 1
+    FShifted: Boolean;      // OnShiftView has slid the view for this drawing
+    FAccum: TArray<Single>; // the drawings so far, scaled down and added up
+    function OverscanFailed(const APixels: TBytes; const ACheckClear: Boolean): Boolean;
+    procedure RetrySmaller;
+    function DirectOverscan(const AWidth, AHeight: Integer): Integer;
+    procedure StartDrawings;
+    procedure Collect(const APixels: TBytes; const AMatte: Boolean);
     procedure Restore;
+    procedure SetOverscan(const Value: Integer);
+    function Shrink(const APixels: TBytes): TBytes;
     procedure SetWidth(const Value: Integer);
     procedure SetHeight(const Value: Integer);
     procedure ApplyTargetSize;
@@ -364,6 +469,50 @@ type
     /// would on screen. The checker settings are not used: the checker only stands for
     /// transparency on screen. Changes made while Busy apply from the next grab.</remarks>
     property Backdrop: TSprite3DBackgroundSpec read FBackdrop write FBackdrop;
+    //** @abstract(The largest overscan factor a grab of AWidth by AHeight can use here.)
+    //**
+    //** OVERSCAN_MAX wherever grabs are drawn off screen, as whatever the GPU cannot draw in
+    //** one go is made up with shifted drawings; always 1 on macOS and iOS, where grabs are
+    //** screenshots. The sizes are not otherwise used.
+    //**
+    //** @param(AWidth The grab's width in pixels.)
+    //**
+    //** @param(AHeight The grab's height in pixels.)
+    //**
+    //** @returns(1 to OVERSCAN_MAX; 1 means no overscan is possible.)
+    /// <summary>The largest overscan factor a grab of AWidth by AHeight can use here.</summary>
+    /// <remarks>OVERSCAN_MAX wherever grabs are drawn off screen, as whatever the GPU cannot
+    /// draw in one go is made up with shifted drawings; always 1 on macOS and iOS, where grabs
+    /// are screenshots. The sizes are not otherwise used.</remarks>
+    /// <param name="AWidth">The grab's width in pixels.</param>
+    /// <param name="AHeight">The grab's height in pixels.</param>
+    /// <returns>1 to OVERSCAN_MAX; 1 means no overscan is possible.</returns>
+    function MaxOverscan(const AWidth, AHeight: Integer): Integer;
+    //** @abstract(How much of an overscan factor a grab of AWidth by AHeight can draw in one
+    //** go here.)
+    //**
+    //** The enlarged target must fit what the GPU can draw, its largest texture, render buffer
+    //** and viewport, OVERSCAN_TARGET_LIMIT, and any smaller size found not to draw this
+    //** session, allowing for any display scaling the pass has met. The GPU's own limits are
+    //** read during the first grab; before that the context class's largest texture is used,
+    //** or 4096 if it gives none. Always 1 on macOS and iOS.
+    //**
+    //** @param(AWidth The grab's width in pixels.)
+    //**
+    //** @param(AHeight The grab's height in pixels.)
+    //**
+    //** @returns(1 to OVERSCAN_MAX.)
+    /// <summary>How much of an overscan factor a grab of AWidth by AHeight can draw in one go
+    /// here.</summary>
+    /// <remarks>The enlarged target must fit what the GPU can draw, its largest texture, render
+    /// buffer and viewport, OVERSCAN_TARGET_LIMIT, and any smaller size found not to draw this
+    /// session, allowing for any display scaling the pass has met. The GPU's own limits are
+    /// read during the first grab; before that the context class's largest texture is used, or
+    /// 4096 if it gives none. Always 1 on macOS and iOS.</remarks>
+    /// <param name="AWidth">The grab's width in pixels.</param>
+    /// <param name="AHeight">The grab's height in pixels.</param>
+    /// <returns>1 to OVERSCAN_MAX.</returns>
+    function SinglePassOverscan(const AWidth, AHeight: Integer): Integer;
     //** @abstract(True from a successful Grab until its procedure has run or Cancel.)
     /// <summary>True from a successful Grab until its procedure has run or
     /// Cancel.</summary>
@@ -405,6 +554,65 @@ type
     /// <remarks>Its alpha is ignored: the background is always drawn opaque.</remarks>
     property OpaqueBackground: TAlphaColor read FOpaqueBackground write FOpaqueBackground
       default TAlphaColors.Black;
+    //** @abstract(How many times larger each way grabs are drawn before being scaled down; 1,
+    //** the default, is off.)
+    //**
+    //** Values are limited to 1 to OVERSCAN_MAX. A grab draws as much of it as
+    //** SinglePassOverscan allows in one go, and makes up the rest with shifted drawings,
+    //** each slid through OnShiftView. Every drawing is matted, scaled down to Width by Height
+    //** with Resample, and freed before the next, and the backdrop is filled in and the
+    //** bitmap made only at the end, so OnBeforeGrab and the delivered image see only Width by
+    //** Height. Changes made while Busy apply from the next grab.
+    /// <summary>How many times larger each way grabs are drawn before being scaled down; 1, the
+    /// default, is off.</summary>
+    /// <remarks>Values are limited to 1 to OVERSCAN_MAX. A grab draws as much of it as
+    /// SinglePassOverscan allows in one go, and makes up the rest with shifted drawings, each
+    /// slid through OnShiftView. Every drawing is matted, scaled down to Width by Height with
+    /// Resample, and freed before the next, and the backdrop is filled in and the bitmap made
+    /// only at the end, so OnBeforeGrab and the delivered image see only Width by Height.
+    /// Changes made while Busy apply from the next grab.</remarks>
+    property Overscan: Integer read FOverscan write SetOverscan default 1;
+    //** @abstract(The filter overscanned grabs are scaled down with; Box by default.)
+    //**
+    //** Changes made while Busy apply from the next grab.
+    /// <summary>The filter overscanned grabs are scaled down with; Box by default.</summary>
+    /// <remarks>Changes made while Busy apply from the next grab.</remarks>
+    property Resample: TSprite3DResampleFilter read FResample write FResample default rfBox;
+    //** @abstract(Runs when an overscanned target turns out too large to draw, before the grab
+    //** is made again smaller.)
+    //**
+    //** The size is remembered for the rest of the session, so MaxOverscan allows less from
+    //** then on and later grabs do not try it again. Use it to tell the user. Runs on the main
+    //** thread, outside the render loop; it must not call Grab or Cancel.
+    /// <summary>Runs when an overscanned target turns out too large to draw, before the grab is
+    /// made again smaller.</summary>
+    /// <remarks>The size is remembered for the rest of the session, so MaxOverscan allows less
+    /// from then on and later grabs do not try it again. Use it to tell the user. Runs on the
+    /// main thread, outside the render loop; it must not call Grab or Cancel.</remarks>
+    property OnOverscanReduced: TSprite3DOverscanEvent read FOnOverscanReduced
+      write FOnOverscanReduced;
+    //** @abstract(Slides the view by a fraction of a pixel for one of a grab's shifted
+    //** drawings, or puts it back.)
+    //**
+    //** Called only when Overscan needs more than one drawing. Before each drawing, after
+    //** OnBeforeGrab, it is called with the slide that drawing needs, a fraction of a pixel of
+    //** the grab's own size in each direction, or 0 for none; after the drawing has been read,
+    //** before OnAfterGrab, it is called with 0 and 0 to put the view back. The slides are
+    //** spread evenly over a drawn pixel, so which way is right or up does not change the
+    //** result. Without a handler the drawings are not slid and overscan beyond what can be
+    //** drawn in one go only repeats work. Runs on the main thread, from inside the render
+    //** for the putting back, and must only change scene state.
+    /// <summary>Slides the view by a fraction of a pixel for one of a grab's shifted drawings,
+    /// or puts it back.</summary>
+    /// <remarks>Called only when Overscan needs more than one drawing. Before each drawing,
+    /// after OnBeforeGrab, it is called with the slide that drawing needs, a fraction of a
+    /// pixel of the grab's own size in each direction, or 0 for none; after the drawing has
+    /// been read, before OnAfterGrab, it is called with 0 and 0 to put the view back. The
+    /// slides are spread evenly over a drawn pixel, so which way is right or up does not change
+    /// the result. Without a handler the drawings are not slid and overscan beyond what can be
+    /// drawn in one go only repeats work. Runs on the main thread, from inside the render for
+    /// the putting back, and must only change scene state.</remarks>
+    property OnShiftView: TSprite3DShiftViewEvent read FOnShiftView write FOnShiftView;
     //** @abstract(Runs in Grab, just before the frame is requested, to set the scene up for
     //** the target.)
     //**
@@ -496,6 +704,9 @@ const
   GL_COLOR_ATTACHMENT0         = $8CE0;
   GL_READ_FRAMEBUFFER          = $8CA8;
   GL_READ_FRAMEBUFFER_BINDING  = $8CAA;
+  GL_MAX_TEXTURE_SIZE          = $0D33;
+  GL_MAX_VIEWPORT_DIMS         = $0D3A;
+  GL_MAX_RENDERBUFFER_SIZE     = $84E8;
 
 type
   TGLenum = Cardinal;
@@ -648,6 +859,72 @@ const
 var
   // sRGB-encoded byte to linear light, 0 to 1
   SRGBToLinear: array[0..255] of Single;
+  // The most pixels across the GPU can draw into, read with the context
+  // current during a grab; 0 until then
+  GLTargetLimit: Integer = 0;
+  // Smaller than the largest target that failed to draw, if one has; this
+  // session only
+  LearnedTargetLimit: Integer = MaxInt;
+
+const
+  // Used for the GPU's limit before a grab has read it, if the context
+  // class gives none: every desktop GPU, and most phones, manage this
+  FALLBACK_TARGET_LIMIT = 4096;
+
+// The most pixels across a target may have here: the GPU's limit, if a
+// grab has read it, otherwise the context class's largest texture, and
+// never more than OVERSCAN_TARGET_LIMIT
+function TargetLimit: Integer;
+var
+  Size: Integer;
+begin
+  Result := GLTargetLimit;
+  if Result <= 0 then
+  begin
+    Result := FALLBACK_TARGET_LIMIT;
+    try
+      if TContextManager.DefaultContextClass <> nil then
+      begin
+        Size := TContextManager.DefaultContextClass.MaxTextureSize;
+        if Size > 0 then
+          Result := Size;
+      end;
+    except
+      // An abstract or failing query leaves the fallback
+    end;
+  end;
+  Result := Min(Min(Result, OVERSCAN_TARGET_LIMIT), LearnedTargetLimit);
+end;
+
+// Reads the GPU's largest texture, render buffer and viewport, with the
+// context current, and keeps the smallest
+procedure LearnTargetLimit(const AGL: TGLFuncs);
+var
+  Value: TGLint;
+  Dims: array[0..1] of TGLint;
+  Limit: Integer;
+begin
+  Limit := MaxInt;
+  Value := 0;
+  AGL.GetIntegerv(GL_MAX_TEXTURE_SIZE, @Value);
+  if Value > 0 then
+    Limit := Min(Limit, Value);
+  Value := 0;
+  AGL.GetIntegerv(GL_MAX_RENDERBUFFER_SIZE, @Value);
+  if Value > 0 then
+    Limit := Min(Limit, Value);
+  Dims[0] := 0;
+  Dims[1] := 0;
+  AGL.GetIntegerv(GL_MAX_VIEWPORT_DIMS, @Dims[0]);
+  if Dims[0] > 0 then
+    Limit := Min(Limit, Dims[0]);
+  if Dims[1] > 0 then
+    Limit := Min(Limit, Dims[1]);
+  // A query the driver does not know leaves an error behind; clear it
+  AGL.GetError();
+  if Limit < MaxInt then
+    GLTargetLimit := Limit;
+end;
 
 procedure InitSRGBTable;
 var
@@ -881,6 +1158,11 @@ begin
   FTransparentBackground := True;
   FOpaqueBackground := TAlphaColors.Black;
   FBackdrop := TSprite3DBackgroundSpec.Default;
+  FOverscan := 1;
+  FResample := rfBox;
+  FScan := 1;
+  FJitter := 1;
+  FPixelScale := 1;
 
   Enabled := False;   // only on for the frame a grab needs
   _Type := TRenderPassType.Pre;
@@ -909,11 +1191,70 @@ begin
   Result := nil;   // RenderListToFBO with the objects' own materials
 end;
 
+// The target is the grab's size times as much of the overscan as can be
+// drawn in one go; the rest is made up with FJitter by FJitter shifted
+// drawings, so FScan * FJitter is at least the overscan asked for
 procedure TSprite3DOffscreen.ApplyTargetSize;
+var
+  Direct: Integer;
 begin
+  Direct := DirectOverscan(FWidth, FHeight);
+  if FOverscan <= Direct then
+  begin
+    FScan := FOverscan;
+    FJitter := 1;
+  end
+  else
+  begin
+    FJitter := Ceil(FOverscan / Direct);
+    FScan := Min(Direct, Ceil(FOverscan / FJitter));
+  end;
   OverwriteViewportSize := True;
-  ViewportWidth := FWidth;
-  ViewportHeight := FHeight;
+  ViewportWidth := FWidth * FScan;
+  ViewportHeight := FHeight * FScan;
+end;
+
+function TSprite3DOffscreen.MaxOverscan(const AWidth, AHeight: Integer): Integer;
+begin
+  {$IFDEF S3D_SCREENSHOT_GRAB}
+  Result := 1;   // grabs are screenshots: nothing to overscan
+  {$ELSE}
+  Result := OVERSCAN_MAX;   // shifted drawings make up what one cannot
+  {$ENDIF}
+end;
+
+function TSprite3DOffscreen.SinglePassOverscan(const AWidth, AHeight: Integer): Integer;
+begin
+  Result := DirectOverscan(AWidth, AHeight);
+end;
+
+function TSprite3DOffscreen.DirectOverscan(const AWidth, AHeight: Integer): Integer;
+var
+  Largest: Single;
+begin
+  {$IFDEF S3D_SCREENSHOT_GRAB}
+  Result := 1;
+  {$ELSE}
+  Largest := Max(1, Max(AWidth, AHeight)) * Max(FPixelScale, 1.0);
+  Result := EnsureRange(Trunc(TargetLimit / Largest), 1, OVERSCAN_MAX);
+  {$ENDIF}
+end;
+
+procedure TSprite3DOffscreen.SetOverscan(const Value: Integer);
+begin
+  FOverscan := EnsureRange(Value, 1, OVERSCAN_MAX);
+  if not FBusy then
+    ApplyTargetSize;
+end;
+
+// An overscanned drawing scaled down to the grab's size, with Resample;
+// anything already that size comes back as it is
+function TSprite3DOffscreen.Shrink(const APixels: TBytes): TBytes;
+begin
+  if (FReadWidth = FGrabWidth) and (FReadHeight = FGrabHeight) then
+    Exit(APixels);
+  Result := ResamplePixels(APixels, FReadWidth, FReadHeight, FGrabWidth, FGrabHeight,
+    FResample);
 end;
 
 procedure TSprite3DOffscreen.SetWidth(const Value: Integer);
@@ -941,7 +1282,18 @@ begin
   GrabScreenshot;   // reports through Deliver, as the render does
   Exit;
   {$ENDIF}
-  ApplyTargetSize;   // pick up any size change made while busy
+  ApplyTargetSize;   // pick up any size or overscan change made while busy
+  FGrabWidth := FWidth;
+  FGrabHeight := FHeight;
+  FAccum := nil;
+  FJitterIndex := 0;
+  StartDrawings;
+end;
+
+// Starts the drawings of one pass of the grab, its first or the next of
+// its shifted ones: over each background in turn, as HandleEndRender reads
+procedure TSprite3DOffscreen.StartDrawings;
+begin
   FReads := nil;
   FTriedFrames := False;
   // How the grab draws: see HandleEndRender
@@ -1038,11 +1390,23 @@ end;
 
 // Lets the owner fit the scene to the target; Restore puts it back
 procedure TSprite3DOffscreen.Prepare;
+var
+  Col, Row: Integer;
 begin
   if Assigned(FOnBeforeGrab) then
   begin
     FPrepared := True;
     FOnBeforeGrab(Self, FWidth, FHeight);
+  end;
+  // A shifted drawing: slide the view to this drawing's place within a
+  // drawn pixel, the places spread evenly over it, in pixels of the grab
+  if (FJitter > 1) and Assigned(FOnShiftView) then
+  begin
+    Col := FJitterIndex mod FJitter;
+    Row := FJitterIndex div FJitter;
+    FShifted := True;
+    FOnShiftView(Self, ((Col + 0.5) / FJitter - 0.5) / FScan,
+      ((Row + 0.5) / FJitter - 0.5) / FScan);
   end;
 end;
 
@@ -1167,6 +1531,7 @@ begin
   FPending := False;
   FBusy := False;
   FReads := nil;
+  FAccum := nil;
   FOnGrabbed := nil;
   Enabled := False;
   Restore;
@@ -1175,6 +1540,12 @@ end;
 // Calls OnAfterGrab once for the OnBeforeGrab that ran, if any
 procedure TSprite3DOffscreen.Restore;
 begin
+  if FShifted then
+  begin
+    FShifted := False;
+    if Assigned(FOnShiftView) then
+      FOnShiftView(Self, 0, 0);
+  end;
   if not FPrepared then
     Exit;
   FPrepared := False;
@@ -1215,9 +1586,26 @@ begin
         FPending := False;
         Restore;
         Pixels := FReads[0];
+        FReads := nil;   // only Pixels holds the drawing now
+        if OverscanFailed(Pixels, False) then
+        begin
+          RetrySmaller;
+          Exit;
+        end;
         for var I := 0 to FReadWidth * FReadHeight - 1 do
           Pixels[I * 4 + 3] := 255;   // the renderer's alpha is not kept
-        Finish(Pixels, FReadWidth, FReadHeight, String.Empty);
+        // An overscanned drawing goes back to the grab's size here, and the
+        // large one is let go
+        try
+          Pixels := Shrink(Pixels);
+        except
+          on E: Exception do
+          begin
+            Finish(nil, 0, 0, 'Scaling the overscanned grab down failed: ' + E.Message);
+            Exit;
+          end;
+        end;
+        Collect(Pixels, False);
       end;
 
     STAGE_ITERATIONS:
@@ -1278,6 +1666,10 @@ begin
   begin
     FReadWidth := W;
     FReadHeight := H;
+    // Display scaling can make the target hold more pixels than asked for;
+    // remembered so MaxOverscan allows for it
+    if FGrabWidth * FScan > 0 then
+      FPixelScale := Max(1.0, W / (FGrabWidth * FScan));
   end
   else if (W <> FReadWidth) or (H <> FReadHeight) then
   begin
@@ -1293,6 +1685,66 @@ begin
   FPending := False;
   Restore;
   Finish(nil, 0, 0, AError);
+end;
+
+// Whether an overscanned grab did not draw: it read back smaller than the
+// target asked for, or, for a matte (ACheckClear), every pixel is fully
+// transparent, which a framed model never is
+function TSprite3DOffscreen.OverscanFailed(const APixels: TBytes;
+  const ACheckClear: Boolean): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if FScan <= 1 then
+    Exit;
+  if (FReadWidth < FGrabWidth * FScan) or (FReadHeight < FGrabHeight * FScan) then
+    Exit(True);
+  if not ACheckClear then
+    Exit;
+  I := 3;
+  while I < Length(APixels) do
+  begin
+    if APixels[I] <> 0 then
+      Exit;   // something was drawn
+    Inc(I, 4);
+  end;
+  Result := True;
+end;
+
+// The overscanned target was too large to draw: remember that size as too
+// large for this session, tell the owner, and make the grab again from the
+// start, with smaller drawings and more of them, from outside the render.
+// Cancel before then drops it.
+procedure TSprite3DOffscreen.RetrySmaller;
+var
+  Alive: IAliveFlag;
+  Me: TSprite3DOffscreen;
+  Callback: TSprite3DGrabProc;
+  Failed: Integer;
+  Step: TThreadProcedure;
+begin
+  Failed := Max(FGrabWidth, FGrabHeight) * FScan;
+  LearnedTargetLimit := Min(LearnedTargetLimit, Failed - 1);
+  Callback := FOnGrabbed;
+  FOnGrabbed := nil;
+  FReads := nil;
+  Alive := FAlive as IAliveFlag;
+  Me := Self;
+  Step :=
+    procedure
+    begin
+      if not Alive.IsAlive or not Me.FBusy then
+        Exit;   // freed or cancelled meanwhile
+      Me.FBusy := False;
+      Me.Enabled := False;
+      if Assigned(Me.FOnOverscanReduced) then
+        Me.FOnOverscanReduced(Me, Failed,
+          Me.SinglePassOverscan(Me.FGrabWidth, Me.FGrabHeight));
+      if not Me.Grab(Callback) and Assigned(Callback) then
+        Callback(nil, 'The grab could not be started again with smaller drawings.');
+    end;
+  System.Classes.TThread.ForceQueue(nil, Step);
 end;
 
 // Every background has been drawn: learn the output's encoding if this grab
@@ -1311,8 +1763,90 @@ begin
     FOutputKnown := True;
   end;
   Matte := BuildMatte(FReads[0], FReads[1], FOutputEncoded);
-  FillBackdrop(Matte, FReadWidth, FReadHeight, FBackdrop);
-  Finish(Matte, FReadWidth, FReadHeight, String.Empty);
+  FReads := nil;   // the drawings are done with; free them before scaling
+  if OverscanFailed(Matte, True) then
+  begin
+    RetrySmaller;
+    Exit;
+  end;
+  // An overscanned matte goes back to the grab's size before the backdrop
+  // is filled in, so the backdrop is drawn at the size it is seen at
+  try
+    Matte := Shrink(Matte);
+  except
+    on E: Exception do
+    begin
+      Finish(nil, 0, 0, 'Scaling the overscanned grab down failed: ' + E.Message);
+      Exit;
+    end;
+  end;
+  Collect(Matte, True);
+end;
+
+// One drawing done, at the grab's size: with no shifted drawings, it is the
+// grab; otherwise it is added to the others, the next is started from
+// outside the render, and after the last the average is the grab. A matte
+// (AMatte) gets its backdrop only at the end, over the average.
+procedure TSprite3DOffscreen.Collect(const APixels: TBytes; const AMatte: Boolean);
+var
+  Pixels: TBytes;
+  I, Count, A: Integer;
+  Alive: IAliveFlag;
+  Me: TSprite3DOffscreen;
+  Step: TThreadProcedure;
+begin
+  if FJitter <= 1 then
+  begin
+    Pixels := APixels;
+    if AMatte then
+      FillBackdrop(Pixels, FGrabWidth, FGrabHeight, FBackdrop);
+    Finish(Pixels, FGrabWidth, FGrabHeight, String.Empty);
+    Exit;
+  end;
+
+  if Length(FAccum) <> Length(APixels) then
+  begin
+    FAccum := nil;
+    SetLength(FAccum, Length(APixels));   // zeroed
+  end;
+  for I := 0 to High(APixels) do
+    FAccum[I] := FAccum[I] + APixels[I];
+  Inc(FJitterIndex);
+  Count := FJitter * FJitter;
+
+  if FJitterIndex < Count then
+  begin
+    // The next shifted drawing, from outside the render
+    Alive := FAlive as IAliveFlag;
+    Me := Self;
+    Step :=
+      procedure
+      begin
+        if not Alive.IsAlive or not Me.FBusy then
+          Exit;   // freed or cancelled meanwhile
+        Me.StartDrawings;
+      end;
+    System.Classes.TThread.ForceQueue(nil, Step);
+    Exit;
+  end;
+
+  // The average of every drawing; still premultiplied, as every colour of
+  // every drawing was within its alpha, but rounding is kept to that too
+  SetLength(Pixels, Length(FAccum));
+  I := 0;
+  while I < Length(Pixels) do
+  begin
+    A := EnsureRange(Round(FAccum[I + 3] / Count), 0, 255);
+    Pixels[I] := EnsureRange(Round(FAccum[I] / Count), 0, A);
+    Pixels[I + 1] := EnsureRange(Round(FAccum[I + 1] / Count), 0, A);
+    Pixels[I + 2] := EnsureRange(Round(FAccum[I + 2] / Count), 0, A);
+    Pixels[I + 3] := A;
+    Inc(I, 4);
+  end;
+  FAccum := nil;
+  if AMatte then
+    FillBackdrop(Pixels, FGrabWidth, FGrabHeight, FBackdrop);
+  Finish(Pixels, FGrabWidth, FGrabHeight, String.Empty);
 end;
 
 // Ends this frame's part of the grab and has a later frame draw over the
@@ -1416,6 +1950,10 @@ begin
   for I := 1 to 16 do
     if GL.GetError() = GL_NO_ERROR then
       Break;
+
+  // The GPU's own limits, for MaxOverscan, once the context is to hand
+  if GLTargetLimit = 0 then
+    LearnTargetLimit(GL);
 
   // The pass can draw into only part of its texture: with display scaling
   // the texture may be larger than ViewportWidth x ViewportHeight. So read

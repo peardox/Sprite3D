@@ -41,7 +41,8 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
-  Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc;
+  Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc,
+  Sprite3DResample;
 
 const
   //** @abstract(The application's name, used for its per-user folder.)
@@ -78,6 +79,17 @@ const
   /// <summary>The frame rate saved animations use until File, Animation changes
   /// it.</summary>
   ANIMATION_FPS_DEFAULT = 30;
+  //** @abstract(The smallest overscan factor File, Animation offers.)
+  /// <summary>The smallest overscan factor File, Animation offers.</summary>
+  OVERSCAN_FACTOR_MIN = 2;
+  //** @abstract(The largest overscan factor File, Animation offers, before the GPU's own
+  //** limit for the grab size.)
+  /// <summary>The largest overscan factor File, Animation offers, before the GPU's own limit
+  /// for the grab size.</summary>
+  OVERSCAN_FACTOR_MAX = 16;
+  //** @abstract(The overscan factor File, Animation shows until another is chosen.)
+  /// <summary>The overscan factor File, Animation shows until another is chosen.</summary>
+  OVERSCAN_FACTOR_DEFAULT = 4;
   //** @abstract(The smallest width or height File, Grab renders, in pixels.)
   /// <summary>The smallest width or height File, Grab renders, in pixels.</summary>
   GRAB_SIZE_MIN = 8;
@@ -206,7 +218,8 @@ type
     FShowBoundingBox: Boolean;
     FShowGrid: Boolean;
     FShowAxes: Boolean;
-    FFitAnyAngle: Boolean;
+    FShowSweptVolume: Boolean;
+    FShowCombinedSweptVolume: Boolean;
     FOrthographic: Boolean;
     FCameraView: String;
     FVariableAzimuth: Single;
@@ -225,7 +238,10 @@ type
     FGrabWidth: Integer;
     FGrabHeight: Integer;
     FAnimationFps: Integer;
+    FOverscan: Integer;
+    FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
+    procedure SetOverscan(const Value: Integer);
     procedure SetGrabWidth(const Value: Integer);
     procedure SetGrabHeight(const Value: Integer);
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
@@ -378,14 +394,23 @@ type
     /// default.</summary>
     /// <remarks>Stored as <c>showAxes</c>.</remarks>
     property ShowAxes: Boolean read FShowAxes write FShowAxes;
-    //** @abstract(Whether View, Fit any angle is ticked on the main form; False by
+    //** @abstract(Whether View, Show Model Volume is ticked on the main form; True by
     //** default.)
     //**
-    //** Stored as @code(fitAnyAngle).
-    /// <summary>Whether View, Fit any angle is ticked on the main form; False by
+    //** Stored as @code(showSweptVolume).
+    /// <summary>Whether View, Show Model Volume is ticked on the main form; True by
     /// default.</summary>
-    /// <remarks>Stored as <c>fitAnyAngle</c>.</remarks>
-    property FitAnyAngle: Boolean read FFitAnyAngle write FFitAnyAngle;
+    /// <remarks>Stored as <c>showSweptVolume</c>.</remarks>
+    property ShowSweptVolume: Boolean read FShowSweptVolume write FShowSweptVolume;
+    //** @abstract(Whether View, Show Animation Volume is ticked on the main form; False by
+    //** default.)
+    //**
+    //** Stored as @code(showCombinedSweptVolume).
+    /// <summary>Whether View, Show Animation Volume is ticked on the main form; False by
+    /// default.</summary>
+    /// <remarks>Stored as <c>showCombinedSweptVolume</c>.</remarks>
+    property ShowCombinedSweptVolume: Boolean read FShowCombinedSweptVolume
+      write FShowCombinedSweptVolume;
     //** @abstract(Whether View, Orthographic is ticked on the main form; False by default.)
     //**
     //** Stored as @code(orthographic).
@@ -545,6 +570,27 @@ type
     /// <remarks>Set in File, Animation. Stored as <c>animationFps</c>. Written values are
     /// limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
     property AnimationFps: Integer read FAnimationFps write SetAnimationFps;
+    //** @abstract(The overscan factor File, Animation was last left at;
+    //** OVERSCAN_FACTOR_DEFAULT by default.)
+    //**
+    //** Only the factor is kept: whether overscan is on is not, and it starts off each
+    //** session, until ticked in File, Animation. Stored as @code(overscan). Written values
+    //** are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less, if the
+    //** GPU cannot draw that much larger.
+    /// <summary>The overscan factor File, Animation was last left at; OVERSCAN_FACTOR_DEFAULT by
+    /// default.</summary>
+    /// <remarks>Only the factor is kept: whether overscan is on is not, and it starts off each
+    /// session, until ticked in File, Animation. Stored as <c>overscan</c>. Written values are
+    /// limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less, if the GPU
+    /// cannot draw that much larger.</remarks>
+    property Overscan: Integer read FOverscan write SetOverscan;
+    //** @abstract(The filter overscanned grabs are scaled down with; Box by default.)
+    //**
+    //** Chosen in File, Animation. Stored as @code(resampleFilter).
+    /// <summary>The filter overscanned grabs are scaled down with; Box by default.</summary>
+    /// <remarks>Chosen in File, Animation. Stored as <c>resampleFilter</c>.</remarks>
+    property ResampleFilter: TSprite3DResampleFilter read FResampleFilter
+      write FResampleFilter;
   end;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
@@ -1003,7 +1049,8 @@ begin
   FShowBoundingBox := True;
   FShowGrid := True;
   FShowAxes := True;
-  FFitAnyAngle := False;
+  FShowSweptVolume := True;
+  FShowCombinedSweptVolume := False;
   FOrthographic := False;
   // The main form's view as it starts
   FCameraView := 'Isometric';
@@ -1025,11 +1072,18 @@ begin
   FGrabWidth := GRAB_SIZE_DEFAULT;
   FGrabHeight := GRAB_SIZE_DEFAULT;
   FAnimationFps := ANIMATION_FPS_DEFAULT;
+  FOverscan := OVERSCAN_FACTOR_DEFAULT;
+  FResampleFilter := rfBox;
 end;
 
 procedure TSprite3DAppSettings.SetAnimationFps(const Value: Integer);
 begin
   FAnimationFps := EnsureRange(Value, ANIMATION_FPS_MIN, ANIMATION_FPS_MAX);
+end;
+
+procedure TSprite3DAppSettings.SetOverscan(const Value: Integer);
+begin
+  FOverscan := EnsureRange(Value, OVERSCAN_FACTOR_MIN, OVERSCAN_FACTOR_MAX);
 end;
 
 // Neon writes through the setters too, so a hand-edited settings.json can't
