@@ -39,6 +39,7 @@ uses
   Sprite3DAxes in 'lib\Sprite3DAxes.pas',
   Sprite3DGrid in 'lib\Sprite3DGrid.pas',
   Sprite3DSweep in 'lib\Sprite3DSweep.pas',
+  Sprite3DResample in 'lib\Sprite3DResample.pas',
   Sprite3DOffscreen in 'lib\Sprite3DOffscreen.pas',
   Sprite3DStorage in 'lib\Sprite3DStorage.pas',
   Sprite3DIconWriter in 'lib\Sprite3DIconWriter.pas',

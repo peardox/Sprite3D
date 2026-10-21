@@ -5,7 +5,7 @@ object AnimationsUsedForm: TAnimationsUsedForm
   BorderStyle = Single
   Caption = 'Animations Used'
   ClientHeight = 420
-  ClientWidth = 320
+  ClientWidth = 360
   Position = MainFormCenter
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -17,27 +17,44 @@ object AnimationsUsedForm: TAnimationsUsedForm
     Padding.Left = 12.000000000000000000
     Padding.Top = 12.000000000000000000
     Padding.Right = 12.000000000000000000
-    Size.Width = 320.000000000000000000
+    Size.Width = 360.000000000000000000
     Size.Height = 376.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
-    object AllCheckBox: TCheckBox
+    object HeaderLayout: TLayout
       Align = Top
       Position.X = 12.000000000000000000
       Position.Y = 12.000000000000000000
-      Size.Width = 296.000000000000000000
+      Size.Width = 336.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
-      Text = 'Select all / none'
-      OnChange = AllCheckBoxChange
+      object ShareHeaderLabel: TLabel
+        Align = Right
+        Position.X = 236.000000000000000000
+        Size.Width = 100.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Trailing
+        Text = '% of combined'
+        TabOrder = 1
+      end
+      object AllCheckBox: TCheckBox
+        Align = Client
+        Size.Width = 236.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Select all / none'
+        OnChange = AllCheckBoxChange
+      end
     end
     object EmptyLabel: TLabel
       Align = Top
       Margins.Top = 4.000000000000000000
       Position.X = 12.000000000000000000
       Position.Y = 42.000000000000000000
-      Size.Width = 296.000000000000000000
+      Size.Width = 336.000000000000000000
       Size.Height = 22.000000000000000000
       Size.PlatformDefault = False
       Text = 'This model has no animations.'
@@ -47,7 +64,7 @@ object AnimationsUsedForm: TAnimationsUsedForm
     object AnimationList: TListBox
       Align = Client
       Margins.Top = 4.000000000000000000
-      Size.Width = 296.000000000000000000
+      Size.Width = 336.000000000000000000
       Size.Height = 304.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
@@ -57,14 +74,14 @@ object AnimationsUsedForm: TAnimationsUsedForm
       DefaultItemStyles.ItemStyle = ''
       DefaultItemStyles.GroupHeaderStyle = ''
       DefaultItemStyles.GroupFooterStyle = ''
-      Viewport.Width = 292.000000000000000000
+      Viewport.Width = 332.000000000000000000
       Viewport.Height = 300.000000000000000000
     end
   end
   object ButtonLayout: TLayout
     Align = Bottom
     Position.Y = 376.000000000000000000
-    Size.Width = 320.000000000000000000
+    Size.Width = 360.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 1
@@ -82,7 +99,7 @@ object AnimationsUsedForm: TAnimationsUsedForm
       Anchors = [akRight, akBottom]
       Default = True
       ModalResult = 1
-      Position.X = 228.000000000000000000
+      Position.X = 268.000000000000000000
       Position.Y = 9.000000000000000000
       TabOrder = 0
       Text = 'OK'

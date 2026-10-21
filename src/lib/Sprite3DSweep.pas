@@ -17,11 +17,14 @@
 //** has baked for it and returns, per animation, the box that holds all of its poses. Each of
 //** those boxes gives that animation's swept volume.
 //**
-//** FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsAbout: the view is
-//** centred on the volume's pivot, the model's centre of rotation, and only the camera's
-//** distance, or its orthographic size, changes; the angles are left alone. CombinedSweptVolume
+//** FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis: it fills the
+//** view on the tighter axis, with the orbit centre on the turning axis, through the model's
+//** centre of rotation; the angles are left alone. CombinedSweptVolume
 //** gives the volume to fit, joining the rest pose's with that of each animation named, so a
 //** chosen subset of the animations can define it.
+//**
+//** ShowCombinedSweep adds a TCombinedSweep that draws one fixed volume, such as the one
+//** CombinedSweptVolume gives, in fuchsia and hot pink, beside the per-animation sweep.
 //**
 //** ShowModelSweep adds a TModelSweep holding the rest pose's volume and one per animation.
 //** Each frame it draws the volume of the animation the model is playing, or the rest pose's
@@ -80,12 +83,16 @@ unit Sprite3DSweep;
   the box that holds all of its poses. Each of those boxes gives that
   animation's swept volume.
 
-  FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsAbout:
-  the view is centred on the volume's pivot, the model's centre of rotation,
-  and only the camera's distance, or its orthographic size, changes; the
-  angles are left alone. CombinedSweptVolume gives the volume to fit,
+  FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis:
+  it fills the view on the tighter axis, with the orbit centre on the turning
+  axis, through the model's centre of rotation; the angles are left alone.
+  CombinedSweptVolume gives the volume to fit,
   joining the rest pose's with that of each animation named, so a chosen
   subset of the animations can define it.
+
+  ShowCombinedSweep adds a TCombinedSweep that draws one fixed volume, such
+  as the one CombinedSweptVolume gives, in fuchsia and hot pink, beside the
+  per-animation sweep.
 
   ShowModelSweep adds a TModelSweep holding the rest pose's volume and one
   per animation. Each frame it draws the volume of the animation the model
@@ -479,6 +486,32 @@ type
     property Segments: Integer read FSegments write SetSegments;
   end;
 
+  //** @abstract(Draws one fixed swept volume, such as the combined one, in its own colours.)
+  //**
+  //** A TModelSweep that is given only Volume, so it draws that volume whatever animation the
+  //** model plays. Its box is fuchsia and its tube and axis hot pink, so it can be told apart
+  //** from the per-animation sweep when both are shown. ShowCombinedSweep creates and places
+  //** one; it is found separately from the per-animation sweep, so a model can have one of
+  //** each.
+  /// <summary>Draws one fixed swept volume, such as the combined one, in its own
+  /// colours.</summary>
+  /// <remarks>A TModelSweep that is given only Volume, so it draws that volume whatever
+  /// animation the model plays. Its box is fuchsia and its tube and axis hot pink, so it can be
+  /// told apart from the per-animation sweep when both are shown.
+  /// <see cref="ShowCombinedSweep"/> creates and places one; it is found separately from the
+  /// per-animation sweep, so a model can have one of each.</remarks>
+  TCombinedSweep = class(TModelSweep)
+  public
+    //** @abstract(Creates an empty sweep, as TModelSweep does, in fuchsia and hot pink.)
+    //**
+    //** @param(AOwner The owner, normally the model, so the sweep is freed with it.)
+    /// <summary>Creates an empty sweep, as TModelSweep does, in fuchsia and hot
+    /// pink.</summary>
+    /// <param name="AOwner">The owner, normally the model, so the sweep is freed with
+    /// it.</param>
+    constructor Create(AOwner: TComponent); override;
+  end;
+
 //** @abstract(Works out the space a bounding box passes through in a full turn about an
 //** axis.)
 //**
@@ -657,17 +690,17 @@ function CombinedSweptVolume(const AModel: TGorillaModel; const ABox: TBoundingB
 function SweepOutline(const AVolume: TSweptVolume;
   const ASegments: Integer = 64): TArray<TPoint3D>;
 
-//** @abstract(Frames a model's swept volume, changing only the camera's distance or
-//** orthographic size.)
+//** @abstract(Frames a model's swept volume as large as it will go, with the orbit centre on
+//** its turning axis.)
 //**
-//** The view is centred on the volume's pivot, the model's centre of rotation, carried
-//** through AModel's transform, and the camera is moved in or out until the whole volume, by
-//** SweepOutline, just fits, with @code(ACamera.FitPointsAbout). Azimuth, PolarAngle and Roll
-//** are not changed. The pivot is usually off the volume's middle, so the volume fills the
-//** view on one side of it and leaves room on the other. The volume holds the model in every
-//** turn about its axis, so turning the model about that axis, or the camera's azimuth about
-//** it when the two axes are parallel, never takes the model out of view; nor does any
-//** animation whose bounds the volume includes. Main thread only.
+//** The volume's outline, by SweepOutline, is framed with @code(ACamera.FitPointsOnAxis): as
+//** large as it will go for the current angles, centred, so it reaches both edges of the
+//** tighter axis, with the orbit centre then put on the turning axis, the line through the
+//** model's centre of rotation, carried through AModel's transform. Azimuth, PolarAngle and
+//** Roll are not changed. The volume holds the model in every turn about its axis, so turning
+//** the model about that axis, or the camera's azimuth about it when the two axes are
+//** parallel, never takes the model out of view; nor does any animation whose bounds the
+//** volume includes. Main thread only.
 //**
 //** @param(ACamera The camera to fit; nil makes the call return False.)
 //**
@@ -683,16 +716,16 @@ function SweepOutline(const AVolume: TSweptVolume;
 //** @returns(True if the volume was framed; False, with nothing changed, if ACamera or AModel
 //** is nil, AVolume is not Valid, the camera is locked, there is no viewport, or it has zero
 //** width or height.)
-/// <summary>Frames a model's swept volume, changing only the camera's distance or orthographic
-/// size.</summary>
-/// <remarks>The view is centred on the volume's pivot, the model's centre of rotation,
-/// carried through AModel's transform, and the camera is moved in or out until the whole
-/// volume, by <see cref="SweepOutline"/>, just fits, with <c>ACamera.FitPointsAbout</c>.
-/// Azimuth, PolarAngle and Roll are not changed. The pivot is usually off the volume's middle,
-/// so the volume fills the view on one side of it and leaves room on the other. The volume
-/// holds the model in every turn about its axis, so turning the model about that axis, or the
-/// camera's azimuth about it when the two axes are parallel, never takes the model out of
-/// view; nor does any animation whose bounds the volume includes. Main thread only.</remarks>
+/// <summary>Frames a model's swept volume as large as it will go, with the orbit centre on
+/// its turning axis.</summary>
+/// <remarks>The volume's outline, by <see cref="SweepOutline"/>, is framed with
+/// <c>ACamera.FitPointsOnAxis</c>: as large as it will go for the current angles, centred, so
+/// it reaches both edges of the tighter axis, with the orbit centre then put on the turning
+/// axis, the line through the model's centre of rotation, carried through AModel's transform.
+/// Azimuth, PolarAngle and Roll are not changed. The volume holds the model in every turn
+/// about its axis, so turning the model about that axis, or the camera's azimuth about it when
+/// the two axes are parallel, never takes the model out of view; nor does any animation whose
+/// bounds the volume includes. Main thread only.</remarks>
 /// <param name="ACamera">The camera to fit; nil makes the call return False.</param>
 /// <param name="AModel">The model the volume belongs to; its transform carries the volume into
 /// the scene. Nil makes the call return False.</param>
@@ -859,6 +892,67 @@ procedure HideModelSweep(const AModel: TGorillaModel);
 /// <param name="AModel">The model to look on; nil gives nil.</param>
 /// <returns>The sweep, or nil if AModel is nil or has none.</returns>
 function FindModelSweep(const AModel: TGorillaModel): TModelSweep;
+
+//** @abstract(Draws one fixed swept volume beside AModel, such as the combined volume of its
+//** rest pose and the animations used.)
+//**
+//** Any combined sweep already on AModel is removed first, so calling it again redraws it
+//** for the new volume. The TCombinedSweep is owned by AModel, so it is freed with it, and
+//** placed beside it, under AModel's parent; it draws AVolume whatever AModel plays. It is
+//** separate from the sweep ShowModelSweep adds, so both can be shown. Call from the main
+//** thread only.
+//**
+//** @param(AModel The model the volume belongs to. Nothing happens if it is nil or has no
+//** parent.)
+//**
+//** @param(AVolume The volume to draw, in AModel's own coordinates, such as one from
+//** CombinedSweptVolume.)
+//**
+//** @returns(The new sweep, owned by AModel; or nil, with nothing added, if AModel is nil or
+//** has no parent, or AVolume is not Valid.)
+//**
+//** @seealso(HideCombinedSweep)
+/// <summary>Draws one fixed swept volume beside AModel, such as the combined volume of its rest
+/// pose and the animations used.</summary>
+/// <remarks>Any combined sweep already on AModel is removed first, so calling it again redraws
+/// it for the new volume. The TCombinedSweep is owned by AModel, so it is freed with it, and
+/// placed beside it, under AModel's parent; it draws AVolume whatever AModel plays. It is
+/// separate from the sweep ShowModelSweep adds, so both can be shown. Call from the main
+/// thread only.</remarks>
+/// <param name="AModel">The model the volume belongs to. Nothing happens if it is nil or has
+/// no parent.</param>
+/// <param name="AVolume">The volume to draw, in AModel's own coordinates, such as one from
+/// <see cref="CombinedSweptVolume"/>.</param>
+/// <returns>The new sweep, owned by AModel; or nil, with nothing added, if AModel is nil or
+/// has no parent, or AVolume is not Valid.</returns>
+/// <seealso cref="HideCombinedSweep"/>
+function ShowCombinedSweep(const AModel: TGorillaModel;
+  const AVolume: TSweptVolume): TCombinedSweep;
+
+//** @abstract(Removes the sweep ShowCombinedSweep added to AModel.)
+//**
+//** Does nothing if AModel is nil or has none. Call from the main thread only.
+//**
+//** @param(AModel The model to remove it from.)
+/// <summary>Removes the sweep ShowCombinedSweep added to AModel.</summary>
+/// <remarks>Does nothing if AModel is nil or has none. Call from the main thread
+/// only.</remarks>
+/// <param name="AModel">The model to remove it from.</param>
+procedure HideCombinedSweep(const AModel: TGorillaModel);
+
+//** @abstract(Returns the sweep ShowCombinedSweep added to AModel, or nil.)
+//**
+//** The caller does not own the result; it is freed with AModel or by HideCombinedSweep.
+//**
+//** @param(AModel The model to look on; nil gives nil.)
+//**
+//** @returns(The combined sweep, or nil if AModel is nil or has none.)
+/// <summary>Returns the sweep ShowCombinedSweep added to AModel, or nil.</summary>
+/// <remarks>The caller does not own the result; it is freed with AModel or by
+/// <see cref="HideCombinedSweep"/>.</remarks>
+/// <param name="AModel">The model to look on; nil gives nil.</param>
+/// <returns>The combined sweep, or nil if AModel is nil or has none.</returns>
+function FindCombinedSweep(const AModel: TGorillaModel): TCombinedSweep;
 
 implementation
 
@@ -1218,20 +1312,19 @@ begin
   end;
 end;
 
-{ The point a fit centres the view on: the pivot, the model's centre of
-  rotation, which lies on the turning axis and stays put while the model
-  turns or animates }
-function SweepCentre(const AVolume: TSweptVolume): TPoint3D;
+{ The turning axis's direction in the model's own coordinates, for a fit to
+  put the orbit centre on the line through the pivot }
+function SweepDirection(const AVolume: TSweptVolume): TPoint3D;
 begin
-  Result := AVolume.Pivot;
+  Result := AVolume.AxisPoint(1, 0, 0) - AVolume.AxisPoint(0, 0, 0);
 end;
 
 function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl3D;
   const AVolume: TSweptVolume; const AMargin: Single): Boolean;
 begin
   Result := (ACamera <> nil) and (AModel <> nil) and AVolume.Valid and
-    ACamera.FitPointsAbout(SweepOutline(AVolume, DEFAULT_SEGMENTS), SweepCentre(AVolume),
-      AModel, AMargin);
+    ACamera.FitPointsOnAxis(SweepOutline(AVolume, DEFAULT_SEGMENTS), AVolume.Pivot,
+      SweepDirection(AVolume), AModel, AMargin);
 end;
 
 function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl3D;
@@ -1239,8 +1332,8 @@ function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl
   const AMargin: Single): Boolean;
 begin
   Result := (ACamera <> nil) and (AModel <> nil) and AVolume.Valid and
-    ACamera.FitPointsAbout(SweepOutline(AVolume, DEFAULT_SEGMENTS), SweepCentre(AVolume),
-      AModel, AViewWidth, AViewHeight, AMargin);
+    ACamera.FitPointsOnAxis(SweepOutline(AVolume, DEFAULT_SEGMENTS), AVolume.Pivot,
+      SweepDirection(AVolume), AModel, AViewWidth, AViewHeight, AMargin);
 end;
 
 function FindModelSweep(const AModel: TGorillaModel): TModelSweep;
@@ -1251,8 +1344,58 @@ begin
   if AModel = nil then
     Exit;
   for I := 0 to AModel.ComponentCount - 1 do
-    if AModel.Components[I] is TModelSweep then
+    // Exactly a TModelSweep: a TCombinedSweep is found by FindCombinedSweep
+    if AModel.Components[I].ClassType = TModelSweep then
       Exit(TModelSweep(AModel.Components[I]));
+end;
+
+function FindCombinedSweep(const AModel: TGorillaModel): TCombinedSweep;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if AModel = nil then
+    Exit;
+  for I := 0 to AModel.ComponentCount - 1 do
+    if AModel.Components[I] is TCombinedSweep then
+      Exit(TCombinedSweep(AModel.Components[I]));
+end;
+
+procedure HideCombinedSweep(const AModel: TGorillaModel);
+var
+  Sweep: TCombinedSweep;
+begin
+  Sweep := FindCombinedSweep(AModel);
+  if Sweep <> nil then
+  begin
+    Sweep.Parent := nil;
+    Sweep.Free;
+  end;
+end;
+
+function ShowCombinedSweep(const AModel: TGorillaModel;
+  const AVolume: TSweptVolume): TCombinedSweep;
+begin
+  Result := nil;
+  if (AModel = nil) or (AModel.Parent = nil) then
+    Exit;
+  HideCombinedSweep(AModel);
+  if not AVolume.Valid then
+    Exit;
+  // Owned by the model, so freed with it; beside it, so never in its bounds
+  Result := TCombinedSweep.Create(AModel);
+  Result.Parent := AModel.Parent;
+  Result.Model := AModel;
+  Result.Volume := AVolume;
+end;
+
+{ TCombinedSweep }
+
+constructor TCombinedSweep.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  BoxColor := TAlphaColorRec.Fuchsia;
+  SweepColor := TAlphaColorRec.Hotpink;
 end;
 
 procedure HideModelSweep(const AModel: TGorillaModel);

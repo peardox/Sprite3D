@@ -358,6 +358,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DAxes.pas"/>
         <DCCReference Include="lib\Sprite3DGrid.pas"/>
         <DCCReference Include="lib\Sprite3DSweep.pas"/>
+        <DCCReference Include="lib\Sprite3DResample.pas"/>
         <DCCReference Include="lib\Sprite3DOffscreen.pas"/>
         <DCCReference Include="lib\Sprite3DStorage.pas"/>
         <DCCReference Include="lib\Sprite3DIconWriter.pas"/>

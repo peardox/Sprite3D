@@ -5,10 +5,11 @@
 //** output. Below the Camera submenu, the View menu has six items that are ticked or not, each
 //** switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid
 //** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation,
-//** Show swept volume the space it sweeps turning about its up axis, Fit swept volume chooses
-//** how the model is fitted, and Orthographic switches between perspective and orthographic
-//** projection. Model, Animations Used chooses which of the model's animations are listed and
-//** count towards the swept volume.
+//** Show Model Volume the space it sweeps turning about its up axis in the animation playing,
+//** Show Animation Volume the one joined over the rest pose and every animation used, which
+//** the camera frames, shown only for a model with animations used, and Orthographic switches
+//** between perspective and orthographic projection. Model, Animations Used chooses which of
+//** the model's animations are listed and count towards the combined swept volume.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
@@ -54,8 +55,8 @@
 //** frames saving it makes at the File, Animation frame rate: the animation's length times
 //** the rate, rounded, or for @code(@(None@)) one turn of TURNTABLE_SECONDS. Model, Animations
 //** Used opens a dialog that ticks which animations are used; the others are left out of the
-//** list, so they are not played, saved or exported, and out of the swept volume that View,
-//** Fit swept volume frames. A new model starts with every animation used.
+//** list, so they are not played, saved or exported, and out of the combined swept volume
+//** that the camera frames. A new model starts with every animation used.
 //**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu
 //** with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4 video. Each
@@ -80,7 +81,11 @@
 //** File, Animation... sets the frame rate every saved animation uses, 30 frames a second
 //** unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it:
 //** one cycle is cut into the whole number of equal steps nearest that rate, so the saved
-//** frames still loop exactly; see TSprite3DAnimationFrames.
+//** frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns overscan
+//** on, for this session only: every grab, icon and export is drawn 2 to 16 times larger each
+//** way, as far as the GPU allows at the grab size, and scaled down with the resampling
+//** filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in
+//** settings.json.
 //**
 //** Each entry also has a tick box. Below the list, All ticks every animation, leaving
 //** @code(@(None@)) as it is so the turn is exported only when ticked by hand, or clears every
@@ -93,7 +98,7 @@
 //** Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
-//** turns the camera: the views, Orthographic, Fit swept volume and the pan are switched off, a
+//** turns the camera: the views, Orthographic and the pan are switched off, a
 //** new model or a resized view is not refitted, and grabs, icons and animation captures use
 //** the view exactly as it stands instead of fitting the model to their own size. The
 //** @code(@(None@)) turn cannot be captured while it is locked, as it turns the camera. The lock
@@ -101,13 +106,13 @@
 //**
 //** Each model replaces the last: it plays its last animation by name if it has any, is centred
 //** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
-//** refitted when the viewport is resized, the projection changes, View, Fit swept volume is
-//** chosen or the animations used change, but not when a dial turns. Ticked, the default, that
-//** item frames the volume the model sweeps turning about its up axis, over its rest pose and
-//** every animation used, centred on its centre of rotation and changing only the camera's
-//** distance, so turning the azimuth dial keeps the model in view. Not ticked, FitToBounds
-//** frames the current pose exactly for the angles at the time of the fit, and turning a dial
-//** afterwards can push part of it past the edge until the next refit.
+//** refitted when the viewport is resized, the projection changes or the animations used
+//** change, but not when a dial turns. Every fit frames the combined swept volume: the space
+//** the model sweeps turning about its up axis, over its rest pose and every animation used,
+//** or its rest pose alone for a model without animations. The volume fills the view on the
+//** tighter axis, and the orbit centre is on the turning axis, so the rest pose, every
+//** animation and the @code(@(None@)) turn are framed alike, and turning the azimuth dial
+//** keeps the model in view.
 //**
 //** The form only handles the user interface. The 3D work is done by the library units in
 //** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and
@@ -136,7 +141,7 @@
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
-//** |   |-- FAnimationSettingsItem "Animation..."  frame rate for saved animations
+//** |   |-- FAnimationSettingsItem "Animation..."  frame rate, overscan and resampling
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** |-- ModelMenu "Model"
@@ -159,9 +164,10 @@
 //**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
 //**     |-- ShowGridItem "Show grid"        ticked at start-up
 //**     |-- ShowAxesItem "Show axes"        ticked at start-up
-//**     |-- ShowSweepItem "Show swept volume"  ticked at start-up; the space swept turning
+//**     |-- ShowSweepItem "Show Model Volume"  ticked at start-up; the space swept turning
 //**     |                                      about the up axis
-//**     |-- FitSweptItem "Fit swept volume"  ticked at start-up; else FitToBounds
+//**     |-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+//**     |                                      frames
 //**     `-- OrthographicItem "Orthographic" orthographic instead of perspective
 //** )
 unit Sprite3dMain;
@@ -175,11 +181,13 @@ unit Sprite3dMain;
   menu has six items that are ticked or not, each switched by choosing it:
   Show bounding box shows the model's bounding box, Show grid a grid on the
   model's floor, Show axes its own X, Y and Z axes through its centre of
-  rotation, Show swept volume the space it sweeps turning about its up axis,
-  Fit swept volume chooses how the model is fitted, and Orthographic switches
-  between perspective and orthographic projection. Model, Animations Used
-  chooses which of the model's animations are listed and count towards the
-  swept volume.
+  rotation, Show Model Volume the space it sweeps turning about its up axis
+  in the animation playing, Show Animation Volume the one joined over the
+  rest pose and every animation used, which the camera frames, shown only for
+  a model with animations used, and Orthographic switches between
+  perspective and orthographic projection.
+  Model, Animations Used chooses which of the model's animations are listed
+  and count towards the combined swept volume.
 
   The camera starts in the isometric view, and each readout always shows its
   dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed,
@@ -234,8 +242,8 @@ unit Sprite3dMain;
   the animation's length times the rate, rounded, or for (None) one turn of
   TURNTABLE_SECONDS. Model, Animations Used opens a dialog that ticks which
   animations are used; the others are left out of the list, so they are not
-  played, saved or exported, and out of the swept volume that View, Fit
-  swept volume frames. A new model starts with every animation used.
+  played, saved or exported, and out of the combined swept volume that the
+  camera frames. A new model starts with every animation used.
 
   Right-clicking an entry in the Animations list selects and plays it, and
   opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save
@@ -263,7 +271,11 @@ unit Sprite3dMain;
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
   animation is resampled to it: one cycle is cut into the whole number of
   equal steps nearest that rate, so the saved frames still loop exactly; see
-  TSprite3DAnimationFrames.
+  TSprite3DAnimationFrames. The same dialog turns overscan on, for this
+  session only: every grab, icon and export is drawn 2 to 16 times larger
+  each way, as far as the GPU allows at the grab size, and scaled down with
+  the resampling filter chosen there, by TSprite3DOffscreen. The factor and
+  filter are kept in settings.json.
 
   Each entry also has a tick box. Below the list, All ticks every animation,
   leaving (None) as it is so the turn is exported only when ticked by hand,
@@ -278,8 +290,8 @@ unit Sprite3dMain;
   folder dialog, the batch goes to the Grabs folder.
 
   View, Camera, Lock Camera fixes the camera where it is. While it is ticked
-  nothing moves or turns the camera: the views, Orthographic, Fit swept
-  volume and the pan are switched off, a new model or a resized view is not
+  nothing moves or turns the camera: the views, Orthographic and the pan
+  are switched off, a new model or a resized view is not
   refitted, and grabs, icons and animation captures use the view exactly as
   it stands instead of fitting the model to their own size. The (None) turn
   cannot be captured while it is locked, as it turns the camera. The lock is
@@ -288,14 +300,13 @@ unit Sprite3dMain;
   Each model replaces the last: it plays its last animation by name if it has
   any, is centred and turned 180 degrees about X, and the camera is fitted so
   it fills the view. The model is refitted when the viewport is resized, the
-  projection changes, View, Fit swept volume is chosen or the animations
-  used change, but not when a dial turns. Ticked, the default, that item
-  frames the volume the model sweeps turning about its up axis, over its rest
-  pose and every animation used, centred on its centre of rotation and
-  changing only the camera's distance, so turning the azimuth dial keeps the
-  model in view. Not ticked, FitToBounds frames the current pose exactly for
-  the angles at the time of the fit, and turning a dial afterwards can push
-  part of it past the edge until the next refit.
+  projection changes or the animations used change, but not when a dial
+  turns. Every fit frames the combined swept volume: the space the model
+  sweeps turning about its up axis, over its rest pose and every animation
+  used, or its rest pose alone for a model without animations. The volume
+  fills the view on the tighter axis, and the orbit centre is on the turning
+  axis, so the rest pose, every animation and the (None) turn are framed
+  alike, and turning the azimuth dial keeps the model in view.
 
   The form only handles the user interface. The 3D work is done by the library
   units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep
@@ -325,7 +336,7 @@ unit Sprite3dMain;
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
-    |   |-- FAnimationSettingsItem "Animation..."  frame rate for saved animations
+    |   |-- FAnimationSettingsItem "Animation..."  frame rate, overscan and resampling
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   `-- ExitMenuItem "Exit"             closes the application
     |-- ModelMenu "Model"
@@ -348,9 +359,10 @@ unit Sprite3dMain;
         |-- ShowBoundsItem "Show bounding box"  ticked at start-up
         |-- ShowGridItem "Show grid"        ticked at start-up
         |-- ShowAxesItem "Show axes"        ticked at start-up
-        |-- ShowSweepItem "Show swept volume"  ticked at start-up; the space swept turning
+        |-- ShowSweepItem "Show Model Volume"  ticked at start-up; the space swept turning
         |                                      about the up axis
-        |-- FitSweptItem "Fit swept volume"  ticked at start-up; else FitToBounds
+        |-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+        |                                      frames
         `-- OrthographicItem "Orthographic" orthographic instead of perspective
 }
 
@@ -367,7 +379,7 @@ uses
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
-  Sprite3DSpriteSheet, Sprite3DSweep
+  Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -518,11 +530,10 @@ type
     //** @abstract(Shows or hides the model's bounding box; ticked at start-up.)
     //**
     //** Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the
-    //** bounds of its current pose, the box the camera fits. See ShowBoundsItemClick.
+    //** bounds of its current pose. See ShowBoundsItemClick.
     /// <summary>Shows or hides the model's bounding box; ticked at start-up.</summary>
     /// <remarks>Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box
-    /// round the bounds of its current pose, the box the camera fits. See
-    /// <see cref="ShowBoundsItemClick"/>.</remarks>
+    /// round the bounds of its current pose. See <see cref="ShowBoundsItemClick"/>.</remarks>
     ShowBoundsItem: TMenuItem;
     //** @abstract(Shows or hides the floor grid; ticked at start-up.)
     //**
@@ -543,8 +554,8 @@ type
     /// draws red, green and blue lines through its centre of rotation. See
     /// <see cref="ShowAxesItemClick"/>.</remarks>
     ShowAxesItem: TMenuItem;
-    //** @abstract(Shows or hides the volume the model sweeps turning about its up axis;
-    //** ticked at start-up.)
+    //** @abstract(Shows or hides the Model Volume, the volume the model sweeps turning about its
+    //** up axis; ticked at start-up.)
     //**
     //** Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out
     //** the space the model's bounds pass through in a full turn about the line through its
@@ -555,8 +566,8 @@ type
     //** which blocks while every pose is stepped through. Whichever animation the model plays,
     //** its volume is drawn; with none playing, the rest pose's. The radii, length and volumes
     //** of each go to DebugMemo. See ShowSweepItemClick.
-    /// <summary>Shows or hides the volume the model sweeps turning about its up axis; ticked at
-    /// start-up.</summary>
+    /// <summary>Shows or hides the Model Volume, the volume the model sweeps turning about its
+    /// up axis; ticked at start-up.</summary>
     /// <remarks>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which
     /// works out the space the model's bounds pass through in a full turn about the line
     /// through its centre of rotation parallel to its Y axis, and draws it: the swept box in
@@ -567,34 +578,30 @@ type
     /// plays, its volume is drawn; with none playing, the rest pose's. The radii, length and
     /// volumes of each go to DebugMemo. See <see cref="ShowSweepItemClick"/>.</remarks>
     ShowSweepItem: TMenuItem;
-    //** @abstract(Fits the model's swept volume, or its bounds when not ticked; ticked at
+    //** @abstract(Shows or hides the Animation Volume, the combined swept volume; not ticked at
     //** start-up.)
     //**
-    //** Ticked, every fit, on screen, for a grab and for a capture, uses FitCameraToSweep from
-    //** Sprite3DSweep on the volume the model sweeps turning about its up axis, joined over its
-    //** rest pose and every animation ticked in Model, Animations Used. The view is centred on
-    //** the model's centre of rotation and only the camera's distance, or the orthographic
-    //** size, changes; the dial angles are left alone. Because the volume holds every
-    //** animation used and every turn about the axis, the framing is the same whichever of
-    //** them plays, and turning the azimuth dial keeps the model in view. The animations are
-    //** measured the first time it is needed for a model, which blocks while every pose is
-    //** stepped through. Not ticked, every fit is FitToBounds, for the current pose and
-    //** angles; the @code(@(None@)) turn is still fitted for every angle. See
-    //** FitSweptItemClick.
-    /// <summary>Fits the model's swept volume, or its bounds when not ticked; ticked at
+    //** Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning
+    //** about its up axis, joined over its rest pose and every animation ticked in Model,
+    //** Animations Used, which is what the camera frames. It is drawn in fuchsia and hot pink
+    //** whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow.
+    //** It is never drawn for a model with no animations, or none used, as it would only repeat
+    //** the rest pose's volume. It is redrawn for each new model and whenever the animations
+    //** used change, and its figures go to DebugMemo. Showing it measures the animations first
+    //** if they have not been, which blocks while every pose is stepped through. See
+    //** ShowCombinedSweepItemClick.
+    /// <summary>Shows or hides the Animation Volume, the combined swept volume; not ticked at
     /// start-up.</summary>
-    /// <remarks>Ticked, every fit, on screen, for a grab and for a capture, uses
-    /// FitCameraToSweep from Sprite3DSweep on the volume the model sweeps turning about its up
-    /// axis, joined over its rest pose and every animation ticked in Model, Animations Used.
-    /// The view is centred on the model's centre of rotation and only the camera's distance,
-    /// or the orthographic size, changes; the dial angles are left alone. Because the volume
-    /// holds every animation used and every turn about the axis, the framing is the same
-    /// whichever of them plays, and turning the azimuth dial keeps the model in view. The
-    /// animations are measured the first time it is needed for a model, which blocks while
-    /// every pose is stepped through. Not ticked, every fit is FitToBounds, for the current
-    /// pose and angles; the <c>(None)</c> turn is still fitted for every angle. See
-    /// <see cref="FitSweptItemClick"/>.</remarks>
-    FitSweptItem: TMenuItem;
+    /// <remarks>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept
+    /// turning about its up axis, joined over its rest pose and every animation ticked in
+    /// Model, Animations Used, which is what the camera frames. It is drawn in fuchsia and hot
+    /// pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and
+    /// yellow. It is never drawn for a model with no animations, or none used, as it would
+    /// only repeat the rest pose's volume. It is redrawn for each new model and whenever the
+    /// animations used change, and its figures go to DebugMemo. Showing it measures the
+    /// animations first if they have not been, which blocks while every pose is stepped
+    /// through. See <see cref="ShowCombinedSweepItemClick"/>.</remarks>
+    ShowCombinedSweepItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
     //**
     //** Ticked, the camera is orthographic; see OrthographicItemClick.
@@ -753,13 +760,13 @@ type
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
     //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
-    //** to the camera. The model is not refitted; see FitSweptItem.
+    //** to the camera. The model is not refitted; see FitModel.
     //**
     //** @param(Sender RollDial.)
     /// <summary>Copies RollDial to the camera's Roll.</summary>
     /// <remarks>The dial value is wrapped into 0 to 360, without negating, shown in RollText
     /// and written to the camera. The model is not refitted; see
-    /// <see cref="FitSweptItem"/>.</remarks>
+    /// <see cref="FitModel"/>.</remarks>
     /// <param name="Sender">RollDial.</param>
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
@@ -788,16 +795,6 @@ type
     /// nothing while View, Camera, Lock Camera is ticked, when the item is disabled.</remarks>
     /// <param name="Sender">OrthographicItem.</param>
     procedure OrthographicItemClick(Sender: TObject);
-    //** @abstract(Ticks or unticks FitSweptItem, then refits the model.)
-    //**
-    //** Does nothing while View, Camera, Lock Camera is ticked, when the item is disabled.
-    //**
-    //** @param(Sender FitSweptItem.)
-    /// <summary>Ticks or unticks FitSweptItem, then refits the model.</summary>
-    /// <remarks>Does nothing while View, Camera, Lock Camera is ticked, when the item is
-    /// disabled.</remarks>
-    /// <param name="Sender">FitSweptItem.</param>
-    procedure FitSweptItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
     //** match.)
     //**
@@ -831,6 +828,17 @@ type
     /// <remarks>Only the tick changes until a model is loaded.</remarks>
     /// <param name="Sender">ShowSweepItem.</param>
     procedure ShowSweepItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks ShowCombinedSweepItem, then adds or removes the combined
+    //** swept volume to match.)
+    //**
+    //** Only the tick changes until a model is loaded.
+    //**
+    //** @param(Sender ShowCombinedSweepItem.)
+    /// <summary>Ticks or unticks ShowCombinedSweepItem, then adds or removes the combined swept
+    /// volume to match.</summary>
+    /// <remarks>Only the tick changes until a model is loaded.</remarks>
+    /// <param name="Sender">ShowCombinedSweepItem.</param>
+    procedure ShowCombinedSweepItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowGridItem, then adds or removes the floor grid to
     //** match.)
     //**
@@ -1098,24 +1106,26 @@ type
     //** @abstract(Opens the Animations Used dialog, and on OK lists only the animations ticked
     //** there and refits to their swept volume.)
     //**
-    //** The dialog lists every animation of the model, ticked if it is used now; Cancel
-    //** changes nothing. On OK the animations list is rebuilt with only those ticked, keeping
-    //** the selection if it is still listed; if the animation playing is left out, the model
-    //** is shown at rest, as @code(@(None@)) does. With View, Fit swept volume ticked, the
-    //** model is then refitted to the swept volume joined over the rest pose and the animations
-    //** used. Does nothing without a model, or while an animation is being saved. On Android
-    //** and iOS the dialog does not block, and the choice is applied when it closes.
+    //** The dialog lists every animation of the model, ticked if it is used now, with its own
+    //** swept volume as a percentage of the combined one, measuring the animations first if
+    //** they have not been; Cancel changes nothing. On OK the animations list is rebuilt with
+    //** only those ticked, keeping the selection if it is still listed; if the animation
+    //** playing is left out, the model is shown at rest, as @code(@(None@)) does. The model is
+    //** then refitted, to the swept volume joined over the rest pose and the animations used.
+    //** Does nothing without a model, or while an animation is being saved. On Android and iOS
+    //** the dialog does not block, and the choice is applied when it closes.
     //**
     //** @param(Sender AnimationsUsedItem.)
     /// <summary>Opens the Animations Used dialog, and on OK lists only the animations ticked
     /// there and refits to their swept volume.</summary>
-    /// <remarks>The dialog lists every animation of the model, ticked if it is used now; Cancel
-    /// changes nothing. On OK the animations list is rebuilt with only those ticked, keeping
-    /// the selection if it is still listed; if the animation playing is left out, the model is
-    /// shown at rest, as <c>(None)</c> does. With View, Fit swept volume ticked, the model is
-    /// then refitted to the swept volume joined over the rest pose and the animations used.
-    /// Does nothing without a model, or while an animation is being saved. On Android and iOS
-    /// the dialog does not block, and the choice is applied when it closes.</remarks>
+    /// <remarks>The dialog lists every animation of the model, ticked if it is used now, with
+    /// its own swept volume as a percentage of the combined one, measuring the animations first
+    /// if they have not been; Cancel changes nothing. On OK the animations list is rebuilt with
+    /// only those ticked, keeping the selection if it is still listed; if the animation playing
+    /// is left out, the model is shown at rest, as <c>(None)</c> does. The model is then
+    /// refitted, to the swept volume joined over the rest pose and the animations used. Does
+    /// nothing without a model, or while an animation is being saved. On Android and iOS the
+    /// dialog does not block, and the choice is applied when it closes.</remarks>
     /// <param name="Sender">AnimationsUsedItem.</param>
     procedure AnimationsUsedItemClick(Sender: TObject);
     //** @abstract(Sets the 1/4 view and fixes it.)
@@ -1186,9 +1196,15 @@ type
     FChangePlayedIndex: Integer;
     // Every animation of the loaded model, sorted, and those Model,
     // Animations Used ticks: only these are listed and count towards the
-    // swept volume View, Fit swept volume frames. All, for a new model.
+    // swept volume the camera frames. All, for a new model.
     FAnimationNames: TArray<String>;
     FUsedAnimations: TArray<String>;
+    // The orbit centre before a shifted overscan drawing slid it, while slid
+    FShiftedCentre: TPoint3D;
+    FViewShifted: Boolean;
+    // Whether File, Animation's Overscan is ticked; kept for this session
+    // only, so overscan always starts off
+    FOverscanOn: Boolean;
     // True while AnimationListBox is refilled, so its OnChange plays nothing
     FRebuildingList: Boolean;
     // The on-screen framing, kept while a grab is fitted to its target
@@ -1252,6 +1268,7 @@ type
     function FitModel: Boolean;
     procedure PlaySelectedAnimation;
     function SweepFitVolume: TSweptVolume;
+    function AnimationSweptVolume(const AName: String): TSweptVolume;
     function GrabFit(const AWidth, AHeight: Integer): Boolean;
     procedure ApplyAngles;
     procedure ApplyDistance;
@@ -1282,6 +1299,7 @@ type
     procedure ApplyShowBounds;
     procedure ApplyShowGrid;
     procedure ApplyShowSweep;
+    procedure ApplyShowCombinedSweep;
     procedure MeasureAnimationSweeps;
     procedure RestoreCameraView;
     procedure SaveViewState;
@@ -1311,6 +1329,11 @@ type
     procedure UpdateCameraLockControls;
     procedure AnimationSettingsItemClick(Sender: TObject);
     procedure ApplyAnimationFps(const AFps: Integer);
+    procedure ApplyOverscan(const AOn: Boolean; const AFactor: Integer;
+      const AFilter: TSprite3DResampleFilter);
+    procedure OffscreenOverscanReduced(Sender: TObject; const AFailedSize,
+      AMaxOverscan: Integer);
+    procedure OffscreenShiftView(Sender: TObject; const ARight, AUp: Single);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     procedure AnimationDialogAccept(Sender: TObject);
     {$ENDIF}
@@ -1470,6 +1493,8 @@ begin
   FOffscreen.Viewport := GorillaViewport;
   FOffscreen.OnBeforeGrab := OffscreenBeforeGrab;
   FOffscreen.OnAfterGrab := OffscreenAfterGrab;
+  FOffscreen.OnOverscanReduced := OffscreenOverscanReduced;
+  FOffscreen.OnShiftView := OffscreenShiftView;
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
@@ -1477,6 +1502,9 @@ begin
   // Every grab from here on is this size, until File, Settings changes it
   FOffscreen.Width := FSettings.GrabWidth;
   FOffscreen.Height := FSettings.GrabHeight;
+  // Overscan starts off each session; the filter is kept for when it is on
+  FOffscreen.Resample := FSettings.ResampleFilter;
+  FOffscreen.Overscan := 1;
   // The look chosen in File, Settings; FMX's default needs nothing doing
   if FSettings.ThemeKind <> thDefault then
   begin
@@ -1843,13 +1871,14 @@ begin
   ShowGridItem.IsChecked := FSettings.ShowGrid;
   ShowAxesItem.IsChecked := FSettings.ShowAxes;
   ShowSweepItem.IsChecked := FSettings.ShowSweptVolume;
-  FitSweptItem.IsChecked := FSettings.FitSweptVolume;
+  ShowCombinedSweepItem.IsChecked := FSettings.ShowCombinedSweptVolume;
   OrthographicItem.IsChecked := FSettings.Orthographic;
   ApplyShowBounds;
   ApplyShowGrid;
   ApplyShowAxes;
   ApplyShowSweep;
-  ApplyProjection;   // refits too, for FitSweptItem
+  ApplyShowCombinedSweep;
+  ApplyProjection;   // refits too
 end;
 
 // The name settings.json keeps for a View, Camera item: its component name
@@ -1926,7 +1955,7 @@ begin
   FSettings.ShowGrid := ShowGridItem.IsChecked;
   FSettings.ShowAxes := ShowAxesItem.IsChecked;
   FSettings.ShowSweptVolume := ShowSweepItem.IsChecked;
-  FSettings.FitSweptVolume := FitSweptItem.IsChecked;
+  FSettings.ShowCombinedSweptVolume := ShowCombinedSweepItem.IsChecked;
   FSettings.Orthographic := OrthographicItem.IsChecked;
   FSettings.PanEnabled := FPanEnabled;
   FSettings.PanX := FPanX;
@@ -1986,10 +2015,9 @@ begin
     ShowMessage('Grab could not start');
 end;
 
-// Fit the model to the grab's own shape, as large as it will go for the
-// current angles (the swept volume if "Fit swept volume" is ticked,
-// otherwise FitToBounds, and without the test distance factor), keeping the
-// on-screen framing to put back
+// Fit the model to the grab's own shape as FitModel would, to the combined
+// swept volume, without the test distance factor, keeping the on-screen
+// framing to put back
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
@@ -2537,19 +2565,16 @@ begin
   FitModel;   // a deliberate change of view, so frame the model for it
 end;
 
-// Refit after a change of model, size, projection, fit mode or animations
-// used. The dials do not call this: the swept volume already allows for any
-// azimuth, and with FitToBounds a dial turn is allowed to push the model
-// past the edge.
+// Refit after a change of model, size, projection or animations used, to
+// the combined swept volume, so the rest pose and every animation used are
+// framed alike. The dials do not call this: with the orbit centre on the
+// turning axis, the fit already allows for turning the azimuth.
 function TMainForm.FitModel: Boolean;
 begin
   Result := not CameraLocked and Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
     Exit;
-  if FitSweptItem.IsChecked then
-    Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume)
-  else
-    Result := GorillaCamera.FitToBounds(GorillaModel);
+  Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume);
   if Result then
   begin
     // Remember the fit, then apply the test distance factor and the pan on
@@ -2603,16 +2628,8 @@ begin
   ApplyDistance;
 end;
 
-procedure TMainForm.FitSweptItemClick(Sender: TObject);
-begin
-  if CameraLocked then
-    Exit;   // it only chooses how the camera is fitted
-  FitSweptItem.IsChecked := not FitSweptItem.IsChecked;
-  FitModel;
-end;
-
-// The volume View, Fit swept volume frames: the rest pose's and that of
-// each animation used, measuring them first if this model's have not been.
+// The volume the camera frames: the rest pose's and that of each animation
+// used, measuring them first if this model's have not been.
 // During a capture nothing can be measured, so only what is already known
 // is used.
 function TMainForm.SweepFitVolume: TSweptVolume;
@@ -2622,14 +2639,22 @@ begin
     FUsedAnimations, True, saY);
 end;
 
-// The grab's own fit, for OffscreenBeforeGrab: the swept volume or the
-// model's current box, for a view of AWidth by AHeight
+// One animation's own swept volume, without the rest pose's, for saving
+// that animation alone; not Valid if its poses have not been measured. The
+// poses are measured first if this model's have not been, except during a
+// capture.
+function TMainForm.AnimationSweptVolume(const AName: String): TSweptVolume;
+begin
+  MeasureAnimationSweeps;
+  Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds,
+    TArray<String>.Create(AName), False, saY);
+end;
+
+// The grab's own fit, for OffscreenBeforeGrab: as FitModel's, for a view of
+// AWidth by AHeight
 function TMainForm.GrabFit(const AWidth, AHeight: Integer): Boolean;
 begin
-  if FitSweptItem.IsChecked then
-    Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume, AWidth, AHeight)
-  else
-    Result := GorillaCamera.FitToBounds(GorillaModel, AWidth, AHeight);
+  Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume, AWidth, AHeight);
 end;
 
 procedure TMainForm.ShowAxesItemClick(Sender: TObject);
@@ -2654,6 +2679,37 @@ procedure TMainForm.ShowSweepItemClick(Sender: TObject);
 begin
   ShowSweepItem.IsChecked := not ShowSweepItem.IsChecked;
   ApplyShowSweep;
+end;
+
+procedure TMainForm.ShowCombinedSweepItemClick(Sender: TObject);
+begin
+  ShowCombinedSweepItem.IsChecked := not ShowCombinedSweepItem.IsChecked;
+  ApplyShowCombinedSweep;
+end;
+
+// The combined swept volume, to match ShowCombinedSweepItem: the volume
+// joined over the rest pose and the animations used, the one View, Fit
+// swept volume frames, measuring the animations first if need be. Nothing
+// without a model.
+procedure TMainForm.ApplyShowCombinedSweep;
+var
+  Sweep: TCombinedSweep;
+begin
+  if not ShowCombinedSweepItem.IsChecked then
+  begin
+    HideCombinedSweep(GorillaModel);
+    Exit;
+  end;
+  // A model without animations, or with none used, has no animation volume
+  // to show: it would only repeat the rest pose's
+  if (GorillaModel = nil) or (Length(FUsedAnimations) = 0) then
+  begin
+    HideCombinedSweep(GorillaModel);
+    Exit;
+  end;
+  Sweep := ShowCombinedSweep(GorillaModel, SweepFitVolume);
+  if Sweep <> nil then
+    DebugMemo.Lines.Add('Combined: ' + Sweep.Volume.ToString);
 end;
 
 // The model's axes to match ShowAxesItem; nothing without a model
@@ -2775,8 +2831,8 @@ begin
     // The angles as the dials have them, unless the camera is locked
     ApplyAngles;
 
-    // Draw the box that FitToBounds and FitToBoundsMax fit, if wanted: the
-    // bounds of the current pose, in Gorilla's default orange
+    // Draw the model's box, if wanted: the bounds of the current pose, in
+    // Gorilla's default orange
     GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
     // Axes through the centre of rotation, sized for the newly loaded model
     if ShowAxesItem.IsChecked then
@@ -2791,6 +2847,8 @@ begin
     // The volume swept turning about the up axis, for the new bounds
     if ShowSweepItem.IsChecked then
       ApplyShowSweep;
+    if ShowCombinedSweepItem.IsChecked then
+      ApplyShowCombinedSweep;
 
     // A locked camera stays where it is, whatever the new model's size
     if not CameraLocked and not FitModel then
@@ -2901,6 +2959,12 @@ var
 begin
   Dialog := TAnimationSettingsForm.Create(nil);
   Dialog.Fps := FSettings.AnimationFps;
+  // Overscan: as far as the GPU can go at the grab size, the factor and
+  // filter last chosen, and ticked only if it was ticked this session
+  Dialog.MaxOverscan := FOffscreen.MaxOverscan(FSettings.GrabWidth, FSettings.GrabHeight);
+  Dialog.Overscan := FSettings.Overscan;
+  Dialog.Filter := FSettings.ResampleFilter;
+  Dialog.OverscanEnabled := FOverscanOn;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
   Dialog.OnAccept := AnimationDialogAccept;
@@ -2908,7 +2972,10 @@ begin
   {$ELSE}
   try
     if Dialog.ShowModal = mrOk then
+    begin
       ApplyAnimationFps(Dialog.Fps);
+      ApplyOverscan(Dialog.OverscanEnabled, Dialog.Overscan, Dialog.Filter);
+    end;
   finally
     Dialog.Free;
   end;
@@ -2917,10 +2984,74 @@ end;
 
 {$IF DEFINED(ANDROID) or DEFINED(IOS)}
 procedure TMainForm.AnimationDialogAccept(Sender: TObject);
+var
+  Dialog: TAnimationSettingsForm;
 begin
-  ApplyAnimationFps(TAnimationSettingsForm(Sender).Fps);
+  Dialog := TAnimationSettingsForm(Sender);
+  ApplyAnimationFps(Dialog.Fps);
+  ApplyOverscan(Dialog.OverscanEnabled, Dialog.Overscan, Dialog.Filter);
 end;
 {$ENDIF}
+
+// An overscanned target was too large for this GPU to draw: the grab is
+// being made again smaller, and this size is not tried again this session
+procedure TMainForm.OffscreenOverscanReduced(Sender: TObject; const AFailedSize,
+  AMaxOverscan: Integer);
+begin
+  DebugMemo.Lines.Add(Format('Overscan: a %d-pixel target could not be drawn here; ' +
+    'grabs of %d x %d are now drawn at most %dx in one go, the rest made up with ' +
+    'shifted drawings', [AFailedSize, FOffscreen.Width, FOffscreen.Height, AMaxOverscan]));
+end;
+
+// One of an overscanned grab's shifted drawings: slide the view by a
+// fraction of a pixel of the grab, from where it was, or, for 0 and 0, put
+// it back. Each slide starts from the same place, so none adds to another.
+procedure TMainForm.OffscreenShiftView(Sender: TObject; const ARight, AUp: Single);
+begin
+  if not Assigned(GorillaCamera) then
+    Exit;
+  if FViewShifted then
+    GorillaCamera.OrbitCenter.Point := FShiftedCentre
+  else
+    FShiftedCentre := GorillaCamera.OrbitCenter.Point;
+  FViewShifted := (ARight <> 0) or (AUp <> 0);
+  if FViewShifted then
+    GorillaCamera.ShiftView(ARight, AUp, FOffscreen.Width, FOffscreen.Height);
+end;
+
+// Overscan for every grab and export from now on: on or off for this
+// session only, and the factor and filter kept in settings.json. A grab
+// uses less than AFactor if the GPU cannot draw that much at its size.
+procedure TMainForm.ApplyOverscan(const AOn: Boolean; const AFactor: Integer;
+  const AFilter: TSprite3DResampleFilter);
+var
+  Changed: Boolean;
+begin
+  Changed := (FSettings.Overscan <> AFactor) or (FSettings.ResampleFilter <> AFilter);
+  FOverscanOn := AOn;
+  FSettings.Overscan := AFactor;   // limited to the allowed range
+  FSettings.ResampleFilter := AFilter;
+  FOffscreen.Resample := AFilter;
+  if AOn then
+  begin
+    FOffscreen.Overscan := FSettings.Overscan;
+    DebugMemo.Lines.Add(Format('Overscan on: %dx, scaled down with %s',
+      [FSettings.Overscan, ResampleFilterName(AFilter)]));
+  end
+  else
+  begin
+    FOffscreen.Overscan := 1;
+    DebugMemo.Lines.Add('Overscan off');
+  end;
+  if Changed then
+    try
+      FSettings.Save;
+    except
+      on E: Exception do
+        ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+          E.Message);
+    end;
+end;
 
 // Keeps the frame rate and writes settings.json straight away
 procedure TMainForm.ApplyAnimationFps(const AFps: Integer);
@@ -3002,7 +3133,6 @@ begin
     if IsCameraViewItem(CameraMenu.Items[I]) then
       CameraMenu.Items[I].Enabled := not Locked;
   OrthographicItem.Enabled := not Locked;
-  FitSweptItem.Enabled := not Locked;
   FLockCameraItem.Enabled := not Capturing;
 end;
 
@@ -3159,6 +3289,8 @@ end;
 procedure TMainForm.AnimationsUsedItemClick(Sender: TObject);
 var
   Dialog: TAnimationsUsedForm;
+  Volumes: TArray<TSweptVolume>;
+  I: Integer;
 begin
   if GorillaModel = nil then
     Exit;
@@ -3167,8 +3299,15 @@ begin
     ShowMessage('An animation is being saved; choose the animations used when it is done.');
     Exit;
   end;
+  // Each animation's own swept volume, and the rest pose's, for the
+  // dialog's percentage column; measured first if they have not been
+  MeasureAnimationSweeps;
+  SetLength(Volumes, Length(FAnimationNames));
+  for I := 0 to High(FAnimationNames) do
+    Volumes[I] := AnimationSweptVolume(FAnimationNames[I]);
   Dialog := TAnimationsUsedForm.Create(nil);
-  Dialog.SetAnimations(FAnimationNames, FUsedAnimations);
+  Dialog.SetAnimations(FAnimationNames, FUsedAnimations, Volumes,
+    CalcSweptVolume(FModelBox, GorillaModel.RotationCenter.Point, saY));
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
   Dialog.OnAccept := AnimationsUsedAccept;
@@ -3190,8 +3329,8 @@ begin
 end;
 {$ENDIF}
 
-// Lists only the animations used, then frames the swept volume joined over
-// them and the rest pose, if View, Fit swept volume is ticked
+// Lists only the animations used, then refits to the swept volume joined
+// over them and the rest pose
 procedure TMainForm.ApplyUsedAnimations(const AUsed: TArray<String>);
 begin
   if Capturing then
@@ -3200,8 +3339,10 @@ begin
   RebuildAnimationList;
   DebugMemo.Lines.Add(Format('Animations used: %d of %d',
     [Length(FUsedAnimations), Length(FAnimationNames)]));
-  if FitSweptItem.IsChecked and FitModel then
+  if FitModel then
     DebugMemo.Lines.Add('Fitted to the animations used: ' + SweepFitVolume.ToString);
+  // The combined volume is joined over the animations used, so it changes too
+  ApplyShowCombinedSweep;
 end;
 
 // A right-click selects and plays the entry under the mouse, as a left
@@ -3715,45 +3856,31 @@ begin
 end;
 
 // Frames the camera once for every frame of ASource, for a target of
-// AWidth x AHeight, with the pan on top as for every fit. A turn is fitted
-// for every angle about the model's centre of rotation, so no frame of the
-// turn can leave the target. An animation is fitted, at the current angles,
-// to the union of its frames' boxes, so the widest pose still fits; the
-// source must already be started.
+// AWidth x AHeight, with the pan on top as for every fit. A single
+// animation saved from the list's pop-up menu, or the Animation menu on
+// Android and iOS, is framed to its own swept volume, so it fills the
+// target as far as its own poses allow. A batch, and the (None) turn, are
+// framed to the combined swept volume, which holds every pose of every
+// animation used, so every animation of a batch is framed alike. Either way
+// the orbit centre is on the turning axis, so a turn of the camera's
+// azimuth never takes the model out of the target.
 function TMainForm.FrameCaptureFraming(const ASource: TSprite3DFrameSource;
   const AWidth, AHeight: Integer): Boolean;
 var
-  I: Integer;
-  Box, Union: TBoundingBox;
+  Volume: TSweptVolume;
 begin
-  if FitSweptItem.IsChecked then
-    // The swept volume holds every animation and every turn, so one fit
-    // serves both kinds of source, and every animation is framed alike
-    Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume, AWidth, AHeight)
-  else if ASource is TSprite3DTurntableFrames then
-    Result := GorillaCamera.FitToBoundsMax(GorillaModel, AWidth, AHeight)
-  else
+  if not FBatchActive and (ASource is TSprite3DAnimationFrames) then
   begin
-    for I := 0 to ASource.FrameCount - 1 do
-    begin
-      ASource.ShowFrame(I);
-      Box := GorillaModel.GetAnimatedBoundingBox();
-      if I = 0 then
-        Union := Box
-      else
-      begin
-        Union.TopLeftNear := Point3D(
-          Min(Union.TopLeftNear.X, Min(Box.TopLeftNear.X, Box.BottomRightFar.X)),
-          Min(Union.TopLeftNear.Y, Min(Box.TopLeftNear.Y, Box.BottomRightFar.Y)),
-          Min(Union.TopLeftNear.Z, Min(Box.TopLeftNear.Z, Box.BottomRightFar.Z)));
-        Union.BottomRightFar := Point3D(
-          Max(Union.BottomRightFar.X, Max(Box.TopLeftNear.X, Box.BottomRightFar.X)),
-          Max(Union.BottomRightFar.Y, Max(Box.TopLeftNear.Y, Box.BottomRightFar.Y)),
-          Max(Union.BottomRightFar.Z, Max(Box.TopLeftNear.Z, Box.BottomRightFar.Z)));
-      end;
-    end;
-    Result := GorillaCamera.FitToBounds(Union, GorillaModel, AWidth, AHeight);
-  end;
+    Volume := AnimationSweptVolume(TSprite3DAnimationFrames(ASource).Animation.Id);
+    if Volume.Valid then
+      DebugMemo.Lines.Add('Framed to ' + TSprite3DAnimationFrames(ASource).Animation.Id +
+        ' alone: ' + Volume.ToString)
+    else
+      Volume := SweepFitVolume;   // not measured: the combined volume holds it too
+  end
+  else
+    Volume := SweepFitVolume;
+  Result := FitCameraToSweep(GorillaCamera, GorillaModel, Volume, AWidth, AHeight);
   if Result and FPanEnabled then
     GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
       ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);

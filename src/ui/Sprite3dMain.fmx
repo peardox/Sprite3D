@@ -45,22 +45,22 @@ object MainForm: TMainForm
         TabOrder = 0
         object ViewportLayout: TLayout
           Align = Client
-          Size.Width = 650.000000000000000000
+          Size.Width = 560.000000000000000000
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
         end
         object ControlsLayout: TLayout
           Align = Right
-          Position.X = 650.000000000000000000
-          Size.Width = 150.000000000000000000
+          Position.X = 560.000000000000000000
+          Size.Width = 240.000000000000000000
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
           object AnimationsHeader: TRectangle
             Align = Top
             Fill.Color = xFF2B2B2B
-            Size.Width = 150.000000000000000000
+            Size.Width = 240.000000000000000000
             Size.Height = 26.000000000000000000
             Size.PlatformDefault = False
             Stroke.Kind = None
@@ -69,7 +69,7 @@ object MainForm: TMainForm
             object FramesLabel: TLabel
               Align = Right
               StyledSettings = [Family]
-              Position.X = 92.000000000000000000
+              Position.X = 182.000000000000000000
               Size.Width = 50.000000000000000000
               Size.Height = 26.000000000000000000
               Size.PlatformDefault = False
@@ -84,7 +84,7 @@ object MainForm: TMainForm
               Align = Client
               StyledSettings = [Family]
               Position.X = 8.000000000000000000
-              Size.Width = 84.000000000000000000
+              Size.Width = 174.000000000000000000
               Size.Height = 26.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Size = 14.000000000000000000
@@ -97,7 +97,7 @@ object MainForm: TMainForm
           end
           object AnimationListBox: TListBox
             Align = Client
-            Size.Width = 150.000000000000000000
+            Size.Width = 240.000000000000000000
             Size.Height = 668.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 86
@@ -107,7 +107,7 @@ object MainForm: TMainForm
             DefaultItemStyles.ItemStyle = ''
             DefaultItemStyles.GroupHeaderStyle = ''
             DefaultItemStyles.GroupFooterStyle = ''
-            Viewport.Width = 146.000000000000000000
+            Viewport.Width = 236.000000000000000000
             Viewport.Height = 664.000000000000000000
           end
         end
@@ -320,14 +320,13 @@ object MainForm: TMainForm
       object ShowSweepItem: TMenuItem
         Locked = True
         IsChecked = True
-        Text = 'Show swept volume'
+        Text = 'Show Model Volume'
         OnClick = ShowSweepItemClick
       end
-      object FitSweptItem: TMenuItem
+      object ShowCombinedSweepItem: TMenuItem
         Locked = True
-        IsChecked = True
-        Text = 'Fit swept volume'
-        OnClick = FitSweptItemClick
+        Text = 'Show Animation Volume'
+        OnClick = ShowCombinedSweepItemClick
       end
       object OrthographicItem: TMenuItem
         Locked = True

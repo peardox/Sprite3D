@@ -16,6 +16,12 @@
 //** whole run before starting it, so every frame is drawn at the same scale, and puts its own
 //** back afterwards.
 //**
+//** A newly started animation can take a few drawn frames to show its first pose: Gorilla
+//** switches clips, uploads the baked poses and settles the skeleton over the next frames
+//** drawn, and until then the model can be in the pose it had before, or at the wrong height.
+//** So the first frame is grabbed WarmUpFrames times, DEFAULT_WARM_UP_FRAMES unless changed,
+//** and those grabs are thrown away before the real one.
+//**
 //** Everything here is for the main thread. A capture runs over many frames of the main loop;
 //** the application stays responsive meanwhile, and should not start other grabs, load
 //** another model or change the animation until the capture reports.
@@ -49,6 +55,13 @@ unit Sprite3DAnimCapture;
   The capture does not frame the model; the owner of the camera sets one
   framing for the whole run before starting it, so every frame is drawn at
   the same scale, and puts its own back afterwards.
+
+  A newly started animation can take a few drawn frames to show its first
+  pose: Gorilla switches clips, uploads the baked poses and settles the
+  skeleton over the next frames drawn, and until then the model can be in
+  the pose it had before, or at the wrong height. So the first frame is
+  grabbed WarmUpFrames times, DEFAULT_WARM_UP_FRAMES unless changed, and
+  those grabs are thrown away before the real one.
 
   Everything here is for the main thread. A capture runs over many frames of
   the main loop; the application stays responsive meanwhile, and should not
@@ -93,6 +106,19 @@ type
   /// <param name="ATotal">How many frames there are in all.</param>
   TSprite3DCaptureProgress = reference to procedure(const ADone, ATotal: Integer);
 
+const
+  //** @abstract(How many grabs of the first frame TSprite3DFrameCapture throws away before
+  //** keeping one, by default.)
+  //**
+  //** Each is one drawn frame, enough for Gorilla to have switched to the animation and
+  //** shown its first pose.
+  /// <summary>How many grabs of the first frame TSprite3DFrameCapture throws away before
+  /// keeping one, by default.</summary>
+  /// <remarks>Each is one drawn frame, enough for Gorilla to have switched to the animation
+  /// and shown its first pose.</remarks>
+  DEFAULT_WARM_UP_FRAMES = 3;
+
+type
   //** @abstract(Something that can be shown one frame at a time for capture.)
   //**
   //** Call Start once, then ShowFrame for any frame from 0 to FrameCount - 1 in any order,
@@ -334,7 +360,9 @@ type
   //** @abstract(One capture run: every frame of a source, grabbed in turn.)
   //**
   //** Create it, then call Run. Run starts the source, shows frame 0 and asks the off-screen
-  //** renderer for a grab; each grab is copied, the next frame shown and grabbed, and so on.
+  //** renderer for a grab; the first WarmUpFrames grabs are thrown away, frame 0 being shown
+  //** again before each, then each grab is copied, the next frame shown and grabbed, and so
+  //** on.
   //** When the last frame is in, or a grab fails, the source is finished, the procedure given
   //** to Create is called once with every frame or the error, and the capture frees itself
   //** and its source. While it runs, the off-screen renderer is busy for most of the time but
@@ -346,8 +374,9 @@ type
   //** before it is grabbed, so the screenshot shows it.
   /// <summary>One capture run: every frame of a source, grabbed in turn.</summary>
   /// <remarks><para>Create it, then call Run. Run starts the source, shows frame 0 and asks the
-  /// off-screen renderer for a grab; each grab is copied, the next frame shown and grabbed,
-  /// and so on. When the last frame is in, or a grab fails, the source is finished, the
+  /// off-screen renderer for a grab; the first WarmUpFrames grabs are thrown away, frame 0
+  /// being shown again before each, then each grab is copied, the next frame shown and
+  /// grabbed, and so on. When the last frame is in, or a grab fails, the source is finished, the
   /// procedure given to Create is called once with every frame or the error, and the capture
   /// frees itself and its source. While it runs, the off-screen renderer is busy for most of
   /// the time but not all of it, so the owner should refuse other grabs on its own
@@ -367,6 +396,9 @@ type
     FCancelled: Boolean;
     FStarted: Boolean;
     FSettleTime: Integer;
+    FWarmUpFrames: Integer;
+    FWarmUpLeft: Integer;
+    FKeptOverscan: Integer;   // the renderer's overscan, put back after warming up
     procedure GrabFrame;
     procedure QueueGrab;
     procedure Done(const AError: String);
@@ -436,6 +468,20 @@ type
     /// <remarks>0 where grabs render off screen, which draws the frame as it is set; about
     /// four display frames where grabs are screenshots.</remarks>
     property SettleTime: Integer read FSettleTime write FSettleTime;
+    //** @abstract(How many grabs of the first frame are thrown away before the one that is
+    //** kept; DEFAULT_WARM_UP_FRAMES by default.)
+    //**
+    //** Each waits for a frame to be drawn, so the animation has caught up with its first pose
+    //** by the time it is kept. Set it before Run; negative values count as 0. They are
+    //** grabbed without overscan, which is put back for the frames that are kept, so they cost
+    //** little whatever the overscan.
+    /// <summary>How many grabs of the first frame are thrown away before the one that is
+    /// kept; DEFAULT_WARM_UP_FRAMES by default.</summary>
+    /// <remarks>Each waits for a frame to be drawn, so the animation has caught up with its
+    /// first pose by the time it is kept. Set it before Run; negative values count as 0. They
+    /// are grabbed without overscan, which is put back for the frames that are kept, so they
+    /// cost little whatever the overscan.</remarks>
+    property WarmUpFrames: Integer read FWarmUpFrames write FWarmUpFrames;
   end;
 
 implementation
@@ -615,6 +661,7 @@ begin
   FSource := ASource;
   FOnDone := AOnDone;
   FOnProgress := AOnProgress;
+  FWarmUpFrames := DEFAULT_WARM_UP_FRAMES;
   {$IF DEFINED(MACOS)}
   FSettleTime := 70;   // about four frames at 60 a second
   {$ELSE}
@@ -651,6 +698,12 @@ begin
   end;
   SetLength(FFrames, 0);
   FIndex := 0;
+  // Grabs to throw away while the animation catches up with its first pose
+  FWarmUpLeft := Max(FWarmUpFrames, 0);
+  // Warm-up grabs are thrown away, so they need no overscan
+  FKeptOverscan := FOffscreen.Overscan;
+  if FWarmUpLeft > 0 then
+    FOffscreen.Overscan := 1;
   FSource.ShowFrame(0);
   QueueGrab;
 end;
@@ -696,6 +749,17 @@ begin
         Me.Done(AError);
         Exit;
       end;
+      if Me.FWarmUpLeft > 0 then
+      begin
+        // A warm-up grab: thrown away, and frame 0 shown and grabbed again,
+        // with the overscan back for the one that is kept
+        Dec(Me.FWarmUpLeft);
+        if Me.FWarmUpLeft = 0 then
+          Me.FOffscreen.Overscan := Me.FKeptOverscan;
+        Me.FSource.ShowFrame(0);
+        Me.QueueGrab;
+        Exit;
+      end;
       try
         Me.FFrames := Me.FFrames + [ImageFromBitmap(ABitmap)];
       except
@@ -724,6 +788,8 @@ procedure TSprite3DFrameCapture.Done(const AError: String);
 var
   Frames: TArray<TSprite3DImage>;
 begin
+  if FWarmUpLeft > 0 then
+    FOffscreen.Overscan := FKeptOverscan;   // ended while warming up
   try
     FSource.Finish;
     if AError = String.Empty then
@@ -743,6 +809,8 @@ begin
   if FCancelled then
     Exit;
   FCancelled := True;
+  if FWarmUpLeft > 0 then
+    FOffscreen.Overscan := FKeptOverscan;   // cancelled while warming up
   FOnDone := nil;
   FOnProgress := nil;
   if FStarted then
