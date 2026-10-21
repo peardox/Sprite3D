@@ -57,6 +57,7 @@ uses
   Sprite3DAnimCapture in 'lib\Sprite3DAnimCapture.pas',
   Sprite3DAnimationForm in 'ui\Sprite3DAnimationForm.pas' {AnimationSettingsForm},
   Sprite3DAnimationsUsedForm in 'ui\Sprite3DAnimationsUsedForm.pas' {AnimationsUsedForm},
+  Sprite3DLoadForm in 'ui\Sprite3DLoadForm.pas' {ModelLoadForm},
   Sprite3DVideo in 'lib\Sprite3DVideo.pas',
   Sprite3DOpenH264 in 'lib\Sprite3DOpenH264.pas',
   Sprite3DNativeLibs in 'lib\Sprite3DNativeLibs.pas',

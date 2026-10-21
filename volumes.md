@@ -57,8 +57,9 @@ An animation moves the model's vertices, so its poses can reach outside the rest
 
 Measuring has some costs and conditions:
 
-- It **blocks** while it runs, for the number of poses times the cost of one bounding box. Sprite3D measures each model once, the first time a volume is needed, and keeps the results until another model is loaded.
-- The axes helper is a child of the model and would count in its bounds, so it is taken off while the poses are measured and put back afterwards.
+- It costs the number of poses times the cost of one bounding box, which can be a second or more for a model with many long animations. So Sprite3D does it as part of loading the model, behind the load dialog, with `TAnimationBoundsMeasurer`, which measures poses in slices of about 30 milliseconds; between slices the dialog is drawn, shows the percentage done, and can be aborted. (`MeasureAnimationBounds` does the whole job at once, for code that doesn't mind waiting.)
+- The results are kept in the `bounds` folder beside `settings.json`, one file per model, named from a hash of its full path, size and time of last change, and only used if they were saved for exactly the animations the model has. A model seen before, unchanged, skips measuring.
+- The new model is measured before it gets any helpers, so nothing but its own geometry counts in its bounds. (Gorilla counts a model's children, and the axes are a child.)
 - The animation that was current is made current again afterwards, running or stopped as it was.
 - Nothing is measured while an animation is being exported, as the export is driving the animations then.
 - An animation that Gorilla has not baked is posed by seeking its skeleton. On Delphi 13 and later that pose is only worked out when a frame is drawn, so such an animation's box may be wrong. Sprite3D loads models with vertex caching, so their animations are baked.

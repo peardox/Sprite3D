@@ -23,6 +23,17 @@
 //** inclination 0 at azimuth 90. A test slider along the bottom of the 3D view moves the camera
 //** out from the fitted distance, x1 to x20.
 //**
+//** A model is loaded behind a modal dialog, TModelLoadForm, with a progress bar, a line saying
+//** what is happening, and Abort. The file is read on a worker thread; Gorilla3D then builds
+//** the model from it in one step, which cannot be interrupted; and each animation's bounds,
+//** which the volumes and the fit need, are measured a slice at a time, unless they are in the
+//** bounds folder of the application's support folder from an earlier load of the same,
+//** unchanged file. The new model is built beside the one shown, which is left alone until the
+//** new one is ready, so Abort, or a failure, leaves the previous model, or none at start-up.
+//** While there is no model, a panel over the view says how to load one. The window is drawn
+//** before the first model loads, the video libraries are looked for only once that load has
+//** ended, and saved files are composed and encoded on a worker thread.
+//**
 //** On show, the form loads the model the operating system asked it to open, as when a .glb or
 //** .gltf file is double-clicked in Explorer or Finder, or else what the start-up action in
 //** File, Settings asks for; files the system asks to open later replace it. File, OpenModel
@@ -203,6 +214,19 @@ unit Sprite3dMain;
   along the bottom of the 3D view moves the camera out from the fitted
   distance, x1 to x20.
 
+  A model is loaded behind a modal dialog, TModelLoadForm, with a progress
+  bar, a line saying what is happening, and Abort. The file is read on a
+  worker thread; Gorilla3D then builds the model from it in one step, which
+  cannot be interrupted; and each animation's bounds, which the volumes and
+  the fit need, are measured a slice at a time, unless they are in the bounds
+  folder of the application's support folder from an earlier load of the same,
+  unchanged file. The new model is built beside the one shown, which is left
+  alone until the new one is ready, so Abort, or a failure, leaves the
+  previous model, or none at start-up. While there is no model, a panel over
+  the view says how to load one. The window is drawn before the first model
+  loads, the video libraries are looked for only once that load has ended, and
+  saved files are composed and encoded on a worker thread.
+
   On show, the form loads the model the operating system asked it to open, as
   when a .glb or .gltf file is double-clicked in Explorer or Finder, or else
   what the start-up action in File, Settings asks for; files the system asks
@@ -379,7 +403,8 @@ uses
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
-  Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample
+  Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
+  Sprite3DLoadForm
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -403,6 +428,26 @@ type
     /// <summary>A video-only MPEG-4 MP4, saved as <c>&lt;name&gt;.mp4</c>; only offered when
     /// the FFmpeg libraries load.</summary>
     skMp4);
+
+  //** @abstract(Where a model load has got to; see TMainForm.SwitchModel.)
+  /// <summary>Where a model load has got to; see TMainForm.SwitchModel.</summary>
+  TModelLoadStage = (
+    //** @abstract(No load is under way.)
+    /// <summary>No load is under way.</summary>
+    lsNone,
+    //** @abstract(The file is being read on a worker thread; Abort stops it at once.)
+    /// <summary>The file is being read on a worker thread; Abort stops it at once.</summary>
+    lsRead,
+    //** @abstract(Gorilla3D builds the model on the next tick, in one step.)
+    /// <summary>Gorilla3D builds the model on the next tick, in one step.</summary>
+    lsBuild,
+    //** @abstract(The new model's animations are being measured, a slice at a time.)
+    /// <summary>The new model's animations are being measured, a slice at a
+    /// time.</summary>
+    lsMeasure,
+    //** @abstract(The new model replaces the old one on the next tick.)
+    /// <summary>The new model replaces the old one on the next tick.</summary>
+    lsCommit);
 
   //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
   //**
@@ -562,10 +607,10 @@ type
     //** centre of rotation parallel to its Y axis, and draws it: the swept box in aqua, and
     //** the tube it holds, with the axis, in yellow. There is one volume for the rest pose,
     //** from the bounds as loaded, and one per animation, from the bounds of all its poses,
-    //** measured with MeasureAnimationBounds the first time the item is ticked for a model,
-    //** which blocks while every pose is stepped through. Whichever animation the model plays,
-    //** its volume is drawn; with none playing, the rest pose's. The radii, length and volumes
-    //** of each go to DebugMemo. See ShowSweepItemClick.
+    //** read from the bounds cache or measured with TAnimationBoundsMeasurer as the model
+    //** loads. Whichever animation the model plays, its volume is drawn; with none playing,
+    //** the rest pose's. The radii, length and volumes of each go to DebugMemo.
+    //** See ShowSweepItemClick.
     /// <summary>Shows or hides the Model Volume, the volume the model sweeps turning about its
     /// up axis; ticked at start-up.</summary>
     /// <remarks>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which
@@ -573,10 +618,10 @@ type
     /// through its centre of rotation parallel to its Y axis, and draws it: the swept box in
     /// aqua, and the tube it holds, with the axis, in yellow. There is one volume for the rest
     /// pose, from the bounds as loaded, and one per animation, from the bounds of all its
-    /// poses, measured with MeasureAnimationBounds the first time the item is ticked for a
-    /// model, which blocks while every pose is stepped through. Whichever animation the model
-    /// plays, its volume is drawn; with none playing, the rest pose's. The radii, length and
-    /// volumes of each go to DebugMemo. See <see cref="ShowSweepItemClick"/>.</remarks>
+    /// poses, read from the bounds cache or measured with TAnimationBoundsMeasurer as the
+    /// model loads. Whichever animation the model plays, its volume is drawn; with none
+    /// playing, the rest pose's. The radii, length and volumes of each go to
+    /// DebugMemo. See <see cref="ShowSweepItemClick"/>.</remarks>
     ShowSweepItem: TMenuItem;
     //** @abstract(Shows or hides the Animation Volume, the combined swept volume; not ticked at
     //** start-up.)
@@ -587,9 +632,7 @@ type
     //** whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow.
     //** It is never drawn for a model with no animations, or none used, as it would only repeat
     //** the rest pose's volume. It is redrawn for each new model and whenever the animations
-    //** used change, and its figures go to DebugMemo. Showing it measures the animations first
-    //** if they have not been, which blocks while every pose is stepped through. See
-    //** ShowCombinedSweepItemClick.
+    //** used change, and its figures go to DebugMemo. See ShowCombinedSweepItemClick.
     /// <summary>Shows or hides the Animation Volume, the combined swept volume; not ticked at
     /// start-up.</summary>
     /// <remarks>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept
@@ -598,9 +641,8 @@ type
     /// pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and
     /// yellow. It is never drawn for a model with no animations, or none used, as it would
     /// only repeat the rest pose's volume. It is redrawn for each new model and whenever the
-    /// animations used change, and its figures go to DebugMemo. Showing it measures the
-    /// animations first if they have not been, which blocks while every pose is stepped
-    /// through. See <see cref="ShowCombinedSweepItemClick"/>.</remarks>
+    /// animations used change, and its figures go to DebugMemo. See
+    /// <see cref="ShowCombinedSweepItemClick"/>.</remarks>
     ShowCombinedSweepItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
     //**
@@ -852,18 +894,18 @@ type
     procedure ShowGridItemClick(Sender: TObject);
     //** @abstract(Lets the user pick a model file and loads it in place of the current one.)
     //**
-    //** Shows OpenDialog1 and passes the chosen file to SwitchModel, which clears the old model
-    //** and loads the new one with the current camera angles and fit mode. Nothing changes if
-    //** the dialog is cancelled. A file that fails to load is reported by SwitchModel, and the
-    //** view is then left empty until another model loads.
+    //** Shows OpenDialog1 and passes the chosen file to SwitchModel, which loads it behind a
+    //** progress dialog with Abort and then puts it in place of the old model, with the current
+    //** camera angles and fit. Nothing changes if either dialog is cancelled or aborted, or if
+    //** the file fails to load, which SwitchModel reports.
     //**
     //** @param(Sender OpenModelMenuItem.)
     /// <summary>Lets the user pick a model file and loads it in place of the current
     /// one.</summary>
-    /// <remarks>Shows OpenDialog1 and passes the chosen file to SwitchModel, which clears the old
-    /// model and loads the new one with the current camera angles and fit mode. Nothing changes
-    /// if the dialog is cancelled. A file that fails to load is reported by SwitchModel, and the
-    /// view is then left empty until another model loads.</remarks>
+    /// <remarks>Shows OpenDialog1 and passes the chosen file to SwitchModel, which loads it
+    /// behind a progress dialog with Abort and then puts it in place of the old model, with the
+    /// current camera angles and fit. Nothing changes if either dialog is cancelled or aborted,
+    /// or if the file fails to load, which SwitchModel reports.</remarks>
     /// <param name="Sender">OpenModelMenuItem.</param>
     procedure OpenModelMenuItemClick(Sender: TObject);
     //** @abstract(Renders the view off screen and saves it as the next grabNNN.png.)
@@ -1186,10 +1228,35 @@ type
     // The viewport's background: a 2D control behind the transparent viewport
     FBackground: TSprite3DBackground;
     FModelBox: TBoundingBox;   // the model's own bounds, measured as loaded
-    // Each animation's bounds over all its poses, for the swept volume;
-    // measured the first time the sweep is shown for the loaded model
+    // Each animation's bounds over all its poses, for the swept volume:
+    // read from the bounds cache or measured while the model loads
     FAnimationBounds: TArray<TAnimationBounds>;
     FAnimationBoundsMeasured: Boolean;
+    FModelFile: String;         // the model loaded, for the bounds cache
+    // The load under way, if any: what stage it is at, driven by FLoadTimer
+    // a tick at a time so the dialog stays responsive. The new model is
+    // built beside the old one, which is untouched until the new one is
+    // ready, so an abort or a failure leaves everything as it was.
+    FLoadStage: TModelLoadStage;
+    FLoadTimer: TTimer;
+    FLoadDialog: TModelLoadForm;
+    FLoadFile: String;
+    FLoadRead: IModelFileRead;
+    FLoadModel: TGorillaModel;
+    FLoadAnims: TArray<String>;
+    FLoadBox: TBoundingBox;
+    FLoadBounds: TArray<TAnimationBounds>;
+    FMeasurer: TAnimationBoundsMeasurer;   // the new model's, while measured
+    FLoadAborted: Boolean;
+    FLoadError: String;      // shown once the dialog has closed
+    FPendingModel: String;   // asked for during a load; loaded after it
+    // Covers the view while no model is loaded, saying how to load one
+    FNoModelPanel: TPanel;
+    // Saves under way on worker threads; the form waits for them as it closes
+    FSaveTasks: TArray<ITask>;
+    // The MP4 entry of the animation pop-up menu, enabled once the video
+    // libraries are found to load
+    FMp4Item: TMenuItem;
     // Set when AnimationListBoxChange has played FChangePlayedIndex, so the
     // click that moved the selection there does not play it a second time
     FChangePlayed: Boolean;
@@ -1300,7 +1367,16 @@ type
     procedure ApplyShowGrid;
     procedure ApplyShowSweep;
     procedure ApplyShowCombinedSweep;
-    procedure MeasureAnimationSweeps;
+    procedure LoadTimerTimer(Sender: TObject);
+    procedure LoadDialogAbort(Sender: TObject);
+    procedure BuildLoadModel;
+    procedure MeasureLoadModel;
+    procedure CommitLoad;
+    procedure EndLoad(const AError: String);
+    procedure ReportLoadEnd;
+    procedure BuildNoModelPanel;
+    procedure UpdateNoModelPanel;
+    procedure StartVideo;
     procedure RestoreCameraView;
     procedure SaveViewState;
     function CameraViewKey(const AItem: TMenuItem): String;
@@ -1442,7 +1518,31 @@ uses
 
 {$R *.fmx}
 
+var
+  // Set as the main form is destroyed, for work queued from other threads
+  // that may arrive after it has gone
+  MainFormGone: Boolean = False;
+
+// ATasks without ATask, for the list of saves under way
+function RemoveTask(const ATasks: TArray<ITask>; const ATask: ITask): TArray<ITask>;
+begin
+  Result := nil;
+  for var Task in ATasks do
+    if Task <> ATask then
+      Result := Result + [Task];
+end;
+
 const
+  // How often a load moves on, in milliseconds, and how long each slice of
+  // animation measuring may hold the main thread; the rest goes to drawing
+  // the dialog and to Abort
+  LOAD_INTERVAL_MS = 15;
+  MEASURE_BUDGET_MS = 30;
+  // The share of the progress bar each stage of a load ends at
+  LOAD_READ_END = 0.3;
+  LOAD_BUILD_END = 0.6;
+  LOAD_MEASURE_END = 0.95;
+
   // The first entry of AnimationListBox, which stops any animation and
   // shows the model as loaded
   NO_ANIMATION = '(None)';
@@ -1531,16 +1631,27 @@ begin
   // The View menu's on/off items as they were left last session
   RestoreViewToggles;
 
+  // Moves a model load on, a tick at a time
+  FLoadTimer := TTimer.Create(Self);
+  FLoadTimer.Enabled := False;
+  FLoadTimer.Interval := LOAD_INTERVAL_MS;
+  FLoadTimer.OnTimer := LoadTimerTimer;
+  // Says how to load a model until one is
+  BuildNoModelPanel;
+
   // The OpenH264 already downloaded, if it is the one openh264.json asks
-  // for; before BuildAnimationMenu first loads the video libraries
+  // for; before StartVideo first loads the video libraries
   PrepareOpenH264;
 
   // The animation list's right-click menu; on mobile, also the drawer's
   // Animation group, so it must come before BuildMobileMenu
   BuildAnimationMenu;
 
-  // Fetches OpenH264 in the background if it is missing or out of date
-  StartOpenH264Update;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // The mobile menu is built from the finished menus, so video is looked
+  // for now; on the desktop that waits until the first model is shown
+  StartVideo;
+  {$ENDIF}
   // View, Camera, Lock Camera; before the menu is moved or mirrored
   BuildLockCameraItem;
 
@@ -1796,8 +1907,25 @@ begin
   if FStarted then
     Exit;   // the form can be shown again; the model stays as it is
   FStarted := True;
-  LoadStartupModel;
-  FileOpenRequests.OnOpenFile := OpenRequestedFile;
+  // The window is drawn before the first model loads, rather than staying
+  // blank until it has; the video libraries are looked for after that
+  Caption := 'Loading...';
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      if MainFormGone then
+        Exit;
+      LoadStartupModel;
+      FileOpenRequests.OnOpenFile := OpenRequestedFile;
+      {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+      TThread.ForceQueue(nil,
+        procedure
+        begin
+          if not MainFormGone then
+            StartVideo;
+        end);
+      {$ENDIF}
+    end);
 end;
 
 function TMainForm.DefaultModelFile: String;
@@ -1848,6 +1976,24 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  MainFormGone := True;   // queued work arriving from here on does nothing
+  // A load under way is dropped, its dialog with it
+  FLoadTimer.Enabled := False;
+  FLoadStage := lsNone;
+  FreeAndNil(FMeasurer);
+  if FLoadRead <> nil then
+    FLoadRead.Cancel;
+  FLoadRead := nil;
+  FreeAndNil(FLoadModel);
+  FreeAndNil(FLoadDialog);
+  // Files being written are finished, so none is left half written
+  if Length(FSaveTasks) > 0 then
+    try
+      TTask.WaitForAll(FSaveTasks);
+    except
+      // Reported already, or not at all now the form is going
+    end;
+  FSaveTasks := nil;
   // Stops a download under way and waits for it
   FreeAndNil(FOpenH264Update);
   FBatchActive := False;   // no further batch entries
@@ -2629,23 +2775,17 @@ begin
 end;
 
 // The volume the camera frames: the rest pose's and that of each animation
-// used, measuring them first if this model's have not been.
-// During a capture nothing can be measured, so only what is already known
-// is used.
+// used, all measured as the model loaded
 function TMainForm.SweepFitVolume: TSweptVolume;
 begin
-  MeasureAnimationSweeps;
   Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds,
     FUsedAnimations, True, saY);
 end;
 
 // One animation's own swept volume, without the rest pose's, for saving
-// that animation alone; not Valid if its poses have not been measured. The
-// poses are measured first if this model's have not been, except during a
-// capture.
+// that animation alone; not Valid if it had no pose to measure
 function TMainForm.AnimationSweptVolume(const AName: String): TSweptVolume;
 begin
-  MeasureAnimationSweeps;
   Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds,
     TArray<String>.Create(AName), False, saY);
 end;
@@ -2740,9 +2880,9 @@ end;
 
 // The volume swept turning about the model's up axis, to match
 // ShowSweepItem: the rest pose's from the model's own bounds as loaded, and
-// one per animation, so the wireframe follows whichever animation plays. The
-// animations are measured the first time the sweep is shown for a model;
-// the figures go to the debug log. Nothing without a model.
+// one per animation, measured as the model loaded, so the wireframe follows
+// whichever animation plays. The figures go to the debug log. Nothing
+// without a model.
 procedure TMainForm.ApplyShowSweep;
 var
   Sweep: TModelSweep;
@@ -2757,7 +2897,6 @@ begin
   if GorillaModel = nil then
     Exit;
 
-  MeasureAnimationSweeps;
   Sweep := ShowModelSweep(GorillaModel, FModelBox, FAnimationBounds, saY);
   if Sweep = nil then
     Exit;
@@ -2768,106 +2907,379 @@ begin
         [Entry.Name, Entry.Poses, Volume.ToString]));
 end;
 
-// Measures every animation's bounds once per model, for ApplyShowSweep.
-// Gorilla counts the model's children in its animated bounds, so the axes,
-// the one helper that is a child, come off while the poses are measured and
-// go back on afterwards. Measuring drives the animations, so it waits while
-// a capture is doing that; the sweep then has the rest pose only, until it
-// is next shown.
-procedure TMainForm.MeasureAnimationSweeps;
+// Looks for the video libraries, which can take a while to load, so the
+// desktop does it after the first model is shown; offers MP4 if they load,
+// and fetches OpenH264 in the background if it is missing or out of date
+procedure TMainForm.StartVideo;
 begin
-  if FAnimationBoundsMeasured or (GorillaModel = nil) or Capturing then
-    Exit;
-  HideModelAxes(GorillaModel);
-  try
-    FAnimationBounds := MeasureAnimationBounds(GorillaModel);
-    FAnimationBoundsMeasured := True;
-  finally
-    if ShowAxesItem.IsChecked then
-      ShowModelAxes(GorillaModel);
+  if VideoAvailable then
+  begin
+    if Assigned(FMp4Item) then
+      FMp4Item.Enabled := True;
+    // In TSheetKind's order: the item index is the kind
+    if Assigned(FBatchKindBox) and (FBatchKindBox.Items.Count = Ord(skMp4)) then
+      FBatchKindBox.Items.Add('MP4 video');
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    if Assigned(FAnimationMenu) then
+    begin
+      var Item := TMenuItem.Create(Self);
+      Item.Text := 'Save as MP4 video';
+      Item.OnClick := SaveMp4ItemClick;
+      FAnimationMenu.AddObject(Item);
+    end;
+    {$ENDIF}
   end;
+  DebugMemo.Lines.Add(VideoStatus);
+  StartOpenH264Update;
 end;
 
-// Load a Model Clearing any old model first (so it Switches them)
-// GorillaModel will be Nil on first call but set on subsequent calls
+// Loads AModel in place of the model shown, with a dialog showing how far it
+// has got and what it is doing, and an Abort button. The load runs in
+// stages from FLoadTimer, a tick at a time, so the dialog is drawn and Abort
+// is seen between them: the file is read on a worker thread, which brings it
+// into the system's file cache; Gorilla3D builds the model from it in one
+// step, which cannot be interrupted; its animations are measured a slice at
+// a time, unless the bounds cache has them; and it then replaces the old
+// model. The new model is built beside the old one, which is left alone
+// until then, so an abort, or a failure at any stage, puts everything back
+// as it was: the old model, or none at start-up.
+// On the desktop the dialog is modal and this returns once the load has
+// ended; on Android and iOS it returns at once. A model asked for while a
+// load is under way, as by a file opened from the system, is loaded after it.
 procedure TMainForm.SwitchModel(const AModel: String);
 var
-  BBox: TBoundingBox;
-  Anims: TArray<String>;
+  Dialog: TModelLoadForm;
 begin
   if (AModel = String.Empty) or (not FileExists(AModel)) then
     begin
       ShowMessage('Model Not Found ' + AModel);
       Exit;
     end;
+  if FLoadStage <> lsNone then
+  begin
+    FPendingModel := AModel;
+    Exit;
+  end;
   if Capturing then
     begin
       ShowMessage('An animation is being saved; open the model again when it is done.');
       Exit;
     end;
 
-  if GorillaModel = Nil then
-    begin
-      GorillaModel := TGorillaModel.Create(GorillaViewport);
-      GorillaModel.Parent := GorillaViewport;
-    end;
+  FLoadFile := ExpandFileName(AModel);
+  FLoadAborted := False;
+  FLoadError := String.Empty;
+  FLoadRead := StartModelFileRead(FLoadFile);
+  FLoadStage := lsRead;
+  Dialog := TModelLoadForm.Create(nil);
+  FLoadDialog := Dialog;
+  Dialog.SetModelName(ExtractFileName(FLoadFile));
+  Dialog.SetProgress(0, 'Reading the file...');
+  Dialog.OnAbort := LoadDialogAbort;
+  Caption := 'Loading ' + ExtractFileName(FLoadFile) + '...';
+  FLoadTimer.Enabled := True;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog frees itself when the load ends,
+  // and EndLoad reports
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    Dialog.ShowModal;
+  finally
+    // ShowModal only returns once EndLoad has closed the dialog; if it ever
+    // returned sooner, the load is dropped here
+    FLoadDialog := nil;
+    if FLoadStage <> lsNone then
+      EndLoad(String.Empty);
+    Dialog.Free;
+  end;
+  ReportLoadEnd;
+  {$ENDIF}
+end;
 
+// Abort, from the dialog: the read stops at once, and the next tick drops
+// the load. During the build, which cannot be interrupted, the click is
+// seen as soon as Gorilla3D returns.
+procedure TMainForm.LoadDialogAbort(Sender: TObject);
+begin
+  FLoadAborted := True;
+  if FLoadRead <> nil then
+    FLoadRead.Cancel;
+end;
+
+// One tick of the load: one stage's worth of work, or a slice of it
+procedure TMainForm.LoadTimerTimer(Sender: TObject);
+var
+  Done, Total: Int64;
+  Fraction: Single;
+begin
+  if FLoadStage = lsNone then
+  begin
+    FLoadTimer.Enabled := False;
+    Exit;
+  end;
+  if FLoadDialog = nil then
+    FLoadAborted := True;   // the dialog has gone: nothing to report to
+  if FLoadAborted then
+  begin
+    DebugMemo.Lines.Add('Load aborted: ' + FLoadFile);
+    EndLoad(String.Empty);
+    Exit;
+  end;
+  try
+    case FLoadStage of
+      lsRead:
+        if not FLoadRead.Done then
+        begin
+          Done := FLoadRead.BytesRead;
+          Total := FLoadRead.TotalBytes;
+          if Total > 0 then
+            Fraction := Done / Total
+          else
+            Fraction := 0;
+          FLoadDialog.SetProgress(LOAD_READ_END * Fraction,
+            Format('Reading the file: %.1f of %.1f MB',
+              [Done / (1024 * 1024), Total / (1024 * 1024)]));
+        end
+        else if FLoadRead.Error <> String.Empty then
+          raise EInOutError.Create(FLoadRead.Error)
+        else
+        begin
+          // Said before the build starts, on the next tick, so the dialog
+          // is drawn saying so while Gorilla3D works
+          FLoadRead := nil;
+          FLoadDialog.SetProgress(LOAD_READ_END, 'Building the model...');
+          FLoadStage := lsBuild;
+        end;
+      lsBuild:
+        BuildLoadModel;
+      lsMeasure:
+        MeasureLoadModel;
+      lsCommit:
+        CommitLoad;
+    end;
+  except
+    on E: Exception do
+      EndLoad('Can''t Load Model : ' + FLoadFile + sLineBreak +
+        'Exception class name : ' + E.ClassName + sLineBreak +
+        'Exception message : ' + E.Message);
+  end;
+end;
+
+// Gorilla3D builds the new model, hidden, beside the one shown; this is the
+// one step that blocks. Its animations' figures come from the bounds cache
+// if it has been seen before, unchanged; otherwise they are measured next.
+procedure TMainForm.BuildLoadModel;
+begin
+  FLoadModel := TGorillaModel.Create(GorillaViewport);
+  FLoadModel.Visible := False;
+  FLoadModel.Parent := GorillaViewport;
+  FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadBox);
+  // The model's own bounds, before any helper is added: the grid's floor
+  PlaceModel(FLoadModel, FLoadBox);
+  if (Length(FLoadAnims) = 0) or
+    LoadAnimationBoundsCache(FLoadFile, FLoadAnims, FLoadBounds) then
+  begin
+    FLoadDialog.SetProgress(LOAD_MEASURE_END, 'Setting up the view...');
+    FLoadStage := lsCommit;
+  end
+  else
+  begin
+    // The new model has no helpers yet, so nothing else counts in its bounds
+    FMeasurer := TAnimationBoundsMeasurer.Create(FLoadModel);
+    FLoadDialog.SetProgress(LOAD_BUILD_END,
+      Format('Measuring %d animations...', [Length(FLoadAnims)]));
+    FLoadStage := lsMeasure;
+  end;
+end;
+
+// A slice of measuring the new model's animations; when they are all done,
+// the figures go to the bounds cache for next time
+procedure TMainForm.MeasureLoadModel;
+begin
+  if FMeasurer.Step(MEASURE_BUDGET_MS) then
+  begin
+    FLoadBounds := FMeasurer.Results;
+    FreeAndNil(FMeasurer);
+    SaveAnimationBoundsCache(FLoadFile, FLoadAnims, FLoadBounds);
+    DebugMemo.Lines.Add(Format('Measured %d animations', [Length(FLoadBounds)]));
+    FLoadDialog.SetProgress(LOAD_MEASURE_END, 'Setting up the view...');
+    FLoadStage := lsCommit;
+  end
+  else
+    FLoadDialog.SetProgress(LOAD_BUILD_END +
+      (LOAD_MEASURE_END - LOAD_BUILD_END) * FMeasurer.Progress,
+      Format('Measuring %d animations: %d%%',
+        [Length(FLoadAnims), Trunc(FMeasurer.Progress * 100)]));
+end;
+
+// The new model replaces the old, which is freed with its helpers, and gets
+// the list, helpers and fit the View menu asks for
+procedure TMainForm.CommitLoad;
+var
+  Old: TGorillaModel;
+begin
   AnimationListBox.Items.Clear;
   AnimationListBox.Items.Add(NO_ANIMATION);
-  FAnimationNames := nil;
-  FUsedAnimations := nil;
-  try
-    Anims := LoadModelFile(GorillaModel, AModel, BBox);
-    // The model's own bounds, before any helper is added: the grid's floor
-    FModelBox := BBox;
-    // A new model's animations are measured when its sweep is first shown
-    FAnimationBounds := nil;
-    FAnimationBoundsMeasured := False;
-    // Every animation is used until Model, Animations Used says otherwise
-    FAnimationNames := Anims;
-    FUsedAnimations := Copy(Anims);
-    RebuildAnimationList;
-
-    // The angles as the dials have them, unless the camera is locked
-    ApplyAngles;
-
-    // Draw the model's box, if wanted: the bounds of the current pose, in
-    // Gorilla's default orange
-    GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
-    // Axes through the centre of rotation, sized for the newly loaded model
-    if ShowAxesItem.IsChecked then
-      ShowModelAxes(GorillaModel);
-    PlaceModel(GorillaModel, BBox);
-
-    // Floor grid, after the model is placed and turned, because the floor
-    // depends on which way up it is
-    if ShowGridItem.IsChecked then
-      ShowModelGrid(GorillaModel, FModelBox);
-
-    // The volume swept turning about the up axis, for the new bounds
-    if ShowSweepItem.IsChecked then
-      ApplyShowSweep;
-    if ShowCombinedSweepItem.IsChecked then
-      ApplyShowCombinedSweep;
-
-    // A locked camera stays where it is, whatever the new model's size
-    if not CameraLocked and not FitModel then
-      Caption := 'Problem fitting Camera'
-    else
-      Caption := ProjectionCaption;
-
-    // For the "Load last model" start-up action; saved with the view state
-    FSettings.LastModel := ExpandFileName(AModel);
-
-  except
-    on E : Exception do
-      begin
-        ShowMessage('Can''t Load Model : ' + AModel + sLineBreak +
-                    'Exception class name : '+ E.ClassName   + sLineBreak +
-                    'Exception message : ' + E.Message);
-        FreeAndNil(GorillaModel);
-      end;
+  Old := GorillaModel;
+  GorillaModel := FLoadModel;
+  FLoadModel := nil;
+  if Old <> nil then
+  begin
+    Old.Parent := nil;
+    Old.Free;
   end;
+  GorillaModel.Visible := True;
+
+  FModelBox := FLoadBox;
+  FModelFile := FLoadFile;
+  FAnimationBounds := FLoadBounds;
+  FAnimationBoundsMeasured := True;
+  // Every animation is used until Model, Animations Used says otherwise
+  FAnimationNames := FLoadAnims;
+  FUsedAnimations := Copy(FLoadAnims);
+  RebuildAnimationList;
+
+  // The angles as the dials have them, unless the camera is locked
+  ApplyAngles;
+
+  // Draw the model's box, if wanted: the bounds of the current pose, in
+  // Gorilla's default orange
+  GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
+  // Axes through the centre of rotation, sized for the newly loaded model
+  if ShowAxesItem.IsChecked then
+    ShowModelAxes(GorillaModel);
+
+  // Floor grid, after the model is placed and turned, because the floor
+  // depends on which way up it is
+  if ShowGridItem.IsChecked then
+    ShowModelGrid(GorillaModel, FModelBox);
+
+  // The volume swept turning about the up axis, for the new bounds
+  if ShowSweepItem.IsChecked then
+    ApplyShowSweep;
+  if ShowCombinedSweepItem.IsChecked then
+    ApplyShowCombinedSweep;
+
+  // For the "Load last model" start-up action; saved with the view state
+  FSettings.LastModel := FLoadFile;
+  DebugMemo.Lines.Add('Loaded ' + FLoadFile);
+
+  EndLoad(String.Empty);
+
+  // A locked camera stays where it is, whatever the new model's size
+  if not CameraLocked and not FitModel then
+    Caption := 'Problem fitting Camera';
+end;
+
+// Ends the load, whether it worked, failed with AError or was aborted:
+// anything of the new model not yet taken on is freed, the dialog is
+// closed, and on Android and iOS the outcome is reported at once; on the
+// desktop SwitchModel reports it once ShowModal has returned
+procedure TMainForm.EndLoad(const AError: String);
+var
+  Dialog: TModelLoadForm;
+begin
+  FLoadTimer.Enabled := False;
+  FLoadStage := lsNone;
+  FreeAndNil(FMeasurer);
+  if FLoadRead <> nil then
+    FLoadRead.Cancel;
+  FLoadRead := nil;
+  if FLoadModel <> nil then
+  begin
+    FLoadModel.Parent := nil;
+    FreeAndNil(FLoadModel);
+  end;
+  FLoadAnims := nil;
+  FLoadBounds := nil;
+  FLoadError := AError;
+  Caption := ProjectionCaption;
+  UpdateNoModelPanel;
+  Dialog := FLoadDialog;
+  FLoadDialog := nil;
+  if Dialog <> nil then
+    Dialog.Finish;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  ReportLoadEnd;
+  {$ENDIF}
+end;
+
+// After the dialog has gone: what went wrong, if anything, and any model
+// asked for meanwhile, loaded next
+procedure TMainForm.ReportLoadEnd;
+var
+  Pending: String;
+begin
+  if FLoadError <> String.Empty then
+  begin
+    DebugMemo.Lines.Add(FLoadError);
+    ShowMessage(FLoadError);
+    FLoadError := String.Empty;
+  end;
+  Pending := FPendingModel;
+  FPendingModel := String.Empty;
+  if Pending <> String.Empty then
+    TThread.ForceQueue(nil,
+      procedure
+      begin
+        if not MainFormGone then
+          SwitchModel(Pending);
+      end);
+end;
+
+// The panel that covers the view while no model is loaded, as at start-up
+// with the start-up action None, or after the first load is aborted. It
+// takes the theme's panel colours, and lets clicks through.
+procedure TMainForm.BuildNoModelPanel;
+var
+  Content: TLayout;
+  Title, Hint: TLabel;
+begin
+  FNoModelPanel := TPanel.Create(Self);
+  FNoModelPanel.Parent := ViewportLayout;
+  FNoModelPanel.Align := TAlignLayout.Contents;
+  FNoModelPanel.HitTest := False;
+
+  Content := TLayout.Create(Self);
+  Content.Parent := FNoModelPanel;
+  Content.Align := TAlignLayout.Center;
+  Content.Width := 360;
+  Content.Height := 80;
+  Content.HitTest := False;
+
+  Title := TLabel.Create(Self);
+  Title.Parent := Content;
+  Title.Align := TAlignLayout.Top;
+  Title.Height := 34;
+  Title.StyledSettings := Title.StyledSettings -
+    [TStyledSetting.Size, TStyledSetting.Style];
+  Title.TextSettings.Font.Size := 20;
+  Title.TextSettings.Font.Style := [TFontStyle.fsBold];
+  Title.TextSettings.HorzAlign := TTextAlign.Center;
+  Title.Text := 'No model loaded';
+  Title.HitTest := False;
+
+  Hint := TLabel.Create(Self);
+  Hint.Parent := Content;
+  Hint.Align := TAlignLayout.Client;
+  Hint.TextSettings.HorzAlign := TTextAlign.Center;
+  Hint.TextSettings.VertAlign := TTextAlign.Leading;
+  Hint.TextSettings.WordWrap := True;
+  Hint.Text := 'Choose File, OpenModel to load one.';
+  Hint.HitTest := False;
+
+  UpdateNoModelPanel;
+end;
+
+// Shows the no-model panel only while there is no model
+procedure TMainForm.UpdateNoModelPanel;
+begin
+  if FNoModelPanel = nil then
+    Exit;
+  FNoModelPanel.Visible := GorillaModel = nil;
+  if FNoModelPanel.Visible then
+    FNoModelPanel.BringToFront;
 end;
 
 // Reads openh264.json and what has been downloaded, without the network,
@@ -2929,9 +3341,9 @@ begin
   AddItem(FAnimationPopup, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationPopup, 'Save as Texture Atlas', SaveAtlasItemClick);
   AddItem(FAnimationPopup, 'Save as AniGif', SaveGifItemClick);
-  // MP4 needs the FFmpeg libraries: offered only if they load
-  AddItem(FAnimationPopup, 'Save as MP4 video', SaveMp4ItemClick).Enabled := VideoAvailable;
-  DebugMemo.Lines.Add(VideoStatus);
+  // MP4 needs the FFmpeg libraries: offered once StartVideo finds they load
+  FMp4Item := AddItem(FAnimationPopup, 'Save as MP4 video', SaveMp4ItemClick);
+  FMp4Item.Enabled := False;
   BuildBatchControls;
 
   // File, Animation..., just above Settings...
@@ -2946,8 +3358,7 @@ begin
   AddItem(FAnimationMenu, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationMenu, 'Save as Texture Atlas', SaveAtlasItemClick);
   AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
-  if VideoAvailable then
-    AddItem(FAnimationMenu, 'Save as MP4 video', SaveMp4ItemClick);
+  // MP4 is added by StartVideo if the video libraries load
   {$ENDIF}
 end;
 
@@ -3300,8 +3711,7 @@ begin
     Exit;
   end;
   // Each animation's own swept volume, and the rest pose's, for the
-  // dialog's percentage column; measured first if they have not been
-  MeasureAnimationSweeps;
+  // dialog's percentage column
   SetLength(Volumes, Length(FAnimationNames));
   for I := 0 to High(FAnimationNames) do
     Volumes[I] := AnimationSweptVolume(FAnimationNames[I]);
@@ -3540,26 +3950,61 @@ begin
   Capture := TSprite3DFrameCapture.Create(FOffscreen, Source,
     procedure(const AFrames: TArray<TSprite3DImage>; const ACaptureError: String)
     var
-      Outcome, FileName: String;
+      Outcome: String;
+      Frames: TArray<TSprite3DImage>;
+      Task: ITask;
     begin
       FCapture := nil;
       EndCapture;
       UpdateBatchControls;
-      Outcome := String.Empty;
       if ACaptureError <> String.Empty then
-        Outcome := Stem + ': capture failed: ' + ACaptureError
-      else
-        try
-          FileName := SaveSheet(Kind, AFrames, Folder, Stem, CycleSeconds);
-          DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [FileName, Length(AFrames)]));
-        except
-          on E: Exception do
-            Outcome := 'Can''t save ' + Stem + ' in ' + Folder + sLineBreak + E.Message;
-        end;
-      if Outcome <> String.Empty then
+      begin
+        Outcome := Stem + ': capture failed: ' + ACaptureError;
         DebugMemo.Lines.Add(Outcome);
-      if Assigned(OnFinished) then
-        OnFinished(Outcome);
+        if Assigned(OnFinished) then
+          OnFinished(Outcome);
+        Exit;
+      end;
+      // Composing and encoding the file is pure arithmetic on the frames,
+      // and can take a while for a GIF or a video, so it is done on a
+      // worker thread; the window stays responsive meanwhile, and the result
+      // is reported on the main thread
+      Caption := Format('Saving %s...', [Stem]);
+      Frames := AFrames;
+      Task := TTask.Run(
+        procedure
+        var
+          Saved, Failure: String;
+          FrameCount: Integer;
+        begin
+          Saved := String.Empty;
+          Failure := String.Empty;
+          FrameCount := Length(Frames);
+          try
+            Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds);
+          except
+            on E: Exception do
+              Failure := 'Can''t save ' + Stem + ' in ' + Folder + sLineBreak + E.Message;
+          end;
+          Frames := nil;   // the frames are let go before the result is reported
+          TThread.Queue(nil,
+            procedure
+            begin
+              if MainFormGone then
+                Exit;
+              FSaveTasks := RemoveTask(FSaveTasks, Task);
+              Task := nil;
+              if Failure = String.Empty then
+                DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [Saved, FrameCount]))
+              else
+                DebugMemo.Lines.Add(Failure);
+              if not Capturing then
+                Caption := ProjectionCaption;
+              if Assigned(OnFinished) then
+                OnFinished(Failure);
+            end);
+        end);
+      FSaveTasks := FSaveTasks + [Task];
     end,
     procedure(const ADone, ATotal: Integer)
     begin
@@ -3619,8 +4064,7 @@ begin
   FBatchKindBox.Items.Add('Sprite strip');
   FBatchKindBox.Items.Add('Texture Atlas');
   FBatchKindBox.Items.Add('AniGif');
-  if VideoAvailable then
-    FBatchKindBox.Items.Add('MP4 video');
+  // MP4 video is added by StartVideo if the video libraries load
   FBatchKindBox.ItemIndex := Ord(skStrip);
 
   // Second row: Export, and Abort beside it

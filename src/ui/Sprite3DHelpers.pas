@@ -7,12 +7,14 @@
 //** and how a loaded model is placed. It uses the library and the RTL, never the UI.
 //**
 //** TSprite3DAppSettings holds the settings kept between sessions, in @code(settings.json)
-//** in the application's own per-user folder, SupportFolder.
+//** in the application's own per-user folder, SupportFolder. The measured bounds of each
+//** model's animations are kept there too, one file per model in its @code(bounds) folder,
+//** through LoadAnimationBoundsCache and SaveAnimationBoundsCache.
 //**
 //** Loading a model through LoadModelFile also registers Gorilla3D's loaders for glTF, FBX,
 //** OBJ, USD, Collada, STL and PLY files, as this unit uses them.
 //**
-//** All routines are for the main thread.
+//** All routines are for the main thread, except the members of IModelFileRead.
 unit Sprite3DHelpers;
 
 {
@@ -28,12 +30,16 @@ unit Sprite3DHelpers;
 
   TSprite3DAppSettings holds the settings kept between sessions, in
   settings.json in the application's own per-user folder, SupportFolder.
+  The measured bounds of each model's animations are kept there too, one
+  file per model in its bounds folder, through LoadAnimationBoundsCache and
+  SaveAnimationBoundsCache.
 
   Loading a model through LoadModelFile also registers Gorilla3D's loaders
   for glTF, FBX, OBJ, USD, Collada, STL and PLY files, as this unit uses
   them.
 
-  All routines are for the main thread.
+  All routines are for the main thread, except the members of
+  IModelFileRead.
 }
 
 interface
@@ -42,7 +48,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
   Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc,
-  Sprite3DResample;
+  Sprite3DResample, Sprite3DSweep;
 
 const
   //** @abstract(The application's name, used for its per-user folder.)
@@ -827,6 +833,138 @@ function IsModelFile(const AFileName: String): Boolean;
 function StartupModelFile(const ARequested: TArray<String>;
   const ADefault: String): String;
 
+type
+  //** @abstract(A read of a model file on a worker thread, from StartModelFileRead.)
+  //**
+  //** Every member may be called from the main thread while the read goes on. The worker holds
+  //** its own reference, so letting go of this one, or cancelling, never leaves it reading
+  //** freed memory.
+  /// <summary>A read of a model file on a worker thread, from StartModelFileRead.</summary>
+  /// <remarks>Every member may be called from the main thread while the read goes on. The
+  /// worker holds its own reference, so letting go of this one, or cancelling, never leaves
+  /// it reading freed memory.</remarks>
+  IModelFileRead = interface
+    ['{3E8B6A51-2C4D-4F7A-9E1B-5D7C8A9F0B24}']
+    //** @abstract(Asks the worker to stop at the next block; Done follows soon after.)
+    /// <summary>Asks the worker to stop at the next block; Done follows soon
+    /// after.</summary>
+    procedure Cancel;
+    //** @abstract(True once the worker has stopped: read to the end, cancelled, or failed.)
+    //**
+    //** @returns(Whether the read is over.)
+    /// <summary>True once the worker has stopped: read to the end, cancelled, or
+    /// failed.</summary>
+    /// <returns>Whether the read is over.</returns>
+    function Done: Boolean;
+    //** @abstract(How many bytes have been read so far.)
+    //**
+    //** @returns(The count, from 0 to TotalBytes.)
+    /// <summary>How many bytes have been read so far.</summary>
+    /// <returns>The count, from 0 to TotalBytes.</returns>
+    function BytesRead: Int64;
+    //** @abstract(The file's size in bytes; 0 until the file has been opened.)
+    //**
+    //** @returns(The size.)
+    /// <summary>The file's size in bytes; 0 until the file has been opened.</summary>
+    /// <returns>The size.</returns>
+    function TotalBytes: Int64;
+    //** @abstract(Why the read failed, once Done; empty if it did not.)
+    //**
+    //** @returns(The error message, or an empty string.)
+    /// <summary>Why the read failed, once Done; empty if it did not.</summary>
+    /// <returns>The error message, or an empty string.</returns>
+    function Error: String;
+  end;
+
+//** @abstract(Starts reading a model file from start to end on a worker thread.)
+//**
+//** Nothing is kept: the point is to bring the file into the operating system's file cache,
+//** which is where a cold load spends most of its time, while the user interface goes on and
+//** the read can be cancelled; Gorilla3D's own load, which cannot, then finds it there. The
+//** file is read in blocks of a megabyte, shared for reading and writing.
+//**
+//** @param(AFileName The file to read.)
+//**
+//** @returns(The read under way.)
+/// <summary>Starts reading a model file from start to end on a worker thread.</summary>
+/// <remarks>Nothing is kept: the point is to bring the file into the operating system's
+/// file cache, which is where a cold load spends most of its time, while the user interface
+/// goes on and the read can be cancelled; Gorilla3D's own load, which cannot, then finds it
+/// there. The file is read in blocks of a megabyte, shared for reading and
+/// writing.</remarks>
+/// <param name="AFileName">The file to read.</param>
+/// <returns>The read under way.</returns>
+function StartModelFileRead(const AFileName: String): IModelFileRead;
+
+//** @abstract(Where the measured animation bounds of a model file are kept between
+//** sessions.)
+//**
+//** A file in the bounds folder of SupportFolder, named from a hash of the model's full path,
+//** size and time of last change, so a model that is changed or replaced gets a new file
+//** and its old figures are never used. Nothing is created.
+//**
+//** @param(AModelFile The model file; it must exist.)
+//**
+//** @returns(The cache file's path, or empty if the model file cannot be found.)
+/// <summary>Where the measured animation bounds of a model file are kept between
+/// sessions.</summary>
+/// <remarks>A file in the bounds folder of SupportFolder, named from a hash of the model's
+/// full path, size and time of last change, so a model that is changed or replaced gets a
+/// new file and its old figures are never used. Nothing is created.</remarks>
+/// <param name="AModelFile">The model file; it must exist.</param>
+/// <returns>The cache file's path, or empty if the model file cannot be found.</returns>
+function AnimationBoundsCacheFile(const AModelFile: String): String;
+
+//** @abstract(Reads the animation bounds saved for a model file, so they need not be measured
+//** again.)
+//**
+//** The figures are used only if they were saved for exactly the animations named, in any
+//** order, and by this version of the cache; anything else, a damaged file included, gives
+//** False and leaves the model to be measured.
+//**
+//** @param(AModelFile The model file, as loaded.)
+//**
+//** @param(ANames Every animation the model has, as LoadModelFile listed them.)
+//**
+//** @param(ABounds The figures, in the order they were saved; empty when False, and without
+//** any animation that had no pose to measure.)
+//**
+//** @returns(True if usable figures were read.)
+/// <summary>Reads the animation bounds saved for a model file, so they need not be measured
+/// again.</summary>
+/// <remarks>The figures are used only if they were saved for exactly the animations named,
+/// in any order, and by this version of the cache; anything else, a damaged file included,
+/// gives False and leaves the model to be measured.</remarks>
+/// <param name="AModelFile">The model file, as loaded.</param>
+/// <param name="ANames">Every animation the model has, as LoadModelFile listed them.</param>
+/// <param name="ABounds">The figures, in the order they were saved; empty when False, and
+/// without any animation that had no pose to measure.</param>
+/// <returns>True if usable figures were read.</returns>
+function LoadAnimationBoundsCache(const AModelFile: String; const ANames: TArray<String>;
+  out ABounds: TArray<TAnimationBounds>): Boolean;
+
+//** @abstract(Saves a model file's measured animation bounds for the next time it is
+//** loaded.)
+//**
+//** Writes AnimationBoundsCacheFile as JSON, making the folder if need be. A failure to write
+//** is ignored: the model is simply measured again next time.
+//**
+//** @param(AModelFile The model file the figures were measured from.)
+//**
+//** @param(ANames Every animation the model has, as LoadModelFile listed them.)
+//**
+//** @param(ABounds The figures, as TAnimationBoundsMeasurer gave them.)
+/// <summary>Saves a model file's measured animation bounds for the next time it is
+/// loaded.</summary>
+/// <remarks>Writes AnimationBoundsCacheFile as JSON, making the folder if need be. A failure
+/// to write is ignored: the model is simply measured again next time.</remarks>
+/// <param name="AModelFile">The model file the figures were measured from.</param>
+/// <param name="ANames">Every animation the model has, as LoadModelFile listed
+/// them.</param>
+/// <param name="ABounds">The figures, as TAnimationBoundsMeasurer gave them.</param>
+procedure SaveAnimationBoundsCache(const AModelFile: String; const ANames: TArray<String>;
+  const ABounds: TArray<TAnimationBounds>);
+
 //** @abstract(The file an icon is saved to without asking, or empty where the user should
 //** choose.)
 //**
@@ -1016,7 +1154,8 @@ function ReadGeneralSettings(const ASettings: TSprite3DAppSettings): TSprite3DGe
 implementation
 
 uses
-  System.Classes, System.Math, System.IOUtils,
+  System.Classes, System.Math, System.IOUtils, System.JSON, System.Hash, System.StrUtils,
+  System.Threading, System.SyncObjs,
   OSPaths, Sprite3DStyles, Sprite3DTitleBar,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
@@ -1284,6 +1423,258 @@ begin
     if IsModelFile(FileName) then
       Exit(FileName);
   Result := ADefault;
+end;
+
+type
+  // The read StartModelFileRead starts; the counters are shared with the
+  // worker, so they are only touched through TInterlocked
+  TModelFileRead = class(TInterfacedObject, IModelFileRead)
+  private
+    FFileName: String;
+    FCancelled: Integer;
+    FDone: Integer;
+    FBytesRead: Int64;
+    FTotalBytes: Int64;
+    FError: String;   // written before FDone is set
+    procedure Run;
+  public
+    procedure Cancel;
+    function Done: Boolean;
+    function BytesRead: Int64;
+    function TotalBytes: Int64;
+    function Error: String;
+  end;
+
+procedure TModelFileRead.Cancel;
+begin
+  TInterlocked.Exchange(FCancelled, 1);
+end;
+
+function TModelFileRead.Done: Boolean;
+begin
+  Result := TInterlocked.CompareExchange(FDone, 0, 0) <> 0;
+end;
+
+function TModelFileRead.BytesRead: Int64;
+begin
+  Result := TInterlocked.Read(FBytesRead);
+end;
+
+function TModelFileRead.TotalBytes: Int64;
+begin
+  Result := TInterlocked.Read(FTotalBytes);
+end;
+
+function TModelFileRead.Error: String;
+begin
+  if Done then
+    Result := FError
+  else
+    Result := String.Empty;
+end;
+
+// On the worker: read the file to the end, a block at a time, stopping
+// early if cancelled
+procedure TModelFileRead.Run;
+const
+  BLOCK = 1024 * 1024;
+var
+  Stream: TFileStream;
+  Buffer: TBytes;
+  Count: Integer;
+begin
+  try
+    try
+      Stream := TFileStream.Create(FFileName, fmOpenRead or fmShareDenyNone);
+      try
+        TInterlocked.Exchange(FTotalBytes, Stream.Size);
+        SetLength(Buffer, BLOCK);
+        repeat
+          if TInterlocked.CompareExchange(FCancelled, 0, 0) <> 0 then
+            Break;
+          Count := Stream.Read(Buffer[0], BLOCK);
+          if Count > 0 then
+            TInterlocked.Add(FBytesRead, Count);
+        until Count <= 0;
+      finally
+        Stream.Free;
+      end;
+    except
+      on E: Exception do
+        FError := E.Message;
+    end;
+  finally
+    TInterlocked.Exchange(FDone, 1);
+  end;
+end;
+
+function StartModelFileRead(const AFileName: String): IModelFileRead;
+var
+  Read: TModelFileRead;
+  Keep: IModelFileRead;
+begin
+  Read := TModelFileRead.Create;
+  Read.FFileName := AFileName;
+  Keep := Read;   // the worker's own reference
+  Result := Keep;
+  TTask.Run(
+    procedure
+    begin
+      Read.Run;
+      Keep := nil;
+    end);
+end;
+
+const
+  // Raised whenever what is measured, or how, changes, so older figures are
+  // not used
+  BOUNDS_CACHE_VERSION = 1;
+  BOUNDS_CACHE_FOLDER = 'bounds';
+
+function AnimationBoundsCacheFile(const AModelFile: String): String;
+var
+  Search: TSearchRec;
+  FullName, Key: String;
+begin
+  Result := String.Empty;
+  FullName := ExpandFileName(AModelFile);
+  if FindFirst(FullName, faAnyFile, Search) <> 0 then
+    Exit;
+  try
+    Key := Format('%s|%d|%s|%d', [FullName, Search.Size,
+      FormatDateTime('yyyymmddhhnnsszzz', Search.TimeStamp), BOUNDS_CACHE_VERSION]);
+  finally
+    FindClose(Search);
+  end;
+  Result := TPath.Combine(TPath.Combine(TSprite3DAppSettings.SupportFolder,
+    BOUNDS_CACHE_FOLDER), THashMD5.GetHashString(Key) + '.json');
+end;
+
+function LoadAnimationBoundsCache(const AModelFile: String; const ANames: TArray<String>;
+  out ABounds: TArray<TAnimationBounds>): Boolean;
+var
+  FileName: String;
+  Root: TJSONValue;
+  Items, Names: TJSONArray;
+  Item: TJSONObject;
+  Box: TJSONArray;
+  Entry: TAnimationBounds;
+  Found: TArray<TAnimationBounds>;
+  Saved: TArray<String>;
+  Name: String;
+
+  function Coord(const AIndex: Integer): Single;
+  begin
+    Result := (Box.Items[AIndex] as TJSONNumber).AsDouble;
+  end;
+
+begin
+  Result := False;
+  ABounds := nil;
+  FileName := AnimationBoundsCacheFile(AModelFile);
+  if (FileName = String.Empty) or not FileExists(FileName) then
+    Exit;
+  Root := nil;
+  try
+    try
+      Root := TJSONObject.ParseJSONValue(TFile.ReadAllText(FileName, TEncoding.UTF8));
+      if not (Root is TJSONObject) or
+        (TJSONObject(Root).GetValue<Integer>('version', 0) <> BOUNDS_CACHE_VERSION) then
+        Exit;
+      // Saved for exactly these animations, each once
+      Names := TJSONObject(Root).GetValue('names') as TJSONArray;
+      if (Names = nil) or (Names.Count <> Length(ANames)) then
+        Exit;
+      for var I := 0 to Names.Count - 1 do
+        Saved := Saved + [Names.Items[I].Value];
+      for Name in ANames do
+      begin
+        var Count := 0;
+        for var Other in Saved do
+          if Other = Name then
+            Inc(Count);
+        if Count <> 1 then
+          Exit;
+      end;
+      Items := TJSONObject(Root).GetValue('animations') as TJSONArray;
+      if (Items = nil) or (Items.Count > Length(ANames)) then
+        Exit;
+      for var I := 0 to Items.Count - 1 do
+      begin
+        Item := Items.Items[I] as TJSONObject;
+        Box := Item.GetValue('box') as TJSONArray;
+        if (Box = nil) or (Box.Count <> 6) then
+          Exit;
+        Entry.Name := Item.GetValue<String>('name');
+        Entry.Poses := Item.GetValue<Integer>('poses');
+        Entry.Box.TopLeftNear := Point3D(Coord(0), Coord(1), Coord(2));
+        Entry.Box.BottomRightFar := Point3D(Coord(3), Coord(4), Coord(5));
+        if IndexStr(Entry.Name, Saved) < 0 then
+          Exit;
+        Found := Found + [Entry];
+      end;
+      ABounds := Found;
+      Result := True;
+    except
+      ABounds := nil;   // damaged or unreadable: measure again
+      Result := False;
+    end;
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure SaveAnimationBoundsCache(const AModelFile: String; const ANames: TArray<String>;
+  const ABounds: TArray<TAnimationBounds>);
+var
+  FileName: String;
+  Root, Item: TJSONObject;
+  Items, Box, Names: TJSONArray;
+  Entry: TAnimationBounds;
+
+  procedure AddCoord(const AValue: Double);
+  begin
+    Box.AddElement(TJSONNumber.Create(AValue));
+  end;
+
+begin
+  FileName := AnimationBoundsCacheFile(AModelFile);
+  if FileName = String.Empty then
+    Exit;
+  Root := TJSONObject.Create;
+  try
+    Root.AddPair('version', TJSONNumber.Create(BOUNDS_CACHE_VERSION));
+    Root.AddPair('model', ExpandFileName(AModelFile));
+    Names := TJSONArray.Create;
+    Root.AddPair('names', Names);
+    for var Name in ANames do
+      Names.Add(Name);
+    Items := TJSONArray.Create;
+    Root.AddPair('animations', Items);
+    for Entry in ABounds do
+    begin
+      Item := TJSONObject.Create;
+      Items.AddElement(Item);
+      Item.AddPair('name', Entry.Name);
+      Item.AddPair('poses', TJSONNumber.Create(Entry.Poses));
+      Box := TJSONArray.Create;
+      Item.AddPair('box', Box);
+      AddCoord(Entry.Box.TopLeftNear.X);
+      AddCoord(Entry.Box.TopLeftNear.Y);
+      AddCoord(Entry.Box.TopLeftNear.Z);
+      AddCoord(Entry.Box.BottomRightFar.X);
+      AddCoord(Entry.Box.BottomRightFar.Y);
+      AddCoord(Entry.Box.BottomRightFar.Z);
+    end;
+    try
+      ForceDirectories(ExtractFilePath(FileName));
+      TFile.WriteAllText(FileName, Root.ToJSON, TEncoding.UTF8);
+    except
+      // Not kept: measured again next time
+    end;
+  finally
+    Root.Free;
+  end;
 end;
 
 function AutoIconFileName(const AExtension: String): String;
