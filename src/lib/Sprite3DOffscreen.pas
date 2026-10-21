@@ -25,9 +25,12 @@
 //** On macOS and iOS Gorilla renders through Metal, so there a grab is instead a screenshot of
 //** the viewport as it is shown, from TGorillaViewport.MakeScreenshot, cropped about its
 //** centre to the target's shape and scaled to the target's size. OnBeforeGrab and
-//** OnAfterGrab are not called, so the framing is the screen's, and the image is opaque: it
-//** shows the viewport's own background, and Backdrop and TransparentBackground are not
-//** used.
+//** OnAfterGrab are not called, so the framing is the screen's. The on-screen background is
+//** a 2D control behind the viewport, so it is not in the screenshot: what is behind the
+//** model is the viewport's own Color, fully transparent unless the background is None.
+//** For a Solid or Gradient Backdrop, the screenshot is laid over it at the target's size;
+//** otherwise the image keeps whatever transparency the screenshot has. Soft edges are not
+//** matted as on the other platforms, and TransparentBackground is not used.
 //**
 //** @preformatted(
 //** TGorillaRenderPassController @(Gorilla.Controller@)
@@ -68,9 +71,13 @@ unit Sprite3DOffscreen;
   instead a screenshot of the viewport as it is shown, from
   TGorillaViewport.MakeScreenshot, cropped about its centre to the target's
   shape and scaled to the target's size. OnBeforeGrab and OnAfterGrab are
-  not called, so the framing is the screen's, and the image is opaque: it
-  shows the viewport's own background, and Backdrop and
-  TransparentBackground are not used.
+  not called, so the framing is the screen's. The on-screen background is a
+  2D control behind the viewport, so it is not in the screenshot: what is
+  behind the model is the viewport's own Color, fully transparent unless
+  the background is None. For a Solid or Gradient Backdrop, the screenshot
+  is laid over it at the target's size; otherwise the image keeps whatever
+  transparency the screenshot has. Soft edges are not matted as on the
+  other platforms, and TransparentBackground is not used.
 
     TGorillaRenderPassController (Gorilla.Controller)
     `-- TSprite3DOffscreen   pre-pass into a Width x Height frame buffer
@@ -968,12 +975,12 @@ end;
 
 {$IFDEF S3D_SCREENSHOT_GRAB}
 // Metal: the viewport as last shown, cropped about its centre to the
-// target's shape and drawn at the target's size, then handed to Deliver,
-// which reports it on the main thread and frees it. Any failure is reported
-// the same way, as an error.
+// target's shape and drawn at the target's size, over the Backdrop if it is
+// Solid or Gradient, then handed to Deliver, which reports it on the main
+// thread and frees it. Any failure is reported the same way, as an error.
 procedure TSprite3DOffscreen.GrabScreenshot;
 var
-  Shot, Image: TBitmap;
+  Shot, Image, Under: TBitmap;
   Source: TRectF;
   W, H: Single;
 begin
@@ -997,6 +1004,19 @@ begin
       if Image.Canvas.BeginScene then
       try
         Image.Canvas.Clear(TAlphaColors.Null);
+        // The on-screen background is not in the screenshot; a colour or
+        // gradient goes under it here, as the other platforms fill it in
+        if FBackdrop.Kind in [TSprite3DBackgroundKind.Solid,
+          TSprite3DBackgroundKind.Gradient] then
+        begin
+          Under := FBackdrop.NewBitmap(FWidth, FHeight, 1);
+          try
+            Image.Canvas.DrawBitmap(Under, TRectF.Create(0, 0, FWidth, FHeight),
+              TRectF.Create(0, 0, FWidth, FHeight), 1, True);
+          finally
+            Under.Free;
+          end;
+        end;
         Image.Canvas.DrawBitmap(Shot, Source, TRectF.Create(0, 0, FWidth, FHeight), 1, False);
       finally
         Image.Canvas.EndScene;

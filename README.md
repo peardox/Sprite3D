@@ -106,6 +106,8 @@ An ARM64EC build (Windows on ARM) can load x64 and ARM64EC libraries but not pla
 
 Until a platform's folder has its libraries, deploying for that platform reports them as missing; untick them in Project, Deployment, or add the libraries. On macOS and iOS the libraries are signed with the app when it is signed, and the hardened runtime must allow libraries from other developers (`com.apple.security.cs.disable-library-validation`) unless they are signed with the app's own team ID.
 
+The libraries are needed only at run time, never to build: Sprite3D does not link against them on any platform, so every platform builds without them.
+
 ### OpenH264 (optional, for H.264 MP4 files)
 
 On its own, FFmpeg's MP4 export writes MPEG-4 Part 2 video, which desktop players handle but web browsers do not. With Cisco's [OpenH264](https://github.com/cisco/openh264) library as well, MP4 files are H.264 instead, which plays everywhere.
@@ -155,7 +157,7 @@ Sprite3D/
 |-- openh264.json             where to download OpenH264 for each platform
 `-- src/
     |-- Sprite3d.dpr, .dproj, .res, Sprite3d_Icon.ico
-    |-- ffmpeg/               DelphiFFmpeg.com FFmpeg 8.1 headers, unchanged, with their licence
+    |-- ffmpeg/               DelphiFFmpeg.com FFmpeg 8.1 headers, unchanged, for reference
     |-- styles/               the themes' FMX styles, linked into the program
     |   |-- Sprite3DThemes.rc        the RCDATA resources
     |   `-- buildstyles.cmd          pre-build: copies the .style files, builds the .res
@@ -314,7 +316,7 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 
 ## Licences
 
-- `src/ffmpeg` holds the FFmpeg Delphi/Pascal headers from [DelphiFFmpeg.com](http://www.delphiffmpeg.com/headers/), unchanged. They are under DelphiFFmpeg.com's BSD-style licence, in `src/ffmpeg/LICENSE.txt`: the notice must stay with the source, and binaries must reproduce it in their documentation.
+- `src/ffmpeg` holds the FFmpeg Delphi/Pascal headers from [DelphiFFmpeg.com](http://www.delphiffmpeg.com/headers/), unchanged. They are not compiled into Sprite3D: they bind FFmpeg statically, and define some error codes only for Windows and macOS, so `Sprite3DVideo.pas` instead declares the few records and constants it needs, copied from them, and loads the libraries itself. The headers and those declarations are under DelphiFFmpeg.com's BSD-style licence, in `src/ffmpeg/LICENSE.txt`: the notice must stay with the source, and binaries must reproduce it in their documentation.
 - The FFmpeg libraries in the DLL pack are under FFmpeg's own licence, the LGPL for the builds used. Shipping them with Sprite3D brings the LGPL's conditions for those libraries.
 - `src/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API headers, Copyright (c) 2013, Cisco Systems, under the BSD 2-clause licence: the notice stays with the source, and binaries must reproduce it in their documentation. The OpenH264 library itself is not distributed with Sprite3D; Cisco's binary licence and its H.264 patent cover apply to copies downloaded from Cisco.
 

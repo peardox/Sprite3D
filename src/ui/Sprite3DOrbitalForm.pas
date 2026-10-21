@@ -105,12 +105,8 @@ type
   /// <remarks>Set CameraSpec and OnPreview before showing it, and read CameraSpec back after
   /// OK.</remarks>
   TOrbitalSettingsForm = class(TForm)
-    //** @abstract(Holds everything above the buttons.)
-    /// <summary>Holds everything above the buttons.</summary>
-    Layout1: TLayout;
-    //** @abstract(Holds the OK and Cancel buttons.)
-    /// <summary>Holds the OK and Cancel buttons.</summary>
-    Layout2: TLayout;
+    ControlLayout: TLayout;
+    ButtonLayout: TLayout;
     //** @abstract(Holds the dials, the pan and the distance slider.)
     /// <summary>Holds the dials, the pan and the distance slider.</summary>
     OrbitalLayout: TLayout;

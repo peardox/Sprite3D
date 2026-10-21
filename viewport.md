@@ -1,42 +1,32 @@
 ### Explain how the background is drawn
 
-> The background is ordinary 3D geometry that travels with the camera and is resized every frame so it exactly fills the view. Everything lives in Sprite3DBackground.pas.
+> The background is no longer part of the 3D scene. It is an ordinary 2D control painted from a bitmap, sitting directly behind a GorillaViewport whose `Color` is fully transparent. Everything lives in Sprite3DBackground.pas.
 >
 > Where it sits
 >
-> TSprite3DBackground is a TDummy attached to the camera’s RollPivot, the same dummy the camera hangs from. The camera sits at (0, 0, −Distance) in that frame, looking along +Z, with X to the right and Y down the screen. Because the background shares that frame, it turns and moves with the camera automatically; nothing has to track the camera’s angles.
+> `TSprite3DBackground` is a `TControl`. `AttachTo(GorillaViewport)` makes it a child of the viewport's parent (ViewportLayout), moves it to just before the viewport in the child order so it is painted first, and gives it the viewport's `Align` and `Margins`. Two `Client`-aligned siblings share the same area, so it always covers exactly what the viewport covers. Because it is 2D, it does not care about the camera at all: perspective, orthographic, field of view, zoom and roll make no difference to it.
 >
-> Fitting it to the view
+> The viewport's colour
 >
-> On every frame, Render calls Fit:
->
-> It picks a depth of 95% of the far plane (950 units from the camera), so anything in the scene is in front of it.
-> It asks the camera for the half-width and half-height of the view at that depth (ViewHalfExtents, worked out from the camera’s own projection matrix). That covers any field of view, window shape or zoom.
-> It sizes the planes to match, 2% larger so no edge shows through rounding.
-> It only sets a property when the value has changed, because every change makes Gorilla redraw.
+> Gorilla3D 1.5.3 honours the alpha of `TGorillaViewport.Color`. For Transparent, Solid and Gradient the background sets the viewport's `Color` to `TAlphaColors.Null`, so the background shows wherever the scene draws nothing. For None it hides itself and gives the viewport back the opaque `Color` it had when attached (black if that was already transparent), so the view looks as it always did.
 >
 > The kinds
 >
-> None: every plane is shrunk to a speck and moved out of view, so nothing is drawn and the viewport’s own black shows.
-> Solid: one full-view plane, a pair really (see below), whose material has a tiny GLSL SurfaceShader that sets one colour.
-> Gradient: the same plane, with a shader that blends from the From colour to the To colour down the plane’s own Y axis (vars.v_VertPos.y). For the other directions, the plane is turned in the view so its Y axis points the chosen way, and enlarged so it still covers the view. The diagonals run exactly corner to corner. After turning, the code reads the plane’s matrix to confirm the axis points the right way, and turns it the other way if not.
-> Transparent (the checker): the full-view plane is put away. The view is tiled with small square planes side by side, light and dark alternating, starting with light at the top-left. All light squares share one material and all dark squares another. They’re all made at startup and only moved afterwards, up to 150 squares of each grey; above that, the squares are drawn at 2×, 3× and so on.
+> None: hidden; the viewport's own opaque colour shows.
+> Solid: no bitmap; the control's area is filled with the colour.
+> Gradient: a bitmap of at most 512 pixels along its longer side, each pixel coloured by the spec's own `GradientAtPoint` arithmetic (the same the off-screen grabs use), stretched smoothly to the control. A blend loses nothing by being stretched, and it stays quick to remake while the window is resized.
+> Transparent (the checker): a bitmap at the display's real pixel size, drawn without smoothing so the square edges stay sharp. Squares are `CheckerSize` logical pixels, light at the top-left. Only two distinct rows exist, so each is painted once and copied to every other row.
 >
-> Why it’s built this way
+> The bitmap is kept and only remade when the spec, the control's size or the display scale changes. `TSprite3DBackgroundSpec.NewBitmap` does the painting and can be used on its own.
 >
-> Each design choice works around something that went wrong:
+> What went away
 >
-> Squares, not a checker shader: Gorilla failed on shaders that read the horizontal position or used fract, so the checker had to be geometry.
-> Side by side, not stacked: dark squares laid over a light plane were too close in depth for the depth buffer to tell apart.
-> Made at startup: adding planes after the first frame never drew reliably, so nothing is added later; planes are only moved.
-> Culling off: Gorilla’s frustum culling misjudged where the small squares were and skipped most of them, so every background plane has FrustumCullingCheck := False.
-> Pairs of planes: every plane has a twin turned half a turn, so one of them faces the camera whichever side Gorilla treats as the front.
-> Black Diffuse: even with lighting off, Gorilla adds part of the material’s own Diffuse colour to what the shader gives, so the materials’ Diffuse is black. Colours still come out about 1.25× too bright (128 shows as 160) from a source I haven’t pinned down yet.
+> All the workarounds for drawing a background in 3D are gone: the shader and Metal texture paths, the pairs of back-to-back planes, the pool of checker squares made at start-up, frustum-culling exclusions, the black Diffuse colour and its 1.25× brightness, stowing planes as specks, and hiding the background in orthographic view. The colours on screen are now exactly the colours chosen.
 >
 > Grabs and icons
 >
-> The background is hidden while a grab is drawn: OnBeforeGrab sets Hidden, which shrinks the planes to a speck and moves them out of view, and OnAfterGrab brings them back. The off-screen renderer cuts the model out against a transparent background. With None or Transparent the grab stays transparent. With Solid or Gradient it fills the colour or gradient in afterwards, per pixel, in the same direction as on screen, so soft edges blend into it.
+> The off-screen pass draws the scene into a frame buffer of its own with its own clear colours, so the 2D background can never end up in a grab, and the main form no longer needs to hide it around a grab. As before, None and Transparent grab transparent, and Solid or Gradient are filled in afterwards, per pixel, so soft edges blend into them. On macOS and iOS, where a grab is a screenshot of the viewport, the screenshot no longer contains the background either; for Solid or Gradient the backdrop is painted under the screenshot at the grab size.
 >
-> Not working yet
+> Still to check
 >
-> In orthographic view the background draws black over the whole scene, so for now it’s simply hidden there. That’s the issue you’re taking to the developer.
+> Whether `MakeScreenshot` on Metal keeps the viewport's transparency, which decides whether Transparent grabs on macOS and iOS come out transparent or black.

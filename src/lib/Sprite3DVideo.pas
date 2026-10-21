@@ -9,13 +9,16 @@
 //** cases FFmpeg writes the MP4 file, and there is no sound track. OpenH264 is used only as
 //** Sprite3DOpenH264 is told, from the copy downloaded for the platform.
 //**
-//** The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers in the
-//** @code(ffmpeg) folder, used as they are. Those headers bind every function statically, so
-//** calling any of them would make the program fail to start where the libraries are
-//** missing. This unit calls none of them: it loads avutil, avcodec and avformat itself with
-//** LoadLibrary or dlopen and looks up the two dozen functions it needs, with the headers'
-//** signatures, so Sprite3D starts and runs whether or not the libraries are there, and
-//** offers video only when VideoAvailable says they loaded.
+//** The unit does not use the DelphiFFmpeg.com FFmpeg 8.1 headers in the @code(ffmpeg)
+//** folder. Those bind every function statically: the linker is given every library they
+//** name, so on macOS and iOS the program would not link, or not start, without the
+//** libraries, and they define some error codes only for Windows and macOS, so they do not
+//** compile for Linux or Android. Instead the few records and constants it needs are declared
+//** privately in the implementation section, copied field for field from those headers, and
+//** it loads avutil, avcodec and avformat itself with LoadLibrary or dlopen and looks up the
+//** two dozen functions it needs, with the headers' signatures. So Sprite3D builds for every
+//** platform, starts and runs whether or not the libraries are there, and offers video only
+//** when VideoAvailable says they loaded.
 //**
 //** The libraries must be FFmpeg 8.1's major versions, as the headers are: avutil 60,
 //** avcodec 62 and avformat 62. They are looked for in the folders NativeLibraryFolders in
@@ -53,14 +56,18 @@ unit Sprite3DVideo;
   used only as Sprite3DOpenH264 is told, from the copy downloaded for the
   platform.
 
-  The types and constants come from the DelphiFFmpeg.com FFmpeg 8.1 headers
-  in the ffmpeg folder, used as they are. Those headers bind every function
-  statically, so calling any of them would make the program fail to start
-  where the libraries are missing. This unit calls none of them: it loads
-  avutil, avcodec and avformat itself with LoadLibrary or dlopen and looks
-  up the two dozen functions it needs, with the headers' signatures, so
-  Sprite3D starts and runs whether or not the libraries are there, and
-  offers video only when VideoAvailable says they loaded.
+  The unit does not use the DelphiFFmpeg.com FFmpeg 8.1 headers in the
+  ffmpeg folder. Those bind every function statically: the linker is given
+  every library they name, so on macOS and iOS the program would not link,
+  or not start, without the libraries, and they define some error codes
+  only for Windows and macOS, so they do not compile for Linux or Android.
+  Instead the few records and constants it needs are declared privately in
+  the implementation section, copied field for field from those headers,
+  and it loads avutil, avcodec and avformat itself with LoadLibrary or
+  dlopen and looks up the two dozen functions it needs, with the headers'
+  signatures. So Sprite3D builds for every platform, starts and runs
+  whether or not the libraries are there, and offers video only when
+  VideoAvailable says they loaded.
 
   The libraries must be FFmpeg 8.1's major versions, as the headers are:
   avutil 60, avcodec 62 and avformat 62. They are looked for in the folders
@@ -274,11 +281,247 @@ uses
   {$IFDEF MSWINDOWS}
   Winapi.Windows,
   {$ENDIF}
-  System.Classes, System.IOUtils, System.Math, Sprite3DNativeLibs,
-  // The DelphiFFmpeg.com headers: types and constants only, see above
-  libavutil, libavutil_error, libavutil_frame, libavutil_pixfmt, libavutil_rational,
-  libavcodec, libavcodec_codec, libavcodec_codec_id, libavcodec_codec_par,
-  libavcodec_codec_defs, libavcodec_packet, libavformat, libavformat_avio;
+  System.Classes, System.IOUtils, System.Math, Sprite3DNativeLibs;
+
+// FFmpeg 8.1's types and constants, as far as this unit needs them, copied
+// from the DelphiFFmpeg.com headers in the ffmpeg folder (BSD-style licence,
+// src/ffmpeg/LICENSE.txt). Each record is only ever reached through a
+// pointer FFmpeg allocated, so it is declared only up to the last field
+// used here; every field before that is kept, in order, so the offsets are
+// the headers'. Enumerations are Integer, four bytes as in the headers, and
+// other records' pointers are Pointer. Do not declare variables of these
+// records, or take their SizeOf: they are not whole.
+{$ALIGN 8}   // natural alignment, as C and the headers lay records out
+const
+  FFMPEG_VERSION = '8.1';
+  // The other libraries' major versions; avutil, avcodec and avformat's
+  // are below, as AVUTIL_MAJOR and so on
+  LIBSWRESAMPLE_VERSION_MAJOR = 6;
+  LIBSWSCALE_VERSION_MAJOR = 9;
+  AV_NUM_DATA_POINTERS = 8;
+  // enum AVCodecID
+  AV_CODEC_ID_MPEG4 = 12;
+  AV_CODEC_ID_H264 = 27;
+  // enum AVPixelFormat
+  AV_PIX_FMT_YUV420P = 0;
+  // enum AVMediaType
+  AVMEDIA_TYPE_VIDEO = 0;
+  // FFERRTAG('E', 'O', 'F', ' ')
+  AVERROR_EOF = -(Ord('E') or (Ord('O') shl 8) or (Ord('F') shl 16) or (Ord(' ') shl 24));
+  AVIO_FLAG_WRITE = 2;
+  AVFMT_NOFILE = $0001;
+  AVFMT_GLOBALHEADER = $0040;
+  AV_PKT_FLAG_KEY = $0001;
+  AV_INPUT_BUFFER_PADDING_SIZE = 64;
+  AV_CODEC_FLAG_QSCALE = 1 shl 1;
+  AV_CODEC_FLAG_GLOBAL_HEADER = 1 shl 22;
+  FF_QP2LAMBDA = 118;
+
+type
+  TAVCodecID = Integer;
+
+  TAVRational = record
+    num: Integer;
+    den: Integer;
+  end;
+
+  TAVChannelLayout = record
+    order: Integer;
+    nb_channels: Integer;
+    u: record
+      case Integer of
+        0: (mask: Int64);
+        1: (map: Pointer);
+      end;
+    opaque: Pointer;
+  end;
+
+  // Opaque here: only passed back to FFmpeg
+  PAVCodec = Pointer;
+  PAVIOContext = Pointer;
+  PPAVIOContext = ^PAVIOContext;
+
+  PAVFrame = ^TAVFrame;
+  PPAVFrame = ^PAVFrame;
+  // Up to pts
+  TAVFrame = record
+    data: array[0..AV_NUM_DATA_POINTERS - 1] of PByte;
+    linesize: array[0..AV_NUM_DATA_POINTERS - 1] of Integer;
+    extended_data: Pointer;
+    width, height: Integer;
+    nb_samples: Integer;
+    format: Integer;
+    pict_type: Integer;
+    sample_aspect_ratio: TAVRational;
+    pts: Int64;
+  end;
+
+  PAVPacket = ^TAVPacket;
+  PPAVPacket = ^PAVPacket;
+  // Up to duration
+  TAVPacket = record
+    buf: Pointer;
+    pts: Int64;
+    dts: Int64;
+    data: PByte;
+    size: Integer;
+    stream_index: Integer;
+    flags: Integer;
+    side_data: Pointer;
+    side_data_elems: Integer;
+    duration: Int64;
+  end;
+
+  PAVCodecParameters = ^TAVCodecParameters;
+  // Up to height
+  TAVCodecParameters = record
+    codec_type: Integer;
+    codec_id: TAVCodecID;
+    codec_tag: Cardinal;
+    extradata: PByte;
+    extradata_size: Integer;
+    coded_side_data: Pointer;
+    nb_coded_side_data: Integer;
+    format: Integer;
+    bit_rate: Int64;
+    bits_per_coded_sample: Integer;
+    bits_per_raw_sample: Integer;
+    profile: Integer;
+    level: Integer;
+    width: Integer;
+    height: Integer;
+  end;
+
+  PAVCodecContext = ^TAVCodecContext;
+  PPAVCodecContext = ^PAVCodecContext;
+  // Up to global_quality. intra_dc_precision is there because the headers
+  // define FF_API_INTRA_DC_PRECISION for avcodec 62.
+  TAVCodecContext = record
+    av_class: Pointer;
+    log_level_offset: Integer;
+    codec_type: Integer;
+    codec: PAVCodec;
+    codec_id: TAVCodecID;
+    codec_tag: Cardinal;
+    priv_data: Pointer;
+    internal: Pointer;
+    opaque: Pointer;
+    bit_rate: Int64;
+    flags: Integer;
+    flags2: Integer;
+    extradata: PByte;
+    extradata_size: Integer;
+    time_base: TAVRational;
+    pkt_timebase: TAVRational;
+    framerate: TAVRational;
+    delay: Integer;
+    width, height: Integer;
+    coded_width, coded_height: Integer;
+    sample_aspect_ratio: TAVRational;
+    pix_fmt: Integer;
+    sw_pix_fmt: Integer;
+    color_primaries: Integer;
+    color_trc: Integer;
+    colorspace: Integer;
+    color_range: Integer;
+    chroma_sample_location: Integer;
+    field_order: Integer;
+    refs: Integer;
+    has_b_frames: Integer;
+    slice_flags: Integer;
+    draw_horiz_band: Pointer;
+    get_format: Pointer;
+    max_b_frames: Integer;
+    b_quant_factor: Single;
+    b_quant_offset: Single;
+    i_quant_factor: Single;
+    i_quant_offset: Single;
+    lumi_masking: Single;
+    temporal_cplx_masking: Single;
+    spatial_cplx_masking: Single;
+    p_masking: Single;
+    dark_masking: Single;
+    nsse_weight: Integer;
+    me_cmp: Integer;
+    me_sub_cmp: Integer;
+    mb_cmp: Integer;
+    ildct_cmp: Integer;
+    dia_size: Integer;
+    last_predictor_count: Integer;
+    me_pre_cmp: Integer;
+    pre_dia_size: Integer;
+    me_subpel_quality: Integer;
+    me_range: Integer;
+    mb_decision: Integer;
+    intra_matrix: PWord;
+    inter_matrix: PWord;
+    chroma_intra_matrix: PWord;
+    intra_dc_precision: Integer;
+    mb_lmin: Integer;
+    mb_lmax: Integer;
+    bidir_refine: Integer;
+    keyint_min: Integer;
+    gop_size: Integer;
+    mv0_threshold: Integer;
+    slices: Integer;
+    sample_rate: Integer;
+    sample_fmt: Integer;
+    ch_layout: TAVChannelLayout;
+    frame_size: Integer;
+    block_align: Integer;
+    cutoff: Integer;
+    audio_service_type: Integer;
+    request_sample_fmt: Integer;
+    initial_padding: Integer;
+    trailing_padding: Integer;
+    seek_preroll: Integer;
+    get_buffer2: Pointer;
+    bit_rate_tolerance: Integer;
+    global_quality: Integer;
+  end;
+
+  PAVStream = ^TAVStream;
+  // Up to avg_frame_rate
+  TAVStream = record
+    av_class: Pointer;
+    index: Integer;
+    id: Integer;
+    codecpar: PAVCodecParameters;
+    priv_data: Pointer;
+    time_base: TAVRational;
+    start_time: Int64;
+    duration: Int64;
+    nb_frames: Int64;
+    disposition: Integer;
+    discard: Integer;
+    sample_aspect_ratio: TAVRational;
+    metadata: Pointer;
+    avg_frame_rate: TAVRational;
+  end;
+
+  PAVOutputFormat = ^TAVOutputFormat;
+  // Up to flags
+  TAVOutputFormat = record
+    name: PAnsiChar;
+    long_name: PAnsiChar;
+    mime_type: PAnsiChar;
+    extensions: PAnsiChar;
+    audio_codec: TAVCodecID;
+    video_codec: TAVCodecID;
+    subtitle_codec: TAVCodecID;
+    flags: Integer;
+  end;
+
+  PAVFormatContext = ^TAVFormatContext;
+  PPAVFormatContext = ^PAVFormatContext;
+  // Up to pb
+  TAVFormatContext = record
+    av_class: Pointer;
+    iformat: Pointer;
+    oformat: PAVOutputFormat;
+    priv_data: Pointer;
+    pb: PAVIOContext;
+  end;
 
 const
   // The major versions the headers describe; the libraries must match, or
