@@ -49,6 +49,11 @@
 //** again with smaller drawings and more of them. Overscan does not apply on macOS and iOS,
 //** where grabs are screenshots.
 //**
+//** The matting and the scaling down of each drawing are done on a worker thread, a task
+//** from the RTL's thread pool, as they are pure arithmetic on the pixels read back; the
+//** render loop and the user interface carry on meanwhile, and the result is picked up on
+//** the main thread. Everything else, including every event, stays on the main thread.
+//**
 //** @preformatted(
 //** TGorillaRenderPassController @(Gorilla.Controller@)
 //** `-- TSprite3DOffscreen   pre-pass into a Width x Height frame buffer
@@ -115,6 +120,12 @@ unit Sprite3DOffscreen;
   the session, OnOverscanReduced is called, and the grab is made again with
   smaller drawings and more of them. Overscan does not apply on macOS and
   iOS, where grabs are screenshots.
+
+  The matting and the scaling down of each drawing are done on a worker
+  thread, a task from the RTL's thread pool, as they are pure arithmetic on
+  the pixels read back; the render loop and the user interface carry on
+  meanwhile, and the result is picked up on the main thread. Everything else,
+  including every event, stays on the main thread.
 
     TGorillaRenderPassController (Gorilla.Controller)
     `-- TSprite3DOffscreen   pre-pass into a Width x Height frame buffer
@@ -323,14 +334,13 @@ type
     FJitterIndex: Integer;  // the drawing under way, 0 to FJitter * FJitter - 1
     FShifted: Boolean;      // OnShiftView has slid the view for this drawing
     FAccum: TArray<Single>; // the drawings so far, scaled down and added up
-    function OverscanFailed(const APixels: TBytes; const ACheckClear: Boolean): Boolean;
     procedure RetrySmaller;
     function DirectOverscan(const AWidth, AHeight: Integer): Integer;
     procedure StartDrawings;
     procedure Collect(const APixels: TBytes; const AMatte: Boolean);
     procedure Restore;
     procedure SetOverscan(const Value: Integer);
-    function Shrink(const APixels: TBytes): TBytes;
+    procedure ProcessDrawing(const AFirst, ASecond: TBytes; const AMatte: Boolean);
     procedure SetWidth(const Value: Integer);
     procedure SetHeight(const Value: Integer);
     procedure ApplyTargetSize;
@@ -648,7 +658,7 @@ type
 implementation
 
 uses
-  System.Math
+  System.Math, System.Threading
   {$IFDEF POSIX}
   , Posix.Dlfcn
   {$ENDIF}
@@ -1247,16 +1257,6 @@ begin
     ApplyTargetSize;
 end;
 
-// An overscanned drawing scaled down to the grab's size, with Resample;
-// anything already that size comes back as it is
-function TSprite3DOffscreen.Shrink(const APixels: TBytes): TBytes;
-begin
-  if (FReadWidth = FGrabWidth) and (FReadHeight = FGrabHeight) then
-    Exit(APixels);
-  Result := ResamplePixels(APixels, FReadWidth, FReadHeight, FGrabWidth, FGrabHeight,
-    FResample);
-end;
-
 procedure TSprite3DOffscreen.SetWidth(const Value: Integer);
 begin
   FWidth := Max(1, Value);
@@ -1587,25 +1587,7 @@ begin
         Restore;
         Pixels := FReads[0];
         FReads := nil;   // only Pixels holds the drawing now
-        if OverscanFailed(Pixels, False) then
-        begin
-          RetrySmaller;
-          Exit;
-        end;
-        for var I := 0 to FReadWidth * FReadHeight - 1 do
-          Pixels[I * 4 + 3] := 255;   // the renderer's alpha is not kept
-        // An overscanned drawing goes back to the grab's size here, and the
-        // large one is let go
-        try
-          Pixels := Shrink(Pixels);
-        except
-          on E: Exception do
-          begin
-            Finish(nil, 0, 0, 'Scaling the overscanned grab down failed: ' + E.Message);
-            Exit;
-          end;
-        end;
-        Collect(Pixels, False);
+        ProcessDrawing(Pixels, nil, False);
       end;
 
     STAGE_ITERATIONS:
@@ -1687,18 +1669,18 @@ begin
   Finish(nil, 0, 0, AError);
 end;
 
-// Whether an overscanned grab did not draw: it read back smaller than the
+// Whether an overscanned drawing did not draw: it read back smaller than the
 // target asked for, or, for a matte (ACheckClear), every pixel is fully
-// transparent, which a framed model never is
-function TSprite3DOffscreen.OverscanFailed(const APixels: TBytes;
-  const ACheckClear: Boolean): Boolean;
+// transparent, which a framed model never is. Pure: any thread.
+function OverscanFailed(const APixels: TBytes; const AReadWidth, AReadHeight,
+  AGrabWidth, AGrabHeight, AScan: Integer; const ACheckClear: Boolean): Boolean;
 var
   I: Integer;
 begin
   Result := False;
-  if FScan <= 1 then
+  if AScan <= 1 then
     Exit;
-  if (FReadWidth < FGrabWidth * FScan) or (FReadHeight < FGrabHeight * FScan) then
+  if (AReadWidth < AGrabWidth * AScan) or (AReadHeight < AGrabHeight * AScan) then
     Exit(True);
   if not ACheckClear then
     Exit;
@@ -1752,7 +1734,7 @@ end;
 procedure TSprite3DOffscreen.CompleteMatte;
 var
   Encoded: Boolean;
-  Matte: TBytes;
+  Dark, Light: TBytes;
 begin
   FPending := False;
   Restore;
@@ -1762,25 +1744,93 @@ begin
     FOutputEncoded := Encoded;
     FOutputKnown := True;
   end;
-  Matte := BuildMatte(FReads[0], FReads[1], FOutputEncoded);
-  FReads := nil;   // the drawings are done with; free them before scaling
-  if OverscanFailed(Matte, True) then
-  begin
-    RetrySmaller;
-    Exit;
-  end;
-  // An overscanned matte goes back to the grab's size before the backdrop
-  // is filled in, so the backdrop is drawn at the size it is seen at
-  try
-    Matte := Shrink(Matte);
-  except
-    on E: Exception do
+  Dark := FReads[0];
+  Light := FReads[1];
+  FReads := nil;   // only Dark and Light hold the drawings now
+  ProcessDrawing(Dark, Light, True);
+end;
+
+// The arithmetic on one drawing, on a worker thread so the render loop and
+// the user interface carry on: the matte from the drawings over black and
+// white (AMatte), or the opaque drawing with its alpha set; the check that
+// an overscanned drawing really drew; and the scaling down to the grab's
+// size. The result is picked up on the main thread, where it is retried
+// smaller, collected, or reported as failed. Everything the worker needs is
+// copied first, so it touches nothing of the pass.
+procedure TSprite3DOffscreen.ProcessDrawing(const AFirst, ASecond: TBytes;
+  const AMatte: Boolean);
+var
+  Alive: IAliveFlag;
+  Me: TSprite3DOffscreen;
+  First, Second: TBytes;
+  Encoded: Boolean;
+  ReadW, ReadH, GrabW, GrabH, Scan: Integer;
+  Filter: TSprite3DResampleFilter;
+  IsMatte: Boolean;
+begin
+  Alive := FAlive as IAliveFlag;
+  Me := Self;
+  IsMatte := AMatte;   // a local, for the anonymous methods to capture
+  First := AFirst;
+  Second := ASecond;
+  Encoded := FOutputEncoded;
+  ReadW := FReadWidth;
+  ReadH := FReadHeight;
+  GrabW := FGrabWidth;
+  GrabH := FGrabHeight;
+  Scan := FScan;
+  Filter := FResample;
+  // Nothing is pending until the next drawing is started, so the pass can
+  // stop drawing every frame while the worker is busy; it cannot be
+  // switched off from inside its own render, so from the main queue
+  System.Classes.TThread.ForceQueue(nil,
+    procedure
     begin
-      Finish(nil, 0, 0, 'Scaling the overscanned grab down failed: ' + E.Message);
-      Exit;
-    end;
-  end;
-  Collect(Matte, True);
+      if Alive.IsAlive and not Me.FPending then
+        Me.Enabled := False;
+    end);
+  TTask.Run(
+    procedure
+    var
+      Pixels: TBytes;
+      Failed: Boolean;
+      Error: String;
+    begin
+      Failed := False;
+      Error := String.Empty;
+      try
+        if IsMatte then
+          Pixels := BuildMatte(First, Second, Encoded)
+        else
+        begin
+          Pixels := First;
+          for var I := 0 to ReadW * ReadH - 1 do
+            Pixels[I * 4 + 3] := 255;   // the renderer's alpha is not kept
+        end;
+        First := nil;
+        Second := nil;
+        Failed := OverscanFailed(Pixels, ReadW, ReadH, GrabW, GrabH, Scan, IsMatte);
+        // An overscanned drawing goes back to the grab's size here, before
+        // any backdrop, and the large one is let go
+        if not Failed and ((ReadW <> GrabW) or (ReadH <> GrabH)) then
+          Pixels := ResamplePixels(Pixels, ReadW, ReadH, GrabW, GrabH, Filter);
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      System.Classes.TThread.Queue(nil,
+        procedure
+        begin
+          if not Alive.IsAlive or not Me.FBusy then
+            Exit;   // freed or cancelled meanwhile
+          if Error <> String.Empty then
+            Me.Finish(nil, 0, 0, 'Processing the grab failed: ' + Error)
+          else if Failed then
+            Me.RetrySmaller
+          else
+            Me.Collect(Pixels, IsMatte);
+        end);
+    end);
 end;
 
 // One drawing done, at the grab's size: with no shifted drawings, it is the

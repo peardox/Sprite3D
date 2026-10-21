@@ -15,7 +15,9 @@
 //** An animation moves the model's vertices, so it can reach outside the rest pose's box.
 //** MeasureAnimationBounds steps each of the model's animations through every pose Gorilla
 //** has baked for it and returns, per animation, the box that holds all of its poses. Each of
-//** those boxes gives that animation's swept volume.
+//** those boxes gives that animation's swept volume. For a model with many animations that
+//** takes a while, so TAnimationBoundsMeasurer does the same in steps of a few milliseconds,
+//** for a caller to run between frames while the application stays responsive.
 //**
 //** FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis: it fills the
 //** view on the tighter axis, with the orbit centre on the turning axis, through the model's
@@ -31,8 +33,8 @@
 //** when none is playing or the playing one was not measured, so the wireframe changes as
 //** soon as another animation is played. It draws the swept box in aqua, and the tube's outer
 //** and inner walls, with the axis itself, in yellow. The lines are drawn with the context's
-//** DrawLine helper, following Gorilla v1.5's Line Rendering guide, with depth testing as
-//** usual, so the model hides the parts behind it. Widths above 1 pixel work on desktop OpenGL
+//** DrawLines helper, two calls a frame, one per colour, following Gorilla v1.5's Line
+//** Rendering guide, with depth testing as usual, so the model hides the parts behind it. Widths above 1 pixel work on desktop OpenGL
 //** only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
 //**
 //** The swept box is larger than the model's own box, and Gorilla counts a model's children in
@@ -81,7 +83,10 @@ unit Sprite3DSweep;
   pose's box. MeasureAnimationBounds steps each of the model's animations
   through every pose Gorilla has baked for it and returns, per animation,
   the box that holds all of its poses. Each of those boxes gives that
-  animation's swept volume.
+  animation's swept volume. For a model with many animations that takes a
+  while, so TAnimationBoundsMeasurer does the same in steps of a few
+  milliseconds, for a caller to run between frames while the application
+  stays responsive.
 
   FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis:
   it fills the view on the tighter axis, with the orbit centre on the turning
@@ -100,8 +105,9 @@ unit Sprite3DSweep;
   not measured, so the wireframe changes as soon as another animation is
   played. It draws the swept box in aqua, and the tube's outer and inner
   walls, with the axis itself, in yellow. The lines are drawn with the
-  context's DrawLine helper, following Gorilla v1.5's Line Rendering guide,
-  with depth testing as usual, so the model hides the parts behind it.
+  context's DrawLines helper, two calls a frame, one per colour, following
+  Gorilla v1.5's Line Rendering guide, with depth testing as usual, so the
+  model hides the parts behind it.
   Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and
   OpenGL ES always draw 1 pixel.
 
@@ -132,7 +138,7 @@ interface
 uses
   System.Classes, System.SysUtils, System.UITypes, System.Math, System.Math.Vectors,
   System.Generics.Collections,
-  FMX.Types, FMX.Types3D, FMX.Controls3D, FMX.Objects3D,
+  FMX.Types, FMX.Types3D, FMX.Controls3D, FMX.Objects3D, FMX.Materials,
   Gorilla.Context, Gorilla.Context.Types, Gorilla.Model, Gorilla.Animation,
   Sprite3DCamera;
 
@@ -291,6 +297,97 @@ type
     Poses: Integer;
   end;
 
+  //** @abstract(Measures a model's animations as MeasureAnimationBounds does, a few
+  //** milliseconds at a time.)
+  //**
+  //** Create it for a model, then call Step repeatedly, for example from the main thread's
+  //** queue with a frame or so between calls, until it returns True; Results then holds the
+  //** same boxes MeasureAnimationBounds would have given. Each Step measures poses until its
+  //** budget is spent, at least one, and before returning puts back the animation that was
+  //** current, running or stopped as it was, released from any fixed pose, so the frames
+  //** drawn between steps show the model as the user left it. It can stop part-way through an
+  //** animation and carry on from there next time.
+  //**
+  //** Gorilla counts a model's children in its animated bounds, so detach any child helper
+  //** for the length of each Step. Do not change the model, or its animations, between steps,
+  //** nor Step while something else drives the animations, such as a capture. Main thread
+  //** only.
+  /// <summary>Measures a model's animations as MeasureAnimationBounds does, a few milliseconds
+  /// at a time.</summary>
+  /// <remarks><para>Create it for a model, then call Step repeatedly, for example from the main
+  /// thread's queue with a frame or so between calls, until it returns True; Results then
+  /// holds the same boxes MeasureAnimationBounds would have given. Each Step measures poses
+  /// until its budget is spent, at least one, and before returning puts back the animation
+  /// that was current, running or stopped as it was, released from any fixed pose, so the
+  /// frames drawn between steps show the model as the user left it. It can stop part-way
+  /// through an animation and carry on from there next time.</para>
+  /// <para>Gorilla counts a model's children in its animated bounds, so detach any child
+  /// helper for the length of each Step. Do not change the model, or its animations, between
+  /// steps, nor Step while something else drives the animations, such as a capture. Main
+  /// thread only.</para></remarks>
+  TAnimationBoundsMeasurer = class
+  private
+    FModel: TGorillaModel;
+    FAnims: TArray<TGorillaAnimation>;
+    FIndex: Integer;          // the animation being measured
+    FPose: Integer;           // its next pose
+    FBox: TBoundingBox;       // its poses so far
+    FPoses: Integer;          // how many of them gave a box
+    FResults: TList<TAnimationBounds>;
+    FTotal: Integer;          // poses in every animation
+    FDone: Integer;           // poses measured so far
+    function GetFinished: Boolean;
+    function GetProgress: Single;
+  public
+    //** @abstract(Prepares to measure every animation of AModel.)
+    //**
+    //** Counts the poses to measure, which is quick; nothing is measured until Step.
+    //**
+    //** @param(AModel The model; it must outlive the measurer. Nil, or a model without
+    //** animations, gives a measurer that is already Finished, with no results.)
+    /// <summary>Prepares to measure every animation of AModel.</summary>
+    /// <remarks>Counts the poses to measure, which is quick; nothing is measured until
+    /// Step.</remarks>
+    /// <param name="AModel">The model; it must outlive the measurer. Nil, or a model without
+    /// animations, gives a measurer that is already Finished, with no results.</param>
+    constructor Create(const AModel: TGorillaModel);
+    //** @abstract(Frees the measurer; the model is left as the last Step left it.)
+    /// <summary>Frees the measurer; the model is left as the last Step left it.</summary>
+    destructor Destroy; override;
+    //** @abstract(Measures poses for up to ABudget milliseconds, then puts the model's
+    //** animation back.)
+    //**
+    //** Blocks for about ABudget milliseconds, longer if one pose takes longer, as at least one
+    //** is measured each call. Pass MaxInt to measure everything left in one go.
+    //**
+    //** @param(ABudget How long to measure for, in milliseconds.)
+    //**
+    //** @returns(True once every animation has been measured; Results is then complete.)
+    /// <summary>Measures poses for up to ABudget milliseconds, then puts the model's animation
+    /// back.</summary>
+    /// <remarks>Blocks for about ABudget milliseconds, longer if one pose takes longer, as at
+    /// least one is measured each call. Pass MaxInt to measure everything left in one
+    /// go.</remarks>
+    /// <param name="ABudget">How long to measure for, in milliseconds.</param>
+    /// <returns>True once every animation has been measured; Results is then
+    /// complete.</returns>
+    function Step(const ABudget: Integer): Boolean;
+    //** @abstract(The boxes measured so far, one per finished animation, in the order
+    //** @code(GetSortedAnimations) gives them.)
+    //**
+    //** @returns(A copy; complete once Finished.)
+    /// <summary>The boxes measured so far, one per finished animation, in the order
+    /// <c>GetSortedAnimations</c> gives them.</summary>
+    /// <returns>A copy; complete once Finished.</returns>
+    function Results: TArray<TAnimationBounds>;
+    //** @abstract(True once every animation has been measured.)
+    /// <summary>True once every animation has been measured.</summary>
+    property Finished: Boolean read GetFinished;
+    //** @abstract(How far through the poses it is, from 0 to 1.)
+    /// <summary>How far through the poses it is, from 0 to 1.</summary>
+    property Progress: Single read GetProgress;
+  end;
+
   //** @abstract(Draws, as a wireframe beside its model, the swept volume of the animation
   //** the model is playing, or of its rest pose.)
   //**
@@ -345,6 +442,14 @@ type
     FSegments: Integer;
     FBoxLines: TArray<TPoint3D>;     // pairs of end points, model coordinates
     FSweepLines: TArray<TPoint3D>;   // pairs of end points, model coordinates
+    // The lines as the context draws them, one buffer and one call per colour
+    FBoxVertices: TVertexBuffer;
+    FBoxIndices: TIndexBuffer;
+    FSweepVertices: TVertexBuffer;
+    FSweepIndices: TIndexBuffer;
+    FBoxMaterial: TColorMaterial;
+    FSweepMaterial: TColorMaterial;
+    procedure FreeBuffers;
     function PlayingName: String;
     procedure UpdateActive;
     procedure BuildLines;
@@ -957,7 +1062,7 @@ function FindCombinedSweep(const AModel: TGorillaModel): TCombinedSweep;
 implementation
 
 uses
-  Sprite3DAnimCapture;
+  System.Diagnostics, Sprite3DAnimCapture;
 
 const
   // A size is never smaller than this, so a flat model still has extent
@@ -1136,100 +1241,161 @@ begin
   Result.Valid := True;
 end;
 
-{ The box holding every pose of AAnimation, stepped at its baked rate;
-  APoses says how many poses gave a box. AAnimation is left current and
-  running, released from any fixed pose. }
-function MeasureOneAnimation(const AModel: TGorillaModel;
-  const AAnimation: TGorillaAnimation; out APoses: Integer): TBoundingBox;
-var
-  Source: TSprite3DAnimationFrames;
-  Rate, I: Integer;
-  Box: TBoundingBox;
+{ The rate that visits every pose Gorilla baked for AAnimation once }
+function MeasureRate(const AAnimation: TGorillaAnimation): Integer;
 begin
-  APoses := 0;
-  Result := Default(TBoundingBox);
-  // Baked poses: step at their rate, so every one is visited once
   if (AAnimation.FrameCount > 0) and (AAnimation.FrameRate > 0) then
-    Rate := Max(1, Ceil(AAnimation.FrameRate))
+    Result := Max(1, Ceil(AAnimation.FrameRate))
   else
-    Rate := UNBAKED_MEASURE_RATE;
+    Result := UNBAKED_MEASURE_RATE;
+end;
 
-  Source := TSprite3DAnimationFrames.Create(AModel, AAnimation, Rate);
-  try
-    Source.Start;
+{ TAnimationBoundsMeasurer }
+
+constructor TAnimationBoundsMeasurer.Create(const AModel: TGorillaModel);
+var
+  Anim: TGorillaAnimation;
+  Source: TSprite3DAnimationFrames;
+begin
+  inherited Create;
+  FModel := AModel;
+  FResults := TList<TAnimationBounds>.Create;
+  if (AModel = nil) or (AModel.AnimationManager = nil) then
+    Exit;
+  FAnims := AModel.AnimationManager.GetSortedAnimations();
+  // The poses to visit, for Progress; making a source only reads lengths
+  for Anim in FAnims do
+  begin
+    Source := TSprite3DAnimationFrames.Create(AModel, Anim, MeasureRate(Anim));
     try
-      for I := 0 to Source.FrameCount - 1 do
-      begin
-        Source.ShowFrame(I);
-        Box := AModel.GetAnimatedBoundingBox();
-        if IsEmptyBox(Box) then
-          Continue;
-        if APoses = 0 then
-          Result := UnionBox(Box, Box)   // puts the corners in order
-        else
-          Result := UnionBox(Result, Box);
-        Inc(APoses);
-      end;
+      Inc(FTotal, Source.FrameCount);
     finally
-      Source.Finish;
+      Source.Free;
+    end;
+  end;
+end;
+
+destructor TAnimationBoundsMeasurer.Destroy;
+begin
+  FResults.Free;
+  inherited;
+end;
+
+function TAnimationBoundsMeasurer.GetFinished: Boolean;
+begin
+  Result := FIndex >= System.Length(FAnims);
+end;
+
+function TAnimationBoundsMeasurer.GetProgress: Single;
+begin
+  if (FTotal <= 0) or Finished then
+    Result := 1
+  else
+    Result := Min(1.0, FDone / FTotal);
+end;
+
+function TAnimationBoundsMeasurer.Results: TArray<TAnimationBounds>;
+begin
+  Result := FResults.ToArray;
+end;
+
+function TAnimationBoundsMeasurer.Step(const ABudget: Integer): Boolean;
+var
+  Original, Anim: TGorillaAnimation;
+  WasRunning: Boolean;
+  Watch: TStopwatch;
+  Source: TSprite3DAnimationFrames;
+  Box: TBoundingBox;
+  Entry: TAnimationBounds;
+  First: Boolean;
+begin
+  Result := Finished;
+  if Result then
+    Exit;
+  var Manager := FModel.AnimationManager;
+  Original := Manager.Current;
+  WasRunning := (Original <> nil) and Original.IsRunning;
+  Watch := TStopwatch.StartNew;
+  First := True;
+  try
+    // Poses until the budget is spent, at least one, across animations
+    while not Finished and (First or (Watch.ElapsedMilliseconds < ABudget)) do
+    begin
+      Anim := FAnims[FIndex];
+      Source := TSprite3DAnimationFrames.Create(FModel, Anim, MeasureRate(Anim));
+      try
+        Source.Start;
+        try
+          while (FPose < Source.FrameCount) and
+            (First or (Watch.ElapsedMilliseconds < ABudget)) do
+          begin
+            First := False;
+            Source.ShowFrame(FPose);
+            Box := FModel.GetAnimatedBoundingBox();
+            if not IsEmptyBox(Box) then
+            begin
+              if FPoses = 0 then
+                FBox := UnionBox(Box, Box)   // puts the corners in order
+              else
+                FBox := UnionBox(FBox, Box);
+              Inc(FPoses);
+            end;
+            Inc(FPose);
+            Inc(FDone);
+          end;
+          if FPose >= Source.FrameCount then
+          begin
+            // This animation is done: keep its box and go on to the next
+            if FPoses > 0 then
+            begin
+              Entry.Name := Anim.Id;
+              Entry.Box := FBox;
+              Entry.Poses := FPoses;
+              FResults.Add(Entry);
+            end;
+            Inc(FIndex);
+            FPose := 0;
+            FPoses := 0;
+          end;
+        finally
+          Source.Finish;
+        end;
+      finally
+        Source.Free;
+      end;
+      // Measuring left it running; only the original may stay so
+      if (Anim <> Original) and Anim.IsRunning then
+        Anim.Stop;
     end;
   finally
-    Source.Free;
+    // Back to the animation that was current, as it was, before anything
+    // is drawn
+    if Original <> nil then
+    begin
+      if Manager.Current <> Original then
+        Manager.Current := Original;
+      if WasRunning then
+      begin
+        if not Original.IsRunning then
+          Original.Start;
+      end
+      else if Original.IsRunning then
+        Original.Stop;
+    end;
   end;
+  Result := Finished;
 end;
 
 function MeasureAnimationBounds(const AModel: TGorillaModel): TArray<TAnimationBounds>;
 var
-  Anims: TArray<TGorillaAnimation>;
-  Anim, Original: TGorillaAnimation;
-  WasRunning: Boolean;
-  Entry: TAnimationBounds;
-  Found: TList<TAnimationBounds>;
+  Measurer: TAnimationBoundsMeasurer;
 begin
-  Result := nil;
-  if AModel = nil then
-    Exit;
-  // Typed by inference, as Gorilla's manager class is not needed by name
-  var Manager := AModel.AnimationManager;
-  if Manager = nil then
-    Exit;
-  Anims := Manager.GetSortedAnimations();
-  if System.Length(Anims) = 0 then
-    Exit;
-
-  Original := Manager.Current;
-  WasRunning := (Original <> nil) and Original.IsRunning;
-  Found := TList<TAnimationBounds>.Create;
+  Measurer := TAnimationBoundsMeasurer.Create(AModel);
   try
-    try
-      for Anim in Anims do
-      begin
-        Entry.Name := Anim.Id;
-        Entry.Box := MeasureOneAnimation(AModel, Anim, Entry.Poses);
-        // Measuring left it running; only the original may stay so
-        if (Anim <> Original) and Anim.IsRunning then
-          Anim.Stop;
-        if Entry.Poses > 0 then
-          Found.Add(Entry);
-      end;
-    finally
-      // Back to the animation that was current, as it was
-      if Original <> nil then
-      begin
-        if Manager.Current <> Original then
-          Manager.Current := Original;
-        if WasRunning then
-        begin
-          if not Original.IsRunning then
-            Original.Start;
-        end
-        else if Original.IsRunning then
-          Original.Stop;
-      end;
-    end;
-    Result := Found.ToArray;
+    Measurer.Step(MaxInt);
+    Result := Measurer.Results;
   finally
-    Found.Free;
+    Measurer.Free;
   end;
 end;
 
@@ -1465,12 +1631,27 @@ begin
   FSweepColor := TAlphaColorRec.Yellow;
   FLineWidth := 1;
   FSegments := DEFAULT_SEGMENTS;
+  FBoxMaterial := TColorMaterial.Create;
+  FBoxMaterial.Color := FBoxColor;
+  FSweepMaterial := TColorMaterial.Create;
+  FSweepMaterial.Color := FSweepColor;
 end;
 
 destructor TModelSweep.Destroy;
 begin
+  FreeBuffers;
+  FBoxMaterial.Free;
+  FSweepMaterial.Free;
   FAnimations.Free;
   inherited;
+end;
+
+procedure TModelSweep.FreeBuffers;
+begin
+  FreeAndNil(FBoxVertices);
+  FreeAndNil(FBoxIndices);
+  FreeAndNil(FSweepVertices);
+  FreeAndNil(FSweepIndices);
 end;
 
 procedure TModelSweep.Notification(AComponent: TComponent; Operation: TOperation);
@@ -1523,12 +1704,16 @@ end;
 procedure TModelSweep.SetBoxColor(const Value: TAlphaColor);
 begin
   FBoxColor := Value;
+  if FBoxMaterial <> nil then
+    FBoxMaterial.Color := Value;
   Repaint;
 end;
 
 procedure TModelSweep.SetSweepColor(const Value: TAlphaColor);
 begin
   FSweepColor := Value;
+  if FSweepMaterial <> nil then
+    FSweepMaterial.Color := Value;
   Repaint;
 end;
 
@@ -1637,6 +1822,7 @@ var
 begin
   FBoxLines := nil;
   FSweepLines := nil;
+  FreeBuffers;
   if not FActive.Valid then
     Exit;
 
@@ -1674,6 +1860,22 @@ begin
     Lines.Free;
   end;
 
+  // The context's buffers: every line of a colour in one draw
+  FBoxVertices := TVertexBuffer.Create([TVertexFormat.Vertex], System.Length(FBoxLines));
+  FBoxIndices := TIndexBuffer.Create(System.Length(FBoxLines));
+  for I := 0 to High(FBoxLines) do
+  begin
+    FBoxVertices.Vertices[I] := FBoxLines[I];
+    FBoxIndices.Indices[I] := I;
+  end;
+  FSweepVertices := TVertexBuffer.Create([TVertexFormat.Vertex], System.Length(FSweepLines));
+  FSweepIndices := TIndexBuffer.Create(System.Length(FSweepLines));
+  for I := 0 to High(FSweepLines) do
+  begin
+    FSweepVertices.Vertices[I] := FSweepLines[I];
+    FSweepIndices.Indices[I] := I;
+  end;
+
   // Sized so that a box round this object's origin, which is the model's,
   // holds every line
   Extent := Point3D(Max(Abs(B.Left), Abs(B.Right)), Max(Abs(B.Top), Abs(B.Bottom)),
@@ -1696,24 +1898,17 @@ begin
   CopyIfChanged(RotationCenter, FModel.RotationCenter.Point);
 end;
 
+// Every line of each colour in one call, rather than a call per line: a few
+// hundred calls a frame made the whole application sluggish
 procedure TModelSweep.DrawLines;
 var
   O: Single;
-  I: Integer;
 begin
   O := AbsoluteOpacity;
-  I := 0;
-  while I < High(FBoxLines) do
-  begin
-    Context.DrawLine(FBoxLines[I], FBoxLines[I + 1], O, FBoxColor);
-    Inc(I, 2);
-  end;
-  I := 0;
-  while I < High(FSweepLines) do
-  begin
-    Context.DrawLine(FSweepLines[I], FSweepLines[I + 1], O, FSweepColor);
-    Inc(I, 2);
-  end;
+  if (FBoxVertices <> nil) and (FBoxVertices.Length > 0) then
+    Context.DrawLines(FBoxVertices, FBoxIndices, FBoxMaterial, O);
+  if (FSweepVertices <> nil) and (FSweepVertices.Length > 0) then
+    Context.DrawLines(FSweepVertices, FSweepIndices, FSweepMaterial, O);
 end;
 
 procedure TModelSweep.Render;

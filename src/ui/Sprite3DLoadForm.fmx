@@ -1,0 +1,66 @@
+object ModelLoadForm: TModelLoadForm
+  Left = 0
+  Top = 0
+  BorderIcons = []
+  BorderStyle = Single
+  Caption = 'Loading'
+  ClientHeight = 130
+  ClientWidth = 400
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  DesignerMasterStyle = 0
+  object MainLayout: TLayout
+    Align = Client
+    Padding.Left = 16.000000000000000000
+    Padding.Top = 16.000000000000000000
+    Padding.Right = 16.000000000000000000
+    Size.Width = 400.000000000000000000
+    Size.Height = 86.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object LoadProgressBar: TProgressBar
+      Align = Top
+      Orientation = Horizontal
+      Position.X = 16.000000000000000000
+      Position.Y = 16.000000000000000000
+      Size.Width = 368.000000000000000000
+      Size.Height = 20.000000000000000000
+      Size.PlatformDefault = False
+      Max = 100.000000000000000000
+    end
+    object StatusLabel: TLabel
+      Align = Top
+      Margins.Top = 8.000000000000000000
+      Position.X = 16.000000000000000000
+      Position.Y = 44.000000000000000000
+      Size.Width = 368.000000000000000000
+      Size.Height = 34.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.VertAlign = Leading
+      TextSettings.WordWrap = True
+      Text = 'Starting...'
+      TabOrder = 1
+    end
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 86.000000000000000000
+    Size.Width = 400.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object AbortButton: TButton
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      Position.X = 304.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'Abort'
+      OnClick = AbortButtonClick
+    end
+  end
+end

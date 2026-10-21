@@ -33,6 +33,9 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
   - **Resampling.** The filter overscanned images are scaled down with: Box (area average), the default and exact for a whole-number scale; Bilinear; Bicubic (Catmull-Rom); Bicubic (Mitchell); or Lanczos 3, the sharpest. Kept as `resampleFilter`.
 - **Settings kept between sessions** in `settings.json`: the grab folder, the icon folder, the background, the camera view, the pan, the View menu's on/off items, the animation frame rate, the overscan factor and resampling filter, and the choices in File, Settings. The animations used are chosen afresh for each model, and overscan starts off each session.
 - **Mobile layout.** On Android and iOS the menus are reached through a hamburger button.
+- **Loading a model.** A model loads behind a dialog with a progress bar, a line under it saying what is happening, and an Abort button (Escape, or the dialog's close box, does the same). The file is first read in the background, which is where a cold load spends most of its time and can be aborted at once; Gorilla3D then builds the model in one step, which can't be interrupted, so Abort pressed then takes effect as soon as that step ends; then the model's animations are measured for their volumes, a slice at a time, with the percentage shown. The measurements are kept (see *Settings* below), so a model that hasn't changed skips that stage next time. The new model is built beside the one on screen, which isn't touched until the new one is ready, so Abort, or a file that fails to load, leaves the previous model exactly as it was, or no model at start-up. A model asked for during a load, such as a file opened from Explorer or Finder, is loaded straight after it.
+- **No model.** While no model is loaded, for example with the start-up action None or after aborting the first load, the view is covered by a panel saying so and pointing to File, OpenModel.
+- **Quick start-up, responsive window.** The window appears before the first model loads. The FFmpeg libraries are looked for only once that load has ended, so MP4 is offered a moment later. Overscanned grabs are matted and scaled down, and strips, atlases, GIFs and MP4s are composed and encoded, on a worker thread, so the window keeps responding while that is done; closing the window waits for a file being written.
 
 Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
 
@@ -198,6 +201,7 @@ Sprite3D/
         |-- Sprite3DSettingsForm.pas, .fmx   Settings dialog
         |-- Sprite3DAnimationForm.pas, .fmx  Animation dialog: the export frame rate
         |-- Sprite3DAnimationsUsedForm.pas, .fmx  Animations Used dialog
+        |-- Sprite3DLoadForm.pas, .fmx       model loading dialog
         `-- Sprite3DHelpers.pas              application rules and settings
 ```
 
@@ -265,6 +269,8 @@ Settings are kept in `settings.json`, written by Neon, in the folder each platfo
 | iOS | `Library/Application Support/Sprite3D` |
 
 The file is plain JSON and can be edited by hand. Colours are written as `#AARRGGBB`.
+
+The same folder has a `bounds` folder: the measured bounds of each model's animations, one small JSON file per model, named from a hash of the model's full path, size and time of last change. A model that is edited, replaced or moved is simply measured again, and its old file is no longer used. The folder can be deleted at any time; nothing is lost but the time it takes to measure again.
 
 ## Themes
 

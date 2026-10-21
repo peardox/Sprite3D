@@ -391,6 +391,10 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <Form>AnimationsUsedForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
+        <DCCReference Include="ui\Sprite3DLoadForm.pas">
+            <Form>ModelLoadForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <DCCReference Include="lib\Sprite3DVideo.pas"/>
         <DCCReference Include="lib\Sprite3DOpenH264.pas"/>
         <DCCReference Include="lib\Sprite3DNativeLibs.pas"/>
