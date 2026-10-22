@@ -199,6 +199,18 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitToBoundsMax-TBoundingBox-TControl3D-Single-">FitToBoundsMax</a></strong>(const ABox: TBoundingBox; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
 </tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitPointsOnAxis-arrayofTPoint3D-TPoint3D-TPoint3D-TControl3D-Single-">FitPointsOnAxis</a></strong>(const APoints: array of TPoint3D; const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#FitPointsOnAxis-arrayofTPoint3D-TPoint3D-TPoint3D-TControl3D-Single-Single-Single-">FitPointsOnAxis</a></strong>(const APoints: array of TPoint3D; const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#ShiftView-Single-Single-Single-Single-">ShiftView</a></strong>(const ARight, AUp, AViewWidth, AViewHeight: Single);</code></td>
+</tr>
 </table>
 <span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
 <table class="summary wide_list">
@@ -914,6 +926,138 @@ Fits a box given in ASpace's local coordinates for every angle.</p>
 </dl>
 <h6 class="description_section">Returns</h6>
 <p class="return">True if the box was framed; False, with nothing changed, if the box is empty, there is no viewport, or it has zero width or height.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitPointsOnAxis-arrayofTPoint3D-TPoint3D-TPoint3D-TControl3D-Single-"></span><code>function <strong>FitPointsOnAxis</strong>(const APoints: array of TPoint3D; const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frames a set of points as large as possible for the current angles, with the orbit centre on a given line.</p>
+<p>
+
+
+<p>The points are framed as FitToBounds frames a box's corners: as large as they can be in the view, centred, so they reach both edges of the tighter axis, left and right or top and bottom, and in perspective mode at least 1 unit in front of the camera, FMX's near plane. The view only holds their convex hull, so the points need only enclose the shape to be framed. Azimuth, PolarAngle and Roll are not changed.
+
+<p>OrbitCenter is then moved along the view axis to the point nearest the line through ALinePoint along ALineDirection, and Distance changed by the same amount, so the camera, and the view, stay exactly where the fit put them. For a shape that is round about that line, such as a model's swept volume about its turning axis, the view axis meets the line while Roll is 0, so the orbit centre is on it and turning the azimuth, with the line upright, keeps the shape centred and in view. When the view axis runs along the line, as seen from straight above, or the move would put the camera less than 1 unit from the new centre, the orbit centre is left where the fit put it.
+
+<p>The points and the line are carried through ASpace's position, rotation and scale into the rig parent's space first.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APoints</dt>
+<dd>The points to keep in view, in ASpace's local coordinates.</dd>
+<dt>ALinePoint</dt>
+<dd>A point on the line the orbit centre is put on, in the same coordinates.</dd>
+<dt>ALineDirection</dt>
+<dd>The line's direction, in the same coordinates; any length but 0.</dd>
+<dt>ASpace</dt>
+<dd>The object whose local space the points and line are in. If nil, they are taken to be in absolute viewport space.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the points' extent 1/1.1 of the view on the tighter axis. Negative values count as 0.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the points were framed; False, with nothing changed, if there are none, the camera is locked, there is no viewport, or it has zero width or height.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DCamera.TSprite3DCamera.html#FitToBounds-TBoundingBox-TControl3D-Single-Single-Single-">FitToBounds</a></dt>
+  <dd>Fits a box given in ASpace's local coordinates for the current angles and an explicit view size.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FitPointsOnAxis-arrayofTPoint3D-TPoint3D-TPoint3D-TControl3D-Single-Single-Single-"></span><code>function <strong>FitPointsOnAxis</strong>(const APoints: array of TPoint3D; const ALinePoint, ALineDirection: TPoint3D; const ASpace: TControl3D; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frames a set of points with the orbit centre on a given line, for an explicit view size.</p>
+<p>
+
+
+<p>Works like the overload without a view size, but frames the points for AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use it for an off-screen target whose shape differs from the viewport's.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APoints</dt>
+<dd>The points to keep in view, in ASpace's local coordinates.</dd>
+<dt>ALinePoint</dt>
+<dd>A point on the line the orbit centre is put on, in the same coordinates.</dd>
+<dt>ALineDirection</dt>
+<dd>The line's direction, in the same coordinates; any length but 0.</dd>
+<dt>ASpace</dt>
+<dd>The object whose local space the points and line are in. If nil, they are taken to be in absolute viewport space.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the points' extent 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the points were framed; False, with nothing changed, if there are none, the camera is locked, or either size is zero or less.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShiftView-Single-Single-Single-Single-"></span><code>procedure <strong>ShiftView</strong>(const ARight, AUp, AViewWidth, AViewHeight: Single);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Slides the view by a number of pixels across and up, without turning it.</p>
+<p>
+
+
+<p>OrbitCenter, and so the camera, moves along the camera's own right and up directions by as much as ARight and AUp pixels measure, in a view of AViewWidth by AViewHeight, at the orbit centre's depth: so the picture moves the other way by that many pixels there. In orthographic mode a pixel is the same size at every depth and the slide is exact; in perspective, parts nearer or further than the orbit centre move a little more or less, which for the fractions of a pixel it is meant for is negligible. The angles, Distance and the orthographic size are not changed, and it works whether or not the camera is Locked, as the caller is expected to put OrbitCenter back.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ARight</dt>
+<dd>Pixels to slide the view right; negative slides it left.</dd>
+<dt>AUp</dt>
+<dd>Pixels to slide the view up; negative slides it down.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view the pixels are measured in.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view the pixels are measured in.</dd>
+</dl>
+</td></tr>
 </table>
 <h3 class="detail">Properties</h3>
 <table class="detail visibility-public wide_list">

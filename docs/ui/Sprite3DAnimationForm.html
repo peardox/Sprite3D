@@ -74,11 +74,15 @@ function pasdocUpdateMembers(className) {
 <div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
-The File, Animation dialog: the frame rate animations are saved at.</p>
+The File, Animation dialog: the frame rate animations are saved at, and overscan.</p>
 <p>
 
 
-<p>One slider, marked FPS, sets the frames per second that the animation list's Save as sprite strip, Save as Texture Atlas and Save as AniGif, and batch Export, use, from ANIMATION_FPS_MIN to ANIMATION_FPS_MAX. The number beside it shows the value as the slider moves. OK accepts it and Cancel leaves the old value; keeping it in settings.json is the caller's job.
+<p>One slider, marked FPS, sets the frames per second that the animation list's Save as sprite strip, Save as Texture Atlas and Save as AniGif, and batch Export, use, from ANIMATION_FPS_MIN to ANIMATION_FPS_MAX. The number beside it shows the value as the slider moves.
+
+<p>Below it, the Overscan tick box turns overscan on for grabs and exports: each image is drawn that many times larger each way and scaled back down with the filter chosen under Resampling. The slider beside it sets the factor, from OVERSCAN_FACTOR_MIN to the smaller of OVERSCAN_FACTOR_MAX and MaxOverscan, which the caller sets to what the off-screen renderer can do; where that is below OVERSCAN_FACTOR_MIN, as where grabs are screenshots, the tick box is disabled and a note says why. The slider and the drop-down are only enabled while the box is ticked.
+
+<p>OK accepts the values and Cancel leaves the old ones; keeping them, and applying them, is the caller's job.
 
 <p>On the desktop, show it with ShowModal and read Fps afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK, OnCancel otherwise, and frees the form when it closes. For the main thread only.</p>
 <span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>

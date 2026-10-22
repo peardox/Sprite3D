@@ -1,28 +1,57 @@
-//** @abstract(The displays attached to a Windows PC, with their names, sizes and modes.)
+//** @abstract(The displays attached to the computer, with their names, sizes and modes, on
+//** every platform.)
 //**
-//** TPeardoxDisplays lists every monitor Windows knows of when it is created: its device
-//** name, the monitor's own name and physical size where its EDID gives them, its desktop
-//** and work areas, its current mode and every mode it offers. Not used by Sprite3D yet.
+//** TPeardoxDisplays lists every display when it is created, and RefreshRateFor gives the
+//** refresh rate of the one a form is on, which Sprite3D uses to limit the view's frame rate.
+//** How much is known depends on the platform:
 //**
-//** Windows only. For the main thread.
+//** @preformatted(
+//** Windows   every monitor Windows knows of: its device name, the monitor's own name and
+//**           physical size where its EDID gives them, its desktop and work areas, its
+//**           current mode and every mode it offers
+//** macOS     FMX's displays, with each one's refresh rate from CoreGraphics
+//** Android   FMX's display, with the refresh rate Display.getRefreshRate gives
+//** iOS       FMX's display; refresh rate 0, unknown
+//** Linux     FMX's display; refresh rate 0, unknown
+//** )
+//**
+//** Outside Windows a display has no device or monitor name of its own, so both are made up,
+//** such as @code(Display 2), its only mode is its current one, its colour depth is 0,
+//** unknown, and its physical size is unknown. A refresh rate of 0 means the system did not
+//** say, as macOS does for some built-in panels. For the main thread.
 unit DisplayData;
 
 {
-  The displays attached to a Windows PC, with their names, sizes and modes.
+  The displays attached to the computer, with their names, sizes and modes,
+  on every platform.
 
-  TPeardoxDisplays lists every monitor Windows knows of when it is created:
-  its device name, the monitor's own name and physical size where its EDID
-  gives them, its desktop and work areas, its current mode and every mode it
-  offers. Not used by Sprite3D yet.
+  TPeardoxDisplays lists every display when it is created, and
+  RefreshRateFor gives the refresh rate of the one a form is on, which
+  Sprite3D uses to limit the view's frame rate. How much is known depends on
+  the platform:
 
-  Windows only. For the main thread.
+    Windows   every monitor Windows knows of: its device name, the monitor's
+              own name and physical size where its EDID gives them, its
+              desktop and work areas, its current mode and every mode it
+              offers
+    macOS     FMX's displays, with each one's refresh rate from CoreGraphics
+    Android   FMX's display, with the refresh rate Display.getRefreshRate
+              gives
+    iOS       FMX's display; refresh rate 0, unknown
+    Linux     FMX's display; refresh rate 0, unknown
+
+  Outside Windows a display has no device or monitor name of its own, so
+  both are made up, such as "Display 2", its only mode is its current one,
+  its colour depth is 0, unknown, and its physical size is unknown. A
+  refresh rate of 0 means the system did not say, as macOS does for some
+  built-in panels. For the main thread.
 }
 
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections,
-  Winapi.Windows, Winapi.MultiMon;
+  System.SysUtils, System.Classes, System.Types, System.Generics.Collections,
+  FMX.Forms;
 
 type
   //** @abstract(One display mode: resolution, colour depth and refresh rate.)
@@ -34,16 +63,19 @@ type
     //** @abstract(The height in pixels.)
     /// <summary>The height in pixels.</summary>
     Height: Integer;
-    //** @abstract(Bits per pixel.)
-    /// <summary>Bits per pixel.</summary>
+    //** @abstract(Bits per pixel; 0 if unknown.)
+    /// <summary>Bits per pixel; 0 if unknown.</summary>
     BitsPerPixel: Integer;
-    //** @abstract(The refresh rate in hertz.)
-    /// <summary>The refresh rate in hertz.</summary>
+    //** @abstract(The refresh rate in hertz; 0 if unknown.)
+    /// <summary>The refresh rate in hertz; 0 if unknown.</summary>
     RefreshRate: Integer; // Hz
     //** @abstract(The mode as text, such as @code(2560 x 1440, 32-bit, 144 Hz).)
     //**
+    //** A colour depth or refresh rate of 0, unknown, is left out.
+    //**
     //** @returns(The text.)
     /// <summary>The mode as text, such as <c>2560 x 1440, 32-bit, 144 Hz</c>.</summary>
+    /// <remarks>A colour depth or refresh rate of 0, unknown, is left out.</remarks>
     /// <returns>The text.</returns>
     function ToString: string;
   end;
@@ -52,19 +84,23 @@ type
   /// <summary>A list of display modes.</summary>
   TDisplayModeList = TList<TDisplayMode>;
 
-  //** @abstract(One monitor, as Windows and its EDID describe it.)
+  //** @abstract(One display, as the system describes it; on Windows, with its EDID.)
   //**
   //** AvailableModes belongs to the TPeardoxDisplays that made the record; a copy shares it.
-  /// <summary>One monitor, as Windows and its EDID describe it.</summary>
+  //** See the unit description for what is known outside Windows.
+  /// <summary>One display, as the system describes it; on Windows, with its EDID.</summary>
   /// <remarks>AvailableModes belongs to the TPeardoxDisplays that made the record; a copy
-  /// shares it.</remarks>
+  /// shares it. See the unit description for what is known outside Windows.</remarks>
   TDisplayInfo = record
-      //** @abstract(Windows' device name, such as @code(\\.\DISPLAY1).)
-      /// <summary>Windows' device name, such as <c>\\.\DISPLAY1</c>.</summary>
+      //** @abstract(Windows' device name, such as @code(\\.\DISPLAY1); elsewhere
+      //** @code(Display) and its number.)
+      /// <summary>Windows' device name, such as <c>\\.\DISPLAY1</c>; elsewhere
+      /// <c>Display</c> and its number.</summary>
       DeviceName: string;
-      //** @abstract(The monitor's own name from its EDID, else the adapter's description.)
-      /// <summary>The monitor's own name from its EDID, else the adapter's
-      /// description.</summary>
+      //** @abstract(The monitor's own name from its EDID, else the adapter's description;
+      //** elsewhere @code(Main display) or DeviceName.)
+      /// <summary>The monitor's own name from its EDID, else the adapter's description;
+      /// elsewhere <c>Main display</c> or DeviceName.</summary>
       FriendlyName: string;
       //** @abstract(The monitor's area of the desktop, in desktop pixels.)
       /// <summary>The monitor's area of the desktop, in desktop pixels.</summary>
@@ -97,8 +133,8 @@ type
   /// <summary>A list of monitors.</summary>
   TDisplayInfoList = TList<TDisplayInfo>;
 
-  //** @abstract(Every monitor attached, read when the object is created.)
-  /// <summary>Every monitor attached, read when the object is created.</summary>
+  //** @abstract(Every display attached, read when the object is created.)
+  /// <summary>Every display attached, read when the object is created.</summary>
   TPeardoxDisplays = class
   private
     FDisplays: TDisplayInfoList;
@@ -107,8 +143,8 @@ type
     procedure Refresh;
     procedure ClearDisplays;
   public
-    //** @abstract(Reads every monitor from Windows.)
-    /// <summary>Reads every monitor from Windows.</summary>
+    //** @abstract(Reads every display from the system.)
+    /// <summary>Reads every display from the system.</summary>
     constructor Create;
     //** @abstract(Frees the list and every monitor's mode list.)
     /// <summary>Frees the list and every monitor's mode list.</summary>
@@ -124,13 +160,59 @@ type
     //** @abstract(The list itself, owned by this object.)
     /// <summary>The list itself, owned by this object.</summary>
     property List: TDisplayInfoList read FDisplays;
+    //** @abstract(Which display a form is on.)
+    //**
+    //** On Windows, the monitor Windows puts most of the form's window on; elsewhere, the one
+    //** FMX reports for it.
+    //**
+    //** @param(AForm The form; nil, or one without a window yet, gives -1.)
+    //**
+    //** @returns(The display's position in the list, or -1 if it cannot be told.)
+    /// <summary>Which display a form is on.</summary>
+    /// <remarks>On Windows, the monitor Windows puts most of the form's window on; elsewhere,
+    /// the one FMX reports for it.</remarks>
+    /// <param name="AForm">The form; nil, or one without a window yet, gives -1.</param>
+    /// <returns>The display's position in the list, or -1 if it cannot be told.</returns>
+    function IndexOfForm(const AForm: TCommonCustomForm): Integer;
+    //** @abstract(The refresh rate of the display a form is on, in hertz.)
+    //**
+    //** The primary display's if the form's cannot be told.
+    //**
+    //** @param(AForm The form; nil asks about the primary display.)
+    //**
+    //** @returns(The refresh rate; 0 if the system does not say.)
+    /// <summary>The refresh rate of the display a form is on, in hertz.</summary>
+    /// <remarks>The primary display's if the form's cannot be told.</remarks>
+    /// <param name="AForm">The form; nil asks about the primary display.</param>
+    /// <returns>The refresh rate; 0 if the system does not say.</returns>
+    function RefreshRateFor(const AForm: TCommonCustomForm): Integer;
   end;
 
 implementation
 
 uses
-  System.StrUtils, System.Win.Registry, System.Math
-  , FMX.Forms, FMX.Types, System.Types;
+  System.Math
+  {$IF DEFINED(MSWINDOWS)}
+  , Winapi.Windows, Winapi.MultiMon, System.Win.Registry, FMX.Platform.Win
+  {$ELSEIF DEFINED(ANDROID)}
+  , FMX.Platform, Androidapi.Helpers, Androidapi.JNI.GraphicsContentViewText
+  {$ELSE}
+  , FMX.Platform
+  {$ENDIF}
+  ;
+
+{ TDisplayMode }
+
+function TDisplayMode.ToString: string;
+begin
+  Result := Format('%d x %d', [Width, Height]);
+  if BitsPerPixel > 0 then
+    Result := Result + Format(', %d-bit', [BitsPerPixel]);
+  if RefreshRate > 0 then
+    Result := Result + Format(', %d Hz', [RefreshRate]);
+end;
+
+{$IF DEFINED(MSWINDOWS)}
 
 const
   ENUM_CURRENT_SETTINGS = DWORD(-1);
@@ -191,14 +273,6 @@ begin
     AWidthMm := Edid[EDID_HSIZE_CM_OFFSET] * 10;
     AHeightMm := Edid[EDID_VSIZE_CM_OFFSET] * 10;
   end;
-end;
-
-{ TDisplayMode }
-
-function TDisplayMode.ToString: string;
-begin
-  Result := Format('%d x %d, %d-bit, %d Hz',
-    [Width, Height, BitsPerPixel, RefreshRate]);
 end;
 
 { ---- EDID parsing ---- }
@@ -428,6 +502,180 @@ begin
   end;
 end;
 
+procedure ReadDisplays(const AList: TDisplayInfoList);
+begin
+  EnumDisplayMonitors(0, nil, @MonitorEnumProc, LPARAM(AList));
+end;
+
+// The device name of the monitor AForm's window is mostly on; empty if it
+// has no window yet
+function FormDeviceName(const AForm: TCommonCustomForm): string;
+var
+  Wnd: HWND;
+  Info: TMonitorInfoEx;
+begin
+  Result := '';
+  if (AForm = nil) or (AForm.Handle = nil) then
+    Exit;
+  Wnd := WindowHandleToPlatform(AForm.Handle).Wnd;
+  if Wnd = 0 then
+    Exit;
+  FillChar(Info, SizeOf(Info), 0);
+  Info.cbSize := SizeOf(TMonitorInfoEx);
+  if GetMonitorInfo(MonitorFromWindow(Wnd, MONITOR_DEFAULTTONEAREST), @Info) then
+    Result := string(Info.szDevice);
+end;
+
+{$ELSE}
+
+{$IF DEFINED(MACOS) and not DEFINED(IOS)}
+const
+  CORE_GRAPHICS = '/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics';
+
+// Declared here rather than taken from Macapi.CoreGraphics, so nothing
+// depends on which of these a given Delphi version translates
+function CGMainDisplayID: UInt32; cdecl; external CORE_GRAPHICS name 'CGMainDisplayID';
+function CGGetActiveDisplayList(AMaxDisplays: UInt32; ADisplays: PUInt32;
+  ACount: PUInt32): Int32; cdecl; external CORE_GRAPHICS name 'CGGetActiveDisplayList';
+function CGDisplayCopyDisplayMode(ADisplay: UInt32): Pointer; cdecl;
+  external CORE_GRAPHICS name 'CGDisplayCopyDisplayMode';
+function CGDisplayModeGetRefreshRate(AMode: Pointer): Double; cdecl;
+  external CORE_GRAPHICS name 'CGDisplayModeGetRefreshRate';
+procedure CGDisplayModeRelease(AMode: Pointer); cdecl;
+  external CORE_GRAPHICS name 'CGDisplayModeRelease';
+
+function CGRefreshRate(const ADisplay: UInt32): Integer;
+var
+  Mode: Pointer;
+begin
+  Result := 0;
+  Mode := CGDisplayCopyDisplayMode(ADisplay);
+  if Mode = nil then
+    Exit;
+  try
+    Result := Round(CGDisplayModeGetRefreshRate(Mode));
+  finally
+    CGDisplayModeRelease(Mode);
+  end;
+end;
+{$ENDIF}
+
+// Each display's refresh rate as the system gives it, the main display's
+// first, then the others in the system's order; empty if it does not say
+function PlatformRefreshRates: TArray<Integer>;
+{$IF DEFINED(MACOS) and not DEFINED(IOS)}
+const
+  MAX_DISPLAYS = 32;
+var
+  Ids: array[0..MAX_DISPLAYS - 1] of UInt32;
+  Count: UInt32;
+  I: Integer;
+  Main: UInt32;
+begin
+  Main := CGMainDisplayID;
+  Result := [CGRefreshRate(Main)];
+  Count := 0;
+  if CGGetActiveDisplayList(MAX_DISPLAYS, @Ids[0], @Count) <> 0 then
+    Exit;
+  for I := 0 to Integer(Count) - 1 do
+    if Ids[I] <> Main then
+      Result := Result + [CGRefreshRate(Ids[I])];
+end;
+{$ELSEIF DEFINED(ANDROID)}
+begin
+  Result := nil;
+  if TAndroidHelper.Display <> nil then
+    Result := [Round(TAndroidHelper.Display.getRefreshRate)];
+end;
+{$ELSE}
+begin
+  Result := nil;   // iOS and Linux: not asked
+end;
+{$ENDIF}
+
+function RateAt(const ARates: TArray<Integer>; const AIndex: Integer): Integer;
+begin
+  if AIndex < Length(ARates) then
+    Result := ARates[AIndex]
+  else if Length(ARates) > 0 then
+    Result := ARates[0]   // one rate for every display
+  else
+    Result := 0;
+end;
+
+procedure AddDisplay(const AList: TDisplayInfoList; const AIndex: Integer;
+  const APrimary: Boolean; const ABounds, AWorkArea: TRectF; const AScale: Single;
+  const ARate: Integer);
+var
+  Display: TDisplayInfo;
+  Scale: Single;
+begin
+  Scale := AScale;
+  if Scale <= 0 then
+    Scale := 1;
+  Display := Default(TDisplayInfo);
+  Display.DeviceName := Format('Display %d', [AIndex + 1]);
+  if APrimary then
+    Display.FriendlyName := 'Main display'
+  else
+    Display.FriendlyName := Display.DeviceName;
+  Display.MonitorRect := Rect(Round(ABounds.Left), Round(ABounds.Top),
+    Round(ABounds.Right), Round(ABounds.Bottom));
+  Display.WorkRect := Rect(Round(AWorkArea.Left), Round(AWorkArea.Top),
+    Round(AWorkArea.Right), Round(AWorkArea.Bottom));
+  Display.IsPrimary := APrimary;
+  Display.CurrentMode.Width := Round(ABounds.Width * Scale);
+  Display.CurrentMode.Height := Round(ABounds.Height * Scale);
+  Display.CurrentMode.BitsPerPixel := 0;
+  Display.CurrentMode.RefreshRate := ARate;
+  Display.AvailableModes := TDisplayModeList.Create;
+  Display.AvailableModes.Add(Display.CurrentMode);
+  AList.Add(Display);
+end;
+
+// FMX's displays, the main one first in the rates; with no display service,
+// the one screen
+procedure ReadDisplays(const AList: TDisplayInfoList);
+var
+  Rates: TArray<Integer>;
+  I, Next: Integer;
+  Rate: Integer;
+  ScreenService: IFMXScreenService;
+  Size: TPointF;
+begin
+  Rates := PlatformRefreshRates;
+  if Screen.DisplayCount > 0 then
+  begin
+    Next := 1;
+    for I := 0 to Screen.DisplayCount - 1 do
+    begin
+      var Display := Screen.Displays[I];
+      if Display.Primary then
+        Rate := RateAt(Rates, 0)
+      else
+      begin
+        Rate := RateAt(Rates, Next);
+        Inc(Next);
+      end;
+      AddDisplay(AList, I, Display.Primary,
+        RectF(Display.Bounds.Left, Display.Bounds.Top, Display.Bounds.Right,
+          Display.Bounds.Bottom),
+        RectF(Display.WorkArea.Left, Display.WorkArea.Top, Display.WorkArea.Right,
+          Display.WorkArea.Bottom),
+        Display.Scale, Rate);
+    end;
+  end
+  else if TPlatformServices.Current.SupportsPlatformService(IFMXScreenService,
+    ScreenService) then
+  begin
+    Size := ScreenService.GetScreenSize;
+    AddDisplay(AList, 0, True, RectF(0, 0, Size.X, Size.Y), RectF(0, 0, Size.X, Size.Y),
+      ScreenService.GetScreenScale, RateAt(Rates, 0));
+  end;
+end;
+
+{$ENDIF}
+
 { TPeardoxDisplays }
 
 constructor TPeardoxDisplays.Create;
@@ -458,7 +706,51 @@ end;
 procedure TPeardoxDisplays.Refresh;
 begin
   ClearDisplays;
-  EnumDisplayMonitors(0, nil, @MonitorEnumProc, LPARAM(FDisplays));
+  ReadDisplays(FDisplays);
+end;
+
+function TPeardoxDisplays.IndexOfForm(const AForm: TCommonCustomForm): Integer;
+{$IF DEFINED(MSWINDOWS)}
+var
+  Name: string;
+  I: Integer;
+begin
+  Result := -1;
+  Name := FormDeviceName(AForm);
+  if Name = '' then
+    Exit;
+  for I := 0 to FDisplays.Count - 1 do
+    if SameText(FDisplays[I].DeviceName, Name) then
+      Exit(I);
+end;
+{$ELSE}
+begin
+  Result := -1;
+  if (AForm = nil) or (Screen.DisplayCount = 0) then
+    Exit;
+  Result := Screen.DisplayFromForm(AForm).Index;
+  if (Result < 0) or (Result >= FDisplays.Count) then
+    Result := -1;
+end;
+{$ENDIF}
+
+function TPeardoxDisplays.RefreshRateFor(const AForm: TCommonCustomForm): Integer;
+var
+  Index, I: Integer;
+begin
+  Result := 0;
+  Index := IndexOfForm(AForm);
+  if Index < 0 then
+    for I := 0 to FDisplays.Count - 1 do
+      if FDisplays[I].IsPrimary then
+      begin
+        Index := I;
+        Break;
+      end;
+  if (Index < 0) and (FDisplays.Count > 0) then
+    Index := 0;
+  if Index >= 0 then
+    Result := FDisplays[Index].CurrentMode.RefreshRate;
 end;
 
 function TPeardoxDisplays.GetCount: Integer;

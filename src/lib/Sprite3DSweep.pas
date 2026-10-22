@@ -30,12 +30,13 @@
 //**
 //** ShowModelSweep adds a TModelSweep holding the rest pose's volume and one per animation.
 //** Each frame it draws the volume of the animation the model is playing, or the rest pose's
-//** when none is playing or the playing one was not measured, so the wireframe changes as
-//** soon as another animation is played. It draws the swept box in aqua, and the tube's outer
-//** and inner walls, with the axis itself, in yellow. The lines are drawn with the context's
+//** when none is playing or the playing one was not measured, so the wireframe changes as soon
+//** as another animation is played. It draws the swept box in aqua, and the tube's outer and
+//** inner walls, with the axis itself, in yellow. The lines are drawn with the context's
 //** DrawLines helper, two calls a frame, one per colour, following Gorilla v1.5's Line
-//** Rendering guide, with depth testing as usual, so the model hides the parts behind it. Widths above 1 pixel work on desktop OpenGL
-//** only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+//** Rendering guide, with depth testing as usual, so the model hides the parts behind it.
+//** Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1
+//** pixel.
 //**
 //** The swept box is larger than the model's own box, and Gorilla counts a model's children in
 //** its bounding box, so the TModelSweep is not a child of the model: it sits beside it, owned
@@ -343,13 +344,15 @@ type
     //**
     //** Counts the poses to measure, which is quick; nothing is measured until Step.
     //**
-    //** @param(AModel The model; it must outlive the measurer. Nil, or a model without
-    //** animations, gives a measurer that is already Finished, with no results.)
+    //** @param(AModel The model; it must outlive the measurer, and be visible while it is
+    //** measured, as MeasureAnimationBounds says. Nil, or a model without animations, gives a
+    //** measurer that is already Finished, with no results.)
     /// <summary>Prepares to measure every animation of AModel.</summary>
     /// <remarks>Counts the poses to measure, which is quick; nothing is measured until
     /// Step.</remarks>
-    /// <param name="AModel">The model; it must outlive the measurer. Nil, or a model without
-    /// animations, gives a measurer that is already Finished, with no results.</param>
+    /// <param name="AModel">The model; it must outlive the measurer, and be visible while it
+    /// is measured, as MeasureAnimationBounds says. Nil, or a model without animations, gives
+    /// a measurer that is already Finished, with no results.</param>
     constructor Create(const AModel: TGorillaModel);
     //** @abstract(Frees the measurer; the model is left as the last Step left it.)
     /// <summary>Frees the measurer; the model is left as the last Step left it.</summary>
@@ -666,7 +669,9 @@ function CalcSweptVolume(const ABox: TBoundingBox; const APivot: TPoint3D;
 //** Blocks for as long as the stepping takes: the number of poses times the cost of one
 //** bounding box. Do not call it while something else drives the animations, such as a
 //** capture. Gorilla counts a model's children in its animated bounds, so call it before
-//** adding any helper to AModel as a child. Main thread only.
+//** adding any helper to AModel as a child. AModel must be visible: Gorilla leaves a hidden
+//** model in the pose it had, so every animation of it would measure as that one pose. Main
+//** thread only.
 //**
 //** An animation whose poses Gorilla did not bake is posed by seeking its skeleton; on Delphi
 //** 13 and later that pose is only evaluated when a frame is drawn, so such an animation's box
@@ -680,16 +685,17 @@ function CalcSweptVolume(const ABox: TBoundingBox; const APivot: TPoint3D;
 /// <summary>Measures, for each of AModel's animations, the box that holds all its
 /// poses.</summary>
 /// <remarks><para>Each animation in turn is made current and stepped, with
-/// TSprite3DAnimationFrames, through one cycle at the rate Gorilla baked its poses, 30 frames
-/// a second if it baked none, and after each step the model's GetAnimatedBoundingBox is added
-/// to that animation's box. The animation that was current before is made current again
+/// TSprite3DAnimationFrames, through one cycle at the rate Gorilla baked its poses, 30 frames a
+/// second if it baked none, and after each step the model's GetAnimatedBoundingBox is added to
+/// that animation's box. The animation that was current before is made current again
 /// afterwards, running or stopped as it was; the others are left stopped. The model's pose
-/// changes while this runs, and is wherever the restored animation puts it
-/// afterwards.</para>
+/// changes while this runs, and is wherever the restored animation puts it afterwards.</para>
 /// <para>Blocks for as long as the stepping takes: the number of poses times the cost of one
-/// bounding box. Do not call it while something else drives the animations, such as a
-/// capture. Gorilla counts a model's children in its animated bounds, so call it before adding
-/// any helper to AModel as a child. Main thread only.</para>
+/// bounding box. Do not call it while something else drives the animations, such as a capture.
+/// Gorilla counts a model's children in its animated bounds, so call it before adding any
+/// helper to AModel as a child. AModel must be visible: Gorilla leaves a hidden model in the
+/// pose it had, so every animation of it would measure as that one pose. Main thread
+/// only.</para>
 /// <para>An animation whose poses Gorilla did not bake is posed by seeking its skeleton; on
 /// Delphi 13 and later that pose is only evaluated when a frame is drawn, so such an
 /// animation's box may be that of the pose already showing. Sprite3D loads models with vertex
@@ -1062,7 +1068,7 @@ function FindCombinedSweep(const AModel: TGorillaModel): TCombinedSweep;
 implementation
 
 uses
-  System.Diagnostics, Sprite3DAnimCapture;
+  System.Diagnostics, System.RTLConsts, Sprite3DAnimCapture;
 
 const
   // A size is never smaller than this, so a flat model still has extent

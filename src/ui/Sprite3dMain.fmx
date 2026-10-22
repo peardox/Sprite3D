@@ -170,7 +170,7 @@ object MainForm: TMainForm
       Text = 'File'
       object OpenModelMenuItem: TMenuItem
         Locked = True
-        Text = 'OpenModel'
+        Text = 'Open Model'
         OnClick = OpenModelMenuItemClick
       end
       object GrabMenuItem: TMenuItem
@@ -182,11 +182,6 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Save As Icon'
         OnClick = SaveAsIconMenuItemClick
-      end
-      object BackgroundSettingsMenuItem: TMenuItem
-        Locked = True
-        Text = 'Background Settings...'
-        OnClick = BackgroundSettingsMenuItemClick
       end
       object SettingsMenuItem: TMenuItem
         Locked = True
@@ -209,6 +204,29 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Animations Used...'
         OnClick = AnimationsUsedItemClick
+      end
+      object ModelSettingsSeparatorItem: TMenuItem
+        Locked = True
+        Text = '-'
+      end
+      object BackgroundSettingsMenuItem: TMenuItem
+        Locked = True
+        Text = 'Background Settings...'
+        OnClick = BackgroundSettingsMenuItemClick
+      end
+      object ModelActionsSeparatorItem: TMenuItem
+        Locked = True
+        Text = '-'
+      end
+      object DirectionsItem: TMenuItem
+        Enabled = False
+        Locked = True
+        Text = 'Directions'
+      end
+      object OrientationItem: TMenuItem
+        Enabled = False
+        Locked = True
+        Text = 'Orientation'
       end
     end
     object ViewMenu: TMenuItem

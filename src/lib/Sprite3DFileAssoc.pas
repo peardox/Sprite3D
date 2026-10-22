@@ -312,7 +312,7 @@ type
 implementation
 
 uses
-  System.IOUtils
+  System.IOUtils, OSPaths
   {$IF DEFINED(MSWINDOWS)}
   , Winapi.Windows, Winapi.ShellAPI, System.Win.Registry
   {$ELSEIF DEFINED(S3D_DESKTOP_MACOS)}
@@ -853,17 +853,23 @@ end;
 // mimeapps.list as lines; edited by hand rather than as an ini file so
 // comments and other groups are kept exactly as they are
 function ReadLines(const AFileName: String): TStringList;
+var
+  FileName: String;
 begin
+  FileName := OSFriendlyPath(AFileName);
   Result := TStringList.Create;
   Result.LineBreak := #10;
-  if TFile.Exists(AFileName) then
-    Result.Text := TFile.ReadAllText(AFileName, TEncoding.UTF8).Replace(#13, '');
+  if TFile.Exists(FileName) then
+    Result.Text := TFile.ReadAllText(FileName, TEncoding.UTF8).Replace(#13, '');
 end;
 
 procedure WriteLines(const AFileName: String; const ALines: TStringList);
+var
+  FileName: String;
 begin
-  ForceDirectories(ExtractFileDir(AFileName));
-  TFile.WriteAllBytes(AFileName, TEncoding.UTF8.GetBytes(ALines.Text));
+  FileName := OSFriendlyPath(AFileName);
+  ForceDirectories(ExtractFileDir(FileName));
+  TFile.WriteAllBytes(FileName, TEncoding.UTF8.GetBytes(ALines.Text));
 end;
 
 // The line index of AKey in the [Default Applications] group, or -1;
@@ -988,8 +994,9 @@ begin
         .Append('NoDisplay=false').Append(#10)
         .Append('Categories=Graphics;3DGraphics;Viewer;').Append(#10)
         .Append('MimeType=').Append(MimeTypes).Append(#10);
-      ForceDirectories(ExtractFileDir(DesktopFileName));
-      TFile.WriteAllBytes(DesktopFileName, TEncoding.UTF8.GetBytes(Desktop.ToString));
+      ForceDirectories(ExtractFileDir(OSFriendlyPath(DesktopFileName)));
+      TFile.WriteAllBytes(OSFriendlyPath(DesktopFileName),
+        TEncoding.UTF8.GetBytes(Desktop.ToString));
 
       // Teach shared-mime-info the extensions; for a type it already knows
       // this only adds the glob
@@ -1002,8 +1009,9 @@ begin
           .Append('    <glob pattern="*').Append(FileType.Extension).Append('"/>').Append(#10)
           .Append('  </mime-type>').Append(#10);
       Mime.Append('</mime-info>').Append(#10);
-      ForceDirectories(ExtractFileDir(MimePackageFileName));
-      TFile.WriteAllBytes(MimePackageFileName, TEncoding.UTF8.GetBytes(Mime.ToString));
+      ForceDirectories(ExtractFileDir(OSFriendlyPath(MimePackageFileName)));
+      TFile.WriteAllBytes(OSFriendlyPath(MimePackageFileName),
+        TEncoding.UTF8.GetBytes(Mime.ToString));
       Result := True;
     except
       on E: Exception do

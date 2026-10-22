@@ -210,7 +210,7 @@ uses
   {$ELSE}
   Posix.Dlfcn,
   {$ENDIF}
-  System.Classes, System.IOUtils, System.Math;
+  System.Classes, System.IOUtils, System.Math, OSPaths;
 
 // The structures below must be laid out as OpenH264's C compiler lays them
 // out: natural alignment, enumerations as 4-byte ints
@@ -345,14 +345,17 @@ var
 { Loading }
 
 function OpenLibrary(const APath: String): HMODULE;
+var
+  Path: String;
 begin
+  Path := OSFriendlyPath(APath);
   {$IFDEF MSWINDOWS}
-  if ExtractFilePath(APath) <> String.Empty then
-    Result := LoadLibraryEx(PChar(APath), 0, LOAD_WITH_ALTERED_SEARCH_PATH)
+  if ExtractFilePath(Path) <> String.Empty then
+    Result := LoadLibraryEx(PChar(Path), 0, LOAD_WITH_ALTERED_SEARCH_PATH)
   else
-    Result := LoadLibrary(PChar(APath));
+    Result := LoadLibrary(PChar(Path));
   {$ELSE}
-  Result := System.SysUtils.LoadLibrary(PChar(APath));
+  Result := System.SysUtils.LoadLibrary(PChar(Path));
   {$ENDIF}
 end;
 

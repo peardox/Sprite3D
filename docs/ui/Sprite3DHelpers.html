@@ -80,11 +80,11 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 
 <p>The application keeps three kinds of code apart. The units in <code>ui</code> only handle the user interface; the units in <code>lib</code> are a library with no knowledge of this application, usable in other projects; and this unit holds what is left: the application's own rules, such as where models are found, how grabs are named and saved, and how a loaded model is placed. It uses the library and the RTL, never the UI.
 
-<p>TSprite3DAppSettings holds the settings kept between sessions, in <code>settings.json</code> in the application's own per-user folder, SupportFolder.
+<p>TSprite3DAppSettings holds the settings kept between sessions, in <code>settings.json</code> in the application's own per-user folder, SupportFolder. The measured bounds of each model's animations are kept there too, one file per model in its <code>bounds</code> folder, through LoadAnimationBoundsCache and SaveAnimationBoundsCache.
 
 <p>Loading a model through LoadModelFile also registers Gorilla3D's loaders for glTF, FBX, OBJ, USD, Collada, STL and PLY files, as this unit uses them.
 
-<p>All routines are for the main thread.</p>
+<p>All routines are for the main thread, except the members of IModelFileRead.</p>
 <span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
 <span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
 <table class="classestable wide_list">
@@ -103,6 +103,10 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DAppSettings.html"><code>TSprite3DAppSettings</code></a></td>
 <td class="itemdesc">The application's settings, kept between sessions in settings.json.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Interface&nbsp;<a class="bold" href="Sprite3DHelpers.IModelFileRead.html"><code>IModelFileRead</code></a></td>
+<td class="itemdesc">A read of a model file on a worker thread, from StartModelFileRead.</td>
 </tr>
 </table>
 <span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
@@ -142,6 +146,18 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></strong>(const ARequested: TArray&lt;String&gt;; const ADefault: String): String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#StartModelFileRead-String-">StartModelFileRead</a></strong>(const AFileName: String): <a href="Sprite3DHelpers.IModelFileRead.html">IModelFileRead</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#AnimationBoundsCacheFile-String-">AnimationBoundsCacheFile</a></strong>(const AModelFile: String): String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#LoadAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">LoadAnimationBoundsCache</a></strong>(const AModelFile: String; const ANames: TArray&lt;String&gt;; out ABounds: TArray&lt;TAnimationBounds&gt;): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">SaveAnimationBoundsCache</a></strong>(const AModelFile: String; const ANames: TArray&lt;String&gt;; const ABounds: TArray&lt;TAnimationBounds&gt;);</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></strong>(const AExtension: String): String;</code></td>
@@ -204,15 +220,24 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#ANIMATION_FPS_DEFAULT">ANIMATION_FPS_DEFAULT</a></strong> = 30;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#OVERSCAN_FACTOR_MIN">OVERSCAN_FACTOR_MIN</a></strong> = 2;</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#OVERSCAN_FACTOR_MAX">OVERSCAN_FACTOR_MAX</a></strong> = 16;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#OVERSCAN_FACTOR_DEFAULT">OVERSCAN_FACTOR_DEFAULT</a></strong> = 4;</code></td>
 </tr>
 <tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_PRESET_SIZES">GRAB_PRESET_SIZES</a></strong>: array[0..11] of Integer =
     (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);</code></td>
 </tr>
@@ -509,6 +534,111 @@ The model to load at start-up: the first one the system asked to open, or ADefau
 </dl>
 <h6 class="description_section">Returns</h6>
 <p class="return">The first model in ARequested, or ADefault if it holds none.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="StartModelFileRead-String-"></span><code>function <strong>StartModelFileRead</strong>(const AFileName: String): <a href="Sprite3DHelpers.IModelFileRead.html">IModelFileRead</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Starts reading a model file from start to end on a worker thread.</p>
+<p>
+
+
+<p>Nothing is kept: the point is to bring the file into the operating system's file cache, which is where a cold load spends most of its time, while the user interface goes on and the read can be cancelled; Gorilla3D's own load, which cannot, then finds it there. The file is read in blocks of a megabyte, shared for reading and writing.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>The file to read.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The read under way.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="AnimationBoundsCacheFile-String-"></span><code>function <strong>AnimationBoundsCacheFile</strong>(const AModelFile: String): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Where the measured animation bounds of a model file are kept between sessions.</p>
+<p>
+
+
+<p>A file in the bounds folder of SupportFolder, named from a hash of the model's full path, size and time of last change, so a model that is changed or replaced gets a new file and its old figures are never used. Nothing is created.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModelFile</dt>
+<dd>The model file; it must exist.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The cache file's path, or empty if the model file cannot be found.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="LoadAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-"></span><code>function <strong>LoadAnimationBoundsCache</strong>(const AModelFile: String; const ANames: TArray&lt;String&gt;; out ABounds: TArray&lt;TAnimationBounds&gt;): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reads the animation bounds saved for a model file, so they need not be measured again.</p>
+<p>
+
+
+<p>The figures are used only if they were saved for exactly the animations named, in any order, and by this version of the cache; anything else, a damaged file included, gives False and leaves the model to be measured.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModelFile</dt>
+<dd>The model file, as loaded.</dd>
+<dt>ANames</dt>
+<dd>Every animation the model has, as LoadModelFile listed them.</dd>
+<dt>ABounds</dt>
+<dd>The figures, in the order they were saved; empty when False, and without any animation that had no pose to measure.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if usable figures were read.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-"></span><code>procedure <strong>SaveAnimationBoundsCache</strong>(const AModelFile: String; const ANames: TArray&lt;String&gt;; const ABounds: TArray&lt;TAnimationBounds&gt;);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Saves a model file's measured animation bounds for the next time it is loaded.</p>
+<p>
+
+
+<p>Writes AnimationBoundsCacheFile as JSON, making the folder if need be. A failure to write is ignored: the model is simply measured again next time.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModelFile</dt>
+<dd>The model file the figures were measured from.</dd>
+<dt>ANames</dt>
+<dd>Every animation the model has, as LoadModelFile listed them.</dd>
+<dt>ABounds</dt>
+<dd>The figures, as TAnimationBoundsMeasurer gave them.</dd>
+</dl>
+</td></tr>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
@@ -852,6 +982,33 @@ The highest frame rate File, Animation offers for saved animations, in frames pe
 <tr><td colspan="1">
 <p>
 The frame rate saved animations use until File, Animation changes it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OVERSCAN_FACTOR_MIN"></span><code><strong>OVERSCAN_FACTOR_MIN</strong> = 2;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The smallest overscan factor File, Animation offers.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OVERSCAN_FACTOR_MAX"></span><code><strong>OVERSCAN_FACTOR_MAX</strong> = 16;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The largest overscan factor File, Animation offers, before the GPU's own limit for the grab size.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OVERSCAN_FACTOR_DEFAULT"></span><code><strong>OVERSCAN_FACTOR_DEFAULT</strong> = 4;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The overscan factor File, Animation shows until another is chosen.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

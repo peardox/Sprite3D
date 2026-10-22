@@ -77,49 +77,59 @@ function pasdocUpdateMembers(className) {
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#AnimationBoundsCacheFile-String-">AnimationBoundsCacheFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Where the measured animation bounds of a model file are kept between sessions.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ApplyFileAssociations-TSprite3DAppSettings-Boolean-Boolean-String-">ApplyFileAssociations</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Registers or unregisters the application for model files as asked, keeping what is needed to undo it in ASettings.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ApplyTheme-TSprite3DTheme-String-">ApplyTheme</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Gives the whole application, title bars included, the look ATheme names.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The file an icon is saved to without asking, or empty where the user should choose.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreateModelAssociations">CreateModelAssociations</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>A new TSprite3DFileAssociations for the model files this application opens.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder grabs are saved in without asking, or empty where the user should choose.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultModelDir">DefaultModelDir</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder that holds the application's models folder, for this platform.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Formats an angle from Wrap360 as whole degrees for a readout.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#GpuModeSupported">GpuModeSupported</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>True where the GPU preference can be set: Windows only.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsModelFile-String-">IsModelFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Whether a file is a model LoadModelFile can load, judged by its extension.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">LoadAnimationBoundsCache</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads the animation bounds saved for a model file, so they need not be measured again.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></td>
@@ -162,9 +172,19 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The GPU preference Windows has for this program file now.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">SaveAnimationBoundsCache</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Saves a model file's measured animation bounds for the next time it is loaded.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Saves a grab as the next free grabNNN.png in a folder.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#StartModelFileRead-String-">StartModelFileRead</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Starts reading a model file from start to end on a worker thread.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></td>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DResample</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DResample</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Resamples RGBA pixels to another size with a choice of filters, for overscanned grabs.</p>
+<p>
+
+
+<p>ResamplePixels scales an image held as RGBA bytes, four to a pixel, rows one after another, with one of the filters in TSprite3DResampleFilter. It is meant for overscan: rendering a grab at a whole multiple of its size and scaling it back down, which smooths edges and fine detail far better than the renderer's own anti-aliasing. It works in either direction and for any pair of sizes, though shrinking is what it is for.
+
+<p>The pixels must be premultiplied, colour already multiplied by alpha, as Sprite3D's grabs and FMX bitmaps hold them. Filtering premultiplied values keeps transparent pixels from bleeding their hidden colour into the edges round them. Filters with negative lobes can ring; each result is clamped to 0 to 255, and each colour to its alpha, so it stays a valid premultiplied pixel.
+
+<p>The work is separable: each row is resampled across, into a buffer of single-precision values the new width by the old height, then each column down. A filter reaches a number of source pixels that grows with the scale, so shrinking by 16 with Lanczos 3 reads 96 source pixels each way for every result.
+
+<p></p>
+
+<pre class="preformatted">
+Filter      reach in output pixels   character
+Box         0.5                      area average: exact for whole multiples
+Bilinear    1                        tent: soft
+CatmullRom  2                        bicubic: sharp, slight ringing
+Mitchell    2                        bicubic: balanced
+Lanczos3    3                        windowed sinc: sharpest, most ringing</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DResample.html#ResampleFilterName-TSprite3DResampleFilter-">ResampleFilterName</a></strong>(const AFilter: <a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a>): String;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DResample.html#ResamplePixels-TBytes-Integer-Integer-Integer-Integer-TSprite3DResampleFilter-">ResamplePixels</a></strong>(const ASource: TBytes; const ASourceWidth, ASourceHeight, AWidth, AHeight: Integer; const AFilter: <a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a>): TBytes;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a></strong> = (...);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ResampleFilterName-TSprite3DResampleFilter-"></span><code>function <strong>ResampleFilterName</strong>(const AFilter: <a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a>): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The name a filter is shown by, such as <code>'Box (area average)'</code>.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFilter</dt>
+<dd>The filter.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">Its name for a drop-down list.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ResamplePixels-TBytes-Integer-Integer-Integer-Integer-TSprite3DResampleFilter-"></span><code>function <strong>ResamplePixels</strong>(const ASource: TBytes; const ASourceWidth, ASourceHeight, AWidth, AHeight: Integer; const AFilter: <a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a>): TBytes;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Scales premultiplied RGBA pixels to a new size with AFilter.</p>
+<p>
+
+
+<p>ASource holds ASourceWidth by ASourceHeight pixels, four bytes each in the order R, G, B, A, rows one after another, with colour already multiplied by alpha. Which way up the rows run does not matter, as the result keeps the same order. Every result is clamped to 0 to 255 and each colour to its alpha. Source pixels past an edge count as the edge pixel. Blocks while it works; any thread, as it touches nothing shared.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ASource</dt>
+<dd>The pixels to scale.</dd>
+<dt>ASourceWidth</dt>
+<dd>The source's width in pixels; at least 1.</dd>
+<dt>ASourceHeight</dt>
+<dd>The source's height in pixels; at least 1.</dd>
+<dt>AWidth</dt>
+<dd>The result's width in pixels; at least 1.</dd>
+<dt>AHeight</dt>
+<dd>The result's height in pixels; at least 1.</dd>
+<dt>AFilter</dt>
+<dd>The filter to scale with.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">AWidth by AHeight pixels in the same layout; a copy of ASource if the sizes are the same.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If a size is less than 1 or ASource is not ASourceWidth by ASourceHeight pixels long.</dd>
+</dl>
+</td></tr>
+</table>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DResampleFilter"></span><code><strong>TSprite3DResampleFilter</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The filter ResamplePixels scales with.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="rfBox">rfBox</span>: Area average: each result is the mean of the source pixels it covers.</p>
+<p>
+
+
+<p>Exact for a whole-number scale, such as overscan, with no ringing.</li>
+<li>
+<span id="rfBilinear">rfBilinear</span>: Tent filter, reaching one output pixel each way: soft.</li>
+<li>
+<span id="rfCatmullRom">rfCatmullRom</span>: Catmull-Rom cubic, reaching two output pixels each way: sharp, with slight ringing.</li>
+<li>
+<span id="rfMitchell">rfMitchell</span>: Mitchell-Netravali cubic, B = C = 1/3, reaching two output pixels each way: a balance of sharpness and ringing.</li>
+<li>
+<span id="rfLanczos3">rfLanczos3</span>: Lanczos windowed sinc, reaching three output pixels each way: the sharpest, with the most ringing.</li>
+</ul>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

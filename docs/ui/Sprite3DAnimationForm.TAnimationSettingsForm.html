@@ -116,6 +116,38 @@ The File, Animation dialog; see the unit description.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanLayout">OverscanLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanCheck">OverscanCheck</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanTrack">OverscanTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanValueLabel">OverscanValueLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FilterLayout">FilterLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FilterLabel">FilterLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#FilterCombo">FilterCombo</a></strong>: TComboBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanNoteLabel">OverscanNoteLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#ButtonLayout">ButtonLayout</a></strong>: TLayout;</code></td>
 </tr>
 <tr class="list2 visibility-public">
@@ -139,6 +171,14 @@ The File, Animation dialog; see the unit description.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanTrackChange-TObject-">OverscanTrackChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanCheckChange-TObject-">OverscanCheckChange</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#ButtonClick-TObject-">ButtonClick</a></strong>(Sender: TObject);</code></td>
 </tr>
 <tr class="list2 visibility-public">
@@ -155,6 +195,22 @@ The File, Animation dialog; see the unit description.</p>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#Fps">Fps</a></strong>: Integer read GetFps write SetFps;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#MaxOverscan">MaxOverscan</a></strong>: Integer read FMaxOverscan write SetMaxOverscan;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#OverscanEnabled">OverscanEnabled</a></strong>: Boolean read GetOverscanEnabled write SetOverscanEnabled;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#Overscan">Overscan</a></strong>: Integer read GetOverscan write SetOverscan;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#Filter">Filter</a></strong>: TSprite3DResampleFilter read GetFilter write SetFilter;</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -230,6 +286,86 @@ A line explaining what the rate is used for.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanLayout"></span><code><strong>OverscanLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The row with OverscanCheck, OverscanTrack and OverscanValueLabel.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanCheck"></span><code><strong>OverscanCheck</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Turns overscan on for grabs and exports.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanTrack"></span><code><strong>OverscanTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The overscan factor, in whole steps.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanValueLabel"></span><code><strong>OverscanValueLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The overscan factor as a number, such as <code>4x</code>.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FilterLayout"></span><code><strong>FilterLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The row with FilterLabel and FilterCombo.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FilterLabel"></span><code><strong>FilterLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption &quot;Resampling&quot;.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FilterCombo"></span><code><strong>FilterCombo</strong>: TComboBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The filter overscanned images are scaled down with, one entry per TSprite3DResampleFilter in its order.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanNoteLabel"></span><code><strong>OverscanNoteLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Says how far overscan can go at the grab size, or why it cannot be used.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="ButtonLayout"></span><code><strong>ButtonLayout</strong>: TLayout;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -293,6 +429,44 @@ Shows the slider's value beside it.</p>
 <dl class="parameters">
 <dt>Sender</dt>
 <dd>FpsTrack.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanTrackChange-TObject-"></span><code>procedure <strong>OverscanTrackChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the overscan factor beside the slider.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>OverscanTrack.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanCheckChange-TObject-"></span><code>procedure <strong>OverscanCheckChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Enables the overscan slider and the filter drop-down while the box is ticked.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>OverscanCheck.</dd>
 </dl>
 </td></tr>
 </table>
@@ -365,6 +539,58 @@ The frame rate shown, in frames per second.</p>
 
 
 <p>Set it before showing the dialog; read it after OK. Values are limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MaxOverscan"></span><code>property <strong>MaxOverscan</strong>: Integer read FMaxOverscan write SetMaxOverscan;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The largest overscan factor allowed; OVERSCAN_FACTOR_MAX until set.</p>
+<p>
+
+
+<p>Set it before Overscan, to what the off-screen renderer can do, such as <code>TSprite3DOffscreen.MaxOverscan</code>. The slider stops there. Below OVERSCAN_FACTOR_MIN, overscan cannot be used: the tick box is cleared and disabled, and the note says so. Values above OVERSCAN_FACTOR_MAX count as OVERSCAN_FACTOR_MAX.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OverscanEnabled"></span><code>property <strong>OverscanEnabled</strong>: Boolean read GetOverscanEnabled write SetOverscanEnabled;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the Overscan box is ticked.</p>
+<p>
+
+
+<p>Setting it True has no effect while MaxOverscan is below OVERSCAN_FACTOR_MIN.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Overscan"></span><code>property <strong>Overscan</strong>: Integer read GetOverscan write SetOverscan;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The overscan factor shown; limited to OVERSCAN_FACTOR_MIN to MaxOverscan.</p>
+<p>
+
+
+<p>It keeps its value while the box is not ticked, so it can be kept as a setting.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Filter"></span><code>property <strong>Filter</strong>: TSprite3DResampleFilter read GetFilter write SetFilter;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The resampling filter chosen.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">

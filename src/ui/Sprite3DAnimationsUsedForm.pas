@@ -28,14 +28,15 @@ unit Sprite3DAnimationsUsedForm;
   after OK, reads UsedAnimations.
 
   A column on the right gives each animation's own swept volume as a
-  percentage of the combined swept volume: the rest pose's joined with that
-  of every animation ticked at the time. It is worked out again whenever a
-  tick changes. An animation that reaches much further than the others
-  stands out, as the others' percentages are small beside it, and unticking
-  it shows how much the combined volume shrinks without it. An unticked
-  animation can show more than 100%, as it is not in the combined volume. Cancel, or closing the dialog any other
-  way, leaves the caller's set as it was, as the dialog only changes its own
-  copy. Keeping the set, and what it is used for, is the caller's job.
+  percentage of the combined swept volume: the rest pose's joined with that of
+  every animation ticked at the time. It is worked out again whenever a tick
+  changes. An animation that reaches much further than the others stands out,
+  as the others' percentages are small beside it, and unticking it shows how
+  much the combined volume shrinks without it. An unticked animation can show
+  more than 100%, as it is not in the combined volume. Cancel, or closing the
+  dialog any other way, leaves the caller's set as it was, as the dialog only
+  changes its own copy. Keeping the set, and what it is used for, is the
+  caller's job.
 
   On the desktop, show it with ShowModal and read UsedAnimations afterwards;
   on Android and iOS, which cannot block, show it with ShowAndFree, which

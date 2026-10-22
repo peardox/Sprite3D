@@ -278,7 +278,7 @@ implementation
 
 uses
   System.Types, System.UITypes, System.Math, System.ZLib, System.Generics.Collections,
-  System.Generics.Defaults;
+  System.Generics.Defaults, OSPaths;
 
 { TSprite3DImage }
 
@@ -499,7 +499,7 @@ begin
   ZCompress(Raw, Zipped, zcDefault);   // a zlib stream, as IDAT wants
   Raw := nil;
 
-  Stream := TFileStream.Create(AFileName, fmCreate);
+  Stream := TFileStream.Create(OSFriendlyPath(AFileName), fmCreate);
   try
     Stream.WriteBuffer(SIGNATURE, Length(SIGNATURE));
     WriteChunk(Stream, 'IHDR', Header);
@@ -875,7 +875,7 @@ begin
 
   Lzw := TGifLzw.Create;
   try
-    Stream := TFileStream.Create(AFileName, fmCreate);
+    Stream := TFileStream.Create(OSFriendlyPath(AFileName), fmCreate);
     try
       Header := 'GIF89a';
       Stream.WriteBuffer(Header[1], 6);

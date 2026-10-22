@@ -3,7 +3,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
   Top = 0
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
-  Caption = 'Animation'
+  Caption = 'Animation Settings'
   ClientHeight = 290
   ClientWidth = 360
   Position = MainFormCenter

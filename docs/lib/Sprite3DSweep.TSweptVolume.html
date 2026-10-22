@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DSweep: Record TSweptVolume</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSweptVolume"></span><h1 class="cio">Record TSweptVolume</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DSweep.html">Sprite3DSweep</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSweptVolume = record</code></p>
+<h2 class="description">Description</h2>
+<p>
+The space a bounding box passes through in a full turn about an axis.</p>
+<p>
+
+
+<p>A tube round the axis, from InnerRadius to OuterRadius, running from AxialLow to AxialHigh along it; a solid cylinder when InnerRadius is 0. All values are in the model's own coordinates and units. Fill it with CalcSweptVolume. Across the axis the two other axes are taken in X, Y, Z order: X and Z for saY, Y and Z for saX, and X and Y for saZ.</p>
+<div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#Valid">Valid</a></strong>: Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#Axis">Axis</a></strong>: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a>;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#Pivot">Pivot</a></strong>: TPoint3D;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#AxialLow">AxialLow</a></strong>: Single;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#AxialHigh">AxialHigh</a></strong>: Single;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#InnerRadius">InnerRadius</a></strong>: Single;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.TSweptVolume.html#OuterRadius">OuterRadius</a></strong>: Single;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TSweptVolume.html#Length">Length</a></strong>: Single;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TSweptVolume.html#Volume">Volume</a></strong>: Single;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TSweptVolume.html#BoxVolume">BoxVolume</a></strong>: Single;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TSweptVolume.html#Box">Box</a></strong>: TBoundingBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TSweptVolume.html#AxisPoint-Single-Single-Single-">AxisPoint</a></strong>(const AAlong, AAcross1, AAcross2: Single): TPoint3D;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TSweptVolume.html#ToString">ToString</a></strong>: String;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Valid"></span><code><strong>Valid</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+False if the box it was worked out from was empty; nothing else is then set but Axis and Pivot.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Axis"></span><code><strong>Axis</strong>: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The model's axis that the turn is about.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Pivot"></span><code><strong>Pivot</strong>: TPoint3D;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A point the turning axis passes through: the model's centre of rotation.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AxialLow"></span><code><strong>AxialLow</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Where the volume starts along the axis: the box's lowest value on it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AxialHigh"></span><code><strong>AxialHigh</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Where the volume ends along the axis: the box's highest value on it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="InnerRadius"></span><code><strong>InnerRadius</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The distance from the axis to the nearest point of the box; 0 when the axis passes through the box.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OuterRadius"></span><code><strong>OuterRadius</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The distance from the axis to the box's farthest corner.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Length"></span><code>function <strong>Length</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How far the volume runs along the axis.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">AxialHigh minus AxialLow; 0 if Valid is False.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Volume"></span><code>function <strong>Volume</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The swept volume itself: the tube between the two radii.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Pi times the difference of the squared radii, times Length, in cubic model units; 0 if Valid is False.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="BoxVolume"></span><code>function <strong>BoxVolume</strong>: Single;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The volume of the swept box, which holds the whole tube, its hole included.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">Twice OuterRadius, squared, times Length, in cubic model units; 0 if Valid is False.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Box"></span><code>function <strong>Box</strong>: TBoundingBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The swept box: the smallest box, square across the axis, that holds the tube.</p>
+<p>
+
+
+<p>It is centred on the axis, 2 times OuterRadius across it each way, and runs from AxialLow to AxialHigh along it. The box cannot show the tube's hole, so it also holds space round the axis that the model never reaches.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The box in the model's own coordinates; meaningless if Valid is False.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AxisPoint-Single-Single-Single-"></span><code>function <strong>AxisPoint</strong>(const AAlong, AAcross1, AAcross2: Single): TPoint3D;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A point given by where it is along the axis and how far it is off it.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AAlong</dt>
+<dd>The point's value along the axis, as AxialLow and AxialHigh are given.</dd>
+<dt>AAcross1</dt>
+<dd>Its offset from the axis along the first of the other two axes, in X, Y, Z order.</dd>
+<dt>AAcross2</dt>
+<dd>Its offset from the axis along the second of the other two axes.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The point in the model's own coordinates.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ToString"></span><code>function <strong>ToString</strong>: String;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A one-line description for a log, with the radii, length, volumes and swept box size.</p>
+<p>
+
+
+<p>Numbers use the current locale's decimal separator, to 3 decimal places.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">The description, or a note that there was nothing to sweep if Valid is False.</p></td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

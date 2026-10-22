@@ -127,6 +127,14 @@ A render pass that draws the viewport's scene off screen, one frame on request.<
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#GrabSizes-arrayofInteger-TSprite3DGrabSizesProc-">GrabSizes</a></strong>(const ASizes: array of Integer; const AOnGrabbed: <a href="Sprite3DOffscreen.html#TSprite3DGrabSizesProc">TSprite3DGrabSizesProc</a>): Boolean;</code></td>
 </tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#MaxOverscan-Integer-Integer-">MaxOverscan</a></strong>(const AWidth, AHeight: Integer): Integer;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#SinglePassOverscan-Integer-Integer-">SinglePassOverscan</a></strong>(const AWidth, AHeight: Integer): Integer;</code></td>
+</tr>
 </table>
 <span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
 <table class="summary wide_list">
@@ -155,6 +163,23 @@ A render pass that draws the viewport's scene off screen, one frame on request.<
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#OpaqueBackground">OpaqueBackground</a></strong>: TAlphaColor read FOpaqueBackground write FOpaqueBackground
       default TAlphaColors.Black;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Overscan">Overscan</a></strong>: Integer read FOverscan write SetOverscan default 1;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#Resample">Resample</a></strong>: <a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a> read FResample write FResample default <a href="Sprite3DResample.html#rfBox">rfBox</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#OnOverscanReduced">OnOverscanReduced</a></strong>: <a href="Sprite3DOffscreen.html#TSprite3DOverscanEvent">TSprite3DOverscanEvent</a> read FOnOverscanReduced
+      write FOnOverscanReduced;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DOffscreen.TSprite3DOffscreen.html#OnShiftView">OnShiftView</a></strong>: <a href="Sprite3DOffscreen.html#TSprite3DShiftViewEvent">TSprite3DShiftViewEvent</a> read FOnShiftView write FOnShiftView;</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
@@ -285,6 +310,62 @@ Grabs one square image of each size in turn, then passes them all to AOnGrabbed.
 <h6 class="description_section">Returns</h6>
 <p class="return">True if the grabs were started; False, with nothing started, if a grab is already under way, Viewport is not set, ASizes is empty or AOnGrabbed is nil.</p></td></tr>
 </table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MaxOverscan-Integer-Integer-"></span><code>function <strong>MaxOverscan</strong>(const AWidth, AHeight: Integer): Integer;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The largest overscan factor a grab of AWidth by AHeight can use here.</p>
+<p>
+
+
+<p>OVERSCAN_MAX wherever grabs are drawn off screen, as whatever the GPU cannot draw in one go is made up with shifted drawings; always 1 on macOS and iOS, where grabs are screenshots. The sizes are not otherwise used.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AWidth</dt>
+<dd>The grab's width in pixels.</dd>
+<dt>AHeight</dt>
+<dd>The grab's height in pixels.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">1 to OVERSCAN_MAX; 1 means no overscan is possible.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SinglePassOverscan-Integer-Integer-"></span><code>function <strong>SinglePassOverscan</strong>(const AWidth, AHeight: Integer): Integer;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How much of an overscan factor a grab of AWidth by AHeight can draw in one go here.</p>
+<p>
+
+
+<p>The enlarged target must fit what the GPU can draw, its largest texture, render buffer and viewport, OVERSCAN_TARGET_LIMIT, and any smaller size found not to draw this session, allowing for any display scaling the pass has met. The GPU's own limits are read during the first grab; before that the context class's largest texture is used, or 4096 if it gives none. Always 1 on macOS and iOS.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AWidth</dt>
+<dd>The grab's width in pixels.</dd>
+<dt>AHeight</dt>
+<dd>The grab's height in pixels.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">1 to OVERSCAN_MAX.</p></td></tr>
+</table>
 <h3 class="detail">Properties</h3>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
@@ -366,6 +447,63 @@ The background colour when TransparentBackground is False; black by default.</p>
 
 
 <p>Its alpha is ignored: the background is always drawn opaque.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Overscan"></span><code>property <strong>Overscan</strong>: Integer read FOverscan write SetOverscan default 1;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How many times larger each way grabs are drawn before being scaled down; 1, the default, is off.</p>
+<p>
+
+
+<p>Values are limited to 1 to OVERSCAN_MAX. A grab draws as much of it as SinglePassOverscan allows in one go, and makes up the rest with shifted drawings, each slid through OnShiftView. Every drawing is matted, scaled down to Width by Height with Resample, and freed before the next, and the backdrop is filled in and the bitmap made only at the end, so OnBeforeGrab and the delivered image see only Width by Height. Changes made while Busy apply from the next grab.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="Resample"></span><code>property <strong>Resample</strong>: <a href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a> read FResample write FResample default <a href="Sprite3DResample.html#rfBox">rfBox</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The filter overscanned grabs are scaled down with; Box by default.</p>
+<p>
+
+
+<p>Changes made while Busy apply from the next grab.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="OnOverscanReduced"></span><code>property <strong>OnOverscanReduced</strong>: <a href="Sprite3DOffscreen.html#TSprite3DOverscanEvent">TSprite3DOverscanEvent</a> read FOnOverscanReduced
+      write FOnOverscanReduced;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Runs when an overscanned target turns out too large to draw, before the grab is made again smaller.</p>
+<p>
+
+
+<p>The size is remembered for the rest of the session, so MaxOverscan allows less from then on and later grabs do not try it again. Use it to tell the user. Runs on the main thread, outside the render loop; it must not call Grab or Cancel.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="OnShiftView"></span><code>property <strong>OnShiftView</strong>: <a href="Sprite3DOffscreen.html#TSprite3DShiftViewEvent">TSprite3DShiftViewEvent</a> read FOnShiftView write FOnShiftView;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Slides the view by a fraction of a pixel for one of a grab's shifted drawings, or puts it back.</p>
+<p>
+
+
+<p>Called only when Overscan needs more than one drawing. Before each drawing, after OnBeforeGrab, it is called with the slide that drawing needs, a fraction of a pixel of the grab's own size in each direction, or 0 for none; after the drawing has been read, before OnAfterGrab, it is called with 0 and 0 to put the view back. The slides are spread evenly over a drawn pixel, so which way is right or up does not change the result. Without a handler the drawings are not slid and overscan beyond what can be drawn in one go only repeats work. Runs on the main thread, from inside the render for the putting back, and must only change scene state.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

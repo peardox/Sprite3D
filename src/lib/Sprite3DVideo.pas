@@ -281,7 +281,7 @@ uses
   {$IFDEF MSWINDOWS}
   Winapi.Windows,
   {$ENDIF}
-  System.Classes, System.IOUtils, System.Math, Sprite3DNativeLibs;
+  System.Classes, System.IOUtils, System.Math, Sprite3DNativeLibs, OSPaths;
 
 // FFmpeg 8.1's types and constants, as far as this unit needs them, copied
 // from the DelphiFFmpeg.com headers in the ffmpeg folder (BSD-style licence,
@@ -637,14 +637,17 @@ end;
 // path; 0 if it cannot be loaded. On Windows, a full path also makes the
 // libraries it needs be found in its own folder.
 function OpenLibrary(const APath: String): HMODULE;
+var
+  Path: String;
 begin
+  Path := OSFriendlyPath(APath);
   {$IFDEF MSWINDOWS}
-  if ExtractFilePath(APath) <> String.Empty then
-    Result := LoadLibraryEx(PChar(APath), 0, LOAD_WITH_ALTERED_SEARCH_PATH)
+  if ExtractFilePath(Path) <> String.Empty then
+    Result := LoadLibraryEx(PChar(Path), 0, LOAD_WITH_ALTERED_SEARCH_PATH)
   else
-    Result := LoadLibrary(PChar(APath));
+    Result := LoadLibrary(PChar(Path));
   {$ELSE}
-  Result := System.SysUtils.LoadLibrary(PChar(APath));
+  Result := System.SysUtils.LoadLibrary(PChar(Path));
   {$ENDIF}
 end;
 
@@ -1041,7 +1044,7 @@ begin
   Packet := nil;
   Opened := False;
   HeaderWritten := False;
-  FileName := UTF8String(AFileName);
+  FileName := UTF8String(OSFriendlyPath(AFileName));
   TimeBase := FrameTimeBase(ACycleSeconds, Length(AFrames));
   try
     Check(Api.avformat_alloc_output_context2(@Output, nil, 'mp4', PAnsiChar(FileName)),
@@ -1161,7 +1164,7 @@ begin
   Encoder := nil;
   Opened := False;
   HeaderWritten := False;
-  FileName := UTF8String(AFileName);
+  FileName := UTF8String(OSFriendlyPath(AFileName));
   TimeBase := FrameTimeBase(ACycleSeconds, Length(AFrames));
   EvenW := W + (W and 1);
   EvenH := H + (H and 1);

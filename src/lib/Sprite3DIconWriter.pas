@@ -244,7 +244,7 @@ function IconDialogFilter: String;
 implementation
 
 uses
-  System.UITypes, System.Math;
+  System.UITypes, System.Math, OSPaths;
 
 var
   GIconWriters: TArray<TSprite3DIconWriterClass>;
@@ -354,12 +354,13 @@ procedure TSprite3DIconWriter.SaveToFile(const AImages: array of TBitmap;
   const AFileName: String);
 var
   Stream: TFileStream;
-  Dir: String;
+  FileName, Dir: String;
 begin
-  Dir := ExtractFileDir(AFileName);
+  FileName := OSFriendlyPath(AFileName);
+  Dir := ExtractFileDir(FileName);
   if Dir <> String.Empty then
     ForceDirectories(Dir);
-  Stream := TFileStream.Create(AFileName, fmCreate);
+  Stream := TFileStream.Create(FileName, fmCreate);
   try
     try
       SaveToStream(AImages, Stream);

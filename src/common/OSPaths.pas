@@ -8,6 +8,11 @@
 //**
 //** Every path returned ends with the platform's path delimiter, so a folder name can be
 //** appended directly. iOS is not handled yet.
+//**
+//** OSFriendlyPath turns any path into the platform's own form, with only @code(\) between
+//** its parts on Windows and only @code(/) elsewhere. Some Windows targets, such as Win64 on
+//** ARM (ARM64EC), do not accept @code(/) in every path they are given, so every file the
+//** application opens goes through it first, as do the folders this unit returns.
 unit OSPaths;
 
 {
@@ -22,6 +27,12 @@ unit OSPaths;
 
   Every path returned ends with the platform's path delimiter, so a folder
   name can be appended directly. iOS is not handled yet.
+
+  OSFriendlyPath turns any path into the platform's own form, with only \
+  between its parts on Windows and only / elsewhere. Some Windows targets,
+  such as Win64 on ARM (ARM64EC), do not accept / in every path they are
+  given, so every file the application opens goes through it first, as do
+  the folders this unit returns.
 }
 
 interface
@@ -74,6 +85,34 @@ function GetAssetsPath(const DevelopmentPath: string = ''): string;
 /// <exception cref="EOSError">If Windows or Linux cannot report the executable's
 /// path.</exception>
 function GetBinaryPath(const DevelopmentPath: string = ''): string;
+
+//** @abstract(A path in the platform's own form: @code(\) between its parts on Windows,
+//** @code(/) elsewhere.)
+//**
+//** Every @code(/) and @code(\) becomes PathDelim, and a run of them after the start becomes
+//** one, so a folder ending in a delimiter joined to a name starting with one still gives a
+//** valid path. Delimiters at the very start are kept as they are, so Windows network paths
+//** such as @code(\\server\share) and @code(\\?\) paths survive. Nothing else changes:
+//** the path is not expanded, and is not checked to exist. Outside Windows, @code(\) is a
+//** legal character in a file name, but a path given with Windows delimiters, as one kept
+//** in a settings file written on Windows may be, is the far likelier meaning.
+//**
+//** @param(APath The path, absolute or relative; empty gives empty.)
+//**
+//** @returns(The path with the platform's delimiters.)
+/// <summary>A path in the platform's own form: <c>\</c> between its parts on Windows,
+/// <c>/</c> elsewhere.</summary>
+/// <remarks>Every <c>/</c> and <c>\</c> becomes PathDelim, and a run of them after the start
+/// becomes one, so a folder ending in a delimiter joined to a name starting with one still
+/// gives a valid path. Delimiters at the very start are kept as they are, so Windows network
+/// paths such as <c>\\server\share</c> and <c>\\?\</c> paths survive. Nothing else
+/// changes: the path is not expanded, and is not checked to exist. Outside Windows,
+/// <c>\</c> is a legal character in a file name, but a path given with Windows delimiters,
+/// as one kept in a settings file written on Windows may be, is the far likelier
+/// meaning.</remarks>
+/// <param name="APath">The path, absolute or relative; empty gives empty.</param>
+/// <returns>The path with the platform's delimiters.</returns>
+function OSFriendlyPath(const APath: string): string;
 
 implementation
 
@@ -220,6 +259,40 @@ begin
   Result := IncludeTrailingPathDelimiter(ExtractFilePath(TEncoding.UTF8.GetString(Buffer, 0, Len)));
   {$ENDIF}
 end;
+function OSFriendlyPath(const APath: string): string;
+var
+  I, Lead: Integer;
+  Builder: TStringBuilder;
+  Last: Boolean;
+begin
+  if APath = '' then
+    Exit('');
+  // The delimiters it starts with are kept, in the platform's form
+  Lead := 0;
+  while (Lead < APath.Length) and CharInSet(APath.Chars[Lead], ['/', '\']) do
+    Inc(Lead);
+  Builder := TStringBuilder.Create(APath.Length);
+  try
+    Builder.Append(PathDelim, Lead);
+    Last := Lead > 0;
+    for I := Lead to APath.Length - 1 do
+      if CharInSet(APath.Chars[I], ['/', '\']) then
+      begin
+        if not Last then
+          Builder.Append(PathDelim);
+        Last := True;
+      end
+      else
+      begin
+        Builder.Append(APath.Chars[I]);
+        Last := False;
+      end;
+    Result := Builder.ToString;
+  finally
+    Builder.Free;
+  end;
+end;
+
 function GetAssetsPath(const DevelopmentPath: string = ''): string;
 begin
   {$IF DEFINED(IOS)}
@@ -237,6 +310,7 @@ begin
   {$ELSEIF DEFINED(LINUX)}
   Result := GetLinuxApplicationPath;
   {$ENDIF}
+  Result := OSFriendlyPath(Result);
 end;
 
 function GetBinaryPath(const DevelopmentPath: string = ''): string;
@@ -260,6 +334,7 @@ begin
   {$ELSE}
   ShowMesage('Unsupported OS');
   {$ENDIF}
+  Result := OSFriendlyPath(Result);
 end;
 
 

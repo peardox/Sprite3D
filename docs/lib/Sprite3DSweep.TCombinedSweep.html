@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DSweep: Class TCombinedSweep</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TCombinedSweep"></span><h1 class="cio">Class TCombinedSweep</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DSweep.html">Sprite3DSweep</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TCombinedSweep = class(<a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>)</code></p>
+<h2 class="description">Description</h2>
+<p>
+Draws one fixed swept volume, such as the combined one, in its own colours.</p>
+<p>
+
+
+<p>A TModelSweep that is given only Volume, so it draws that volume whatever animation the model plays. Its box is fuchsia and its tube and axis hot pink, so it can be told apart from the per-animation sweep when both are shown. ShowCombinedSweep creates and places one; it is found separately from the per-animation sweep, so a model can have one of each.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TDummy</li>
+<li class="ancestor"><a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a></li>
+<li class="thisitem">TCombinedSweep</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-protected inherited-member">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSweep.TCombinedSweep.html#Render">Render</a></strong>; override;</code></td>
+</tr>
+<tr class="list2 visibility-protected inherited-member">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSweep.TCombinedSweep.html#Notification-TComponent-TOperation-">Notification</a></strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DSweep.TCombinedSweep.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSweep.TCombinedSweep.html#SetAnimationVolume-String-TSweptVolume-">SetAnimationVolume</a></strong>(const AName: String; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>);</code></td>
+</tr>
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSweep.TCombinedSweep.html#ClearAnimationVolumes">ClearAnimationVolumes</a></strong>;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.TCombinedSweep.html#TryGetAnimationVolume-String-TSweptVolume-">TryGetAnimationVolume</a></strong>(const AName: String; out AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>): Boolean;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DSweep.TCombinedSweep.html#Create-TComponent-">Create</a></strong>(AOwner: TComponent); override;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#Model">Model</a></strong>: TGorillaModel read FModel write SetModel;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#Volume">Volume</a></strong>: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a> read FVolume write SetVolume;</code></td>
+</tr>
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#ActiveVolume">ActiveVolume</a></strong>: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a> read GetActiveVolume;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#ActiveAnimation">ActiveAnimation</a></strong>: String read GetActiveAnimation;</code></td>
+</tr>
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#BoxColor">BoxColor</a></strong>: TAlphaColor read FBoxColor write SetBoxColor;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#SweepColor">SweepColor</a></strong>: TAlphaColor read FSweepColor write SetSweepColor;</code></td>
+</tr>
+<tr class="list visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#LineWidth">LineWidth</a></strong>: Single read FLineWidth write SetLineWidth;</code></td>
+</tr>
+<tr class="list2 visibility-public inherited-member">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DSweep.TCombinedSweep.html#Segments">Segments</a></strong>: Integer read FSegments write SetSegments;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-protected inherited-member wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Render"></span><code>procedure <strong>Render</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Draws the volume in use with the model's matrix, in the main pass only.</p>
+<p>
+
+
+<p>Copies Model's transform to this object if it changed, picks the volume in use and works its lines out if it changed, then, if Model is visible and that volume is Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring the previous matrix and line state afterwards, even if drawing fails. Does nothing in Gorilla's shadow, reflection and other passes.</p>
+</td></tr>
+</table>
+<table class="detail visibility-protected inherited-member wide_list">
+<tr class="list visibility-protected">
+<td class="visibility"><span class="badge vis-protected">Protected</span></td>
+<td class="itemcode"><span id="Notification-TComponent-TOperation-"></span><code>procedure <strong>Notification</strong>(AComponent: TComponent; Operation: TOperation); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Forgets Model if it is freed first.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AComponent</dt>
+<dd>The component being freed or removed.</dd>
+<dt>Operation</dt>
+<dd>What is happening to it.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Frees the sweep and its animation volumes.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetAnimationVolume-String-TSweptVolume-"></span><code>procedure <strong>SetAnimationVolume</strong>(const AName: String; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>);</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Gives an animation its swept volume, replacing any it had.</p>
+<p>
+
+
+<p>While the model plays the animation whose Id is AName, AVolume is drawn instead of Volume. Redraws.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AName</dt>
+<dd>The animation's Id; names are compared exactly.</dd>
+<dt>AVolume</dt>
+<dd>Its volume, in the model's own coordinates; one that is not Valid is stored but never drawn.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ClearAnimationVolumes"></span><code>procedure <strong>ClearAnimationVolumes</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Removes every animation's volume, so only Volume is drawn.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="TryGetAnimationVolume-String-TSweptVolume-"></span><code>function <strong>TryGetAnimationVolume</strong>(const AName: String; out AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Looks up the volume given to an animation.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AName</dt>
+<dd>The animation's Id.</dd>
+<dt>AVolume</dt>
+<dd>The volume, if there is one; otherwise undefined.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if AName has a volume.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TComponent-"></span><code>constructor <strong>Create</strong>(AOwner: TComponent); override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Creates an empty sweep, as TModelSweep does, in fuchsia and hot pink.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOwner</dt>
+<dd>The owner, normally the model, so the sweep is freed with it.</dd>
+</dl>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Model"></span><code>property <strong>Model</strong>: TGorillaModel read FModel write SetModel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+The model whose matrix the lines are drawn with and whose playing animation picks the volume; nil draws nothing.</p>
+<p>
+
+
+<p>Not owned. If it is freed first the sweep forgets it. Give this object the same parent as the model.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Volume"></span><code>property <strong>Volume</strong>: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a> read FVolume write SetVolume;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+The rest pose's volume, drawn when no animation with a volume is playing.</p>
+<p>
+
+
+<p>In Model's own coordinates. Setting it redraws.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ActiveVolume"></span><code>property <strong>ActiveVolume</strong>: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a> read GetActiveVolume;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+The volume drawn now: the playing animation's, or Volume.</p>
+<p>
+
+
+<p>Worked out from the model's animation at the time of reading, as Render does.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ActiveAnimation"></span><code>property <strong>ActiveAnimation</strong>: String read GetActiveAnimation;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+The Id of the animation whose volume is drawn now; empty for Volume.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="BoxColor"></span><code>property <strong>BoxColor</strong>: TAlphaColor read FBoxColor write SetBoxColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Colour of the swept box; aqua by default.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SweepColor"></span><code>property <strong>SweepColor</strong>: TAlphaColor read FSweepColor write SetSweepColor;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Colour of the tube's walls and the axis; yellow by default.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="LineWidth"></span><code>property <strong>LineWidth</strong>: Single read FLineWidth write SetLineWidth;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Line width in screen pixels; 1 by default.</p>
+<p>
+
+
+<p>Values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values below 1 count as 1.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public inherited-member wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Segments"></span><code>property <strong>Segments</strong>: Integer read FSegments write SetSegments;</code></td>
+</tr>
+<tr><td colspan="2">
+<p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
+Lines in each ring; 64 by default.</p>
+<p>
+
+
+<p>More look rounder and cost more to draw. Values below 8 count as 8.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

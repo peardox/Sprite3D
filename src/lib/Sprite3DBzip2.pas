@@ -155,8 +155,13 @@ type
 
 procedure TOutput.Add(const AByte: Byte);
 begin
+  // Doubled, from 64 KB at least; written out rather than with Max, so this
+  // inline routine needs nothing from System.Math
   if Len = Length(Data) then
-    SetLength(Data, Max(NativeInt(65536), NativeInt(Length(Data)) * 2));
+    if NativeInt(Length(Data)) * 2 < 65536 then
+      SetLength(Data, 65536)
+    else
+      SetLength(Data, NativeInt(Length(Data)) * 2);
   Data[Len] := AByte;
   Inc(Len);
 end;

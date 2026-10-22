@@ -66,36 +66,51 @@ const
   /// <remarks>The radius is half the diagonal of the model's bounding box, so a pan of 1
   /// moves the orbit centre out to where the model's farthest corner was.</remarks>
   PAN_LIMIT = 2.0;
-  //** @abstract(The lowest frame rate File, Animation offers for saved animations, in frames
-  //** per second.)
-  /// <summary>The lowest frame rate File, Animation offers for saved animations, in frames per
-  /// second.</summary>
+  //** @abstract(The lowest frame rate Model, Animation Settings offers for saved animations,
+  //** in frames per second.)
+  /// <summary>The lowest frame rate Model, Animation Settings offers for saved animations, in
+  /// frames per second.</summary>
   ANIMATION_FPS_MIN = 1;
-  //** @abstract(The highest frame rate File, Animation offers for saved animations, in frames
-  //** per second.)
+  //** @abstract(The highest frame rate Model, Animation Settings offers for saved animations,
+  //** in frames per second.)
   //**
   //** Gorilla bakes animations at 60 frames a second on desktop, so a higher rate would only
   //** repeat frames.
-  /// <summary>The highest frame rate File, Animation offers for saved animations, in frames
-  /// per second.</summary>
+  /// <summary>The highest frame rate Model, Animation Settings offers for saved animations, in
+  /// frames per second.</summary>
   /// <remarks>Gorilla bakes animations at 60 frames a second on desktop, so a higher rate
   /// would only repeat frames.</remarks>
   ANIMATION_FPS_MAX = 60;
-  //** @abstract(The frame rate saved animations use until File, Animation changes it.)
-  /// <summary>The frame rate saved animations use until File, Animation changes
+  //** @abstract(The frame rate saved animations use until Model, Animation Settings changes
+  //** it.)
+  /// <summary>The frame rate saved animations use until Model, Animation Settings changes
   /// it.</summary>
   ANIMATION_FPS_DEFAULT = 30;
-  //** @abstract(The smallest overscan factor File, Animation offers.)
-  /// <summary>The smallest overscan factor File, Animation offers.</summary>
+  //** @abstract(The smallest overscan factor Model, Animation Settings offers.)
+  /// <summary>The smallest overscan factor Model, Animation Settings offers.</summary>
   OVERSCAN_FACTOR_MIN = 2;
-  //** @abstract(The largest overscan factor File, Animation offers, before the GPU's own
-  //** limit for the grab size.)
-  /// <summary>The largest overscan factor File, Animation offers, before the GPU's own limit
-  /// for the grab size.</summary>
+  //** @abstract(The largest overscan factor Model, Animation Settings offers, before the GPU's
+  //** own limit for the grab size.)
+  /// <summary>The largest overscan factor Model, Animation Settings offers, before the GPU's
+  /// own limit for the grab size.</summary>
   OVERSCAN_FACTOR_MAX = 16;
-  //** @abstract(The overscan factor File, Animation shows until another is chosen.)
-  /// <summary>The overscan factor File, Animation shows until another is chosen.</summary>
+  //** @abstract(The overscan factor Model, Animation Settings shows until another is chosen.)
+  /// <summary>The overscan factor Model, Animation Settings shows until another is
+  /// chosen.</summary>
   OVERSCAN_FACTOR_DEFAULT = 4;
+  //** @abstract(The lowest frame rate File, Settings lets the view be drawn at.)
+  /// <summary>The lowest frame rate File, Settings lets the view be drawn at.</summary>
+  VIEW_FPS_MIN = 1;
+  //** @abstract(The highest frame rate kept for the view; File, Settings offers no more than
+  //** the display's refresh rate.)
+  /// <summary>The highest frame rate kept for the view; File, Settings offers no more than the
+  /// display's refresh rate.</summary>
+  VIEW_FPS_MAX = 1000;
+  //** @abstract(The frame rate the view is drawn at until File, Settings changes it, and the
+  //** most it offers where the display's refresh rate is not known.)
+  /// <summary>The frame rate the view is drawn at until File, Settings changes it, and the
+  /// most it offers where the display's refresh rate is not known.</summary>
+  VIEW_FPS_DEFAULT = 60;
   //** @abstract(The smallest width or height File, Grab renders, in pixels.)
   /// <summary>The smallest width or height File, Grab renders, in pixels.</summary>
   GRAB_SIZE_MIN = 8;
@@ -183,6 +198,14 @@ type
     /// <summary>The folder File, Grab saves into; empty to be asked at the next
     /// grab.</summary>
     SaveFolder: String;
+    //** @abstract(The frame rate the view is drawn at, VIEW_FPS_MIN to MaxViewFps.)
+    /// <summary>The frame rate the view is drawn at, VIEW_FPS_MIN to MaxViewFps.</summary>
+    ViewFps: Integer;
+    //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
+    //** kept.)
+    /// <summary>The most ViewFps may be: the display's refresh rate, set by the caller; not
+    /// kept.</summary>
+    MaxViewFps: Integer;
   end;
 
   //** @abstract(Protected-access helper for TControl3D; nothing in the project uses it yet.)
@@ -244,9 +267,11 @@ type
     FGrabWidth: Integer;
     FGrabHeight: Integer;
     FAnimationFps: Integer;
+    FViewFps: Integer;
     FOverscan: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
+    procedure SetViewFps(const Value: Integer);
     procedure SetOverscan(const Value: Integer);
     procedure SetGrabWidth(const Value: Integer);
     procedure SetGrabHeight(const Value: Integer);
@@ -569,32 +594,44 @@ type
     //** @abstract(The frame rate animations are saved at, in frames per second;
     //** ANIMATION_FPS_DEFAULT by default.)
     //**
-    //** Set in File, Animation. Stored as @code(animationFps). Written values are limited to
-    //** ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.
+    //** Set in Model, Animation Settings. Stored as @code(animationFps). Written values are
+    //** limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.
     /// <summary>The frame rate animations are saved at, in frames per second;
     /// ANIMATION_FPS_DEFAULT by default.</summary>
-    /// <remarks>Set in File, Animation. Stored as <c>animationFps</c>. Written values are
-    /// limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
+    /// <remarks>Set in Model, Animation Settings. Stored as <c>animationFps</c>. Written
+    /// values are limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
     property AnimationFps: Integer read FAnimationFps write SetAnimationFps;
-    //** @abstract(The overscan factor File, Animation was last left at;
+    //** @abstract(The frame rate the view is drawn at, in frames per second; VIEW_FPS_DEFAULT by
+    //** default.)
+    //**
+    //** Set in File, Settings, which offers up to the display's refresh rate. Stored as
+    //** @code(viewFps). Written values are limited to VIEW_FPS_MIN to VIEW_FPS_MAX.
+    /// <summary>The frame rate the view is drawn at, in frames per second; VIEW_FPS_DEFAULT by
+    /// default.</summary>
+    /// <remarks>Set in File, Settings, which offers up to the display's refresh rate. Stored
+    /// as <c>viewFps</c>. Written values are limited to VIEW_FPS_MIN to
+    /// VIEW_FPS_MAX.</remarks>
+    property ViewFps: Integer read FViewFps write SetViewFps;
+    //** @abstract(The overscan factor Model, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
     //** Only the factor is kept: whether overscan is on is not, and it starts off each
-    //** session, until ticked in File, Animation. Stored as @code(overscan). Written values
-    //** are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less, if the
-    //** GPU cannot draw that much larger.
-    /// <summary>The overscan factor File, Animation was last left at; OVERSCAN_FACTOR_DEFAULT by
-    /// default.</summary>
+    //** session, until ticked in Model, Animation Settings. Stored as @code(overscan). Written
+    //** values are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less,
+    //** if the GPU cannot draw that much larger.
+    /// <summary>The overscan factor Model, Animation Settings was last left at;
+    /// OVERSCAN_FACTOR_DEFAULT by default.</summary>
     /// <remarks>Only the factor is kept: whether overscan is on is not, and it starts off each
-    /// session, until ticked in File, Animation. Stored as <c>overscan</c>. Written values are
-    /// limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less, if the GPU
-    /// cannot draw that much larger.</remarks>
+    /// session, until ticked in Model, Animation Settings. Stored as <c>overscan</c>. Written
+    /// values are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less,
+    /// if the GPU cannot draw that much larger.</remarks>
     property Overscan: Integer read FOverscan write SetOverscan;
     //** @abstract(The filter overscanned grabs are scaled down with; Box by default.)
     //**
-    //** Chosen in File, Animation. Stored as @code(resampleFilter).
+    //** Chosen in Model, Animation Settings. Stored as @code(resampleFilter).
     /// <summary>The filter overscanned grabs are scaled down with; Box by default.</summary>
-    /// <remarks>Chosen in File, Animation. Stored as <c>resampleFilter</c>.</remarks>
+    /// <remarks>Chosen in Model, Animation Settings. Stored as
+    /// <c>resampleFilter</c>.</remarks>
     property ResampleFilter: TSprite3DResampleFilter read FResampleFilter
       write FResampleFilter;
   end;
@@ -1155,7 +1192,7 @@ implementation
 
 uses
   System.Classes, System.Math, System.IOUtils, System.JSON, System.Hash, System.StrUtils,
-  System.Threading, System.SyncObjs,
+  System.Threading, System.SyncObjs, System.Generics.Collections,
   OSPaths, Sprite3DStyles, Sprite3DTitleBar,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
@@ -1211,6 +1248,7 @@ begin
   FGrabWidth := GRAB_SIZE_DEFAULT;
   FGrabHeight := GRAB_SIZE_DEFAULT;
   FAnimationFps := ANIMATION_FPS_DEFAULT;
+  FViewFps := VIEW_FPS_DEFAULT;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
   FResampleFilter := rfBox;
 end;
@@ -1218,6 +1256,11 @@ end;
 procedure TSprite3DAppSettings.SetAnimationFps(const Value: Integer);
 begin
   FAnimationFps := EnsureRange(Value, ANIMATION_FPS_MIN, ANIMATION_FPS_MAX);
+end;
+
+procedure TSprite3DAppSettings.SetViewFps(const Value: Integer);
+begin
+  FViewFps := EnsureRange(Value, VIEW_FPS_MIN, VIEW_FPS_MAX);
 end;
 
 procedure TSprite3DAppSettings.SetOverscan(const Value: Integer);
@@ -1290,7 +1333,7 @@ end;
 
 class function TSprite3DAppSettings.SupportFolder: String;
 begin
-  Result := AppDataFolder(APP_NAME);
+  Result := OSFriendlyPath(AppDataFolder(APP_NAME));
 end;
 
 function TSprite3DAppSettings.HasSaveFolder: Boolean;
@@ -1391,11 +1434,13 @@ function SaveGrab(const ABitmap: TBitmap; const AFolder: String;
   var ANumber: Integer): String;
 var
   Number: Integer;
+  Folder: String;
 begin
   // Work on a copy, so ANumber is untouched if anything below fails
   Number := ANumber;
-  ForceDirectories(AFolder);
-  Result := NextNumberedFileName(AFolder, 'grab', '.png', Number);
+  Folder := OSFriendlyPath(AFolder);
+  ForceDirectories(Folder);
+  Result := NextNumberedFileName(Folder, 'grab', '.png', Number);
   ABitmap.SaveToFile(Result);
   ANumber := Number + 1;
 end;
@@ -1514,7 +1559,7 @@ var
   Keep: IModelFileRead;
 begin
   Read := TModelFileRead.Create;
-  Read.FFileName := AFileName;
+  Read.FFileName := OSFriendlyPath(AFileName);
   Keep := Read;   // the worker's own reference
   Result := Keep;
   TTask.Run(
@@ -1527,8 +1572,9 @@ end;
 
 const
   // Raised whenever what is measured, or how, changes, so older figures are
-  // not used
-  BOUNDS_CACHE_VERSION = 1;
+  // not used. 2: models were measured hidden, which left every animation at
+  // its rest pose, so those figures are wrong
+  BOUNDS_CACHE_VERSION = 2;
   BOUNDS_CACHE_FOLDER = 'bounds';
 
 function AnimationBoundsCacheFile(const AModelFile: String): String;
@@ -1537,7 +1583,7 @@ var
   FullName, Key: String;
 begin
   Result := String.Empty;
-  FullName := ExpandFileName(AModelFile);
+  FullName := ExpandFileName(OSFriendlyPath(AModelFile));
   if FindFirst(FullName, faAnyFile, Search) <> 0 then
     Exit;
   try
@@ -1546,8 +1592,8 @@ begin
   finally
     FindClose(Search);
   end;
-  Result := TPath.Combine(TPath.Combine(TSprite3DAppSettings.SupportFolder,
-    BOUNDS_CACHE_FOLDER), THashMD5.GetHashString(Key) + '.json');
+  Result := OSFriendlyPath(TPath.Combine(TPath.Combine(TSprite3DAppSettings.SupportFolder,
+    BOUNDS_CACHE_FOLDER), THashMD5.GetHashString(Key) + '.json'));
 end;
 
 function LoadAnimationBoundsCache(const AModelFile: String; const ANames: TArray<String>;
@@ -1697,7 +1743,7 @@ var
   Ani: TArray<TGorillaAnimation>;
 begin
   AModel.Clear;
-  AModel.LoadFromFile(nil, AFileName, [TAnimationCachingFlag.VertexPosition]);
+  AModel.LoadFromFile(nil, OSFriendlyPath(AFileName), [TAnimationCachingFlag.VertexPosition]);
 
   Names := TStringList.Create;
   try
@@ -1979,6 +2025,9 @@ begin
   Result.GrabWidth := ASettings.GrabWidth;
   Result.GrabHeight := ASettings.GrabHeight;
   Result.SaveFolder := ASettings.SaveFolder;
+  Result.ViewFps := ASettings.ViewFps;
+  // The caller knows the display; until it says, at least the rate in use
+  Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then
     Result.GpuMode := ReadGpuMode
   else

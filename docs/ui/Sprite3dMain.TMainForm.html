@@ -179,6 +179,14 @@ The main form: a Gorilla3D view of one model, with dials for the camera.</p>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ModelMenu">ModelMenu</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AnimationsUsedItem">AnimationsUsedItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewMenu">ViewMenu</a></strong>: TMenuItem;</code></td>
 </tr>
 <tr class="list visibility-public">
@@ -203,47 +211,55 @@ The main form: a Gorilla3D view of one model, with dials for the camera.</p>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#FitAnyAngleItem">FitAnyAngleItem</a></strong>: TMenuItem;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ShowSweepItem">ShowSweepItem</a></strong>: TMenuItem;</code></td>
 </tr>
 <tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ShowCombinedSweepItem">ShowCombinedSweepItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#OrthographicItem">OrthographicItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewVariableItem">ViewVariableItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewIsometricItem">ViewIsometricItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewPixel2To1Item">ViewPixel2To1Item</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewThreeQuarterItem">ViewThreeQuarterItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewHeadOnItem">ViewHeadOnItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewTopDownItem">ViewTopDownItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewSideItem">ViewSideItem</a></strong>: TMenuItem;</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AnimationsHeader">AnimationsHeader</a></strong>: TRectangle;</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#AnimationsLabel">AnimationsLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#FramesLabel">FramesLabel</a></strong>: TLabel;</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -298,89 +314,101 @@ The main form: a Gorilla3D view of one model, with dials for the camera.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#FitAnyAngleItemClick-TObject-">FitAnyAngleItemClick</a></strong>(Sender: TObject);</code></td>
-</tr>
-<tr class="list2 visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ShowAxesItemClick-TObject-">ShowAxesItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ShowBoundsItemClick-TObject-">ShowBoundsItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ShowSweepItemClick-TObject-">ShowSweepItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
 <tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ShowCombinedSweepItemClick-TObject-">ShowCombinedSweepItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ShowGridItemClick-TObject-">ShowGridItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#OpenModelMenuItemClick-TObject-">OpenModelMenuItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#GrabMenuItemClick-TObject-">GrabMenuItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#SaveAsIconMenuItemClick-TObject-">SaveAsIconMenuItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#BackgroundSettingsMenuItemClick-TObject-">BackgroundSettingsMenuItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#SettingsMenuItemClick-TObject-">SettingsMenuItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ExitMenuItemClick-TObject-">ExitMenuItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewVariableItemClick-TObject-">ViewVariableItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewIsometricItemClick-TObject-">ViewIsometricItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#DistanceTrackChange-TObject-">DistanceTrackChange</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewPixel2To1ItemClick-TObject-">ViewPixel2To1ItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewThreeQuarterItemClick-TObject-">ViewThreeQuarterItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewHeadOnItemClick-TObject-">ViewHeadOnItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewTopDownItemClick-TObject-">ViewTopDownItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list2 visibility-public">
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewSideItemClick-TObject-">ViewSideItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
-<tr class="list visibility-public">
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#AnimationListBoxClick-TObject-">AnimationListBoxClick</a></strong>(Sender: TObject);</code></td>
 </tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#AnimationListBoxChange-TObject-">AnimationListBoxChange</a></strong>(Sender: TObject);</code></td>
+</tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewOneQuarterItemClick-TObject-">ViewOneQuarterItemClick</a></strong>(Sender: TObject);</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#AnimationsUsedItemClick-TObject-">AnimationsUsedItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewRoot2ItemClick-TObject-">ViewRoot2ItemClick</a></strong>(Sender: TObject);</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewOneQuarterItemClick-TObject-">ViewOneQuarterItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
 <tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewRoot2ItemClick-TObject-">ViewRoot2ItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewGoldenRatioItemClick-TObject-">ViewGoldenRatioItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
@@ -603,6 +631,26 @@ The &quot;Exit&quot; item; see ExitMenuItemClick.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ModelMenu"></span><code><strong>ModelMenu</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Model&quot; menu; holds AnimationsUsedItem.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AnimationsUsedItem"></span><code><strong>AnimationsUsedItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Animations Used...&quot; item; see AnimationsUsedItemClick.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="ViewMenu"></span><code><strong>ViewMenu</strong>: TMenuItem;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -645,7 +693,7 @@ Shows or hides the model's bounding box; ticked at start-up.</p>
 <p>
 
 
-<p>Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the bounds of its current pose, the box the camera fits. See ShowBoundsItemClick.</p>
+<p>Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the bounds of its current pose. See ShowBoundsItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -679,15 +727,29 @@ Shows or hides the model's X, Y and Z axes; ticked at start-up.</p>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="FitAnyAngleItem"></span><code><strong>FitAnyAngleItem</strong>: TMenuItem;</code></td>
+<td class="itemcode"><span id="ShowSweepItem"></span><code><strong>ShowSweepItem</strong>: TMenuItem;</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
-Chooses FitToBoundsMax over FitToBounds, so the model fits at every angle.</p>
+Shows or hides the Model Volume, the volume the model sweeps turning about its up axis; ticked at start-up.</p>
 <p>
 
 
-<p>Ticked, the model is framed for every possible Azimuth, inclination and Roll, so turning the dials only moves the camera round it and the model always stays in view. Not ticked, the model is framed exactly for the angles at the time of the fit; turning a dial afterwards can push part of it past the edge until the next refit, which happens on a resize, a projection change or choosing this item.</p>
+<p>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out the space the model's bounds pass through in a full turn about the line through its centre of rotation parallel to its Y axis, and draws it: the swept box in aqua, and the tube it holds, with the axis, in yellow. There is one volume for the rest pose, from the bounds as loaded, and one per animation, from the bounds of all its poses, read from the bounds cache or measured with TAnimationBoundsMeasurer as the model loads. Whichever animation the model plays, its volume is drawn; with none playing, the rest pose's. The radii, length and volumes of each go to DebugMemo. See ShowSweepItemClick.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowCombinedSweepItem"></span><code><strong>ShowCombinedSweepItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows or hides the Animation Volume, the combined swept volume; not ticked at start-up.</p>
+<p>
+
+
+<p>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning about its up axis, joined over its rest pose and every animation ticked in Model, Animations Used, which is what the camera frames. It is drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or none used, as it would only repeat the rest pose's volume. It is redrawn for each new model and whenever the animations used change, and its figures go to DebugMemo. See ShowCombinedSweepItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -781,7 +843,7 @@ The &quot;Side View&quot; view; see ViewSideItemClick.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-A dark strip above AnimationListBox that holds AnimationsLabel, so the title stands out whatever the theme.</p>
+A dark strip above AnimationListBox that holds AnimationsLabel and FramesLabel, so the titles stand out whatever the theme.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -791,7 +853,17 @@ A dark strip above AnimationListBox that holds AnimationsLabel, so the title sta
 </tr>
 <tr><td colspan="2">
 <p>
-The &quot;Animations&quot; title: bold yellow on AnimationsHeader.</p>
+The &quot;Animations&quot; title: bold yellow on AnimationsHeader, at its left, inside the header's padding.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FramesLabel"></span><code><strong>FramesLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Frames&quot; title: bold yellow on AnimationsHeader, at its right, inside the header's padding, over the frame counts in AnimationListBox.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -805,7 +877,7 @@ The model's animations, by name, after a first entry, <code>(None)</code>, that 
 <p>
 
 
-<p>Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a sprite strip, a texture atlas or an animated GIF; see the unit description.</p>
+<p>Only the animations ticked in Model, Animations Used are listed. Each entry shows, at its right, the number of frames saving it makes at the File, Animation frame rate. Choosing an entry plays it, whether by a click or by moving the selection with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a sprite strip, a texture atlas or an animated GIF; see the unit description.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -935,7 +1007,7 @@ Copies RollDial to the camera's Roll.</p>
 <p>
 
 
-<p>The dial value is wrapped into 0 to 360, without negating, shown in RollText and written to the camera. The model is not refitted; see FitAnyAngleItem.
+<p>The dial value is wrapped into 0 to 360, without negating, shown in RollText and written to the camera. The model is not refitted; see FitModel.
 
 <p></p>
 <h6 class="description_section">Parameters</h6>
@@ -990,27 +1062,6 @@ Ticks or unticks OrthographicItem, then switches the projection to match and ref
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="FitAnyAngleItemClick-TObject-"></span><code>procedure <strong>FitAnyAngleItemClick</strong>(Sender: TObject);</code></td>
-</tr>
-<tr><td colspan="2">
-<p>
-Ticks or unticks FitAnyAngleItem, then refits the model.</p>
-<p>
-
-
-<p>Does nothing while View, Camera, Lock Camera is ticked, when the item is disabled.
-
-<p></p>
-<h6 class="description_section">Parameters</h6>
-<dl class="parameters">
-<dt>Sender</dt>
-<dd>FitAnyAngleItem.</dd>
-</dl>
-</td></tr>
-</table>
-<table class="detail visibility-public wide_list">
-<tr class="list visibility-public">
-<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="ShowAxesItemClick-TObject-"></span><code>procedure <strong>ShowAxesItemClick</strong>(Sender: TObject);</code></td>
 </tr>
 <tr><td colspan="2">
@@ -1053,6 +1104,48 @@ Ticks or unticks ShowBoundsItem, then shows or hides the model's bounding box to
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowSweepItemClick-TObject-"></span><code>procedure <strong>ShowSweepItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Ticks or unticks ShowSweepItem, then adds or removes the model's swept volume to match.</p>
+<p>
+
+
+<p>Only the tick changes until a model is loaded.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>ShowSweepItem.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowCombinedSweepItemClick-TObject-"></span><code>procedure <strong>ShowCombinedSweepItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Ticks or unticks ShowCombinedSweepItem, then adds or removes the combined swept volume to match.</p>
+<p>
+
+
+<p>Only the tick changes until a model is loaded.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>ShowCombinedSweepItem.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><span id="ShowGridItemClick-TObject-"></span><code>procedure <strong>ShowGridItemClick</strong>(Sender: TObject);</code></td>
 </tr>
 <tr><td colspan="2">
@@ -1082,7 +1175,7 @@ Lets the user pick a model file and loads it in place of the current one.</p>
 <p>
 
 
-<p>Shows OpenDialog1 and passes the chosen file to SwitchModel, which clears the old model and loads the new one with the current camera angles and fit mode. Nothing changes if the dialog is cancelled. A file that fails to load is reported by SwitchModel, and the view is then left empty until another model loads.
+<p>Shows OpenDialog1 and passes the chosen file to SwitchModel, which loads it behind a progress dialog with Abort and then puts it in place of the old model, with the current camera angles and fit. Nothing changes if either dialog is cancelled or aborted, or if the file fails to load, which SwitchModel reports.
 
 <p></p>
 <h6 class="description_section">Parameters</h6>
@@ -1376,13 +1469,55 @@ Plays the chosen animation, or stops any for <code>(None)</code>.</p>
 <p>
 
 
-<p>Ignored while an animation is being saved, which needs the animation it started.
+<p>A click that moved the selection has already been played by AnimationListBoxChange, so it is not played twice; a click on the entry already selected plays it again. Ignored while an animation is being saved, which needs the animation it started.
 
 <p></p>
 <h6 class="description_section">Parameters</h6>
 <dl class="parameters">
 <dt>Sender</dt>
 <dd>AnimationListBox.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AnimationListBoxChange-TObject-"></span><code>procedure <strong>AnimationListBoxChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Plays the newly selected animation, or stops any for <code>(None)</code>, whatever moved the selection.</p>
+<p>
+
+
+<p>Runs whenever the selection moves: the Up and Down arrow keys, Home, End and the page keys, a click on another entry, or code setting ItemIndex. So stepping through the list with the keys plays each animation as a click does. Ignored while an animation is being saved, and when the list is emptied for another model.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>AnimationListBox.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AnimationsUsedItemClick-TObject-"></span><code>procedure <strong>AnimationsUsedItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Opens the Animations Used dialog, and on OK lists only the animations ticked there and refits to their swept volume.</p>
+<p>
+
+
+<p>The dialog lists every animation of the model, ticked if it is used now, with its own swept volume as a percentage of the combined one, measuring the animations first if they have not been; Cancel changes nothing. On OK the animations list is rebuilt with only those ticked, keeping the selection if it is still listed; if the animation playing is left out, the model is shown at rest, as <code>(None)</code> does. The model is then refitted, to the swept volume joined over the rest pose and the animations used. Does nothing without a model, or while an animation is being saved. On Android and iOS the dialog does not block, and the choice is applied when it closes.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>AnimationsUsedItem.</dd>
 </dl>
 </td></tr>
 </table>

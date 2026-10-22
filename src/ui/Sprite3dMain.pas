@@ -6,8 +6,8 @@
 //** switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid
 //** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation,
 //** Show Model Volume the space it sweeps turning about its up axis in the animation playing,
-//** Show Animation Volume the one joined over the rest pose and every animation used, which
-//** the camera frames, shown only for a model with animations used, and Orthographic switches
+//** Show Animation Volume the one joined over the rest pose and every animation used, shown
+//** only while it is the volume the view frames, and Orthographic switches
 //** between perspective and orthographic projection. Model, Animations Used chooses which of
 //** the model's animations are listed and count towards the combined swept volume.
 //**
@@ -36,7 +36,7 @@
 //**
 //** On show, the form loads the model the operating system asked it to open, as when a .glb or
 //** .gltf file is double-clicked in Explorer or Finder, or else what the start-up action in
-//** File, Settings asks for; files the system asks to open later replace it. File, OpenModel
+//** File, Settings asks for; files the system asks to open later replace it. File, Open Model
 //** then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY file, and File, Exit closes
 //** the application. File, Grab renders the view off screen at the grab size set in File,
 //** Settings, 256 by 256 pixels unless changed, with the model fitted to fill it, and saves it
@@ -63,25 +63,39 @@
 //** off by default and kept in settings.json.
 //**
 //** The Animations list shows, to the right of each entry under the Frames title, how many
-//** frames saving it makes at the File, Animation frame rate: the animation's length times
-//** the rate, rounded, or for @code(@(None@)) one turn of TURNTABLE_SECONDS. Model, Animations
-//** Used opens a dialog that ticks which animations are used; the others are left out of the
-//** list, so they are not played, saved or exported, and out of the combined swept volume
-//** that the camera frames. A new model starts with every animation used.
+//** frames saving it makes at the Model, Animation Settings frame rate: the animation's length
+//** times the rate, rounded, or for @code(@(None@)) one turn of TURNTABLE_SECONDS. Model,
+//** Animations Used opens a dialog that ticks which animations are used; the others are left
+//** out of the list, so they are not played, saved or exported, and out of the combined swept
+//** volume. A new model starts with every animation used.
 //**
-//** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu
-//** with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4 video. Each
-//** grabs every frame of that animation off screen, from the first to the last, at the grab
-//** size and with one framing that fits every frame, and saves them in SaveFolder: side by side
-//** in one row as @code(<animation>_strip<frames>.png), in a square grid read left to right and
-//** top to bottom as @code(<animation>.png), as a looping @code(<animation>.gif), or as a
-//** video-only @code(<animation>.mp4) through Sprite3DVideo, H.264 when Cisco's OpenH264
-//** library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when
-//** the FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The
-//** @code(@(None@)) entry, which has no animation, captures instead one full turn of the model
-//** in one second, at the File, Animation frame rate, named after the model with
-//** @code(_rotate) added. On Android and iOS, which have no right-click, the same items are in
-//** an Animation group of the menu drawer and act on the selected entry.
+//** Under the list, five buttons with icons, named in their hints, act on the selected
+//** animation: first frame, previous frame, play or pause, next frame and last frame. The
+//** frames are those an export makes at the Model, Animation Settings frame rate, held exactly
+//** as the export shows them, by TSprite3DAnimationPlayer; any of the four frame buttons pauses
+//** the animation on its frame. After them, a readout always shows the frame showing, held or
+//** playing, and the frames in all, with the "/" in a fixed place; it reads "- / -" when there
+//** is no animation to count, as for @code(@(None@)). A readout over the top left of the view,
+//** white on a dark backing, shows the frames per second the viewport draws, which File,
+//** Settings sets, kept within the refresh rate of the display the window is on, and checked
+//** again whenever the window moves to another display. Play and pause share a button, whose
+//** icon and hint change to say which it does. Stepping wraps round from the last frame to the
+//** first and back. Choosing an entry plays it from the start, unless the controls are paused,
+//** when it starts paused on its first frame; starting a capture lets a held animation play on.
+//**
+//** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up
+//** menu with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4
+//** video. Each grabs every frame of that animation off screen, from the first to the last, at
+//** the grab size and with one framing that fits every frame, and saves them in SaveFolder:
+//** side by side in one row as @code(<animation>_strip<frames>.png), in a square grid read
+//** left to right and top to bottom as @code(<animation>.png), as a looping
+//** @code(<animation>.gif), or as a video-only @code(<animation>.mp4) through Sprite3DVideo,
+//** H.264 when Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered
+//** only when the FFmpeg libraries load; DebugMemo says at start-up whether they did and from
+//** where. The @code(@(None@)) entry, which has no animation, captures instead one full turn
+//** of the model in one second, at the Model, Animation Settings frame rate, named after the
+//** model with @code(_rotate) added. On Android and iOS, which have no right-click, the same
+//** items are in an Animation group of the menu drawer and act on the selected entry.
 //**
 //** At start-up the OpenH264 library, which makes MP4 files H.264, is taken from
 //** @code(openh264.json): an address for each platform, from which a copy is downloaded in
@@ -89,14 +103,13 @@
 //** An empty address, or a failed download, leaves MP4 files as MPEG-4 Part 2. DebugMemo says
 //** which happened.
 //**
-//** File, Animation... sets the frame rate every saved animation uses, 30 frames a second
-//** unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it:
-//** one cycle is cut into the whole number of equal steps nearest that rate, so the saved
+//** Model, Animation Settings... sets the frame rate every saved animation uses, 30 frames a
+//** second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to
+//** it: one cycle is cut into the whole number of equal steps nearest that rate, so the saved
 //** frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns overscan
 //** on, for this session only: every grab, icon and export is drawn 2 to 16 times larger each
-//** way, as far as the GPU allows at the grab size, and scaled down with the resampling
-//** filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in
-//** settings.json.
+//** way, as far as the GPU allows at the grab size, and scaled down with the resampling filter
+//** chosen there, by TSprite3DOffscreen. The factor and filter are kept in settings.json.
 //**
 //** Each entry also has a tick box. Below the list, All ticks every animation, leaving
 //** @code(@(None@)) as it is so the turn is exported only when ticked by hand, or clears every
@@ -115,15 +128,17 @@
 //** @code(@(None@)) turn cannot be captured while it is locked, as it turns the camera. The lock
 //** is not kept between sessions.
 //**
-//** Each model replaces the last: it plays its last animation by name if it has any, is centred
-//** and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is
-//** refitted when the viewport is resized, the projection changes or the animations used
-//** change, but not when a dial turns. Every fit frames the combined swept volume: the space
-//** the model sweeps turning about its up axis, over its rest pose and every animation used,
-//** or its rest pose alone for a model without animations. The volume fills the view on the
-//** tighter axis, and the orbit centre is on the turning axis, so the rest pose, every
-//** animation and the @code(@(None@)) turn are framed alike, and turning the azimuth dial
-//** keeps the model in view.
+//** Each model replaces the last: it is centred and turned 180 degrees about X, and the camera
+//** is fitted so it fills the view. The model is refitted when the viewport is resized, the
+//** projection changes, the animations used change, another entry is chosen, an entry is ticked
+//** or unticked for export, or an animation is paused, stepped or played, but not when a dial
+//** turns. While one or more entries are ticked, playing or paused, the fit frames the combined
+//** swept volume, the space the model sweeps turning about its up axis over its rest pose and
+//** every animation used, so everything a batch exports is framed alike, and Show Animation
+//** Volume draws it. Otherwise, as for a model without animations, it frames the volume of what
+//** is on screen alone: the selected animation's, paused or playing, or the rest pose's for
+//** @code(@(None@)). Either way the volume fills the view on the tighter axis, and the orbit
+//** centre is on the turning axis, so turning the azimuth dial keeps the model in view.
 //**
 //** The form only handles the user interface. The 3D work is done by the library units in
 //** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and
@@ -148,15 +163,19 @@
 //**
 //** MainMenu1
 //** |-- FileMenu "File"
-//** |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+//** |   |-- OpenModelMenuItem "Open Model"  shows OpenDialog1
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
-//** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
-//** |   |-- FAnimationSettingsItem "Animation..."  frame rate, overscan and resampling
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** |-- ModelMenu "Model"
-//** |   `-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
+//** |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
+//** |   |-- ModelSettingsSeparatorItem "-"
+//** |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
+//** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+//** |   |-- ModelActionsSeparatorItem "-"
+//** |   |-- DirectionsItem "Directions"     disabled; for a later version
+//** |   `-- OrientationItem "Orientation"   disabled; for a later version
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
 //**     |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
@@ -194,8 +213,8 @@ unit Sprite3dMain;
   model's floor, Show axes its own X, Y and Z axes through its centre of
   rotation, Show Model Volume the space it sweeps turning about its up axis
   in the animation playing, Show Animation Volume the one joined over the
-  rest pose and every animation used, which the camera frames, shown only for
-  a model with animations used, and Orthographic switches between
+  rest pose and every animation used, shown only while it is the volume the
+  view frames, and Orthographic switches between
   perspective and orthographic projection.
   Model, Animations Used chooses which of the model's animations are listed
   and count towards the combined swept volume.
@@ -230,7 +249,7 @@ unit Sprite3dMain;
   On show, the form loads the model the operating system asked it to open, as
   when a .glb or .gltf file is double-clicked in Explorer or Finder, or else
   what the start-up action in File, Settings asks for; files the system asks
-  to open later replace it. File, OpenModel then loads any other glTF, FBX,
+  to open later replace it. File, Open Model then loads any other glTF, FBX,
   OBJ, USD, Collada, STL or PLY file, and File, Exit closes the application.
   File, Grab renders the view off screen at the grab size set in File,
   Settings, 256 by 256 pixels unless changed, with the model fitted to fill
@@ -240,7 +259,7 @@ unit Sprite3dMain;
   Sprite3DHelpers. File, Save As Icon renders the view off screen at each of
   Windows' icon sizes and saves them together as one .ico file the user names.
   Behind the model the viewport can show a background; by default none is
-  drawn. File, Background Settings... chooses None, Transparent (a two-grey
+  drawn. Model, Background Settings... chooses None, Transparent (a two-grey
   checker standing for transparency), Solid or Gradient, which grabs and icons
   follow too.
 
@@ -262,12 +281,29 @@ unit Sprite3dMain;
   settings.json.
 
   The Animations list shows, to the right of each entry under the Frames
-  title, how many frames saving it makes at the File, Animation frame rate:
+  title, how many frames saving it makes at the Model, Animation Settings frame rate:
   the animation's length times the rate, rounded, or for (None) one turn of
   TURNTABLE_SECONDS. Model, Animations Used opens a dialog that ticks which
   animations are used; the others are left out of the list, so they are not
-  played, saved or exported, and out of the combined swept volume that the
-  camera frames. A new model starts with every animation used.
+  played, saved or exported, and out of the combined swept volume. A new
+  model starts with every animation used.
+
+  Under the list, five buttons with icons, named in their hints, act on the
+  selected animation: first frame, previous frame, play or pause, next frame
+  and last frame. The frames are those an export makes at the Model, Animation
+  Settings frame rate, held exactly as the export shows them, by
+  TSprite3DAnimationPlayer; any of the four frame buttons pauses the animation
+  on its frame. After them, a readout always shows the frame showing, held or
+  playing, and the frames in all, with the "/" in a fixed place; it reads "- /
+  -" when there is no animation to count, as for (None). A readout over the
+  top left of the view, white on a dark backing, shows the frames per second
+  the viewport draws, which File, Settings sets, kept within the refresh rate
+  of the display the window is on, and checked again whenever the window moves
+  to another display. Play and pause share a button, whose icon and hint
+  change to say which it does. Stepping wraps round from the last frame to the
+  first and back. Choosing an entry plays it from the start, unless the
+  controls are paused, when it starts paused on its first frame; starting a
+  capture lets a held animation play on.
 
   Right-clicking an entry in the Animations list selects and plays it, and
   opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save
@@ -291,7 +327,7 @@ unit Sprite3dMain;
   whenever the address changes. An empty address, or a failed download,
   leaves MP4 files as MPEG-4 Part 2. DebugMemo says which happened.
 
-  File, Animation... sets the frame rate every saved animation uses, 30
+  Model, Animation Settings... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
   animation is resampled to it: one cycle is cut into the whole number of
   equal steps nearest that rate, so the saved frames still loop exactly; see
@@ -321,16 +357,19 @@ unit Sprite3dMain;
   cannot be captured while it is locked, as it turns the camera. The lock is
   not kept between sessions.
 
-  Each model replaces the last: it plays its last animation by name if it has
-  any, is centred and turned 180 degrees about X, and the camera is fitted so
-  it fills the view. The model is refitted when the viewport is resized, the
-  projection changes or the animations used change, but not when a dial
-  turns. Every fit frames the combined swept volume: the space the model
-  sweeps turning about its up axis, over its rest pose and every animation
-  used, or its rest pose alone for a model without animations. The volume
-  fills the view on the tighter axis, and the orbit centre is on the turning
-  axis, so the rest pose, every animation and the (None) turn are framed
-  alike, and turning the azimuth dial keeps the model in view.
+  Each model replaces the last: it is centred and turned 180 degrees about X,
+  and the camera is fitted so it fills the view. The model is refitted when
+  the viewport is resized, the projection changes, the animations used change,
+  another entry is chosen, an entry is ticked or unticked for export, or an
+  animation is paused, stepped or played, but not when a dial turns. While one
+  or more entries are ticked, playing or paused, the fit frames the combined
+  swept volume, the space the model sweeps turning about its up axis over its
+  rest pose and every animation used, so everything a batch exports is framed
+  alike, and Show Animation Volume draws it. Otherwise, as for a model without
+  animations, it frames the volume of what is on screen alone: the selected
+  animation's, paused or playing, or the rest pose's for (None). Either way
+  the volume fills the view on the tighter axis, and the orbit centre is on
+  the turning axis, so turning the azimuth dial keeps the model in view.
 
   The form only handles the user interface. The 3D work is done by the library
   units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep
@@ -356,15 +395,19 @@ unit Sprite3dMain;
 
     MainMenu1
     |-- FileMenu "File"
-    |   |-- OpenModelMenuItem "OpenModel"   shows OpenDialog1
+    |   |-- OpenModelMenuItem "Open Model"  shows OpenDialog1
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
-    |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
-    |   |-- FAnimationSettingsItem "Animation..."  frame rate, overscan and resampling
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   `-- ExitMenuItem "Exit"             closes the application
     |-- ModelMenu "Model"
-    |   `-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
+    |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
+    |   |-- ModelSettingsSeparatorItem "-"
+    |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
+    |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+    |   |-- ModelActionsSeparatorItem "-"
+    |   |-- DirectionsItem "Directions"     disabled; for a later version
+    |   `-- OrientationItem "Orientation"   disabled; for a later version
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
         |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
@@ -404,7 +447,7 @@ uses
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
-  Sprite3DLoadForm
+  Sprite3DLoadForm, Gorilla.Animation, DisplayData
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -495,12 +538,12 @@ type
     /// <remarks>The model on screen is a TGorillaModel created at run time by
     /// SwitchModel.</remarks>
     Model3D1: TModel3D;
-    //** @abstract(Asks for the model file that File, OpenModel loads.)
+    //** @abstract(Asks for the model file that File, Open Model loads.)
     //**
     //** Its filter, set in the form designer, offers only the formats the unit has loaders
     //** for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and then
     //** one at a time.
-    /// <summary>Asks for the model file that File, OpenModel loads.</summary>
+    /// <summary>Asks for the model file that File, Open Model loads.</summary>
     /// <remarks>Its filter, set in the form designer, offers only the formats the unit has
     /// loaders for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and
     /// then one at a time.</remarks>
@@ -522,8 +565,8 @@ type
     /// <summary>The "File" menu, holding OpenModelMenuItem, GrabMenuItem and
     /// ExitMenuItem.</summary>
     FileMenu: TMenuItem;
-    //** @abstract(The "OpenModel" item; see OpenModelMenuItemClick.)
-    /// <summary>The "OpenModel" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
+    //** @abstract(The "Open Model" item; see OpenModelMenuItemClick.)
+    /// <summary>The "Open Model" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
     OpenModelMenuItem: TMenuItem;
     //** @abstract(The "Grab" item; see GrabMenuItemClick.)
     /// <summary>The "Grab" item; see <see cref="GrabMenuItemClick"/>.</summary>
@@ -544,13 +587,29 @@ type
     //** @abstract(The "Exit" item; see ExitMenuItemClick.)
     /// <summary>The "Exit" item; see <see cref="ExitMenuItemClick"/>.</summary>
     ExitMenuItem: TMenuItem;
-    //** @abstract(The "Model" menu; holds AnimationsUsedItem.)
-    /// <summary>The "Model" menu; holds <see cref="AnimationsUsedItem"/>.</summary>
+    //** @abstract(The "Model" menu: AnimationsUsedItem, the Animation... and
+    //** BackgroundSettingsMenuItem settings, and DirectionsItem and OrientationItem.)
+    /// <summary>The "Model" menu: <see cref="AnimationsUsedItem"/>, the Animation... and
+    /// <see cref="BackgroundSettingsMenuItem"/> settings, and <see cref="DirectionsItem"/> and
+    /// <see cref="OrientationItem"/>.</summary>
     ModelMenu: TMenuItem;
     //** @abstract(The "Animations Used..." item; see AnimationsUsedItemClick.)
     /// <summary>The "Animations Used..." item; see
     /// <see cref="AnimationsUsedItemClick"/>.</summary>
     AnimationsUsedItem: TMenuItem;
+    //** @abstract(Separator line in the Model menu, above the settings items.)
+    /// <summary>Separator line in the Model menu, above the settings items.</summary>
+    ModelSettingsSeparatorItem: TMenuItem;
+    //** @abstract(Separator line in the Model menu, above DirectionsItem.)
+    /// <summary>Separator line in the Model menu, above
+    /// <see cref="DirectionsItem"/>.</summary>
+    ModelActionsSeparatorItem: TMenuItem;
+    //** @abstract(The "Directions" item; disabled, as it does nothing yet.)
+    /// <summary>The "Directions" item; disabled, as it does nothing yet.</summary>
+    DirectionsItem: TMenuItem;
+    //** @abstract(The "Orientation" item; disabled, as it does nothing yet.)
+    /// <summary>The "Orientation" item; disabled, as it does nothing yet.</summary>
+    OrientationItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     /// <summary>The "View" menu; holds <see cref="CameraMenu"/>.</summary>
     ViewMenu: TMenuItem;
@@ -609,8 +668,7 @@ type
     //** from the bounds as loaded, and one per animation, from the bounds of all its poses,
     //** read from the bounds cache or measured with TAnimationBoundsMeasurer as the model
     //** loads. Whichever animation the model plays, its volume is drawn; with none playing,
-    //** the rest pose's. The radii, length and volumes of each go to DebugMemo.
-    //** See ShowSweepItemClick.
+    //** the rest pose's. See ShowSweepItemClick.
     /// <summary>Shows or hides the Model Volume, the volume the model sweeps turning about its
     /// up axis; ticked at start-up.</summary>
     /// <remarks>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which
@@ -620,28 +678,30 @@ type
     /// pose, from the bounds as loaded, and one per animation, from the bounds of all its
     /// poses, read from the bounds cache or measured with TAnimationBoundsMeasurer as the
     /// model loads. Whichever animation the model plays, its volume is drawn; with none
-    /// playing, the rest pose's. The radii, length and volumes of each go to
-    /// DebugMemo. See <see cref="ShowSweepItemClick"/>.</remarks>
+    /// playing, the rest pose's. See <see cref="ShowSweepItemClick"/>.</remarks>
     ShowSweepItem: TMenuItem;
     //** @abstract(Shows or hides the Animation Volume, the combined swept volume; not ticked at
     //** start-up.)
     //**
     //** Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning
     //** about its up axis, joined over its rest pose and every animation ticked in Model,
-    //** Animations Used, which is what the camera frames. It is drawn in fuchsia and hot pink
-    //** whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow.
-    //** It is never drawn for a model with no animations, or none used, as it would only repeat
-    //** the rest pose's volume. It is redrawn for each new model and whenever the animations
-    //** used change, and its figures go to DebugMemo. See ShowCombinedSweepItemClick.
+    //** Animations Used. It is drawn only while the view frames it: while one or more entries
+    //** of the Animations list are ticked for export, playing or paused. It is drawn in
+    //** fuchsia and hot pink whatever animation plays, so it can be shown alongside
+    //** ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
+    //** none used, as it would only repeat the rest pose's volume. It is redrawn for each new
+    //** model and whenever the animations used or the ticks change. See
+    //** ShowCombinedSweepItemClick.
     /// <summary>Shows or hides the Animation Volume, the combined swept volume; not ticked at
     /// start-up.</summary>
     /// <remarks>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept
     /// turning about its up axis, joined over its rest pose and every animation ticked in
-    /// Model, Animations Used, which is what the camera frames. It is drawn in fuchsia and hot
-    /// pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and
-    /// yellow. It is never drawn for a model with no animations, or none used, as it would
-    /// only repeat the rest pose's volume. It is redrawn for each new model and whenever the
-    /// animations used change, and its figures go to DebugMemo. See
+    /// Model, Animations Used. It is drawn only while the view frames it: while one or more
+    /// entries of the Animations list are ticked for export, playing or paused. It is
+    /// drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside
+    /// ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
+    /// none used, as it would only repeat the rest pose's volume. It is redrawn for each new
+    /// model and whenever the animations used or the ticks change. See
     /// <see cref="ShowCombinedSweepItemClick"/>.</remarks>
     ShowCombinedSweepItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
@@ -693,19 +753,19 @@ type
     //** stops any animation; see AnimationListBoxClick.)
     //**
     //** Only the animations ticked in Model, Animations Used are listed. Each entry shows, at
-    //** its right, the number of frames saving it makes at the File, Animation frame rate.
-    //** Choosing an entry plays it, whether by a click or by moving the selection with the Up
-    //** and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry selects and
-    //** plays it and opens a pop-up menu that saves it as a sprite strip, a texture atlas or an
-    //** animated GIF; see the unit description.
+    //** its right, the number of frames saving it makes at the Model, Animation Settings frame
+    //** rate. Choosing an entry plays it, whether by a click or by moving the selection with
+    //** the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
+    //** selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
+    //** texture atlas or an animated GIF; see the unit description.
     /// <summary>The model's animations, by name, after a first entry, <c>(None)</c>, that stops
     /// any animation; see <see cref="AnimationListBoxClick"/>.</summary>
     /// <remarks>Only the animations ticked in Model, Animations Used are listed. Each entry
-    /// shows, at its right, the number of frames saving it makes at the File, Animation frame
-    /// rate. Choosing an entry plays it, whether by a click or by moving the selection with
-    /// the Up and Down arrow keys; see <see cref="AnimationListBoxChange"/>. Right-clicking an
-    /// entry selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
-    /// texture atlas or an animated GIF; see the unit description.</remarks>
+    /// shows, at its right, the number of frames saving it makes at the Model, Animation
+    /// Settings frame rate. Choosing an entry plays it, whether by a click or by moving the
+    /// selection with the Up and Down arrow keys; see <see cref="AnimationListBoxChange"/>.
+    /// Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a
+    /// sprite strip, a texture atlas or an animated GIF; see the unit description.</remarks>
     AnimationListBox: TListBox;
     //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
     /// <summary>The "1/4 View" view; see <see cref="ViewOneQuarterItemClick"/>.</summary>
@@ -1269,7 +1329,7 @@ type
     // The orbit centre before a shifted overscan drawing slid it, while slid
     FShiftedCentre: TPoint3D;
     FViewShifted: Boolean;
-    // Whether File, Animation's Overscan is ticked; kept for this session
+    // Whether Model, Animation Settings's Overscan is ticked; kept for this session
     // only, so overscan always starts off
     FOverscanOn: Boolean;
     // True while AnimationListBox is refilled, so its OnChange plays nothing
@@ -1286,7 +1346,7 @@ type
     // The animation list's pop-up menu: Save as sprite strip, Save as
     // Texture Atlas, Save as AniGif
     FAnimationPopup: TPopupMenu;
-    // File, Animation...: the frame rate saved animations use
+    // Model, Animation Settings...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
     // Keeps the downloaded OpenH264 in step with openh264.json
     FOpenH264Update: TSprite3DLibraryUpdate;
@@ -1305,6 +1365,31 @@ type
     FRefitAfterCapture: Boolean;
     // Batch export, below the animation list: All, what to save, Export
     FBatchLayout: TLayout;
+    // The play, pause and step buttons under the animation list, for the
+    // selected animation, and the player that holds and steps it; nil until
+    // one of them, or choosing an entry, plays an animation
+    FTransportLayout: TLayout;
+    FFirstButton: TButton;
+    FPreviousButton: TButton;
+    FPlayButton: TButton;
+    FNextButton: TButton;
+    FLastButton: TButton;
+    // The frame readout after the buttons, "frame / frames", as three labels
+    // so the "/" stays put whatever the numbers
+    FFrameNumberLabel: TLabel;
+    FFrameSlashLabel: TLabel;
+    FFrameTotalLabel: TLabel;
+    // The frame rate the viewport draws at, top left of the view, and the
+    // timer that refreshes it and the frame readout
+    FFpsLabel: TLabel;
+    FFpsBack: TRectangle;   // dark, so the label reads on any background
+    FReadoutTimer: TTimer;
+    // The displays, kept so the one the form is on can be checked cheaply
+    // as the readouts refresh; read again whenever the form moves to
+    // another, so the frame rate follows that display's refresh rate
+    FDisplays: TPeardoxDisplays;
+    FDisplayIndex: Integer;
+    FPlayer: TSprite3DAnimationPlayer;
     FBatchAll: TCheckBox;
     FBatchKindBox: TComboBox;
     FExportButton: TButton;
@@ -1370,6 +1455,7 @@ type
     procedure LoadTimerTimer(Sender: TObject);
     procedure LoadDialogAbort(Sender: TObject);
     procedure BuildLoadModel;
+    procedure ShowLoadModel(const AShowNew: Boolean);
     procedure MeasureLoadModel;
     procedure CommitLoad;
     procedure EndLoad(const AError: String);
@@ -1435,12 +1521,35 @@ type
       out AError: String): Boolean;
     function Capturing: Boolean;
     procedure BuildBatchControls;
+    procedure BuildTransportControls;
+    procedure UpdateTransportControls;
+    procedure UpdateFrameReadout;
+    function ViewFpsLimit: Integer;
+    procedure ApplyViewFps;
+    procedure CheckDisplay;
+    procedure BuildFpsReadout;
+    procedure ReadoutTimerTimer(Sender: TObject);
+    procedure TransportButtonApplyStyle(Sender: TObject);
+    procedure TransportChanged;
+    function EnsurePlayer: Boolean;
+    function AnimationHeld: Boolean;
+    procedure PlayButtonClick(Sender: TObject);
+    procedure FirstButtonClick(Sender: TObject);
+    procedure PreviousButtonClick(Sender: TObject);
+    procedure NextButtonClick(Sender: TObject);
+    procedure LastButtonClick(Sender: TObject);
+    function SelectedAnimation: TGorillaAnimation;
+    function AnyEntryTicked: Boolean;
+    function UsesCombinedView: Boolean;
+    function ViewVolume: TSweptVolume;
+    procedure UpdateView;
     procedure BatchAllChange(Sender: TObject);
     procedure AnimationListBoxChangeCheck(Sender: TObject);
     procedure ExportButtonClick(Sender: TObject);
     procedure AbortButtonClick(Sender: TObject);
     function ChooseExportFolder(out AFolder: String): Boolean;
     procedure RunNextBatchItem;
+    procedure ContinueBatch;
     procedure FinishBatch;
     procedure UpdateBatchControls;
     function FrameCaptureFraming(const ASource: TSprite3DFrameSource;
@@ -1511,8 +1620,8 @@ var
 implementation
 
 uses
-  FMX.Platform, System.IOUtils,
-  Gorilla.DefTypes, Gorilla.Animation, System.Math,
+  FMX.Platform, System.IOUtils, OSPaths,
+  Gorilla.DefTypes, System.Math,
   Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm,
   Sprite3DAnimationsUsedForm;
 
@@ -1542,12 +1651,15 @@ const
   LOAD_READ_END = 0.3;
   LOAD_BUILD_END = 0.6;
   LOAD_MEASURE_END = 0.95;
+  // How often the frame rate and frame readouts are refreshed, in
+  // milliseconds: often enough for the frame number to follow playback
+  READOUT_INTERVAL_MS = 100;
 
   // The first entry of AnimationListBox, which stops any animation and
   // shows the model as loaded
   NO_ANIMATION = '(None)';
   // What the (None) entry captures instead of an animation: one full turn
-  // of the model in TURNTABLE_SECONDS, at the File, Animation frame rate
+  // of the model in TURNTABLE_SECONDS, at the Model, Animation Settings frame rate
   TURNTABLE_SECONDS = 1.0;
   // Marks the frame-count label FrameCountLabel puts on each list entry
   FRAME_LABEL_TAG = 3001;
@@ -1598,6 +1710,10 @@ begin
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
+  // The frame rate the view is drawn at, as chosen in File, Settings, within
+  // what the display can show
+  FDisplayIndex := -1;
+  ApplyViewFps;
   FGrabNumber := 1;
   // Every grab from here on is this size, until File, Settings changes it
   FOffscreen.Width := FSettings.GrabWidth;
@@ -1638,6 +1754,8 @@ begin
   FLoadTimer.OnTimer := LoadTimerTimer;
   // Says how to load a model until one is
   BuildNoModelPanel;
+  // Frames per second, top left over the view, above the panel
+  BuildFpsReadout;
 
   // The OpenH264 already downloaded, if it is the one openh264.json asks
   // for; before StartVideo first loads the video libraries
@@ -1838,15 +1956,27 @@ end;
 procedure TMainForm.PlaySelectedAnimation;
 var
   ani: String;
+  WasHeld: Boolean;
 begin
   if Capturing then
     Exit;   // a capture is driving the animation
+  // Choosing an entry plays it from the start; but while the controls are
+  // paused, the new animation starts paused too, on its first frame
+  WasHeld := (FPlayer <> nil) and FPlayer.Held;
+  FreeAndNil(FPlayer);
   if Assigned(GorillaModel) then
     begin
       if AnimationListBox.ItemIndex > 0 then
         begin
           ani := AnimationListBox.Items[AnimationListBox.ItemIndex];
-          GorillaModel.AnimationManager.PlayAnimation(ani);
+          var Anim := GorillaModel.AnimationManager.PlayAnimation(ani);
+          if Anim <> nil then
+          begin
+            FPlayer := TSprite3DAnimationPlayer.Create(GorillaModel, Anim,
+              FSettings.AnimationFps);
+            if WasHeld then
+              FPlayer.ShowFrame(0);
+          end;
         end
       else if AnimationListBox.ItemIndex = 0 then
         begin
@@ -1855,6 +1985,8 @@ begin
             GorillaModel.AnimationManager.Current.Stop();
         end;
     end;
+  UpdateTransportControls;
+  UpdateView;
 end;
 
 procedure TMainForm.ApplyAngles;
@@ -1934,7 +2066,7 @@ const
 //  DEFAULT_MODEL = 'models/TestAnimatedCharacter.glb';
 //  DEFAULT_MODEL = 'models/TestStaticCharacter.glb';
 begin
-  Result := ModelDir + DEFAULT_MODEL;
+  Result := OSFriendlyPath(ModelDir + DEFAULT_MODEL);
 end;
 
 // A model the system asked to open, such as one double-clicked in Explorer
@@ -1950,8 +2082,9 @@ begin
       saNone:
         DebugMemo.Lines.Add('Start-up action is None: no model loaded');
       saLastModel:
-        if (FSettings.LastModel <> String.Empty) and FileExists(FSettings.LastModel) then
-          FileName := FSettings.LastModel
+        if (FSettings.LastModel <> String.Empty) and
+          FileExists(OSFriendlyPath(FSettings.LastModel)) then
+          FileName := OSFriendlyPath(FSettings.LastModel)
         else
         begin
           if FSettings.LastModel <> String.Empty then
@@ -1977,6 +2110,10 @@ end;
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   MainFormGone := True;   // queued work arriving from here on does nothing
+  if Assigned(FReadoutTimer) then
+    FReadoutTimer.Enabled := False;
+  FreeAndNil(FDisplays);
+  FreeAndNil(FPlayer);
   // A load under way is dropped, its dialog with it
   FLoadTimer.Enabled := False;
   FLoadStage := lsNone;
@@ -2161,9 +2298,9 @@ begin
     ShowMessage('Grab could not start');
 end;
 
-// Fit the model to the grab's own shape as FitModel would, to the combined
-// swept volume, without the test distance factor, keeping the on-screen
-// framing to put back
+// Fit the model to the grab's own shape as FitModel would, to ViewVolume,
+// without the test distance factor, keeping the on-screen framing to put
+// back
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
@@ -2239,6 +2376,61 @@ begin
 end;
 {$ENDIF}
 
+// The most File, Settings offers for the view's frame rate: the refresh rate
+// of the display the form is on, or VIEW_FPS_DEFAULT where the system does
+// not say
+function TMainForm.ViewFpsLimit: Integer;
+begin
+  if FDisplays = nil then
+  begin
+    FDisplays := TPeardoxDisplays.Create;
+    FDisplayIndex := FDisplays.IndexOfForm(Self);
+  end;
+  Result := FDisplays.RefreshRateFor(Self);
+  if Result < VIEW_FPS_MIN then
+    Result := VIEW_FPS_DEFAULT;
+end;
+
+// The view's frame rate: the one File, Settings asks for, but never more
+// than the display the form is on can show. The rate asked for is kept, so
+// moving back to a faster display brings it back.
+procedure TMainForm.ApplyViewFps;
+var
+  Limit, Rate: Integer;
+begin
+  if GorillaViewport = nil then
+    Exit;
+  Limit := ViewFpsLimit;
+  Rate := Min(FSettings.ViewFps, Limit);
+  if Round(GorillaViewport.FixedFrameRate) = Rate then
+    Exit;
+  GorillaViewport.FixedFrameRate := Rate;
+  if Rate < FSettings.ViewFps then
+    DebugMemo.Lines.Add(Format('The view is drawn at %d frames per second, as this ' +
+      'display refreshes at %d; %d is asked for', [Rate, Limit, FSettings.ViewFps]))
+  else
+    DebugMemo.Lines.Add(Format('The view is drawn at up to %d frames per second', [Rate]));
+end;
+
+// Whether the form is on another display than before, as after being moved
+// across; if so the displays are read again and the frame rate kept within
+// the new one's. Checking is cheap, so it is done with each readout refresh.
+procedure TMainForm.CheckDisplay;
+var
+  Index: Integer;
+begin
+  if FDisplays = nil then
+    Exit;
+  Index := FDisplays.IndexOfForm(Self);
+  if Index = FDisplayIndex then
+    Exit;
+  // Another display, or one plugged in or changed: read them all afresh
+  FreeAndNil(FDisplays);
+  FDisplays := TPeardoxDisplays.Create;
+  FDisplayIndex := FDisplays.IndexOfForm(Self);
+  ApplyViewFps;
+end;
+
 procedure TMainForm.SettingsMenuItemClick(Sender: TObject);
 var
   Dialog: TGeneralSettingsForm;
@@ -2249,6 +2441,7 @@ begin
   Dialog := TGeneralSettingsForm.Create(nil);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   FSettingsBefore := ReadGeneralSettings(FSettings);
+  FSettingsBefore.MaxViewFps := ViewFpsLimit;
   Dialog.Values := FSettingsBefore;
   // ShowModal cannot block here: the dialog reports OK and frees itself
   Dialog.OnAccept := SettingsDialogAccept;
@@ -2256,6 +2449,7 @@ begin
   {$ELSE}
   try
     Before := ReadGeneralSettings(FSettings);
+    Before.MaxViewFps := ViewFpsLimit;
     Dialog.Values := Before;
     if Dialog.ShowModal = mrOk then
       ApplyGeneralSettings(Before, Dialog.Values);
@@ -2315,6 +2509,12 @@ begin
       FOffscreen.Height := FSettings.GrabHeight;
       DebugMemo.Lines.Add(Format('Grabs are now %d x %d pixels',
         [FSettings.GrabWidth, FSettings.GrabHeight]));
+    end;
+
+    if ANew.ViewFps <> AOld.ViewFps then
+    begin
+      FSettings.ViewFps := ANew.ViewFps;   // limited to the allowed range
+      ApplyViewFps;
     end;
 
     if ANew.SaveFolder <> AOld.SaveFolder then
@@ -2711,16 +2911,18 @@ begin
   FitModel;   // a deliberate change of view, so frame the model for it
 end;
 
-// Refit after a change of model, size, projection or animations used, to
-// the combined swept volume, so the rest pose and every animation used are
-// framed alike. The dials do not call this: with the orbit centre on the
-// turning axis, the fit already allows for turning the azimuth.
+// Refit after a change of model, size, projection, animation or ticks, to
+// ViewVolume: the combined swept volume while entries are ticked for export
+// playing or paused, so everything a batch exports is framed alike, and
+// otherwise the volume of what is shown alone, as large as the view allows.
+// The dials do not call this: with the orbit centre on the turning axis, the
+// fit already allows for turning the azimuth.
 function TMainForm.FitModel: Boolean;
 begin
   Result := not CameraLocked and Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
     Exit;
-  Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume);
+  Result := FitCameraToSweep(GorillaCamera, GorillaModel, ViewVolume);
   if Result then
   begin
     // Remember the fit, then apply the test distance factor and the pan on
@@ -2774,8 +2976,9 @@ begin
   ApplyDistance;
 end;
 
-// The volume the camera frames: the rest pose's and that of each animation
-// used, all measured as the model loaded
+// The combined volume: the rest pose's and that of each animation used, all
+// measured as the model loaded; framed while entries are ticked, and by
+// batch exports
 function TMainForm.SweepFitVolume: TSweptVolume;
 begin
   Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds,
@@ -2794,7 +2997,57 @@ end;
 // AWidth by AHeight
 function TMainForm.GrabFit(const AWidth, AHeight: Integer): Boolean;
 begin
-  Result := FitCameraToSweep(GorillaCamera, GorillaModel, SweepFitVolume, AWidth, AHeight);
+  Result := FitCameraToSweep(GorillaCamera, GorillaModel, ViewVolume, AWidth, AHeight);
+end;
+
+// True while any entry of the list, (None) included, is ticked for export
+function TMainForm.AnyEntryTicked: Boolean;
+var
+  I: Integer;
+begin
+  for I := 0 to AnimationListBox.Count - 1 do
+    if AnimationListBox.ListItems[I].IsChecked then
+      Exit(True);
+  Result := False;
+end;
+
+// Whether the view shows the combined volume: whenever an entry is ticked
+// for export, as a batch frames them all alike, playing or paused. With
+// nothing ticked it shows the volume of what is on screen alone, playing or
+// paused.
+function TMainForm.UsesCombinedView: Boolean;
+begin
+  Result := (GorillaModel <> nil) and AnyEntryTicked;
+end;
+
+// The volume the view is fitted to and grabs are framed by: the combined one
+// when UsesCombinedView, otherwise the selected animation's own, or the rest
+// pose's for (None) and for a model without animations
+function TMainForm.ViewVolume: TSweptVolume;
+begin
+  if UsesCombinedView then
+    Exit(SweepFitVolume);
+  if AnimationListBox.ItemIndex > 0 then
+  begin
+    Result := AnimationSweptVolume(AnimationListBox.Items[AnimationListBox.ItemIndex]);
+    if Result.Valid then
+      Exit;
+  end;
+  // The rest pose alone: no animation named
+  Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds, nil, True, saY);
+end;
+
+// The combined wireframe and the fit, after anything that changes which
+// volume the view shows. During a capture both wait until it ends.
+procedure TMainForm.UpdateView;
+begin
+  if Capturing then
+  begin
+    FRefitAfterCapture := True;
+    Exit;
+  end;
+  ApplyShowCombinedSweep;
+  FitModel;
 end;
 
 procedure TMainForm.ShowAxesItemClick(Sender: TObject);
@@ -2827,13 +3080,10 @@ begin
   ApplyShowCombinedSweep;
 end;
 
-// The combined swept volume, to match ShowCombinedSweepItem: the volume
-// joined over the rest pose and the animations used, the one View, Fit
-// swept volume frames, measuring the animations first if need be. Nothing
-// without a model.
+// The combined swept volume, to match ShowCombinedSweepItem, and only while
+// the view frames it (UsesCombinedView): the volume joined over the rest
+// pose and the animations used. Nothing without a model.
 procedure TMainForm.ApplyShowCombinedSweep;
-var
-  Sweep: TCombinedSweep;
 begin
   if not ShowCombinedSweepItem.IsChecked then
   begin
@@ -2841,15 +3091,14 @@ begin
     Exit;
   end;
   // A model without animations, or with none used, has no animation volume
-  // to show: it would only repeat the rest pose's
-  if (GorillaModel = nil) or (Length(FUsedAnimations) = 0) then
+  // to show: it would only repeat the rest pose's. Nor is it shown unless
+  // the view is of the combined volume: entries ticked.
+  if (GorillaModel = nil) or (Length(FUsedAnimations) = 0) or not UsesCombinedView then
   begin
     HideCombinedSweep(GorillaModel);
     Exit;
   end;
-  Sweep := ShowCombinedSweep(GorillaModel, SweepFitVolume);
-  if Sweep <> nil then
-    DebugMemo.Lines.Add('Combined: ' + Sweep.Volume.ToString);
+  ShowCombinedSweep(GorillaModel, SweepFitVolume);
 end;
 
 // The model's axes to match ShowAxesItem; nothing without a model
@@ -2881,13 +3130,8 @@ end;
 // The volume swept turning about the model's up axis, to match
 // ShowSweepItem: the rest pose's from the model's own bounds as loaded, and
 // one per animation, measured as the model loaded, so the wireframe follows
-// whichever animation plays. The figures go to the debug log. Nothing
-// without a model.
+// whichever animation plays. Nothing without a model.
 procedure TMainForm.ApplyShowSweep;
-var
-  Sweep: TModelSweep;
-  Volume: TSweptVolume;
-  Entry: TAnimationBounds;
 begin
   if not ShowSweepItem.IsChecked then
   begin
@@ -2897,14 +3141,7 @@ begin
   if GorillaModel = nil then
     Exit;
 
-  Sweep := ShowModelSweep(GorillaModel, FModelBox, FAnimationBounds, saY);
-  if Sweep = nil then
-    Exit;
-  DebugMemo.Lines.Add('Rest pose: ' + Sweep.Volume.ToString);
-  for Entry in FAnimationBounds do
-    if Sweep.TryGetAnimationVolume(Entry.Name, Volume) then
-      DebugMemo.Lines.Add(Format('%s (%d poses): %s',
-        [Entry.Name, Entry.Poses, Volume.ToString]));
+  ShowModelSweep(GorillaModel, FModelBox, FAnimationBounds, saY);
 end;
 
 // Looks for the video libraries, which can take a while to load, so the
@@ -2949,15 +3186,19 @@ end;
 procedure TMainForm.SwitchModel(const AModel: String);
 var
   Dialog: TModelLoadForm;
+  Model: String;
 begin
-  if (AModel = String.Empty) or (not FileExists(AModel)) then
+  // In this platform's own form, whoever named it: a dialog, the system, a
+  // setting kept from another platform, or a constant
+  Model := OSFriendlyPath(AModel);
+  if (Model = String.Empty) or (not FileExists(Model)) then
     begin
-      ShowMessage('Model Not Found ' + AModel);
+      ShowMessage('Model Not Found ' + Model);
       Exit;
     end;
   if FLoadStage <> lsNone then
   begin
-    FPendingModel := AModel;
+    FPendingModel := Model;
     Exit;
   end;
   if Capturing then
@@ -2966,7 +3207,7 @@ begin
       Exit;
     end;
 
-  FLoadFile := ExpandFileName(AModel);
+  FLoadFile := ExpandFileName(Model);
   FLoadAborted := False;
   FLoadError := String.Empty;
   FLoadRead := StartModelFileRead(FLoadFile);
@@ -3085,12 +3326,38 @@ begin
   end
   else
   begin
-    // The new model has no helpers yet, so nothing else counts in its bounds
+    // Gorilla only poses a model it can draw: a hidden one keeps its first
+    // pose whatever frame it is set to, so every animation would measure as
+    // the rest pose. So the new model is shown, and the old one hidden,
+    // while it is measured; an abort puts the old one back. The new model
+    // has no helpers yet, so nothing else counts in its bounds.
+    ShowLoadModel(True);
     FMeasurer := TAnimationBoundsMeasurer.Create(FLoadModel);
     FLoadDialog.SetProgress(LOAD_BUILD_END,
       Format('Measuring %d animations...', [Length(FLoadAnims)]));
     FLoadStage := lsMeasure;
   end;
+end;
+
+// Shows the model being loaded and hides the one on screen, with the
+// wireframes beside it (its grid and axes are its children, so go with it),
+// or with AShowNew False the other way round
+procedure TMainForm.ShowLoadModel(const AShowNew: Boolean);
+var
+  Sweep: TModelSweep;
+  Combined: TCombinedSweep;
+begin
+  if FLoadModel <> nil then
+    FLoadModel.Visible := AShowNew;
+  if GorillaModel = nil then
+    Exit;
+  GorillaModel.Visible := not AShowNew;
+  Sweep := FindModelSweep(GorillaModel);
+  if Sweep <> nil then
+    Sweep.Visible := not AShowNew;
+  Combined := FindCombinedSweep(GorillaModel);
+  if Combined <> nil then
+    Combined.Visible := not AShowNew;
 end;
 
 // A slice of measuring the new model's animations; when they are all done,
@@ -3102,7 +3369,6 @@ begin
     FLoadBounds := FMeasurer.Results;
     FreeAndNil(FMeasurer);
     SaveAnimationBoundsCache(FLoadFile, FLoadAnims, FLoadBounds);
-    DebugMemo.Lines.Add(Format('Measured %d animations', [Length(FLoadBounds)]));
     FLoadDialog.SetProgress(LOAD_MEASURE_END, 'Setting up the view...');
     FLoadStage := lsCommit;
   end
@@ -3119,6 +3385,7 @@ procedure TMainForm.CommitLoad;
 var
   Old: TGorillaModel;
 begin
+  FreeAndNil(FPlayer);   // its animation goes with the old model
   AnimationListBox.Items.Clear;
   AnimationListBox.Items.Add(NO_ANIMATION);
   Old := GorillaModel;
@@ -3188,6 +3455,8 @@ begin
   FLoadRead := nil;
   if FLoadModel <> nil then
   begin
+    // Not taken on: the old model, if any, is shown again as it was
+    ShowLoadModel(False);
     FLoadModel.Parent := nil;
     FreeAndNil(FLoadModel);
   end;
@@ -3266,7 +3535,7 @@ begin
   Hint.TextSettings.HorzAlign := TTextAlign.Center;
   Hint.TextSettings.VertAlign := TTextAlign.Leading;
   Hint.TextSettings.WordWrap := True;
-  Hint.Text := 'Choose File, OpenModel to load one.';
+  Hint.Text := 'Choose File, Open Model to load one.';
   Hint.HitTest := False;
 
   UpdateNoModelPanel;
@@ -3280,6 +3549,8 @@ begin
   FNoModelPanel.Visible := GorillaModel = nil;
   if FNoModelPanel.Visible then
     FNoModelPanel.BringToFront;
+  if FFpsBack <> nil then
+    FFpsBack.BringToFront;   // the frame rate stays readable over the panel
 end;
 
 // Reads openh264.json and what has been downloaded, without the network,
@@ -3345,12 +3616,13 @@ begin
   FMp4Item := AddItem(FAnimationPopup, 'Save as MP4 video', SaveMp4ItemClick);
   FMp4Item.Enabled := False;
   BuildBatchControls;
+  BuildTransportControls;
 
-  // File, Animation..., just above Settings...
+  // Model, Animation Settings..., just above Background Settings...
   FAnimationSettingsItem := TMenuItem.Create(Self);
-  FAnimationSettingsItem.Text := 'Animation...';
+  FAnimationSettingsItem.Text := 'Animation Settings...';
   FAnimationSettingsItem.OnClick := AnimationSettingsItemClick;
-  FileMenu.InsertObject(SettingsMenuItem.Index, FAnimationSettingsItem);
+  ModelMenu.InsertObject(BackgroundSettingsMenuItem.Index, FAnimationSettingsItem);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   FAnimationMenu := TMenuItem.Create(Self);
   FAnimationMenu.Text := 'Animation';
@@ -3362,7 +3634,7 @@ begin
   {$ENDIF}
 end;
 
-// File, Animation...: the frame rate saved animations use. OK keeps the
+// Model, Animation Settings...: the frame rate saved animations use. OK keeps the
 // new rate and saves it; Cancel leaves the old one.
 procedure TMainForm.AnimationSettingsItemClick(Sender: TObject);
 var
@@ -3471,6 +3743,10 @@ begin
     Exit;
   FSettings.AnimationFps := AFps;   // limited to the allowed range
   UpdateFrameCounts;
+  // The frames stepped through are the export frames, so they follow too
+  if FPlayer <> nil then
+    FPlayer.FrameRate := FSettings.AnimationFps;
+  UpdateTransportControls;
   DebugMemo.Lines.Add(Format('Animations are now saved at %d frames per second',
     [FSettings.AnimationFps]));
   try
@@ -3607,6 +3883,7 @@ begin
     FRebuildingList := False;
   end;
   UpdateFrameCounts;
+  UpdateTransportControls;
 
   if Assigned(GorillaModel) and Assigned(GorillaModel.AnimationManager) then
   begin
@@ -3635,7 +3912,7 @@ begin
   Result := False;
 end;
 
-// The frames saving entry AIndex makes at the File, Animation rate, worked
+// The frames saving entry AIndex makes at the Model, Animation Settings rate, worked
 // out as a capture does: one turn for (None), otherwise the animation's
 // length times the rate, rounded. 0 if the animation cannot be found.
 function TMainForm.AnimationFrameCount(const AIndex: Integer): Integer;
@@ -3680,7 +3957,7 @@ begin
   Result.TextSettings.HorzAlign := TTextAlign.Trailing;
 end;
 
-// Every entry's frame count, for the File, Animation rate now
+// Every entry's frame count, for the Model, Animation Settings rate now
 procedure TMainForm.UpdateFrameCounts;
 var
   I, Count: Integer;
@@ -3749,8 +4026,7 @@ begin
   RebuildAnimationList;
   DebugMemo.Lines.Add(Format('Animations used: %d of %d',
     [Length(FUsedAnimations), Length(FAnimationNames)]));
-  if FitModel then
-    DebugMemo.Lines.Add('Fitted to the animations used: ' + SweepFitVolume.ToString);
+  FitModel;
   // The combined volume is joined over the animations used, so it changes too
   ApplyShowCombinedSweep;
 end;
@@ -3897,6 +4173,10 @@ begin
     Exit;
   end;
 
+  // The capture drives the animation itself, so nothing stays held
+  FreeAndNil(FPlayer);
+  UpdateTransportControls;
+
   if AIndex = 0 then
   begin
     // No animation: one turn of the model, named after the model
@@ -4026,6 +4306,331 @@ begin
   end;
 end;
 
+const
+  // The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
+  // button's text colour
+  ICON_FIRST = 'M5 6h2v12H5z M8 12l6-6v12z M14 12l6-6v12z';
+  ICON_PREVIOUS = 'M7 12l7-6v12z M15 6h2v12h-2z';
+  ICON_PLAY = 'M8 5v14l11-7z';
+  ICON_PAUSE = 'M6 5h4v14H6z M14 5h4v14h-4z';
+  ICON_NEXT = 'M7 6h2v12H7z M10 6v12l7-6z';
+  ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
+
+// The buttons that play, pause and step the selected animation, in a row
+// under the animation list and above the batch controls, made here rather
+// than in the form designer: first frame, previous frame, play or pause,
+// next frame and last frame, each an icon with its name as a hint, and the
+// readout of the frame showing at the right. With (None) selected there is
+// nothing for them to act on.
+procedure TMainForm.BuildTransportControls;
+var
+  Readout: TLayout;
+
+  function AddReadoutLabel(const AParent: TLayout; const AWidth: Single;
+    const AAlign: TTextAlign): TLabel;
+  begin
+    Result := TLabel.Create(Self);
+    Result.Parent := AParent;
+    Result.Position.X := AParent.ChildrenCount * 1000;   // in order, as above
+    Result.Align := TAlignLayout.Left;
+    Result.Width := AWidth;
+    Result.TextSettings.HorzAlign := AAlign;
+    Result.TextSettings.WordWrap := False;
+    Result.HitTest := False;
+  end;
+
+  function AddButton(const AIcon, AHint: String; const AOnClick: TNotifyEvent): TButton;
+  var
+    Icon: FMX.Objects.TPath;
+  begin
+    Result := TButton.Create(Self);
+    Result.Parent := FTransportLayout;
+    // FMX orders left-aligned controls by their X, and a new one at X = 0
+    // would go before those already there, reversing the row; so each is
+    // placed after the last
+    Result.Position.X := FTransportLayout.ChildrenCount * 1000;
+    Result.Align := TAlignLayout.Left;
+    Result.Width := 30;
+    Result.Margins.Right := 2;
+    Result.Text := String.Empty;
+    Result.Hint := AHint;
+    Result.ShowHint := True;
+    Result.OnClick := AOnClick;
+    Result.OnApplyStyleLookup := TransportButtonApplyStyle;
+    Icon := FMX.Objects.TPath.Create(Self);
+    Icon.Parent := Result;
+    Icon.Align := TAlignLayout.Center;
+    Icon.Width := 24;
+    Icon.Height := 24;
+    Icon.WrapMode := TPathWrapMode.Original;
+    Icon.Data.Data := AIcon;
+    Icon.Stroke.Kind := TBrushKind.None;
+    Icon.Fill.Color := TAlphaColors.Black;   // the theme's colour once styled
+    Icon.HitTest := False;
+    Result.TagObject := Icon;
+  end;
+
+begin
+  FTransportLayout := TLayout.Create(Self);
+  FTransportLayout.Parent := ControlsLayout;
+  FTransportLayout.Align := TAlignLayout.Bottom;
+  FTransportLayout.Height := 36;
+  FTransportLayout.Padding.Rect := TRectF.Create(4, 4, 4, 2);
+  FFirstButton := AddButton(ICON_FIRST, 'First frame', FirstButtonClick);
+  FPreviousButton := AddButton(ICON_PREVIOUS, 'Previous frame', PreviousButtonClick);
+  FPlayButton := AddButton(ICON_PLAY, 'Play', PlayButtonClick);
+  FNextButton := AddButton(ICON_NEXT, 'Next frame', NextButtonClick);
+  FLastButton := AddButton(ICON_LAST, 'Last frame', LastButtonClick);
+  // The readout: the frame number right-aligned in a fixed width, then the
+  // "/", then the total, so the "/" never moves
+  Readout := TLayout.Create(Self);
+  Readout.Parent := FTransportLayout;
+  Readout.Align := TAlignLayout.Client;
+  Readout.Hint := 'The frame showing, of the frames an export makes';
+  Readout.ShowHint := True;
+  Readout.HitTest := True;   // for the hint
+  FFrameNumberLabel := AddReadoutLabel(Readout, 28, TTextAlign.Trailing);
+  FFrameSlashLabel := AddReadoutLabel(Readout, 10, TTextAlign.Center);
+  FFrameSlashLabel.Text := '/';
+  FFrameTotalLabel := AddReadoutLabel(Readout, 28, TTextAlign.Leading);
+  UpdateTransportControls;
+end;
+
+// An icon takes the colour the theme gives the button's text, so it shows
+// on every style, light or dark
+procedure TMainForm.TransportButtonApplyStyle(Sender: TObject);
+var
+  Button: TButton;
+begin
+  Button := Sender as TButton;
+  if Button.TagObject is FMX.Objects.TPath then
+    FMX.Objects.TPath(Button.TagObject).Fill.Color := Button.ResultingTextSettings.FontColor;
+end;
+
+// The selected animation, or nil for (None), no selection or no model
+function TMainForm.SelectedAnimation: TGorillaAnimation;
+begin
+  Result := nil;
+  if (GorillaModel = nil) or not Assigned(GorillaModel.AnimationManager) or
+    (AnimationListBox.ItemIndex <= 0) then
+    Exit;
+  Result := GorillaModel.AnimationManager.GetAnimation(
+    AnimationListBox.Items[AnimationListBox.ItemIndex]);
+end;
+
+// True while the selected animation is held on a frame
+function TMainForm.AnimationHeld: Boolean;
+begin
+  Result := (FPlayer <> nil) and FPlayer.Held and (FPlayer.Animation = SelectedAnimation);
+end;
+
+// Every button needs a selected animation, and none works during a capture.
+// Play and pause share a button: its icon and hint say which it does now.
+// The label shows the frame held, counted from 1.
+procedure TMainForm.UpdateTransportControls;
+var
+  Anim: TGorillaAnimation;
+  Playing: Boolean;
+begin
+  if FPlayButton = nil then
+    Exit;
+  if Capturing then
+    Anim := nil
+  else
+    Anim := SelectedAnimation;
+  Playing := (Anim <> nil) and (GorillaModel.AnimationManager.Current = Anim) and
+    Anim.IsRunning and not AnimationHeld;
+  FFirstButton.Enabled := Anim <> nil;
+  FPreviousButton.Enabled := Anim <> nil;
+  FPlayButton.Enabled := Anim <> nil;
+  FNextButton.Enabled := Anim <> nil;
+  FLastButton.Enabled := Anim <> nil;
+  if Playing then
+  begin
+    FMX.Objects.TPath(FPlayButton.TagObject).Data.Data := ICON_PAUSE;
+    FPlayButton.Hint := 'Pause';
+  end
+  else
+  begin
+    FMX.Objects.TPath(FPlayButton.TagObject).Data.Data := ICON_PLAY;
+    FPlayButton.Hint := 'Play';
+  end;
+  UpdateFrameReadout;
+end;
+
+// The frame readout: the frame showing, counted from 1, of the frames an
+// export makes, held or playing; for an animation playing without a player
+// the frames alone; and "- / -" for (None), no model or a capture
+procedure TMainForm.UpdateFrameReadout;
+var
+  Anim: TGorillaAnimation;
+  Number, Total: String;
+begin
+  if FFrameNumberLabel = nil then
+    Exit;
+  Number := '-';
+  Total := '-';
+  if not Capturing then
+  begin
+    Anim := SelectedAnimation;
+    if (Anim <> nil) and (FPlayer <> nil) and (FPlayer.Animation = Anim) then
+    begin
+      Number := IntToStr(FPlayer.CurrentFrame + 1);
+      Total := IntToStr(FPlayer.FrameCount);
+    end
+    else if Anim <> nil then
+      Total := IntToStr(AnimationFrameCount(AnimationListBox.ItemIndex));
+  end;
+  if FFrameNumberLabel.Text <> Number then
+    FFrameNumberLabel.Text := Number;
+  if FFrameTotalLabel.Text <> Total then
+    FFrameTotalLabel.Text := Total;
+end;
+
+// The frame rate readout, top left over the view on a dark backing, made
+// here rather than in the form designer. It lets clicks through, and is refreshed with the frame
+// readout a few times a second, as a value changing every frame cannot be
+// read anyway.
+procedure TMainForm.BuildFpsReadout;
+begin
+  // A dark, mostly opaque backing whatever the theme, with white text, so
+  // it reads over any background the view has
+  FFpsBack := TRectangle.Create(Self);
+  FFpsBack.Parent := ViewportLayout;
+  FFpsBack.Align := TAlignLayout.None;
+  FFpsBack.Position.Point := TPointF.Create(8, 6);
+  FFpsBack.Width := 64;
+  FFpsBack.Height := 20;
+  FFpsBack.XRadius := 4;
+  FFpsBack.YRadius := 4;
+  FFpsBack.Fill.Kind := TBrushKind.Solid;
+  FFpsBack.Fill.Color := $C0000000;
+  FFpsBack.Stroke.Kind := TBrushKind.None;
+  FFpsBack.HitTest := False;
+
+  FFpsLabel := TLabel.Create(Self);
+  FFpsLabel.Parent := FFpsBack;
+  FFpsLabel.Align := TAlignLayout.Client;
+  FFpsLabel.StyledSettings := FFpsLabel.StyledSettings - [TStyledSetting.FontColor];
+  FFpsLabel.TextSettings.FontColor := TAlphaColors.White;
+  FFpsLabel.TextSettings.HorzAlign := TTextAlign.Center;
+  FFpsLabel.TextSettings.WordWrap := False;
+  FFpsLabel.HitTest := False;
+  FFpsLabel.Text := '- fps';
+  FFpsBack.BringToFront;
+
+  FReadoutTimer := TTimer.Create(Self);
+  FReadoutTimer.Interval := READOUT_INTERVAL_MS;
+  FReadoutTimer.OnTimer := ReadoutTimerTimer;
+  FReadoutTimer.Enabled := True;
+end;
+
+// The frames per second Gorilla's viewport reports, and the frame showing
+procedure TMainForm.ReadoutTimerTimer(Sender: TObject);
+var
+  Text: String;
+begin
+  if Assigned(GorillaViewport) and Assigned(FFpsLabel) then
+  begin
+    Text := Format('%d fps', [Round(GorillaViewport.FramesPerSecond)]);
+    if FFpsLabel.Text <> Text then
+      FFpsLabel.Text := Text;
+  end;
+  UpdateFrameReadout;
+  CheckDisplay;
+end;
+
+// A player for the selected animation, playing it from the start if it is
+// not already playing; False if there is no animation to play
+function TMainForm.EnsurePlayer: Boolean;
+var
+  Anim: TGorillaAnimation;
+begin
+  Result := False;
+  if Capturing then
+    Exit;
+  Anim := SelectedAnimation;
+  if Anim = nil then
+    Exit;
+  if (FPlayer = nil) or (FPlayer.Animation <> Anim) then
+  begin
+    FreeAndNil(FPlayer);
+    if (GorillaModel.AnimationManager.Current <> Anim) or not Anim.IsRunning then
+      GorillaModel.AnimationManager.PlayAnimation(Anim);
+    FPlayer := TSprite3DAnimationPlayer.Create(GorillaModel, Anim, FSettings.AnimationFps);
+  end;
+  Result := True;
+end;
+
+// After a button: the buttons, and the view, as a held animation is framed
+// by its own volume
+procedure TMainForm.TransportChanged;
+begin
+  UpdateTransportControls;
+  UpdateView;
+end;
+
+// Play or pause: carries on from the frame held, holds the frame showing,
+// or plays the selected animation if it is not playing
+procedure TMainForm.PlayButtonClick(Sender: TObject);
+var
+  Anim: TGorillaAnimation;
+begin
+  Anim := SelectedAnimation;
+  if Capturing or (Anim = nil) then
+    Exit;
+  if (FPlayer = nil) or (FPlayer.Animation <> Anim) or
+    (GorillaModel.AnimationManager.Current <> Anim) or not Anim.IsRunning then
+  begin
+    // Not playing: from the start, as choosing it would
+    PlaySelectedAnimation;
+    Exit;
+  end;
+  if FPlayer.Held then
+    FPlayer.Play
+  else
+    FPlayer.Pause;
+  TransportChanged;
+end;
+
+// First frame: held on the animation's first pose
+procedure TMainForm.FirstButtonClick(Sender: TObject);
+begin
+  if not EnsurePlayer then
+    Exit;
+  FPlayer.ShowFrame(0);
+  TransportChanged;
+end;
+
+// Last frame: held on the animation's last pose, the frame an export ends on
+procedure TMainForm.LastButtonClick(Sender: TObject);
+begin
+  if not EnsurePlayer then
+    Exit;
+  FPlayer.ShowFrame(FPlayer.FrameCount - 1);
+  TransportChanged;
+end;
+
+// Previous frame: held one frame back, from the one held or showing; from
+// the first, round to the last
+procedure TMainForm.PreviousButtonClick(Sender: TObject);
+begin
+  if not EnsurePlayer then
+    Exit;
+  FPlayer.Step(-1);
+  TransportChanged;
+end;
+
+// Next frame: held one frame on, from the one held or showing; from the
+// last, round to the first
+procedure TMainForm.NextButtonClick(Sender: TObject);
+begin
+  if not EnsurePlayer then
+    Exit;
+  FPlayer.Step(1);
+  TransportChanged;
+end;
+
 // The batch controls under the animation list, made here rather than in the
 // form designer, and tick boxes on the list's entries. FMX's list box draws
 // each entry's tick box to the left of its text.
@@ -4115,6 +4720,7 @@ begin
   finally
     FSyncingChecks := False;
   end;
+  UpdateView;   // ticked or not decides the volume shown
 end;
 
 // A tick changed by hand: All shows whether every animation is ticked,
@@ -4139,11 +4745,13 @@ begin
   finally
     FSyncingChecks := False;
   end;
+  UpdateView;   // ticked or not decides the volume shown
 end;
 
 // Export is offered only when there is a model and nothing is being saved
 procedure TMainForm.UpdateBatchControls;
 begin
+  UpdateTransportControls;
   if FExportButton = nil then
     Exit;
   FExportButton.Enabled := not Capturing;
@@ -4216,6 +4824,14 @@ begin
   RunNextBatchItem;
 end;
 
+// The batch's next entry, queued after an entry has been saved; nothing if
+// the batch has been ended, as when the form is closing
+procedure TMainForm.ContinueBatch;
+begin
+  if FBatchActive and not MainFormGone then
+    RunNextBatchItem;
+end;
+
 // Starts the batch's next entry, or ends the batch after the last. Each
 // entry starts from a fresh main-loop turn, after the last capture has
 // freed itself.
@@ -4244,12 +4860,9 @@ begin
         else
           FBatchErrors := FBatchErrors + [AResult];
         Inc(FBatchPos);
-        TThread.ForceQueue(nil,
-          procedure
-          begin
-            if FBatchActive then   // cleared if the form is closing
-              RunNextBatchItem;
-          end);
+        // The next entry from a fresh main-loop turn, by a method rather
+        // than another anonymous one nested in this
+        TThread.ForceQueue(nil, ContinueBatch);
       end, Error);
     if not Started then
     begin
@@ -4316,10 +4929,7 @@ begin
   if not FBatchActive and (ASource is TSprite3DAnimationFrames) then
   begin
     Volume := AnimationSweptVolume(TSprite3DAnimationFrames(ASource).Animation.Id);
-    if Volume.Valid then
-      DebugMemo.Lines.Add('Framed to ' + TSprite3DAnimationFrames(ASource).Animation.Id +
-        ' alone: ' + Volume.ToString)
-    else
+    if not Volume.Valid then
       Volume := SweepFitVolume;   // not measured: the combined volume holds it too
   end
   else
@@ -4340,7 +4950,10 @@ begin
   FCaptureFramed := False;
   ApplyAngles;
   if FRefitAfterCapture then
+  begin
+    ApplyShowCombinedSweep;
     FitModel;
+  end;
   FRefitAfterCapture := False;
   Caption := ProjectionCaption;
 end;
@@ -4354,31 +4967,33 @@ function TMainForm.SaveSheet(const AKind: TSheetKind;
   const ACycleSeconds: Double): String;
 var
   Cells: Integer;
+  Folder: String;
 begin
-  ForceDirectories(AFolder);
+  Folder := OSFriendlyPath(AFolder);
+  ForceDirectories(Folder);
   case AKind of
     skStrip:
       begin
-        Result := TPath.Combine(AFolder,
+        Result := TPath.Combine(Folder,
           Format('%s_strip%d.png', [AStem, Length(AFrames)]));
         SavePng(ComposeStrip(AFrames), Result);
       end;
     skAtlas:
       begin
-        Result := TPath.Combine(AFolder, AStem + '.png');
+        Result := TPath.Combine(Folder, AStem + '.png');
         SavePng(ComposeAtlas(AFrames, Cells), Result);
       end;
     skGif:
       begin
         // Each frame's share of the cycle, in hundredths of a second
-        Result := TPath.Combine(AFolder, AStem + '.gif');
+        Result := TPath.Combine(Folder, AStem + '.gif');
         SaveAnimatedGif(AFrames, Result,
           Max(1, Round(100 * ACycleSeconds / Max(1, Length(AFrames)))));
       end;
   else
     begin
       // H.264 when OpenH264 is present, otherwise MPEG-4 Part 2
-      Result := TPath.Combine(AFolder, AStem + '.mp4');
+      Result := TPath.Combine(Folder, AStem + '.mp4');
       Result := Result + ' (' + SaveMp4Video(AFrames, Result, ACycleSeconds) + ')';
     end;
   end;

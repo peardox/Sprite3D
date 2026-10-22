@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DSweep</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DSweep</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+Works out the volume a model sweeps as it turns about its up axis, for its rest pose and each animation, and draws the one in use.</p>
+<p>
+
+
+<p>CalcSweptVolume takes a bounding box and the model's centre of rotation and works out the space the box passes through in a full turn about a line through the centre of rotation, parallel to one of the model's own axes: Y, the model's up axis, by default. That space is a cylinder, or a thick-walled tube when the centre of rotation lies outside the box seen along the axis. Its outer radius reaches the box's farthest corner and its inner radius its nearest point; it is exactly as long as the box is along the axis. The swept box is the box that encloses the tube, square across the axis and centred on it. The result is a TSweptVolume, in the model's own coordinates. The box encloses the model, so the swept volume encloses everything the model can reach as it turns, with room to spare where the model does not fill its box.
+
+<p>An animation moves the model's vertices, so it can reach outside the rest pose's box. MeasureAnimationBounds steps each of the model's animations through every pose Gorilla has baked for it and returns, per animation, the box that holds all of its poses. Each of those boxes gives that animation's swept volume. For a model with many animations that takes a while, so TAnimationBoundsMeasurer does the same in steps of a few milliseconds, for a caller to run between frames while the application stays responsive.
+
+<p>FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis: it fills the view on the tighter axis, with the orbit centre on the turning axis, through the model's centre of rotation; the angles are left alone. CombinedSweptVolume gives the volume to fit, joining the rest pose's with that of each animation named, so a chosen subset of the animations can define it.
+
+<p>ShowCombinedSweep adds a TCombinedSweep that draws one fixed volume, such as the one CombinedSweptVolume gives, in fuchsia and hot pink, beside the per-animation sweep.
+
+<p>ShowModelSweep adds a TModelSweep holding the rest pose's volume and one per animation. Each frame it draws the volume of the animation the model is playing, or the rest pose's when none is playing or the playing one was not measured, so the wireframe changes as soon as another animation is played. It draws the swept box in aqua, and the tube's outer and inner walls, with the axis itself, in yellow. The lines are drawn with the context's DrawLines helper, two calls a frame, one per colour, following Gorilla v1.5's Line Rendering guide, with depth testing as usual, so the model hides the parts behind it. Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+
+<p>The swept box is larger than the model's own box, and Gorilla counts a model's children in its bounding box, so the TModelSweep is not a child of the model: it sits beside it, owned by the model so it is freed with it, and draws with the model's matrix. The model's own bounding box, ShowBoundingBox and the camera's fits are therefore unaffected. For the same reason, measure the boxes before adding any helper that is a child of the model.
+
+<p></p>
+
+<pre class="preformatted">
+&lt;model's parent&gt;
+|-- TGorillaModel     owns the TModelSweep, so frees it
+`-- TModelSweep       one per model, found by FindModelSweep; draws the volume in use in
+                      its Render with the model's AbsoluteMatrix</pre>
+
+<p>
+
+<p>Usage:
+
+<p></p>
+
+<pre class="preformatted">
+Box := GorillaModel1.GetBoundingBox();            // before any helper is added
+Anims := MeasureAnimationBounds(GorillaModel1);   // blocks; changes the pose meanwhile
+Sweep := ShowModelSweep(GorillaModel1, Box, Anims);
+if Sweep &lt;&gt; nil then
+  Memo1.Lines.Add(Sweep.Volume.ToString);
+HideModelSweep(GorillaModel1);</pre>
+
+<p></p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSweep.TSweptVolume.html"><code>TSweptVolume</code></a></td>
+<td class="itemdesc">The space a bounding box passes through in a full turn about an axis.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSweep.TAnimationBounds.html"><code>TAnimationBounds</code></a></td>
+<td class="itemdesc">The box that holds every pose of one of a model's animations.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DSweep.TAnimationBoundsMeasurer.html"><code>TAnimationBoundsMeasurer</code></a></td>
+<td class="itemdesc">Measures a model's animations as MeasureAnimationBounds does, a few milliseconds at a time.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DSweep.TModelSweep.html"><code>TModelSweep</code></a></td>
+<td class="itemdesc">Draws, as a wireframe beside its model, the swept volume of the animation the model is playing, or of its rest pose.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DSweep.TCombinedSweep.html"><code>TCombinedSweep</code></a></td>
+<td class="itemdesc">Draws one fixed swept volume, such as the combined one, in its own colours.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#CalcSweptVolume-TBoundingBox-TPoint3D-TSweepAxis-">CalcSweptVolume</a></strong>(const ABox: TBoundingBox; const APivot: TPoint3D; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#MeasureAnimationBounds-TGorillaModel-">MeasureAnimationBounds</a></strong>(const AModel: TGorillaModel): TArray&lt;<a href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a>&gt;;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#UnionSweptVolume-arrayofTSweptVolume-">UnionSweptVolume</a></strong>(const AVolumes: array of <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>): <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#CombinedSweptVolume-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TArrayString-Boolean-TSweepAxis-">CombinedSweptVolume</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const AAnimations: TArray&lt;<a href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a>&gt;; const ANames: TArray&lt;String&gt;; const AIncludeRest: Boolean = True; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#SweepOutline-TSweptVolume-Integer-">SweepOutline</a></strong>(const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>; const ASegments: Integer = 64): TArray&lt;TPoint3D&gt;;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#FitCameraToSweep-TSprite3DCamera-TControl3D-TSweptVolume-Single-">FitCameraToSweep</a></strong>(const ACamera: <a href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a>; const AModel: TControl3D; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#FitCameraToSweep-TSprite3DCamera-TControl3D-TSweptVolume-Single-Single-Single-">FitCameraToSweep</a></strong>(const ACamera: <a href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a>; const AModel: TControl3D; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TSweepAxis-">ShowModelSweep</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const AAnimations: TArray&lt;<a href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a>&gt;; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>; overload;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TSweepAxis-">ShowModelSweep</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>; overload;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSweep.html#HideModelSweep-TGorillaModel-">HideModelSweep</a></strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#FindModelSweep-TGorillaModel-">FindModelSweep</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#ShowCombinedSweep-TGorillaModel-TSweptVolume-">ShowCombinedSweep</a></strong>(const AModel: TGorillaModel; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>): <a href="Sprite3DSweep.TCombinedSweep.html">TCombinedSweep</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSweep.html#HideCombinedSweep-TGorillaModel-">HideCombinedSweep</a></strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#FindCombinedSweep-TGorillaModel-">FindCombinedSweep</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TCombinedSweep.html">TCombinedSweep</a>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a></strong> = (...);</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="CalcSweptVolume-TBoundingBox-TPoint3D-TSweepAxis-"></span><code>function <strong>CalcSweptVolume</strong>(const ABox: TBoundingBox; const APivot: TPoint3D; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Works out the space a bounding box passes through in a full turn about an axis.</p>
+<p>
+
+
+<p>The turn is about the line through APivot parallel to the model's AAxis. Seen along that axis the box is a rectangle: OuterRadius is the distance from the axis to its farthest corner and InnerRadius to its nearest point, 0 if the axis passes through it. The volume runs along the axis exactly as far as the box does. Pure arithmetic; any thread.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ABox</dt>
+<dd>The box, in the model's own coordinates. Measure it before any helper is added to the model as a child, as Gorilla counts children in its bounds.</dd>
+<dt>APivot</dt>
+<dd>A point the axis passes through, normally the model's centre of rotation, <code>RotationCenter.Point</code>, in the same coordinates.</dd>
+<dt>AAxis</dt>
+<dd>Which of the model's axes the turn is parallel to; Y, its up axis, by default.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The swept volume; Valid is False if ABox is empty, with a minimum above its maximum on any axis.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="MeasureAnimationBounds-TGorillaModel-"></span><code>function <strong>MeasureAnimationBounds</strong>(const AModel: TGorillaModel): TArray&lt;<a href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a>&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Measures, for each of AModel's animations, the box that holds all its poses.</p>
+<p>
+
+
+<p>Each animation in turn is made current and stepped, with TSprite3DAnimationFrames, through one cycle at the rate Gorilla baked its poses, 30 frames a second if it baked none, and after each step the model's GetAnimatedBoundingBox is added to that animation's box. The animation that was current before is made current again afterwards, running or stopped as it was; the others are left stopped. The model's pose changes while this runs, and is wherever the restored animation puts it afterwards.
+
+<p>Blocks for as long as the stepping takes: the number of poses times the cost of one bounding box. Do not call it while something else drives the animations, such as a capture. Gorilla counts a model's children in its animated bounds, so call it before adding any helper to AModel as a child. Main thread only.
+
+<p>An animation whose poses Gorilla did not bake is posed by seeking its skeleton; on Delphi 13 and later that pose is only evaluated when a frame is drawn, so such an animation's box may be that of the pose already showing. Sprite3D loads models with vertex caching, so its animations are baked.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model; nil, or one with no animations, gives an empty array.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">One entry per animation that gave a non-empty box, in the order <code>GetSortedAnimations</code> gives them.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="UnionSweptVolume-arrayofTSweptVolume-"></span><code>function <strong>UnionSweptVolume</strong>(const AVolumes: array of <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>): <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The smallest swept volume that holds every valid volume given.</p>
+<p>
+
+
+<p>The volumes must turn about the same axis through the same pivot, as those worked out for one model are; the result takes both from the first valid volume. Its length runs from the lowest AxialLow to the highest AxialHigh, its outer radius is the largest and its inner radius the smallest. Where the volumes differ in length the result is a little larger than their union, never smaller. Pure arithmetic; any thread.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AVolumes</dt>
+<dd>The volumes; those that are not Valid are skipped.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The combined volume; Valid is False if none of AVolumes is Valid.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="CombinedSweptVolume-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TArrayString-Boolean-TSweepAxis-"></span><code>function <strong>CombinedSweptVolume</strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const AAnimations: TArray&lt;<a href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a>&gt;; const ANames: TArray&lt;String&gt;; const AIncludeRest: Boolean = True; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The swept volume of a model over its rest pose and a chosen set of its animations.</p>
+<p>
+
+
+<p>Works out the rest pose's volume from ABox and each chosen animation's from its entry in AAnimations, all about the line through <code>AModel.RotationCenter</code> parallel to AAxis, and combines them with UnionSweptVolume. Only the animations named in ANames are included, so a fit can be made for a subset of them; pass every Id for all of them, and none for the rest pose alone. A name with no entry in AAnimations is skipped. Main thread only, as it reads AModel.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model; nil gives a volume that is not Valid.</dd>
+<dt>ABox</dt>
+<dd>AModel's own bounds at rest, measured before any helper was added to it as a child.</dd>
+<dt>AAnimations</dt>
+<dd>The boxes MeasureAnimationBounds gave for AModel's animations; may be empty.</dd>
+<dt>ANames</dt>
+<dd>The Ids of the animations to include; empty for none.</dd>
+<dt>AIncludeRest</dt>
+<dd>Whether the rest pose's volume is included.</dd>
+<dt>AAxis</dt>
+<dd>Which of the model's axes it turns about; Y, its up axis, by default.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The combined volume; Valid is False if nothing chosen gave a box.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SweepOutline-TSweptVolume-Integer-"></span><code>function <strong>SweepOutline</strong>(const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>; const ASegments: Integer = 64): TArray&lt;TPoint3D&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Points whose convex hull holds the whole of a swept volume.</p>
+<p>
+
+
+<p>Two rings of ASegments points, one at each end of the volume, on a regular polygon drawn round the outer circle rather than inside it, so the polygon, and every view of it, holds the circle. From any direction the volume's outline is that of its two end circles, so these points are all a camera fit needs. Pure arithmetic; any thread.
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AVolume</dt>
+<dd>The volume, in the model's own coordinates.</dd>
+<dt>ASegments</dt>
+<dd>Points in each ring; values below 8 count as 8. 64 makes the polygon at most 0.12% wider than the circle.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">2 times ASegments points in the model's own coordinates; empty if AVolume is not Valid.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FitCameraToSweep-TSprite3DCamera-TControl3D-TSweptVolume-Single-"></span><code>function <strong>FitCameraToSweep</strong>(const ACamera: <a href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a>; const AModel: TControl3D; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Frames a model's swept volume as large as it will go, with the orbit centre on its turning axis.</p>
+<p>
+
+
+<p>The volume's outline, by SweepOutline, is framed with <code>ACamera.FitPointsOnAxis</code>: as large as it will go for the current angles, centred, so it reaches both edges of the tighter axis, with the orbit centre then put on the turning axis, the line through the model's centre of rotation, carried through AModel's transform. Azimuth, PolarAngle and Roll are not changed. The volume holds the model in every turn about its axis, so turning the model about that axis, or the camera's azimuth about it when the two axes are parallel, never takes the model out of view; nor does any animation whose bounds the volume includes. Main thread only.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACamera</dt>
+<dd>The camera to fit; nil makes the call return False.</dd>
+<dt>AModel</dt>
+<dd>The model the volume belongs to; its transform carries the volume into the scene. Nil makes the call return False.</dd>
+<dt>AVolume</dt>
+<dd>The volume, in AModel's own coordinates, such as one from CombinedSweptVolume.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the volume 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the volume was framed; False, with nothing changed, if ACamera or AModel is nil, AVolume is not Valid, the camera is locked, there is no viewport, or it has zero width or height.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FitCameraToSweep-TSprite3DCamera-TControl3D-TSweptVolume-Single-Single-Single-"></span><code>function <strong>FitCameraToSweep</strong>(const ACamera: <a href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a>; const AModel: TControl3D; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>; const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Frames a model's swept volume for an explicit view size.</p>
+<p>
+
+
+<p>As the other FitCameraToSweep, for a view of AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use it for an off-screen target whose shape differs from the viewport's.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACamera</dt>
+<dd>The camera to fit; nil makes the call return False.</dd>
+<dt>AModel</dt>
+<dd>The model the volume belongs to; nil makes the call return False.</dd>
+<dt>AVolume</dt>
+<dd>The volume, in AModel's own coordinates.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in the same units as AViewHeight.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in the same units as AViewWidth.</dd>
+<dt>AMargin</dt>
+<dd>Padding as a fraction of the view: 0.1 makes the volume 1/1.1 of the view on the tighter axis.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if the volume was framed; False, with nothing changed, if ACamera or AModel is nil, AVolume is not Valid, the camera is locked, or either size is zero or less.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowModelSweep-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TSweepAxis-"></span><code>function <strong>ShowModelSweep</strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const AAnimations: TArray&lt;<a href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a>&gt;; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>; overload;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Draws the volume AModel sweeps in a full turn about its up axis, at rest and in each animation.</p>
+<p>
+
+
+<p>Any sweep already on AModel is removed first, so calling it again, for example after loading a different model, redraws it for the new bounds. The volumes are worked out by CalcSweptVolume, about the line through <code>AModel.RotationCenter</code> parallel to AAxis: the rest pose's from ABox, and each animation's from its entry in AAnimations. While AModel plays one of those animations its volume is drawn; otherwise the rest pose's. The TModelSweep is owned by AModel, so it is freed with it, and placed beside it, under AModel's parent. The volumes are worked out at the time of the call; call again if the centre of rotation changes. Call from the main thread only.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to sweep. Nothing happens if it is nil or has no parent.</dd>
+<dt>ABox</dt>
+<dd>AModel's own bounds at rest, in its own coordinates, measured before any helper was added to it as a child.</dd>
+<dt>AAnimations</dt>
+<dd>The boxes MeasureAnimationBounds gave for AModel's animations; may be empty.</dd>
+<dt>AAxis</dt>
+<dd>Which of the model's axes it turns about; Y, its up axis, by default.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The new sweep, owned by AModel; or nil, with nothing added, if AModel is nil or has no parent, or ABox is empty and no animation gave a box.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DSweep.html#HideModelSweep-TGorillaModel-">HideModelSweep</a></dt>
+  <dd>Removes the sweep ShowModelSweep added to AModel.</dd>
+  <dt><a class="normal" href="Sprite3DSweep.html#FindModelSweep-TGorillaModel-">FindModelSweep</a></dt>
+  <dd>Returns the sweep ShowModelSweep added to AModel, or nil.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowModelSweep-TGorillaModel-TBoundingBox-TSweepAxis-"></span><code>function <strong>ShowModelSweep</strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const AAxis: <a href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a> = <a href="Sprite3DSweep.html#saY">saY</a>): <a href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>; overload;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Draws the volume AModel sweeps in a full turn about its up axis, at rest only.</p>
+<p>
+
+
+<p>As the other ShowModelSweep with no animation boxes, so the rest pose's volume is drawn whatever AModel plays.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to sweep. Nothing happens if it is nil or has no parent.</dd>
+<dt>ABox</dt>
+<dd>AModel's own bounds at rest, in its own coordinates, measured before any helper was added to it as a child.</dd>
+<dt>AAxis</dt>
+<dd>Which of the model's axes it turns about; Y, its up axis, by default.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The new sweep, owned by AModel; or nil, with nothing added, if AModel is nil or has no parent, or ABox is empty.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="HideModelSweep-TGorillaModel-"></span><code>procedure <strong>HideModelSweep</strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Removes the sweep ShowModelSweep added to AModel.</p>
+<p>
+
+
+<p>Frees the TModelSweep. Does nothing if AModel is nil or has no sweep. Call from the main thread only.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to remove the sweep from.</dd>
+</dl>
+<h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TSweepAxis-">ShowModelSweep</a></dt>
+  <dd>Draws the volume AModel sweeps in a full turn about its up axis, at rest only.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FindModelSweep-TGorillaModel-"></span><code>function <strong>FindModelSweep</strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Returns the sweep ShowModelSweep added to AModel, or nil.</p>
+<p>
+
+
+<p>Looks among the components AModel owns. The caller does not own the result; it is freed with AModel or by HideModelSweep.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to look on; nil gives nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The sweep, or nil if AModel is nil or has none.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowCombinedSweep-TGorillaModel-TSweptVolume-"></span><code>function <strong>ShowCombinedSweep</strong>(const AModel: TGorillaModel; const AVolume: <a href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a>): <a href="Sprite3DSweep.TCombinedSweep.html">TCombinedSweep</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Draws one fixed swept volume beside AModel, such as the combined volume of its rest pose and the animations used.</p>
+<p>
+
+
+<p>Any combined sweep already on AModel is removed first, so calling it again redraws it for the new volume. The TCombinedSweep is owned by AModel, so it is freed with it, and placed beside it, under AModel's parent; it draws AVolume whatever AModel plays. It is separate from the sweep ShowModelSweep adds, so both can be shown. Call from the main thread only.
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model the volume belongs to. Nothing happens if it is nil or has no parent.</dd>
+<dt>AVolume</dt>
+<dd>The volume to draw, in AModel's own coordinates, such as one from CombinedSweptVolume.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The new sweep, owned by AModel; or nil, with nothing added, if AModel is nil or has no parent, or AVolume is not Valid.</p><h6 class="description_section">See also</h6>
+<dl class="see_also">
+  <dt><a class="normal" href="Sprite3DSweep.html#HideCombinedSweep-TGorillaModel-">HideCombinedSweep</a></dt>
+  <dd>Removes the sweep ShowCombinedSweep added to AModel.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="HideCombinedSweep-TGorillaModel-"></span><code>procedure <strong>HideCombinedSweep</strong>(const AModel: TGorillaModel);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Removes the sweep ShowCombinedSweep added to AModel.</p>
+<p>
+
+
+<p>Does nothing if AModel is nil or has none. Call from the main thread only.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to remove it from.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FindCombinedSweep-TGorillaModel-"></span><code>function <strong>FindCombinedSweep</strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TCombinedSweep.html">TCombinedSweep</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Returns the sweep ShowCombinedSweep added to AModel, or nil.</p>
+<p>
+
+
+<p>The caller does not own the result; it is freed with AModel or by HideCombinedSweep.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to look on; nil gives nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The combined sweep, or nil if AModel is nil or has none.</p></td></tr>
+</table>
+<h3 class="detail">Types</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSweepAxis"></span><code><strong>TSweepAxis</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The model's own axis that the sweep turns about.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="saX">saX</span>: The model's X axis.</li>
+<li>
+<span id="saY">saY</span>: The model's Y axis, its up axis; the default.</li>
+<li>
+<span id="saZ">saZ</span>: The model's Z axis.</li>
+</ul>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

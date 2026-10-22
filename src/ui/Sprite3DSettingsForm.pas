@@ -1,8 +1,8 @@
-//** @abstract(The Settings dialog: file associations, what to load at start-up, the theme,
-//** and, on Windows, which GPU to use.)
+//** @abstract(The Settings dialog: file associations, what to load at start-up, the theme, the
+//** grab size, the view's frame rate and, on Windows, which GPU to use.)
 //**
 //** A small modal form, centred on the main form, laid out in its .fmx file with standard
-//** FMX controls in four groups:
+//** FMX controls in groups:
 //**
 //** @preformatted(
 //** TGeneralSettingsForm
@@ -13,6 +13,7 @@
 //**     |   |-- ThemeGroup             Default @(no theme@), Dark, Aqua, Ruby and Golden Graphite
 //**     |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
 //**     |   |                          GrabFolderText, GrabFolderResetButton
+//**     |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
 //**     |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
 //**     `-- ButtonLayout               OkButton, CancelButton
 //** )
@@ -24,8 +25,11 @@
 //** decide such things when the app is built. Grab size sets the size of every off-screen grab:
 //** one of the square sizes in GRAB_PRESET_SIZES, or Custom, which lets the width and height be
 //** typed, each from GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels; Reset beside the grab folder
-//** empties it, so the next grab asks for a folder again. The GPU group is shown on Windows
-//** only; a change there takes effect the next time Sprite3D starts.
+//** empties it, so the next grab asks for a folder again. View frame rate sets how many
+//** frames a second the view is drawn at, from VIEW_FPS_MIN up to the display's refresh rate,
+//** which the caller gives as Values.MaxViewFps; left at the top, a higher rate kept from a
+//** faster display stays as it was. The GPU group is shown on Windows only; a
+//** change there takes effect the next time Sprite3D starts.
 //**
 //** The dialog only edits a TSprite3DGeneralSettings: set Values before showing it and read
 //** it back after OK; applying the choices is the caller's job. On the desktop show it with
@@ -35,10 +39,11 @@ unit Sprite3DSettingsForm;
 
 {
   The Settings dialog: file associations, what to load at start-up, the
-  theme, and, on Windows, which GPU to use.
+  theme, the grab size, the view's frame rate and, on Windows, which GPU to
+  use.
 
   A small modal form, centred on the main form, laid out in its .fmx file
-  with standard FMX controls in four groups:
+  with standard FMX controls in groups:
 
     TGeneralSettingsForm
     `-- BackPanel                      the form's opaque background
@@ -48,6 +53,7 @@ unit Sprite3DSettingsForm;
         |   |-- ThemeGroup             Default (no theme), Dark, Aqua, Ruby and Golden Graphite
         |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
         |   |                          GrabFolderText, GrabFolderResetButton
+        |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
         |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
         `-- ButtonLayout               OkButton, CancelButton
 
@@ -60,8 +66,11 @@ unit Sprite3DSettingsForm;
   off-screen grab: one of the square sizes in GRAB_PRESET_SIZES, or Custom,
   which lets the width and height be typed, each from GRAB_SIZE_MIN to
   GRAB_SIZE_MAX pixels; Reset beside the grab folder empties it, so the next
-  grab asks for a folder again. The GPU group is shown on Windows only; a
-  change there takes effect the next time Sprite3D starts.
+  grab asks for a folder again. View frame rate sets how many frames a second
+  the view is drawn at, from VIEW_FPS_MIN up to the display's refresh rate,
+  which the caller gives as Values.MaxViewFps; left at the top, a higher
+  rate kept from a faster display stays as it was. The GPU group is shown on
+  Windows only; a change there takes effect the next time Sprite3D starts.
 
   The dialog only edits a TSprite3DGeneralSettings: set Values before
   showing it and read it back after OK; applying the choices is the
@@ -137,6 +146,18 @@ type
     //** @abstract(The GPU choices; Windows only.)
     /// <summary>The GPU choices; Windows only.</summary>
     GpuGroup: TGroupBox;
+    //** @abstract(The view's frame rate.)
+    /// <summary>The view's frame rate.</summary>
+    FrameRateGroup: TGroupBox;
+    //** @abstract(Chooses the view's frame rate, VIEW_FPS_MIN to Values.MaxViewFps.)
+    /// <summary>Chooses the view's frame rate, VIEW_FPS_MIN to Values.MaxViewFps.</summary>
+    FrameRateTrack: TTrackBar;
+    //** @abstract(The frame rate FrameRateTrack is at.)
+    /// <summary>The frame rate FrameRateTrack is at.</summary>
+    FrameRateValueLabel: TLabel;
+    //** @abstract(Says how far the slider goes, and why.)
+    /// <summary>Says how far the slider goes, and why.</summary>
+    FrameRateNote: TLabel;
     //** @abstract(The off-screen grab size choices.)
     /// <summary>The off-screen grab size choices.</summary>
     GrabGroup: TGroupBox;
@@ -223,6 +244,12 @@ type
     /// <summary>Shows a preset's size in the boxes, or enables them for Custom.</summary>
     /// <param name="Sender">The drop-down.</param>
     procedure GrabSizeComboChange(Sender: TObject);
+    //** @abstract(Shows the frame rate FrameRateTrack is at.)
+    //**
+    //** @param(Sender FrameRateTrack.)
+    /// <summary>Shows the frame rate FrameRateTrack is at.</summary>
+    /// <param name="Sender">FrameRateTrack.</param>
+    procedure FrameRateTrackChange(Sender: TObject);
     //** @abstract(Clears the grab folder; it takes effect on OK.)
     //**
     //** @param(Sender The button.)
@@ -430,6 +457,15 @@ begin
   GrabCustomLayout.Enabled := GrabSizeCombo.ItemIndex = CustomIndex;
   ShowGrabFolder;
 
+  // Up to the display's refresh rate; a rate kept from a faster display is
+  // brought down to it
+  FrameRateTrack.Min := VIEW_FPS_MIN;
+  FrameRateTrack.Max := Max(VIEW_FPS_MIN, Value.MaxViewFps);
+  FrameRateTrack.Value := EnsureRange(Value.ViewFps, VIEW_FPS_MIN, Round(FrameRateTrack.Max));
+  FrameRateNote.Text := Format('From %d up to %d, the display''s refresh rate.',
+    [VIEW_FPS_MIN, Round(FrameRateTrack.Max)]);
+  FrameRateTrackChange(FrameRateTrack);
+
   case Value.GpuMode of
     gmPowerSaving: GpuLowRadio.IsChecked := True;
     gmHighPerformance: GpuHighRadio.IsChecked := True;
@@ -468,6 +504,13 @@ begin
   FValues.GrabWidth := EnsureRange(Round(GrabWidthBox.Value), GRAB_SIZE_MIN, GRAB_SIZE_MAX);
   FValues.GrabHeight := EnsureRange(Round(GrabHeightBox.Value), GRAB_SIZE_MIN, GRAB_SIZE_MAX);
 
+  // Left at the top, a higher rate asked for on a faster display is kept,
+  // to be used there again; the caller keeps the view within this display
+  if (Round(FrameRateTrack.Value) < Round(FrameRateTrack.Max)) or
+    (FValues.ViewFps < Round(FrameRateTrack.Max)) then
+    FValues.ViewFps := EnsureRange(Round(FrameRateTrack.Value), VIEW_FPS_MIN,
+      Max(VIEW_FPS_MIN, FValues.MaxViewFps));
+
   if GpuGroup.Visible then
   begin
     if GpuLowRadio.IsChecked then
@@ -477,6 +520,11 @@ begin
     else
       FValues.GpuMode := gmSystem;
   end;
+end;
+
+procedure TGeneralSettingsForm.FrameRateTrackChange(Sender: TObject);
+begin
+  FrameRateValueLabel.Text := IntToStr(Round(FrameRateTrack.Value));
 end;
 
 procedure TGeneralSettingsForm.ShowAndFree;

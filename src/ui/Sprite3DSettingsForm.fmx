@@ -4,7 +4,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Settings'
-  ClientHeight = 790
+  ClientHeight = 890
   ClientWidth = 440
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -278,7 +278,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
           OnClick = GrabFolderResetButtonClick
         end
       end
-      object GpuGroup: TGroupBox
+      object FrameRateGroup: TGroupBox
         Align = Top
         Margins.Left = 8.000000000000000000
         Margins.Top = 8.000000000000000000
@@ -286,10 +286,58 @@ object GeneralSettingsForm: TGeneralSettingsForm
         Position.X = 8.000000000000000000
         Position.Y = 600.000000000000000000
         Size.Width = 424.000000000000000000
+        Size.Height = 92.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'View frame rate (frames per second)'
+        TabOrder = 4
+        object FrameRateTrack: TTrackBar
+          CanParentFocus = True
+          Frequency = 1.000000000000000000
+          Max = 60.000000000000000000
+          Min = 1.000000000000000000
+          Orientation = Horizontal
+          Position.X = 16.000000000000000000
+          Position.Y = 32.000000000000000000
+          Size.Width = 320.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          Value = 60.000000000000000000
+          OnChange = FrameRateTrackChange
+        end
+        object FrameRateValueLabel: TLabel
+          Position.X = 344.000000000000000000
+          Position.Y = 32.000000000000000000
+          Size.Width = 56.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.HorzAlign = Trailing
+          Text = '60'
+          TabOrder = 1
+        end
+        object FrameRateNote: TLabel
+          Position.X = 16.000000000000000000
+          Position.Y = 60.000000000000000000
+          Size.Width = 384.000000000000000000
+          Size.Height = 20.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.VertAlign = Leading
+          Text = 'Up to the display'#39's refresh rate.'
+          TabOrder = 2
+        end
+      end
+      object GpuGroup: TGroupBox
+        Align = Top
+        Margins.Left = 8.000000000000000000
+        Margins.Top = 8.000000000000000000
+        Margins.Right = 8.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 700.000000000000000000
+        Size.Width = 424.000000000000000000
         Size.Height = 138.000000000000000000
         Size.PlatformDefault = False
         Text = 'Graphics processor (Windows)'
-        TabOrder = 4
+        TabOrder = 5
         object GpuSystemRadio: TRadioButton
           GroupName = 'Gpu'
           Position.X = 16.000000000000000000

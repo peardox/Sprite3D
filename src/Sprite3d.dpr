@@ -49,6 +49,7 @@ uses
   Sprite3DOrbitalForm in 'ui\Sprite3DOrbitalForm.pas' {OrbitalSettingsForm},
   OSPaths in 'common\OSPaths.pas',
   GpuPreference in 'common\GpuPreference.pas',
+  DisplayData in 'common\DisplayData.pas',
   Sprite3DFileAssoc in 'lib\Sprite3DFileAssoc.pas',
   Sprite3DStyles in 'lib\Sprite3DStyles.pas',
   Sprite3DTitleBar in 'lib\Sprite3DTitleBar.pas',

@@ -97,6 +97,16 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Decompresses a whole bzip2 file held in memory.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#CalcSweptVolume-TBoundingBox-TPoint3D-TSweepAxis-">CalcSweptVolume</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Works out the space a bounding box passes through in a full turn about an axis.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#CombinedSweptVolume-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TArrayString-Boolean-TSweepAxis-">CombinedSweptVolume</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>The swept volume of a model over its rest pose and a chosen set of its animations.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeAtlas-TArrayTSprite3DImage-Integer-">ComposeAtlas</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
 <td class="itemdesc"><p>Puts the frames in a square grid: a texture atlas.</p></td>
@@ -122,14 +132,34 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Turns a <code>file:</code> URL into a local path; other text is returned unchanged.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#FindCombinedSweep-TGorillaModel-">FindCombinedSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Returns the sweep ShowCombinedSweep added to AModel, or nil.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.html#FindModelAxes-TGorillaModel-">FindModelAxes</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
 <td class="itemdesc"><p>Returns the axes ShowModelAxes added to AModel, or nil.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#FindModelGrid-TGorillaModel-">FindModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Returns the grid ShowModelGrid added to AModel, or nil.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#FindModelSweep-TGorillaModel-">FindModelSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Returns the sweep ShowModelSweep added to AModel, or nil.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#FitCameraToSweep-TSprite3DCamera-TControl3D-TSweptVolume-Single-">FitCameraToSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Frames a model's swept volume as large as it will go, with the orbit centre on its turning axis.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#FitCameraToSweep-TSprite3DCamera-TControl3D-TSweptVolume-Single-Single-Single-">FitCameraToSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Frames a model's swept volume for an explicit view size.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#H264Available">H264Available</a></td>
@@ -137,14 +167,24 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Whether MP4 video will be H.264: FFmpeg and OpenH264 both loaded.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#HideCombinedSweep-TGorillaModel-">HideCombinedSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Removes the sweep ShowCombinedSweep added to AModel.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.html#HideModelAxes-TGorillaModel-">HideModelAxes</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
 <td class="itemdesc"><p>Removes the axes ShowModelAxes added to AModel.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#HideModelGrid-TGorillaModel-">HideModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Removes the grid ShowModelGrid added to AModel.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#HideModelSweep-TGorillaModel-">HideModelSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Removes the sweep ShowModelSweep added to AModel.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.html#IconDialogFilter">IconDialogFilter</a></td>
@@ -167,84 +207,104 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Whether data starts as a bzip2 stream does.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#MeasureAnimationBounds-TGorillaModel-">MeasureAnimationBounds</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Measures, for each of AModel's animations, the box that holds all its poses.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#NativeLibraryFolders">NativeLibraryFolders</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
 <td class="itemdesc"><p>The folders to look for the program's own libraries in, best first.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#NativePlatformKey">NativePlatformKey</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
 <td class="itemdesc"><p>The platform's name, as used for <code>dlls</code> folders and <code>openh264.json</code>.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Available">OpenH264Available</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Whether OpenH264 is loaded, loading it the first time.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264LoadedLibrary">OpenH264LoadedLibrary</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>The full path of the OpenH264 loaded, or empty if none is.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Retry">OpenH264Retry</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Loads the named OpenH264 again unless a copy is already loaded.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Status">OpenH264Status</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Which OpenH264 was loaded and from where, or why none was.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#RecheckH264">RecheckH264</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
 <td class="itemdesc"><p>Looks for OpenH264 again, after a copy may have been added, unless one is loaded.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.html#RegisterIconWriter-TSprite3DIconWriterClass-">RegisterIconWriter</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>Adds an icon format to those IconWriters lists.</p></td>
 </tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DResample.html#ResampleFilterName-TSprite3DResampleFilter-">ResampleFilterName</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DResample.html">Sprite3DResample</a></td>
+<td class="itemdesc"><p>The name a filter is shown by, such as <code>'Box (area average)'</code>.</p></td>
+</tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DResample.html#ResamplePixels-TBytes-Integer-Integer-Integer-Integer-TSprite3DResampleFilter-">ResamplePixels</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DResample.html">Sprite3DResample</a></td>
+<td class="itemdesc"><p>Scales premultiplied RGBA pixels to a new size with AFilter.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SafeFileStem-String-">SafeFileStem</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
 <td class="itemdesc"><p>A name made safe to use as a file name on every platform.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SaveAnimatedGif-TArrayTSprite3DImage-String-Integer-">SaveAnimatedGif</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
 <td class="itemdesc"><p>Writes the frames as an animated GIF that loops for ever.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#SaveH264Video-TArrayTSprite3DImage-String-Double-">SaveH264Video</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
 <td class="itemdesc"><p>Writes the frames as a video-only H.264 MP4 file with OpenH264.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#SaveMp4Video-TArrayTSprite3DImage-String-Double-">SaveMp4Video</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
 <td class="itemdesc"><p>Writes the frames as a video-only MP4 file, H.264 if it can, else MPEG-4 Part 2.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#SaveMpeg4Video-TArrayTSprite3DImage-String-Double-">SaveMpeg4Video</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
 <td class="itemdesc"><p>Writes the frames as a video-only MPEG-4 Part 2 MP4 file.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SavePng-TSprite3DImage-String-">SavePng</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
 <td class="itemdesc"><p>Writes an image as a 32-bit RGBA PNG file.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#SetPreferredOpenH264-String-">SetPreferredOpenH264</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Names the copy of OpenH264 to load: the one downloaded for this platform.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#SetTitleBarSpec-TSprite3DTitleBarSpec-">SetTitleBarSpec</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>Makes ASpec the look of every title bar, now and for forms shown later.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowCombinedSweep-TGorillaModel-TSweptVolume-">ShowCombinedSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Draws one fixed swept volume beside AModel, such as the combined volume of its rest pose and the animations used.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.html#ShowModelAxes-TGorillaModel-Single-Boolean-">ShowModelAxes</a></td>
@@ -262,14 +322,34 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TSweepAxis-">ShowModelSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Draws the volume AModel sweeps in a full turn about its up axis, at rest and in each animation.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TSweepAxis-">ShowModelSweep</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Draws the volume AModel sweeps in a full turn about its up axis, at rest only.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#StyleBackgroundColour-TAlphaColor-">StyleBackgroundColour</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>The colour of the form background in the FMX style in use.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#SweepOutline-TSweptVolume-Integer-">SweepOutline</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>Points whose convex hull holds the whole of a swept volume.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#TitleBarSpecFromStyle-TAlphaColor-TAlphaColor-">TitleBarSpecFromStyle</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>A title bar spec to go with the FMX style in use.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSweep.html#UnionSweptVolume-arrayofTSweptVolume-">UnionSweptVolume</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
+<td class="itemdesc"><p>The smallest swept volume that holds every valid volume given.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#VideoAvailable">VideoAvailable</a></td>

@@ -88,6 +88,10 @@ Renders a Gorilla3D viewport's scene to an off-screen target of any size.</p>
 
 <p>On macOS and iOS Gorilla renders through Metal, so there a grab is instead a screenshot of the viewport as it is shown, from TGorillaViewport.MakeScreenshot, cropped about its centre to the target's shape and scaled to the target's size. OnBeforeGrab and OnAfterGrab are not called, so the framing is the screen's. The on-screen background is a 2D control behind the viewport, so it is not in the screenshot: what is behind the model is the viewport's own Color, fully transparent unless the background is None. For a Solid or Gradient Backdrop, the screenshot is laid over it at the target's size; otherwise the image keeps whatever transparency the screenshot has. Soft edges are not matted as on the other platforms, and TransparentBackground is not used.
 
+<p>Overscan, 1 unless changed, renders each grab at that many times its size each way and scales the result back down to Width by Height with the Resample filter, from Sprite3DResample, which smooths edges far better than the renderer's own anti-aliasing. As much of the factor as the GPU can draw in one go is drawn in one go: a target up to what the GPU can draw and OVERSCAN_TARGET_LIMIT pixels across. Any more is made up with shifted drawings: the grab is drawn J by J times at that size, each time with the view slid by a different fraction of a drawn pixel through OnShiftView, every drawing is scaled down with Resample, and the results are averaged, which samples J times as finely each way. So any factor up to OVERSCAN_MAX can be used whatever the GPU, at the cost of more drawings. Each drawing is matted and scaled down before the next is made, so only one enlarged drawing exists at a time, and what is delivered is always Width by Height. A GPU or driver can report a size it then fails to draw at: if an overscanned drawing comes back smaller than asked for, or wholly transparent, that size is remembered as too large for the rest of the session, OnOverscanReduced is called, and the grab is made again with smaller drawings and more of them. Overscan does not apply on macOS and iOS, where grabs are screenshots.
+
+<p>The matting and the scaling down of each drawing are done on a worker thread, a task from the RTL's thread pool, as they are pure arithmetic on the pixels read back; the render loop and the user interface carry on meanwhile, and the result is picked up on the main thread. Everything else, including every event, stays on the main thread.
+
 <p></p>
 
 <pre class="preformatted">
@@ -116,6 +120,12 @@ TGorillaRenderPassController (Gorilla.Controller)
 <td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#TSprite3DGrabSizeEvent">TSprite3DGrabSizeEvent</a></strong> = procedure(Sender: TObject; const AWidth, AHeight: Integer) of object;</code></td>
 </tr>
 <tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#TSprite3DOverscanEvent">TSprite3DOverscanEvent</a></strong> = procedure(Sender: TObject; const AFailedSize, AMaxOverscan: Integer) of object;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#TSprite3DShiftViewEvent">TSprite3DShiftViewEvent</a></strong> = procedure(Sender: TObject; const ARight, AUp: Single) of object;</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#TSprite3DGrabSizesProc">TSprite3DGrabSizesProc</a></strong> = reference to procedure(const AImages: TArray&lt;TBitmap&gt;;
     const AError: String);</code></td>
 </tr>
@@ -127,6 +137,12 @@ TGorillaRenderPassController (Gorilla.Controller)
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#DEFAULT_OFFSCREEN_HEIGHT">DEFAULT_OFFSCREEN_HEIGHT</a></strong> = 256;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#OVERSCAN_MAX">OVERSCAN_MAX</a></strong> = 16;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DOffscreen.html#OVERSCAN_TARGET_LIMIT">OVERSCAN_TARGET_LIMIT</a></strong> = 8192;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
@@ -183,6 +199,58 @@ Signature of TSprite3DOffscreen.OnBeforeGrab.</p>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DOverscanEvent"></span><code><strong>TSprite3DOverscanEvent</strong> = procedure(Sender: TObject; const AFailedSize, AMaxOverscan: Integer) of object;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Signature of TSprite3DOffscreen.OnOverscanReduced.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The TSprite3DOffscreen.</dd>
+<dt>AFailedSize</dt>
+<dd>The target's larger side, in pixels, that could not be drawn.</dd>
+<dt>AMaxOverscan</dt>
+<dd>The factor the grab's size can now be drawn at in one go; the rest of Overscan is made up with shifted drawings.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TSprite3DShiftViewEvent"></span><code><strong>TSprite3DShiftViewEvent</strong> = procedure(Sender: TObject; const ARight, AUp: Single) of object;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Signature of TSprite3DOffscreen.OnShiftView.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The TSprite3DOffscreen.</dd>
+<dt>ARight</dt>
+<dd>How far to slide the view right, in pixels of the grab's own size, Width by Height; a fraction of a pixel, or 0.</dd>
+<dt>AUp</dt>
+<dd>How far to slide the view up, likewise.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
 <td class="itemcode"><span id="TSprite3DGrabSizesProc"></span><code><strong>TSprite3DGrabSizesProc</strong> = reference to procedure(const AImages: TArray&lt;TBitmap&gt;;
     const AError: String);</code></td>
 </tr>
@@ -223,6 +291,28 @@ The width, in pixels, of a new TSprite3DOffscreen's target.</p>
 <tr><td colspan="1">
 <p>
 The height, in pixels, of a new TSprite3DOffscreen's target.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OVERSCAN_MAX"></span><code><strong>OVERSCAN_MAX</strong> = 16;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The largest Overscan factor TSprite3DOffscreen accepts.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="OVERSCAN_TARGET_LIMIT"></span><code><strong>OVERSCAN_TARGET_LIMIT</strong> = 8192;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The most pixels across or down an overscanned target may have, whatever the GPU allows.</p>
+<p>
+
+
+<p>Each drawing of a grab is held in memory at the target's size, four bytes a pixel, and a transparent grab needs up to three of them at once and the matte made from them, so this keeps a grab under about 1 GB: 8192 by 8192 pixels is 256 MB each.</p>
 </td></tr>
 </table>
 <hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>

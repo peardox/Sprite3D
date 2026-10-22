@@ -78,9 +78,11 @@ Demo form for TSprite3DCamera: loads a model and drives the camera with dials.</
 <p>
 
 
-<p>The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a panel of three dials for Azimuth, inclination and Roll. The Debug tab holds a memo for log output. Below the Camera submenu, the View menu has five items that are ticked or not, each switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Fit any angle chooses how the model is fitted, and Orthographic switches between perspective and orthographic projection.
+<p>The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a panel of three dials for Azimuth, inclination and Roll. The Debug tab holds a memo for log output. Below the Camera submenu, the View menu has six items that are ticked or not, each switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Show Model Volume the space it sweeps turning about its up axis in the animation playing, Show Animation Volume the one joined over the rest pose and every animation used, which the camera frames, shown only for a model with animations used, and Orthographic switches between perspective and orthographic projection. Model, Animations Used chooses which of the model's animations are listed and count towards the combined swept volume.
 
 <p>The camera starts in the isometric view, and each readout always shows its dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so the view turns the right way for the dial. View, Camera, Variable lets the dials set the angles; View, Camera, Isometric, the default for now, sets the readouts to inclination 35.264, azimuth 45 and roll 0, the true isometric view, and switches the dials off; View, Camera, Pixel 2:1 does the same with an inclination of about 26.565; View, Camera, 1/4 View, 3/4 View, Sqrt(2) and Golden Ratio use about 22.5, 45, 54.736 and 58.283; View, Camera, Head On and View, Camera, Top Down use inclinations of 0 and 90 at azimuth 0; and View, Camera, Side View uses inclination 0 at azimuth 90. A test slider along the bottom of the 3D view moves the camera out from the fitted distance, x1 to x20.
+
+<p>A model is loaded behind a modal dialog, TModelLoadForm, with a progress bar, a line saying what is happening, and Abort. The file is read on a worker thread; Gorilla3D then builds the model from it in one step, which cannot be interrupted; and each animation's bounds, which the volumes and the fit need, are measured a slice at a time, unless they are in the bounds folder of the application's support folder from an earlier load of the same, unchanged file. The new model is built beside the one shown, which is left alone until the new one is ready, so Abort, or a failure, leaves the previous model, or none at start-up. While there is no model, a panel over the view says how to load one. The window is drawn before the first model loads, the video libraries are looked for only once that load has ended, and saved files are composed and encoded on a worker thread.
 
 <p>On show, the form loads the model the operating system asked it to open, as when a .glb or .gltf file is double-clicked in Explorer or Finder, or else what the start-up action in File, Settings asks for; files the system asks to open later replace it. File, OpenModel then loads any other glTF, FBX, OBJ, USD, Collada, STL or PLY file, and File, Exit closes the application. File, Grab renders the view off screen at the grab size set in File, Settings, 256 by 256 pixels unless changed, with the model fitted to fill it, and saves it as the next of grab001.png, grab002.png and so on in SaveFolder, asking for that folder only when none is known: SaveFolder is kept between sessions in settings.json, through TSprite3DAppSettings in Sprite3DHelpers. File, Save As Icon renders the view off screen at each of Windows' icon sizes and saves them together as one .ico file the user names. Behind the model the viewport can show a background; by default none is drawn. File, Background Settings... chooses None, Transparent (a two-grey checker standing for transparency), Solid or Gradient, which grabs and icons follow too.
 
@@ -88,19 +90,21 @@ Demo form for TSprite3DCamera: loads a model and drives the camera with dials.</
 
 <p>The Variable camera dialog can also pan the view along the model's own X and Z axes, for the odd model that should sit off centre. The pan moves the point the camera orbits, on top of every fit, on screen and in grabs and icons, in whichever view is chosen, until it is switched off; it never changes the angles or the distance. It is off by default and kept in settings.json.
 
+<p>The Animations list shows, to the right of each entry under the Frames title, how many frames saving it makes at the File, Animation frame rate: the animation's length times the rate, rounded, or for <code>(None)</code> one turn of TURNTABLE_SECONDS. Model, Animations Used opens a dialog that ticks which animations are used; the others are left out of the list, so they are not played, saved or exported, and out of the combined swept volume that the camera frames. A new model starts with every animation used.
+
 <p>Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4 video. Each grabs every frame of that animation off screen, from the first to the last, at the grab size and with one framing that fits every frame, and saves them in SaveFolder: side by side in one row as <code>&lt;animation&gt;_strip&lt;frames&gt;.png</code>, in a square grid read left to right and top to bottom as <code>&lt;animation&gt;.png</code>, as a looping <code>&lt;animation&gt;.gif</code>, or as a video-only <code>&lt;animation&gt;.mp4</code> through Sprite3DVideo, H.264 when Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when the FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The <code>(None)</code> entry, which has no animation, captures instead one full turn of the model in one second, at the File, Animation frame rate, named after the model with <code>_rotate</code> added. On Android and iOS, which have no right-click, the same items are in an Animation group of the menu drawer and act on the selected entry.
 
 <p>At start-up the OpenH264 library, which makes MP4 files H.264, is taken from <code>openh264.json</code>: an address for each platform, from which a copy is downloaded in the background into OpenH264Folder the first time, and again whenever the address changes. An empty address, or a failed download, leaves MP4 files as MPEG-4 Part 2. DebugMemo says which happened.
 
-<p>File, Animation... sets the frame rate every saved animation uses, 30 frames a second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it: one cycle is cut into the whole number of equal steps nearest that rate, so the saved frames still loop exactly; see TSprite3DAnimationFrames.
+<p>File, Animation... sets the frame rate every saved animation uses, 30 frames a second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it: one cycle is cut into the whole number of equal steps nearest that rate, so the saved frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns overscan on, for this session only: every grab, icon and export is drawn 2 to 16 times larger each way, as far as the GPU allows at the grab size, and scaled down with the resampling filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in settings.json.
 
 <p>Each entry also has a tick box. Below the list, All ticks every animation, leaving <code>(None)</code> as it is so the turn is exported only when ticked by hand, or clears every entry; a drop-down chooses Sprite strip, Texture Atlas, AniGif or, when FFmpeg loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can be made there for the batch. SaveFolder itself is not changed. A failed entry is reported at the end and does not stop the others. Each entry is unticked as soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while a batch runs, lets the entry being captured finish and save, then drops the rest. On Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
 
-<p>View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or turns the camera: the views, Orthographic, Fit any angle and the pan are switched off, a new model or a resized view is not refitted, and grabs, icons and animation captures use the view exactly as it stands instead of fitting the model to their own size. The <code>(None)</code> turn cannot be captured while it is locked, as it turns the camera. The lock is not kept between sessions.
+<p>View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or turns the camera: the views, Orthographic and the pan are switched off, a new model or a resized view is not refitted, and grabs, icons and animation captures use the view exactly as it stands instead of fitting the model to their own size. The <code>(None)</code> turn cannot be captured while it is locked, as it turns the camera. The lock is not kept between sessions.
 
-<p>Each model replaces the last: it plays its last animation by name if it has any, is centred and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is refitted when the viewport is resized, the projection changes or View, Fit any angle is chosen, but not when a dial turns. Ticked, that item uses FitToBoundsMax, which frames the model for every angle at once, so the dials can never push it out of view. Not ticked, FitToBounds frames it exactly for the angles at the time of the fit, and turning a dial afterwards can push part of it past the edge until the next refit.
+<p>Each model replaces the last: it plays its last animation by name if it has any, is centred and turned 180 degrees about X, and the camera is fitted so it fills the view. The model is refitted when the viewport is resized, the projection changes or the animations used change, but not when a dial turns. Every fit frames the combined swept volume: the space the model sweeps turning about its up axis, over its rest pose and every animation used, or its rest pose alone for a model without animations. The volume fills the view on the tighter axis, and the orbit centre is on the turning axis, so the rest pose, every animation and the <code>(None)</code> turn are framed alike, and turning the azimuth dial keeps the model in view.
 
-<p>The form only handles the user interface. The 3D work is done by the library units in <code>lib</code>: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid and Sprite3DOffscreen. The application's other rules, such as where models are found, how a model is loaded and placed, and how grabs are named and saved, are in Sprite3DHelpers.
+<p>The form only handles the user interface. The 3D work is done by the library units in <code>lib</code>: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and Sprite3DOffscreen. The application's other rules, such as where models are found, how a model is loaded and placed, and how grabs are named and saved, are in Sprite3DHelpers.
 
 <p>On Android and iOS, where FMX shows no menu bar, the same menus are reached through a hamburger button on a toolbar at the top, which opens a drawer listing every item in MainMenu1; ticks show the current camera view and which View items are on. Exit is left out on iOS. On Linux the same items are moved onto a TMenuBar that FMX draws itself, as the native GTK menu bar showed only the first letter of each item.
 
@@ -122,9 +126,11 @@ MainMenu1
 |   |-- GrabMenuItem &quot;Grab&quot;             saves the off-screen view as grabNNN.png
 |   |-- SaveAsIconMenuItem &quot;Save As Icon&quot;  saves the view as a Windows .ico file
 |   |-- BackgroundSettingsMenuItem &quot;Background Settings...&quot;  opens the background dialog
-|   |-- FAnimationSettingsItem &quot;Animation...&quot;  frame rate for saved animations
+|   |-- FAnimationSettingsItem &quot;Animation...&quot;  frame rate, overscan and resampling
 |   |-- SettingsMenuItem &quot;Settings...&quot;  opens the general settings dialog
 |   `-- ExitMenuItem &quot;Exit&quot;             closes the application
+|-- ModelMenu &quot;Model&quot;
+|   `-- AnimationsUsedItem &quot;Animations Used...&quot;  which animations are listed and swept
 `-- ViewMenu &quot;View&quot;                   its ticks are kept in settings.json
     |-- CameraMenu &quot;Camera&quot;             the view, kept in settings.json
     |   |-- ViewVariableItem &quot;Variable&quot;     dials set the angles; also the pan
@@ -143,7 +149,10 @@ MainMenu1
     |-- ShowBoundsItem &quot;Show bounding box&quot;  ticked at start-up
     |-- ShowGridItem &quot;Show grid&quot;        ticked at start-up
     |-- ShowAxesItem &quot;Show axes&quot;        ticked at start-up
-    |-- FitAnyAngleItem &quot;Fit any angle&quot; FitToBoundsMax instead of FitToBounds
+    |-- ShowSweepItem &quot;Show Model Volume&quot;  ticked at start-up; the space swept turning
+    |                                      about the up axis
+    |-- ShowCombinedSweepItem &quot;Show Animation Volume&quot;  the volume the camera
+    |                                      frames
     `-- OrthographicItem &quot;Orthographic&quot; orthographic instead of perspective</pre>
 
 <p></p>
@@ -163,6 +172,9 @@ MainMenu1
 <table class="summary wide_list">
 <tr class="list visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3dMain.html#TSheetKind">TSheetKind</a></strong> = (...);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3dMain.html#TModelLoadStage">TModelLoadStage</a></strong> = (...);</code></td>
 </tr>
 </table>
 <span id="PasDoc-Variables"></span><h3 class="summary">Variables</h3>
@@ -190,6 +202,28 @@ What the animation list's pop-up menu saves a capture as.</p>
 <span id="skGif">skGif</span>: A looping animated GIF, saved as <code>&lt;name&gt;.gif</code>.</li>
 <li>
 <span id="skMp4">skMp4</span>: A video-only MPEG-4 MP4, saved as <code>&lt;name&gt;.mp4</code>; only offered when the FFmpeg libraries load.</li>
+</ul>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="TModelLoadStage"></span><code><strong>TModelLoadStage</strong> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Where a model load has got to; see TMainForm.SwitchModel.</p>
+<h6 class="description_section">Values</h6>
+<ul>
+<li>
+<span id="lsNone">lsNone</span>: No load is under way.</li>
+<li>
+<span id="lsRead">lsRead</span>: The file is being read on a worker thread; Abort stops it at once.</li>
+<li>
+<span id="lsBuild">lsBuild</span>: Gorilla3D builds the model on the next tick, in one step.</li>
+<li>
+<span id="lsMeasure">lsMeasure</span>: The new model's animations are being measured, a slice at a time.</li>
+<li>
+<span id="lsCommit">lsCommit</span>: The new model replaces the old one on the next tick.</li>
 </ul>
 </td></tr>
 </table>

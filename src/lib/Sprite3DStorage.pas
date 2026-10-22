@@ -135,7 +135,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.TypInfo,
+  System.IOUtils, System.TypInfo, OSPaths,
   Neon.Core.Persistence, Neon.Core.Persistence.JSON;
 
 function AppDataFolder(const AAppName: String): String;
@@ -180,7 +180,7 @@ end;
 constructor TSprite3DJsonSettings.Create(const AFileName: String);
 begin
   inherited Create;
-  FFileName := AFileName;
+  FFileName := OSFriendlyPath(AFileName);
 end;
 
 function TSprite3DJsonSettings.Load: Boolean;

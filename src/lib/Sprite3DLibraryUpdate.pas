@@ -168,7 +168,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, System.ZLib, System.Math, System.Net.HttpClient,
-  System.Net.URLClient, Sprite3DNativeLibs, Sprite3DBzip2;
+  System.Net.URLClient, Sprite3DNativeLibs, Sprite3DBzip2, OSPaths;
 
 const
   INSTALLED_FILE = 'installed.json';
@@ -454,8 +454,8 @@ constructor TSprite3DLibraryUpdate.Create(const AConfigFile, AName, AFolder: Str
 begin
   inherited Create;
   FName := AName;
-  FFolder := AFolder;
-  ReadConfig(AConfigFile);
+  FFolder := OSFriendlyPath(AFolder);
+  ReadConfig(OSFriendlyPath(AConfigFile));
   ReadInstalled;
 end;
 

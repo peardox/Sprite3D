@@ -374,6 +374,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         </DCCReference>
         <DCCReference Include="common\OSPaths.pas"/>
         <DCCReference Include="common\GpuPreference.pas"/>
+        <DCCReference Include="common\DisplayData.pas"/>
         <DCCReference Include="lib\Sprite3DFileAssoc.pas"/>
         <DCCReference Include="lib\Sprite3DStyles.pas"/>
         <DCCReference Include="lib\Sprite3DTitleBar.pas"/>

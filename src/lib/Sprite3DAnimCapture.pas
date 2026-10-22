@@ -22,6 +22,10 @@
 //** So the first frame is grabbed WarmUpFrames times, DEFAULT_WARM_UP_FRAMES unless changed,
 //** and those grabs are thrown away before the real one.
 //**
+//** TSprite3DAnimationPlayer plays, pauses and steps an animation on screen, one export frame
+//** at a time, holding each pose as a capture would. SetAnimationPaused pauses an animation's
+//** clock the same way on every Delphi version.
+//**
 //** Everything here is for the main thread. A capture runs over many frames of the main loop;
 //** the application stays responsive meanwhile, and should not start other grabs, load
 //** another model or change the animation until the capture reports.
@@ -63,6 +67,11 @@ unit Sprite3DAnimCapture;
   grabbed WarmUpFrames times, DEFAULT_WARM_UP_FRAMES unless changed, and
   those grabs are thrown away before the real one.
 
+  TSprite3DAnimationPlayer plays, pauses and steps an animation on screen,
+  one export frame at a time, holding each pose as a capture would.
+  SetAnimationPaused pauses an animation's clock the same way on every
+  Delphi version.
+
   Everything here is for the main thread. A capture runs over many frames of
   the main loop; the application stays responsive meanwhile, and should not
   start other grabs, load another model or change the animation until the
@@ -78,7 +87,7 @@ unit Sprite3DAnimCapture;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.Math.Vectors,
+  System.SysUtils, System.Classes, System.Types, System.Math.Vectors, System.Diagnostics,
   FMX.Graphics, Gorilla.Model, Gorilla.Animation,
   Sprite3DCamera, Sprite3DOffscreen, Sprite3DSpriteSheet;
 
@@ -484,10 +493,276 @@ type
     property WarmUpFrames: Integer read FWarmUpFrames write FWarmUpFrames;
   end;
 
+//** @abstract(Holds an animation on its current pose, or lets it carry on from there.)
+//**
+//** Pauses or unpauses the animation's skeleton clock, the same way on every Delphi version:
+//** @code(Skeleton.Paused) on Delphi 13 and later, where Gorilla's render clock owns
+//** @code(Pause), and @code(Skeleton.Pause) before. A paused animation stays current and
+//** running, with its pose held, baked or not, so whatever follows the playing animation
+//** still sees it; unpaused, it carries on from the same moment. Main thread only.
+//**
+//** @param(AAnimation The animation; nil, or one without a skeleton, is ignored.)
+//**
+//** @param(APaused True to hold the pose, False to carry on.)
+/// <summary>Holds an animation on its current pose, or lets it carry on from
+/// there.</summary>
+/// <remarks>Pauses or unpauses the animation's skeleton clock, the same way on every Delphi
+/// version: <c>Skeleton.Paused</c> on Delphi 13 and later, where Gorilla's render clock owns
+/// <c>Pause</c>, and <c>Skeleton.Pause</c> before. A paused animation stays current and
+/// running, with its pose held, baked or not, so whatever follows the playing animation still
+/// sees it; unpaused, it carries on from the same moment. Main thread only.</remarks>
+/// <param name="AAnimation">The animation; nil, or one without a skeleton, is
+/// ignored.</param>
+/// <param name="APaused">True to hold the pose, False to carry on.</param>
+procedure SetAnimationPaused(const AAnimation: TGorillaAnimation; const APaused: Boolean);
+
+type
+  //** @abstract(Plays, pauses and steps one animation of a model on screen, an export frame
+  //** at a time.)
+  //**
+  //** Made when the animation starts playing from its beginning. While it plays, the player
+  //** keeps its own clock, so Pause can tell which frame is showing. Pause, Step and
+  //** ShowFrame hold the animation on one frame: the frames are those an export at FrameRate
+  //** makes, by TSprite3DAnimationFrames, so frame N is held exactly as frame N of an export
+  //** shows it, from the baked pose where Gorilla has baked the animation. Play carries on
+  //** from the frame held. Freeing the player lets a held animation play on.
+  //**
+  //** For the main thread only. The model and animation must outlive the player, and nothing
+  //** else, such as a capture, may drive the animation while it is held.
+  /// <summary>Plays, pauses and steps one animation of a model on screen, an export frame at a
+  /// time.</summary>
+  /// <remarks>Made when the animation starts playing from its beginning. While it plays, the
+  /// player keeps its own clock, so Pause can tell which frame is showing. Pause, Step and
+  /// ShowFrame hold the animation on one frame: the frames are those an export at FrameRate
+  /// makes, by TSprite3DAnimationFrames, so frame N is held exactly as frame N of an export
+  /// shows it, from the baked pose where Gorilla has baked the animation. Play carries on from
+  /// the frame held. Freeing the player lets a held animation play on.
+  /// For the main thread only. The model and animation must outlive the player, and nothing
+  /// else, such as a capture, may drive the animation while it is held.</remarks>
+  TSprite3DAnimationPlayer = class
+  private
+    FModel: TGorillaModel;
+    FAnimation: TGorillaAnimation;
+    FFrameRate: Integer;
+    FFrames: TSprite3DAnimationFrames;   // the export frames, at FFrameRate
+    FHeld: Boolean;
+    FFrame: Integer;                     // the frame held
+    FClock: TStopwatch;                  // since play last started
+    FOffset: Double;                     // seconds into the cycle it started at
+    function GetFrameCount: Integer;
+    function GetCurrentFrame: Integer;
+    function PlayingFrame: Integer;
+    procedure SetFrameRate(const AValue: Integer);
+  public
+    //** @abstract(Starts following an animation that has just started from its beginning.)
+    //**
+    //** @param(AModel The model the animation belongs to.)
+    //**
+    //** @param(AAnimation The animation, current and running from its first pose.)
+    //**
+    //** @param(AFrameRate The export frame rate, which sets the frames held and stepped
+    //** through.)
+    //**
+    //** @raises(EArgumentException If AModel or AAnimation is nil, or AFrameRate is below 1.)
+    /// <summary>Starts following an animation that has just started from its
+    /// beginning.</summary>
+    /// <param name="AModel">The model the animation belongs to.</param>
+    /// <param name="AAnimation">The animation, current and running from its first
+    /// pose.</param>
+    /// <param name="AFrameRate">The export frame rate, which sets the frames held and stepped
+    /// through.</param>
+    /// <exception cref="EArgumentException">If AModel or AAnimation is nil, or AFrameRate is
+    /// below 1.</exception>
+    constructor Create(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation;
+      const AFrameRate: Integer);
+    //** @abstract(Lets a held animation play on from its frame, then frees the player.)
+    /// <summary>Lets a held animation play on from its frame, then frees the player.</summary>
+    destructor Destroy; override;
+    //** @abstract(Carries on playing from the frame held; nothing if it is not held.)
+    /// <summary>Carries on playing from the frame held; nothing if it is not held.</summary>
+    procedure Play;
+    //** @abstract(Holds the animation on the frame showing now; nothing if already held.)
+    /// <summary>Holds the animation on the frame showing now; nothing if already
+    /// held.</summary>
+    procedure Pause;
+    //** @abstract(Holds the animation on frame AFrame.)
+    //**
+    //** @param(AFrame The frame, from 0 to FrameCount - 1; others wrap round, as the
+    //** animation loops, so -1 is the last frame.)
+    /// <summary>Holds the animation on frame AFrame.</summary>
+    /// <param name="AFrame">The frame, from 0 to FrameCount - 1; others wrap round, as the
+    /// animation loops, so -1 is the last frame.</param>
+    procedure ShowFrame(const AFrame: Integer);
+    //** @abstract(Holds the animation ADelta frames on from the one held, or from the one
+    //** showing if it is playing.)
+    //**
+    //** @param(ADelta Frames to move: 1 for the next, -1 for the previous; it wraps round.)
+    /// <summary>Holds the animation ADelta frames on from the one held, or from the one
+    /// showing if it is playing.</summary>
+    /// <param name="ADelta">Frames to move: 1 for the next, -1 for the previous; it wraps
+    /// round.</param>
+    procedure Step(const ADelta: Integer);
+    //** @abstract(The animation played.)
+    /// <summary>The animation played.</summary>
+    property Animation: TGorillaAnimation read FAnimation;
+    //** @abstract(True while the animation is held on one frame.)
+    /// <summary>True while the animation is held on one frame.</summary>
+    property Held: Boolean read FHeld;
+    //** @abstract(The frame held, from 0; meaningful only while Held.)
+    /// <summary>The frame held, from 0; meaningful only while Held.</summary>
+    property Frame: Integer read FFrame;
+    //** @abstract(The frame showing, from 0: the one held, or while playing the one nearest the
+    //** moment showing, by the player's own clock.)
+    /// <summary>The frame showing, from 0: the one held, or while playing the one nearest the
+    /// moment showing, by the player's own clock.</summary>
+    property CurrentFrame: Integer read GetCurrentFrame;
+    //** @abstract(How many frames one cycle has at FrameRate, as an export makes.)
+    /// <summary>How many frames one cycle has at FrameRate, as an export makes.</summary>
+    property FrameCount: Integer read GetFrameCount;
+    //** @abstract(The export frame rate the frames are counted at.)
+    //**
+    //** Changing it while held keeps the same point of the cycle, to the nearest new frame.
+    //** Values below 1 count as 1.
+    /// <summary>The export frame rate the frames are counted at.</summary>
+    /// <remarks>Changing it while held keeps the same point of the cycle, to the nearest new
+    /// frame. Values below 1 count as 1.</remarks>
+    property FrameRate: Integer read FFrameRate write SetFrameRate;
+  end;
+
 implementation
 
 uses
   System.Math;
+
+procedure SetAnimationPaused(const AAnimation: TGorillaAnimation; const APaused: Boolean);
+begin
+  if (AAnimation = nil) or not Assigned(AAnimation.Skeleton) then
+    Exit;
+  {$IF CompilerVersion >= 37.0}
+  AAnimation.Skeleton.Paused := APaused;
+  {$ELSE}
+  AAnimation.Skeleton.Pause := APaused;
+  {$ENDIF}
+end;
+
+{ TSprite3DAnimationPlayer }
+
+constructor TSprite3DAnimationPlayer.Create(const AModel: TGorillaModel;
+  const AAnimation: TGorillaAnimation; const AFrameRate: Integer);
+begin
+  inherited Create;
+  if AFrameRate < 1 then
+    raise EArgumentException.Create('The frame rate must be at least 1.');
+  FModel := AModel;
+  FAnimation := AAnimation;
+  FFrameRate := AFrameRate;
+  // Raises for a missing model or animation
+  FFrames := TSprite3DAnimationFrames.Create(AModel, AAnimation, AFrameRate);
+  FOffset := 0;
+  FClock := TStopwatch.StartNew;
+end;
+
+destructor TSprite3DAnimationPlayer.Destroy;
+begin
+  if Assigned(FFrames) then
+    Play;
+  FFrames.Free;
+  inherited;
+end;
+
+function TSprite3DAnimationPlayer.GetFrameCount: Integer;
+begin
+  Result := FFrames.FrameCount;
+end;
+
+function TSprite3DAnimationPlayer.GetCurrentFrame: Integer;
+begin
+  if FHeld then
+    Result := FFrame
+  else
+    Result := PlayingFrame;
+end;
+
+// The frame nearest the moment showing now, by the player's own clock
+function TSprite3DAnimationPlayer.PlayingFrame: Integer;
+var
+  Duration, Time, Phase: Double;
+begin
+  Duration := FFrames.Duration;
+  if Duration <= 0 then
+    Exit(0);
+  Time := FOffset + FClock.Elapsed.TotalSeconds;
+  Phase := Frac(Time / Duration);
+  Result := Round(Phase * FrameCount) mod FrameCount;
+end;
+
+procedure TSprite3DAnimationPlayer.ShowFrame(const AFrame: Integer);
+var
+  Count: Integer;
+begin
+  Count := FrameCount;
+  FFrame := ((AFrame mod Count) + Count) mod Count;
+  if not FHeld then
+  begin
+    // This animation alone, no cross-fade, then its clock stopped
+    if Assigned(FModel.AnimationManager) then
+      FModel.AnimationManager.CancelBlend;
+    FFrames.Start;
+    SetAnimationPaused(FAnimation, True);
+    FHeld := True;
+  end;
+  FFrames.ShowFrame(FFrame);
+end;
+
+procedure TSprite3DAnimationPlayer.Pause;
+begin
+  if not FHeld then
+    ShowFrame(PlayingFrame);
+end;
+
+procedure TSprite3DAnimationPlayer.Step(const ADelta: Integer);
+begin
+  if FHeld then
+    ShowFrame(FFrame + ADelta)
+  else
+    ShowFrame(PlayingFrame + ADelta);
+end;
+
+procedure TSprite3DAnimationPlayer.Play;
+var
+  Time: Double;
+begin
+  if not FHeld then
+    Exit;
+  FHeld := False;
+  Time := FFrame * FFrames.Duration / FrameCount;
+  // The baked pose let go and the clock running again, from the frame held
+  FFrames.Finish;
+  SetAnimationPaused(FAnimation, False);
+  if Assigned(FAnimation.Skeleton) then
+    FAnimation.Skeleton.SeekTo(Time);
+  FOffset := Time;
+  FClock := TStopwatch.StartNew;
+end;
+
+procedure TSprite3DAnimationPlayer.SetFrameRate(const AValue: Integer);
+var
+  Rate: Integer;
+  Phase: Double;
+begin
+  Rate := Max(1, AValue);
+  if Rate = FFrameRate then
+    Exit;
+  Phase := FFrame / FrameCount;
+  FFrameRate := Rate;
+  FreeAndNil(FFrames);
+  FFrames := TSprite3DAnimationFrames.Create(FModel, FAnimation, Rate);
+  if FHeld then
+  begin
+    FFrame := Round(Phase * FrameCount) mod FrameCount;
+    FFrames.ShowFrame(FFrame);
+  end;
+end;
 
 { TSprite3DFrameSource }
 
