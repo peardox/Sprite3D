@@ -84,17 +84,17 @@ function pasdocUpdateMembers(className) {
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ANIMATION_FPS_DEFAULT">ANIMATION_FPS_DEFAULT</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
-<td class="itemdesc"><p>The frame rate saved animations use until File, Animation changes it.</p></td>
+<td class="itemdesc"><p>The frame rate saved animations use until Model, Animation Settings changes it.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ANIMATION_FPS_MAX">ANIMATION_FPS_MAX</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
-<td class="itemdesc"><p>The highest frame rate File, Animation offers for saved animations, in frames per second.</p></td>
+<td class="itemdesc"><p>The highest frame rate Model, Animation Settings offers for saved animations, in frames per second.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ANIMATION_FPS_MIN">ANIMATION_FPS_MIN</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
-<td class="itemdesc"><p>The lowest frame rate File, Animation offers for saved animations, in frames per second.</p></td>
+<td class="itemdesc"><p>The lowest frame rate Model, Animation Settings offers for saved animations, in frames per second.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ApplyFileAssociations-TSprite3DAppSettings-Boolean-Boolean-String-">ApplyFileAssociations</a></td>
@@ -214,17 +214,17 @@ function pasdocUpdateMembers(className) {
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OVERSCAN_FACTOR_DEFAULT">OVERSCAN_FACTOR_DEFAULT</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
-<td class="itemdesc"><p>The overscan factor File, Animation shows until another is chosen.</p></td>
+<td class="itemdesc"><p>The overscan factor Model, Animation Settings shows until another is chosen.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OVERSCAN_FACTOR_MAX">OVERSCAN_FACTOR_MAX</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
-<td class="itemdesc"><p>The largest overscan factor File, Animation offers, before the GPU's own limit for the grab size.</p></td>
+<td class="itemdesc"><p>The largest overscan factor Model, Animation Settings offers, before the GPU's own limit for the grab size.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OVERSCAN_FACTOR_MIN">OVERSCAN_FACTOR_MIN</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
-<td class="itemdesc"><p>The smallest overscan factor File, Animation offers.</p></td>
+<td class="itemdesc"><p>The smallest overscan factor Model, Animation Settings offers.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PAN_LIMIT">PAN_LIMIT</a></td>
@@ -274,7 +274,7 @@ function pasdocUpdateMembers(className) {
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DAnimationForm.TAnimationSettingsForm.html">TAnimationSettingsForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimationForm.html">Sprite3DAnimationForm</a></td>
-<td class="itemdesc"><p>The File, Animation dialog; see the unit description.</p></td>
+<td class="itemdesc"><p>The Model, Animation Settings dialog; see the unit description.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimationsUsedForm.TAnimationsUsedForm.html">TAnimationsUsedForm</a></td>
@@ -352,11 +352,26 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The application's look: FMX's own default style, or one of the FMX styles that come with RAD Studio.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#VIEW_FPS_DEFAULT">VIEW_FPS_DEFAULT</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The frame rate the view is drawn at until File, Settings changes it, and the most it offers where the display's refresh rate is not known.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#VIEW_FPS_MAX">VIEW_FPS_MAX</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The highest frame rate kept for the view; File, Settings offers no more than the display's refresh rate.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#VIEW_FPS_MIN">VIEW_FPS_MIN</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The lowest frame rate File, Settings lets the view be drawn at.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#Wrap360-Single-">Wrap360</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Shifts an angle in degrees by whole turns into the range 0 to 360.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#WriteGpuMode-TSprite3DGpuMode-">WriteGpuMode</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Asks Windows for a GPU for this program file, from the next start.</p></td>

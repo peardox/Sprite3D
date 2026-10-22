@@ -74,11 +74,11 @@ function pasdocUpdateMembers(className) {
 <div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
-The Settings dialog: file associations, what to load at start-up, the theme, and, on Windows, which GPU to use.</p>
+The Settings dialog: file associations, what to load at start-up, the theme, the grab size, the view's frame rate and, on Windows, which GPU to use.</p>
 <p>
 
 
-<p>A small modal form, centred on the main form, laid out in its .fmx file with standard FMX controls in four groups:
+<p>A small modal form, centred on the main form, laid out in its .fmx file with standard FMX controls in groups:
 
 <p></p>
 
@@ -91,12 +91,13 @@ TGeneralSettingsForm
     |   |-- ThemeGroup             Default (no theme), Dark, Aqua, Ruby and Golden Graphite
     |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
     |   |                          GrabFolderText, GrabFolderResetButton
+    |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
     |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
     `-- ButtonLayout               OkButton, CancelButton</pre>
 
 <p>
 
-<p>Open With offers Sprite3D for model files in the system's Open With list; Always makes it their default application, and needs Open With, except on macOS, where Open With is set by the app bundle and the box only shows it. Clearing either puts back what was there before, as far as it is still valid. On Android and iOS the group is disabled, as those systems decide such things when the app is built. Grab size sets the size of every off-screen grab: one of the square sizes in GRAB_PRESET_SIZES, or Custom, which lets the width and height be typed, each from GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels; Reset beside the grab folder empties it, so the next grab asks for a folder again. The GPU group is shown on Windows only; a change there takes effect the next time Sprite3D starts.
+<p>Open With offers Sprite3D for model files in the system's Open With list; Always makes it their default application, and needs Open With, except on macOS, where Open With is set by the app bundle and the box only shows it. Clearing either puts back what was there before, as far as it is still valid. On Android and iOS the group is disabled, as those systems decide such things when the app is built. Grab size sets the size of every off-screen grab: one of the square sizes in GRAB_PRESET_SIZES, or Custom, which lets the width and height be typed, each from GRAB_SIZE_MIN to GRAB_SIZE_MAX pixels; Reset beside the grab folder empties it, so the next grab asks for a folder again. View frame rate sets how many frames a second the view is drawn at, from VIEW_FPS_MIN up to the display's refresh rate, which the caller gives as Values.MaxViewFps; left at the top, a higher rate kept from a faster display stays as it was. The GPU group is shown on Windows only; a change there takes effect the next time Sprite3D starts.
 
 <p>The dialog only edits a TSprite3DGeneralSettings: set Values before showing it and read it back after OK; applying the choices is the caller's job. On the desktop show it with ShowModal and free it afterwards; on Android and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK and frees the form when it closes.</p>
 <span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>

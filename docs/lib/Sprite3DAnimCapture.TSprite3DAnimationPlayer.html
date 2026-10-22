@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DAnimCapture: Class TSprite3DAnimationPlayer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TSprite3DAnimationPlayer"></span><h1 class="cio">Class TSprite3DAnimationPlayer</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TSprite3DAnimationPlayer = class(TObject)</code></p>
+<h2 class="description">Description</h2>
+<p>
+Plays, pauses and steps one animation of a model on screen, an export frame at a time.</p>
+<p>
+
+
+<p>Made when the animation starts playing from its beginning. While it plays, the player keeps its own clock, so Pause can tell which frame is showing. Pause, Step and ShowFrame hold the animation on one frame: the frames are those an export at FrameRate makes, by TSprite3DAnimationFrames, so frame N is held exactly as frame N of an export shows it, from the baked pose where Gorilla has baked the animation. Play carries on from the frame held. Freeing the player lets a held animation play on.
+
+<p>For the main thread only. The model and animation must outlive the player, and nothing else, such as a capture, may drive the animation while it is held.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TObject</li>
+<li class="thisitem">TSprite3DAnimationPlayer</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Create-TGorillaModel-TGorillaAnimation-Integer-">Create</a></strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>destructor <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Destroy">Destroy</a></strong>; override;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Play">Play</a></strong>;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Pause">Pause</a></strong>;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#ShowFrame-Integer-">ShowFrame</a></strong>(const AFrame: Integer);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Step-Integer-">Step</a></strong>(const ADelta: Integer);</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Animation">Animation</a></strong>: TGorillaAnimation read FAnimation;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Held">Held</a></strong>: Boolean read FHeld;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Frame">Frame</a></strong>: Integer read FFrame;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#CurrentFrame">CurrentFrame</a></strong>: Integer read GetCurrentFrame;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#FrameCount">FrameCount</a></strong>: Integer read GetFrameCount;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#FrameRate">FrameRate</a></strong>: Integer read FFrameRate write SetFrameRate;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Create-TGorillaModel-TGorillaAnimation-Integer-"></span><code>constructor <strong>Create</strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Starts following an animation that has just started from its beginning.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model the animation belongs to.</dd>
+<dt>AAnimation</dt>
+<dd>The animation, current and running from its first pose.</dd>
+<dt>AFrameRate</dt>
+<dd>The export frame rate, which sets the frames held and stepped through.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If AModel or AAnimation is nil, or AFrameRate is below 1.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Destroy"></span><code>destructor <strong>Destroy</strong>; override;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Lets a held animation play on from its frame, then frees the player.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Play"></span><code>procedure <strong>Play</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Carries on playing from the frame held; nothing if it is not held.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Pause"></span><code>procedure <strong>Pause</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the animation on the frame showing now; nothing if already held.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowFrame-Integer-"></span><code>procedure <strong>ShowFrame</strong>(const AFrame: Integer);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the animation on frame AFrame.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrame</dt>
+<dd>The frame, from 0 to FrameCount - 1; others wrap round, as the animation loops, so -1 is the last frame.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Step-Integer-"></span><code>procedure <strong>Step</strong>(const ADelta: Integer);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the animation ADelta frames on from the one held, or from the one showing if it is playing.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ADelta</dt>
+<dd>Frames to move: 1 for the next, -1 for the previous; it wraps round.</dd>
+</dl>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Animation"></span><code>property <strong>Animation</strong>: TGorillaAnimation read FAnimation;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The animation played.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Held"></span><code>property <strong>Held</strong>: Boolean read FHeld;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True while the animation is held on one frame.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Frame"></span><code>property <strong>Frame</strong>: Integer read FFrame;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The frame held, from 0; meaningful only while Held.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CurrentFrame"></span><code>property <strong>CurrentFrame</strong>: Integer read GetCurrentFrame;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The frame showing, from 0: the one held, or while playing the one nearest the moment showing, by the player's own clock.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameCount"></span><code>property <strong>FrameCount</strong>: Integer read GetFrameCount;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How many frames one cycle has at FrameRate, as an export makes.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameRate"></span><code>property <strong>FrameRate</strong>: Integer read FFrameRate write SetFrameRate;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The export frame rate the frames are counted at.</p>
+<p>
+
+
+<p>Changing it while held keeps the same point of the cycle, to the nearest new frame. Values below 1 count as 1.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

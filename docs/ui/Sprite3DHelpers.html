@@ -229,15 +229,24 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#OVERSCAN_FACTOR_DEFAULT">OVERSCAN_FACTOR_DEFAULT</a></strong> = 4;</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#VIEW_FPS_MIN">VIEW_FPS_MIN</a></strong> = 1;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#VIEW_FPS_MAX">VIEW_FPS_MAX</a></strong> = 1000;</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#VIEW_FPS_DEFAULT">VIEW_FPS_DEFAULT</a></strong> = 60;</code></td>
 </tr>
 <tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+</tr>
+<tr class="list2 visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_PRESET_SIZES">GRAB_PRESET_SIZES</a></strong>: array[0..11] of Integer =
     (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);</code></td>
 </tr>
@@ -959,7 +968,7 @@ The largest camera pan either way, as a multiple of the model's radius.</p>
 </tr>
 <tr><td colspan="1">
 <p>
-The lowest frame rate File, Animation offers for saved animations, in frames per second.</p>
+The lowest frame rate Model, Animation Settings offers for saved animations, in frames per second.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">
@@ -968,7 +977,7 @@ The lowest frame rate File, Animation offers for saved animations, in frames per
 </tr>
 <tr><td colspan="1">
 <p>
-The highest frame rate File, Animation offers for saved animations, in frames per second.</p>
+The highest frame rate Model, Animation Settings offers for saved animations, in frames per second.</p>
 <p>
 
 
@@ -981,7 +990,7 @@ The highest frame rate File, Animation offers for saved animations, in frames pe
 </tr>
 <tr><td colspan="1">
 <p>
-The frame rate saved animations use until File, Animation changes it.</p>
+The frame rate saved animations use until Model, Animation Settings changes it.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">
@@ -990,7 +999,7 @@ The frame rate saved animations use until File, Animation changes it.</p>
 </tr>
 <tr><td colspan="1">
 <p>
-The smallest overscan factor File, Animation offers.</p>
+The smallest overscan factor Model, Animation Settings offers.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">
@@ -999,7 +1008,7 @@ The smallest overscan factor File, Animation offers.</p>
 </tr>
 <tr><td colspan="1">
 <p>
-The largest overscan factor File, Animation offers, before the GPU's own limit for the grab size.</p>
+The largest overscan factor Model, Animation Settings offers, before the GPU's own limit for the grab size.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">
@@ -1008,7 +1017,34 @@ The largest overscan factor File, Animation offers, before the GPU's own limit f
 </tr>
 <tr><td colspan="1">
 <p>
-The overscan factor File, Animation shows until another is chosen.</p>
+The overscan factor Model, Animation Settings shows until another is chosen.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="VIEW_FPS_MIN"></span><code><strong>VIEW_FPS_MIN</strong> = 1;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The lowest frame rate File, Settings lets the view be drawn at.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="VIEW_FPS_MAX"></span><code><strong>VIEW_FPS_MAX</strong> = 1000;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The highest frame rate kept for the view; File, Settings offers no more than the display's refresh rate.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="VIEW_FPS_DEFAULT"></span><code><strong>VIEW_FPS_DEFAULT</strong> = 60;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The frame rate the view is drawn at until File, Settings changes it, and the most it offers where the display's refresh rate is not known.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

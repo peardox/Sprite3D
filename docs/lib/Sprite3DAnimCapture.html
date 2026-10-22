@@ -71,7 +71,7 @@ function pasdocUpdateMembers(className) {
 <div class="container-fluid py-3 px-4">
 <h1 class="unit">Unit Sprite3DAnimCapture</h1>
 <div class="sections">
-<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
 Grabs every frame of a model's animation, or of a turn of the camera round it, one off-screen grab after another.</p>
@@ -85,6 +85,8 @@ Grabs every frame of a model's animation, or of a turn of the camera round it, o
 <p>The capture does not frame the model; the owner of the camera sets one framing for the whole run before starting it, so every frame is drawn at the same scale, and puts its own back afterwards.
 
 <p>A newly started animation can take a few drawn frames to show its first pose: Gorilla switches clips, uploads the baked poses and settles the skeleton over the next frames drawn, and until then the model can be in the pose it had before, or at the wrong height. So the first frame is grabbed WarmUpFrames times, DEFAULT_WARM_UP_FRAMES unless changed, and those grabs are thrown away before the real one.
+
+<p>TSprite3DAnimationPlayer plays, pauses and steps an animation on screen, one export frame at a time, holding each pose as a capture would. SetAnimationPaused pauses an animation's clock the same way on every Delphi version.
 
 <p>Everything here is for the main thread. A capture runs over many frames of the main loop; the application stays responsive meanwhile, and should not start other grabs, load another model or change the animation until the capture reports.
 
@@ -121,6 +123,16 @@ TSprite3DFrameCapture   ShowFrame (N) -&gt; TSprite3DOffscreen.Grab -&gt; copy -
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAnimCapture.TSprite3DFrameCapture.html"><code>TSprite3DFrameCapture</code></a></td>
 <td class="itemdesc">One capture run: every frame of a source, grabbed in turn.</td>
 </tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html"><code>TSprite3DAnimationPlayer</code></a></td>
+<td class="itemdesc">Plays, pauses and steps one animation of a model on screen, an export frame at a time.</td>
+</tr>
+</table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DAnimCapture.html#SetAnimationPaused-TGorillaAnimation-Boolean-">SetAnimationPaused</a></strong>(const AAnimation: TGorillaAnimation; const APaused: Boolean);</code></td>
+</tr>
 </table>
 <span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
 <table class="summary wide_list">
@@ -139,6 +151,31 @@ TSprite3DFrameCapture   ShowFrame (N) -&gt; TSprite3DOffscreen.Grab -&gt; copy -
 </tr>
 </table>
 <h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SetAnimationPaused-TGorillaAnimation-Boolean-"></span><code>procedure <strong>SetAnimationPaused</strong>(const AAnimation: TGorillaAnimation; const APaused: Boolean);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Holds an animation on its current pose, or lets it carry on from there.</p>
+<p>
+
+
+<p>Pauses or unpauses the animation's skeleton clock, the same way on every Delphi version: <code>Skeleton.Paused</code> on Delphi 13 and later, where Gorilla's render clock owns <code>Pause</code>, and <code>Skeleton.Pause</code> before. A paused animation stays current and running, with its pose held, baked or not, so whatever follows the playing animation still sees it; unpaused, it carries on from the same moment. Main thread only.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AAnimation</dt>
+<dd>The animation; nil, or one without a skeleton, is ignored.</dd>
+<dt>APaused</dt>
+<dd>True to hold the pose, False to carry on.</dd>
+</dl>
+</td></tr>
+</table>
 <h3 class="detail">Types</h3>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">

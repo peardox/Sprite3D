@@ -187,6 +187,22 @@ The main form: a Gorilla3D view of one model, with dials for the camera.</p>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ModelSettingsSeparatorItem">ModelSettingsSeparatorItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ModelActionsSeparatorItem">ModelActionsSeparatorItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#DirectionsItem">DirectionsItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#OrientationItem">OrientationItem</a></strong>: TMenuItem;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3dMain.TMainForm.html#ViewMenu">ViewMenu</a></strong>: TMenuItem;</code></td>
 </tr>
 <tr class="list visibility-public">
@@ -517,7 +533,7 @@ An FMX TModel3D placed at design time; the code does not use it.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-Asks for the model file that File, OpenModel loads.</p>
+Asks for the model file that File, Open Model loads.</p>
 <p>
 
 
@@ -565,7 +581,7 @@ The &quot;File&quot; menu, holding OpenModelMenuItem, GrabMenuItem and ExitMenuI
 </tr>
 <tr><td colspan="2">
 <p>
-The &quot;OpenModel&quot; item; see OpenModelMenuItemClick.</p>
+The &quot;Open Model&quot; item; see OpenModelMenuItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -635,7 +651,7 @@ The &quot;Exit&quot; item; see ExitMenuItemClick.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-The &quot;Model&quot; menu; holds AnimationsUsedItem.</p>
+The &quot;Model&quot; menu: AnimationsUsedItem, the Animation... and BackgroundSettingsMenuItem settings, and DirectionsItem and OrientationItem.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -646,6 +662,46 @@ The &quot;Model&quot; menu; holds AnimationsUsedItem.</p>
 <tr><td colspan="2">
 <p>
 The &quot;Animations Used...&quot; item; see AnimationsUsedItemClick.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ModelSettingsSeparatorItem"></span><code><strong>ModelSettingsSeparatorItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Separator line in the Model menu, above the settings items.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ModelActionsSeparatorItem"></span><code><strong>ModelActionsSeparatorItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Separator line in the Model menu, above DirectionsItem.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DirectionsItem"></span><code><strong>DirectionsItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Directions&quot; item; disabled, as it does nothing yet.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OrientationItem"></span><code><strong>OrientationItem</strong>: TMenuItem;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The &quot;Orientation&quot; item; disabled, as it does nothing yet.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -735,7 +791,7 @@ Shows or hides the Model Volume, the volume the model sweeps turning about its u
 <p>
 
 
-<p>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out the space the model's bounds pass through in a full turn about the line through its centre of rotation parallel to its Y axis, and draws it: the swept box in aqua, and the tube it holds, with the axis, in yellow. There is one volume for the rest pose, from the bounds as loaded, and one per animation, from the bounds of all its poses, read from the bounds cache or measured with TAnimationBoundsMeasurer as the model loads. Whichever animation the model plays, its volume is drawn; with none playing, the rest pose's. The radii, length and volumes of each go to DebugMemo. See ShowSweepItemClick.</p>
+<p>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out the space the model's bounds pass through in a full turn about the line through its centre of rotation parallel to its Y axis, and draws it: the swept box in aqua, and the tube it holds, with the axis, in yellow. There is one volume for the rest pose, from the bounds as loaded, and one per animation, from the bounds of all its poses, read from the bounds cache or measured with TAnimationBoundsMeasurer as the model loads. Whichever animation the model plays, its volume is drawn; with none playing, the rest pose's. See ShowSweepItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -749,7 +805,7 @@ Shows or hides the Animation Volume, the combined swept volume; not ticked at st
 <p>
 
 
-<p>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning about its up axis, joined over its rest pose and every animation ticked in Model, Animations Used, which is what the camera frames. It is drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or none used, as it would only repeat the rest pose's volume. It is redrawn for each new model and whenever the animations used change, and its figures go to DebugMemo. See ShowCombinedSweepItemClick.</p>
+<p>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning about its up axis, joined over its rest pose and every animation ticked in Model, Animations Used. It is drawn only while the view frames it: while one or more entries of the Animations list are ticked for export, playing or paused. It is drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or none used, as it would only repeat the rest pose's volume. It is redrawn for each new model and whenever the animations used or the ticks change. See ShowCombinedSweepItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -877,7 +933,7 @@ The model's animations, by name, after a first entry, <code>(None)</code>, that 
 <p>
 
 
-<p>Only the animations ticked in Model, Animations Used are listed. Each entry shows, at its right, the number of frames saving it makes at the File, Animation frame rate. Choosing an entry plays it, whether by a click or by moving the selection with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a sprite strip, a texture atlas or an animated GIF; see the unit description.</p>
+<p>Only the animations ticked in Model, Animations Used are listed. Each entry shows, at its right, the number of frames saving it makes at the Model, Animation Settings frame rate. Choosing an entry plays it, whether by a click or by moving the selection with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a sprite strip, a texture atlas or an animated GIF; see the unit description.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">

@@ -237,7 +237,7 @@ Measures, for each of AModel's animations, the box that holds all its poses.</p>
 
 <p>Each animation in turn is made current and stepped, with TSprite3DAnimationFrames, through one cycle at the rate Gorilla baked its poses, 30 frames a second if it baked none, and after each step the model's GetAnimatedBoundingBox is added to that animation's box. The animation that was current before is made current again afterwards, running or stopped as it was; the others are left stopped. The model's pose changes while this runs, and is wherever the restored animation puts it afterwards.
 
-<p>Blocks for as long as the stepping takes: the number of poses times the cost of one bounding box. Do not call it while something else drives the animations, such as a capture. Gorilla counts a model's children in its animated bounds, so call it before adding any helper to AModel as a child. Main thread only.
+<p>Blocks for as long as the stepping takes: the number of poses times the cost of one bounding box. Do not call it while something else drives the animations, such as a capture. Gorilla counts a model's children in its animated bounds, so call it before adding any helper to AModel as a child. AModel must be visible: Gorilla leaves a hidden model in the pose it had, so every animation of it would measure as that one pose. Main thread only.
 
 <p>An animation whose poses Gorilla did not bake is posed by seeking its skeleton; on Delphi 13 and later that pose is only evaluated when a frame is drawn, so such an animation's box may be that of the pose already showing. Sprite3D loads models with vertex caching, so its animations are baked.
 

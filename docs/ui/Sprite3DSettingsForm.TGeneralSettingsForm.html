@@ -164,6 +164,22 @@ The Settings dialog.</p>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FrameRateGroup">FrameRateGroup</a></strong>: TGroupBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FrameRateTrack">FrameRateTrack</a></strong>: TTrackBar;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FrameRateValueLabel">FrameRateValueLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FrameRateNote">FrameRateNote</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabGroup">GrabGroup</a></strong>: TGroupBox;</code></td>
 </tr>
 <tr class="list visibility-public">
@@ -255,9 +271,13 @@ The Settings dialog.</p>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabFolderResetButtonClick-TObject-">GrabFolderResetButtonClick</a></strong>(Sender: TObject);</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#FrameRateTrackChange-TObject-">FrameRateTrackChange</a></strong>(Sender: TObject);</code></td>
 </tr>
 <tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#GrabFolderResetButtonClick-TObject-">GrabFolderResetButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DSettingsForm.TGeneralSettingsForm.html#ShowAndFree">ShowAndFree</a></strong>;</code></td>
 </tr>
@@ -443,6 +463,46 @@ The Golden Graphite FMX style: dark grey with gold.</p>
 <tr><td colspan="2">
 <p>
 The GPU choices; Windows only.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameRateGroup"></span><code><strong>FrameRateGroup</strong>: TGroupBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The view's frame rate.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameRateTrack"></span><code><strong>FrameRateTrack</strong>: TTrackBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Chooses the view's frame rate, VIEW_FPS_MIN to Values.MaxViewFps.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameRateValueLabel"></span><code><strong>FrameRateValueLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The frame rate FrameRateTrack is at.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameRateNote"></span><code><strong>FrameRateNote</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Says how far the slider goes, and why.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -712,6 +772,25 @@ Shows a preset's size in the boxes, or enables them for Custom.</p>
 <dl class="parameters">
 <dt>Sender</dt>
 <dd>The drop-down.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FrameRateTrackChange-TObject-"></span><code>procedure <strong>FrameRateTrackChange</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the frame rate FrameRateTrack is at.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>FrameRateTrack.</dd>
 </dl>
 </td></tr>
 </table>
