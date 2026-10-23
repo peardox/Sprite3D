@@ -93,18 +93,22 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.EDirectionsFile.html"><code>EDirectionsFile</code></a></td>
+<td class="itemdesc">Raised by LoadDirectionsFile when a file cannot be used as directions.</td>
+</tr>
+<tr class="list2">
 <td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DGeneralSettings.html"><code>TSprite3DGeneralSettings</code></a></td>
 <td class="itemdesc">The choices made in File, Settings, together.</td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TControl3DAccess.html"><code>TControl3DAccess</code></a></td>
 <td class="itemdesc">Protected-access helper for TControl3D; nothing in the project uses it yet.</td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DAppSettings.html"><code>TSprite3DAppSettings</code></a></td>
 <td class="itemdesc">The application's settings, kept between sessions in settings.json.</td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname">Interface&nbsp;<a class="bold" href="Sprite3DHelpers.IModelFileRead.html"><code>IModelFileRead</code></a></td>
 <td class="itemdesc">A read of a model file on a worker thread, from StartModelFileRead.</td>
 </tr>
@@ -113,6 +117,30 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <table class="summary wide_list">
 <tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#Wrap360-Single-">Wrap360</a></strong>(const ADegrees: Single): Single;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#NearestDirectionCount-Integer-">NearestDirectionCount</a></strong>(const ACount: Integer): Integer;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#CompassPointName-Single-">CompassPointName</a></strong>(const ADegrees: Single): String;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#PlainDirectionOrder-Integer-Boolean-">PlainDirectionOrder</a></strong>(const ACount: Integer; const AClockwise: Boolean): TArray&lt;Integer&gt;;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#IsDirectionOrder-TArrayInteger-Integer-">IsDirectionOrder</a></strong>(const AOrder: TArray&lt;Integer&gt;; const ACount: Integer): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DirectionOrderToText-TArrayInteger-">DirectionOrderToText</a></strong>(const AOrder: TArray&lt;Integer&gt;): String;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DirectionOrderFromText-String-">DirectionOrderFromText</a></strong>(const AText: String): TArray&lt;Integer&gt;;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#SaveDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">SaveDirectionsFile</a></strong>(const AFileName: String; const ACount: Integer; const AStart: Single; const AOrder: TArray&lt;Integer&gt;; const ASnap: Boolean);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#LoadDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">LoadDirectionsFile</a></strong>(const AFileName: String; out ACount: Integer; out AStart: Single; out AOrder: TArray&lt;Integer&gt;; out ASnap: Boolean);</code></td>
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></strong>(const ADegrees: Single): String;</code></td>
@@ -238,15 +266,31 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#VIEW_FPS_DEFAULT">VIEW_FPS_DEFAULT</a></strong> = 60;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTION_COUNTS">DIRECTION_COUNTS</a></strong>: array[0..22] of Integer =
+    (1, 2, 4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 44, 48, 52, 54, 56, 60, 64);</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTION_COUNT_DEFAULT">DIRECTION_COUNT_DEFAULT</a></strong> = 8;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTIONS_FILE_FORMAT">DIRECTIONS_FILE_FORMAT</a></strong> = 'Sprite3D directions';</code></td>
 </tr>
 <tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTIONS_FILE_VERSION">DIRECTIONS_FILE_VERSION</a></strong> = 1;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTIONS_FILE_EXTENSION">DIRECTIONS_FILE_EXTENSION</a></strong> = '.json';</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_PRESET_SIZES">GRAB_PRESET_SIZES</a></strong>: array[0..11] of Integer =
     (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);</code></td>
 </tr>
@@ -273,6 +317,253 @@ Shifts an angle in degrees by whole turns into the range 0 to 360.</p>
 </dl>
 <h6 class="description_section">Returns</h6>
 <p class="return">The same direction as an angle from 0 up to, but not including, 360.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="NearestDirectionCount-Integer-"></span><code>function <strong>NearestDirectionCount</strong>(const ACount: Integer): Integer;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The entry of DIRECTION_COUNTS nearest to a number, the smaller of two as near.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACount</dt>
+<dd>Any number.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">One of DIRECTION_COUNTS.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="CompassPointName-Single-"></span><code>function <strong>CompassPointName</strong>(const ADegrees: Single): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The abbreviated name of a point of the 32-point compass, if a bearing is on one.</p>
+<p>
+
+
+<p>The points are 11.25 degrees apart, named as the mariner's compass names them: the cardinal points N, E, S and W; the intercardinal NE, SE, SW and NW; the eight winds between them, NNE, ENE and so on; and the sixteen &quot;by&quot; points, NbE (north by east), NEbN and so on.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ADegrees</dt>
+<dd>A bearing in degrees clockwise from north, any number of turns.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The point's abbreviation, such as N, NbE, NNE or NEbN, for a bearing within a hundredth of a degree of one; otherwise an empty string, so a whole-degree bearing only has a name on the eight points that fall on whole degrees.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PlainDirectionOrder-Integer-Boolean-"></span><code>function <strong>PlainDirectionOrder</strong>(const ACount: Integer; const AClockwise: Boolean): TArray&lt;Integer&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The plain order of ACount directions: clockwise from position 0, or anticlockwise.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACount</dt>
+<dd>How many directions; values below 1 give an empty order.</dd>
+<dt>AClockwise</dt>
+<dd>True for 0, 1, 2 and so on; False for 0, ACount - 1, ACount - 2 and so on.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">ACount positions, every one from 0 to ACount - 1 once.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IsDirectionOrder-TArrayInteger-Integer-"></span><code>function <strong>IsDirectionOrder</strong>(const AOrder: TArray&lt;Integer&gt;; const ACount: Integer): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether an order holds every position from 0 to ACount - 1 exactly once.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOrder</dt>
+<dd>The order, as positions from 0.</dd>
+<dt>ACount</dt>
+<dd>How many directions there are.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if AOrder has ACount entries and each position once.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DirectionOrderToText-TArrayInteger-"></span><code>function <strong>DirectionOrderToText</strong>(const AOrder: TArray&lt;Integer&gt;): String;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+An order as the text DirectionOrder keeps: positions from 1, separated by commas.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AOrder</dt>
+<dd>The order, as positions from 0.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The text, such as <code>'3,5,7,1,4,6,8,2'</code>; empty for an empty order.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DirectionOrderFromText-String-"></span><code>function <strong>DirectionOrderFromText</strong>(const AText: String): TArray&lt;Integer&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reads the text DirectionOrder keeps back into an order.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AText</dt>
+<dd>Positions from 1, separated by commas; spaces are ignored.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The positions from 0, in order; an entry that is not a number gives -1, which IsDirectionOrder rejects.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-"></span><code>procedure <strong>SaveDirectionsFile</strong>(const AFileName: String; const ACount: Integer; const AStart: Single; const AOrder: TArray&lt;Integer&gt;; const ASnap: Boolean);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes a set of directions to a JSON file, for Model, Directions' Export.</p>
+<p>
+
+
+<p>The file holds everything Model, Directions sets, so it can be read back with LoadDirectionsFile, kept beside artwork whose directions come in a fixed order, and swapped between models:
+
+<p></p>
+
+<pre class="preformatted">
+ {
+   &quot;format&quot;: &quot;Sprite3D directions&quot;,
+   &quot;version&quot;: 1,
+   &quot;count&quot;: 8,
+   &quot;start&quot;: 0,
+   &quot;snap&quot;: false,
+   &quot;clockwise&quot;: true,
+   &quot;order&quot;: [3, 5, 7, 1, 4, 6, 8, 2],
+   &quot;directions&quot;: [
+     { &quot;number&quot;: 1, &quot;position&quot;: 3, &quot;bearing&quot;: 90, &quot;point&quot;: &quot;E&quot; },
+     ...
+   ]
+ }</pre>
+
+<p>
+
+<p><code>order</code> holds the positions, counted clockwise from 1 at the red marker, in the order the directions are taken in, as DirectionOrder does. <code>directions</code> spells each one out, with its bearing and compass point, for people and other tools to read; LoadDirectionsFile ignores it. The folder is made if it does not exist.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>The file to write; replaced if it exists.</dd>
+<dt>ACount</dt>
+<dd>How many directions; one of DIRECTION_COUNTS.</dd>
+<dt>AStart</dt>
+<dd>The red marker's bearing, in degrees clockwise from north.</dd>
+<dt>AOrder</dt>
+<dd>The order, as positions from 0; one that does not fit ACount is written as the plain clockwise order.</dd>
+<dt>ASnap</dt>
+<dd>Whether the dial is locked to steps of one direction.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EInOutError</code></dt>
+<dd>or another file exception if the file cannot be written.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="LoadDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-"></span><code>procedure <strong>LoadDirectionsFile</strong>(const AFileName: String; out ACount: Integer; out AStart: Single; out AOrder: TArray&lt;Integer&gt;; out ASnap: Boolean);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reads a set of directions from a JSON file written by SaveDirectionsFile.</p>
+<p>
+
+
+<p><code>count</code> and <code>start</code> are needed. <code>order</code> may be left out, when <code>clockwise</code>, true if it too is left out, gives the plain order; <code>snap</code> may be left out, for False. <code>format</code>, when present, must be DIRECTIONS_FILE_FORMAT, and <code>version</code>, when present, no newer than DIRECTIONS_FILE_VERSION. Anything else in the file is ignored.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>The file to read.</dd>
+<dt>ACount</dt>
+<dd>Set to the number of directions, one of DIRECTION_COUNTS.</dd>
+<dt>AStart</dt>
+<dd>Set to the red marker's bearing, wrapped into 0 up to 360.</dd>
+<dt>AOrder</dt>
+<dd>Set to the order, as positions from 0, every one once.</dd>
+<dt>ASnap</dt>
+<dd>Set to whether the dial is locked to steps of one direction.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DHelpers.EDirectionsFile.html">EDirectionsFile</a></dt>
+<dd>if the file is not JSON, is not a directions file, or holds a count or order that cannot be used; the message says which, for showing as it is.</dd>
+<dt><code>EFileNotFoundException</code></dt>
+<dd>or another file exception if the file cannot be read.</dd>
+</dl>
+</td></tr>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
@@ -1045,6 +1336,52 @@ The highest frame rate kept for the view; File, Settings offers no more than the
 <tr><td colspan="1">
 <p>
 The frame rate the view is drawn at until File, Settings changes it, and the most it offers where the display's refresh rate is not known.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DIRECTION_COUNTS"></span><code><strong>DIRECTION_COUNTS</strong>: array[0..22] of Integer =
+    (1, 2, 4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 44, 48, 52, 54, 56, 60, 64);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The numbers of directions Model, Directions offers: 1, 2, and every multiple of 4 or 6 up to 64, smallest first.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DIRECTION_COUNT_DEFAULT"></span><code><strong>DIRECTION_COUNT_DEFAULT</strong> = 8;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The number of directions until Model, Directions changes it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DIRECTIONS_FILE_FORMAT"></span><code><strong>DIRECTIONS_FILE_FORMAT</strong> = 'Sprite3D directions';</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The <code>format</code> a directions file names itself with, so another JSON file is not taken for one.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DIRECTIONS_FILE_VERSION"></span><code><strong>DIRECTIONS_FILE_VERSION</strong> = 1;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The newest directions file layout this version writes and reads.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DIRECTIONS_FILE_EXTENSION"></span><code><strong>DIRECTIONS_FILE_EXTENSION</strong> = '.json';</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The extension Model, Directions gives the directions files it exports.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

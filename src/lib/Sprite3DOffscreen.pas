@@ -655,6 +655,23 @@ type
     property OnAfterGrab: TNotifyEvent read FOnAfterGrab write FOnAfterGrab;
   end;
 
+//** @abstract(Whether a render pass is a TSprite3DOffscreen grab.)
+//**
+//** For helpers that draw in the main pass only and skip Gorilla's other passes, such as
+//** shadows and reflections, but should also be drawn into grabs, so a grab shows what the
+//** view shows. Pass the Gorilla context's CurrentPass.
+//**
+//** @param(APass The pass being rendered; nil gives False.)
+//**
+//** @returns(True if APass is a TSprite3DOffscreen.)
+/// <summary>Whether a render pass is a TSprite3DOffscreen grab.</summary>
+/// <remarks>For helpers that draw in the main pass only and skip Gorilla's other passes, such
+/// as shadows and reflections, but should also be drawn into grabs, so a grab shows what the
+/// view shows. Pass the Gorilla context's CurrentPass.</remarks>
+/// <param name="APass">The pass being rendered; nil gives False.</param>
+/// <returns>True if APass is a TSprite3DOffscreen.</returns>
+function IsOffscreenPass(const APass: TObject): Boolean;
+
 implementation
 
 uses
@@ -1157,6 +1174,11 @@ begin
     Result.Free;
     raise;
   end;
+end;
+
+function IsOffscreenPass(const APass: TObject): Boolean;
+begin
+  Result := APass is TSprite3DOffscreen;
 end;
 
 constructor TSprite3DOffscreen.Create(AOwner: TComponent; const AId: String);

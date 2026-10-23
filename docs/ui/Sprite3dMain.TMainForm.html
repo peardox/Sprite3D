@@ -418,13 +418,17 @@ The main form: a Gorilla3D view of one model, with dials for the camera.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewOneQuarterItemClick-TObject-">ViewOneQuarterItemClick</a></strong>(Sender: TObject);</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#DirectionsItemClick-TObject-">DirectionsItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewRoot2ItemClick-TObject-">ViewRoot2ItemClick</a></strong>(Sender: TObject);</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewOneQuarterItemClick-TObject-">ViewOneQuarterItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
 <tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewRoot2ItemClick-TObject-">ViewRoot2ItemClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3dMain.TMainForm.html#ViewGoldenRatioItemClick-TObject-">ViewGoldenRatioItemClick</a></strong>(Sender: TObject);</code></td>
 </tr>
@@ -691,7 +695,7 @@ Separator line in the Model menu, above DirectionsItem.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-The &quot;Directions&quot; item; disabled, as it does nothing yet.</p>
+The &quot;Directions...&quot; item; see DirectionsItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -805,7 +809,7 @@ Shows or hides the Animation Volume, the combined swept volume; not ticked at st
 <p>
 
 
-<p>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning about its up axis, joined over its rest pose and every animation ticked in Model, Animations Used. It is drawn only while the view frames it: while one or more entries of the Animations list are ticked for export, playing or paused. It is drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or none used, as it would only repeat the rest pose's volume. It is redrawn for each new model and whenever the animations used or the ticks change. See ShowCombinedSweepItemClick.</p>
+<p>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning about its up axis, joined over its rest pose and every animation ticked in Model, Animations Used. It is drawn only while the view frames it: while two or more animations in the Animations list are ticked for export, playing or paused. It is drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or none used, as it would only repeat the rest pose's volume. It is redrawn for each new model and whenever the animations used or the ticks change. See ShowCombinedSweepItemClick.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -1294,7 +1298,7 @@ Opens the Background Settings dialog and applies what is chosen.</p>
 <p>
 
 
-<p>The dialog, TBackgroundSettingsForm, opens modally, centred on this form, showing the background in use. Every change is shown in the viewport at once. If it is closed with OK, the chosen background is kept, used for grabs and icons, and saved to settings.json; Cancel puts back the background in use. On Android and iOS, where a dialog cannot block, it opens as an ordinary form and OK is applied when it closes.
+<p>The dialog, TBackgroundSettingsForm, opens modally, centred on this form, showing the background in use. Every change is shown in the viewport at once. If it is closed with OK, the chosen background is kept, used for grabs and icons but not animation exports, and saved to settings.json; Cancel puts back the background in use. On Android and iOS, where a dialog cannot block, it opens as an ordinary form and OK is applied when it closes.
 
 <p></p>
 <h6 class="description_section">Parameters</h6>
@@ -1574,6 +1578,27 @@ Opens the Animations Used dialog, and on OK lists only the animations ticked the
 <dl class="parameters">
 <dt>Sender</dt>
 <dd>AnimationsUsedItem.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DirectionsItemClick-TObject-"></span><code>procedure <strong>DirectionsItemClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Opens the Directions dialog, and on OK keeps what is chosen there.</p>
+<p>
+
+
+<p>The dialog, TDirectionsForm, shows a compass with a marker for each direction, the first in red, and sets how many directions there are, the first one's bearing, the order they are taken in, clockwise, anticlockwise or any order clicked with Change Order, and whether the dial is locked to steps of one direction, as kept in settings.json; Export and Import write them to and read them from a JSON file of their own, in DirectionsFolder. OK keeps and saves them; Cancel changes nothing. The rest of the program reads the result with DirectionBearings in the settings. On Android and iOS the dialog does not block, and the choice is kept when it closes.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>DirectionsItem.</dd>
 </dl>
 </td></tr>
 </table>

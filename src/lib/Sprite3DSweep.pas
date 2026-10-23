@@ -38,6 +38,10 @@
 //** Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1
 //** pixel.
 //**
+//** ShowModelBoundsOutline adds a TModelBoundsOutline, which draws the model's bounding box
+//** into TSprite3DOffscreen grabs while its ShowBoundingBox is on, as Gorilla draws that box on
+//** screen only; the wireframes here draw into grabs too, so a grab shows what the view shows.
+//**
 //** The swept box is larger than the model's own box, and Gorilla counts a model's children in
 //** its bounding box, so the TModelSweep is not a child of the model: it sits beside it, owned
 //** by the model so it is freed with it, and draws with the model's matrix. The model's own
@@ -111,6 +115,11 @@ unit Sprite3DSweep;
   model hides the parts behind it.
   Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and
   OpenGL ES always draw 1 pixel.
+
+  ShowModelBoundsOutline adds a TModelBoundsOutline, which draws the model's
+  bounding box into TSprite3DOffscreen grabs while its ShowBoundingBox is on,
+  as Gorilla draws that box on screen only; the wireframes here draw into
+  grabs too, so a grab shows what the view shows.
 
   The swept box is larger than the model's own box, and Gorilla counts a
   model's children in its bounding box, so the TModelSweep is not a child of
@@ -395,12 +404,12 @@ type
   //** the model is playing, or of its rest pose.)
   //**
   //** A TDummy holding Volume, for the rest pose, and a volume per animation, set with
-  //** SetAnimationVolume. In its own Render, in the main pass only, it picks the volume in
-  //** use: that of the animation the model is playing, by its Id, if the animation is running
-  //** and has a volume; otherwise Volume. It draws that volume's swept box in BoxColor and, in
-  //** SweepColor, the tube's outer wall, its inner wall when it has one, and the axis. Each
-  //** wall is a ring of Segments lines at each end, joined by four lines along the axis. The
-  //** lines are worked out again only when the volume in use changes or a setting does.
+  //** SetAnimationVolume. In its own Render, in the main pass and in grabs only, it picks the
+  //** volume in use: that of the animation the model is playing, by its Id, if the animation is
+  //** running and has a volume; otherwise Volume. It draws that volume's swept box in BoxColor
+  //** and, in SweepColor, the tube's outer wall, its inner wall when it has one, and the axis.
+  //** Each wall is a ring of Segments lines at each end, joined by four lines along the axis.
+  //** The lines are worked out again only when the volume in use changes or a setting does.
   //**
   //** It belongs beside Model, under the same parent, not inside it, so it never counts in
   //** Model's bounding box. Each Render it draws with Model's AbsoluteMatrix, so the lines
@@ -414,13 +423,13 @@ type
   //** thread only. ShowModelSweep creates and places one.
   /// <summary>Draws, as a wireframe beside its model, the swept volume of the animation the
   /// model is playing, or of its rest pose.</summary>
-  /// <remarks><para>A TDummy holding Volume, for the rest pose, and a volume per animation,
-  /// set with SetAnimationVolume. In its own Render, in the main pass only, it picks the
-  /// volume in use: that of the animation the model is playing, by its Id, if the animation is
-  /// running and has a volume; otherwise Volume. It draws that volume's swept box in BoxColor
-  /// and, in SweepColor, the tube's outer wall, its inner wall when it has one, and the axis.
-  /// Each wall is a ring of Segments lines at each end, joined by four lines along the axis.
-  /// The lines are worked out again only when the volume in use changes or a setting
+  /// <remarks><para>A TDummy holding Volume, for the rest pose, and a volume per animation, set
+  /// with SetAnimationVolume. In its own Render, in the main pass and in grabs only, it picks
+  /// the volume in use: that of the animation the model is playing, by its Id, if the animation
+  /// is running and has a volume; otherwise Volume. It draws that volume's swept box in
+  /// BoxColor and, in SweepColor, the tube's outer wall, its inner wall when it has one, and
+  /// the axis. Each wall is a ring of Segments lines at each end, joined by four lines along
+  /// the axis. The lines are worked out again only when the volume in use changes or a setting
   /// does.</para>
   /// <para>It belongs beside Model, under the same parent, not inside it, so it never counts
   /// in Model's bounding box. Each Render it draws with Model's AbsoluteMatrix, so the lines
@@ -467,20 +476,22 @@ type
     function GetActiveVolume: TSweptVolume;
     function GetActiveAnimation: String;
   protected
-    //** @abstract(Draws the volume in use with the model's matrix, in the main pass only.)
+    //** @abstract(Draws the volume in use with the model's matrix, in the main pass and grabs.)
     //**
     //** Copies Model's transform to this object if it changed, picks the volume in use and
-    //** works its lines out if it changed, then, if Model is visible and that volume is
-    //** Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix,
-    //** restoring the previous matrix and line state afterwards, even if drawing fails. Does
-    //** nothing in Gorilla's shadow, reflection and other passes.
-    /// <summary>Draws the volume in use with the model's matrix, in the main pass
-    /// only.</summary>
+    //** works its lines out if it changed, then, if Model is visible and that volume is Valid,
+    //** draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring the
+    //** previous matrix and line state afterwards, even if drawing fails. Does nothing in
+    //** Gorilla's shadow, reflection and other passes, but does draw into a TSprite3DOffscreen
+    //** grab, so a grab shows what the view shows.
+    /// <summary>Draws the volume in use with the model's matrix, in the main pass and
+    /// grabs.</summary>
     /// <remarks>Copies Model's transform to this object if it changed, picks the volume in use
     /// and works its lines out if it changed, then, if Model is visible and that volume is
     /// Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring
     /// the previous matrix and line state afterwards, even if drawing fails. Does nothing in
-    /// Gorilla's shadow, reflection and other passes.</remarks>
+    /// Gorilla's shadow, reflection and other passes, but does draw into a TSprite3DOffscreen
+    /// grab, so a grab shows what the view shows.</remarks>
     procedure Render; override;
 
     //** @abstract(Forgets Model if it is freed first.)
@@ -1065,10 +1076,98 @@ procedure HideCombinedSweep(const AModel: TGorillaModel);
 /// <returns>The combined sweep, or nil if AModel is nil or has none.</returns>
 function FindCombinedSweep(const AModel: TGorillaModel): TCombinedSweep;
 
+type
+  //** @abstract(Draws a model's bounding box into grabs, as Gorilla's own ShowBoundingBox draws
+  //** it on screen.)
+  //**
+  //** Gorilla draws ShowBoundingBox in the main pass only, so a TSprite3DOffscreen grab would
+  //** leave it out. This draws the same box, the model's current animated bounds in its own
+  //** coordinates, in orange by default, but only into a grab, and only while the model's
+  //** ShowBoundingBox is True; on screen Gorilla's own box is drawn, so nothing is drawn
+  //** twice. It sits beside the model, not inside it, so it never counts in the model's
+  //** bounds, and draws with the model's matrix. Made with ShowModelBoundsOutline; owned by
+  //** the model. Main thread only.
+  /// <summary>Draws a model's bounding box into grabs, as Gorilla's own ShowBoundingBox draws
+  /// it on screen.</summary>
+  /// <remarks>Gorilla draws ShowBoundingBox in the main pass only, so a TSprite3DOffscreen
+  /// grab would leave it out. This draws the same box, the model's current animated bounds in
+  /// its own coordinates, in orange by default, but only into a grab, and only while the
+  /// model's ShowBoundingBox is True; on screen Gorilla's own box is drawn, so nothing is drawn
+  /// twice. It sits beside the model, not inside it, so it never counts in the model's
+  /// bounds, and draws with the model's matrix. Made with ShowModelBoundsOutline; owned by the
+  /// model. Main thread only.</remarks>
+  TModelBoundsOutline = class(TControl3D)
+  private
+    FModel: TGorillaModel;
+    FColor: TAlphaColor;
+    FMaterial: TColorMaterial;
+    FVertices: TVertexBuffer;
+    FIndices: TIndexBuffer;
+    procedure SetModel(const Value: TGorillaModel);
+    procedure SetColor(const Value: TAlphaColor);
+  protected
+    //** @abstract(Draws the box, into a grab only.)
+    /// <summary>Draws the box, into a grab only.</summary>
+    procedure Render; override;
+    //** @abstract(Lets go of the model when it is freed.)
+    //**
+    //** @param(AComponent The component being inserted or removed.)
+    //**
+    //** @param(Operation Whether it is being inserted or removed.)
+    /// <summary>Lets go of the model when it is freed.</summary>
+    /// <param name="AComponent">The component being inserted or removed.</param>
+    /// <param name="Operation">Whether it is being inserted or removed.</param>
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+  public
+    //** @abstract(Creates the outline, orange, with no model.)
+    //**
+    //** @param(AOwner The owner, normally the model.)
+    /// <summary>Creates the outline, orange, with no model.</summary>
+    /// <param name="AOwner">The owner, normally the model.</param>
+    constructor Create(AOwner: TComponent); override;
+    //** @abstract(Frees the outline and its line buffers.)
+    /// <summary>Frees the outline and its line buffers.</summary>
+    destructor Destroy; override;
+    //** @abstract(The model whose box is drawn; nil draws nothing.)
+    /// <summary>The model whose box is drawn; nil draws nothing.</summary>
+    property Model: TGorillaModel read FModel write SetModel;
+    //** @abstract(The box's colour; orange by default, as Gorilla's.)
+    /// <summary>The box's colour; orange by default, as Gorilla's.</summary>
+    property Color: TAlphaColor read FColor write SetColor;
+  end;
+
+//** @abstract(Adds a TModelBoundsOutline to AModel, so grabs show its bounding box when
+//** ShowBoundingBox is on.)
+//**
+//** Replaces any outline AModel already has. The outline draws only into grabs and only while
+//** AModel's ShowBoundingBox is True, so it can stay in place whatever that is set to.
+//**
+//** @param(AModel The model. Nothing happens if it is nil or has no parent.)
+//**
+//** @returns(The outline, owned by AModel; or nil if nothing was added.)
+/// <summary>Adds a TModelBoundsOutline to AModel, so grabs show its bounding box when
+/// ShowBoundingBox is on.</summary>
+/// <remarks>Replaces any outline AModel already has. The outline draws only into grabs and
+/// only while AModel's ShowBoundingBox is True, so it can stay in place whatever that is set
+/// to.</remarks>
+/// <param name="AModel">The model. Nothing happens if it is nil or has no parent.</param>
+/// <returns>The outline, owned by AModel; or nil if nothing was added.</returns>
+function ShowModelBoundsOutline(const AModel: TGorillaModel): TModelBoundsOutline;
+
+//** @abstract(Returns the outline ShowModelBoundsOutline added to AModel, or nil.)
+//**
+//** @param(AModel The model to look on; nil gives nil.)
+//**
+//** @returns(The outline, or nil if AModel is nil or has none.)
+/// <summary>Returns the outline ShowModelBoundsOutline added to AModel, or nil.</summary>
+/// <param name="AModel">The model to look on; nil gives nil.</param>
+/// <returns>The outline, or nil if AModel is nil or has none.</returns>
+function FindModelBoundsOutline(const AModel: TGorillaModel): TModelBoundsOutline;
+
 implementation
 
 uses
-  System.Diagnostics, System.RTLConsts, Sprite3DAnimCapture;
+  System.Diagnostics, System.RTLConsts, Sprite3DAnimCapture, Sprite3DOffscreen;
 
 const
   // A size is never smaller than this, so a flat model still has extent
@@ -1930,14 +2029,17 @@ begin
   if not FModel.Visible then
     Exit;
 
-  // Main pass only: Render also runs in shadow, reflection, environment
-  // and other passes, where CurrentPass is assigned. Under a plain FMX
-  // context there are no passes, and the FMX helpers still work.
+  // The main pass and grabs only: Render also runs in shadow, reflection,
+  // environment and other passes, where CurrentPass is assigned, and is
+  // skipped there; a TSprite3DOffscreen grab draws it, so a grab shows what
+  // the view shows. Under a plain FMX context there are no passes, and the
+  // FMX helpers still work.
   if Context is TGorillaContext then
     Ctx := TGorillaContext(Context)
   else
     Ctx := nil;
-  if (Ctx <> nil) and Assigned(Ctx.CurrentPass) then
+  if (Ctx <> nil) and Assigned(Ctx.CurrentPass) and
+    not IsOffscreenPass(Ctx.CurrentPass) then
     Exit;
 
   // The playing animation's volume, or the rest pose's; the lines are only
@@ -1965,6 +2067,142 @@ begin
   finally
     Context.SetMatrix(PrevMat);
   end;
+end;
+
+
+{ TModelBoundsOutline }
+
+constructor TModelBoundsOutline.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  Stored := False;
+  Locked := True;
+  HitTest := False;
+  FColor := TAlphaColorRec.Orange;
+  FMaterial := TColorMaterial.Create;
+  FMaterial.Color := FColor;
+  // The 12 edges as 24 line ends; the corners are filled in as drawn
+  FVertices := TVertexBuffer.Create([TVertexFormat.Vertex], 24);
+  FIndices := TIndexBuffer.Create(24);
+  for var I := 0 to 23 do
+    FIndices.Indices[I] := I;
+end;
+
+destructor TModelBoundsOutline.Destroy;
+begin
+  FVertices.Free;
+  FIndices.Free;
+  FMaterial.Free;
+  inherited;
+end;
+
+procedure TModelBoundsOutline.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited;
+  if (Operation = opRemove) and (AComponent = FModel) then
+    FModel := nil;
+end;
+
+procedure TModelBoundsOutline.SetModel(const Value: TGorillaModel);
+begin
+  if FModel = Value then
+    Exit;
+  if FModel <> nil then
+    FModel.RemoveFreeNotification(Self);
+  FModel := Value;
+  if FModel <> nil then
+    FModel.FreeNotification(Self);
+end;
+
+procedure TModelBoundsOutline.SetColor(const Value: TAlphaColor);
+begin
+  FColor := Value;
+  FMaterial.Color := Value;
+end;
+
+procedure TModelBoundsOutline.Render;
+var
+  Ctx: TGorillaContext;
+  B: TBoundingBox;
+  Corners: array[0..7] of TPoint3D;
+  I, Bit, K, N: Integer;
+  PrevMat: TMatrix3D;
+begin
+  inherited;
+  if (FModel = nil) or not FModel.Visible or not FModel.ShowBoundingBox then
+    Exit;
+  // Into a grab only: on screen, Gorilla draws its own box
+  if not (Context is TGorillaContext) then
+    Exit;
+  Ctx := TGorillaContext(Context);
+  if not IsOffscreenPass(Ctx.CurrentPass) then
+    Exit;
+  B := FModel.GetAnimatedBoundingBox();
+  if IsEmptyBox(B) then
+    Exit;
+
+  // The 12 edges join each corner to the three that differ from it on one
+  // axis only
+  for I := 0 to 7 do
+    Corners[I] := Point3D(
+      IfThen((I and 1) <> 0, B.Right, B.Left),
+      IfThen((I and 2) <> 0, B.Bottom, B.Top),
+      IfThen((I and 4) <> 0, B.Far, B.Near));
+  N := 0;
+  for I := 0 to 7 do
+  begin
+    Bit := 1;
+    for K := 0 to 2 do
+    begin
+      if (I and Bit) = 0 then
+      begin
+        FVertices.Vertices[N] := Corners[I];
+        FVertices.Vertices[N + 1] := Corners[I or Bit];
+        Inc(N, 2);
+      end;
+      Bit := Bit shl 1;
+    end;
+  end;
+
+  // The box is in the model's own coordinates
+  PrevMat := Context.CurrentMatrix;
+  Context.SetMatrix(FModel.AbsoluteMatrix);
+  try
+    Context.DrawLines(FVertices, FIndices, FMaterial, AbsoluteOpacity);
+  finally
+    Context.SetMatrix(PrevMat);
+  end;
+end;
+
+function FindModelBoundsOutline(const AModel: TGorillaModel): TModelBoundsOutline;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if AModel = nil then
+    Exit;
+  for I := 0 to AModel.ComponentCount - 1 do
+    if AModel.Components[I] is TModelBoundsOutline then
+      Exit(TModelBoundsOutline(AModel.Components[I]));
+end;
+
+function ShowModelBoundsOutline(const AModel: TGorillaModel): TModelBoundsOutline;
+var
+  Old: TModelBoundsOutline;
+begin
+  Result := nil;
+  if (AModel = nil) or (AModel.Parent = nil) then
+    Exit;
+  Old := FindModelBoundsOutline(AModel);
+  if Old <> nil then
+  begin
+    Old.Parent := nil;
+    Old.Free;
+  end;
+  // Owned by the model, so freed with it; beside it, so never in its bounds
+  Result := TModelBoundsOutline.Create(AModel);
+  Result.Parent := AModel.Parent;
+  Result.Model := AModel;
 end;
 
 end.

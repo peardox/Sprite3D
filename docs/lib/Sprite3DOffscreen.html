@@ -71,7 +71,7 @@ function pasdocUpdateMembers(className) {
 <div class="container-fluid py-3 px-4">
 <h1 class="unit">Unit Sprite3DOffscreen</h1>
 <div class="sections">
-<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div><div class="one_section"><a class="section" href="#PasDoc-Types">Types</a></div><div class="one_section"><a class="section" href="#PasDoc-Constants">Constants</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
 Renders a Gorilla3D viewport's scene to an off-screen target of any size.</p>
@@ -111,6 +111,12 @@ TGorillaRenderPassController (Gorilla.Controller)
 <td class="itemdesc">A render pass that draws the viewport's scene off screen, one frame on request.</td>
 </tr>
 </table>
+<span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
+<table class="summary wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DOffscreen.html#IsOffscreenPass-TObject-">IsOffscreenPass</a></strong>(const APass: TObject): Boolean;</code></td>
+</tr>
+</table>
 <span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
 <table class="summary wide_list">
 <tr class="list visibility-published">
@@ -146,6 +152,30 @@ TGorillaRenderPassController (Gorilla.Controller)
 </tr>
 </table>
 <h2 class="description">Description</h2>
+<h3 class="detail">Functions and Procedures</h3>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IsOffscreenPass-TObject-"></span><code>function <strong>IsOffscreenPass</strong>(const APass: TObject): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether a render pass is a TSprite3DOffscreen grab.</p>
+<p>
+
+
+<p>For helpers that draw in the main pass only and skip Gorilla's other passes, such as shadows and reflections, but should also be drawn into grabs, so a grab shows what the view shows. Pass the Gorilla context's CurrentPass.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APass</dt>
+<dd>The pass being rendered; nil gives False.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if APass is a TSprite3DOffscreen.</p></td></tr>
+</table>
 <h3 class="detail">Types</h3>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">

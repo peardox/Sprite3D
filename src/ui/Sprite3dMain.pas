@@ -64,10 +64,10 @@
 //**
 //** The Animations list shows, to the right of each entry under the Frames title, how many
 //** frames saving it makes at the Model, Animation Settings frame rate: the animation's length
-//** times the rate, rounded, or for @code(@(None@)) one turn of TURNTABLE_SECONDS. Model,
-//** Animations Used opens a dialog that ticks which animations are used; the others are left
-//** out of the list, so they are not played, saved or exported, and out of the combined swept
-//** volume. A new model starts with every animation used.
+//** times the rate, rounded, or 1 for @code(@(None@)), a single still frame. Model, Animations
+//** Used opens a dialog that ticks which animations are used; the others are left out of the
+//** list, so they are not played, saved or exported, and out of the combined swept volume. A
+//** new model starts with every animation used.
 //**
 //** Under the list, five buttons with icons, named in their hints, act on the selected
 //** animation: first frame, previous frame, play or pause, next frame and last frame. The
@@ -82,20 +82,24 @@
 //** icon and hint change to say which it does. Stepping wraps round from the last frame to the
 //** first and back. Choosing an entry plays it from the start, unless the controls are paused,
 //** when it starts paused on its first frame; starting a capture lets a held animation play on.
+//** Grabs and icons are saved as the view shows them, with the background and every helper
+//** showing. Animation exports show the model alone: the bounding box, axes, grid and volume
+//** wireframes are hidden for each drawing, and the background is left out, so they are
+//** transparent around the model, or black for MP4.
 //**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up
 //** menu with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4
 //** video. Each grabs every frame of that animation off screen, from the first to the last, at
 //** the grab size and with one framing that fits every frame, and saves them in SaveFolder:
-//** side by side in one row as @code(<animation>_strip<frames>.png), in a square grid read
-//** left to right and top to bottom as @code(<animation>.png), as a looping
-//** @code(<animation>.gif), or as a video-only @code(<animation>.mp4) through Sprite3DVideo,
-//** H.264 when Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered
-//** only when the FFmpeg libraries load; DebugMemo says at start-up whether they did and from
-//** where. The @code(@(None@)) entry, which has no animation, captures instead one full turn
-//** of the model in one second, at the Model, Animation Settings frame rate, named after the
-//** model with @code(_rotate) added. On Android and iOS, which have no right-click, the same
-//** items are in an Animation group of the menu drawer and act on the selected entry.
+//** side by side in one row as @code(<animation>_strip<frames>.png), in a square grid read left
+//** to right and top to bottom as @code(<animation>.png), as a looping @code(<animation>.gif),
+//** or as a video-only @code(<animation>.mp4) through Sprite3DVideo, H.264 when Cisco's
+//** OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when the
+//** FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The
+//** @code(@(None@)) entry, which has no animation, captures instead a single still frame of the
+//** model in its bind pose, named after the model. On Android and iOS, which have no
+//** right-click, the same items are in an Animation group of the menu drawer and act on the
+//** selected entry.
 //**
 //** At start-up the OpenH264 library, which makes MP4 files H.264, is taken from
 //** @code(openh264.json): an address for each platform, from which a copy is downloaded in
@@ -122,23 +126,23 @@
 //** Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
-//** turns the camera: the views, Orthographic and the pan are switched off, a
-//** new model or a resized view is not refitted, and grabs, icons and animation captures use
-//** the view exactly as it stands instead of fitting the model to their own size. The
-//** @code(@(None@)) turn cannot be captured while it is locked, as it turns the camera. The lock
-//** is not kept between sessions.
+//** turns the camera: the views, Orthographic and the pan are switched off, a new model or a
+//** resized view is not refitted, and grabs, icons and animation captures use the view exactly
+//** as it stands instead of fitting the model to their own size. The lock is not kept between
+//** sessions.
 //**
 //** Each model replaces the last: it is centred and turned 180 degrees about X, and the camera
 //** is fitted so it fills the view. The model is refitted when the viewport is resized, the
 //** projection changes, the animations used change, another entry is chosen, an entry is ticked
 //** or unticked for export, or an animation is paused, stepped or played, but not when a dial
-//** turns. While one or more entries are ticked, playing or paused, the fit frames the combined
-//** swept volume, the space the model sweeps turning about its up axis over its rest pose and
-//** every animation used, so everything a batch exports is framed alike, and Show Animation
-//** Volume draws it. Otherwise, as for a model without animations, it frames the volume of what
-//** is on screen alone: the selected animation's, paused or playing, or the rest pose's for
-//** @code(@(None@)). Either way the volume fills the view on the tighter axis, and the orbit
-//** centre is on the turning axis, so turning the azimuth dial keeps the model in view.
+//** turns. While two or more animations are ticked, playing or paused, the fit frames the
+//** combined swept volume, the space the model sweeps turning about its up axis over its rest
+//** pose and every animation used, so everything a batch exports is framed alike, and Show
+//** Animation Volume draws it. Otherwise, with one ticked or none, as for a model without
+//** animations, it frames the volume of what is on screen alone: the selected animation's,
+//** paused or playing, or the rest pose's for @code(@(None@)). Either way the volume fills the
+//** view on the tighter axis, and the orbit centre is on the turning axis, so turning the
+//** azimuth dial keeps the model in view.
 //**
 //** The form only handles the user interface. The 3D work is done by the library units in
 //** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and
@@ -174,7 +178,7 @@
 //** |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
 //** |   |-- ModelActionsSeparatorItem "-"
-//** |   |-- DirectionsItem "Directions"     disabled; for a later version
+//** |   |-- DirectionsItem "Directions..."  how many directions, the first and their order
 //** |   `-- OrientationItem "Orientation"   disabled; for a later version
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
@@ -281,12 +285,12 @@ unit Sprite3dMain;
   settings.json.
 
   The Animations list shows, to the right of each entry under the Frames
-  title, how many frames saving it makes at the Model, Animation Settings frame rate:
-  the animation's length times the rate, rounded, or for (None) one turn of
-  TURNTABLE_SECONDS. Model, Animations Used opens a dialog that ticks which
+  title, how many frames saving it makes at the Model, Animation Settings
+  frame rate: the animation's length times the rate, rounded, or 1 for (None),
+  a single still frame. Model, Animations Used opens a dialog that ticks which
   animations are used; the others are left out of the list, so they are not
-  played, saved or exported, and out of the combined swept volume. A new
-  model starts with every animation used.
+  played, saved or exported, and out of the combined swept volume. A new model
+  starts with every animation used.
 
   Under the list, five buttons with icons, named in their hints, act on the
   selected animation: first frame, previous frame, play or pause, next frame
@@ -303,23 +307,26 @@ unit Sprite3dMain;
   change to say which it does. Stepping wraps round from the last frame to the
   first and back. Choosing an entry plays it from the start, unless the
   controls are paused, when it starts paused on its first frame; starting a
-  capture lets a held animation play on.
+  capture lets a held animation play on. Grabs and icons are saved as the view
+  shows them, with the background and every helper showing. Animation exports
+  show the model alone: the bounding box, axes, grid and volume wireframes are
+  hidden for each drawing, and the background is left out, so they are
+  transparent around the model, or black for MP4.
 
   Right-clicking an entry in the Animations list selects and plays it, and
   opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save
   as AniGif and Save as MP4 video. Each grabs every frame of that animation
   off screen, from the first to the last, at the grab size and with one
-  framing that fits every frame, and saves them in SaveFolder: side by side
-  in one row as <animation>_strip<frames>.png, in a square grid read left to
-  right and top to bottom as <animation>.png, as a looping <animation>.gif,
-  or as a video-only <animation>.mp4 through Sprite3DVideo, H.264 when
-  Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is
-  offered only when the FFmpeg libraries load; DebugMemo says at start-up
-  whether they did and from where. The (None) entry, which has no animation,
-  captures instead one full turn of the model in one second, at the File,
-  Animation frame rate, named after the model with _rotate added. On Android
-  and iOS, which have no right-click, the same items are in an Animation
-  group of the menu drawer and act on the selected entry.
+  framing that fits every frame, and saves them in SaveFolder: side by side in
+  one row as <animation>_strip<frames>.png, in a square grid read left to
+  right and top to bottom as <animation>.png, as a looping <animation>.gif, or
+  as a video-only <animation>.mp4 through Sprite3DVideo, H.264 when Cisco's
+  OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only
+  when the FFmpeg libraries load; DebugMemo says at start-up whether they did
+  and from where. The (None) entry, which has no animation, captures instead a
+  single still frame of the model in its bind pose, named after the model. On
+  Android and iOS, which have no right-click, the same items are in an
+  Animation group of the menu drawer and act on the selected entry.
 
   At start-up the OpenH264 library, which makes MP4 files H.264, is taken
   from openh264.json: an address for each platform, from which a copy is
@@ -350,26 +357,25 @@ unit Sprite3dMain;
   folder dialog, the batch goes to the Grabs folder.
 
   View, Camera, Lock Camera fixes the camera where it is. While it is ticked
-  nothing moves or turns the camera: the views, Orthographic and the pan
-  are switched off, a new model or a resized view is not
-  refitted, and grabs, icons and animation captures use the view exactly as
-  it stands instead of fitting the model to their own size. The (None) turn
-  cannot be captured while it is locked, as it turns the camera. The lock is
-  not kept between sessions.
+  nothing moves or turns the camera: the views, Orthographic and the pan are
+  switched off, a new model or a resized view is not refitted, and grabs,
+  icons and animation captures use the view exactly as it stands instead of
+  fitting the model to their own size. The lock is not kept between sessions.
 
   Each model replaces the last: it is centred and turned 180 degrees about X,
   and the camera is fitted so it fills the view. The model is refitted when
   the viewport is resized, the projection changes, the animations used change,
   another entry is chosen, an entry is ticked or unticked for export, or an
-  animation is paused, stepped or played, but not when a dial turns. While one
-  or more entries are ticked, playing or paused, the fit frames the combined
-  swept volume, the space the model sweeps turning about its up axis over its
-  rest pose and every animation used, so everything a batch exports is framed
-  alike, and Show Animation Volume draws it. Otherwise, as for a model without
-  animations, it frames the volume of what is on screen alone: the selected
-  animation's, paused or playing, or the rest pose's for (None). Either way
-  the volume fills the view on the tighter axis, and the orbit centre is on
-  the turning axis, so turning the azimuth dial keeps the model in view.
+  animation is paused, stepped or played, but not when a dial turns. While two
+  or more animations are ticked, playing or paused, the fit frames the
+  combined swept volume, the space the model sweeps turning about its up axis
+  over its rest pose and every animation used, so everything a batch exports
+  is framed alike, and Show Animation Volume draws it. Otherwise, with one
+  ticked or none, as for a model without animations, it frames the volume of
+  what is on screen alone: the selected animation's, paused or playing, or the
+  rest pose's for (None). Either way the volume fills the view on the tighter
+  axis, and the orbit centre is on the turning axis, so turning the azimuth
+  dial keeps the model in view.
 
   The form only handles the user interface. The 3D work is done by the library
   units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep
@@ -406,7 +412,7 @@ unit Sprite3dMain;
     |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
     |   |-- ModelActionsSeparatorItem "-"
-    |   |-- DirectionsItem "Directions"     disabled; for a later version
+    |   |-- DirectionsItem "Directions..."  how many directions, the first and their order
     |   `-- OrientationItem "Orientation"   disabled; for a later version
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
@@ -447,7 +453,7 @@ uses
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
-  Sprite3DLoadForm, Gorilla.Animation, DisplayData
+  Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -604,8 +610,8 @@ type
     /// <summary>Separator line in the Model menu, above
     /// <see cref="DirectionsItem"/>.</summary>
     ModelActionsSeparatorItem: TMenuItem;
-    //** @abstract(The "Directions" item; disabled, as it does nothing yet.)
-    /// <summary>The "Directions" item; disabled, as it does nothing yet.</summary>
+    //** @abstract(The "Directions..." item; see DirectionsItemClick.)
+    /// <summary>The "Directions..." item; see <see cref="DirectionsItemClick"/>.</summary>
     DirectionsItem: TMenuItem;
     //** @abstract(The "Orientation" item; disabled, as it does nothing yet.)
     /// <summary>The "Orientation" item; disabled, as it does nothing yet.</summary>
@@ -685,9 +691,9 @@ type
     //**
     //** Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning
     //** about its up axis, joined over its rest pose and every animation ticked in Model,
-    //** Animations Used. It is drawn only while the view frames it: while one or more entries
-    //** of the Animations list are ticked for export, playing or paused. It is drawn in
-    //** fuchsia and hot pink whatever animation plays, so it can be shown alongside
+    //** Animations Used. It is drawn only while the view frames it: while two or more
+    //** animations in the Animations list are ticked for export, playing or paused. It is drawn
+    //** in fuchsia and hot pink whatever animation plays, so it can be shown alongside
     //** ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
     //** none used, as it would only repeat the rest pose's volume. It is redrawn for each new
     //** model and whenever the animations used or the ticks change. See
@@ -696,9 +702,9 @@ type
     /// start-up.</summary>
     /// <remarks>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept
     /// turning about its up axis, joined over its rest pose and every animation ticked in
-    /// Model, Animations Used. It is drawn only while the view frames it: while one or more
-    /// entries of the Animations list are ticked for export, playing or paused. It is
-    /// drawn in fuchsia and hot pink whatever animation plays, so it can be shown alongside
+    /// Model, Animations Used. It is drawn only while the view frames it: while two or more
+    /// animations in the Animations list are ticked for export, playing or paused. It is drawn
+    /// in fuchsia and hot pink whatever animation plays, so it can be shown alongside
     /// ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
     /// none used, as it would only repeat the rest pose's volume. It is redrawn for each new
     /// model and whenever the animations used or the ticks change. See
@@ -1024,17 +1030,19 @@ type
     //**
     //** The dialog, TBackgroundSettingsForm, opens modally, centred on this form, showing the
     //** background in use. Every change is shown in the viewport at once. If it is closed with
-    //** OK, the chosen background is kept, used for grabs and icons, and saved to
-    //** settings.json; Cancel puts back the background in use. On Android and iOS, where a dialog cannot block, it opens as an ordinary
-    //** form and OK is applied when it closes.
+    //** OK, the chosen background is kept, used for grabs and icons but not animation exports,
+    //** and saved to settings.json; Cancel puts back the background in use. On Android and iOS,
+    //** where a dialog cannot block, it opens as an ordinary form and OK is applied when it
+    //** closes.
     //**
     //** @param(Sender BackgroundSettingsMenuItem.)
     /// <summary>Opens the Background Settings dialog and applies what is chosen.</summary>
     /// <remarks>The dialog, TBackgroundSettingsForm, opens modally, centred on this form,
     /// showing the background in use. Every change is shown in the viewport at once. If it is
-    /// closed with OK, the chosen background is kept, used for grabs and icons, and saved to
-    /// settings.json; Cancel puts back the background in use. On Android and iOS, where a dialog cannot block, it opens as an ordinary form
-    /// and OK is applied when it closes.</remarks>
+    /// closed with OK, the chosen background is kept, used for grabs and icons but not
+    /// animation exports, and saved to settings.json; Cancel puts back the background in use.
+    /// On Android and iOS, where a dialog cannot block, it opens as an ordinary form and OK is
+    /// applied when it closes.</remarks>
     /// <param name="Sender">BackgroundSettingsMenuItem.</param>
     procedure BackgroundSettingsMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Settings dialog and applies what is chosen.)
@@ -1230,6 +1238,29 @@ type
     /// dialog does not block, and the choice is applied when it closes.</remarks>
     /// <param name="Sender">AnimationsUsedItem.</param>
     procedure AnimationsUsedItemClick(Sender: TObject);
+    //** @abstract(Opens the Directions dialog, and on OK keeps what is chosen there.)
+    //**
+    //** The dialog, TDirectionsForm, shows a compass with a marker for each direction, the
+    //** first in red, and sets how many directions there are, the first one's bearing, the
+    //** order they are taken in, clockwise, anticlockwise or any order clicked with Change
+    //** Order, and whether the dial is locked to steps of one direction, as kept in
+    //** settings.json; Export and Import write them to and read them from a JSON file of their
+    //** own, in DirectionsFolder. OK keeps and saves them; Cancel changes nothing. The rest of
+    //** the program reads the result with DirectionBearings in the settings. On Android and iOS
+    //** the dialog does not block, and the choice is kept when it closes.
+    //**
+    //** @param(Sender DirectionsItem.)
+    /// <summary>Opens the Directions dialog, and on OK keeps what is chosen there.</summary>
+    /// <remarks>The dialog, TDirectionsForm, shows a compass with a marker for each direction,
+    /// the first in red, and sets how many directions there are, the first one's bearing, the
+    /// order they are taken in, clockwise, anticlockwise or any order clicked with Change
+    /// Order, and whether the dial is locked to steps of one direction, as kept in
+    /// settings.json; Export and Import write them to and read them from a JSON file of their
+    /// own, in DirectionsFolder. OK keeps and saves them; Cancel changes nothing. The rest of
+    /// the program reads the result with DirectionBearings in the settings. On Android and iOS
+    /// the dialog does not block, and the choice is kept when it closes.</remarks>
+    /// <param name="Sender">DirectionsItem.</param>
+    procedure DirectionsItemClick(Sender: TObject);
     //** @abstract(Sets the 1/4 view and fixes it.)
     //**
     //** Inclination 22.5 degrees at azimuth 45: a lower look than View, Camera, 3/4 View. The
@@ -1356,6 +1387,12 @@ type
     // True while a grab or a capture has its own framing on the camera,
     // which must be put back even if the camera is locked meanwhile
     FGrabFramed: Boolean;
+    // The helpers a grab hid, to be shown again after it: the bounding box,
+    // and the axes, grid and volume wireframes
+    FGrabHidden: TArray<TControl3D>;
+    FGrabHidBounds: Boolean;
+    FGrabHidAxes: TModelAxes;
+    FGrabHidGrid: TModelGrid;
     FCaptureFramed: Boolean;
     // The capture under way, or nil; it frees itself when it reports
     FCapture: TSprite3DFrameCapture;
@@ -1508,7 +1545,10 @@ type
     procedure ApplyUsedAnimations(const AUsed: TArray<String>);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     procedure AnimationsUsedAccept(Sender: TObject);
+    procedure DirectionsAccept(Sender: TObject);
     {$ENDIF}
+    procedure ApplyDirections(const ACount: Integer; const AStart: Single;
+      const AOrder: TArray<Integer>; const ASnap: Boolean);
     procedure AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure SaveStripItemClick(Sender: TObject);
@@ -1539,7 +1579,9 @@ type
     procedure NextButtonClick(Sender: TObject);
     procedure LastButtonClick(Sender: TObject);
     function SelectedAnimation: TGorillaAnimation;
-    function AnyEntryTicked: Boolean;
+    function TickedAnimationCount: Integer;
+    procedure HideHelpersForGrab;
+    procedure ShowHelpersAfterGrab;
     function UsesCombinedView: Boolean;
     function ViewVolume: TSweptVolume;
     procedure UpdateView;
@@ -1622,8 +1664,8 @@ implementation
 uses
   FMX.Platform, System.IOUtils, OSPaths,
   Gorilla.DefTypes, System.Math,
-  Sprite3DAxes, Sprite3DGrid, Sprite3DOpenFiles, Sprite3DBackgroundForm,
-  Sprite3DAnimationsUsedForm;
+  Sprite3DOpenFiles, Sprite3DBackgroundForm,
+  Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm;
 
 {$R *.fmx}
 
@@ -1658,9 +1700,9 @@ const
   // The first entry of AnimationListBox, which stops any animation and
   // shows the model as loaded
   NO_ANIMATION = '(None)';
-  // What the (None) entry captures instead of an animation: one full turn
-  // of the model in TURNTABLE_SECONDS, at the Model, Animation Settings frame rate
-  TURNTABLE_SECONDS = 1.0;
+  // What the (None) entry captures instead of an animation is one still
+  // frame, the model in its bind pose; a GIF or MP4 of it lasts this long
+  STILL_SECONDS = 1.0;
   // Marks the frame-count label FrameCountLabel puts on each list entry
   FRAME_LABEL_TAG = 3001;
   // The most memory a capture may use for its frames and the image made
@@ -1980,9 +2022,8 @@ begin
         end
       else if AnimationListBox.ItemIndex = 0 then
         begin
-          // Show base model
-          if Assigned(GorillaModel.AnimationManager) and Assigned(GorillaModel.AnimationManager.Current) then
-            GorillaModel.AnimationManager.Current.Stop();
+          // The model as loaded: Gorilla puts it back in its bind pose
+          GorillaModel.ResetToBindPose();
         end;
     end;
   UpdateTransportControls;
@@ -2304,6 +2345,11 @@ end;
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
+  // Animation exports show the model alone: the helpers drawn on screen to
+  // show its box, axes, floor and volumes are left out. Grabs and icons are
+  // saved as the view shows them, helpers and all.
+  if Assigned(FCapture) then
+    HideHelpersForGrab;
   // The on-screen background is a 2D control behind the viewport, so it is
   // never in the grab's frame buffer; grabs add their own backdrop after
   // matting
@@ -2320,9 +2366,65 @@ begin
       ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
 end;
 
+// Hides, for one drawing of an animation export, everything drawn on
+// screen only to help see the model: its bounding box, axes and grid, and the Model and
+// Animation Volume wireframes. Only what is showing is hidden, and
+// ShowHelpersAfterGrab shows exactly that again.
+procedure TMainForm.HideHelpersForGrab;
+
+  procedure HideIt(const AHelper: TControl3D);
+  begin
+    if (AHelper <> nil) and AHelper.Visible then
+    begin
+      AHelper.Visible := False;
+      FGrabHidden := FGrabHidden + [AHelper];
+    end;
+  end;
+
+begin
+  ShowHelpersAfterGrab;   // anything still hidden from a grab that ended early
+  if GorillaModel = nil then
+    Exit;
+  FGrabHidBounds := GorillaModel.ShowBoundingBox;
+  if FGrabHidBounds then
+    GorillaModel.ShowBoundingBox := False;
+  // The axes and grid draw beside the model, not as their own children, so
+  // they are hidden with Shown rather than Visible
+  FGrabHidAxes := FindModelAxes(GorillaModel);
+  if (FGrabHidAxes <> nil) and FGrabHidAxes.Shown then
+    FGrabHidAxes.Shown := False
+  else
+    FGrabHidAxes := nil;
+  FGrabHidGrid := FindModelGrid(GorillaModel);
+  if (FGrabHidGrid <> nil) and FGrabHidGrid.Shown then
+    FGrabHidGrid.Shown := False
+  else
+    FGrabHidGrid := nil;
+  HideIt(FindModelSweep(GorillaModel));
+  HideIt(FindCombinedSweep(GorillaModel));
+end;
+
+// Shows again what HideHelpersForGrab hid, before the main pass draws
+procedure TMainForm.ShowHelpersAfterGrab;
+begin
+  for var Helper in FGrabHidden do
+    Helper.Visible := True;
+  FGrabHidden := nil;
+  if FGrabHidAxes <> nil then
+    FGrabHidAxes.Shown := True;
+  FGrabHidAxes := nil;
+  if FGrabHidGrid <> nil then
+    FGrabHidGrid.Shown := True;
+  FGrabHidGrid := nil;
+  if FGrabHidBounds and (GorillaModel <> nil) then
+    GorillaModel.ShowBoundingBox := True;
+  FGrabHidBounds := False;
+end;
+
 // Put the on-screen framing back before the main pass draws
 procedure TMainForm.OffscreenAfterGrab(Sender: TObject);
 begin
+  ShowHelpersAfterGrab;
   // Only a framing this grab set is put back
   if not FGrabFramed then
     Exit;
@@ -2912,7 +3014,7 @@ begin
 end;
 
 // Refit after a change of model, size, projection, animation or ticks, to
-// ViewVolume: the combined swept volume while entries are ticked for export
+// ViewVolume: the combined swept volume while animations are ticked for export
 // playing or paused, so everything a batch exports is framed alike, and
 // otherwise the volume of what is shown alone, as large as the view allows.
 // The dials do not call this: with the orbit centre on the turning axis, the
@@ -2977,7 +3079,7 @@ begin
 end;
 
 // The combined volume: the rest pose's and that of each animation used, all
-// measured as the model loaded; framed while entries are ticked, and by
+// measured as the model loaded; framed while animations are ticked, and by
 // batch exports
 function TMainForm.SweepFitVolume: TSweptVolume;
 begin
@@ -3000,24 +3102,25 @@ begin
   Result := FitCameraToSweep(GorillaCamera, GorillaModel, ViewVolume, AWidth, AHeight);
 end;
 
-// True while any entry of the list, (None) included, is ticked for export
-function TMainForm.AnyEntryTicked: Boolean;
+// How many animations are ticked for export; (None), entry 0, the turn,
+// is not an animation and does not count
+function TMainForm.TickedAnimationCount: Integer;
 var
   I: Integer;
 begin
-  for I := 0 to AnimationListBox.Count - 1 do
+  Result := 0;
+  for I := 1 to AnimationListBox.Count - 1 do
     if AnimationListBox.ListItems[I].IsChecked then
-      Exit(True);
-  Result := False;
+      Inc(Result);
 end;
 
-// Whether the view shows the combined volume: whenever an entry is ticked
-// for export, as a batch frames them all alike, playing or paused. With
-// nothing ticked it shows the volume of what is on screen alone, playing or
-// paused.
+// Whether the view shows the combined volume: while two or more animations
+// are ticked for export, as a batch frames them all alike, playing or
+// paused. With one ticked, or none, it shows the volume of what is on
+// screen alone, playing or paused.
 function TMainForm.UsesCombinedView: Boolean;
 begin
-  Result := (GorillaModel <> nil) and AnyEntryTicked;
+  Result := (GorillaModel <> nil) and (TickedAnimationCount >= 2);
 end;
 
 // The volume the view is fitted to and grabs are framed by: the combined one
@@ -3092,7 +3195,7 @@ begin
   end;
   // A model without animations, or with none used, has no animation volume
   // to show: it would only repeat the rest pose's. Nor is it shown unless
-  // the view is of the combined volume: entries ticked.
+  // the view is of the combined volume: two or more animations ticked.
   if (GorillaModel = nil) or (Length(FUsedAnimations) = 0) or not UsesCombinedView then
   begin
     HideCombinedSweep(GorillaModel);
@@ -3397,6 +3500,11 @@ begin
     Old.Free;
   end;
   GorillaModel.Visible := True;
+  // Measuring stepped the animations through their poses and left the
+  // model however the last of them did; put it in its bind pose, exactly as
+  // choosing (None) does, so it shows, and its bounding box measures, the
+  // same either way
+  GorillaModel.ResetToBindPose();
 
   FModelBox := FLoadBox;
   FModelFile := FLoadFile;
@@ -3413,6 +3521,8 @@ begin
   // Draw the model's box, if wanted: the bounds of the current pose, in
   // Gorilla's default orange
   GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
+  // Gorilla draws that box on screen only; this draws it into grabs too
+  ShowModelBoundsOutline(GorillaModel);
   // Axes through the centre of rotation, sized for the newly loaded model
   if ShowAxesItem.IsChecked then
     ShowModelAxes(GorillaModel);
@@ -3912,9 +4022,10 @@ begin
   Result := False;
 end;
 
-// The frames saving entry AIndex makes at the Model, Animation Settings rate, worked
-// out as a capture does: one turn for (None), otherwise the animation's
-// length times the rate, rounded. 0 if the animation cannot be found.
+// The frames saving entry AIndex makes at the Model, Animation Settings
+// rate, worked out as a capture does: 1 for (None), a still of the bind
+// pose, otherwise the animation's length times the rate, rounded. 0 if the
+// animation cannot be found.
 function TMainForm.AnimationFrameCount(const AIndex: Integer): Integer;
 var
   Anim: TGorillaAnimation;
@@ -3922,7 +4033,7 @@ var
 begin
   Result := 0;
   if AIndex = 0 then
-    Exit(Max(1, Round(FSettings.AnimationFps * TURNTABLE_SECONDS)));
+    Exit(1);
   if (GorillaModel = nil) or (GorillaModel.AnimationManager = nil) then
     Exit;
   Anim := GorillaModel.AnimationManager.GetAnimation(AnimationListBox.Items[AIndex]);
@@ -3972,8 +4083,90 @@ begin
   end;
 end;
 
-// Model, Animations Used...: which animations are listed and swept. OK
-// applies the dialog's ticks; Cancel leaves everything as it was.
+// Model, Directions...: how many directions, where the first points, the
+// order they are taken in, and whether the dial snaps. OK keeps and saves
+// them; Cancel leaves everything as it was.
+procedure TMainForm.DirectionsItemClick(Sender: TObject);
+var
+  Dialog: TDirectionsForm;
+  Order: TArray<Integer>;
+begin
+  Dialog := TDirectionsForm.Create(nil);
+  Dialog.Snap := FSettings.DirectionSnap;
+  Dialog.Count := FSettings.DirectionCount;
+  Dialog.Start := FSettings.DirectionStart;
+  Order := FSettings.DirectionOrderList;
+  if not IsDirectionOrder(Order, Dialog.Count) then
+    Order := PlainDirectionOrder(Dialog.Count, FSettings.DirectionClockwise);
+  Dialog.Order := Order;
+  Dialog.Folder := FSettings.DirectionsFolder;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports OK and frees itself
+  Dialog.OnAccept := DirectionsAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal = mrOk then
+    begin
+      FSettings.DirectionsFolder := Dialog.Folder;
+      ApplyDirections(Dialog.Count, Dialog.Start, Dialog.Order, Dialog.Snap);
+    end
+    else
+      // Kept with the other settings when they are next saved
+      FSettings.DirectionsFolder := Dialog.Folder;
+  finally
+    Dialog.Free;
+  end;
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.DirectionsAccept(Sender: TObject);
+var
+  Dialog: TDirectionsForm;
+begin
+  Dialog := Sender as TDirectionsForm;
+  ApplyDirections(Dialog.Count, Dialog.Start, Dialog.Order, Dialog.Snap);
+end;
+{$ENDIF}
+
+// Keeps the directions chosen in Model, Directions, and saves them. A plain
+// order is kept as DirectionClockwise alone, with DirectionOrder empty
+procedure TMainForm.ApplyDirections(const ACount: Integer; const AStart: Single;
+  const AOrder: TArray<Integer>; const ASnap: Boolean);
+var
+  Clockwise, Anticlockwise: TArray<Integer>;
+  Plain: Boolean;
+begin
+  FSettings.DirectionCount := ACount;   // limited to DIRECTION_COUNTS
+  FSettings.DirectionStart := AStart;
+  FSettings.DirectionSnap := ASnap;
+  Clockwise := PlainDirectionOrder(FSettings.DirectionCount, True);
+  Anticlockwise := PlainDirectionOrder(FSettings.DirectionCount, False);
+  Plain := not IsDirectionOrder(AOrder, FSettings.DirectionCount) or
+    (DirectionOrderToText(AOrder) = DirectionOrderToText(Clockwise)) or
+    (DirectionOrderToText(AOrder) = DirectionOrderToText(Anticlockwise));
+  if Plain then
+  begin
+    FSettings.DirectionClockwise := (FSettings.DirectionCount <= 2) or
+      not IsDirectionOrder(AOrder, FSettings.DirectionCount) or
+      (DirectionOrderToText(AOrder) <> DirectionOrderToText(Anticlockwise));
+    FSettings.DirectionOrder := String.Empty;
+  end
+  else
+  begin
+    FSettings.DirectionClockwise := True;
+    FSettings.DirectionOrder := DirectionOrderToText(AOrder);
+  end;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
 procedure TMainForm.AnimationsUsedItemClick(Sender: TObject);
 var
   Dialog: TAnimationsUsedForm;
@@ -4166,24 +4359,18 @@ begin
     Exit;
   end;
 
-  if (AIndex = 0) and CameraLocked then
-  begin
-    AError := 'The (None) turn turns the camera, which is locked. Untick View, Camera, ' +
-      'Lock Camera to capture it.';
-    Exit;
-  end;
-
   // The capture drives the animation itself, so nothing stays held
   FreeAndNil(FPlayer);
   UpdateTransportControls;
 
+
   if AIndex = 0 then
   begin
-    // No animation: one turn of the model, named after the model
-    Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel) +
-      '_rotate');
-    Source := TSprite3DTurntableFrames.Create(GorillaCamera,
-      Max(1, Round(FSettings.AnimationFps * TURNTABLE_SECONDS)), TURNTABLE_SECONDS);
+    // No animation: one still frame of the model in its bind pose, named
+    // after the model. A turntable source of one frame shows the view as it
+    // is, without turning it.
+    Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
+    Source := TSprite3DTurntableFrames.Create(GorillaCamera, 1, STILL_SECONDS);
   end
   else
   begin
@@ -4211,6 +4398,13 @@ begin
       [Stem, Count, FOffscreen.Width, FOffscreen.Height]);
     Exit;
   end;
+
+  // Exports carry no background, whatever the view shows behind the model:
+  // strips, atlases and GIFs are transparent around it, and MP4s, which
+  // cannot be, are laid over black. EndCapture puts the view's back.
+  var NoBackdrop := TSprite3DBackgroundSpec.Default;
+  NoBackdrop.Kind := TSprite3DBackgroundKind.None;
+  FOffscreen.Backdrop := NoBackdrop;
 
   // One framing for every frame, from here until EndCapture; a locked
   // camera is captured exactly as it stands
@@ -4916,7 +5110,7 @@ end;
 // AWidth x AHeight, with the pan on top as for every fit. A single
 // animation saved from the list's pop-up menu, or the Animation menu on
 // Android and iOS, is framed to its own swept volume, so it fills the
-// target as far as its own poses allow. A batch, and the (None) turn, are
+// target as far as its own poses allow. A batch, and the (None) still, are
 // framed to the combined swept volume, which holds every pose of every
 // animation used, so every animation of a batch is framed alike. Either way
 // the orbit centre is on the turning axis, so a turn of the camera's
@@ -4944,6 +5138,8 @@ end;
 // viewport changed size meanwhile
 procedure TMainForm.EndCapture;
 begin
+  // Grabs and icons show the background again, as the view does
+  FOffscreen.Backdrop := FBackground.Spec;
   // Only a framing the capture set is put back
   if FCaptureFramed then
     GorillaCamera.RestoreFraming(FCaptureRestore);

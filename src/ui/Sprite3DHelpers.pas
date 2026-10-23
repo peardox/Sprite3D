@@ -111,6 +111,27 @@ const
   /// <summary>The frame rate the view is drawn at until File, Settings changes it, and the
   /// most it offers where the display's refresh rate is not known.</summary>
   VIEW_FPS_DEFAULT = 60;
+  //** @abstract(The numbers of directions Model, Directions offers: 1, 2, and every multiple of
+  //** 4 or 6 up to 64, smallest first.)
+  /// <summary>The numbers of directions Model, Directions offers: 1, 2, and every multiple of
+  /// 4 or 6 up to 64, smallest first.</summary>
+  DIRECTION_COUNTS: array[0..22] of Integer =
+    (1, 2, 4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 44, 48, 52, 54, 56, 60, 64);
+  //** @abstract(The number of directions until Model, Directions changes it.)
+  /// <summary>The number of directions until Model, Directions changes it.</summary>
+  DIRECTION_COUNT_DEFAULT = 8;
+  //** @abstract(The @code(format) a directions file names itself with, so another JSON file
+  //** is not taken for one.)
+  /// <summary>The <c>format</c> a directions file names itself with, so another JSON file is
+  /// not taken for one.</summary>
+  DIRECTIONS_FILE_FORMAT = 'Sprite3D directions';
+  //** @abstract(The newest directions file layout this version writes and reads.)
+  /// <summary>The newest directions file layout this version writes and reads.</summary>
+  DIRECTIONS_FILE_VERSION = 1;
+  //** @abstract(The extension Model, Directions gives the directions files it exports.)
+  /// <summary>The extension Model, Directions gives the directions files it
+  /// exports.</summary>
+  DIRECTIONS_FILE_EXTENSION = '.json';
   //** @abstract(The smallest width or height File, Grab renders, in pixels.)
   /// <summary>The smallest width or height File, Grab renders, in pixels.</summary>
   GRAB_SIZE_MIN = 8;
@@ -131,6 +152,14 @@ const
     (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);
 
 type
+  //** @abstract(Raised by LoadDirectionsFile when a file cannot be used as directions.)
+  //**
+  //** The message says what is wrong, in words fit to show the user.
+  /// <summary>Raised by LoadDirectionsFile when a file cannot be used as
+  /// directions.</summary>
+  /// <remarks>The message says what is wrong, in words fit to show the user.</remarks>
+  EDirectionsFile = class(Exception);
+
   //** @abstract(What the application loads when it starts and no file was asked for.)
   //**
   //** @code(saNone) loads nothing; @code(saDefaultModel) loads the sample model;
@@ -236,6 +265,7 @@ type
   private
     FSaveFolder: String;
     FIconFolder: String;
+    FDirectionsFolder: String;
     FBackgroundKind: TSprite3DBackgroundKind;
     FBackgroundColour: String;
     FGradientFrom: String;
@@ -268,10 +298,17 @@ type
     FGrabHeight: Integer;
     FAnimationFps: Integer;
     FViewFps: Integer;
+    FDirectionCount: Integer;
+    FDirectionStart: Single;
+    FDirectionClockwise: Boolean;
+    FDirectionOrder: String;
+    FDirectionSnap: Boolean;
     FOverscan: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
     procedure SetViewFps(const Value: Integer);
+    procedure SetDirectionCount(const Value: Integer);
+    procedure SetDirectionStart(const Value: Single);
     procedure SetOverscan(const Value: Integer);
     procedure SetGrabWidth(const Value: Integer);
     procedure SetGrabHeight(const Value: Integer);
@@ -311,6 +348,31 @@ type
     /// drive that is not connected, so the user can be asked for a folder again.</remarks>
     /// <returns>Whether grabs can be saved in SaveFolder without asking.</returns>
     function HasSaveFolder: Boolean;
+    //** @abstract(The order the directions are taken in: for each direction, from the first,
+    //** its position round the compass.)
+    //**
+    //** Positions count clockwise from 0 at DirectionStart. This is DirectionOrder when it
+    //** holds every position from 1 to DirectionCount once each, less one; otherwise the plain
+    //** order, clockwise or anticlockwise as DirectionClockwise says.
+    //**
+    //** @returns(DirectionCount positions, every one from 0 to DirectionCount - 1 once.)
+    /// <summary>The order the directions are taken in: for each direction, from the first,
+    /// its position round the compass.</summary>
+    /// <remarks>Positions count clockwise from 0 at DirectionStart. This is DirectionOrder
+    /// when it holds every position from 1 to DirectionCount once each, less one; otherwise
+    /// the plain order, clockwise or anticlockwise as DirectionClockwise says.</remarks>
+    /// <returns>DirectionCount positions, every one from 0 to DirectionCount - 1
+    /// once.</returns>
+    function DirectionOrderList: TArray<Integer>;
+    //** @abstract(Each direction's compass bearing, in the order the directions are taken
+    //** in.)
+    //**
+    //** @returns(DirectionCount bearings, in degrees clockwise from north, 0 up to 360.)
+    /// <summary>Each direction's compass bearing, in the order the directions are taken
+    /// in.</summary>
+    /// <returns>DirectionCount bearings, in degrees clockwise from north, 0 up to
+    /// 360.</returns>
+    function DirectionBearings: TArray<Single>;
     //** @abstract(The background settings together, as the viewport and grabs use them.)
     //**
     //** Reading turns the stored colour texts back into colours; one that cannot be read
@@ -345,6 +407,14 @@ type
     /// until an icon is saved.</summary>
     /// <remarks>Stored as <c>iconFolder</c> in settings.json.</remarks>
     property IconFolder: String read FIconFolder write FIconFolder;
+    //** @abstract(The folder a directions file was last exported to or imported from, where
+    //** the next Export or Import in Model, Directions opens; empty until one is.)
+    //**
+    //** Stored as @code(directionsFolder) in settings.json.
+    /// <summary>The folder a directions file was last exported to or imported from, where the
+    /// next Export or Import in Model, Directions opens; empty until one is.</summary>
+    /// <remarks>Stored as <c>directionsFolder</c> in settings.json.</remarks>
+    property DirectionsFolder: String read FDirectionsFolder write FDirectionsFolder;
     //** @abstract(What the background shows: None, Transparent, Solid or Gradient.)
     //**
     //** Stored as @code(backgroundKind), by name. None, the default until one is chosen,
@@ -601,8 +671,8 @@ type
     /// <remarks>Set in Model, Animation Settings. Stored as <c>animationFps</c>. Written
     /// values are limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
     property AnimationFps: Integer read FAnimationFps write SetAnimationFps;
-    //** @abstract(The frame rate the view is drawn at, in frames per second; VIEW_FPS_DEFAULT by
-    //** default.)
+    //** @abstract(The frame rate the view is drawn at, in frames per second;
+    //** VIEW_FPS_DEFAULT by default.)
     //**
     //** Set in File, Settings, which offers up to the display's refresh rate. Stored as
     //** @code(viewFps). Written values are limited to VIEW_FPS_MIN to VIEW_FPS_MAX.
@@ -612,6 +682,66 @@ type
     /// as <c>viewFps</c>. Written values are limited to VIEW_FPS_MIN to
     /// VIEW_FPS_MAX.</remarks>
     property ViewFps: Integer read FViewFps write SetViewFps;
+    //** @abstract(How many directions Model, Directions has around its compass;
+    //** DIRECTION_COUNT_DEFAULT by default.)
+    //**
+    //** Stored as @code(directionCount). A written value that is not one of DIRECTION_COUNTS
+    //** becomes the nearest that is.
+    /// <summary>How many directions Model, Directions has around its compass;
+    /// DIRECTION_COUNT_DEFAULT by default.</summary>
+    /// <remarks>Stored as <c>directionCount</c>. A written value that is not one of
+    /// DIRECTION_COUNTS becomes the nearest that is.</remarks>
+    property DirectionCount: Integer read FDirectionCount write SetDirectionCount;
+    //** @abstract(The compass bearing of position 0, the red marker in Model, Directions, in
+    //** degrees clockwise from north; 0, north, by default.)
+    //**
+    //** Stored as @code(directionStart). It is the first direction's bearing unless
+    //** DirectionOrder puts another first. Written values are wrapped into 0 up to 360.
+    /// <summary>The compass bearing of position 0, the red marker in Model, Directions, in
+    /// degrees clockwise from north; 0, north, by default.</summary>
+    /// <remarks>Stored as <c>directionStart</c>. It is the first direction's bearing unless
+    /// DirectionOrder puts another first. Written values are wrapped into 0 up to
+    /// 360.</remarks>
+    property DirectionStart: Single read FDirectionStart write SetDirectionStart;
+    //** @abstract(Whether the directions are numbered clockwise from the first; True by
+    //** default.)
+    //**
+    //** Stored as @code(directionClockwise). False numbers them anticlockwise. Used when
+    //** DirectionOrder is empty or does not fit DirectionCount.
+    /// <summary>Whether the directions are numbered clockwise from the first; True by
+    /// default.</summary>
+    /// <remarks>Stored as <c>directionClockwise</c>. False numbers them anticlockwise. Used
+    /// when DirectionOrder is empty or does not fit DirectionCount.</remarks>
+    property DirectionClockwise: Boolean read FDirectionClockwise
+      write FDirectionClockwise;
+    //** @abstract(The order the directions are taken in, as Model, Directions set it; empty
+    //** by default.)
+    //**
+    //** Stored as @code(directionOrder): the positions round the compass, counted clockwise
+    //** from 1 at DirectionStart, in the order the directions are numbered, separated by
+    //** commas, such as @code('3,5,7,1,4,6,8,2') for E, S, W, N, SE, SW, NW and NE when the
+    //** first of eight is north. Empty, or text that is not every position from 1 to
+    //** DirectionCount once each, means the plain order DirectionClockwise gives. Use
+    //** DirectionOrderList and DirectionBearings rather than reading it directly.
+    /// <summary>The order the directions are taken in, as Model, Directions set it; empty by
+    /// default.</summary>
+    /// <remarks>Stored as <c>directionOrder</c>: the positions round the compass, counted
+    /// clockwise from 1 at DirectionStart, in the order the directions are numbered, separated
+    /// by commas, such as <c>'3,5,7,1,4,6,8,2'</c> for E, S, W, N, SE, SW, NW and NE when the
+    /// first of eight is north. Empty, or text that is not every position from 1 to
+    /// DirectionCount once each, means the plain order DirectionClockwise gives. Use
+    /// DirectionOrderList and DirectionBearings rather than reading it directly.</remarks>
+    property DirectionOrder: String read FDirectionOrder write FDirectionOrder;
+    //** @abstract(Whether the Model, Directions dial turns in steps of one direction; False
+    //** by default.)
+    //**
+    //** Stored as @code(directionSnap). True locks DirectionStart to whole multiples of 360
+    //** divided by DirectionCount, counted from north.
+    /// <summary>Whether the Model, Directions dial turns in steps of one direction; False by
+    /// default.</summary>
+    /// <remarks>Stored as <c>directionSnap</c>. True locks DirectionStart to whole multiples of
+    /// 360 divided by DirectionCount, counted from north.</remarks>
+    property DirectionSnap: Boolean read FDirectionSnap write FDirectionSnap;
     //** @abstract(The overscan factor Model, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
@@ -645,6 +775,202 @@ type
 /// <param name="ADegrees">Any angle in degrees, negative or past a full turn.</param>
 /// <returns>The same direction as an angle from 0 up to, but not including, 360.</returns>
 function Wrap360(const ADegrees: Single): Single;
+
+//** @abstract(The entry of DIRECTION_COUNTS nearest to a number, the smaller of two as near.)
+//**
+//** @param(ACount Any number.)
+//**
+//** @returns(One of DIRECTION_COUNTS.)
+/// <summary>The entry of DIRECTION_COUNTS nearest to a number, the smaller of two as
+/// near.</summary>
+/// <param name="ACount">Any number.</param>
+/// <returns>One of DIRECTION_COUNTS.</returns>
+function NearestDirectionCount(const ACount: Integer): Integer;
+
+//** @abstract(The abbreviated name of a point of the 32-point compass, if a bearing is on
+//** one.)
+//**
+//** The points are 11.25 degrees apart, named as the mariner's compass names them: the
+//** cardinal points N, E, S and W; the intercardinal NE, SE, SW and NW; the eight winds
+//** between them, NNE, ENE and so on; and the sixteen "by" points, NbE (north by east),
+//** NEbN and so on.
+//**
+//** @param(ADegrees A bearing in degrees clockwise from north, any number of turns.)
+//**
+//** @returns(The point's abbreviation, such as N, NbE, NNE or NEbN, for a bearing within a
+//** hundredth of a degree of one; otherwise an empty string, so a whole-degree bearing only
+//** has a name on the eight points that fall on whole degrees.)
+/// <summary>The abbreviated name of a point of the 32-point compass, if a bearing is on
+/// one.</summary>
+/// <remarks>The points are 11.25 degrees apart, named as the mariner's compass names them:
+/// the cardinal points N, E, S and W; the intercardinal NE, SE, SW and NW; the eight winds
+/// between them, NNE, ENE and so on; and the sixteen "by" points, NbE (north by east), NEbN
+/// and so on.</remarks>
+/// <param name="ADegrees">A bearing in degrees clockwise from north, any number of
+/// turns.</param>
+/// <returns>The point's abbreviation, such as N, NbE, NNE or NEbN, for a bearing within a
+/// hundredth of a degree of one; otherwise an empty string, so a whole-degree bearing only
+/// has a name on the eight points that fall on whole degrees.</returns>
+function CompassPointName(const ADegrees: Single): String;
+
+//** @abstract(The plain order of ACount directions: clockwise from position 0, or
+//** anticlockwise.)
+//**
+//** @param(ACount How many directions; values below 1 give an empty order.)
+//**
+//** @param(AClockwise True for 0, 1, 2 and so on; False for 0, ACount - 1, ACount - 2 and so
+//** on.)
+//**
+//** @returns(ACount positions, every one from 0 to ACount - 1 once.)
+/// <summary>The plain order of ACount directions: clockwise from position 0, or
+/// anticlockwise.</summary>
+/// <param name="ACount">How many directions; values below 1 give an empty order.</param>
+/// <param name="AClockwise">True for 0, 1, 2 and so on; False for 0, ACount - 1, ACount - 2
+/// and so on.</param>
+/// <returns>ACount positions, every one from 0 to ACount - 1 once.</returns>
+function PlainDirectionOrder(const ACount: Integer; const AClockwise: Boolean): TArray<Integer>;
+
+//** @abstract(Whether an order holds every position from 0 to ACount - 1 exactly once.)
+//**
+//** @param(AOrder The order, as positions from 0.)
+//**
+//** @param(ACount How many directions there are.)
+//**
+//** @returns(True if AOrder has ACount entries and each position once.)
+/// <summary>Whether an order holds every position from 0 to ACount - 1 exactly
+/// once.</summary>
+/// <param name="AOrder">The order, as positions from 0.</param>
+/// <param name="ACount">How many directions there are.</param>
+/// <returns>True if AOrder has ACount entries and each position once.</returns>
+function IsDirectionOrder(const AOrder: TArray<Integer>; const ACount: Integer): Boolean;
+
+//** @abstract(An order as the text DirectionOrder keeps: positions from 1, separated by
+//** commas.)
+//**
+//** @param(AOrder The order, as positions from 0.)
+//**
+//** @returns(The text, such as @code('3,5,7,1,4,6,8,2'); empty for an empty order.)
+/// <summary>An order as the text DirectionOrder keeps: positions from 1, separated by
+/// commas.</summary>
+/// <param name="AOrder">The order, as positions from 0.</param>
+/// <returns>The text, such as <c>'3,5,7,1,4,6,8,2'</c>; empty for an empty order.</returns>
+function DirectionOrderToText(const AOrder: TArray<Integer>): String;
+
+//** @abstract(Reads the text DirectionOrder keeps back into an order.)
+//**
+//** @param(AText Positions from 1, separated by commas; spaces are ignored.)
+//**
+//** @returns(The positions from 0, in order; an entry that is not a number gives -1, which
+//** IsDirectionOrder rejects.)
+/// <summary>Reads the text DirectionOrder keeps back into an order.</summary>
+/// <param name="AText">Positions from 1, separated by commas; spaces are ignored.</param>
+/// <returns>The positions from 0, in order; an entry that is not a number gives -1, which
+/// IsDirectionOrder rejects.</returns>
+function DirectionOrderFromText(const AText: String): TArray<Integer>;
+
+//** @abstract(Writes a set of directions to a JSON file, for Model, Directions' Export.)
+//**
+//** The file holds everything Model, Directions sets, so it can be read back with
+//** LoadDirectionsFile, kept beside artwork whose directions come in a fixed order, and
+//** swapped between models:
+//**
+//** @preformatted(
+//** {
+//**   "format": "Sprite3D directions",
+//**   "version": 1,
+//**   "count": 8,
+//**   "start": 0,
+//**   "snap": false,
+//**   "clockwise": true,
+//**   "order": [3, 5, 7, 1, 4, 6, 8, 2],
+//**   "directions": [
+//**     { "number": 1, "position": 3, "bearing": 90, "point": "E" },
+//**     ...
+//**   ]
+//** }
+//** )
+//**
+//** @code(order) holds the positions, counted clockwise from 1 at the red marker, in the
+//** order the directions are taken in, as DirectionOrder does. @code(directions) spells
+//** each one out, with its bearing and compass point, for people and other tools to read;
+//** LoadDirectionsFile ignores it. The folder is made if it does not exist.
+//**
+//** @param(AFileName The file to write; replaced if it exists.)
+//**
+//** @param(ACount How many directions; one of DIRECTION_COUNTS.)
+//**
+//** @param(AStart The red marker's bearing, in degrees clockwise from north.)
+//**
+//** @param(AOrder The order, as positions from 0; one that does not fit ACount is written
+//** as the plain clockwise order.)
+//**
+//** @param(ASnap Whether the dial is locked to steps of one direction.)
+//**
+//** @raises(EInOutError or another file exception if the file cannot be written.)
+/// <summary>Writes a set of directions to a JSON file, for Model, Directions'
+/// Export.</summary>
+/// <remarks>The file holds everything Model, Directions sets, so it can be read back with
+/// LoadDirectionsFile, kept beside artwork whose directions come in a fixed order, and
+/// swapped between models. Its members are <c>format</c> (DIRECTIONS_FILE_FORMAT),
+/// <c>version</c>, <c>count</c>, <c>start</c>, <c>snap</c>, <c>clockwise</c>,
+/// <c>order</c> and <c>directions</c>. <c>order</c> holds the positions, counted clockwise
+/// from 1 at the red marker, in the order the directions are taken in, as DirectionOrder
+/// does, such as <c>[3, 5, 7, 1, 4, 6, 8, 2]</c>. <c>directions</c> spells each one out,
+/// with its number, position, bearing and compass point, for people and other tools to
+/// read; LoadDirectionsFile ignores it. The folder is made if it does not exist.</remarks>
+/// <param name="AFileName">The file to write; replaced if it exists.</param>
+/// <param name="ACount">How many directions; one of DIRECTION_COUNTS.</param>
+/// <param name="AStart">The red marker's bearing, in degrees clockwise from north.</param>
+/// <param name="AOrder">The order, as positions from 0; one that does not fit ACount is
+/// written as the plain clockwise order.</param>
+/// <param name="ASnap">Whether the dial is locked to steps of one direction.</param>
+/// <exception cref="EInOutError">Or another file exception, if the file cannot be
+/// written.</exception>
+procedure SaveDirectionsFile(const AFileName: String; const ACount: Integer;
+  const AStart: Single; const AOrder: TArray<Integer>; const ASnap: Boolean);
+
+//** @abstract(Reads a set of directions from a JSON file written by SaveDirectionsFile.)
+//**
+//** @code(count) and @code(start) are needed. @code(order) may be left out, when
+//** @code(clockwise), true if it too is left out, gives the plain order; @code(snap) may
+//** be left out, for False. @code(format), when present, must be DIRECTIONS_FILE_FORMAT,
+//** and @code(version), when present, no newer than DIRECTIONS_FILE_VERSION. Anything
+//** else in the file is ignored.
+//**
+//** @param(AFileName The file to read.)
+//**
+//** @param(ACount Set to the number of directions, one of DIRECTION_COUNTS.)
+//**
+//** @param(AStart Set to the red marker's bearing, wrapped into 0 up to 360.)
+//**
+//** @param(AOrder Set to the order, as positions from 0, every one once.)
+//**
+//** @param(ASnap Set to whether the dial is locked to steps of one direction.)
+//**
+//** @raises(EDirectionsFile if the file is not JSON, is not a directions file, or holds a
+//** count or order that cannot be used; the message says which, for showing as it is.)
+//**
+//** @raises(EFileNotFoundException or another file exception if the file cannot be read.)
+/// <summary>Reads a set of directions from a JSON file written by
+/// SaveDirectionsFile.</summary>
+/// <remarks><c>count</c> and <c>start</c> are needed. <c>order</c> may be left out, when
+/// <c>clockwise</c>, true if it too is left out, gives the plain order; <c>snap</c> may be
+/// left out, for False. <c>format</c>, when present, must be DIRECTIONS_FILE_FORMAT, and
+/// <c>version</c>, when present, no newer than DIRECTIONS_FILE_VERSION. Anything else in
+/// the file is ignored.</remarks>
+/// <param name="AFileName">The file to read.</param>
+/// <param name="ACount">Set to the number of directions, one of DIRECTION_COUNTS.</param>
+/// <param name="AStart">Set to the red marker's bearing, wrapped into 0 up to 360.</param>
+/// <param name="AOrder">Set to the order, as positions from 0, every one once.</param>
+/// <param name="ASnap">Set to whether the dial is locked to steps of one
+/// direction.</param>
+/// <exception cref="EDirectionsFile">If the file is not JSON, is not a directions file, or
+/// holds a count or order that cannot be used; the message says which, for showing as it
+/// is.</exception>
+/// <exception cref="EFileNotFoundException">Or another file exception, if the file cannot
+/// be read.</exception>
+procedure LoadDirectionsFile(const AFileName: String; out ACount: Integer;
+  out AStart: Single; out AOrder: TArray<Integer>; out ASnap: Boolean);
 
 //** @abstract(Formats an angle from Wrap360 as whole degrees for a readout.)
 //**
@@ -1219,6 +1545,7 @@ begin
   inherited Create(TPath.Combine(SupportFolder, SETTINGS_FILE_NAME));
   FSaveFolder := String.Empty;
   FIconFolder := String.Empty;
+  FDirectionsFolder := String.Empty;
   SetBackgroundSpec(TSprite3DBackgroundSpec.Default);
   // As the main form's check boxes start; a settings.json without these
   // keys leaves them so
@@ -1249,6 +1576,11 @@ begin
   FGrabHeight := GRAB_SIZE_DEFAULT;
   FAnimationFps := ANIMATION_FPS_DEFAULT;
   FViewFps := VIEW_FPS_DEFAULT;
+  FDirectionCount := DIRECTION_COUNT_DEFAULT;
+  FDirectionStart := 0;
+  FDirectionClockwise := True;
+  FDirectionOrder := String.Empty;
+  FDirectionSnap := False;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
   FResampleFilter := rfBox;
 end;
@@ -1256,6 +1588,33 @@ end;
 procedure TSprite3DAppSettings.SetAnimationFps(const Value: Integer);
 begin
   FAnimationFps := EnsureRange(Value, ANIMATION_FPS_MIN, ANIMATION_FPS_MAX);
+end;
+
+function TSprite3DAppSettings.DirectionOrderList: TArray<Integer>;
+begin
+  Result := DirectionOrderFromText(FDirectionOrder);
+  if not IsDirectionOrder(Result, FDirectionCount) then
+    Result := PlainDirectionOrder(FDirectionCount, FDirectionClockwise);
+end;
+
+function TSprite3DAppSettings.DirectionBearings: TArray<Single>;
+var
+  Order: TArray<Integer>;
+begin
+  Order := DirectionOrderList;
+  SetLength(Result, Length(Order));
+  for var I := 0 to High(Order) do
+    Result[I] := Wrap360(FDirectionStart + Order[I] * 360 / FDirectionCount);
+end;
+
+procedure TSprite3DAppSettings.SetDirectionCount(const Value: Integer);
+begin
+  FDirectionCount := NearestDirectionCount(Value);
+end;
+
+procedure TSprite3DAppSettings.SetDirectionStart(const Value: Single);
+begin
+  FDirectionStart := Wrap360(Value);
 end;
 
 procedure TSprite3DAppSettings.SetViewFps(const Value: Integer);
@@ -1339,6 +1698,197 @@ end;
 function TSprite3DAppSettings.HasSaveFolder: Boolean;
 begin
   Result := (FSaveFolder <> String.Empty) and DirectoryExists(FSaveFolder);
+end;
+
+function NearestDirectionCount(const ACount: Integer): Integer;
+begin
+  Result := DIRECTION_COUNTS[0];
+  for var Count in DIRECTION_COUNTS do
+    if Abs(Count - ACount) < Abs(Result - ACount) then
+      Result := Count;
+end;
+
+function PlainDirectionOrder(const ACount: Integer; const AClockwise: Boolean): TArray<Integer>;
+begin
+  Result := nil;
+  if ACount < 1 then
+    Exit;
+  SetLength(Result, ACount);
+  for var I := 0 to ACount - 1 do
+    if AClockwise then
+      Result[I] := I
+    else
+      Result[I] := (ACount - I) mod ACount;
+end;
+
+function IsDirectionOrder(const AOrder: TArray<Integer>; const ACount: Integer): Boolean;
+var
+  Seen: TArray<Boolean>;
+begin
+  Result := (ACount >= 1) and (Length(AOrder) = ACount);
+  if not Result then
+    Exit;
+  SetLength(Seen, ACount);
+  for var Position in AOrder do
+  begin
+    if (Position < 0) or (Position >= ACount) or Seen[Position] then
+      Exit(False);
+    Seen[Position] := True;
+  end;
+end;
+
+function DirectionOrderToText(const AOrder: TArray<Integer>): String;
+begin
+  Result := String.Empty;
+  for var I := 0 to High(AOrder) do
+  begin
+    if I > 0 then
+      Result := Result + ',';
+    Result := Result + IntToStr(AOrder[I] + 1);
+  end;
+end;
+
+function DirectionOrderFromText(const AText: String): TArray<Integer>;
+begin
+  Result := nil;
+  if AText.Trim = String.Empty then
+    Exit;
+  for var Part in AText.Split([',']) do
+    Result := Result + [StrToIntDef(Part.Trim, 0) - 1];
+end;
+
+procedure SaveDirectionsFile(const AFileName: String; const ACount: Integer;
+  const AStart: Single; const AOrder: TArray<Integer>; const ASnap: Boolean);
+var
+  FileName: String;
+  Order: TArray<Integer>;
+  Root, Item: TJSONObject;
+  Positions, Items: TJSONArray;
+  Count: Integer;
+  Start, Bearing: Single;
+begin
+  FileName := OSFriendlyPath(AFileName);
+  Count := NearestDirectionCount(ACount);
+  Start := Wrap360(AStart);
+  Order := AOrder;
+  if not IsDirectionOrder(Order, Count) then
+    Order := PlainDirectionOrder(Count, True);
+  Root := TJSONObject.Create;
+  try
+    Root.AddPair('format', DIRECTIONS_FILE_FORMAT);
+    Root.AddPair('version', TJSONNumber.Create(DIRECTIONS_FILE_VERSION));
+    Root.AddPair('count', TJSONNumber.Create(Count));
+    Root.AddPair('start', TJSONNumber.Create(Start));
+    Root.AddPair('snap', TJSONBool.Create(ASnap));
+    Root.AddPair('clockwise', TJSONBool.Create((Count <= 2) or (DirectionOrderToText(Order) <>
+      DirectionOrderToText(PlainDirectionOrder(Count, False)))));
+    Positions := TJSONArray.Create;
+    Root.AddPair('order', Positions);
+    Items := TJSONArray.Create;
+    Root.AddPair('directions', Items);
+    for var I := 0 to High(Order) do
+    begin
+      Positions.Add(Order[I] + 1);
+      Bearing := Wrap360(Start + Order[I] * 360 / Count);
+      Item := TJSONObject.Create;
+      Items.AddElement(Item);
+      Item.AddPair('number', TJSONNumber.Create(I + 1));
+      Item.AddPair('position', TJSONNumber.Create(Order[I] + 1));
+      Item.AddPair('bearing', TJSONNumber.Create(Bearing));
+      Item.AddPair('point', CompassPointName(Bearing));
+    end;
+    if ExtractFileDir(FileName) <> String.Empty then
+      ForceDirectories(ExtractFileDir(FileName));
+    TFile.WriteAllText(FileName, Root.Format(2), TEncoding.UTF8);
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure LoadDirectionsFile(const AFileName: String; out ACount: Integer;
+  out AStart: Single; out AOrder: TArray<Integer>; out ASnap: Boolean);
+var
+  Value: TJSONValue;
+  Root: TJSONObject;
+  Positions: TJSONArray;
+  Text: String;
+  Version, Count, Position: Integer;
+  Start: Double;
+  Clockwise, Snap, Known: Boolean;
+begin
+  Value := TJSONObject.ParseJSONValue(TFile.ReadAllText(OSFriendlyPath(AFileName),
+    TEncoding.UTF8));
+  try
+    if not (Value is TJSONObject) then
+      raise EDirectionsFile.Create('This file is not a directions file: it is not a JSON ' +
+        'object.');
+    Root := TJSONObject(Value);
+    if Root.TryGetValue<String>('format', Text) and (Text <> DIRECTIONS_FILE_FORMAT) then
+      raise EDirectionsFile.CreateFmt('This file is not a directions file: its format is ' +
+        '"%s".', [Text]);
+    if Root.TryGetValue<Integer>('version', Version) and
+      (Version > DIRECTIONS_FILE_VERSION) then
+      raise EDirectionsFile.CreateFmt('This directions file is version %d, from a newer ' +
+        'Sprite3D; this one reads up to version %d.', [Version, DIRECTIONS_FILE_VERSION]);
+    if not Root.TryGetValue<Integer>('count', Count) then
+      raise EDirectionsFile.Create('This directions file does not say how many directions ' +
+        'there are ("count").');
+    Known := False;
+    for var Allowed in DIRECTION_COUNTS do
+      Known := Known or (Allowed = Count);
+    if not Known then
+      raise EDirectionsFile.CreateFmt('This directions file has %d directions; the number ' +
+        'must be 1, 2, or a multiple of 4 or 6 up to 64.', [Count]);
+    if not Root.TryGetValue<Double>('start', Start) then
+      raise EDirectionsFile.Create('This directions file does not say where the first ' +
+        'position points ("start").');
+    if not Root.TryGetValue<Boolean>('snap', Snap) then
+      Snap := False;
+    if not Root.TryGetValue<Boolean>('clockwise', Clockwise) then
+      Clockwise := True;
+    AOrder := nil;
+    Positions := Root.GetValue('order') as TJSONArray;
+    if Positions = nil then
+      AOrder := PlainDirectionOrder(Count, Clockwise)
+    else
+    begin
+      for var Item in Positions do
+      begin
+        if not ((Item is TJSONNumber) and TryStrToInt(Item.Value, Position)) then
+          Position := 0;   // not a whole number: rejected below
+        AOrder := AOrder + [Position - 1];
+      end;
+      if not IsDirectionOrder(AOrder, Count) then
+        raise EDirectionsFile.CreateFmt('The order in this directions file ("order") must ' +
+          'hold every position from 1 to %d exactly once.', [Count]);
+    end;
+    ACount := Count;
+    AStart := Wrap360(Start);
+    ASnap := Snap;
+  finally
+    Value.Free;
+  end;
+end;
+
+function CompassPointName(const ADegrees: Single): String;
+const
+  // The 32 points, from north clockwise, 11.25 degrees apart
+  POINT_STEP = 360 / 32;
+  POINT_TOLERANCE = 0.01;
+  NAMES: array[0..31] of String = (
+    'N', 'NbE', 'NNE', 'NEbN', 'NE', 'NEbE', 'ENE', 'EbN',
+    'E', 'EbS', 'ESE', 'SEbE', 'SE', 'SEbS', 'SSE', 'SbE',
+    'S', 'SbW', 'SSW', 'SWbS', 'SW', 'SWbW', 'WSW', 'WbS',
+    'W', 'WbN', 'WNW', 'NWbW', 'NW', 'NWbN', 'NNW', 'NbW');
+var
+  Angle: Single;
+  Steps: Integer;
+begin
+  Result := String.Empty;
+  Angle := Wrap360(ADegrees);
+  Steps := Round(Angle / POINT_STEP);
+  if Abs(Angle - Steps * POINT_STEP) <= POINT_TOLERANCE then
+    Result := NAMES[Steps mod 32];
 end;
 
 function Wrap360(const ADegrees: Single): Single;

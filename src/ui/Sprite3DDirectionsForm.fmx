@@ -1,0 +1,193 @@
+object DirectionsForm: TDirectionsForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Directions'
+  ClientHeight = 400
+  ClientWidth = 520
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnClose = FormClose
+  DesignerMasterStyle = 0
+  object FacePaintBox: TPaintBox
+    Position.X = 12.000000000000000000
+    Position.Y = 24.000000000000000000
+    Size.Width = 308.000000000000000000
+    Size.Height = 308.000000000000000000
+    Size.PlatformDefault = False
+    HitTest = True
+    OnMouseDown = FacePaintBoxMouseDown
+    OnPaint = FacePaintBoxPaint
+  end
+  object ControlsLayout: TLayout
+    Position.X = 332.000000000000000000
+    Position.Y = 12.000000000000000000
+    Size.Width = 176.000000000000000000
+    Size.Height = 332.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object CountLabel: TLabel
+      Position.X = 0.000000000000000000
+      Position.Y = 0.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Directions'
+      TabOrder = 0
+    end
+    object CountCombo: TComboBox
+      Position.X = 0.000000000000000000
+      Position.Y = 22.000000000000000000
+      Size.Width = 96.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      OnChange = CountComboChange
+    end
+    object OrderLabel: TLabel
+      Position.X = 0.000000000000000000
+      Position.Y = 54.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Numbered'
+      TabOrder = 2
+    end
+    object ClockwiseRadio: TRadioButton
+      GroupName = 'Order'
+      IsChecked = True
+      Position.X = 0.000000000000000000
+      Position.Y = 76.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+      Text = 'Clockwise'
+      OnChange = OrderRadioChange
+    end
+    object AnticlockwiseRadio: TRadioButton
+      GroupName = 'Order'
+      Position.X = 0.000000000000000000
+      Position.Y = 98.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 4
+      Text = 'Anticlockwise'
+      OnChange = OrderRadioChange
+    end
+    object CustomRadio: TRadioButton
+      GroupName = 'Order'
+      Enabled = False
+      Position.X = 0.000000000000000000
+      Position.Y = 120.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 5
+      Text = 'Custom (Change Order)'
+    end
+    object StartLabel: TLabel
+      Position.X = 0.000000000000000000
+      Position.Y = 150.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Red marker points to'
+      TabOrder = 6
+    end
+    object StartDial: TArcDial
+      Position.X = 36.000000000000000000
+      Position.Y = 172.000000000000000000
+      RotationAngle = -90.000000000000000000
+      Size.Width = 104.000000000000000000
+      Size.Height = 104.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 7
+      OnChange = StartDialChange
+    end
+    object StartText: TLabel
+      Position.X = 0.000000000000000000
+      Position.Y = 280.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.HorzAlign = Center
+      Text = '0'#176' N'
+      TabOrder = 8
+    end
+    object SnapCheck: TCheckBox
+      Position.X = 0.000000000000000000
+      Position.Y = 302.000000000000000000
+      Size.Width = 176.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 9
+      Text = 'Lock to directions'
+      OnChange = SnapCheckChange
+    end
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 356.000000000000000000
+    Size.Width = 520.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object CancelButton: TButton
+      Anchors = [akLeft, akBottom]
+      Cancel = True
+      ModalResult = 2
+      Position.X = 12.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 1
+      Text = 'Cancel'
+      OnClick = ButtonClick
+    end
+    object ImportButton: TButton
+      Anchors = [akBottom]
+      Position.X = 104.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 3
+      Text = 'Import...'
+      Hint = 'Read the directions from a JSON file'
+      ShowHint = True
+      OnClick = ImportButtonClick
+    end
+    object OrderButton: TButton
+      Anchors = [akBottom]
+      Position.X = 200.000000000000000000
+      Position.Y = 9.000000000000000000
+      Size.Width = 120.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = 'Change Order'
+      OnClick = OrderButtonClick
+    end
+    object ExportButton: TButton
+      Anchors = [akBottom]
+      Position.X = 336.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 4
+      Text = 'Export...'
+      Hint = 'Save the directions to a JSON file'
+      ShowHint = True
+      OnClick = ExportButtonClick
+    end
+    object OkButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      ModalResult = 1
+      Position.X = 428.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'OK'
+      OnClick = ButtonClick
+    end
+  end
+end

@@ -84,7 +84,7 @@ Shows three coloured lines through a point, drawn on top or by shaders.</p>
 <p>
 
 
-<p>A TDummy. With OnTop it draws the lines in its own Render, in the main pass only, with the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a frame beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render copies the parent's position, rotation, scale and centre of rotation to the frame if any of them changed. The strips are built when SetExtent is called and rebuilt only when a property changes. Freeing the TModelAxes frees the frame, strips and materials.
+<p>A TDummy. With OnTop it draws the lines in its own Render, in the main pass and grabs, with the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a frame beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render copies the parent's position, rotation, scale and centre of rotation to the frame if any of them changed. The strips are built when SetExtent is called and rebuilt only when a property changes. Freeing the TModelAxes frees the frame, strips and materials.
 
 <p>Its Width, Height and Depth are set to the lines' extent and its Position to their middle, so anything that culls by an object's size sees the whole set. The object is not stored in .fmx files and ignores the mouse. Use it from the main thread only.</p>
 <span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
@@ -137,6 +137,10 @@ Shows three coloured lines through a point, drawn on top or by shaders.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#Shown">Shown</a></strong>: Boolean read FShown write SetShown;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DAxes.TModelAxes.html#OnTop">OnTop</a></strong>: Boolean read FOnTop write SetOnTop;</code></td>
 </tr>
 </table>
@@ -153,7 +157,7 @@ Draws the lines on top, or keeps the strips' frame on the parent.</p>
 <p>
 
 
-<p>Does nothing before SetExtent is called. With OnTop, draws the three lines in the main pass only, setting the context matrix to this object's AbsoluteMatrix and restoring the previous matrix, line state and depth test afterwards, even if drawing fails. Without OnTop, copies the parent's transform to the frame if it changed, and draws nothing.</p>
+<p>Does nothing before SetExtent is called. With OnTop, draws the three lines in the main pass and grabs, setting the context matrix to this object's AbsoluteMatrix and restoring the previous matrix, line state and depth test afterwards, even if drawing fails. Without OnTop, copies the parent's transform to the frame if it changed, and draws nothing.</p>
 </td></tr>
 </table>
 <table class="detail visibility-protected wide_list">
@@ -286,6 +290,20 @@ Line width in screen pixels, whatever the distance; 1 by default.</p>
 
 
 <p>Without OnTop the shader draws any width on every backend. With OnTop, values above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values below 1 count as 1.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Shown"></span><code>property <strong>Shown</strong>: Boolean read FShown write SetShown;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the helper is drawn at all; True by default.</p>
+<p>
+
+
+<p>False hides it, its lines and planes included, which are drawn beside the model rather than as children of this object, so Visible alone does not hide them. Nothing is freed, and True shows it again as it was. Kept when the drawing is rebuilt.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">

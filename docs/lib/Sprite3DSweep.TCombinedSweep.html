@@ -168,11 +168,11 @@ Draws one fixed swept volume, such as the combined one, in its own colours.</p>
 </tr>
 <tr><td colspan="2">
 <p class="description-inherited">This item is declared in ancestor <a class="normal" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a>.</p><p>
-Draws the volume in use with the model's matrix, in the main pass only.</p>
+Draws the volume in use with the model's matrix, in the main pass and grabs.</p>
 <p>
 
 
-<p>Copies Model's transform to this object if it changed, picks the volume in use and works its lines out if it changed, then, if Model is visible and that volume is Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring the previous matrix and line state afterwards, even if drawing fails. Does nothing in Gorilla's shadow, reflection and other passes.</p>
+<p>Copies Model's transform to this object if it changed, picks the volume in use and works its lines out if it changed, then, if Model is visible and that volume is Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring the previous matrix and line state afterwards, even if drawing fails. Does nothing in Gorilla's shadow, reflection and other passes, but does draw into a TSprite3DOffscreen grab, so a grab shows what the view shows.</p>
 </td></tr>
 </table>
 <table class="detail visibility-protected inherited-member wide_list">

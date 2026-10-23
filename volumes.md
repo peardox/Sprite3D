@@ -6,7 +6,7 @@ Sprite3D frames a model by the space it sweeps as it turns about its up axis, ra
 
 A sprite set wants every image of a model at the same scale and in the same place. Two things get in the way of that if the camera is fitted to the model's bounding box:
 
-- **Turning.** The `(None)` turntable, and turning the azimuth dial, show the model from every side. A box that fits one view exactly can poke out of the frame a quarter turn later.
+- **Turning.** Turning the azimuth dial shows the model from every side. A box that fits one view exactly can poke out of the frame a quarter turn later.
 - **Animating.** Every pose of every animation has its own box. A walk reaches further than the rest pose, and a jump reaches higher. Fitting each animation, or each frame, to its own box changes the scale from one to the next.
 
 A volume that holds the model in every turn about its up axis, and in every pose of the animations that matter, fixes both: frame that once, and nothing the model does can leave the frame or change the scale.
@@ -72,7 +72,7 @@ Two wireframes can be shown from the View menu:
 | Item | Shows | Colours |
 |---|---|---|
 | **Show Model Volume** | the swept volume of the animation playing, or of the rest pose when none is playing. It changes as soon as another animation plays, whether chosen with the mouse or the arrow keys | swept box aqua; tube walls and axis yellow |
-| **Show Animation Volume** | the **combined** volume: the rest pose and every animation used, joined into one. It is shown only while the view is fitted to it, that is while one or more entries of the Animations list are ticked for export, and never for a model without animations, or with none used, as it would only repeat the rest pose's volume | swept box fuchsia; tube walls and axis hot pink |
+| **Show Animation Volume** | the **combined** volume: the rest pose and every animation used, joined into one. It is shown only while the view is fitted to it, that is while two or more animations in the Animations list are ticked for export, and never for a model without animations, or with none used, as it would only repeat the rest pose's volume | swept box fuchsia; tube walls and axis hot pink |
 
 **Model, Animations Used...** chooses which animations count. Unticked animations leave the Animations list, so they are not played or exported, and leave the combined volume. A model starts with every animation used.
 
@@ -80,7 +80,7 @@ The dialog's right-hand column gives each animation's own swept volume, π(*R*²
 
 The combined volume is joined from the separate ones by `UnionSweptVolume`: the lowest start and highest end along the axis, the largest outer radius and the smallest inner radius. Where the animations differ in height this is a little larger than their exact union, never smaller.
 
-Both wireframes are drawn beside the model, not inside it, so they never count in its bounding box, and they draw with the model's own matrix, so they follow it wherever it is moved, turned or scaled.
+Both wireframes are drawn beside the model, not inside it, so they never count in its bounding box, and they draw with the model's own matrix, so they follow it wherever it is moved, turned or scaled. Grabs and icons include them when they are showing, as the view does; animation exports leave them out, along with the bounding box, axes, grid and background.
 
 ## Fitting the camera
 
@@ -88,12 +88,12 @@ On screen, and for a grab or an icon, which match the screen, the volume framed 
 
 | Animations list | Volume framed |
 |---|---|
-| one or more entries ticked for export, playing or paused | the **combined** volume, so the view shows what a batch export will frame |
-| nothing ticked | the volume of what is on screen alone: the selected animation's own, without the rest pose's, or the rest pose's for `(None)` and for a model without animations |
+| two or more animations ticked for export, playing or paused | the **combined** volume, so the view shows what a batch export will frame |
+| one animation ticked, or none | the volume of what is on screen alone: the selected animation's own, without the rest pose's, or the rest pose's for `(None)` and for a model without animations |
 
 The second fills as much of the view as that volume allows, so a single animation, or a static model, is shown as large as it will go. The view is refitted whenever the choice changes: another entry is chosen, a tick is set or cleared, or an animation is paused, stepped or played with the buttons under the list.
 
-A batch export and the `(None)` turn always frame the combined volume. One animation saved on its own, from the Animations list's right-click menu (or the Animation menu on Android and iOS), is framed to that animation's own volume instead, without the rest pose's, so it fills the image as far as its own poses allow. Either way the fit takes two steps, in `TSprite3DCamera.FitPointsOnAxis`.
+A batch export, and `(None)`'s single still frame, always frame the combined volume. One animation saved on its own, from the Animations list's right-click menu (or the Animation menu on Android and iOS), is framed to that animation's own volume instead, without the rest pose's, so it fills the image as far as its own poses allow. Either way the fit takes two steps, in `TSprite3DCamera.FitPointsOnAxis`.
 
 **1. Fill the view.** From any direction, a cylinder's outline is that of its two end circles. `SweepOutline` stands in for each circle with a regular 64-sided polygon drawn round it, its corners 1 / cos(π / 64), about 1.0012, times the radius from the axis, so the polygon holds the circle exactly. These 128 points are framed the way `FitToBounds` frames a box's corners: for the current angles, as large as they will go, centred, so the volume reaches both edges of the tighter axis, left and right or top and bottom. In perspective the camera also stays at least 1 unit, FMX's near plane, in front of the nearest point, which can stop a very close volume filling the view. The angles themselves are never changed.
 
@@ -103,7 +103,7 @@ A batch export and the `(None)` turn always frame the combined volume. One anima
 
 the usual formula for the [nearest points of two lines](https://en.wikipedia.org/wiki/Skew_lines). The cylinder is round about the turning axis, so while Roll is 0 step 1 centres the view across it and the view axis meets the turning axis: the orbit centre ends up on the axis, at the height that centres the volume.
 
-That is what makes the framing hold as the camera turns. The camera's azimuth turns it about an upright line through the orbit centre. The model stands upright, so that line is the turning axis, and the volume, round about it, looks the same from every azimuth. The `(None)` turntable and the azimuth dial therefore never push the model out of the frame or change its size, and every animation used, and the rest pose, is framed alike.
+That is what makes the framing hold as the camera turns. The camera's azimuth turns it about an upright line through the orbit centre. The model stands upright, so that line is the turning axis, and the volume, round about it, looks the same from every azimuth. The azimuth dial therefore never pushes the model out of the frame or changes its size, and every animation used, and the rest pose, is framed alike.
 
 Two cases keep step 1's orbit centre as it is:
 

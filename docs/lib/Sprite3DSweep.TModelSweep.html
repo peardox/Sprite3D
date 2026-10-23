@@ -84,7 +84,7 @@ Draws, as a wireframe beside its model, the swept volume of the animation the mo
 <p>
 
 
-<p>A TDummy holding Volume, for the rest pose, and a volume per animation, set with SetAnimationVolume. In its own Render, in the main pass only, it picks the volume in use: that of the animation the model is playing, by its Id, if the animation is running and has a volume; otherwise Volume. It draws that volume's swept box in BoxColor and, in SweepColor, the tube's outer wall, its inner wall when it has one, and the axis. Each wall is a ring of Segments lines at each end, joined by four lines along the axis. The lines are worked out again only when the volume in use changes or a setting does.
+<p>A TDummy holding Volume, for the rest pose, and a volume per animation, set with SetAnimationVolume. In its own Render, in the main pass and in grabs only, it picks the volume in use: that of the animation the model is playing, by its Id, if the animation is running and has a volume; otherwise Volume. It draws that volume's swept box in BoxColor and, in SweepColor, the tube's outer wall, its inner wall when it has one, and the axis. Each wall is a ring of Segments lines at each end, joined by four lines along the axis. The lines are worked out again only when the volume in use changes or a setting does.
 
 <p>It belongs beside Model, under the same parent, not inside it, so it never counts in Model's bounding box. Each Render it draws with Model's AbsoluteMatrix, so the lines follow the model wherever it moves, turns or is scaled; it also copies Model's position, rotation, scale and centre of rotation to itself, and sets its own Width, Height and Depth to cover the lines, so anything that culls by an object's size sees them all. Nothing is drawn while Model is nil or hidden, or the volume in use is not Valid.
 
@@ -171,11 +171,11 @@ Draws, as a wireframe beside its model, the swept volume of the animation the mo
 </tr>
 <tr><td colspan="2">
 <p>
-Draws the volume in use with the model's matrix, in the main pass only.</p>
+Draws the volume in use with the model's matrix, in the main pass and grabs.</p>
 <p>
 
 
-<p>Copies Model's transform to this object if it changed, picks the volume in use and works its lines out if it changed, then, if Model is visible and that volume is Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring the previous matrix and line state afterwards, even if drawing fails. Does nothing in Gorilla's shadow, reflection and other passes.</p>
+<p>Copies Model's transform to this object if it changed, picks the volume in use and works its lines out if it changed, then, if Model is visible and that volume is Valid, draws the lines with the context matrix set to Model's AbsoluteMatrix, restoring the previous matrix and line state afterwards, even if drawing fails. Does nothing in Gorilla's shadow, reflection and other passes, but does draw into a TSprite3DOffscreen grab, so a grab shows what the view shows.</p>
 </td></tr>
 </table>
 <table class="detail visibility-protected wide_list">

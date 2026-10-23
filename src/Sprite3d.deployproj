@@ -7,7 +7,7 @@
         <DeviceId Condition="'$(Platform)'=='Android'"/>
         <DeviceId Condition="'$(Platform)'=='Android64'"/>
         <DeviceId Condition="'$(Platform)'=='iOSDevice64'"/>
-        <DeviceId Condition="'$(Platform)'=='iOSSimARM64'"/>
+        <DeviceId Condition="'$(Platform)'=='iOSSimARM64'">9CA6C703-4434-4DF2-B262-F3FD9F1BDAF9</DeviceId>
     </PropertyGroup>
     <ItemGroup Condition="'$(Platform)'=='WinARM64EC'">
         <DeployFile Include="..\dlls\win64arm\avformat-62.dll">

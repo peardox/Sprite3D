@@ -113,6 +113,14 @@ The application's settings, kept between sessions in settings.json.</p>
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#HasSaveFolder">HasSaveFolder</a></strong>: Boolean;</code></td>
 </tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionOrderList">DirectionOrderList</a></strong>: TArray&lt;Integer&gt;;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionBearings">DirectionBearings</a></strong>: TArray&lt;Single&gt;;</code></td>
+</tr>
 </table>
 <span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
 <table class="summary wide_list">
@@ -135,135 +143,160 @@ The application's settings, kept between sessions in settings.json.</p>
 </tr>
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionsFolder">DirectionsFolder</a></strong>: String read FDirectionsFolder write FDirectionsFolder;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#BackgroundKind">BackgroundKind</a></strong>: TSprite3DBackgroundKind read FBackgroundKind
       write FBackgroundKind;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#BackgroundColour">BackgroundColour</a></strong>: String read FBackgroundColour write FBackgroundColour;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GradientFrom">GradientFrom</a></strong>: String read FGradientFrom write FGradientFrom;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GradientTo">GradientTo</a></strong>: String read FGradientTo write FGradientTo;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GradientDirection">GradientDirection</a></strong>: TSprite3DGradientDirection read FGradientDirection
       write FGradientDirection;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CheckerSize">CheckerSize</a></strong>: Integer read FCheckerSize write FCheckerSize;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CheckerLight">CheckerLight</a></strong>: String read FCheckerLight write FCheckerLight;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CheckerDark">CheckerDark</a></strong>: String read FCheckerDark write FCheckerDark;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowBoundingBox">ShowBoundingBox</a></strong>: Boolean read FShowBoundingBox write FShowBoundingBox;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowGrid">ShowGrid</a></strong>: Boolean read FShowGrid write FShowGrid;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowAxes">ShowAxes</a></strong>: Boolean read FShowAxes write FShowAxes;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowSweptVolume">ShowSweptVolume</a></strong>: Boolean read FShowSweptVolume write FShowSweptVolume;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ShowCombinedSweptVolume">ShowCombinedSweptVolume</a></strong>: Boolean read FShowCombinedSweptVolume
       write FShowCombinedSweptVolume;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#Orthographic">Orthographic</a></strong>: Boolean read FOrthographic write FOrthographic;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#CameraView">CameraView</a></strong>: String read FCameraView write FCameraView;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#VariableAzimuth">VariableAzimuth</a></strong>: Single read FVariableAzimuth write FVariableAzimuth;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#VariableInclination">VariableInclination</a></strong>: Single read FVariableInclination
       write FVariableInclination;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#VariableRoll">VariableRoll</a></strong>: Single read FVariableRoll write FVariableRoll;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#PanEnabled">PanEnabled</a></strong>: Boolean read FPanEnabled write FPanEnabled;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#PanX">PanX</a></strong>: Single read FPanX write FPanX;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#PanZ">PanZ</a></strong>: Single read FPanZ write FPanZ;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#StartupAction">StartupAction</a></strong>: <a href="Sprite3DHelpers.html#TSprite3DStartupAction">TSprite3DStartupAction</a> read FStartupAction write FStartupAction;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#LastModel">LastModel</a></strong>: String read FLastModel write FLastModel;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#Theme">Theme</a></strong>: String read FTheme write FTheme;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GpuMode">GpuMode</a></strong>: <a href="Sprite3DHelpers.html#TSprite3DGpuMode">TSprite3DGpuMode</a> read FGpuMode write FGpuMode;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#OpenWith">OpenWith</a></strong>: Boolean read FOpenWith write FOpenWith;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#AlwaysOpenWith">AlwaysOpenWith</a></strong>: Boolean read FAlwaysOpenWith write FAlwaysOpenWith;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#AssociationBackup">AssociationBackup</a></strong>: String read FAssociationBackup write FAssociationBackup;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GrabWidth">GrabWidth</a></strong>: Integer read FGrabWidth write SetGrabWidth;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#GrabHeight">GrabHeight</a></strong>: Integer read FGrabHeight write SetGrabHeight;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#AnimationFps">AnimationFps</a></strong>: Integer read FAnimationFps write SetAnimationFps;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ViewFps">ViewFps</a></strong>: Integer read FViewFps write SetViewFps;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionCount">DirectionCount</a></strong>: Integer read FDirectionCount write SetDirectionCount;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionStart">DirectionStart</a></strong>: Single read FDirectionStart write SetDirectionStart;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionClockwise">DirectionClockwise</a></strong>: Boolean read FDirectionClockwise
+      write FDirectionClockwise;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionOrder">DirectionOrder</a></strong>: String read FDirectionOrder write FDirectionOrder;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionSnap">DirectionSnap</a></strong>: Boolean read FDirectionSnap write FDirectionSnap;</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
@@ -325,6 +358,38 @@ True if SaveFolder is set and the folder still exists.</p>
 <h6 class="description_section">Returns</h6>
 <p class="return">Whether grabs can be saved in SaveFolder without asking.</p></td></tr>
 </table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DirectionOrderList"></span><code>function <strong>DirectionOrderList</strong>: TArray&lt;Integer&gt;;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The order the directions are taken in: for each direction, from the first, its position round the compass.</p>
+<p>
+
+
+<p>Positions count clockwise from 0 at DirectionStart. This is DirectionOrder when it holds every position from 1 to DirectionCount once each, less one; otherwise the plain order, clockwise or anticlockwise as DirectionClockwise says.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">DirectionCount positions, every one from 0 to DirectionCount - 1 once.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="DirectionBearings"></span><code>function <strong>DirectionBearings</strong>: TArray&lt;Single&gt;;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Each direction's compass bearing, in the order the directions are taken in.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">DirectionCount bearings, in degrees clockwise from north, 0 up to 360.</p></td></tr>
+</table>
 <h3 class="detail">Properties</h3>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
@@ -381,6 +446,20 @@ The folder the last icon was saved in, where the next save dialog opens; empty u
 
 
 <p>Stored as <code>iconFolder</code> in settings.json.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="DirectionsFolder"></span><code>property <strong>DirectionsFolder</strong>: String read FDirectionsFolder write FDirectionsFolder;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The folder a directions file was last exported to or imported from, where the next Export or Import in Model, Directions opens; empty until one is.</p>
+<p>
+
+
+<p>Stored as <code>directionsFolder</code> in settings.json.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">
@@ -833,6 +912,77 @@ The frame rate the view is drawn at, in frames per second; VIEW_FPS_DEFAULT by d
 
 
 <p>Set in File, Settings, which offers up to the display's refresh rate. Stored as <code>viewFps</code>. Written values are limited to VIEW_FPS_MIN to VIEW_FPS_MAX.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="DirectionCount"></span><code>property <strong>DirectionCount</strong>: Integer read FDirectionCount write SetDirectionCount;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How many directions Model, Directions has around its compass; DIRECTION_COUNT_DEFAULT by default.</p>
+<p>
+
+
+<p>Stored as <code>directionCount</code>. A written value that is not one of DIRECTION_COUNTS becomes the nearest that is.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="DirectionStart"></span><code>property <strong>DirectionStart</strong>: Single read FDirectionStart write SetDirectionStart;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The compass bearing of position 0, the red marker in Model, Directions, in degrees clockwise from north; 0, north, by default.</p>
+<p>
+
+
+<p>Stored as <code>directionStart</code>. It is the first direction's bearing unless DirectionOrder puts another first. Written values are wrapped into 0 up to 360.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="DirectionClockwise"></span><code>property <strong>DirectionClockwise</strong>: Boolean read FDirectionClockwise
+      write FDirectionClockwise;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the directions are numbered clockwise from the first; True by default.</p>
+<p>
+
+
+<p>Stored as <code>directionClockwise</code>. False numbers them anticlockwise. Used when DirectionOrder is empty or does not fit DirectionCount.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="DirectionOrder"></span><code>property <strong>DirectionOrder</strong>: String read FDirectionOrder write FDirectionOrder;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The order the directions are taken in, as Model, Directions set it; empty by default.</p>
+<p>
+
+
+<p>Stored as <code>directionOrder</code>: the positions round the compass, counted clockwise from 1 at DirectionStart, in the order the directions are numbered, separated by commas, such as <code>'3,5,7,1,4,6,8,2'</code> for E, S, W, N, SE, SW, NW and NE when the first of eight is north. Empty, or text that is not every position from 1 to DirectionCount once each, means the plain order DirectionClockwise gives. Use DirectionOrderList and DirectionBearings rather than reading it directly.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="DirectionSnap"></span><code>property <strong>DirectionSnap</strong>: Boolean read FDirectionSnap write FDirectionSnap;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether the Model, Directions dial turns in steps of one direction; False by default.</p>
+<p>
+
+
+<p>Stored as <code>directionSnap</code>. True locks DirectionStart to whole multiples of 360 divided by DirectionCount, counted from north.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

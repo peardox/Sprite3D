@@ -13,9 +13,10 @@
 //** depth testing off, so only the context can draw over the model.
 //**
 //** OnTop True, the default, draws the lines over everything, so the model never hides them,
-//** even inside a solid model. In each frame's main pass the TModelAxes draws them with the
-//** context's DrawLine helper, following Gorilla v1.5's Line Rendering guide. Widths above 1
-//** pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
+//** even inside a solid model. In each frame's main pass, and in grabs, the TModelAxes draws
+//** them with the context's DrawLine helper, following Gorilla v1.5's Line Rendering guide.
+//** Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1
+//** pixel.
 //**
 //** OnTop False draws each line with a GLSL shader, through the documented SurfaceShader hook
 //** of a TGorillaDefaultMaterialSource, which Gorilla converts for Vulkan and Metal. Each line
@@ -115,9 +116,9 @@ uses
 type
   //** @abstract(Shows three coloured lines through a point, drawn on top or by shaders.)
   //**
-  //** A TDummy. With OnTop it draws the lines in its own Render, in the main pass only, with
-  //** the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a frame
-  //** beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render
+  //** A TDummy. With OnTop it draws the lines in its own Render, in the main pass and grabs,
+  //** with the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a
+  //** frame beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render
   //** copies the parent's position, rotation, scale and centre of rotation to the frame if any
   //** of them changed. The strips are built when SetExtent is called and rebuilt only when a
   //** property changes. Freeing the TModelAxes frees the frame, strips and materials.
@@ -146,6 +147,7 @@ type
     FBoxHi: TPoint3D;
     FPivot: TPoint3D;
     FFrame: TDummy;
+    FShown: Boolean;
     FXColor: TAlphaColor;
     FYColor: TAlphaColor;
     FZColor: TAlphaColor;
@@ -166,18 +168,19 @@ type
     procedure SetYColor(const Value: TAlphaColor);
     procedure SetZColor(const Value: TAlphaColor);
     procedure SetLineWidth(const Value: Single);
+    procedure SetShown(const Value: Boolean);
     procedure SetOnTop(const Value: Boolean);
   protected
     //** @abstract(Draws the lines on top, or keeps the strips' frame on the parent.)
     //**
     //** Does nothing before SetExtent is called. With OnTop, draws the three lines in the main
-    //** pass only, setting the context matrix to this object's AbsoluteMatrix and restoring
-    //** the previous matrix, line state and depth test afterwards, even if drawing fails.
-    //** Without OnTop, copies the parent's transform to the frame if it changed, and draws
-    //** nothing.
+    //** pass and grabs, setting the context matrix to this object's AbsoluteMatrix and
+    //** restoring the previous matrix, line state and depth test afterwards, even if drawing
+    //** fails. Without OnTop, copies the parent's transform to the frame if it changed, and
+    //** draws nothing.
     /// <summary>Draws the lines on top, or keeps the strips' frame on the parent.</summary>
     /// <remarks>Does nothing before <see cref="SetExtent"/> is called. With OnTop, draws the
-    /// three lines in the main pass only, setting the context matrix to this object's
+    /// three lines in the main pass and grabs, setting the context matrix to this object's
     /// AbsoluteMatrix and restoring the previous matrix, line state and depth test afterwards,
     /// even if drawing fails. Without OnTop, copies the parent's transform to the frame if it
     /// changed, and draws nothing.</remarks>
@@ -259,6 +262,16 @@ type
     /// above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
     /// Values below 1 count as 1.</remarks>
     property LineWidth: Single read FLineWidth write SetLineWidth;
+    //** @abstract(Whether the helper is drawn at all; True by default.)
+    //**
+    //** False hides it, its lines and planes included, which are drawn beside the model rather
+    //** than as children of this object, so Visible alone does not hide them. Nothing is freed,
+    //** and True shows it again as it was. Kept when the drawing is rebuilt.
+    /// <summary>Whether the helper is drawn at all; True by default.</summary>
+    /// <remarks>False hides it, its lines and planes included, which are drawn beside the model
+    /// rather than as children of this object, so Visible alone does not hide them. Nothing is
+    /// freed, and True shows it again as it was. Kept when the drawing is rebuilt.</remarks>
+    property Shown: Boolean read FShown write SetShown;
     //** @abstract(Whether the lines are drawn over everything; True by default.)
     //**
     //** True draws them with the context and depth testing off, so the model and anything in
@@ -352,6 +365,9 @@ function FindModelAxes(const AModel: TGorillaModel): TModelAxes;
 
 implementation
 
+uses
+  Sprite3DOffscreen;
+
 const
   // A strip is never thinner than this, so a flat model still gets a
   // valid plane
@@ -385,6 +401,7 @@ end;
 constructor TModelAxes.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  FShown := True;
   Stored := False;
   Locked := True;
   HitTest := False;
@@ -393,6 +410,14 @@ begin
   FZColor := TAlphaColorRec.Blue;
   FLineWidth := 1;
   FOnTop := True;
+end;
+
+procedure TModelAxes.SetShown(const Value: Boolean);
+begin
+  FShown := Value;
+  Visible := Value;
+  if FFrame <> nil then
+    FFrame.Visible := Value;
 end;
 
 destructor TModelAxes.Destroy;
@@ -456,14 +481,17 @@ var
   PrevMat: TMatrix3D;
   Wide: Boolean;
 begin
-  // Main pass only: Render also runs in shadow, reflection, environment
-  // and other passes, where CurrentPass is assigned. Under a plain FMX
-  // context there are no passes, and the FMX helpers still work.
+  // The main pass and grabs only: Render also runs in shadow, reflection,
+  // environment and other passes, where CurrentPass is assigned, and is
+  // skipped there; a TSprite3DOffscreen grab draws it, so a grab shows what
+  // the view shows. Under a plain FMX context there are no passes, and the
+  // FMX helpers still work.
   if Context is TGorillaContext then
     Ctx := TGorillaContext(Context)
   else
     Ctx := nil;
-  if (Ctx <> nil) and Assigned(Ctx.CurrentPass) then
+  if (Ctx <> nil) and Assigned(Ctx.CurrentPass) and
+    not IsOffscreenPass(Ctx.CurrentPass) then
     Exit;
 
   // Line width is Gorilla line state; it needs persistent mode because
@@ -641,6 +669,7 @@ begin
   FFrame.HitTest := False;
   FFrame.FreeNotification(Self);
   FFrame.Parent := Model.Parent;
+  FFrame.Visible := FShown;
   SyncFrame;
 
   // Two strips per line, in the two planes that contain it, so whichever

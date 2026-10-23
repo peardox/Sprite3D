@@ -159,6 +159,7 @@ type
     FFloorHi: TPoint3D;   // floor is one of their faces
     FHasExtent: Boolean;
     FFrame: TDummy;
+    FShown: Boolean;
     FGridAxis: TGridAxis;
     FGridSize: Single;
     FGridColor: TAlphaColor;
@@ -181,6 +182,7 @@ type
     procedure SetGridLevel(const Value: Single);
     procedure SetGridOnFloor(const Value: Boolean);
     procedure SetGridCells(const Value: Integer);
+    procedure SetShown(const Value: Boolean);
   protected
     //** @abstract(Keeps the grid frame on the parent's transform.)
     //**
@@ -320,6 +322,16 @@ type
     /// straight edge. The cost does not depend on this value. Values below 1 count as
     /// 1.</remarks>
     property GridCells: Integer read FGridCells write SetGridCells;
+    //** @abstract(Whether the helper is drawn at all; True by default.)
+    //**
+    //** False hides it, its lines and planes included, which are drawn beside the model rather
+    //** than as children of this object, so Visible alone does not hide them. Nothing is freed,
+    //** and True shows it again as it was. Kept when the drawing is rebuilt.
+    /// <summary>Whether the helper is drawn at all; True by default.</summary>
+    /// <remarks>False hides it, its lines and planes included, which are drawn beside the model
+    /// rather than as children of this object, so Visible alone does not hide them. Nothing is
+    /// freed, and True shows it again as it was. Kept when the drawing is rebuilt.</remarks>
+    property Shown: Boolean read FShown write SetShown;
   end;
 
 //** @abstract(Shows a shader-drawn grid on AModel's floor, from its current bounds.)
@@ -481,6 +493,7 @@ end;
 constructor TModelGrid.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  FShown := True;
   Stored := False;
   Locked := True;
   HitTest := False;
@@ -490,6 +503,14 @@ begin
   FGridLevel := 0;
   FGridOnFloor := True;
   FGridCells := 1000;
+end;
+
+procedure TModelGrid.SetShown(const Value: Boolean);
+begin
+  FShown := Value;
+  Visible := Value;
+  if FFrame <> nil then
+    FFrame.Visible := Value;
 end;
 
 destructor TModelGrid.Destroy;
@@ -696,6 +717,7 @@ begin
   FFrame.HitTest := False;
   FFrame.FreeNotification(Self);
   FFrame.Parent := Model.Parent;
+  FFrame.Visible := FShown;
   SyncFrame;
 
   // The plane, parented before anything else, as in Gorilla's examples.

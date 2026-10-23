@@ -97,29 +97,49 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The file an icon is saved to without asking, or empty where the user should choose.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CompassPointName-Single-">CompassPointName</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The abbreviated name of a point of the 32-point compass, if a bearing is on one.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreateModelAssociations">CreateModelAssociations</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>A new TSprite3DFileAssociations for the model files this application opens.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder grabs are saved in without asking, or empty where the user should choose.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultModelDir">DefaultModelDir</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder that holds the application's models folder, for this platform.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Formats an angle from Wrap360 as whole degrees for a readout.</p></td>
 </tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionOrderFromText-String-">DirectionOrderFromText</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads the text DirectionOrder keeps back into an order.</p></td>
+</tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionOrderToText-TArrayInteger-">DirectionOrderToText</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>An order as the text DirectionOrder keeps: positions from 1, separated by commas.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#GpuModeSupported">GpuModeSupported</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>True where the GPU preference can be set: Windows only.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsDirectionOrder-TArrayInteger-Integer-">IsDirectionOrder</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Whether an order holds every position from 0 to ACount - 1 exactly once.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsModelFile-String-">IsModelFile</a></td>
@@ -132,14 +152,24 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Reads the animation bounds saved for a model file, so they need not be measured again.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">LoadDirectionsFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads a set of directions from a JSON file written by SaveDirectionsFile.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Replaces a model's contents with a model file and starts its last animation.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-">ModelPanOffset</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>How far to move the orbit centre for a camera pan.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NearestDirectionCount-Integer-">NearestDirectionCount</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The entry of DIRECTION_COUNTS nearest to a number, the smaller of two as near.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></td>
@@ -162,19 +192,29 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Centres a loaded model on its bounding box and turns it right way up.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlainDirectionOrder-Integer-Boolean-">PlainDirectionOrder</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The plain order of ACount directions: clockwise from position 0, or anticlockwise.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGeneralSettings-TSprite3DAppSettings-">ReadGeneralSettings</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The File, Settings choices as they stand now.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGpuMode">ReadGpuMode</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The GPU preference Windows has for this program file now.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">SaveAnimationBoundsCache</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Saves a model file's measured animation bounds for the next time it is loaded.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">SaveDirectionsFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Writes a set of directions to a JSON file, for Model, Directions' Export.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></td>

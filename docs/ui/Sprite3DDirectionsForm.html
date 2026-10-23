@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DDirectionsForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<h1 class="unit">Unit Sprite3DDirectionsForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="description">Description</h2>
+<p>
+The Model, Directions dialog: how many directions there are around the model, where they point, and the order they are taken in.</p>
+<p>
+
+
+<p>The dialog shows a compass as a clock face: a white disc with N, E, S and W round its edge, and a marker at each of the directions' positions, spread evenly round it. The clock's &quot;12 o'clock&quot;, the position the dial turns, is red; the others are black. Each marker shows its direction's number, from 1, when there are 32 or fewer. In the centre an arc with an arrowhead, half the diameter of the face, shows the way the numbers increase when they go clockwise or anticlockwise; for any other order the centre says Custom order.
+
+<p></p>
+
+<pre class="preformatted">
+TDirectionsForm
+|-- FacePaintBox          the compass, drawn in FacePaintBoxPaint; clicked to order
+|-- CountCombo            1, 2 and every multiple of 4 or 6 up to 64
+|-- ClockwiseRadio,
+|   AnticlockwiseRadio,
+|   CustomRadio           the order: plain either way, or set with Change Order
+|-- StartDial             the red position's bearing, StartText showing it
+|-- SnapCheck             locks the dial to steps of one direction
+`-- CancelButton, ImportButton, OrderButton, ExportButton, OkButton</pre>
+
+<p>
+
+<p>Change Order lets any order be chosen: the markers are clicked in the order wanted, and each takes the next number as it is clicked; once every marker has one, that is the order, shown by the Custom button. The first marker clicked becomes the red marker: if it is not the red one already, the dial turns onto it at once. Clicking Change Order again before the end, changing the number of directions, or choosing Clockwise or Anticlockwise, abandons it and turns the dial back. Positions are counted clockwise from 0 at the red marker, so Order, for each direction from the first, gives the position it is at: clicking E, S, W, N, SE, SW, NW and NE of eight that started with N red turns the red marker to E, at 90 degrees, and gives 0, 2, 4, 6, 1, 3, 5, 7. Order can also be set, say from a file, with the first direction elsewhere than the red marker: 2, 4, 6, 0, 3, 5, 7, 1 with the red marker at north is the same set of bearings.
+
+<p>Artwork bought or drawn elsewhere often comes with its directions in a fixed order of its own, which may need setting again and again, so Export writes everything the dialog holds to a JSON file, with SaveDirectionsFile, and Import reads one back, with LoadDirectionsFile, into the dialog; OK then keeps it as usual. Export and Import are on the desktop only, and open in Folder, which they leave at the folder last used.
+
+<p>The bearing is in degrees clockwise from north, which is at the top of the face. The dial sets it to any whole degree, or, with SnapCheck ticked, to a whole number of the steps between directions, counted from north; StartText names it when it is on one of the 32 points of the compass, such as NE or NbE. The dialog only edits its own copy: set Count, Start, Order and Snap before showing it and read them back after OK. On the desktop show it with ShowModal; on Android and iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK and frees the form when it closes. For the main thread only.</p>
+<span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
+<span id="PasDoc-Classes"></span><h3 class="cio">Classes, Interfaces, Objects and Records</h3>
+<table class="classestable wide_list">
+<tr class="listheader">
+<th class="itemname">Name</th>
+<th class="itemdesc">Description</th>
+</tr>
+<tr class="list">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DDirectionsForm.TDirectionsForm.html"><code>TDirectionsForm</code></a></td>
+<td class="itemdesc">The Model, Directions dialog; see the unit description.</td>
+</tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

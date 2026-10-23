@@ -88,6 +88,8 @@ Works out the volume a model sweeps as it turns about its up axis, for its rest 
 
 <p>ShowModelSweep adds a TModelSweep holding the rest pose's volume and one per animation. Each frame it draws the volume of the animation the model is playing, or the rest pose's when none is playing or the playing one was not measured, so the wireframe changes as soon as another animation is played. It draws the swept box in aqua, and the tube's outer and inner walls, with the axis itself, in yellow. The lines are drawn with the context's DrawLines helper, two calls a frame, one per colour, following Gorilla v1.5's Line Rendering guide, with depth testing as usual, so the model hides the parts behind it. Widths above 1 pixel work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
 
+<p>ShowModelBoundsOutline adds a TModelBoundsOutline, which draws the model's bounding box into TSprite3DOffscreen grabs while its ShowBoundingBox is on, as Gorilla draws that box on screen only; the wireframes here draw into grabs too, so a grab shows what the view shows.
+
 <p>The swept box is larger than the model's own box, and Gorilla counts a model's children in its bounding box, so the TModelSweep is not a child of the model: it sits beside it, owned by the model so it is freed with it, and draws with the model's matrix. The model's own bounding box, ShowBoundingBox and the camera's fits are therefore unaffected. For the same reason, measure the boxes before adding any helper that is a child of the model.
 
 <p></p>
@@ -140,6 +142,10 @@ HideModelSweep(GorillaModel1);</pre>
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DSweep.TCombinedSweep.html"><code>TCombinedSweep</code></a></td>
 <td class="itemdesc">Draws one fixed swept volume, such as the combined one, in its own colours.</td>
 </tr>
+<tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DSweep.TModelBoundsOutline.html"><code>TModelBoundsOutline</code></a></td>
+<td class="itemdesc">Draws a model's bounding box into grabs, as Gorilla's own ShowBoundingBox draws it on screen.</td>
+</tr>
 </table>
 <span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
 <table class="summary wide_list">
@@ -184,6 +190,12 @@ HideModelSweep(GorillaModel1);</pre>
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#FindCombinedSweep-TGorillaModel-">FindCombinedSweep</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TCombinedSweep.html">TCombinedSweep</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#ShowModelBoundsOutline-TGorillaModel-">ShowModelBoundsOutline</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TModelBoundsOutline.html">TModelBoundsOutline</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSweep.html#FindModelBoundsOutline-TGorillaModel-">FindModelBoundsOutline</a></strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TModelBoundsOutline.html">TModelBoundsOutline</a>;</code></td>
 </tr>
 </table>
 <span id="PasDoc-Types"></span><h3 class="summary">Types</h3>
@@ -626,6 +638,50 @@ Returns the sweep ShowCombinedSweep added to AModel, or nil.</p>
 </dl>
 <h6 class="description_section">Returns</h6>
 <p class="return">The combined sweep, or nil if AModel is nil or has none.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ShowModelBoundsOutline-TGorillaModel-"></span><code>function <strong>ShowModelBoundsOutline</strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TModelBoundsOutline.html">TModelBoundsOutline</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Adds a TModelBoundsOutline to AModel, so grabs show its bounding box when ShowBoundingBox is on.</p>
+<p>
+
+
+<p>Replaces any outline AModel already has. The outline draws only into grabs and only while AModel's ShowBoundingBox is True, so it can stay in place whatever that is set to.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model. Nothing happens if it is nil or has no parent.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The outline, owned by AModel; or nil if nothing was added.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="FindModelBoundsOutline-TGorillaModel-"></span><code>function <strong>FindModelBoundsOutline</strong>(const AModel: TGorillaModel): <a href="Sprite3DSweep.TModelBoundsOutline.html">TModelBoundsOutline</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Returns the outline ShowModelBoundsOutline added to AModel, or nil.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AModel</dt>
+<dd>The model to look on; nil gives nil.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The outline, or nil if AModel is nil or has none.</p></td></tr>
 </table>
 <h3 class="detail">Types</h3>
 <table class="detail visibility-published wide_list">

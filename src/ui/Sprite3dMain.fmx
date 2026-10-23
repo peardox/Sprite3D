@@ -219,9 +219,9 @@ object MainForm: TMainForm
         Text = '-'
       end
       object DirectionsItem: TMenuItem
-        Enabled = False
         Locked = True
-        Text = 'Directions'
+        Text = 'Directions...'
+        OnClick = DirectionsItemClick
       end
       object OrientationItem: TMenuItem
         Enabled = False
