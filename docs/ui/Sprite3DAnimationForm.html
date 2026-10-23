@@ -74,13 +74,15 @@ function pasdocUpdateMembers(className) {
 <div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
-The Model, Animation Settings dialog: the frame rate animations are saved at, and overscan.</p>
+The Model, Animation Settings dialog: the frame rate animations are saved at, overscan, and texture atlas pages.</p>
 <p>
 
 
-<p>One slider, marked FPS, sets the frames per second that the animation list's Save as sprite strip, Save as Texture Atlas and Save as AniGif, and batch Export, use, from ANIMATION_FPS_MIN to ANIMATION_FPS_MAX. The number beside it shows the value as the slider moves.
+<p>One slider, marked FPS, sets the frames per second that the animation list's Save as sprite strip, Save as Spritesheet and Save as AniGif, and batch Export, use, from ANIMATION_FPS_MIN to ANIMATION_FPS_MAX. The number beside it shows the value as the slider moves.
 
 <p>Below it, the Overscan tick box turns overscan on for grabs and exports: each image is drawn that many times larger each way and scaled back down with the filter chosen under Resampling. The slider beside it sets the factor, from OVERSCAN_FACTOR_MIN to the smaller of OVERSCAN_FACTOR_MAX and MaxOverscan, which the caller sets to what the off-screen renderer can do; where that is below OVERSCAN_FACTOR_MIN, as where grabs are screenshots, the tick box is disabled and a note says why. The slider and the drop-down are only enabled while the box is ticked.
+
+<p>Under Texture Atlas, Page size chooses the largest a texture atlas page may be each way, one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick box below lets pages be any size rather than powers of 2 each way.
 
 <p>OK accepts the values and Cancel leaves the old ones; keeping them, and applying them, is the caller's job.
 

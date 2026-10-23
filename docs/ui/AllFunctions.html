@@ -107,6 +107,16 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>A new TSprite3DFileAssociations for the model files this application opens.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreditsFromJson-TJSONValue-">CreditsFromJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads credits from the <code>credits</code> object of a project file.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreditsToJson-TSprite3DCredits-">CreditsToJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Credits as the <code>credits</code> object of a project file.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The folder grabs are saved in without asking, or empty where the user should choose.</p></td>
@@ -132,6 +142,16 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>An order as the text DirectionOrder keeps: positions from 1, separated by commas.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionsFromJson-TJSONValue-Integer-Single-TArrayInteger-Boolean-">DirectionsFromJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads a set of directions from a JSON object, as LoadDirectionsFile reads a file.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionsToJson-Integer-Single-TArrayInteger-Boolean-">DirectionsToJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>A set of directions as the JSON object SaveDirectionsFile writes.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#GpuModeSupported">GpuModeSupported</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>True where the GPU preference can be set: Windows only.</p></td>
@@ -147,64 +167,74 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Whether a file is a model LoadModelFile can load, judged by its extension.</p></td>
 </tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsProjectFile-String-">IsProjectFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Whether a file is a Sprite3D project file, judged by its extension, PROJECT_FILE_EXTENSION.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">LoadAnimationBoundsCache</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Reads the animation bounds saved for a model file, so they need not be measured again.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">LoadDirectionsFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Reads a set of directions from a JSON file written by SaveDirectionsFile.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Replaces a model's contents with a model file and starts its last animation.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-">ModelPanOffset</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>How far to move the orbit centre for a camera pan.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NearestDirectionCount-Integer-">NearestDirectionCount</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The entry of DIRECTION_COUNTS nearest to a number, the smaller of two as near.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The first free numbered file name in a folder, such as grab001.png.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OpenH264ConfigFile">OpenH264ConfigFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The <code>openh264.json</code> that gives OpenH264's download address for each platform, or empty if there is none.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OpenH264Folder">OpenH264Folder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Where downloaded copies of OpenH264 are kept: an <code>openh264</code> folder in SupportFolder.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlaceModel-TGorillaModel-TBoundingBox-">PlaceModel</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Centres a loaded model on its bounding box and turns it right way up.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlainDirectionOrder-Integer-Boolean-">PlainDirectionOrder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The plain order of ACount directions: clockwise from position 0, or anticlockwise.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGeneralSettings-TSprite3DAppSettings-">ReadGeneralSettings</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The File, Settings choices as they stand now.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGpuMode">ReadGpuMode</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The GPU preference Windows has for this program file now.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#RegisterProjectFiles-String-">RegisterProjectFiles</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Makes Sprite3D open its own project files, PROJECT_FILE_EXTENSION, when one is double-clicked.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">SaveAnimationBoundsCache</a></td>

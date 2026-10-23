@@ -211,6 +211,10 @@ A TGorillaCamera that orbits a centre point through a chain of three pivots.</p>
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DCamera.TSprite3DCamera.html#ShiftView-Single-Single-Single-Single-">ShiftView</a></strong>(const ARight, AUp, AViewWidth, AViewHeight: Single);</code></td>
 </tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DCamera.TSprite3DCamera.html#ProjectToView-TPoint3D-TControl3D-Single-Single-Single-Single-">ProjectToView</a></strong>(const APoint: TPoint3D; const ASpace: TControl3D; const AViewWidth, AViewHeight: Single; out AX, AY: Single): Boolean;</code></td>
+</tr>
 </table>
 <span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
 <table class="summary wide_list">
@@ -1058,6 +1062,50 @@ Slides the view by a number of pixels across and up, without turning it.</p>
 <dd>The height of the view the pixels are measured in.</dd>
 </dl>
 </td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ProjectToView-TPoint3D-TControl3D-Single-Single-Single-Single-"></span><code>function <strong>ProjectToView</strong>(const APoint: TPoint3D; const ASpace: TControl3D; const AViewWidth, AViewHeight: Single; out AX, AY: Single): Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Where a point falls in a view of a given size, as the camera stands.</p>
+<p>
+
+
+<p>The point is carried into the rig's space as the fits carry a box's corners, then seen through the camera's own GetProjectionMatrix for AViewWidth by AViewHeight, in perspective or orthographic projection as the camera is set. The result is measured in the view's pixels from its top-left corner, so the centre of the view is <code>(AViewWidth / 2, AViewHeight / 2)</code> and the centre of the top-left pixel is <code>(0.5, 0.5)</code>. It may lie outside the view.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>APoint</dt>
+<dd>The point, in ASpace's own coordinates, such as a model's RotationCenter.</dd>
+<dt>ASpace</dt>
+<dd>The object whose coordinates APoint is in; nil for the rig parent's.</dd>
+<dt>AViewWidth</dt>
+<dd>The width of the view, in pixels, such as a grab's.</dd>
+<dt>AViewHeight</dt>
+<dd>The height of the view, in pixels.</dd>
+<dt>AX</dt>
+<dd>Set to the distance from the view's left edge, in pixels.</dd>
+<dt>AY</dt>
+<dd>Set to the distance from the view's top edge, in pixels.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">False, leaving AX and AY at 0, if the view has no size or, in perspective, the point is not in front of the camera.</p></td></tr>
 </table>
 <h3 class="detail">Properties</h3>
 <table class="detail visibility-public wide_list">

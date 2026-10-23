@@ -112,6 +112,16 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The application's name, used for its per-user folder.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ATLAS_PAGE_SIZES">ATLAS_PAGE_SIZES</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The largest a texture atlas page may be, each way, as Model, Animation Settings offers it: 1k, 2k, 4k, 8k and 16k pixels.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ATLAS_PAGE_SIZE_DEFAULT">ATLAS_PAGE_SIZE_DEFAULT</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The texture atlas page size until Model, Animation Settings changes it.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The file an icon is saved to without asking, or empty where the user should choose.</p></td>
@@ -125,6 +135,16 @@ function pasdocUpdateMembers(className) {
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreateModelAssociations">CreateModelAssociations</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>A new TSprite3DFileAssociations for the model files this application opens.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreditsFromJson-TJSONValue-">CreditsFromJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads credits from the <code>credits</code> object of a project file.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#CreditsToJson-TSprite3DCredits-">CreditsToJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Credits as the <code>credits</code> object of a project file.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></td>
@@ -150,6 +170,16 @@ function pasdocUpdateMembers(className) {
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionOrderToText-TArrayInteger-">DirectionOrderToText</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>An order as the text DirectionOrder keeps: positions from 1, separated by commas.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionsFromJson-TJSONValue-Integer-Single-TArrayInteger-Boolean-">DirectionsFromJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Reads a set of directions from a JSON object, as LoadDirectionsFile reads a file.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DirectionsToJson-Integer-Single-TArrayInteger-Boolean-">DirectionsToJson</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>A set of directions as the JSON object SaveDirectionsFile writes.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#DIRECTIONS_FILE_EXTENSION">DIRECTIONS_FILE_EXTENSION</a></td>
@@ -222,84 +252,104 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Whether a file is a model LoadModelFile can load, judged by its extension.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#IsProjectFile-String-">IsProjectFile</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Whether a file is a Sprite3D project file, judged by its extension, PROJECT_FILE_EXTENSION.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">LoadAnimationBoundsCache</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Reads the animation bounds saved for a model file, so they need not be measured again.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">LoadDirectionsFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Reads a set of directions from a JSON file written by SaveDirectionsFile.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Replaces a model's contents with a model file and starts its last animation.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3dMain.html#MainForm">MainForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
 <td class="itemdesc"><p>The main form, created by Application.CreateForm in Sprite3d.dpr.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-">ModelPanOffset</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>How far to move the orbit centre for a camera pan.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NearestDirectionCount-Integer-">NearestDirectionCount</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The entry of DIRECTION_COUNTS nearest to a number, the smaller of two as near.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The first free numbered file name in a folder, such as grab001.png.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OpenH264ConfigFile">OpenH264ConfigFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The <code>openh264.json</code> that gives OpenH264's download address for each platform, or empty if there is none.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OpenH264Folder">OpenH264Folder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Where downloaded copies of OpenH264 are kept: an <code>openh264</code> folder in SupportFolder.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOrbitalForm.html#OrbitalSettingsForm">OrbitalSettingsForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOrbitalForm.html">Sprite3DOrbitalForm</a></td>
 <td class="itemdesc"><p>The instance the project file creates; the main form makes its own.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OVERSCAN_FACTOR_DEFAULT">OVERSCAN_FACTOR_DEFAULT</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The overscan factor Model, Animation Settings shows until another is chosen.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OVERSCAN_FACTOR_MAX">OVERSCAN_FACTOR_MAX</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The largest overscan factor Model, Animation Settings offers, before the GPU's own limit for the grab size.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#OVERSCAN_FACTOR_MIN">OVERSCAN_FACTOR_MIN</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The smallest overscan factor Model, Animation Settings offers.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PAN_LIMIT">PAN_LIMIT</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The largest camera pan either way, as a multiple of the model's radius.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlaceModel-TGorillaModel-TBoundingBox-">PlaceModel</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Centres a loaded model on its bounding box and turns it right way up.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PlainDirectionOrder-Integer-Boolean-">PlainDirectionOrder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The plain order of ACount directions: clockwise from position 0, or anticlockwise.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PROJECT_FILE_EXTENSION">PROJECT_FILE_EXTENSION</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The extension of Sprite3D project files: credits, the model, directions and the Animations list, which File, Save Project saves and the system opens with Sprite3D.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PROJECT_FILE_FORMAT">PROJECT_FILE_FORMAT</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The <code>format</code> a project file names itself with.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#PROJECT_FILE_VERSION">PROJECT_FILE_VERSION</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>The newest project file layout this version writes and reads.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#ReadGeneralSettings-TSprite3DAppSettings-">ReadGeneralSettings</a></td>
@@ -312,34 +362,44 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The GPU preference Windows has for this program file now.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.html#RegisterProjectFiles-String-">RegisterProjectFiles</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Makes Sprite3D open its own project files, PROJECT_FILE_EXTENSION, when one is double-clicked.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">SaveAnimationBoundsCache</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Saves a model file's measured animation bounds for the next time it is loaded.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">SaveDirectionsFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Writes a set of directions to a JSON file, for Model, Directions' Export.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Saves a grab as the next free grabNNN.png in a folder.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#SETTINGS_FILE_NAME">SETTINGS_FILE_NAME</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The name of the settings file in SupportFolder.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#StartModelFileRead-String-">StartModelFileRead</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Starts reading a model file from start to end on a worker thread.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The model to load at start-up: the first one the system asked to open, or ADefault.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3dMain.TAnimationListState.html">TAnimationListState</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
+<td class="itemdesc"><p>An Animations list read from a file, ready to apply to a model.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DAnimationForm.TAnimationSettingsForm.html">TAnimationSettingsForm</a></td>
@@ -352,19 +412,29 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The Model, Animations Used dialog; see the unit description.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3dMain.TAtlasPart.html">TAtlasPart</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
+<td class="itemdesc"><p>One animation captured for a texture atlas, kept until the batch ends and the pages are made.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DBackgroundForm.TBackgroundSettingsForm.html">TBackgroundSettingsForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DBackgroundForm.html">Sprite3DBackgroundForm</a></td>
 <td class="itemdesc"><p>The Background Settings dialog; edits a TSprite3DBackgroundSpec.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOrbitalForm.TCameraSettings.html">TCameraSettings</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOrbitalForm.html">Sprite3DOrbitalForm</a></td>
 <td class="itemdesc"><p>Everything the Variable camera dialog edits.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.TControl3DAccess.html">TControl3DAccess</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>Protected-access helper for TControl3D; nothing in the project uses it yet.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DCreditsForm.TCreditsForm.html">TCreditsForm</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DCreditsForm.html">Sprite3DCreditsForm</a></td>
+<td class="itemdesc"><p>The Creator Credits dialog; see the unit description.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DDirectionsForm.TDirectionsForm.html">TDirectionsForm</a></td>
@@ -372,39 +442,49 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The Model, Directions dialog; see the unit description.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DExportForm.TExportProgressForm.html">TExportProgressForm</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DExportForm.html">Sprite3DExportForm</a></td>
+<td class="itemdesc"><p>The export progress dialog; see the unit description.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSettingsForm.TGeneralSettingsForm.html">TGeneralSettingsForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSettingsForm.html">Sprite3DSettingsForm</a></td>
 <td class="itemdesc"><p>The Settings dialog.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3dMain.TMainForm.html">TMainForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
 <td class="itemdesc"><p>The main form: a Gorilla3D view of one model, with dials for the camera.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DLoadForm.TModelLoadForm.html">TModelLoadForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DLoadForm.html">Sprite3DLoadForm</a></td>
 <td class="itemdesc"><p>The model loading dialog; see the unit description.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3dMain.html#TModelLoadStage">TModelLoadStage</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
 <td class="itemdesc"><p>Where a model load has got to; see TMainForm.SwitchModel.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOrbitalForm.TOrbitalSettingsForm.html">TOrbitalSettingsForm</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOrbitalForm.html">Sprite3DOrbitalForm</a></td>
 <td class="itemdesc"><p>The Variable camera dialog.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3dMain.html#TSheetKind">TSheetKind</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3dMain.html">Sprite3dMain</a></td>
 <td class="itemdesc"><p>What the animation list's pop-up menu saves a capture as.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.TSprite3DAppSettings.html">TSprite3DAppSettings</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
 <td class="itemdesc"><p>The application's settings, kept between sessions in settings.json.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DHelpers.TSprite3DCredits.html">TSprite3DCredits</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DHelpers.html">Sprite3DHelpers</a></td>
+<td class="itemdesc"><p>Who made a sprite set, as File, Save Project sets it and the metadata's <code>meta</code> gives it.</p></td>
 </tr>
 <tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DHelpers.TSprite3DGeneralSettings.html">TSprite3DGeneralSettings</a></td>

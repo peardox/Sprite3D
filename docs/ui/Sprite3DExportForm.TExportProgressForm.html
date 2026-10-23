@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Sprite3DExportForm: Class TExportProgressForm</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="PasDoc 1.0.5.snapshot">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="StyleSheet" type="text/css" href="bootstrap.min.css">
+<link rel="StyleSheet" type="text/css" href="pasdoc.css">
+<style>
+.inherited-member { display: none; }
+</style>
+<script>
+/* PasDoc JavaScript for toggleable visibility and/or inherited members. */
+
+/* Get checkbox value, or true if the checkbox does not exist (e.g. for visibilities that are not toggable). */
+function getCheckboxValue(checkboxId) {
+  var checkbox = document.getElementById(checkboxId);
+  return checkbox ? checkbox.checked : true;
+}
+
+/* Update display of members that are toggable because
+   1. their visibility is toggable (--visible-members=xxx? in PasDoc)
+   2. or they are from ancestors (inherited), and thus toggable (see --inherited-members in PasDoc)
+*/ 
+function pasdocUpdateMembers(className) {
+  var elements = document.getElementsByClassName(className);
+  var showInherited = getCheckboxValue("checkbox-inherited-member");
+  var showVisibilities = {};
+  showVisibilities["visibility-published"] = getCheckboxValue("checkbox-visibility-published");
+  showVisibilities["visibility-public"] = getCheckboxValue("checkbox-visibility-public");
+  showVisibilities["visibility-protected"] = getCheckboxValue("checkbox-visibility-protected");
+  showVisibilities["visibility-strictprotected"] = getCheckboxValue("checkbox-visibility-strictprotected");
+  showVisibilities["visibility-private"] = getCheckboxValue("checkbox-visibility-private");
+  showVisibilities["visibility-strictprivate"] = getCheckboxValue("checkbox-visibility-strictprivate");
+  showVisibilities["visibility-automated"] = getCheckboxValue("checkbox-visibility-automated");
+  showVisibilities["visibility-implicit"] = getCheckboxValue("checkbox-visibility-implicit");
+  for (var i = 0; i < elements.length; i++) {
+    var show = true;
+    if (elements[i].classList.contains("inherited-member")) {
+      show = show && showInherited;
+    }
+    for (var visibility in showVisibilities) {
+      if (elements[i].classList.contains(visibility)) {
+        show = show && showVisibilities[visibility];
+        break;
+      }
+    }
+    elements[i].style.display = show ? "revert" : "none";
+  }
+}
+</script>
+</head>
+<body>
+<nav class="navbar d-md-none sticky-top bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Documentation</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+<div class="offcanvas-md offcanvas-start navigation" tabindex="-1" id="sidebarNav" data-bs-scroll="true">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Documentation</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body py-2">
+<ul class="nav flex-column px-3"><li class="nav-item"><a class="nav-link px-2 py-1" href="AllUnits.html">Units</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="ClassHierarchy.html">Class Hierarchy</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllClasses.html">Classes, Interfaces, Objects and Records</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllTypes.html">Types</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllVariables.html">Variables</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllConstants.html">Constants</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllFunctions.html">Functions and Procedures</a></li><li class="nav-item"><a class="nav-link px-2 py-1" href="AllIdentifiers.html">Identifiers</a></li></ul></div></div>
+<main class="pasdoc-content content">
+<div class="container-fluid py-3 px-4">
+<span id="TExportProgressForm"></span><h1 class="cio">Class TExportProgressForm</h1>
+<div class="sections">
+<div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></div><div class="one_section"><a class="section" href="#PasDoc-Fields">Fields</a></div><div class="one_section"><a class="section" href="#PasDoc-Methods">Methods</a></div><div class="one_section"><a class="section" href="#PasDoc-Properties">Properties</a></div></div>
+<span id="PasDoc-Description"></span><h2 class="unit">Unit</h2>
+<p class="unitlink">
+<a href="Sprite3DExportForm.html">Sprite3DExportForm</a></p>
+<h2 class="declaration">Declaration</h2>
+<p class="declaration">
+<code>type TExportProgressForm = class(TForm)</code></p>
+<h2 class="description">Description</h2>
+<p>
+The export progress dialog; see the unit description.</p>
+<span id="PasDoc-Hierarchy"></span><h2 class="hierarchy">Hierarchy</h2>
+<ul class="hierarchy"><li class="ancestor">TForm</li>
+<li class="thisitem">TExportProgressForm</li></ul><div class="show-members-toggles">
+<span class="show-members-toggles-label">Show Additional Members:</span>
+<label><input type="checkbox" autocomplete="off" id="checkbox-inherited-member" onchange="pasdocUpdateMembers('inherited-member')"> Inherited</label>
+</div>
+<h2 class="overview">Overview</h2>
+<span id="PasDoc-Fields"></span><h3 class="summary">Fields</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#MainLayout">MainLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#ExportProgressBar">ExportProgressBar</a></strong>: TProgressBar;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#RemainingLabel">RemainingLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#StatusLabel">StatusLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#ResultMemo">ResultMemo</a></strong>: TMemo;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#ButtonLayout">ButtonLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#AbortButton">AbortButton</a></strong>: TButton;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DExportForm.TExportProgressForm.html#CloseButton">CloseButton</a></strong>: TButton;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Methods"></span><h3 class="summary">Methods</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#AbortButtonClick-TObject-">AbortButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#CloseButtonClick-TObject-">CloseButtonClick</a></strong>(Sender: TObject);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#FormCloseQuery-TObject-Boolean-">FormCloseQuery</a></strong>(Sender: TObject; var CanClose: Boolean);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#FormClose-TObject-TCloseAction-">FormClose</a></strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#SetProgress-Single-String-">SetProgress</a></strong>(const AFraction: Single; const AStatus: String);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#AddLine-String-">AddLine</a></strong>(const ALine: String);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#SetRemaining-Int64-">SetRemaining</a></strong>(const AMilliseconds: Int64);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#SetRemainingNote-String-">SetRemainingNote</a></strong>(const ANote: String);</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#Finish-String-TArrayString-">Finish</a></strong>(const AReport: String; const AProblems: TArray&lt;String&gt;);</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DExportForm.TExportProgressForm.html#ShowAndFree">ShowAndFree</a></strong>;</code></td>
+</tr>
+</table>
+<span id="PasDoc-Properties"></span><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DExportForm.TExportProgressForm.html#Aborted">Aborted</a></strong>: Boolean read FAborted;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DExportForm.TExportProgressForm.html#Finished">Finished</a></strong>: Boolean read FFinished;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DExportForm.TExportProgressForm.html#OnAbort">OnAbort</a></strong>: TNotifyEvent read FOnAbort write FOnAbort;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DExportForm.TExportProgressForm.html#OnClosed">OnClosed</a></strong>: TNotifyEvent read FOnClosed write FOnClosed;</code></td>
+</tr>
+</table>
+<h2 class="description">Description</h2>
+<h3 class="detail">Fields</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="MainLayout"></span><code><strong>MainLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Holds the progress bar, the status line and the list of results.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ExportProgressBar"></span><code><strong>ExportProgressBar</strong>: TProgressBar;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+How far the whole export has got, from 0 to 100.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="RemainingLabel"></span><code><strong>RemainingLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The estimated time left, under the progress bar, as hours, minutes and seconds; hidden by Finish.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="StatusLabel"></span><code><strong>StatusLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+What is being exported now, under the progress bar; the outcome at the end.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ResultMemo"></span><code><strong>ResultMemo</strong>: TMemo;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The files saved and the problems met, as they happen, and the report at the end.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ButtonLayout"></span><code><strong>ButtonLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The strip holding Abort and Close.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AbortButton"></span><code><strong>AbortButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Asks for the export to stop once the animation being exported is saved; also pressed by the Escape key.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CloseButton"></span><code><strong>CloseButton</strong>: TButton;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog; enabled once the export has ended.</p>
+</td></tr>
+</table>
+<h3 class="detail">Methods</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AbortButtonClick-TObject-"></span><code>procedure <strong>AbortButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Calls OnAbort, once, and says the export is stopping.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>AbortButton.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="CloseButtonClick-TObject-"></span><code>procedure <strong>CloseButtonClick</strong>(Sender: TObject);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Closes the dialog, once the export has ended.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>CloseButton.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormCloseQuery-TObject-Boolean-"></span><code>procedure <strong>FormCloseQuery</strong>(Sender: TObject; var CanClose: Boolean);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Lets the dialog close only after Finish; any other close is taken as Abort.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+<dt>CanClose</dt>
+<dd>Set to False until Finish has been called.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="FormClose-TObject-TCloseAction-"></span><code>procedure <strong>FormClose</strong>(Sender: TObject; var Action: TCloseAction);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Frees the form as it closes when shown with ShowAndFree.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>Sender</dt>
+<dd>The form.</dd>
+<dt>Action</dt>
+<dd>Set to caFree when shown with ShowAndFree.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetProgress-Single-String-"></span><code>procedure <strong>SetProgress</strong>(const AFraction: Single; const AStatus: String);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows how far the export has got and what it is doing.</p>
+<p>
+
+
+<p>Once Abort has been asked for, the status line keeps saying the export is stopping, after AStatus.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFraction</dt>
+<dd>How far the whole export has got, from 0 to 1; values outside are clamped.</dd>
+<dt>AStatus</dt>
+<dd>What is being done now, in a few words.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AddLine-String-"></span><code>procedure <strong>AddLine</strong>(const ALine: String);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Adds a line to the list below the bar, such as a file saved or a problem.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ALine</dt>
+<dd>The line; it may hold line breaks.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetRemaining-Int64-"></span><code>procedure <strong>SetRemaining</strong>(const AMilliseconds: Int64);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the estimated time left, as <code>Time remaining: about H:MM:SS</code>.</p>
+<p>
+
+
+<p>Hours are not wrapped into days, so 30 hours show as 30:00:00. Ignored after Finish.
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AMilliseconds</dt>
+<dd>The time left, in milliseconds; below 0 shows that it is still being worked out.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="SetRemainingNote-String-"></span><code>procedure <strong>SetRemainingNote</strong>(const ANote: String);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows a note in place of the time left, for a stage that cannot be estimated.</p>
+<p>
+
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ANote</dt>
+<dd>The note, after <code>Time remaining:</code>; empty clears the line.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Finish-String-TArrayString-"></span><code>procedure <strong>Finish</strong>(const AReport: String; const AProblems: TArray&lt;String&gt;);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the outcome, as the export has ended, and lets the dialog be closed.</p>
+<p>
+
+
+<p>The status line shows AReport; the list gets AReport and then each of AProblems. Abort is disabled and Close enabled, and the time remaining is hidden. The bar is left where the export got to.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AReport</dt>
+<dd>What was exported, in a line or two.</dd>
+<dt>AProblems</dt>
+<dd>What went wrong, one entry each; empty if nothing did.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="ShowAndFree"></span><code>procedure <strong>ShowAndFree</strong>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Shows the dialog without blocking and frees it when it is closed.</p>
+<p>
+
+
+<p>For Android and iOS, where ShowModal cannot block.</p>
+</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Aborted"></span><code>property <strong>Aborted</strong>: Boolean read FAborted;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True once Abort has been asked for.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Finished"></span><code>property <strong>Finished</strong>: Boolean read FFinished;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+True once Finish has been called.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnAbort"></span><code>property <strong>OnAbort</strong>: TNotifyEvent read FOnAbort write FOnAbort;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called once, when Abort is first asked for.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="OnClosed"></span><code>property <strong>OnClosed</strong>: TNotifyEvent read FOnClosed write FOnClosed;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Called as the dialog closes, before ShowAndFree frees it.</p>
+<p>
+
+
+<p>For an owner keeping a reference to the dialog, to let it go.</p>
+</td></tr>
+</table>
+<hr><span class="appinfo"><em>Generated by <a href="https://pasdoc.github.io/">PasDoc 1.0.5.snapshot</a>. </em>
+</span>
+</div></main>
+<script src="bootstrap.bundle.min.js"></script>
+</body></html>

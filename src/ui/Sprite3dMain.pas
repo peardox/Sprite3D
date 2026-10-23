@@ -1651,11 +1651,13 @@ type
     FPlayer: TSprite3DAnimationPlayer;
     FBatchAll: TCheckBox;
     FBatchKindBox: TComboBox;
-    // Above Export: whether a strip or spritesheet is saved with its metadata, and
-    // whether to export every direction (kept for the directions export to
-    // come; no effect yet)
+    // Above Export: whether a strip or spritesheet is saved with its metadata,
+    // whether to export every direction, and whether to export in two passes
+    // (for the two-pass export to come; no effect yet). 2-pass is not kept:
+    // it starts clear each session and is in no project file
     FBatchMetadata: TCheckBox;
     FBatchDirections: TCheckBox;
+    FBatchTwoPass: TCheckBox;
     FExportButton: TButton;
     FAbortButton: TButton;
     // Abort was clicked: the batch stops once the current entry is saved
@@ -1705,6 +1707,9 @@ type
     // of that was capturing before a texture atlas's pages were made
     FBatchClock: TStopwatch;
     FBatchCaptureMs: Int64;
+    // When the dialog's time remaining was last changed, on FBatchClock; -1
+    // before the first estimate
+    FBatchRemainingAt: Int64;
     FDirFrames: TArray<TSprite3DImage>;
     FDirFailed: Boolean;
     // The camera's azimuth before a capture turned it to a direction, put
@@ -6270,7 +6275,7 @@ begin
   FBatchKindIndex := Ord(skStrip);
   FBatchKindBox.OnChange := BatchKindChange;
 
-  // Second row, above Export: the metadata and directions choices
+  // Second row, above Export: the metadata, directions and two-pass choices
   Row := TLayout.Create(Self);
   Row.Parent := FBatchLayout;
   Row.Align := TAlignLayout.Top;
@@ -6291,13 +6296,22 @@ begin
 
   FBatchDirections := TCheckBox.Create(Self);
   FBatchDirections.Parent := Row;
-  FBatchDirections.Align := TAlignLayout.Client;
+  FBatchDirections.Align := TAlignLayout.Left;
+  FBatchDirections.Width := 88;
   FBatchDirections.Text := 'Directions';
   FBatchDirections.Hint := 'Export every animation in each direction set in Model, ' +
     'Directions, in their order';
   FBatchDirections.ShowHint := True;
   FBatchDirections.IsChecked := FSettings.ExportDirections;
   FBatchDirections.OnChange := BatchDirectionsChange;
+
+  FBatchTwoPass := TCheckBox.Create(Self);
+  FBatchTwoPass.Parent := Row;
+  FBatchTwoPass.Align := TAlignLayout.Client;
+  FBatchTwoPass.Text := '2-pass';
+  FBatchTwoPass.Hint := 'Export in two passes (to come; no effect yet)';
+  FBatchTwoPass.ShowHint := True;
+  FBatchTwoPass.IsChecked := False;   // not kept between sessions
 
   // Third row: Export, and Abort beside it
   Row := TLayout.Create(Self);
@@ -6401,7 +6415,8 @@ begin
   FSettings.ExportMetadata := FBatchMetadata.IsChecked;
 end;
 
-// Kept in settings.json for the directions export to come; no effect yet
+// Kept in settings.json; ticked, every animation is exported in each
+// direction of Model, Directions
 procedure TMainForm.BatchDirectionsChange(Sender: TObject);
 begin
   FSettings.ExportDirections := FBatchDirections.IsChecked;
@@ -6503,6 +6518,7 @@ begin
   FBatchMetadata.Enabled := not Capturing and
     (FBatchKindBox.ItemIndex in [Ord(skStrip), Ord(skSheet)]);
   FBatchDirections.Enabled := not Capturing;
+  FBatchTwoPass.Enabled := not Capturing;
   UpdateListFileItems;
   FAbortButton.Enabled := FBatchActive and not FBatchAborted and not FAtlasSaving;
   // The lock cannot change while a capture has its own framing on the camera
@@ -6604,6 +6620,7 @@ begin
   // Timed from here to the report
   FBatchClock := TStopwatch.StartNew;
   FBatchCaptureMs := -1;
+  FBatchRemainingAt := -1;
   FDirFrames := nil;
   FDirFailed := False;
   FBatchItems := Items;
@@ -6653,16 +6670,45 @@ begin
 end;
 
 // The batch's progress in its dialog: AItemFraction of the way through the
-// entry under way, and what is happening, after which entry it is
+// entry under way, and what is happening, after which entry it is; and the
+// time left, from the time taken so far and the fraction done
 procedure TMainForm.ShowExportStep(const AItemFraction: Single; const AStatus: String);
+const
+  // No estimate until this much has been done and this long has passed, as
+  // the first frames say little about the rest
+  ESTIMATE_AFTER_FRACTION = 0.01;
+  ESTIMATE_AFTER_MS = 2000;
+  // Changed at most this often, so the figure can be read
+  ESTIMATE_EVERY_MS = 500;
 var
   Total: Integer;
+  Fraction: Double;
+  Elapsed: Int64;
 begin
   if FExportDialog = nil then
     Exit;
   Total := Max(1, Length(FBatchItems));
-  FExportDialog.SetProgress((Min(FBatchPos, Total) + EnsureRange(AItemFraction, 0, 1)) /
-    Total, AStatus);
+  Fraction := (Min(FBatchPos, Total) + EnsureRange(AItemFraction, 0, 1)) / Total;
+  FExportDialog.SetProgress(Fraction, AStatus);
+  if FBatchAborted then
+  begin
+    // The status line says it is stopping; the estimate was for the lot
+    FExportDialog.SetRemainingNote(String.Empty);
+    Exit;
+  end;
+  Elapsed := FBatchClock.ElapsedMilliseconds;
+  if (Fraction < ESTIMATE_AFTER_FRACTION) or (Elapsed < ESTIMATE_AFTER_MS) then
+  begin
+    if FBatchRemainingAt < 0 then
+      FExportDialog.SetRemaining(-1);
+    Exit;
+  end;
+  if (FBatchRemainingAt >= 0) and (Elapsed - FBatchRemainingAt < ESTIMATE_EVERY_MS) then
+    Exit;
+  FBatchRemainingAt := Elapsed;
+  // The rest at the rate so far; every step is taken to be alike, so a
+  // batch of animations of very different lengths makes it rougher
+  FExportDialog.SetRemaining(Round(Elapsed * (1 - Fraction) / Fraction));
 end;
 
 // Which list entry, counted from 1, batch step APos is of
@@ -6887,7 +6933,11 @@ begin
   UpdateBatchControls;
   Caption := 'Saving texture atlas...';
   if FExportDialog <> nil then
+  begin
     FExportDialog.SetProgress(1, 'Saving the texture atlas pages...');
+    // How long the pages take is not known until they are made
+    FExportDialog.SetRemainingNote('saving the pages, not estimated');
+  end;
   Task := TTask.Run(
     procedure
     var

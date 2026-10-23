@@ -97,18 +97,22 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemdesc">Raised by LoadDirectionsFile when a file cannot be used as directions.</td>
 </tr>
 <tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DCredits.html"><code>TSprite3DCredits</code></a></td>
+<td class="itemdesc">Who made a sprite set, as File, Save Project sets it and the metadata's <code>meta</code> gives it.</td>
+</tr>
+<tr class="list">
 <td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DGeneralSettings.html"><code>TSprite3DGeneralSettings</code></a></td>
 <td class="itemdesc">The choices made in File, Settings, together.</td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TControl3DAccess.html"><code>TControl3DAccess</code></a></td>
 <td class="itemdesc">Protected-access helper for TControl3D; nothing in the project uses it yet.</td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3DHelpers.TSprite3DAppSettings.html"><code>TSprite3DAppSettings</code></a></td>
 <td class="itemdesc">The application's settings, kept between sessions in settings.json.</td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname">Interface&nbsp;<a class="bold" href="Sprite3DHelpers.IModelFileRead.html"><code>IModelFileRead</code></a></td>
 <td class="itemdesc">A read of a model file on a worker thread, from StartModelFileRead.</td>
 </tr>
@@ -143,64 +147,82 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#LoadDirectionsFile-String-Integer-Single-TArrayInteger-Boolean-">LoadDirectionsFile</a></strong>(const AFileName: String; out ACount: Integer; out AStart: Single; out AOrder: TArray&lt;Integer&gt;; out ASnap: Boolean);</code></td>
 </tr>
 <tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DirectionsToJson-Integer-Single-TArrayInteger-Boolean-">DirectionsToJson</a></strong>(const ACount: Integer; const AStart: Single; const AOrder: TArray&lt;Integer&gt;; const ASnap: Boolean): TJSONObject;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#DirectionsFromJson-TJSONValue-Integer-Single-TArrayInteger-Boolean-">DirectionsFromJson</a></strong>(const AValue: TJSONValue; out ACount: Integer; out AStart: Single; out AOrder: TArray&lt;Integer&gt;; out ASnap: Boolean);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#IsProjectFile-String-">IsProjectFile</a></strong>(const AFileName: String): Boolean;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#CreditsToJson-TSprite3DCredits-">CreditsToJson</a></strong>(const ACredits: <a href="Sprite3DHelpers.TSprite3DCredits.html">TSprite3DCredits</a>): TJSONObject;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#CreditsFromJson-TJSONValue-">CreditsFromJson</a></strong>(const AValue: TJSONValue): <a href="Sprite3DHelpers.TSprite3DCredits.html">TSprite3DCredits</a>;</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DegreesText-Single-">DegreesText</a></strong>(const ADegrees: Single): String;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DefaultModelDir">DefaultModelDir</a></strong>: String;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#DefaultGrabFolder">DefaultGrabFolder</a></strong>: String;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#OpenH264ConfigFile">OpenH264ConfigFile</a></strong>: String;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#OpenH264Folder">OpenH264Folder</a></strong>: String;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#NextNumberedFileName-String-String-String-Integer-">NextNumberedFileName</a></strong>(const AFolder, APrefix, AExtension: String; var ANumber: Integer): String;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#SaveGrab-TBitmap-String-Integer-">SaveGrab</a></strong>(const ABitmap: TBitmap; const AFolder: String; var ANumber: Integer): String;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#LoadModelFile-TGorillaModel-String-TBoundingBox-">LoadModelFile</a></strong>(const AModel: TGorillaModel; const AFileName: String; out ABox: TBoundingBox): TArray&lt;String&gt;;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#PlaceModel-TGorillaModel-TBoundingBox-">PlaceModel</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox);</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#IsModelFile-String-">IsModelFile</a></strong>(const AFileName: String): Boolean;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#StartupModelFile-TArrayString-String-">StartupModelFile</a></strong>(const ARequested: TArray&lt;String&gt;; const ADefault: String): String;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#StartModelFileRead-String-">StartModelFileRead</a></strong>(const AFileName: String): <a href="Sprite3DHelpers.IModelFileRead.html">IModelFileRead</a>;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#AnimationBoundsCacheFile-String-">AnimationBoundsCacheFile</a></strong>(const AModelFile: String): String;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#LoadAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">LoadAnimationBoundsCache</a></strong>(const AModelFile: String; const ANames: TArray&lt;String&gt;; out ABounds: TArray&lt;TAnimationBounds&gt;): Boolean;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DHelpers.html#SaveAnimationBoundsCache-String-TArrayString-TArrayTAnimationBounds-">SaveAnimationBoundsCache</a></strong>(const AModelFile: String; const ANames: TArray&lt;String&gt;; const ABounds: TArray&lt;TAnimationBounds&gt;);</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#AutoIconFileName-String-">AutoIconFileName</a></strong>(const AExtension: String): String;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ModelPanOffset-TGorillaModel-TBoundingBox-Single-Single-">ModelPanOffset</a></strong>(const AModel: TGorillaModel; const ABox: TBoundingBox; const APanX, APanZ: Single): TPoint3D;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ApplyTheme-TSprite3DTheme-String-">ApplyTheme</a></strong>(const ATheme: <a href="Sprite3DHelpers.html#TSprite3DTheme">TSprite3DTheme</a>; out AError: String): Boolean;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#CreateModelAssociations">CreateModelAssociations</a></strong>: TSprite3DFileAssociations;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#ApplyFileAssociations-TSprite3DAppSettings-Boolean-Boolean-String-">ApplyFileAssociations</a></strong>(const ASettings: <a href="Sprite3DHelpers.TSprite3DAppSettings.html">TSprite3DAppSettings</a>; const AOpenWith, AAlways: Boolean; out AMessage: String): Boolean;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#RegisterProjectFiles-String-">RegisterProjectFiles</a></strong>(out AMessage: String): Boolean;</code></td>
 </tr>
 <tr class="list2 visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DHelpers.html#GpuModeSupported">GpuModeSupported</a></strong>: Boolean;</code></td>
@@ -273,6 +295,12 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTION_COUNT_DEFAULT">DIRECTION_COUNT_DEFAULT</a></strong> = 8;</code></td>
 </tr>
 <tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#ATLAS_PAGE_SIZES">ATLAS_PAGE_SIZES</a></strong>: array[0..4] of Integer = (1024, 2048, 4096, 8192, 16384);</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#ATLAS_PAGE_SIZE_DEFAULT">ATLAS_PAGE_SIZE_DEFAULT</a></strong> = 4096;</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTIONS_FILE_FORMAT">DIRECTIONS_FILE_FORMAT</a></strong> = 'Sprite3D directions';</code></td>
 </tr>
 <tr class="list2 visibility-published">
@@ -282,15 +310,24 @@ Support routines for the Sprite3D application that are neither UI nor library.</
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#DIRECTIONS_FILE_EXTENSION">DIRECTIONS_FILE_EXTENSION</a></strong> = '.json';</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#PROJECT_FILE_EXTENSION">PROJECT_FILE_EXTENSION</a></strong> = '.sprite3d';</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#PROJECT_FILE_FORMAT">PROJECT_FILE_FORMAT</a></strong> = 'Sprite3D project';</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#PROJECT_FILE_VERSION">PROJECT_FILE_VERSION</a></strong> = 1;</code></td>
 </tr>
 <tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MIN">GRAB_SIZE_MIN</a></strong> = 8;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_MAX">GRAB_SIZE_MAX</a></strong> = 1024;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_SIZE_DEFAULT">GRAB_SIZE_DEFAULT</a></strong> = 256;</code></td>
+</tr>
+<tr class="list2 visibility-published">
 <td class="itemcode"><code><strong><a href="Sprite3DHelpers.html#GRAB_PRESET_SIZES">GRAB_PRESET_SIZES</a></strong>: array[0..11] of Integer =
     (8, 16, 24, 32, 64, 96, 128, 160, 192, 256, 384, 512);</code></td>
 </tr>
@@ -564,6 +601,149 @@ Reads a set of directions from a JSON file written by SaveDirectionsFile.</p>
 <dd>or another file exception if the file cannot be read.</dd>
 </dl>
 </td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DirectionsToJson-Integer-Single-TArrayInteger-Boolean-"></span><code>function <strong>DirectionsToJson</strong>(const ACount: Integer; const AStart: Single; const AOrder: TArray&lt;Integer&gt;; const ASnap: Boolean): TJSONObject;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+A set of directions as the JSON object SaveDirectionsFile writes.</p>
+<p>
+
+
+<p>For keeping directions inside another JSON file, such as a project file. The caller owns the object.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACount</dt>
+<dd>How many directions; one of DIRECTION_COUNTS.</dd>
+<dt>AStart</dt>
+<dd>The red marker's bearing, in degrees clockwise from north.</dd>
+<dt>AOrder</dt>
+<dd>The order, as positions from 0; one that does not fit ACount is written as the plain clockwise order.</dd>
+<dt>ASnap</dt>
+<dd>Whether the dial is locked to steps of one direction.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The object, with every member SaveDirectionsFile writes.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="DirectionsFromJson-TJSONValue-Integer-Single-TArrayInteger-Boolean-"></span><code>procedure <strong>DirectionsFromJson</strong>(const AValue: TJSONValue; out ACount: Integer; out AStart: Single; out AOrder: TArray&lt;Integer&gt;; out ASnap: Boolean);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reads a set of directions from a JSON object, as LoadDirectionsFile reads a file.</p>
+<p>
+
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AValue</dt>
+<dd>The object, such as one DirectionsToJson made.</dd>
+<dt>ACount</dt>
+<dd>Set to the number of directions, one of DIRECTION_COUNTS.</dd>
+<dt>AStart</dt>
+<dd>Set to the red marker's bearing, wrapped into 0 up to 360.</dd>
+<dt>AOrder</dt>
+<dd>Set to the order, as positions from 0, every one once.</dd>
+<dt>ASnap</dt>
+<dd>Set to whether the dial is locked to steps of one direction.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><a class="normal" href="Sprite3DHelpers.EDirectionsFile.html">EDirectionsFile</a></dt>
+<dd>If AValue is not an object of directions, or holds a count or order that cannot be used; the message says which.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="IsProjectFile-String-"></span><code>function <strong>IsProjectFile</strong>(const AFileName: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Whether a file is a Sprite3D project file, judged by its extension, PROJECT_FILE_EXTENSION.</p>
+<p>
+
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>A file name or path.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True if its extension is PROJECT_FILE_EXTENSION, in any case.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="CreditsToJson-TSprite3DCredits-"></span><code>function <strong>CreditsToJson</strong>(const ACredits: <a href="Sprite3DHelpers.TSprite3DCredits.html">TSprite3DCredits</a>): TJSONObject;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Credits as the <code>credits</code> object of a project file.</p>
+<p>
+
+
+<p>Members are <code>creator</code>, <code>creator_url</code>, <code>modeller</code>, <code>modeller_url</code>, <code>artist</code>, <code>artist_url</code> and <code>created</code>; empty ones are written as <code>null</code>. The caller owns the object.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>ACredits</dt>
+<dd>The credits.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The object.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="CreditsFromJson-TJSONValue-"></span><code>function <strong>CreditsFromJson</strong>(const AValue: TJSONValue): <a href="Sprite3DHelpers.TSprite3DCredits.html">TSprite3DCredits</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Reads credits from the <code>credits</code> object of a project file.</p>
+<p>
+
+
+<p>Members left out, <code>null</code> or not text are read as empty.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AValue</dt>
+<dd>The object; anything else gives empty credits.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The credits.</p></td></tr>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
@@ -1078,6 +1258,29 @@ Registers or unregisters the application for model files as asked, keeping what 
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
+<td class="itemcode"><span id="RegisterProjectFiles-String-"></span><code>function <strong>RegisterProjectFiles</strong>(out AMessage: String): Boolean;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Makes Sprite3D open its own project files, PROJECT_FILE_EXTENSION, when one is double-clicked.</p>
+<p>
+
+
+<p>Called each time the application starts, so the files open with the copy of the program last run, whatever is chosen for model files in File, Settings. On Windows the extension gets a ProgID of its own, <code>Sprite3D.Project</code>, and is made to open with it; a choice made with Always in Windows' own How do you want to open dialog still wins. On Linux the project MIME type, <code>application/x-sprite3d</code>, goes into the application's desktop entry, with the model types if they are registered, and is made to open with it. On macOS the bundle's document types do this, and elsewhere there are no associations, so it does nothing.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AMessage</dt>
+<dd>Set to what went wrong; empty if nothing did.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">True on success, or where there is nothing to do.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
 <td class="itemcode"><span id="GpuModeSupported"></span><code>function <strong>GpuModeSupported</strong>: Boolean;</code></td>
 </tr>
 <tr><td colspan="1">
@@ -1359,6 +1562,24 @@ The number of directions until Model, Directions changes it.</p>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
+<td class="itemcode"><span id="ATLAS_PAGE_SIZES"></span><code><strong>ATLAS_PAGE_SIZES</strong>: array[0..4] of Integer = (1024, 2048, 4096, 8192, 16384);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The largest a texture atlas page may be, each way, as Model, Animation Settings offers it: 1k, 2k, 4k, 8k and 16k pixels.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ATLAS_PAGE_SIZE_DEFAULT"></span><code><strong>ATLAS_PAGE_SIZE_DEFAULT</strong> = 4096;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The texture atlas page size until Model, Animation Settings changes it.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
 <td class="itemcode"><span id="DIRECTIONS_FILE_FORMAT"></span><code><strong>DIRECTIONS_FILE_FORMAT</strong> = 'Sprite3D directions';</code></td>
 </tr>
 <tr><td colspan="1">
@@ -1382,6 +1603,33 @@ The newest directions file layout this version writes and reads.</p>
 <tr><td colspan="1">
 <p>
 The extension Model, Directions gives the directions files it exports.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PROJECT_FILE_EXTENSION"></span><code><strong>PROJECT_FILE_EXTENSION</strong> = '.sprite3d';</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The extension of Sprite3D project files: credits, the model, directions and the Animations list, which File, Save Project saves and the system opens with Sprite3D.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PROJECT_FILE_FORMAT"></span><code><strong>PROJECT_FILE_FORMAT</strong> = 'Sprite3D project';</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The <code>format</code> a project file names itself with.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PROJECT_FILE_VERSION"></span><code><strong>PROJECT_FILE_VERSION</strong> = 1;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+The newest project file layout this version writes and reads.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

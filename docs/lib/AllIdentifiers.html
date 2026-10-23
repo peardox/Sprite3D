@@ -107,9 +107,19 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>The swept volume of a model over its rest pose and a chosen set of its animations.</p></td>
 </tr>
 <tr class="list">
-<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeAtlas-TArrayTSprite3DImage-Integer-">ComposeAtlas</a></td>
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeAtlasPage-TArrayTSprite3DImage-TSprite3DAtlasPage-">ComposeAtlasPage</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
-<td class="itemdesc"><p>Puts the frames in a square grid: a texture atlas.</p></td>
+<td class="itemdesc"><p>Lays out one texture atlas page from PlanAtlasPages.</p></td>
+</tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeRows-TArrayTSprite3DImage-Integer-">ComposeRows</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Puts the frames in rows of ACols: a strip of several rows, such as one row per direction.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeSheet-TArrayTSprite3DImage-Integer-">ComposeSheet</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Puts the frames in a square grid: a spritesheet.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#ComposeStrip-TArrayTSprite3DImage-">ComposeStrip</a></td>
@@ -252,44 +262,54 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Measures, for each of AModel's animations, the box that holds all its poses.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#MeasureFrameEmpty-TSprite3DImage-">MeasureFrameEmpty</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Measures the fully transparent border round a frame.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#NativeLibraryFolders">NativeLibraryFolders</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
 <td class="itemdesc"><p>The folders to look for the program's own libraries in, best first.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DNativeLibs.html#NativePlatformKey">NativePlatformKey</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DNativeLibs.html">Sprite3DNativeLibs</a></td>
 <td class="itemdesc"><p>The platform's name, as used for <code>dlls</code> folders and <code>openh264.json</code>.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Available">OpenH264Available</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Whether OpenH264 is loaded, loading it the first time.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264LoadedLibrary">OpenH264LoadedLibrary</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>The full path of the OpenH264 loaded, or empty if none is.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Retry">OpenH264Retry</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Loads the named OpenH264 again unless a copy is already loaded.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#OpenH264Status">OpenH264Status</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Which OpenH264 was loaded and from where, or why none was.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#OVERSCAN_MAX">OVERSCAN_MAX</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>The largest Overscan factor TSprite3DOffscreen accepts.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#OVERSCAN_TARGET_LIMIT">OVERSCAN_TARGET_LIMIT</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>The most pixels across or down an overscanned target may have, whatever the GPU allows.</p></td>
+</tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#PlanAtlasPages-TArrayInteger-Integer-Integer-Integer-Boolean-">PlanAtlasPages</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Plans the pages of a texture atlas: which frames of which animations go on each page, and each page's grid and size.</p></td>
 </tr>
 <tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#RecheckH264">RecheckH264</a></td>
@@ -342,311 +362,346 @@ function pasdocUpdateMembers(className) {
 <td class="itemdesc"><p>Writes an image as a 32-bit RGBA PNG file.</p></td>
 </tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.html#SaveSheetMetadata-String-TArrayTSprite3DImage-TSprite3DSheetInfo-">SaveSheetMetadata</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Writes the metadata of a sprite strip, spritesheet or texture atlas page as a JSON file.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.html#SetAnimationPaused-TGorillaAnimation-Boolean-">SetAnimationPaused</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>Holds an animation on its current pose, or lets it carry on from there.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.html#SetPreferredOpenH264-String-">SetPreferredOpenH264</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>Names the copy of OpenH264 to load: the one downloaded for this platform.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#SetTitleBarSpec-TSprite3DTitleBarSpec-">SetTitleBarSpec</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>Makes ASpec the look of every title bar, now and for forms shown later.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowCombinedSweep-TGorillaModel-TSweptVolume-">ShowCombinedSweep</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Draws one fixed swept volume beside AModel, such as the combined volume of its rest pose and the animations used.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.html#ShowModelAxes-TGorillaModel-Single-Boolean-">ShowModelAxes</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
 <td class="itemdesc"><p>Draws AModel's X, Y and Z axes through its centre of rotation.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowModelBoundsOutline-TGorillaModel-">ShowModelBoundsOutline</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Adds a TModelBoundsOutline to AModel, so grabs show its bounding box when ShowBoundingBox is on.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-">ShowModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Shows a shader-drawn grid on AModel's floor, from its current bounds.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#ShowModelGrid-TGorillaModel-TBoundingBox-">ShowModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TArrayTAnimationBounds-TSweepAxis-">ShowModelSweep</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Draws the volume AModel sweeps in a full turn about its up axis, at rest and in each animation.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#ShowModelSweep-TGorillaModel-TBoundingBox-TSweepAxis-">ShowModelSweep</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Draws the volume AModel sweeps in a full turn about its up axis, at rest only.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#StyleBackgroundColour-TAlphaColor-">StyleBackgroundColour</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>The colour of the form background in the FMX style in use.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#SweepOutline-TSweptVolume-Integer-">SweepOutline</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Points whose convex hull holds the whole of a swept volume.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.TAnimationBounds.html">TAnimationBounds</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>The box that holds every pose of one of a model's animations.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.TAnimationBoundsMeasurer.html">TAnimationBoundsMeasurer</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Measures a model's animations as MeasureAnimationBounds does, a few milliseconds at a time.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.TCombinedSweep.html">TCombinedSweep</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Draws one fixed swept volume, such as the combined one, in its own colours.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.html#TGridAxis">TGridAxis</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>The axis a TModelGrid is drawn across.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.html#TitleBarSpecFromStyle-TAlphaColor-TAlphaColor-">TitleBarSpecFromStyle</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>A title bar spec to go with the FMX style in use.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.html#TLookAtMode">TLookAtMode</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
 <td class="itemdesc"><p>How LookAt treats Roll when it turns the camera.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAxes.TModelAxes.html">TModelAxes</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAxes.html">Sprite3DAxes</a></td>
 <td class="itemdesc"><p>Shows three coloured lines through a point, drawn on top or by shaders.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.TModelBoundsOutline.html">TModelBoundsOutline</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Draws a model's bounding box into grabs, as Gorilla's own ShowBoundingBox draws it on screen.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DGrid.TModelGrid.html">TModelGrid</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DGrid.html">Sprite3DGrid</a></td>
 <td class="itemdesc"><p>Shows a shader-drawn grid for its parent model.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.TModelSweep.html">TModelSweep</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>Draws, as a wireframe beside its model, the swept volume of the animation the model is playing, or of its rest pose.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.TQuat.html">TQuat</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
 <td class="itemdesc"><p>A quaternion of Doubles, used for the camera's orientation arithmetic.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.TSprite3DAnimationFrames.html">TSprite3DAnimationFrames</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>One cycle of a Gorilla model's animation, resampled at a chosen frame rate.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html">TSprite3DAnimationPlayer</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>Plays, pauses and steps one animation of a model on screen, an export frame at a time.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DFileAssoc.html#TSprite3DAssocSupport">TSprite3DAssocSupport</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DFileAssoc.html">Sprite3DFileAssoc</a></td>
 <td class="itemdesc"><p>How much of the file associations this platform lets a program change.</p></td>
 </tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DAtlasPage.html">TSprite3DAtlasPage</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>One page of a texture atlas, as PlanAtlasPages lays it out.</p></td>
+</tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DAtlasSlice.html">TSprite3DAtlasSlice</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>A run of one animation's frames on a texture atlas page.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DBackground.TSprite3DBackground.html">TSprite3DBackground</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DBackground.html">Sprite3DBackground</a></td>
 <td class="itemdesc"><p>Shows a background behind a viewport, as a 2D control.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DBackground.html#TSprite3DBackgroundKind">TSprite3DBackgroundKind</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DBackground.html">Sprite3DBackground</a></td>
 <td class="itemdesc"><p>What a background shows.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DBackground.TSprite3DBackgroundSpec.html">TSprite3DBackgroundSpec</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DBackground.html">Sprite3DBackground</a></td>
 <td class="itemdesc"><p>Describes a background: its kind, colours and checker size.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.TSprite3DCamera.html">TSprite3DCamera</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
 <td class="itemdesc"><p>A TGorillaCamera that orbits a centre point through a chain of three pivots.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.html#TSprite3DCaptureProgress">TSprite3DCaptureProgress</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>Reports progress after each frame is grabbed.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DFileAssoc.TSprite3DFileAssociations.html">TSprite3DFileAssociations</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DFileAssoc.html">Sprite3DFileAssoc</a></td>
 <td class="itemdesc"><p>Registers the running program for a set of file types, for the current user.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOpenFiles.TSprite3DFileOpenRequests.html">TSprite3DFileOpenRequests</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenFiles.html">Sprite3DOpenFiles</a></td>
 <td class="itemdesc"><p>The queue of files the operating system has asked the application to open.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DFileAssoc.TSprite3DFileType.html">TSprite3DFileType</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DFileAssoc.html">Sprite3DFileAssoc</a></td>
 <td class="itemdesc"><p>One file type an application opens.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.TSprite3DFrameCapture.html">TSprite3DFrameCapture</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>One capture run: every frame of a source, grabbed in turn.</p></td>
 </tr>
+<tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DFrameEmpty.html">TSprite3DFrameEmpty</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>The fully transparent border round a frame: how many whole columns or rows at each edge have nothing in them.</p></td>
+</tr>
 <tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DFrameRef.html">TSprite3DFrameRef</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>Which frame of which animation and direction an image's frame is.</p></td>
+</tr>
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.TSprite3DFrameSource.html">TSprite3DFrameSource</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>Something that can be shown one frame at a time for capture.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.html#TSprite3DFramesProc">TSprite3DFramesProc</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>Reports a finished capture: every frame, in order, or an error.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DCamera.TSprite3DFraming.html">TSprite3DFraming</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DCamera.html">Sprite3DCamera</a></td>
 <td class="itemdesc"><p>A camera's framing: where it orbits and how far out it is.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#TSprite3DGrabProc">TSprite3DGrabProc</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>Receives the result of TSprite3DOffscreen.Grab.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#TSprite3DGrabSizeEvent">TSprite3DGrabSizeEvent</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>Signature of TSprite3DOffscreen.OnBeforeGrab.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#TSprite3DGrabSizesProc">TSprite3DGrabSizesProc</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>Receives the result of TSprite3DOffscreen.GrabSizes.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DBackground.html#TSprite3DGradientDirection">TSprite3DGradientDirection</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DBackground.html">Sprite3DBackground</a></td>
 <td class="itemdesc"><p>Which way a Gradient background runs, from GradientFrom to GradientTo.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOpenH264.TSprite3DH264Encoder.html">TSprite3DH264Encoder</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenH264.html">Sprite3DOpenH264</a></td>
 <td class="itemdesc"><p>One OpenH264 encoder, for pictures of one size.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.TSprite3DIconWriter.html">TSprite3DIconWriter</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>Base class for an icon file format.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.html#TSprite3DIconWriterClass">TSprite3DIconWriterClass</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>A TSprite3DIconWriter descendant, for choosing a format at run time.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DIconWriter.TSprite3DIcoWriter.html">TSprite3DIcoWriter</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DIconWriter.html">Sprite3DIconWriter</a></td>
 <td class="itemdesc"><p>Writes Windows .ico files.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
 <td class="itemdesc"><p>An image as plain RGBA bytes with straight alpha, top row first.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DStorage.TSprite3DJsonSettings.html">TSprite3DJsonSettings</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DStorage.html">Sprite3DStorage</a></td>
 <td class="itemdesc"><p>Base class for settings kept as a JSON file.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DLibraryUpdate.TSprite3DLibraryUpdate.html">TSprite3DLibraryUpdate</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DLibraryUpdate.html">Sprite3DLibraryUpdate</a></td>
 <td class="itemdesc"><p>One library's download, for this platform; see the unit description.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DLibraryUpdate.html#TSprite3DLibraryUpdateDone">TSprite3DLibraryUpdateDone</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DLibraryUpdate.html">Sprite3DLibraryUpdate</a></td>
 <td class="itemdesc"><p>Reports the end of a download, on the main thread.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.TSprite3DOffscreen.html">TSprite3DOffscreen</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>A render pass that draws the viewport's scene off screen, one frame on request.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DOpenFiles.html#TSprite3DOpenFileEvent">TSprite3DOpenFileEvent</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOpenFiles.html">Sprite3DOpenFiles</a></td>
 <td class="itemdesc"><p>Receives a file the operating system asks the application to open.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#TSprite3DOverscanEvent">TSprite3DOverscanEvent</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>Signature of TSprite3DOffscreen.OnOverscanReduced.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DResample.html#TSprite3DResampleFilter">TSprite3DResampleFilter</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DResample.html">Sprite3DResample</a></td>
 <td class="itemdesc"><p>The filter ResamplePixels scales with.</p></td>
 </tr>
+<tr class="list">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DSheetInfo.html">TSprite3DSheetInfo</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>What SaveSheetMetadata writes about an image besides its frames.</p></td>
+</tr>
 <tr class="list2">
+<td class="itemname"><a class="bold" href="Sprite3DSpriteSheet.TSprite3DSheetMeta.html">TSprite3DSheetMeta</a></td>
+<td class="itemunit"><a class="bold" href="Sprite3DSpriteSheet.html">Sprite3DSpriteSheet</a></td>
+<td class="itemdesc"><p>The <code>meta</code> section SaveSheetMetadata writes first: which page, who made it, and when.</p></td>
+</tr>
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DOffscreen.html#TSprite3DShiftViewEvent">TSprite3DShiftViewEvent</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DOffscreen.html">Sprite3DOffscreen</a></td>
 <td class="itemdesc"><p>Signature of TSprite3DOffscreen.OnShiftView.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DTitleBar.TSprite3DTitleBarSpec.html">TSprite3DTitleBarSpec</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DTitleBar.html">Sprite3DTitleBar</a></td>
 <td class="itemdesc"><p>How title bars should look.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DAnimCapture.TSprite3DTurntableFrames.html">TSprite3DTurntableFrames</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DAnimCapture.html">Sprite3DAnimCapture</a></td>
 <td class="itemdesc"><p>One turn of the camera round the model, in equal steps.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#TSweepAxis">TSweepAxis</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>The model's own axis that the sweep turns about.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.TSweptVolume.html">TSweptVolume</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>The space a bounding box passes through in a full turn about an axis.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DSweep.html#UnionSweptVolume-arrayofTSweptVolume-">UnionSweptVolume</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DSweep.html">Sprite3DSweep</a></td>
 <td class="itemdesc"><p>The smallest swept volume that holds every valid volume given.</p></td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#VideoAvailable">VideoAvailable</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
 <td class="itemdesc"><p>Whether MP4 video can be written: the FFmpeg libraries loaded and have the encoder.</p></td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname"><a class="bold" href="Sprite3DVideo.html#VideoStatus">VideoStatus</a></td>
 <td class="itemunit"><a class="bold" href="Sprite3DVideo.html">Sprite3DVideo</a></td>
 <td class="itemdesc"><p>Why video is or is not available, for a log or a hint.</p></td>

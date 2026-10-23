@@ -98,7 +98,7 @@ Plays, pauses and steps one animation of a model on screen, an export frame at a
 <table class="summary wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>constructor <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Create-TGorillaModel-TGorillaAnimation-Integer-">Create</a></strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer);</code></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationPlayer.html#Create-TGorillaModel-TGorillaAnimation-Integer-Integer-">Create</a></strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer; const AFrameCount: Integer = 0);</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -153,13 +153,15 @@ Plays, pauses and steps one animation of a model on screen, an export frame at a
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="Create-TGorillaModel-TGorillaAnimation-Integer-"></span><code>constructor <strong>Create</strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer);</code></td>
+<td class="itemcode"><span id="Create-TGorillaModel-TGorillaAnimation-Integer-Integer-"></span><code>constructor <strong>Create</strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer; const AFrameCount: Integer = 0);</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
 Starts following an animation that has just started from its beginning.</p>
 <p>
 
+
+<p>
 
 <p>
 
@@ -176,6 +178,8 @@ Starts following an animation that has just started from its beginning.</p>
 <dd>The animation, current and running from its first pose.</dd>
 <dt>AFrameRate</dt>
 <dd>The export frame rate, which sets the frames held and stepped through.</dd>
+<dt>AFrameCount</dt>
+<dd>The number of export frames, in place of what AFrameRate gives, such as one chosen by hand; 0, the default, for what AFrameRate gives. It is kept when FrameRate changes.</dd>
 </dl>
 <h6 class="description_section">Exceptions raised</h6>
 <dl class="exceptions_raised">

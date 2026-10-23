@@ -4,7 +4,7 @@ object ExportProgressForm: TExportProgressForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Exporting'
-  ClientHeight = 300
+  ClientHeight = 326
   ClientWidth = 440
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -19,7 +19,7 @@ object ExportProgressForm: TExportProgressForm
     Padding.Top = 16.000000000000000000
     Padding.Right = 16.000000000000000000
     Size.Width = 440.000000000000000000
-    Size.Height = 256.000000000000000000
+    Size.Height = 282.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object ExportProgressBar: TProgressBar
@@ -32,11 +32,22 @@ object ExportProgressForm: TExportProgressForm
       Size.PlatformDefault = False
       Max = 100.000000000000000000
     end
+    object RemainingLabel: TLabel
+      Align = Top
+      Margins.Top = 6.000000000000000000
+      Position.X = 16.000000000000000000
+      Position.Y = 42.000000000000000000
+      Size.Width = 408.000000000000000000
+      Size.Height = 20.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Time remaining: estimating...'
+      TabOrder = 3
+    end
     object StatusLabel: TLabel
       Align = Top
       Margins.Top = 8.000000000000000000
       Position.X = 16.000000000000000000
-      Position.Y = 44.000000000000000000
+      Position.Y = 70.000000000000000000
       Size.Width = 408.000000000000000000
       Size.Height = 34.000000000000000000
       Size.PlatformDefault = False
@@ -63,7 +74,7 @@ object ExportProgressForm: TExportProgressForm
   end
   object ButtonLayout: TLayout
     Align = Bottom
-    Position.Y = 256.000000000000000000
+    Position.Y = 282.000000000000000000
     Size.Width = 440.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False

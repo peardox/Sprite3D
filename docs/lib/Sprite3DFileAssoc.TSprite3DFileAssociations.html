@@ -127,13 +127,17 @@ Registers the running program for a set of file types, for the current user.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#MakeDefault-String-">MakeDefault</a></strong>(var ABackup: String): Boolean;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#Claim">Claim</a></strong>: Boolean;</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#RestoreDefaults-String-">RestoreDefaults</a></strong>(var ABackup: String): Boolean;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#MakeDefault-String-">MakeDefault</a></strong>(var ABackup: String): Boolean;</code></td>
 </tr>
 <tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#RestoreDefaults-String-">RestoreDefaults</a></strong>(var ABackup: String): Boolean;</code></td>
+</tr>
+<tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>procedure <strong><a href="Sprite3DFileAssoc.TSprite3DFileAssociations.html#OpenSystemDefaults">OpenSystemDefaults</a></strong>;</code></td>
 </tr>
@@ -268,6 +272,23 @@ Removes what Register added.</p>
 <p></p>
 <h6 class="description_section">Returns</h6>
 <p class="return">True on success; False, with LastError set, otherwise.</p></td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="Claim"></span><code>function <strong>Claim</strong>: Boolean;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Makes this program the default for the types without asking, for types that are the application's own.</p>
+<p>
+
+
+<p>Only for file types no other program has a claim to, such as the application's own documents: it does not keep the previous defaults, as MakeDefault does. On Windows it sets each extension's own default ProgID in <code>HKCU\Software\Classes</code>, which a choice made in Windows' own How do you want to open dialog with Always still overrides; on Linux it sets each MIME type's default in <code>mimeapps.list</code>. Call Register first. On macOS the bundle's document types do this, so it does nothing.
+
+<p></p>
+<h6 class="description_section">Returns</h6>
+<p class="return">True on success; False, with LastError set, on failure or where the platform does not allow it.</p></td></tr>
 </table>
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">

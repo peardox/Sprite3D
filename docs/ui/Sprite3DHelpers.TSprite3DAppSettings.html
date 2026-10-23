@@ -279,30 +279,50 @@ The application's settings, kept between sessions in settings.json.</p>
 </tr>
 <tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
-<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionCount">DirectionCount</a></strong>: Integer read FDirectionCount write SetDirectionCount;</code></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#MinifyJson">MinifyJson</a></strong>: Boolean read FMinifyJson write SetMinifyJson;</code></td>
 </tr>
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
-<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionStart">DirectionStart</a></strong>: Single read FDirectionStart write SetDirectionStart;</code></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionCount">DirectionCount</a></strong>: Integer read FDirectionCount write SetDirectionCount;</code></td>
 </tr>
 <tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionStart">DirectionStart</a></strong>: Single read FDirectionStart write SetDirectionStart;</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionClockwise">DirectionClockwise</a></strong>: Boolean read FDirectionClockwise
       write FDirectionClockwise;</code></td>
 </tr>
-<tr class="list visibility-published">
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionOrder">DirectionOrder</a></strong>: String read FDirectionOrder write FDirectionOrder;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#DirectionSnap">DirectionSnap</a></strong>: Boolean read FDirectionSnap write FDirectionSnap;</code></td>
 </tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ExportMetadata">ExportMetadata</a></strong>: Boolean read FExportMetadata write FExportMetadata;</code></td>
+</tr>
 <tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ExportDirections">ExportDirections</a></strong>: Boolean read FExportDirections write FExportDirections;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#AtlasPageSize">AtlasPageSize</a></strong>: Integer read FAtlasPageSize write SetAtlasPageSize;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#AtlasNonPowerOf2">AtlasNonPowerOf2</a></strong>: Boolean read FAtlasNonPowerOf2 write FAtlasNonPowerOf2;</code></td>
+</tr>
+<tr class="list2 visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#Overscan">Overscan</a></strong>: Integer read FOverscan write SetOverscan;</code></td>
 </tr>
-<tr class="list2 visibility-published">
+<tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DHelpers.TSprite3DAppSettings.html#ResampleFilter">ResampleFilter</a></strong>: TSprite3DResampleFilter read FResampleFilter
       write FResampleFilter;</code></td>
@@ -917,6 +937,20 @@ The frame rate the view is drawn at, in frames per second; VIEW_FPS_DEFAULT by d
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
 <td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="MinifyJson"></span><code>property <strong>MinifyJson</strong>: Boolean read FMinifyJson write SetMinifyJson;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether JSON files are written minified, with no indents or line breaks; False by default.</p>
+<p>
+
+
+<p>Set in File, Settings. Stored as <code>minifyJson</code>. Writing it, loading settings.json included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes follows, settings.json itself among them.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
 <td class="itemcode"><span id="DirectionCount"></span><code>property <strong>DirectionCount</strong>: Integer read FDirectionCount write SetDirectionCount;</code></td>
 </tr>
 <tr><td colspan="2">
@@ -983,6 +1017,62 @@ Whether the Model, Directions dial turns in steps of one direction; False by def
 
 
 <p>Stored as <code>directionSnap</code>. True locks DirectionStart to whole multiples of 360 divided by DirectionCount, counted from north.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="ExportMetadata"></span><code>property <strong>ExportMetadata</strong>: Boolean read FExportMetadata write FExportMetadata;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether a sprite strip or spritesheet is saved with its metadata; False by default.</p>
+<p>
+
+
+<p>Stored as <code>exportMetadata</code>; set by the Metadata box above Export. True writes, beside each strip or spritesheet, a JSON file of the same name with the extension .json, made by SaveSheetMetadata: the image's size and layout, where the centre of rotation falls in a frame, and each frame's transparent border. AniGifs and MP4 videos have none, and texture atlas pages always have it, whatever this says.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="ExportDirections"></span><code>property <strong>ExportDirections</strong>: Boolean read FExportDirections write FExportDirections;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether exports are to be made for every direction of Model, Directions; False by default.</p>
+<p>
+
+
+<p>Stored as <code>exportDirections</code>; set by the Directions box above Export. Ticked, each animation is exported once for each direction, in their order, and the metadata's <code>directions</code> lists their bearings; otherwise it is the single dummy entry 0.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="AtlasPageSize"></span><code>property <strong>AtlasPageSize</strong>: Integer read FAtlasPageSize write SetAtlasPageSize;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The largest a texture atlas page may be, in pixels each way; ATLAS_PAGE_SIZE_DEFAULT by default.</p>
+<p>
+
+
+<p>Stored as <code>atlasPageSize</code>; set in Model, Animation Settings. A written value that is not one of ATLAS_PAGE_SIZES becomes the nearest that is.</p>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="visibility"><span class="badge vis-published">Published</span></td>
+<td class="itemcode"><span id="AtlasNonPowerOf2"></span><code>property <strong>AtlasNonPowerOf2</strong>: Boolean read FAtlasNonPowerOf2 write FAtlasNonPowerOf2;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether a texture atlas page may be any size, rather than a power of 2 each way; False by default.</p>
+<p>
+
+
+<p>Stored as <code>atlasNonPowerOf2</code>; set in Model, Animation Settings. False makes each page's width and height the smallest powers of 2 that hold its frames; True makes the page exactly as large as its grid of frames.</p>
 </td></tr>
 </table>
 <table class="detail visibility-published wide_list">

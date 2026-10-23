@@ -94,13 +94,15 @@ Demo form for TSprite3DCamera: loads a model and drives the camera with dials.</
 
 <p>Under the list, five buttons with icons, named in their hints, act on the selected animation: first frame, previous frame, play or pause, next frame and last frame. The frames are those an export makes at the Model, Animation Settings frame rate, held exactly as the export shows them, by TSprite3DAnimationPlayer; any of the four frame buttons pauses the animation on its frame. After them, a readout always shows the frame showing, held or playing, and the frames in all, with the &quot;/&quot; in a fixed place; it reads &quot;- / -&quot; when there is no animation to count, as for <code>(None)</code>. A readout over the top left of the view, white on a dark backing, shows the frames per second the viewport draws, which File, Settings sets, kept within the refresh rate of the display the window is on, and checked again whenever the window moves to another display. Play and pause share a button, whose icon and hint change to say which it does. Stepping wraps round from the last frame to the first and back. Choosing an entry plays it from the start, unless the controls are paused, when it starts paused on its first frame; starting a capture lets a held animation play on. Grabs and icons are saved as the view shows them, with the background and every helper showing. Animation exports show the model alone: the bounding box, axes, grid and volume wireframes are hidden for each drawing, and the background is left out, so they are transparent around the model, or black for MP4.
 
-<p>Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4 video. Each grabs every frame of that animation off screen, from the first to the last, at the grab size and with one framing that fits every frame, and saves them in SaveFolder: side by side in one row as <code>&lt;animation&gt;_strip&lt;frames&gt;.png</code>, in a square grid read left to right and top to bottom as <code>&lt;animation&gt;.png</code>, as a looping <code>&lt;animation&gt;.gif</code>, or as a video-only <code>&lt;animation&gt;.mp4</code> through Sprite3DVideo, H.264 when Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when the FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The <code>(None)</code> entry, which has no animation, captures instead a single still frame of the model in its bind pose, named after the model. On Android and iOS, which have no right-click, the same items are in an Animation group of the menu drawer and act on the selected entry.
+<p>Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up menu with Save as sprite strip, Save as Spritesheet, Save as AniGif and Save as MP4 video. Each grabs every frame of that animation off screen, from the first to the last, at the grab size and with one framing that fits every frame, and saves them in SaveFolder: side by side in one row as <code>&lt;animation&gt;_strip&lt;frames&gt;.png</code>, in a square grid read left to right and top to bottom as <code>&lt;animation&gt;.png</code>, as a looping <code>&lt;animation&gt;.gif</code>, or as a video-only <code>&lt;animation&gt;.mp4</code> through Sprite3DVideo, H.264 when Cisco's OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when the FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The <code>(None)</code> entry, which has no animation, captures instead a single still frame of the model in its bind pose, named after the model. On Android and iOS, which have no right-click, the same items are in an Animation group of the menu drawer and act on the selected entry.
 
 <p>At start-up the OpenH264 library, which makes MP4 files H.264, is taken from <code>openh264.json</code>: an address for each platform, from which a copy is downloaded in the background into OpenH264Folder the first time, and again whenever the address changes. An empty address, or a failed download, leaves MP4 files as MPEG-4 Part 2. DebugMemo says which happened.
 
 <p>Model, Animation Settings... sets the frame rate every saved animation uses, 30 frames a second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to it: one cycle is cut into the whole number of equal steps nearest that rate, so the saved frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns overscan on, for this session only: every grab, icon and export is drawn 2 to 16 times larger each way, as far as the GPU allows at the grab size, and scaled down with the resampling filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in settings.json.
 
-<p>Each entry also has a tick box. Below the list, All ticks every animation, leaving <code>(None)</code> as it is so the turn is exported only when ticked by hand, or clears every entry; a drop-down chooses Sprite strip, Texture Atlas, AniGif or, when FFmpeg loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can be made there for the batch. SaveFolder itself is not changed. A failed entry is reported at the end and does not stop the others. Each entry is unticked as soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while a batch runs, lets the entry being captured finish and save, then drops the rest. On Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
+<p>Each entry also has a tick box. Below the list, All ticks every animation, leaving <code>(None)</code> as it is so the turn is exported only when ticked by hand, or clears every entry; a drop-down chooses Sprite strip, Spritesheet, Texture Atlas, AniGif or, when FFmpeg loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can be made there for the batch. SaveFolder itself is not changed. A failed entry is reported at the end and does not stop the others. Each entry is unticked as soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while a batch runs, lets the entry being captured finish and save, then drops the rest. On Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
+
+<p>The drop-down's Texture Atlas asks for its folder as it is chosen. Its batch captures every ticked entry, then packs them, in list order, onto pages no larger than the page size in Model, Animation Settings, saved as <code>&lt;model&gt;_atlas_01.png</code>, <code>_02</code> and so on; see SaveAtlas.
 
 <p>View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or turns the camera: the views, Orthographic and the pan are switched off, a new model or a resized view is not refitted, and grabs, icons and animation captures use the view exactly as it stands instead of fitting the model to their own size. The lock is not kept between sessions.
 
@@ -116,8 +118,8 @@ Demo form for TSprite3DCamera: loads a model and drives the camera with dials.</
 TabControl1
 |-- GorillaTab &quot;View&quot;
 |   `-- MainLayout
-|       |-- ViewportLayout   owns the TGorillaViewport
-|       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
+|       |-- ViewportLayout   the area left of the control panel
+|       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
 |       `-- ControlsLayout   dials and their labels
 `-- DebugTab &quot;Debug&quot;
     `-- DebugMemo
@@ -170,6 +172,14 @@ MainMenu1
 <th class="itemdesc">Description</th>
 </tr>
 <tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3dMain.TAnimationListState.html"><code>TAnimationListState</code></a></td>
+<td class="itemdesc">An Animations list read from a file, ready to apply to a model.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3dMain.TAtlasPart.html"><code>TAtlasPart</code></a></td>
+<td class="itemdesc">One animation captured for a texture atlas, kept until the batch ends and the pages are made.</td>
+</tr>
+<tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="Sprite3dMain.TMainForm.html"><code>TMainForm</code></a></td>
 <td class="itemdesc">The main form: a Gorilla3D view of one model, with dials for the camera.</td>
 </tr>
@@ -203,7 +213,9 @@ What the animation list's pop-up menu saves a capture as.</p>
 <li>
 <span id="skStrip">skStrip</span>: One row of frames, saved as <code>&lt;name&gt;_strip&lt;count&gt;.png</code>.</li>
 <li>
-<span id="skAtlas">skAtlas</span>: A square grid of frames, saved as <code>&lt;name&gt;.png</code>.</li>
+<span id="skSheet">skSheet</span>: A square grid of frames, saved as <code>&lt;name&gt;.png</code>.</li>
+<li>
+<span id="skAtlas">skAtlas</span>: Texture atlas pages: every animation of a batch packed onto shared pages, saved as <code>&lt;model&gt;_atlas_01.png</code> and so on; batch Export only.</li>
 <li>
 <span id="skGif">skGif</span>: A looping animated GIF, saved as <code>&lt;name&gt;.gif</code>.</li>
 <li>

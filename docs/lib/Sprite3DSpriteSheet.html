@@ -74,15 +74,19 @@ function pasdocUpdateMembers(className) {
 <div class="one_section"><a class="section" href="#PasDoc-Description">Description</a></div><div class="one_section"><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></div><div class="one_section"><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></div></div>
 <span id="PasDoc-Description"></span><h2 class="description">Description</h2>
 <p>
-Lays out a sequence of frames as a sprite strip, a texture atlas or an animated GIF, and writes them to files.</p>
+Lays out a sequence of frames as a sprite strip, a spritesheet, texture atlas pages or an animated GIF, and writes them to files.</p>
 <p>
 
 
 <p>The frames are TSprite3DImage records: plain RGBA pixels with straight (not premultiplied) alpha, top row first, all the same size. ImageFromBitmap makes one from an FMX bitmap, such as a grab from TSprite3DOffscreen, so the frames take no GPU resources and no canvas is involved.
 
-<p>ComposeStrip puts the frames side by side in one row; ComposeAtlas puts them in a square grid, left to right and then top to bottom. SavePng writes such an image as a PNG file and SaveAnimatedGif writes the frames as a looping GIF. Both writers are plain Pascal over streams, using only System.ZLib, so they behave the same on every platform and are not limited by the largest bitmap the GPU or FMX canvas accepts: a strip of a hundred frames of 256 pixels is written as easily as a single frame.
+<p>ComposeStrip puts the frames side by side in one row; ComposeSheet puts them in a square grid, left to right and then top to bottom. SavePng writes such an image as a PNG file and SaveAnimatedGif writes the frames as a looping GIF. Both writers are plain Pascal over streams, using only System.ZLib, so they behave the same on every platform and are not limited by the largest bitmap the GPU or FMX canvas accepts: a strip of a hundred frames of 256 pixels is written as easily as a single frame.
 
 <p>GIF keeps 256 colours per frame and on/off transparency, so each frame gets its own palette of up to 255 colours, chosen by median cut, plus one transparent entry; pixels less than half opaque become transparent. Every frame replaces the last (disposal &quot;restore to background&quot;), so transparent sprites animate cleanly.
+
+<p>A texture atlas puts the frames of several animations on shared pages: PlanAtlasPages decides which frames go on each page, filling every page but the last, and how large each page is, and ComposeAtlasPage lays a page out.
+
+<p>MeasureFrameEmpty measures the fully transparent border round a frame, and SaveSheetMetadata writes a strip's, a spritesheet's or an atlas page's metadata as JSON beside it: the image's size and layout, where the model's centre of rotation falls in a frame, the animations it holds, and each frame's transparent border with the smallest of each side over all of them.
 
 <p>Nothing here keeps state, and every routine may be called on any thread, except ImageFromBitmap, which reads an FMX bitmap and so belongs on the main thread.
 
@@ -91,8 +95,11 @@ Lays out a sequence of frames as a sprite strip, a texture atlas or an animated 
 <pre class="preformatted">
 frames: TArray&lt;TSprite3DImage&gt;
 |-- ComposeStrip  -&gt; TSprite3DImage, Count x 1 frames  -&gt; SavePng
-|-- ComposeAtlas  -&gt; TSprite3DImage, N x N frames      -&gt; SavePng
-`-- SaveAnimatedGif                                    -&gt; .gif</pre>
+|-- ComposeRows   -&gt; TSprite3DImage, rows of N frames   -&gt; SavePng
+|-- ComposeSheet  -&gt; TSprite3DImage, N x N frames      -&gt; SavePng
+|-- PlanAtlasPages, then ComposeAtlasPage per page     -&gt; SavePng
+|-- SaveAnimatedGif                                    -&gt; .gif
+`-- SaveSheetMetadata, from MeasureFrameEmpty          -&gt; .json beside the .png</pre>
 
 <p></p>
 <span id="PasDoc-Uses"></span><h2 class="overview">Overview</h2>
@@ -106,6 +113,30 @@ frames: TArray&lt;TSprite3DImage&gt;
 <td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DImage.html"><code>TSprite3DImage</code></a></td>
 <td class="itemdesc">An image as plain RGBA bytes with straight alpha, top row first.</td>
 </tr>
+<tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DFrameEmpty.html"><code>TSprite3DFrameEmpty</code></a></td>
+<td class="itemdesc">The fully transparent border round a frame: how many whole columns or rows at each edge have nothing in them.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DAtlasSlice.html"><code>TSprite3DAtlasSlice</code></a></td>
+<td class="itemdesc">A run of one animation's frames on a texture atlas page.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DAtlasPage.html"><code>TSprite3DAtlasPage</code></a></td>
+<td class="itemdesc">One page of a texture atlas, as PlanAtlasPages lays it out.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DFrameRef.html"><code>TSprite3DFrameRef</code></a></td>
+<td class="itemdesc">Which frame of which animation and direction an image's frame is.</td>
+</tr>
+<tr class="list2">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DSheetMeta.html"><code>TSprite3DSheetMeta</code></a></td>
+<td class="itemdesc">The <code>meta</code> section SaveSheetMetadata writes first: which page, who made it, and when.</td>
+</tr>
+<tr class="list">
+<td class="itemname">Record&nbsp;<a class="bold" href="Sprite3DSpriteSheet.TSprite3DSheetInfo.html"><code>TSprite3DSheetInfo</code></a></td>
+<td class="itemdesc">What SaveSheetMetadata writes about an image besides its frames.</td>
+</tr>
 </table>
 <span id="PasDoc-FuncsProcs"></span><h3 class="summary">Functions and Procedures</h3>
 <table class="summary wide_list">
@@ -116,15 +147,30 @@ frames: TArray&lt;TSprite3DImage&gt;
 <td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeStrip-TArrayTSprite3DImage-">ComposeStrip</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeAtlas-TArrayTSprite3DImage-Integer-">ComposeAtlas</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; out ACells: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeRows-TArrayTSprite3DImage-Integer-">ComposeRows</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const ACols: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
 </tr>
 <tr class="list2 visibility-published">
-<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SavePng-TSprite3DImage-String-">SavePng</a></strong>(const AImage: <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>; const AFileName: String);</code></td>
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeSheet-TArrayTSprite3DImage-Integer-">ComposeSheet</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; out ACells: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
 </tr>
 <tr class="list visibility-published">
-<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SaveAnimatedGif-TArrayTSprite3DImage-String-Integer-">SaveAnimatedGif</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ADelay: Integer);</code></td>
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SavePng-TSprite3DImage-String-">SavePng</a></strong>(const AImage: <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>; const AFileName: String);</code></td>
 </tr>
 <tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SaveAnimatedGif-TArrayTSprite3DImage-String-Integer-">SaveAnimatedGif</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AFileName: String; const ADelay: Integer);</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#MeasureFrameEmpty-TSprite3DImage-">MeasureFrameEmpty</a></strong>(const AFrame: <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>): <a href="Sprite3DSpriteSheet.TSprite3DFrameEmpty.html">TSprite3DFrameEmpty</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#PlanAtlasPages-TArrayInteger-Integer-Integer-Integer-Boolean-">PlanAtlasPages</a></strong>(const AFrameCounts: TArray&lt;Integer&gt;; const AFrameWidth, AFrameHeight, AMaxSize: Integer; const ANonPowerOf2: Boolean): TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DAtlasPage.html">TSprite3DAtlasPage</a>&gt;;</code></td>
+</tr>
+<tr class="list visibility-published">
+<td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#ComposeAtlasPage-TArrayTSprite3DImage-TSprite3DAtlasPage-">ComposeAtlasPage</a></strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const APage: <a href="Sprite3DSpriteSheet.TSprite3DAtlasPage.html">TSprite3DAtlasPage</a>): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr class="list2 visibility-published">
+<td class="itemcode"><code>procedure <strong><a href="Sprite3DSpriteSheet.html#SaveSheetMetadata-String-TArrayTSprite3DImage-TSprite3DSheetInfo-">SaveSheetMetadata</a></strong>(const AFileName: String; const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AInfo: <a href="Sprite3DSpriteSheet.TSprite3DSheetInfo.html">TSprite3DSheetInfo</a>);</code></td>
+</tr>
+<tr class="list visibility-published">
 <td class="itemcode"><code>function <strong><a href="Sprite3DSpriteSheet.html#SafeFileStem-String-">SafeFileStem</a></strong>(const AName: String): String;</code></td>
 </tr>
 </table>
@@ -200,11 +246,49 @@ Puts the frames side by side in one row: a sprite strip.</p>
 </table>
 <table class="detail visibility-published wide_list">
 <tr class="list visibility-published">
-<td class="itemcode"><span id="ComposeAtlas-TArrayTSprite3DImage-Integer-"></span><code>function <strong>ComposeAtlas</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; out ACells: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+<td class="itemcode"><span id="ComposeRows-TArrayTSprite3DImage-Integer-"></span><code>function <strong>ComposeRows</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const ACols: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
 </tr>
 <tr><td colspan="1">
 <p>
-Puts the frames in a square grid: a texture atlas.</p>
+Puts the frames in rows of ACols: a strip of several rows, such as one row per direction.</p>
+<p>
+
+
+<p>Frame I is in column <code>I mod ACols</code> and row <code>I div ACols</code>; there are as many rows as the frames need, and cells after the last frame are fully transparent.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The frames, in order; at least one, all the same size.</dd>
+<dt>ACols</dt>
+<dd>The number of columns; at least 1.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The image, ACols frames wide.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size, or ACols is below 1.</dd>
+<dt><code>EOutOfMemory</code></dt>
+<dd>If the image is too large to allocate.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ComposeSheet-TArrayTSprite3DImage-Integer-"></span><code>function <strong>ComposeSheet</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; out ACells: Integer): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Puts the frames in a square grid: a spritesheet.</p>
 <p>
 
 
@@ -227,12 +311,12 @@ Puts the frames in a square grid: a texture atlas.</p>
 <dd>On return, the number of columns, which is also the number of rows.</dd>
 </dl>
 <h6 class="description_section">Returns</h6>
-<p class="return">The atlas.</p><h6 class="description_section">Exceptions raised</h6>
+<p class="return">The spritesheet.</p><h6 class="description_section">Exceptions raised</h6>
 <dl class="exceptions_raised">
 <dt><code>EArgumentException</code></dt>
 <dd>If there are no frames or they differ in size.</dd>
 <dt><code>EOutOfMemory</code></dt>
-<dd>If the atlas is too large to allocate.</dd>
+<dd>If the spritesheet is too large to allocate.</dd>
 </dl>
 </td></tr>
 </table>
@@ -315,6 +399,185 @@ Writes the frames as an animated GIF that loops for ever.</p>
 <dd>If the file cannot be created.</dd>
 <dt><code>EWriteError</code></dt>
 <dd>If writing fails part way.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="MeasureFrameEmpty-TSprite3DImage-"></span><code>function <strong>MeasureFrameEmpty</strong>(const AFrame: <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>): <a href="Sprite3DSpriteSheet.TSprite3DFrameEmpty.html">TSprite3DFrameEmpty</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Measures the fully transparent border round a frame.</p>
+<p>
+
+
+<p>A pixel counts as empty only when its alpha is 0; anything at all drawn there, however faint, counts as part of the sprite.
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrame</dt>
+<dd>The frame.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The border; see TSprite3DFrameEmpty.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="PlanAtlasPages-TArrayInteger-Integer-Integer-Integer-Boolean-"></span><code>function <strong>PlanAtlasPages</strong>(const AFrameCounts: TArray&lt;Integer&gt;; const AFrameWidth, AFrameHeight, AMaxSize: Integer; const ANonPowerOf2: Boolean): TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DAtlasPage.html">TSprite3DAtlasPage</a>&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Plans the pages of a texture atlas: which frames of which animations go on each page, and each page's grid and size.</p>
+<p>
+
+
+<p>A texture atlas is the frames of several animations on shared pages. Every frame is a cell of AFrameWidth by AFrameHeight; a page is a grid of such cells no larger than AMaxSize each way, so it holds at most <code>(AMaxSize div AFrameWidth) * (AMaxSize div AFrameHeight)</code> frames. The animations' frames are taken in order, every frame of the first, then every frame of the next, and so on, and fill each page in turn: an animation that does not fit in what is left of a page carries on at the start of the next. So every page but the last is full, a full grid with no cell to spare.
+
+<p>Each page is then made as small as its frames allow; for a full page that is the largest page. With ANonPowerOf2 False, its width and height are the smallest powers of 2 whose grid of whole cells holds them, the smaller area first and then the squarer; its grid is every whole cell that fits. With ANonPowerOf2 True, it is exactly as large as a grid of whole cells that holds them, chosen the same way. The frames fill the grid left to right and then top to bottom. Animations with no frames are skipped.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrameCounts</dt>
+<dd>The number of frames of each animation, in the order they are to be laid out.</dd>
+<dt>AFrameWidth</dt>
+<dd>The width of every frame, in pixels; at least 1.</dd>
+<dt>AFrameHeight</dt>
+<dd>The height of every frame, in pixels; at least 1.</dd>
+<dt>AMaxSize</dt>
+<dd>The most a page may be each way, in pixels, such as one of 1024 to 16384.</dd>
+<dt>ANonPowerOf2</dt>
+<dd>True lets a page be any size; False keeps both sides powers of 2.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The pages, in order; empty if there are no frames, or a frame is larger than AMaxSize.</p></td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="ComposeAtlasPage-TArrayTSprite3DImage-TSprite3DAtlasPage-"></span><code>function <strong>ComposeAtlasPage</strong>(const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const APage: <a href="Sprite3DSpriteSheet.TSprite3DAtlasPage.html">TSprite3DAtlasPage</a>): <a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>;</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Lays out one texture atlas page from PlanAtlasPages.</p>
+<p>
+
+
+<p>Frame I goes in column <code>I mod APage.Cols</code> and row <code>I div APage.Cols</code>; the rest of the page, spare cells and any strip too narrow for a whole cell, is fully transparent.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFrames</dt>
+<dd>The page's frames, in order: the frames of each of APage.Slices in turn; all the same size.</dd>
+<dt>APage</dt>
+<dd>The page.</dd>
+</dl>
+<h6 class="description_section">Returns</h6>
+<p class="return">The page, APage.Width by APage.Height.</p><h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size, or there are more than the page's grid holds.</dd>
+<dt><code>EOutOfMemory</code></dt>
+<dd>If the page is too large to allocate.</dd>
+</dl>
+</td></tr>
+</table>
+<table class="detail visibility-published wide_list">
+<tr class="list visibility-published">
+<td class="itemcode"><span id="SaveSheetMetadata-String-TArrayTSprite3DImage-TSprite3DSheetInfo-"></span><code>procedure <strong>SaveSheetMetadata</strong>(const AFileName: String; const AFrames: TArray&lt;<a href="Sprite3DSpriteSheet.TSprite3DImage.html">TSprite3DImage</a>&gt;; const AInfo: <a href="Sprite3DSpriteSheet.TSprite3DSheetInfo.html">TSprite3DSheetInfo</a>);</code></td>
+</tr>
+<tr><td colspan="1">
+<p>
+Writes the metadata of a sprite strip, spritesheet or texture atlas page as a JSON file.</p>
+<p>
+
+
+<p>Each frame is measured with MeasureFrameEmpty. The file is:
+
+<p></p>
+
+<pre class="preformatted">
+ {
+   &quot;meta&quot;: {
+     &quot;page&quot;: 1, &quot;page_count&quot;: 1, &quot;total_frames&quot;: 8,
+     &quot;creator&quot;: &quot;...&quot;, &quot;creator_url&quot;: &quot;...&quot;,
+     &quot;modeller&quot;: &quot;...&quot;, &quot;modeller_url&quot;: &quot;...&quot;,
+     &quot;artist&quot;: &quot;...&quot;, &quot;artist_url&quot;: &quot;...&quot;,
+     &quot;created&quot;: &quot;2026-10-01&quot;, &quot;modified&quot;: &quot;2026-10-23T16:40:00.000+01:00&quot;,
+     &quot;file&quot;: &quot;C:\\Models\\hero.glb&quot;
+   },
+   &quot;image&quot;: {
+     &quot;size&quot;: { &quot;width&quot;: 2048, &quot;height&quot;: 256 },
+     &quot;sprite_size&quot;: { &quot;width&quot;: 256, &quot;height&quot;: 256 },
+     &quot;layout&quot;: { &quot;cols&quot;: 8, &quot;rows&quot;: 1, &quot;frame_count&quot;: 8 },
+     &quot;origin&quot;: { &quot;x&quot;: 127, &quot;y&quot;: 201 },
+     &quot;sprite_empty&quot;: { &quot;left&quot;: 61, &quot;top&quot;: 12, &quot;right&quot;: 58, &quot;bottom&quot;: 40 },
+     &quot;directions&quot;: [0],
+     &quot;animations&quot;: [&quot;walk&quot;],
+     &quot;animation_frames&quot;: [8],
+     &quot;unused&quot;: 0
+   },
+   &quot;frames&quot;: [
+     {
+       &quot;animation&quot;: 0,
+       &quot;direction&quot;: 0,
+       &quot;frame&quot;: 0,
+       &quot;empty&quot;: { &quot;left&quot;: 64, &quot;top&quot;: 12, &quot;right&quot;: 60, &quot;bottom&quot;: 40 }
+     },
+     ...
+   ]
+ }</pre>
+
+<p>
+
+<p><code>meta</code> comes first, from AInfo.Meta: the page, from 1, the number of pages, the number of frames the export made over every page in <code>total_frames</code>, the credits, the day the project started, when this export was made, and the model file; empty text is <code>null</code>. <code>size</code> is the whole image's, from AInfo, and <code>sprite_size</code> one frame's, the grab size. <code>origin</code> is the pixel the model's centre of rotation falls on in every frame, in the frame's own pixels, (0, 0) the top left pixel, as whole numbers; <code>null</code> for each if it is not known. <code>sprite_empty</code> holds, for each side, the smallest of the frames' empty borders, so cropping every frame by it loses nothing from any of them. <code>directions</code> lists the directions the image holds, as compass bearings in degrees in the order they are exported; one direction is the single dummy entry 0. <code>animations</code> names the animations the image holds, and <code>animation_frames</code> gives how many frames each has in all, so one that carries on onto another atlas page shows its whole length. <code>unused</code> is the number of the grid's cells after the last frame, which hold nothing. <code>frames</code> has one entry per frame, in the order of the cells, saying which animation and direction it is, as indices into <code>animations</code> and <code>directions</code>, which frame of that animation and direction, counted from 0, and its empty sections in <code>empty</code>. The file is replaced if it exists; the folder must exist.
+
+<p>
+
+<p>
+
+<p>
+
+<p>
+
+<p></p>
+<h6 class="description_section">Parameters</h6>
+<dl class="parameters">
+<dt>AFileName</dt>
+<dd>The file to write, normally the image's name with the extension .json.</dd>
+<dt>AFrames</dt>
+<dd>The frames, in order, as laid out in the image; at least one, all the same size.</dd>
+<dt>AInfo</dt>
+<dd>The image's size, grid, origin, directions, animations, and which each frame is.</dd>
+</dl>
+<h6 class="description_section">Exceptions raised</h6>
+<dl class="exceptions_raised">
+<dt><code>EArgumentException</code></dt>
+<dd>If there are no frames, they differ in size, AInfo's grid cannot hold them, or AInfo.Frames does not match them or names an animation or direction it does not list.</dd>
+<dt><code>EInOutError</code></dt>
+<dd>or another file exception if the file cannot be written.</dd>
 </dl>
 </td></tr>
 </table>

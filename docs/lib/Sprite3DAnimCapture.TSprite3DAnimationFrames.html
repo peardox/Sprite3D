@@ -109,7 +109,7 @@ One cycle of a Gorilla model's animation, resampled at a chosen frame rate.</p>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><code>constructor <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationFrames.html#Create-TGorillaModel-TGorillaAnimation-Integer-">Create</a></strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer);</code></td>
+<td class="itemcode"><code>constructor <strong><a href="Sprite3DAnimCapture.TSprite3DAnimationFrames.html#Create-TGorillaModel-TGorillaAnimation-Integer-Integer-">Create</a></strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer; const AFrameCount: Integer = 0);</code></td>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -159,13 +159,15 @@ How long each frame shows when played, in hundredths of a second, as GIF counts 
 <table class="detail visibility-public wide_list">
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
-<td class="itemcode"><span id="Create-TGorillaModel-TGorillaAnimation-Integer-"></span><code>constructor <strong>Create</strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer);</code></td>
+<td class="itemcode"><span id="Create-TGorillaModel-TGorillaAnimation-Integer-Integer-"></span><code>constructor <strong>Create</strong>(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation; const AFrameRate: Integer; const AFrameCount: Integer = 0);</code></td>
 </tr>
 <tr><td colspan="2">
 <p>
-Prepares to capture one cycle of AAnimation of AModel at AFrameRate.</p>
+Prepares to capture one cycle of AAnimation of AModel at AFrameRate, or in AFrameCount frames.</p>
 <p>
 
+
+<p>
 
 <p>
 
@@ -182,6 +184,8 @@ Prepares to capture one cycle of AAnimation of AModel at AFrameRate.</p>
 <dd>One of AModel's animations; it must outlive this object.</dd>
 <dt>AFrameRate</dt>
 <dd>The frames per second wanted; at least 1.</dd>
+<dt>AFrameCount</dt>
+<dd>The number of frames wanted, in place of what AFrameRate gives, such as one chosen by hand; 0, the default, for what AFrameRate gives.</dd>
 </dl>
 <h6 class="description_section">Exceptions raised</h6>
 <dl class="exceptions_raised">
@@ -197,7 +201,7 @@ Prepares to capture one cycle of AAnimation of AModel at AFrameRate.</p>
 </tr>
 <tr><td colspan="2">
 <p>
-The number of frames: the length times the chosen rate, rounded.</p>
+The number of frames: the count chosen, or the length times the chosen rate, rounded.</p>
 <p>
 
 

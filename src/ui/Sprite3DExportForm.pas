@@ -2,12 +2,13 @@
 //** exported, Abort, and at the end the outcome and Close.)
 //**
 //** The dialog does no exporting itself. Whoever runs the export shows it, reports each step
-//** with SetProgress, adds lines worth keeping with AddLine, and calls Finish when the export
-//** has ended, whether it worked, failed or was aborted. Until then Close is disabled. Abort,
-//** the Escape key, or the window's close box calls OnAbort once: the export is to stop once
-//** the animation being exported is saved, so the dialog says it is stopping and stays open
-//** until Finish. Finish shows the outcome in the list below the bar, disables Abort and
-//** enables Close, which is then the only way to close the dialog.
+//** with SetProgress, says how long is left with SetRemaining or SetRemainingNote, adds lines
+//** worth keeping with AddLine, and calls Finish when the export has ended, whether it worked,
+//** failed or was aborted. Until then Close is disabled. Abort, the Escape key, or the window's
+//** close box calls OnAbort once: the export is to stop once the animation being exported is
+//** saved, so the dialog says it is stopping and stays open until Finish. Finish shows the
+//** outcome in the list below the bar, disables Abort and enables Close, which is then the only
+//** way to close the dialog.
 //**
 //** On the desktop, show it with ShowModal, which returns when Close is pressed; the export
 //** must be driven by something that runs while a modal dialog is up, such as queued calls
@@ -20,7 +21,8 @@ unit Sprite3DExportForm;
   exported, Abort, and at the end the outcome and Close.
 
   The dialog does no exporting itself. Whoever runs the export shows it,
-  reports each step with SetProgress, adds lines worth keeping with AddLine,
+  reports each step with SetProgress, says how long is left with
+  SetRemaining or SetRemainingNote, adds lines worth keeping with AddLine,
   and calls Finish when the export has ended, whether it worked, failed or
   was aborted. Until then Close is disabled. Abort, the Escape key, or the
   window's close box calls OnAbort once: the export is to stop once the
@@ -53,6 +55,11 @@ type
     //** @abstract(How far the whole export has got, from 0 to 100.)
     /// <summary>How far the whole export has got, from 0 to 100.</summary>
     ExportProgressBar: TProgressBar;
+    //** @abstract(The estimated time left, under the progress bar, as hours, minutes and
+    //** seconds; hidden by Finish.)
+    /// <summary>The estimated time left, under the progress bar, as hours, minutes and
+    /// seconds; hidden by Finish.</summary>
+    RemainingLabel: TLabel;
     //** @abstract(What is being exported now, under the progress bar; the outcome at the
     //** end.)
     /// <summary>What is being exported now, under the progress bar; the outcome at the
@@ -137,10 +144,33 @@ type
     /// problem.</summary>
     /// <param name="ALine">The line; it may hold line breaks.</param>
     procedure AddLine(const ALine: String);
+    //** @abstract(Shows the estimated time left, as @code(Time remaining: about H:MM:SS).)
+    //**
+    //** Hours are not wrapped into days, so 30 hours show as 30:00:00. Ignored after Finish.
+    //**
+    //** @param(AMilliseconds The time left, in milliseconds; below 0 shows that it is still
+    //** being worked out.)
+    /// <summary>Shows the estimated time left, as <c>Time remaining: about
+    /// H:MM:SS</c>.</summary>
+    /// <remarks>Hours are not wrapped into days, so 30 hours show as 30:00:00. Ignored after
+    /// Finish.</remarks>
+    /// <param name="AMilliseconds">The time left, in milliseconds; below 0 shows that it is
+    /// still being worked out.</param>
+    procedure SetRemaining(const AMilliseconds: Int64);
+    //** @abstract(Shows a note in place of the time left, for a stage that cannot be
+    //** estimated.)
+    //**
+    //** @param(ANote The note, after @code(Time remaining:); empty clears the line.)
+    /// <summary>Shows a note in place of the time left, for a stage that cannot be
+    /// estimated.</summary>
+    /// <param name="ANote">The note, after <c>Time remaining:</c>; empty clears the
+    /// line.</param>
+    procedure SetRemainingNote(const ANote: String);
     //** @abstract(Shows the outcome, as the export has ended, and lets the dialog be closed.)
     //**
     //** The status line shows AReport; the list gets AReport and then each of AProblems.
-    //** Abort is disabled and Close enabled. The bar is left where the export got to.
+    //** Abort is disabled and Close enabled, and the time remaining is hidden. The bar is
+    //** left where the export got to.
     //**
     //** @param(AReport What was exported, in a line or two.)
     //**
@@ -148,8 +178,8 @@ type
     /// <summary>Shows the outcome, as the export has ended, and lets the dialog be
     /// closed.</summary>
     /// <remarks>The status line shows AReport; the list gets AReport and then each of
-    /// AProblems. Abort is disabled and Close enabled. The bar is left where the export got
-    /// to.</remarks>
+    /// AProblems. Abort is disabled and Close enabled, and the time remaining is hidden. The
+    /// bar is left where the export got to.</remarks>
     /// <param name="AReport">What was exported, in a line or two.</param>
     /// <param name="AProblems">What went wrong, one entry each; empty if nothing
     /// did.</param>
@@ -209,6 +239,39 @@ begin
   ResultMemo.GoToTextEnd;
 end;
 
+// H:MM:SS, the hours not wrapped into days, rounded up to the second so the
+// last second left shows as 0:00:01 rather than 0:00:00
+function HoursMinutesSeconds(const AMilliseconds: Int64): String;
+var
+  Seconds: Int64;
+begin
+  Seconds := (AMilliseconds + 999) div 1000;
+  if Seconds < 0 then
+    Seconds := 0;
+  Result := Format('%d:%.2d:%.2d', [Seconds div 3600, (Seconds mod 3600) div 60,
+    Seconds mod 60]);
+end;
+
+procedure TExportProgressForm.SetRemaining(const AMilliseconds: Int64);
+begin
+  if FFinished then
+    Exit;
+  if AMilliseconds < 0 then
+    RemainingLabel.Text := 'Time remaining: estimating...'
+  else
+    RemainingLabel.Text := 'Time remaining: about ' + HoursMinutesSeconds(AMilliseconds);
+end;
+
+procedure TExportProgressForm.SetRemainingNote(const ANote: String);
+begin
+  if FFinished then
+    Exit;
+  if ANote = String.Empty then
+    RemainingLabel.Text := String.Empty
+  else
+    RemainingLabel.Text := 'Time remaining: ' + ANote;
+end;
+
 procedure TExportProgressForm.RequestAbort;
 begin
   if FAborted or FFinished then
@@ -256,6 +319,8 @@ begin
   if FFinished then
     Exit;
   FFinished := True;
+  // The report gives the time taken instead
+  RemainingLabel.Visible := False;
   StatusLabel.Text := AReport;
   ResultMemo.Lines.Add(String.Empty);
   ResultMemo.Lines.Add(AReport);

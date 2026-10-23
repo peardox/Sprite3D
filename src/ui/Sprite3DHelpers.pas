@@ -839,14 +839,16 @@ type
     //** @abstract(Whether exports are to be made for every direction of Model, Directions;
     //** False by default.)
     //**
-    //** Stored as @code(exportDirections); set by the Directions box above Export. Kept for
-    //** the directions export to come: it has no effect yet, and the metadata's
-    //** @code(directions) is the single dummy entry 0.
+    //** Stored as @code(exportDirections); set by the Directions box above Export. Ticked,
+    //** each animation is exported once for each direction, in their order, and the
+    //** metadata's @code(directions) lists their bearings; otherwise it is the single dummy
+    //** entry 0.
     /// <summary>Whether exports are to be made for every direction of Model, Directions; False
     /// by default.</summary>
     /// <remarks>Stored as <c>exportDirections</c>; set by the Directions box above Export.
-    /// Kept for the directions export to come: it has no effect yet, and the metadata's
-    /// <c>directions</c> is the single dummy entry 0.</remarks>
+    /// Ticked, each animation is exported once for each direction, in their order, and the
+    /// metadata's <c>directions</c> lists their bearings; otherwise it is the single dummy
+    /// entry 0.</remarks>
     property ExportDirections: Boolean read FExportDirections write FExportDirections;
     //** @abstract(The largest a texture atlas page may be, in pixels each way;
     //** ATLAS_PAGE_SIZE_DEFAULT by default.)

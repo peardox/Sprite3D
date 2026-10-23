@@ -148,6 +148,30 @@ The Model, Animation Settings dialog; see the unit description.</p>
 </tr>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasHeaderLabel">AtlasHeaderLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasSizeLayout">AtlasSizeLayout</a></strong>: TLayout;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasSizeLabel">AtlasSizeLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasSizeCombo">AtlasSizeCombo</a></strong>: TComboBox;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasNonPowerOf2Check">AtlasNonPowerOf2Check</a></strong>: TCheckBox;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasNoteLabel">AtlasNoteLabel</a></strong>: TLabel;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code><strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#ButtonLayout">ButtonLayout</a></strong>: TLayout;</code></td>
 </tr>
 <tr class="list2 visibility-public">
@@ -211,6 +235,14 @@ The Model, Animation Settings dialog; see the unit description.</p>
 <tr class="list visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
 <td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#Filter">Filter</a></strong>: TSprite3DResampleFilter read GetFilter write SetFilter;</code></td>
+</tr>
+<tr class="list2 visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasPageSize">AtlasPageSize</a></strong>: Integer read GetAtlasPageSize write SetAtlasPageSize;</code></td>
+</tr>
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><code>property <strong><a href="Sprite3DAnimationForm.TAnimationSettingsForm.html#AtlasNonPowerOf2">AtlasNonPowerOf2</a></strong>: Boolean read GetAtlasNonPowerOf2 write SetAtlasNonPowerOf2;</code></td>
 </tr>
 <tr class="list2 visibility-public">
 <td class="visibility"><span class="badge vis-public">Public</span></td>
@@ -361,6 +393,66 @@ The filter overscanned images are scaled down with, one entry per TSprite3DResam
 <tr><td colspan="2">
 <p>
 Says how far overscan can go at the grab size, or why it cannot be used.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasHeaderLabel"></span><code><strong>AtlasHeaderLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The heading &quot;Texture Atlas&quot;.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasSizeLayout"></span><code><strong>AtlasSizeLayout</strong>: TLayout;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The row with AtlasSizeLabel and AtlasSizeCombo.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasSizeLabel"></span><code><strong>AtlasSizeLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The caption &quot;Page size&quot;.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasSizeCombo"></span><code><strong>AtlasSizeCombo</strong>: TComboBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The largest an atlas page may be each way, one entry per ATLAS_PAGE_SIZES in its order.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasNonPowerOf2Check"></span><code><strong>AtlasNonPowerOf2Check</strong>: TCheckBox;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Lets atlas pages be any size, rather than powers of 2 each way.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasNoteLabel"></span><code><strong>AtlasNoteLabel</strong>: TLabel;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+A line explaining what the page size is for.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
@@ -591,6 +683,30 @@ The overscan factor shown; limited to OVERSCAN_FACTOR_MIN to MaxOverscan.</p>
 <tr><td colspan="2">
 <p>
 The resampling filter chosen.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasPageSize"></span><code>property <strong>AtlasPageSize</strong>: Integer read GetAtlasPageSize write SetAtlasPageSize;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+The largest a texture atlas page may be each way, in pixels; one of ATLAS_PAGE_SIZES.</p>
+<p>
+
+
+<p>A value that is not one of them shows as the nearest that is.</p>
+</td></tr>
+</table>
+<table class="detail visibility-public wide_list">
+<tr class="list visibility-public">
+<td class="visibility"><span class="badge vis-public">Public</span></td>
+<td class="itemcode"><span id="AtlasNonPowerOf2"></span><code>property <strong>AtlasNonPowerOf2</strong>: Boolean read GetAtlasNonPowerOf2 write SetAtlasNonPowerOf2;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+Whether texture atlas pages may be any size, rather than powers of 2.</p>
 </td></tr>
 </table>
 <table class="detail visibility-public wide_list">
