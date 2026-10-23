@@ -1,0 +1,184 @@
+object CreditsForm: TCreditsForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Creator Credits'
+  ClientHeight = 318
+  ClientWidth = 440
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnClose = FormClose
+  DesignerMasterStyle = 0
+  object CreatorLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 19.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Creator'
+    TabOrder = 100
+  end
+  object CreatorEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 0
+    Position.X = 128.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 296.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'Who created this sprite set'
+    ShowHint = True
+  end
+  object CreatorUrlLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 53.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Creator URL'
+    TabOrder = 101
+  end
+  object CreatorUrlEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 1
+    Position.X = 128.000000000000000000
+    Position.Y = 50.000000000000000000
+    Size.Width = 296.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'Where the creator''s work can be found'
+    ShowHint = True
+  end
+  object ModellerLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 87.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Modeller'
+    TabOrder = 102
+  end
+  object ModellerEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 2
+    Position.X = 128.000000000000000000
+    Position.Y = 84.000000000000000000
+    Size.Width = 296.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'Who made the models'
+    ShowHint = True
+  end
+  object ModellerUrlLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 121.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Modeller URL'
+    TabOrder = 103
+  end
+  object ModellerUrlEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 3
+    Position.X = 128.000000000000000000
+    Position.Y = 118.000000000000000000
+    Size.Width = 296.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'Where the modeller''s work can be found'
+    ShowHint = True
+  end
+  object ArtistLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 155.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Artist'
+    TabOrder = 104
+  end
+  object ArtistEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 4
+    Position.X = 128.000000000000000000
+    Position.Y = 152.000000000000000000
+    Size.Width = 296.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'Who made the textures'
+    ShowHint = True
+  end
+  object ArtistUrlLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 189.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Artist URL'
+    TabOrder = 105
+  end
+  object ArtistUrlEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 5
+    Position.X = 128.000000000000000000
+    Position.Y = 186.000000000000000000
+    Size.Width = 296.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'Where the artist''s work can be found'
+    ShowHint = True
+  end
+  object CreatedLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 223.000000000000000000
+    Size.Width = 104.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Creation Date'
+    TabOrder = 110
+  end
+  object CreatedDate: TDateEdit
+    Date = 46318.000000000000000000
+    Position.X = 128.000000000000000000
+    Position.Y = 220.000000000000000000
+    Size.Width = 140.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 6
+    Hint = 'The day the project started'
+    ShowHint = True
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 274.000000000000000000
+    Size.Width = 440.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 7
+    object CancelButton: TButton
+      Anchors = [akLeft, akBottom]
+      Cancel = True
+      ModalResult = 2
+      Position.X = 16.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 1
+      Text = 'Cancel'
+      OnClick = ButtonClick
+    end
+    object OkButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      ModalResult = 1
+      Position.X = 344.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'OK'
+      OnClick = ButtonClick
+    end
+  end
+end

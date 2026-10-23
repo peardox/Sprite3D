@@ -326,13 +326,44 @@ object GeneralSettingsForm: TGeneralSettingsForm
           TabOrder = 2
         end
       end
-      object GpuGroup: TGroupBox
+      object FilesGroup: TGroupBox
         Align = Top
         Margins.Left = 8.000000000000000000
         Margins.Top = 8.000000000000000000
         Margins.Right = 8.000000000000000000
         Position.X = 8.000000000000000000
         Position.Y = 700.000000000000000000
+        Size.Width = 424.000000000000000000
+        Size.Height = 84.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Files'
+        TabOrder = 6
+        object MinifyJsonCheck: TCheckBox
+          Position.X = 12.000000000000000000
+          Position.Y = 28.000000000000000000
+          Size.Width = 400.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          Text = 'Minify JSON'
+        end
+        object MinifyJsonNote: TLabel
+          Position.X = 12.000000000000000000
+          Position.Y = 52.000000000000000000
+          Size.Width = 400.000000000000000000
+          Size.Height = 20.000000000000000000
+          Size.PlatformDefault = False
+          Text = 'Metadata, project, settings and other JSON files without indents.'
+          TabOrder = 1
+        end
+      end
+      object GpuGroup: TGroupBox
+        Align = Top
+        Margins.Left = 8.000000000000000000
+        Margins.Top = 8.000000000000000000
+        Margins.Right = 8.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 792.000000000000000000
         Size.Width = 424.000000000000000000
         Size.Height = 138.000000000000000000
         Size.PlatformDefault = False

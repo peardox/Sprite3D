@@ -135,7 +135,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.TypInfo, OSPaths,
+  System.IOUtils, System.TypInfo, OSPaths, JsonText,
   Neon.Core.Persistence, Neon.Core.Persistence.JSON;
 
 function AppDataFolder(const AAppName: String): String;
@@ -168,11 +168,12 @@ begin
 end;
 
 // Camel-case names, published properties only, laid out for people to read
+// unless File, Settings asks for minified JSON
 function JsonConfig: INeonConfiguration;
 begin
   Result := TNeonConfiguration.Camel
     .SetVisibility([mvPublished])
-    .SetPrettyPrint(True);
+    .SetPrettyPrint(not MinifyJson);
 end;
 
 { TSprite3DJsonSettings }

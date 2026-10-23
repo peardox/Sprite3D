@@ -1328,6 +1328,49 @@ type
     /// <param name="AViewWidth">The width of the view the pixels are measured in.</param>
     /// <param name="AViewHeight">The height of the view the pixels are measured in.</param>
     procedure ShiftView(const ARight, AUp, AViewWidth, AViewHeight: Single);
+    //** @abstract(Where a point falls in a view of a given size, as the camera stands.)
+    //**
+    //** The point is carried into the rig's space as the fits carry a box's corners, then seen
+    //** through the camera's own GetProjectionMatrix for AViewWidth by AViewHeight, in
+    //** perspective or orthographic projection as the camera is set. The result is measured
+    //** in the view's pixels from its top-left corner, so the centre of the view is
+    //** @code(@(AViewWidth / 2, AViewHeight / 2@)) and the centre of the top-left pixel is
+    //** @code(@(0.5, 0.5@)). It may lie outside the view.
+    //**
+    //** @param(APoint The point, in ASpace's own coordinates, such as a model's
+    //** RotationCenter.)
+    //**
+    //** @param(ASpace The object whose coordinates APoint is in; nil for the rig parent's.)
+    //**
+    //** @param(AViewWidth The width of the view, in pixels, such as a grab's.)
+    //**
+    //** @param(AViewHeight The height of the view, in pixels.)
+    //**
+    //** @param(AX Set to the distance from the view's left edge, in pixels.)
+    //**
+    //** @param(AY Set to the distance from the view's top edge, in pixels.)
+    //**
+    //** @returns(False, leaving AX and AY at 0, if the view has no size or, in perspective,
+    //** the point is not in front of the camera.)
+    /// <summary>Where a point falls in a view of a given size, as the camera stands.</summary>
+    /// <remarks>The point is carried into the rig's space as the fits carry a box's corners,
+    /// then seen through the camera's own GetProjectionMatrix for AViewWidth by AViewHeight, in
+    /// perspective or orthographic projection as the camera is set. The result is measured in
+    /// the view's pixels from its top-left corner, so the centre of the view is
+    /// <c>(AViewWidth / 2, AViewHeight / 2)</c> and the centre of the top-left pixel is
+    /// <c>(0.5, 0.5)</c>. It may lie outside the view.</remarks>
+    /// <param name="APoint">The point, in ASpace's own coordinates, such as a model's
+    /// RotationCenter.</param>
+    /// <param name="ASpace">The object whose coordinates APoint is in; nil for the rig
+    /// parent's.</param>
+    /// <param name="AViewWidth">The width of the view, in pixels, such as a grab's.</param>
+    /// <param name="AViewHeight">The height of the view, in pixels.</param>
+    /// <param name="AX">Set to the distance from the view's left edge, in pixels.</param>
+    /// <param name="AY">Set to the distance from the view's top edge, in pixels.</param>
+    /// <returns>False, leaving AX and AY at 0, if the view has no size or, in perspective, the
+    /// point is not in front of the camera.</returns>
+    function ProjectToView(const APoint: TPoint3D; const ASpace: TControl3D;
+      const AViewWidth, AViewHeight: Single; out AX, AY: Single): Boolean;
 
     { Root of the chain - set Rig.Parent to place the camera in a scene }
     //** @abstract(The root of the pivot chain; set @code(Rig.Parent) to place the camera in a
@@ -2180,6 +2223,53 @@ begin
     Exit;   // the line is behind or right in front of the camera
   FAzimuthPivot.Position.Point := Center + AxF * S;
   Distance := Distance + S;
+end;
+
+function TSprite3DCamera.ProjectToView(const APoint: TPoint3D; const ASpace: TControl3D;
+  const AViewWidth, AViewHeight: Single; out AX, AY: Single): Boolean;
+var
+  M: TMatrix3D;
+  Q: TQuat;
+  P, D: TPoint3D;
+  SX, SY, X, Y, Z: Single;
+  RigParent: TFmxObject;
+begin
+  AX := 0;
+  AY := 0;
+  Result := False;
+  if (AViewWidth <= 0) or (AViewHeight <= 0) then
+    Exit;
+  M := GetProjectionMatrix(AViewWidth, AViewHeight, NEAR_CLEARANCE, FAR_PLANE);
+  SX := Abs(M.m11);
+  SY := Abs(M.m22);
+  if (SX < EPS) or (SY < EPS) then
+    Exit;
+  // Into the rig parent's space, as FitBox carries a box's corners
+  if ASpace <> nil then
+    P := ASpace.LocalToAbsolute3D(APoint)
+  else
+    P := APoint;
+  RigParent := FAzimuthPivot.Parent;
+  if (ASpace <> nil) and (RigParent is TControl3D) then
+    P := TControl3D(RigParent).AbsoluteToLocal3D(P);
+  // In the camera's axes: right, down (FMX's up is -Y) and the view direction
+  Q := GetOrientation;
+  D := P - CameraPosition;
+  X := D.DotProduct(Q.Rotate(Point3D(1, 0, 0)));
+  Y := D.DotProduct(Q.Rotate(Point3D(0, 1, 0)));
+  Z := D.DotProduct(Q.Rotate(Point3D(0, 0, 1)));
+  // The diagonal is 1 / tan(half-angle) in perspective, and 1 / (half the
+  // visible size) in orthographic mode, per axis
+  if not IsOrthographic then
+  begin
+    if Z < EPS then
+      Exit;   // at or behind the eye
+    X := X / Z;
+    Y := Y / Z;
+  end;
+  AX := (1 + X * SX) * AViewWidth / 2;
+  AY := (1 + Y * SY) * AViewHeight / 2;
+  Result := True;
 end;
 
 procedure TSprite3DCamera.ShiftView(const ARight, AUp, AViewWidth, AViewHeight: Single);

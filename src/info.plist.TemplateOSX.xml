@@ -25,6 +25,18 @@
 			<string>ply</string>
 		</array>
 	</dict>
+	<dict>
+		<key>CFBundleTypeName</key>
+		<string>Sprite3D project</string>
+		<key>CFBundleTypeRole</key>
+		<string>Editor</string>
+		<key>LSHandlerRank</key>
+		<string>Owner</string>
+		<key>CFBundleTypeExtensions</key>
+		<array>
+			<string>sprite3d</string>
+		</array>
+	</dict>
 </array>
 </dict>
 </plist>

@@ -4,7 +4,7 @@
 >
 > Where it sits
 >
-> `TSprite3DBackground` is a `TControl`. `AttachTo(GorillaViewport)` makes it a child of the viewport's parent (ViewportLayout), moves it to just before the viewport in the child order so it is painted first, and gives it the viewport's `Align` and `Margins`. Two `Client`-aligned siblings share the same area, so it always covers exactly what the viewport covers. Because it is 2D, it does not care about the camera at all: perspective, orthographic, field of view, zoom and roll make no difference to it.
+> `TSprite3DBackground` is a `TControl`. `AttachTo(GorillaViewport)` makes it a child of the viewport's parent (AspectLayout, inside ViewportLayout), moves it to just before the viewport in the child order so it is painted first, and gives it the viewport's `Align` and `Margins`, or its bounds if it is not aligned. The viewport is not aligned: `FitViewportToAspect` in the main form sizes it to the grab size's aspect ratio, centred in AspectLayout, and sets the background to the same bounds each time, so it always covers exactly what the viewport covers. Because it is 2D, it does not care about the camera at all: perspective, orthographic, field of view, zoom and roll make no difference to it.
 >
 > The viewport's colour
 >

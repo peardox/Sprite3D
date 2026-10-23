@@ -88,7 +88,7 @@
 //** transparent around the model, or black for MP4.
 //**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up
-//** menu with Save as sprite strip, Save as Texture Atlas, Save as AniGif and Save as MP4
+//** menu with Save as sprite strip, Save as Spritesheet, Save as AniGif and Save as MP4
 //** video. Each grabs every frame of that animation off screen, from the first to the last, at
 //** the grab size and with one framing that fits every frame, and saves them in SaveFolder:
 //** side by side in one row as @code(<animation>_strip<frames>.png), in a square grid read left
@@ -117,13 +117,19 @@
 //**
 //** Each entry also has a tick box. Below the list, All ticks every animation, leaving
 //** @code(@(None@)) as it is so the turn is exported only when ticked by hand, or clears every
-//** entry; a drop-down chooses Sprite strip, Texture Atlas, AniGif or, when FFmpeg loaded, MP4
-//** video, and Export saves every ticked entry that way, one after another, in a folder chosen in a folder dialog that opens at SaveFolder, so
-//** a new sub-folder can be made there for the batch. SaveFolder itself is not changed. A
-//** failed entry is reported at the end and does not stop the others. Each entry is unticked as
-//** soon as it is saved, so a failed one stays ticked for another try. Abort, enabled only while
-//** a batch runs, lets the entry being captured finish and save, then drops the rest. On
-//** Android and iOS, which have no folder dialog, the batch goes to the Grabs folder.
+//** entry; a drop-down chooses Sprite strip, Spritesheet, Texture Atlas, AniGif or, when FFmpeg
+//** loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a
+//** folder chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can be made
+//** there for the batch. SaveFolder itself is not changed. A failed entry is reported at the
+//** end and does not stop the others. Each entry is unticked as soon as it is saved, so a
+//** failed one stays ticked for another try. Abort, enabled only while a batch runs, lets the
+//** entry being captured finish and save, then drops the rest. On Android and iOS, which have
+//** no folder dialog, the batch goes to the Grabs folder.
+//**
+//** The drop-down's Texture Atlas asks for its folder as it is chosen. Its batch captures
+//** every ticked entry, then packs them, in list order, onto pages no larger than the page
+//** size in Model, Animation Settings, saved as @code(<model>_atlas_01.png), @code(_02) and
+//** so on; see SaveAtlas.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
 //** turns the camera: the views, Orthographic and the pan are switched off, a new model or a
@@ -159,8 +165,8 @@
 //** TabControl1
 //** |-- GorillaTab "View"
 //** |   `-- MainLayout
-//** |       |-- ViewportLayout   owns the TGorillaViewport
-//** |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
+//** |       |-- ViewportLayout   the area left of the control panel
+//** |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
 //** |       `-- ControlsLayout   dials and their labels
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
@@ -314,7 +320,7 @@ unit Sprite3dMain;
   transparent around the model, or black for MP4.
 
   Right-clicking an entry in the Animations list selects and plays it, and
-  opens a pop-up menu with Save as sprite strip, Save as Texture Atlas, Save
+  opens a pop-up menu with Save as sprite strip, Save as Spritesheet, Save
   as AniGif and Save as MP4 video. Each grabs every frame of that animation
   off screen, from the first to the last, at the grab size and with one
   framing that fits every frame, and saves them in SaveFolder: side by side in
@@ -346,8 +352,9 @@ unit Sprite3dMain;
 
   Each entry also has a tick box. Below the list, All ticks every animation,
   leaving (None) as it is so the turn is exported only when ticked by hand,
-  or clears every entry; a drop-down chooses Sprite strip, Texture Atlas,
-  AniGif or, when FFmpeg loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a folder
+  or clears every entry; a drop-down chooses Sprite strip, Spritesheet,
+  Texture Atlas, AniGif or, when FFmpeg loaded, MP4 video, and Export saves
+  every ticked entry that way, one after another, in a folder
   chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can
   be made there for the batch. SaveFolder itself is not changed. A failed
   entry is reported at the end and does not stop the others. Each entry is
@@ -393,8 +400,8 @@ unit Sprite3dMain;
     TabControl1
     |-- GorillaTab "View"
     |   `-- MainLayout
-    |       |-- ViewportLayout   owns the TGorillaViewport
-    |       |   `-- DistanceLayout   test strip: DistanceLabel, DistanceTrack
+    |       |-- ViewportLayout   the area left of the control panel
+    |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
     |       `-- ControlsLayout   dials and their labels
     `-- DebugTab "Debug"
         `-- DebugMemo
@@ -453,7 +460,9 @@ uses
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
-  Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid
+  Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
+  Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
+  System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -464,10 +473,16 @@ type
   /// <summary>What the animation list's pop-up menu saves a capture as.</summary>
   TSheetKind = (
     //** @abstract(One row of frames, saved as @code(<name>_strip<count>.png).)
-    /// <summary>One row of frames, saved as <c>&lt;name&gt;_strip&lt;count&gt;.png</c>.</summary>
+    /// <summary>One row of frames, saved as
+    /// <c>&lt;name&gt;_strip&lt;count&gt;.png</c>.</summary>
     skStrip,
     //** @abstract(A square grid of frames, saved as @code(<name>.png).)
     /// <summary>A square grid of frames, saved as <c>&lt;name&gt;.png</c>.</summary>
+    skSheet,
+    //** @abstract(Texture atlas pages: every animation of a batch packed onto shared pages,
+    //** saved as @code(<model>_atlas_01.png) and so on; batch Export only.)
+    /// <summary>Texture atlas pages: every animation of a batch packed onto shared pages,
+    /// saved as <c>&lt;model&gt;_atlas_01.png</c> and so on; batch Export only.</summary>
     skAtlas,
     //** @abstract(A looping animated GIF, saved as @code(<name>.gif).)
     /// <summary>A looping animated GIF, saved as <c>&lt;name&gt;.gif</c>.</summary>
@@ -477,6 +492,51 @@ type
     /// <summary>A video-only MPEG-4 MP4, saved as <c>&lt;name&gt;.mp4</c>; only offered when
     /// the FFmpeg libraries load.</summary>
     skMp4);
+
+  //** @abstract(An Animations list read from a file, ready to apply to a model.)
+  /// <summary>An Animations list read from a file, ready to apply to a model.</summary>
+  TAnimationListState = record
+    //** @abstract(The entry to select, by name; empty for none.)
+    /// <summary>The entry to select, by name; empty for none.</summary>
+    Selected: String;
+    //** @abstract(The entries, by name, in the order listed.)
+    /// <summary>The entries, by name, in the order listed.</summary>
+    Names: TArray<String>;
+    //** @abstract(Each entry's tick.)
+    /// <summary>Each entry's tick.</summary>
+    Checked: TArray<Boolean>;
+    //** @abstract(Each entry's frame count typed in; 0 for the one the frame rate gives.)
+    /// <summary>Each entry's frame count typed in; 0 for the one the frame rate
+    /// gives.</summary>
+    Frames: TArray<Integer>;
+  end;
+
+  //** @abstract(One animation captured for a texture atlas, kept until the batch ends and the
+  //** pages are made.)
+  /// <summary>One animation captured for a texture atlas, kept until the batch ends and the
+  /// pages are made.</summary>
+  TAtlasPart = record
+    //** @abstract(The entry's name as the Animations list shows it.)
+    /// <summary>The entry's name as the Animations list shows it.</summary>
+    Name: String;
+    //** @abstract(The entry's index in the Animations list, to untick once saved.)
+    /// <summary>The entry's index in the Animations list, to untick once saved.</summary>
+    Entry: Integer;
+    //** @abstract(Its frames, in order.)
+    /// <summary>Its frames, in order.</summary>
+    Frames: TArray<TSprite3DImage>;
+    //** @abstract(The pixel the centre of rotation falls on in its frames.)
+    /// <summary>The pixel the centre of rotation falls on in its frames.</summary>
+    Origin: TPoint;
+    //** @abstract(Whether Origin is known.)
+    /// <summary>Whether Origin is known.</summary>
+    OriginKnown: Boolean;
+    //** @abstract(The direction it was captured in, as an index into the batch's directions;
+    //** 0 when directions are not used.)
+    /// <summary>The direction it was captured in, as an index into the batch's directions; 0
+    /// when directions are not used.</summary>
+    Direction: Integer;
+  end;
 
   //** @abstract(Where a model load has got to; see TMainForm.SwitchModel.)
   /// <summary>Where a model load has got to; see TMainForm.SwitchModel.</summary>
@@ -504,7 +564,8 @@ type
   //** time; the form owns none of them directly. All event handlers run on the main thread.
   //**
   //** @seealso(TSprite3DCamera)
-  /// <summary>The main form: a Gorilla3D view of one model, with dials for the camera.</summary>
+  /// <summary>The main form: a Gorilla3D view of one model, with dials for the
+  /// camera.</summary>
   /// <remarks>The viewport, light, model and TSprite3DCamera are created at run time, not at
   /// design time; the form owns none of them directly. All event handlers run on the main
   /// thread.</remarks>
@@ -529,11 +590,25 @@ type
     //** @abstract(Fills the View tab and holds ViewportLayout and ControlsLayout.)
     /// <summary>Fills the View tab and holds ViewportLayout and ControlsLayout.</summary>
     MainLayout: TLayout;
-    //** @abstract(The area left of the control panel; owns the TGorillaViewport made in
-    //** FormCreate.)
-    /// <summary>The area left of the control panel; owns the TGorillaViewport made in
-    /// FormCreate.</summary>
+    //** @abstract(The area left of the control panel; holds AspectLayout, with the FPS
+    //** readout and the no-model notice over it.)
+    /// <summary>The area left of the control panel; holds AspectLayout, with the FPS readout
+    /// and the no-model notice over it.</summary>
     ViewportLayout: TLayout;
+    //** @abstract(Fills ViewportLayout in dark grey, and holds the TGorillaViewport made in
+    //** FormCreate, with its background, centred at the shape of the grabs.)
+    //**
+    //** The viewport is as large as fits in AspectLayout while keeping the aspect ratio of the
+    //** grab size set in File, Settings, usually square, so what is on screen is framed as the
+    //** grabs are; the grey shows round it. FitViewportToAspect places it whenever
+    //** AspectLayout changes size or the grab size changes. Clicks pass through it.
+    /// <summary>Fills ViewportLayout in dark grey, and holds the TGorillaViewport made in
+    /// FormCreate, with its background, centred at the shape of the grabs.</summary>
+    /// <remarks>The viewport is as large as fits in AspectLayout while keeping the aspect ratio
+    /// of the grab size set in File, Settings, usually square, so what is on screen is framed
+    /// as the grabs are; the grey shows round it. FitViewportToAspect places it whenever
+    /// AspectLayout changes size or the grab size changes. Clicks pass through it.</remarks>
+    AspectLayout: TRectangle;
     //** @abstract(The right-hand control panel holding the dials and their labels.)
     /// <summary>The right-hand control panel holding the dials and their labels.</summary>
     ControlsLayout: TLayout;
@@ -574,6 +649,22 @@ type
     //** @abstract(The "Open Model" item; see OpenModelMenuItemClick.)
     /// <summary>The "Open Model" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
     OpenModelMenuItem: TMenuItem;
+    //** @abstract(The "Load Animation Settings..." item; see
+    //** LoadAnimationSettingsItemClick.)
+    /// <summary>The "Load Animation Settings..." item; see
+    /// <see cref="LoadAnimationSettingsItemClick"/>.</summary>
+    LoadAnimationSettingsItem: TMenuItem;
+    //** @abstract(The "Save Animation Settings..." item; see
+    //** SaveAnimationSettingsItemClick.)
+    /// <summary>The "Save Animation Settings..." item; see
+    /// <see cref="SaveAnimationSettingsItemClick"/>.</summary>
+    SaveAnimationSettingsItem: TMenuItem;
+    //** @abstract(The "Save Project..." item; see CreditsItemClick.)
+    /// <summary>The "Save Project..." item; see <see cref="CreditsItemClick"/>.</summary>
+    CreditsItem: TMenuItem;
+    //** @abstract(The "Load Project..." item; see LoadCreditsItemClick.)
+    /// <summary>The "Load Project..." item; see <see cref="LoadCreditsItemClick"/>.</summary>
+    LoadCreditsItem: TMenuItem;
     //** @abstract(The "Grab" item; see GrabMenuItemClick.)
     /// <summary>The "Grab" item; see <see cref="GrabMenuItemClick"/>.</summary>
     GrabMenuItem: TMenuItem;
@@ -664,8 +755,8 @@ type
     /// draws red, green and blue lines through its centre of rotation. See
     /// <see cref="ShowAxesItemClick"/>.</remarks>
     ShowAxesItem: TMenuItem;
-    //** @abstract(Shows or hides the Model Volume, the volume the model sweeps turning about its
-    //** up axis; ticked at start-up.)
+    //** @abstract(Shows or hides the Model Volume, the volume the model sweeps turning about
+    //** its up axis; ticked at start-up.)
     //**
     //** Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out
     //** the space the model's bounds pass through in a full turn about the line through its
@@ -747,8 +838,8 @@ type
     AnimationsHeader: TRectangle;
     //** @abstract(The "Animations" title: bold yellow on AnimationsHeader, at its left, inside
     //** the header's padding.)
-    /// <summary>The "Animations" title: bold yellow on AnimationsHeader, at its left, inside the
-    /// header's padding.</summary>
+    /// <summary>The "Animations" title: bold yellow on AnimationsHeader, at its left, inside
+    /// the header's padding.</summary>
     AnimationsLabel: TLabel;
     //** @abstract(The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
     //** header's padding, over the frame counts in AnimationListBox.)
@@ -763,7 +854,7 @@ type
     //** rate. Choosing an entry plays it, whether by a click or by moving the selection with
     //** the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
     //** selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
-    //** texture atlas or an animated GIF; see the unit description.
+    //** spritesheet or an animated GIF; see the unit description.
     /// <summary>The model's animations, by name, after a first entry, <c>(None)</c>, that stops
     /// any animation; see <see cref="AnimationListBoxClick"/>.</summary>
     /// <remarks>Only the animations ticked in Model, Animations Used are listed. Each entry
@@ -771,7 +862,7 @@ type
     /// Settings frame rate. Choosing an entry plays it, whether by a click or by moving the
     /// selection with the Up and Down arrow keys; see <see cref="AnimationListBoxChange"/>.
     /// Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a
-    /// sprite strip, a texture atlas or an animated GIF; see the unit description.</remarks>
+    /// sprite strip, a spritesheet or an animated GIF; see the unit description.</remarks>
     AnimationListBox: TListBox;
     //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
     /// <summary>The "1/4 View" view; see <see cref="ViewOneQuarterItemClick"/>.</summary>
@@ -793,11 +884,12 @@ type
     //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
     //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is
     //** the current folder instead if that has a models subfolder. The handler creates a
-    //** TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree FOV,
-    //** which becomes the viewport's camera, and a point light parented to the camera at its
-    //** origin, so it sits where the camera is and points where it looks. The viewport runs
-    //** at a fixed 60 frames per second without VSync. A TSprite3DBackground is put behind
-    //** the viewport, showing the background kept in settings.json.
+    //** TGorillaViewport in AspectLayout, which FitViewportToAspect makes as large as fits
+    //** there at the aspect ratio of the grab size, centred; a TSprite3DCamera with a 45-degree
+    //** FOV, which becomes the viewport's camera; and a point light parented to the camera at
+    //** its origin, so it sits where the camera is and points where it looks. The viewport runs
+    //** at a fixed 60 frames per second without VSync. A TSprite3DBackground is put behind the
+    //** viewport, showing the background kept in settings.json.
     //**
     //** The dials start at 0, then the camera view kept in settings.json is chosen, as its
     //** View, Camera item would choose it: a fixed view turns the dials to its angles and
@@ -811,15 +903,16 @@ type
     /// <remarks><para>The models folder comes from DefaultModelDir in Sprite3DHelpers: it is
     /// the library path on macOS, the home folder on Linux and <c>'../../../'</c> elsewhere; on
     /// Windows it is the current folder instead if that has a models subfolder. The handler
-    /// creates a TGorillaViewport owned by ViewportLayout, a TSprite3DCamera with a 45-degree
-    /// FOV, which becomes the viewport's camera, and a point light parented to the camera at
-    /// its origin, so it sits where the camera is and points where it looks. The viewport
-    /// runs at a fixed 60 frames per second without VSync. A TSprite3DBackground is put
-    /// behind the viewport, showing the background kept in settings.json.</para>
-    /// <para>The dials start at 0, then the camera view kept in settings.json is chosen, as
-    /// its View, Camera item would choose it: a fixed view turns the dials to its angles and
-    /// switches them off, and Variable turns them to the angles kept with it and leaves them
-    /// on. Isometric is chosen when none is kept. Last, the View menu's five on/off items are
+    /// creates a TGorillaViewport in AspectLayout, which FitViewportToAspect makes as large as
+    /// fits there at the aspect ratio of the grab size, centred; a TSprite3DCamera with a
+    /// 45-degree FOV, which becomes the viewport's camera; and a point light parented to the
+    /// camera at its origin, so it sits where the camera is and points where it looks. The
+    /// viewport runs at a fixed 60 frames per second without VSync. A TSprite3DBackground is
+    /// put behind the viewport, showing the background kept in settings.json.</para> <para>The
+    /// dials start at 0, then the camera view kept in settings.json is chosen, as its View,
+    /// Camera item would choose it: a fixed view turns the dials to its angles and switches
+    /// them off, and Variable turns them to the angles kept with it and leaves them on.
+    /// Isometric is chosen when none is kept. Last, the View menu's five on/off items are
     /// ticked as settings.json says they were left, and applied, which also sets the
     /// projection.</para></remarks>
     /// <param name="Sender">The form.</param>
@@ -865,10 +958,31 @@ type
     /// saved as soon as they change.</remarks>
     /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
+    //** @abstract(Asks before quitting while an export is under way.)
+    //**
+    //** While animations are being captured or exported, or files are still being written,
+    //** the close is held and a dialog asks "Still exporting. Do you really want to quit?".
+    //** No carries on with the export. Yes stops it, drops what is not yet saved, and closes
+    //** the window; files already being written are finished first, so none is left half
+    //** written. With nothing being exported the window closes at once.
+    //**
+    //** @param(Sender The form.)
+    //**
+    //** @param(CanClose Set to False while the question is open or was answered No.)
+    /// <summary>Asks before quitting while an export is under way.</summary>
+    /// <remarks>While animations are being captured or exported, or files are still being
+    /// written, the close is held and a dialog asks "Still exporting. Do you really want to
+    /// quit?". No carries on with the export. Yes stops it, drops what is not yet saved, and
+    /// closes the window; files already being written are finished first, so none is left half
+    /// written. With nothing being exported the window closes at once.</remarks>
+    /// <param name="Sender">The form.</param>
+    /// <param name="CanClose">Set to False while the question is open or was answered
+    /// No.</param>
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
-    //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and written
-    //** to the camera. The model is not refitted; see FitModel.
+    //** The dial value is wrapped into 0 to 360, without negating, shown in RollText and
+    //** written to the camera. The model is not refitted; see FitModel.
     //**
     //** @param(Sender RollDial.)
     /// <summary>Copies RollDial to the camera's Roll.</summary>
@@ -879,21 +993,29 @@ type
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
     //**
-    //** Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is loaded,
-    //** or while View, Camera, Lock Camera is ticked.
+    //** Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is
+    //** loaded, or while View, Camera, Lock Camera is ticked.
     //**
     //** @param(Sender The TGorillaViewport.)
     /// <summary>Refits the camera to the model when the viewport changes size.</summary>
-    /// <remarks>Assigned to the viewport's OnResize in FormCreate. Does nothing until a model is
-    /// loaded, or while View, Camera, Lock Camera is ticked.</remarks>
+    /// <remarks>Assigned to the viewport's OnResize in FormCreate. Does nothing until a model
+    /// is loaded, or while View, Camera, Lock Camera is ticked.</remarks>
     /// <param name="Sender">The TGorillaViewport.</param>
     procedure GorillaViewportResize(Sender: TObject);
+    //** @abstract(Places the viewport again when AspectLayout changes size; see
+    //** FitViewportToAspect.)
+    //**
+    //** @param(Sender AspectLayout.)
+    /// <summary>Places the viewport again when AspectLayout changes size; see
+    /// FitViewportToAspect.</summary>
+    /// <param name="Sender">AspectLayout.</param>
+    procedure AspectLayoutResize(Sender: TObject);
     //** @abstract(Ticks or unticks OrthographicItem, then switches the projection to match
     //** and refits the model.)
     //**
-    //** Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the form
-    //** caption, and refits, since the two modes size the view differently. Does nothing while
-    //** View, Camera, Lock Camera is ticked, when the item is disabled.
+    //** Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the
+    //** form caption, and refits, since the two modes size the view differently. Does nothing
+    //** while View, Camera, Lock Camera is ticked, when the item is disabled.
     //**
     //** @param(Sender OrthographicItem.)
     /// <summary>Ticks or unticks OrthographicItem, then switches the projection to match and
@@ -974,14 +1096,105 @@ type
     /// or if the file fails to load, which SwitchModel reports.</remarks>
     /// <param name="Sender">OpenModelMenuItem.</param>
     procedure OpenModelMenuItemClick(Sender: TObject);
+    //** @abstract(Saves the Animations list as it stands to a JSON file.)
+    //**
+    //** Asks where, in a save dialog opening in the model's folder, with the name
+    //** @code(<model>_animations.json). The file holds every entry of the list, in order,
+    //** with its tick and any frame count typed in for it, and the entry selected:
+    //**
+    //** @preformatted(
+    //** {
+    //**   "format": "Sprite3D animation settings",
+    //**   "version": 1,
+    //**   "model": "hero.glb",
+    //**   "selected": "walk",
+    //**   "animations": [
+    //**     { "name": "(None)", "checked": false },
+    //**     { "name": "walk", "checked": true, "frames": 24 },
+    //**     { "name": "run", "checked": true }
+    //**   ]
+    //** }
+    //** )
+    //**
+    //** @code(frames) is there only for a count typed in. Desktop only, with a model loaded
+    //** and nothing being exported.
+    //**
+    //** @param(Sender SaveAnimationSettingsItem.)
+    /// <summary>Saves the Animations list as it stands to a JSON file.</summary>
+    /// <remarks>Asks where, in a save dialog opening in the model's folder, with the name
+    /// <c>&lt;model&gt;_animations.json</c>. The file holds <c>format</c> ("Sprite3D animation
+    /// settings"), <c>version</c>, <c>model</c>, <c>selected</c>, the entry selected, and
+    /// <c>animations</c>, every entry of the list, in order, each with its <c>name</c>, its
+    /// tick as <c>checked</c>, and <c>frames</c>, only for a count typed in. Desktop only,
+    /// with a model loaded and nothing being exported.</remarks>
+    /// <param name="Sender">SaveAnimationSettingsItem.</param>
+    procedure SaveAnimationSettingsItemClick(Sender: TObject);
+    //** @abstract(Loads a file saved by SaveAnimationSettingsItemClick and applies it to the
+    //** Animations list.)
+    //**
+    //** The animations the file lists that the model has become the animations used, as
+    //** Model, Animations Used would make them, in the model's order; their ticks and frame
+    //** counts are set as the file says, every other count going back to the one the frame
+    //** rate gives; and the entry the file has selected is selected and played. Animations
+    //** the file names that the model does not have are left out and reported. A file that
+    //** is not one of these, or that names none of the model's animations, changes nothing.
+    //** Desktop only, with a model loaded and nothing being exported.
+    //**
+    //** @param(Sender LoadAnimationSettingsItem.)
+    /// <summary>Loads a file saved by SaveAnimationSettingsItemClick and applies it to the
+    /// Animations list.</summary>
+    /// <remarks>The animations the file lists that the model has become the animations used,
+    /// as Model, Animations Used would make them, in the model's order; their ticks and frame
+    /// counts are set as the file says, every other count going back to the one the frame rate
+    /// gives; and the entry the file has selected is selected and played. Animations the file
+    /// names that the model does not have are left out and reported. A file that is not one
+    /// of these, or that names none of the model's animations, changes nothing. Desktop only,
+    /// with a model loaded and nothing being exported.</remarks>
+    /// <param name="Sender">LoadAnimationSettingsItem.</param>
+    procedure LoadAnimationSettingsItemClick(Sender: TObject);
+    //** @abstract(File, Save Project: edits the creator credits, keeps them for every export's
+    //** metadata, and saves them in a project file.)
+    //**
+    //** The dialog, TCreditsForm, takes the creator, modeller and artist, each with a URL, and
+    //** the day the project started. On OK the credits go into the @code(meta) section of
+    //** every metadata file saved from then on, and a save dialog asks where to keep them, as
+    //** a project file with the extension PROJECT_FILE_EXTENSION, opening at the project
+    //** last saved or loaded, or beside the model. The project file holds the credits, the
+    //** model's full path, the directions of Model, Directions, the Animations list and the
+    //** export choices; see SaveProjectFile. Cancelling the save keeps the credits all the
+    //** same. On Android and iOS, which have no save dialog, the credits are kept for the
+    //** session only.
+    //**
+    //** @param(Sender CreditsItem.)
+    /// <summary>File, Save Project: edits the creator credits, keeps them for every export's
+    /// metadata, and saves them in a project file.</summary>
+    /// <remarks>The dialog, TCreditsForm, takes the creator, modeller and artist, each with a
+    /// URL, and the day the project started. On OK the credits go into the <c>meta</c>
+    /// section of every metadata file saved from then on, and a save dialog asks where to
+    /// keep them, as a project file with the extension PROJECT_FILE_EXTENSION, opening at the
+    /// project last saved or loaded, or beside the model. The project file holds the credits,
+    /// the model's full path, the directions of Model, Directions, the Animations list and the
+    /// export choices; see SaveProjectFile. Cancelling the save keeps the credits all the
+    /// same. On Android and iOS, which have no save dialog, the credits are kept for the
+    /// session only.</remarks>
+    /// <param name="Sender">CreditsItem.</param>
+    procedure CreditsItemClick(Sender: TObject);
+    //** @abstract(File, Load Project: loads a project file and applies it; see
+    //** LoadProjectFile.)
+    //**
+    //** @param(Sender LoadCreditsItem.)
+    /// <summary>File, Load Project: loads a project file and applies it; see
+    /// LoadProjectFile.</summary>
+    /// <param name="Sender">LoadCreditsItem.</param>
+    procedure LoadCreditsItemClick(Sender: TObject);
     //** @abstract(Renders the view off screen and saves it as the next grabNNN.png.)
     //**
     //** If no usable SaveFolder is known, because none has been chosen yet or the stored one no
     //** longer exists, a "Save Location" folder dialog asks for it first, and SaveFolder is set
     //** to the choice and saved; if the dialog is cancelled nothing is grabbed. The image comes
     //** from Offscreen at its Width and Height, the grab size set in File, Settings, with the
-    //** camera refitted by FitToBounds for that size so the model fills it, unless View, Camera,
-    //** Lock Camera is ticked, when the view is grabbed as it stands, and is saved a
+    //** camera refitted by FitToBounds for that size so the model fills it, unless View,
+    //** Camera, Lock Camera is ticked, when the view is grabbed as it stands, and is saved a
     //** frame later as grab001.png, grab002.png and so on: the number starts at 1 when the
     //** folder is chosen and goes up by one for every file saved, skipping any name already in
     //** the folder, so earlier grabs are never overwritten. Each saved file is logged in
@@ -1059,10 +1272,10 @@ type
     /// <summary>Opens the Settings dialog and applies what is chosen.</summary>
     /// <remarks>The dialog, TGeneralSettingsForm, opens modally, centred on this form, showing
     /// the settings as they stand, with Open With, the default application and the GPU read
-    /// from the system. On OK the file associations are changed as chosen, the theme is
-    /// applied at once, the GPU preference is stored for the next start, and everything is
-    /// saved to settings.json; anything the user needs to know, such as a failure or the need
-    /// to restart, is reported in a message. Cancel changes nothing. On Android and iOS, where a
+    /// from the system. On OK the file associations are changed as chosen, the theme is applied
+    /// at once, the GPU preference is stored for the next start, and everything is saved to
+    /// settings.json; anything the user needs to know, such as a failure or the need to
+    /// restart, is reported in a message. Cancel changes nothing. On Android and iOS, where a
     /// dialog cannot block, it opens as an ordinary form and OK is applied when it
     /// closes.</remarks>
     /// <param name="Sender">SettingsMenuItem.</param>
@@ -1365,6 +1578,11 @@ type
     FOverscanOn: Boolean;
     // True while AnimationListBox is refilled, so its OnChange plays nothing
     FRebuildingList: Boolean;
+    // Ticks are being set by SetEntryChecks, which keeps the selection: a
+    // change of it meanwhile plays nothing
+    FKeepingSelection: Boolean;
+    // Quitting mid-export was confirmed: the next close goes ahead
+    FQuitConfirmed: Boolean;
     // The on-screen framing, kept while a grab is fitted to its target
     FSavedFraming: TSprite3DFraming;
     // The camera pan, applied on top of every fit while FPanEnabled
@@ -1375,7 +1593,7 @@ type
     FFitCenter: TPoint3D;
     FFitted: Boolean;
     // The animation list's pop-up menu: Save as sprite strip, Save as
-    // Texture Atlas, Save as AniGif
+    // Spritesheet, Save as AniGif
     FAnimationPopup: TPopupMenu;
     // Model, Animation Settings...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
@@ -1400,6 +1618,10 @@ type
     FCaptureRestore: TSprite3DFraming;
     // The viewport was resized during the capture: refit when it ends
     FRefitAfterCapture: Boolean;
+    // The orbit centre before SnapCaptureOrigin slid the view, put back by
+    // EndCapture even when the camera is locked
+    FOriginSnapped: Boolean;
+    FOriginRestore: TPoint3D;
     // Batch export, below the animation list: All, what to save, Export
     FBatchLayout: TLayout;
     // The play, pause and step buttons under the animation list, for the
@@ -1429,6 +1651,11 @@ type
     FPlayer: TSprite3DAnimationPlayer;
     FBatchAll: TCheckBox;
     FBatchKindBox: TComboBox;
+    // Above Export: whether a strip or spritesheet is saved with its metadata, and
+    // whether to export every direction (kept for the directions export to
+    // come; no effect yet)
+    FBatchMetadata: TCheckBox;
+    FBatchDirections: TCheckBox;
     FExportButton: TButton;
     FAbortButton: TButton;
     // Abort was clicked: the batch stops once the current entry is saved
@@ -1444,6 +1671,56 @@ type
     FBatchFolder: String;
     FBatchSaved: Integer;
     FBatchErrors: TArray<String>;
+    // A Texture Atlas batch: the animations captured so far, made into pages
+    // when the batch ends; the folder chosen when Texture Atlas was picked;
+    // the pages are being written; the drop-down's choice before the last
+    // change, to go back to if no folder is chosen
+    FAtlasParts: TArray<TAtlasPart>;
+    FAtlasFolder: String;
+    FAtlasSaving: Boolean;
+    FBatchKindIndex: Integer;
+    // The batch's progress dialog, while it is open, and whether the view's
+    // own redraws were stopped for the batch
+    FExportDialog: TExportProgressForm;
+    FViewPaused: Boolean;
+    // The entry selected when the batch started, selected again at its end
+    FBatchSelected: Integer;
+    // The creator credits, for every export's metadata; the project file
+    // last saved or loaded; and an Animations list from a project, applied
+    // once its model, FPendingListModel, has loaded
+    FCredits: TSprite3DCredits;
+    FProjectFile: String;
+    FPendingList: TAnimationListState;
+    FPendingListModel: String;
+    FHasPendingList: Boolean;
+    // Directions: each batch step's direction, as an index into the
+    // bearings, or -1 without directions; the bearings, from Model,
+    // Directions, empty without; how many entries the batch has; and, for a
+    // strip or spritesheet, the frames of the entry's directions so far and
+    // whether one of them failed
+    FBatchDirs: TArray<Integer>;
+    FBatchBearings: TArray<Single>;
+    FBatchEntryCount: Integer;
+    // How long the batch has taken, from Export to its report, and how much
+    // of that was capturing before a texture atlas's pages were made
+    FBatchClock: TStopwatch;
+    FBatchCaptureMs: Int64;
+    FDirFrames: TArray<TSprite3DImage>;
+    FDirFailed: Boolean;
+    // The camera's azimuth before a capture turned it to a direction, put
+    // back by EndCapture, and whether it did
+    FDirTurned: Boolean;
+    FDirRestoreAzimuth: Single;
+    // Whether an animation chosen in the list starts held on its first frame:
+    // so at first, and after Pause or a step; not after Play
+    FHoldNew: Boolean;
+    // Frame counts typed over an entry's own, by animation name, for this
+    // model; and the editor for one, while it is open
+    FFrameOverrides: TDictionary<String, Integer>;
+    FFrameEditor: TEdit;
+    FFrameEditName: String;
+    FSpentEditor: TEdit;   // closed, freed from a fresh main-loop turn
+    FItemDownX: Single;    // where on its entry the mouse last went down
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     // Mobile only: the pop-up menu's items, offered in the menu drawer
     FAnimationMenu: TMenuItem;
@@ -1552,13 +1829,19 @@ type
     procedure AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure SaveStripItemClick(Sender: TObject);
-    procedure SaveAtlasItemClick(Sender: TObject);
+    procedure SaveSheetItemClick(Sender: TObject);
     procedure SaveGifItemClick(Sender: TObject);
     procedure SaveMp4ItemClick(Sender: TObject);
     procedure StartSingleCapture(const AKind: TSheetKind);
-    function StartCapture(const AKind: TSheetKind; const AIndex: Integer;
+    function StartCapture(const AKind: TSheetKind; const AIndex, ADirection: Integer;
       const AFolder: String; const AOnFinished: TProc<String>;
       out AError: String): Boolean;
+    procedure StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
+      const AFolder: String);
+    procedure TurnToDirection(const ABearing: Single);
+    function BatchStepTitle: String;
+    function BatchEntryOrdinal(const APos: Integer): Integer;
+    procedure FitFormToGrabShape;
     function Capturing: Boolean;
     procedure BuildBatchControls;
     procedure BuildTransportControls;
@@ -1569,6 +1852,7 @@ type
     procedure CheckDisplay;
     procedure BuildFpsReadout;
     procedure ReadoutTimerTimer(Sender: TObject);
+    procedure FitViewportToAspect;
     procedure TransportButtonApplyStyle(Sender: TObject);
     procedure TransportChanged;
     function EnsurePlayer: Boolean;
@@ -1586,6 +1870,40 @@ type
     function ViewVolume: TSweptVolume;
     procedure UpdateView;
     procedure BatchAllChange(Sender: TObject);
+    procedure BatchKindChange(Sender: TObject);
+    procedure SetEntryChecks(const AEntries: TArray<Integer>; const AChecked: Boolean);
+    procedure ShowExportStep(const AItemFraction: Single; const AStatus: String);
+    procedure ExportDialogAbort(Sender: TObject);
+    procedure ExportDialogClosed(Sender: TObject);
+    procedure PauseViewForExport(const APause: Boolean);
+    function FrameOverride(const AName: String): Integer;
+    procedure SetFrameOverride(const AName: String; const ACount: Integer);
+    procedure AnimationItemMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
+    procedure AnimationItemDblClick(Sender: TObject);
+    procedure StartFrameEdit(const AEntry: Integer);
+    procedure FinishFrameEdit(const ACommit, AFreeNow: Boolean);
+    procedure FreeSpentEditor;
+    procedure FrameEditorKeyDown(Sender: TObject; var Key: Word; var KeyChar: Char;
+      Shift: TShiftState);
+    procedure FrameEditorExit(Sender: TObject);
+    procedure UpdateListFileItems;
+    function AnimationListToJson: TJSONObject;
+    function ReadAnimationList(const AValue: TJSONValue; out AState: TAnimationListState;
+      out AError: String): Boolean;
+    procedure ApplyAnimationList(const AState: TAnimationListState; const AFrom: String);
+    function ExportMeta(const APage, APageCount: Integer): TSprite3DSheetMeta;
+    procedure SaveProjectAs;
+    procedure SaveProjectFile(const AFileName: String);
+    function LoadProjectFile(const AFileName: String): Boolean;
+    procedure ApplyPendingList;
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    procedure CreditsAccept(Sender: TObject);
+    {$ENDIF}
+    function Exporting: Boolean;
+    procedure QuitAfterConfirm;
+    procedure BatchMetadataChange(Sender: TObject);
+    procedure BatchDirectionsChange(Sender: TObject);
     procedure AnimationListBoxChangeCheck(Sender: TObject);
     procedure ExportButtonClick(Sender: TObject);
     procedure AbortButtonClick(Sender: TObject);
@@ -1593,12 +1911,25 @@ type
     procedure RunNextBatchItem;
     procedure ContinueBatch;
     procedure FinishBatch;
+    procedure ReportBatch;
+    procedure SaveAtlasBatch;
+    procedure ChooseAtlasFolder;
+    function SaveAtlas(const AParts: TArray<TAtlasPart>; const AFolder, AStem: String;
+      const APageSize: Integer; const ANonPowerOf2, AMetadata: Boolean;
+      const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta;
+      out ASaved: TArray<Integer>; out ANotes: TArray<String>): TArray<String>;
+    procedure ApplyAtlasSettings(const APageSize: Integer; const ANonPowerOf2: Boolean);
+    procedure DeleteAtlasPages(const AFolder, AStem: String; var ANotes: TArray<String>);
     procedure UpdateBatchControls;
     function FrameCaptureFraming(const ASource: TSprite3DFrameSource;
       const AWidth, AHeight: Integer): Boolean;
     procedure EndCapture;
+    function SnapCaptureOrigin(const AWidth, AHeight: Integer; out AOrigin: TPoint): Boolean;
     function SaveSheet(const AKind: TSheetKind; const AFrames: TArray<TSprite3DImage>;
-      const AFolder, AStem: String; const ACycleSeconds: Double): String;
+      const AFolder, AStem: String; const ACycleSeconds: Double;
+      const AMetadata: Boolean; const AOrigin: TPoint; const AOriginKnown: Boolean;
+      const AAnimation: String; const ADirections: TArray<Single>;
+      const AMeta: TSprite3DSheetMeta): String;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -1665,7 +1996,8 @@ uses
   FMX.Platform, System.IOUtils, OSPaths,
   Gorilla.DefTypes, System.Math,
   Sprite3DOpenFiles, Sprite3DBackgroundForm,
-  Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm;
+  Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
+  Sprite3DCreditsForm, System.DateUtils, JsonText;
 
 {$R *.fmx}
 
@@ -1721,7 +2053,8 @@ begin
   FPolarAngle := 0;
   FFactor := 1.0;
 
-  GorillaViewport := TGorillaViewport.Create(ViewportLayout);
+  GorillaViewport := TGorillaViewport.Create(AspectLayout);
+  GorillaViewport.Parent := AspectLayout;
   GorillaViewport.OnResize := GorillaViewportResize;
   GorillaViewport.UseFixedFrameRate := true;
   GorillaViewport.VSync := False;
@@ -1752,6 +2085,9 @@ begin
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
+  FFrameOverrides := TDictionary<String, Integer>.Create;
+  // An animation chosen first shows held on its first frame
+  FHoldNew := True;
   // The frame rate the view is drawn at, as chosen in File, Settings, within
   // what the display can show
   FDisplayIndex := -1;
@@ -1774,14 +2110,17 @@ begin
   FPanEnabled := FSettings.PanEnabled;
   FPanX := EnsureRange(FSettings.PanX, -PAN_LIMIT, PAN_LIMIT);
   FPanZ := EnsureRange(FSettings.PanZ, -PAN_LIMIT, PAN_LIMIT);
-  // Fill the space the bottom test strip (DistanceLayout) leaves
-  GorillaViewport.Align := TAlignLayout.Client;
+  // Placed by FitViewportToAspect, at the shape of the grabs, once the
+  // background is attached below
+  GorillaViewport.Align := TAlignLayout.None;
   // The background behind the model, as last chosen: a 2D control behind
   // the viewport, which it makes see-through. It takes the viewport's
   // alignment, so it comes after that is set; its parent frees it.
   FBackground := TSprite3DBackground.Create(nil);
   FBackground.AttachTo(GorillaViewport);
   ApplyBackground(FSettings.BackgroundSpec, False);
+  AspectLayout.HitTest := False;
+  FitViewportToAspect;
 
   // The camera view as it was left last session; Isometric the first time
   RestoreCameraView;
@@ -1984,8 +2323,8 @@ end;
 procedure TMainForm.AnimationListBoxChange(Sender: TObject);
 begin
   FChangePlayed := False;
-  if FRebuildingList then
-    Exit;   // RebuildAnimationList keeps the selection; nothing new to play
+  if FRebuildingList or FKeepingSelection then
+    Exit;   // the selection is kept as it was; nothing new to play
   if Capturing or (AnimationListBox.ItemIndex < 0) then
     Exit;   // a capture drives the animation; or the list is being emptied
   PlaySelectedAnimation;
@@ -2004,7 +2343,11 @@ begin
     Exit;   // a capture is driving the animation
   // Choosing an entry plays it from the start; but while the controls are
   // paused, the new animation starts paused too, on its first frame
-  WasHeld := (FPlayer <> nil) and FPlayer.Held;
+  // An animation chosen starts held on its first frame at first, and after
+  // Pause or a step; once Play has been pressed, it plays
+  if FPlayer <> nil then
+    FHoldNew := FPlayer.Held;
+  WasHeld := FHoldNew;
   FreeAndNil(FPlayer);
   if Assigned(GorillaModel) then
     begin
@@ -2015,7 +2358,7 @@ begin
           if Anim <> nil then
           begin
             FPlayer := TSprite3DAnimationPlayer.Create(GorillaModel, Anim,
-              FSettings.AnimationFps);
+              FSettings.AnimationFps, FrameOverride(ani));
             if WasHeld then
               FPlayer.ShowFrame(0);
           end;
@@ -2074,12 +2417,62 @@ end;
 // On startup load a default Model as specified by DefaultLoadType
 // The directory layout of models/Orientation follows this pattern
 // to allow easy addition of new Model types
+// Makes the window wider or narrower, as it opens, so that the area left of
+// the Animations panel has the shape of the grab size from File, Settings,
+// and the view fills it with no grey either side. The height is kept. The
+// width stays within the display's work area, keeping the window on it; a
+// maximised or full-screen window, and Android and iOS, are left as they are.
+procedure TMainForm.FitFormToGrabShape;
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Aspect, Wanted: Single;
+  NewWidth, MinWidth, MaxWidth: Integer;
+  Area: TRectF;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if (WindowState <> TWindowState.wsNormal) or FullScreen or (FSettings = nil) or
+    (FSettings.GrabHeight <= 0) or (ViewportLayout.Height <= 0) then
+    Exit;
+  Aspect := FSettings.GrabWidth / FSettings.GrabHeight;
+  Wanted := ViewportLayout.Height * Aspect;
+  NewWidth := Round(ClientWidth + (Wanted - ViewportLayout.Width));
+  MinWidth := Round(ControlsLayout.Width) + 160;
+  Area := Screen.WorkAreaRect;
+  // The window's frame round the client area counts towards the display
+  MaxWidth := Round(Area.Width) - (Width - ClientWidth);
+  NewWidth := EnsureRange(NewWidth, MinWidth, Max(MinWidth, MaxWidth));
+  if NewWidth = ClientWidth then
+    Exit;
+  ClientWidth := NewWidth;
+  // Back onto the display if the wider window runs off it
+  if Left + Width > Area.Right then
+    Left := Max(Round(Area.Left), Round(Area.Right) - Width);
+  {$ENDIF}
+end;
+
 procedure TMainForm.FormShow(Sender: TObject);
 begin
   FSetupComplete := True;
   if FStarted then
     Exit;   // the form can be shown again; the model stays as it is
   FStarted := True;
+  // Project files open with this copy of the program, off the main thread,
+  // as on Linux it runs the system's database updates
+  TTask.Run(
+    procedure
+    var
+      Note: String;
+    begin
+      if not RegisterProjectFiles(Note) then
+        TThread.Queue(nil,
+          procedure
+          begin
+            if not MainFormGone then
+              DebugMemo.Lines.Add('Can''t associate ' + PROJECT_FILE_EXTENSION +
+                ' files with Sprite3D: ' + Note);
+          end);
+    end);
   // The window is drawn before the first model loads, rather than staying
   // blank until it has; the video libraries are looked for after that
   Caption := 'Loading...';
@@ -2088,6 +2481,8 @@ begin
     begin
       if MainFormGone then
         Exit;
+      // Laid out by now: the view is made the shape of the grabs
+      FitFormToGrabShape;
       LoadStartupModel;
       FileOpenRequests.OnOpenFile := OpenRequestedFile;
       {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
@@ -2116,8 +2511,18 @@ end;
 procedure TMainForm.LoadStartupModel;
 var
   FileName: String;
+  Requested: TArray<String>;
 begin
-  FileName := StartupModelFile(FileOpenRequests.TakePending, String.Empty);
+  Requested := FileOpenRequests.TakePending;
+  // A project the system asked to open comes first, and loads its model
+  for var Request in Requested do
+    if IsProjectFile(Request) then
+    begin
+      if LoadProjectFile(Request) then
+        Exit;
+      Break;
+    end;
+  FileName := StartupModelFile(Requested, String.Empty);
   if FileName = String.Empty then
     case FSettings.StartupAction of
       saNone:
@@ -2142,10 +2547,48 @@ end;
 // A file the system asks to open while the application runs
 procedure TMainForm.OpenRequestedFile(const AFileName: String);
 begin
-  if IsModelFile(AFileName) then
+  if IsProjectFile(AFileName) then
+    LoadProjectFile(AFileName)
+  else if IsModelFile(AFileName) then
     SwitchModel(AFileName)
   else
     ShowMessage('Not a model this application can open: ' + AFileName);
+end;
+
+// Anything of an export still going: a capture, a batch, atlas pages or
+// files being written
+function TMainForm.Exporting: Boolean;
+begin
+  Result := Capturing or FAtlasSaving or (Length(FSaveTasks) > 0);
+end;
+
+procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  if FQuitConfirmed or not Exporting then
+    Exit;
+  CanClose := False;
+  TDialogService.MessageDialog('Still exporting. Do you really want to quit?',
+    TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0,
+    procedure(const AResult: TModalResult)
+    begin
+      if AResult <> mrYes then
+        Exit;   // carry on exporting
+      FQuitConfirmed := True;
+      // No further entries, and nothing more for an atlas; FormDestroy
+      // cancels the capture under way and waits for files being written
+      FBatchAborted := True;
+      FAtlasParts := nil;
+      DebugMemo.Lines.Add('Quitting: export abandoned');
+      // Closed again from a fresh main-loop turn, once this close has ended
+      TThread.ForceQueue(nil, QuitAfterConfirm);
+    end);
+end;
+
+// The close the user confirmed mid-export
+procedure TMainForm.QuitAfterConfirm;
+begin
+  if not MainFormGone then
+    Close;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -2183,6 +2626,8 @@ begin
   FileOpenRequests.OnOpenFile := nil;
   SaveViewState;
   FreeAndNil(FSettings);
+  FreeAndNil(FSpentEditor);
+  FreeAndNil(FFrameOverrides);
 end;
 
 // Ticks the View menu's on/off items as settings.json says, then applies
@@ -2291,6 +2736,47 @@ begin
   end;
 end;
 
+procedure TMainForm.AspectLayoutResize(Sender: TObject);
+begin
+  FitViewportToAspect;
+end;
+
+// Makes the viewport, and its background behind it, as large as fits in
+// AspectLayout at the aspect ratio of the grab size, centred, on whole
+// logical pixels. Its own OnResize then refits the model.
+procedure TMainForm.FitViewportToAspect;
+var
+  Area, Box: TRectF;
+  Aspect, W, H: Single;
+begin
+  if (GorillaViewport = nil) or (FSettings = nil) then
+    Exit;   // still being made
+  Area := AspectLayout.LocalRect;
+  if (Area.Width <= 0) or (Area.Height <= 0) or (FSettings.GrabHeight <= 0) then
+    Exit;
+  Aspect := FSettings.GrabWidth / FSettings.GrabHeight;
+  if Area.Width / Area.Height > Aspect then
+  begin
+    // Wider than the grabs: full height, grey either side
+    H := Area.Height;
+    W := H * Aspect;
+  end
+  else
+  begin
+    // Taller than the grabs: full width, grey above and below
+    W := Area.Width;
+    H := W / Aspect;
+  end;
+  W := Max(1, Trunc(W));
+  H := Max(1, Trunc(H));
+  Box := TRectF.Create(TPointF.Create(Round((Area.Width - W) / 2),
+    Round((Area.Height - H) / 2)), W, H);
+  if GorillaViewport.BoundsRect <> Box then
+    GorillaViewport.BoundsRect := Box;
+  if (FBackground <> nil) and (FBackground.BoundsRect <> Box) then
+    FBackground.BoundsRect := Box;
+end;
+
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
 begin
   if Assigned(FCapture) then
@@ -2300,6 +2786,597 @@ begin
     Exit;
   end;
   FitModel;
+end;
+
+const
+  ANIMATION_SETTINGS_FORMAT = 'Sprite3D animation settings';
+  ANIMATION_SETTINGS_VERSION = 1;
+  ANIMATION_SETTINGS_FILTER =
+    'Sprite3D animation settings (*.json)|*.json|All files (*.*)|*.*';
+  PROJECT_FILTER = 'Sprite3D project (*.sprite3d)|*.sprite3d|All files (*.*)|*.*';
+
+// File, Save and Load Animation Settings: with a model, while nothing is
+// being exported, and on the desktop, which has file dialogs
+procedure TMainForm.UpdateListFileItems;
+var
+  Usable: Boolean;
+begin
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  Usable := False;
+  {$ELSE}
+  Usable := (GorillaModel <> nil) and not Capturing;
+  {$ENDIF}
+  SaveAnimationSettingsItem.Enabled := Usable;
+  LoadAnimationSettingsItem.Enabled := Usable;
+  // The credits can be set on every platform; a project file needs the
+  // desktop's file dialogs
+  CreditsItem.Enabled := not Capturing;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  LoadCreditsItem.Enabled := False;
+  {$ELSE}
+  LoadCreditsItem.Enabled := not Capturing;
+  {$ENDIF}
+end;
+
+// The Animations list as it stands, as the JSON File, Save Animation
+// Settings writes and a project file holds: every entry in order, with its
+// tick and any frame count typed in, and the entry selected. The caller
+// owns the object.
+function TMainForm.AnimationListToJson: TJSONObject;
+var
+  Entry: TJSONObject;
+  List: TJSONArray;
+  Count: Integer;
+begin
+  Result := TJSONObject.Create;
+  Result.AddPair('format', ANIMATION_SETTINGS_FORMAT);
+  Result.AddPair('version', TJSONNumber.Create(ANIMATION_SETTINGS_VERSION));
+  Result.AddPair('model', ExtractFileName(FModelFile));
+  if AnimationListBox.ItemIndex >= 0 then
+    Result.AddPair('selected', AnimationListBox.Items[AnimationListBox.ItemIndex])
+  else
+    Result.AddPair('selected', TJSONNull.Create);
+  List := TJSONArray.Create;
+  Result.AddPair('animations', List);
+  for var I := 0 to AnimationListBox.Count - 1 do
+  begin
+    Entry := TJSONObject.Create;
+    List.AddElement(Entry);
+    Entry.AddPair('name', AnimationListBox.Items[I]);
+    Entry.AddPair('checked', TJSONBool.Create(AnimationListBox.ListItems[I].IsChecked));
+    Count := 0;
+    if I > 0 then
+      Count := FrameOverride(AnimationListBox.Items[I]);
+    if Count > 0 then
+      Entry.AddPair('frames', TJSONNumber.Create(Count));
+  end;
+end;
+
+// Reads an Animations list from JSON written by AnimationListToJson, without
+// applying it. False, with AError saying why, if it cannot be used.
+function TMainForm.ReadAnimationList(const AValue: TJSONValue;
+  out AState: TAnimationListState; out AError: String): Boolean;
+var
+  Text, Name: String;
+  List: TJSONArray;
+  Ticked: Boolean;
+  Count: Integer;
+begin
+  Result := False;
+  AError := String.Empty;
+  AState.Selected := String.Empty;
+  AState.Names := nil;
+  AState.Checked := nil;
+  AState.Frames := nil;
+  if not (AValue is TJSONObject) then
+  begin
+    AError := 'It is not a JSON object.';
+    Exit;
+  end;
+  if TJSONObject(AValue).TryGetValue<String>('format', Text) and
+    (Text <> ANIMATION_SETTINGS_FORMAT) then
+  begin
+    AError := Format('Its format is "%s".', [Text]);
+    Exit;
+  end;
+  if not TJSONObject(AValue).TryGetValue<String>('selected', AState.Selected) then
+    AState.Selected := String.Empty;
+  List := TJSONObject(AValue).GetValue('animations') as TJSONArray;
+  if List = nil then
+  begin
+    AError := 'It lists no animations ("animations").';
+    Exit;
+  end;
+  for var Element in List do
+  begin
+    if not (Element is TJSONObject) or
+      not TJSONObject(Element).TryGetValue<String>('name', Name) then
+      Continue;
+    if not TJSONObject(Element).TryGetValue<Boolean>('checked', Ticked) then
+      Ticked := False;
+    if not TJSONObject(Element).TryGetValue<Integer>('frames', Count) then
+      Count := 0;
+    AState.Names := AState.Names + [Name];
+    AState.Checked := AState.Checked + [Ticked];
+    AState.Frames := AState.Frames + [EnsureRange(Count, 0, 9999)];
+  end;
+  Result := True;
+end;
+
+// Applies an Animations list to the model loaded: the animations it lists
+// that the model has become the animations used, their ticks and frame
+// counts are set, and its selected entry is selected and played. AFrom names
+// where it came from, for the messages: those it lists that the model does
+// not have are reported, and if it names none of the model's, nothing is
+// changed.
+procedure TMainForm.ApplyAnimationList(const AState: TAnimationListState;
+  const AFrom: String);
+var
+  Used, Missing: TArray<String>;
+  Ticks: TArray<Integer>;
+  Listed: Boolean;
+  Index: Integer;
+begin
+  if (GorillaModel = nil) or Capturing then
+    Exit;
+  // The model's animations it lists, in the model's order, and those it
+  // lists that the model does not have
+  Used := nil;
+  for var Known in FAnimationNames do
+    for var I := 0 to High(AState.Names) do
+      if AState.Names[I] = Known then
+      begin
+        Used := Used + [Known];
+        Break;
+      end;
+  Missing := nil;
+  for var I := 0 to High(AState.Names) do
+    if AState.Names[I] <> NO_ANIMATION then
+    begin
+      Listed := False;
+      for var Known in FAnimationNames do
+        Listed := Listed or (Known = AState.Names[I]);
+      if not Listed then
+        Missing := Missing + [AState.Names[I]];
+    end;
+  if (Length(Used) = 0) and (Length(Missing) > 0) then
+  begin
+    ShowMessage('None of the animations in ' + AFrom +
+      ' are in this model, so the Animations list was not changed.');
+    Exit;
+  end;
+
+  // Frame counts, then the animations used, which lists them afresh with
+  // nothing ticked, then the ticks and the selection
+  FinishFrameEdit(False, True);
+  FFrameOverrides.Clear;
+  for var I := 0 to High(AState.Names) do
+    if (AState.Names[I] <> NO_ANIMATION) and (AState.Frames[I] > 0) then
+      FFrameOverrides.AddOrSetValue(AState.Names[I], AState.Frames[I]);
+  ApplyUsedAnimations(Used);
+  Ticks := nil;
+  for var I := 0 to High(AState.Names) do
+    if AState.Checked[I] then
+    begin
+      Index := AnimationListBox.Items.IndexOf(AState.Names[I]);
+      if Index >= 0 then
+        Ticks := Ticks + [Index];
+    end;
+  FSyncingChecks := True;
+  try
+    SetEntryChecks(Ticks, True);
+  finally
+    FSyncingChecks := False;
+  end;
+  AnimationListBoxChangeCheck(AnimationListBox);   // All, and the volume shown
+  Index := AnimationListBox.Items.IndexOf(AState.Selected);
+  if (Index >= 0) and (Index <> AnimationListBox.ItemIndex) then
+    AnimationListBox.ItemIndex := Index   // played, as choosing it would
+  else
+  begin
+    // Its frame count may have changed: play it again with the new one
+    FChangePlayed := False;
+    PlaySelectedAnimation;
+  end;
+  UpdateFrameCounts;
+  UpdateTransportControls;
+  DebugMemo.Lines.Add('Applied the animation settings from ' + AFrom);
+  if Length(Missing) > 0 then
+    ShowMessage('Not in this model, so left out of the Animations list:' + sLineBreak +
+      String.Join(sLineBreak, Missing));
+end;
+
+procedure TMainForm.SaveAnimationSettingsItemClick(Sender: TObject);
+var
+  Dialog: TSaveDialog;
+  FileName: String;
+  Root: TJSONObject;
+begin
+  if (GorillaModel = nil) or Capturing then
+    Exit;
+  FinishFrameEdit(True, False);   // a count being typed counts
+  Dialog := TSaveDialog.Create(nil);
+  try
+    Dialog.Title := 'Save Animation Settings';
+    Dialog.Filter := ANIMATION_SETTINGS_FILTER;
+    Dialog.DefaultExt := 'json';
+    Dialog.Options := [TOpenOption.ofOverwritePrompt, TOpenOption.ofHideReadOnly,
+      TOpenOption.ofPathMustExist, TOpenOption.ofEnableSizing];
+    Dialog.InitialDir := ExtractFileDir(FModelFile);
+    Dialog.FileName := SafeFileStem(TPath.GetFileNameWithoutExtension(FModelFile)) +
+      '_animations.json';
+    if not Dialog.Execute or (Dialog.FileName = String.Empty) then
+      Exit;
+    FileName := Dialog.FileName;
+  finally
+    Dialog.Free;
+  end;
+  Root := AnimationListToJson;
+  try
+    try
+      // UTF-8 without a byte order mark, which some JSON readers reject
+      TFile.WriteAllBytes(OSFriendlyPath(FileName), JsonToBytes(Root));
+      DebugMemo.Lines.Add('Saved the animation settings to ' + FileName);
+    except
+      on E: Exception do
+        ShowMessage('Can''t save the animation settings to ' + FileName + sLineBreak +
+          E.Message);
+    end;
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TMainForm.LoadAnimationSettingsItemClick(Sender: TObject);
+var
+  Dialog: TOpenDialog;
+  FileName, Error: String;
+  Value: TJSONValue;
+  State: TAnimationListState;
+  Readable: Boolean;
+begin
+  if (GorillaModel = nil) or Capturing then
+    Exit;
+  FinishFrameEdit(False, False);
+  Dialog := TOpenDialog.Create(nil);
+  try
+    Dialog.Title := 'Load Animation Settings';
+    Dialog.Filter := ANIMATION_SETTINGS_FILTER;
+    Dialog.DefaultExt := 'json';
+    Dialog.Options := [TOpenOption.ofFileMustExist, TOpenOption.ofHideReadOnly,
+      TOpenOption.ofEnableSizing];
+    Dialog.InitialDir := ExtractFileDir(FModelFile);
+    if not Dialog.Execute or (Dialog.FileName = String.Empty) then
+      Exit;
+    FileName := Dialog.FileName;
+  finally
+    Dialog.Free;
+  end;
+  // Read it all before changing anything
+  try
+    Value := TJSONObject.ParseJSONValue(TFile.ReadAllText(OSFriendlyPath(FileName),
+      TEncoding.UTF8));
+    try
+      Readable := ReadAnimationList(Value, State, Error);
+    finally
+      Value.Free;
+    end;
+  except
+    on E: Exception do
+    begin
+      Readable := False;
+      Error := E.Message;
+    end;
+  end;
+  if not Readable then
+  begin
+    ShowMessage('Can''t load the animation settings from ' + FileName + sLineBreak + Error);
+    Exit;
+  end;
+  ApplyAnimationList(State, ExtractFileName(FileName));
+end;
+
+// The meta section of the metadata saved now: page APage of APageCount, the
+// image's own frames as the total, the credits, the day the project started, now, and the model
+function TMainForm.ExportMeta(const APage, APageCount: Integer): TSprite3DSheetMeta;
+begin
+  Result.Page := APage;
+  Result.PageCount := APageCount;
+  Result.TotalFrames := 0;   // the image's own frames, unless set
+  Result.Creator := FCredits.Creator;
+  Result.CreatorUrl := FCredits.CreatorUrl;
+  Result.Modeller := FCredits.Modeller;
+  Result.ModellerUrl := FCredits.ModellerUrl;
+  Result.Artist := FCredits.Artist;
+  Result.ArtistUrl := FCredits.ArtistUrl;
+  Result.Created := FCredits.Created;
+  // Local time, with its offset from UTC
+  Result.Modified := DateToISO8601(Now, False);
+  Result.ModelFile := FModelFile;
+end;
+
+// File, Save Project...: the credits, and on OK they are kept for every
+// export's metadata and saved, with the model, the directions, the
+// Animations list and the export choices, as a project file
+procedure TMainForm.CreditsItemClick(Sender: TObject);
+var
+  Dialog: TCreditsForm;
+begin
+  Dialog := TCreditsForm.Create(nil);
+  Dialog.Credits := FCredits;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here, and there is no save dialog: the credits
+  // are kept for this session's exports
+  Dialog.OnAccept := CreditsAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    FCredits := Dialog.Credits;
+  finally
+    Dialog.Free;
+  end;
+  DebugMemo.Lines.Add('Creator credits set');
+  SaveProjectAs;
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.CreditsAccept(Sender: TObject);
+begin
+  FCredits := (Sender as TCreditsForm).Credits;
+  DebugMemo.Lines.Add('Creator credits set');
+end;
+{$ENDIF}
+
+// Asks where to save the project file, opening at the last one or beside the
+// model, and saves it there
+procedure TMainForm.SaveProjectAs;
+var
+  Dialog: TSaveDialog;
+  FileName: String;
+begin
+  Dialog := TSaveDialog.Create(nil);
+  try
+    Dialog.Title := 'Save Project';
+    Dialog.Filter := PROJECT_FILTER;
+    Dialog.DefaultExt := PROJECT_FILE_EXTENSION.Substring(1);
+    Dialog.Options := [TOpenOption.ofOverwritePrompt, TOpenOption.ofHideReadOnly,
+      TOpenOption.ofPathMustExist, TOpenOption.ofEnableSizing];
+    if FProjectFile <> String.Empty then
+    begin
+      Dialog.InitialDir := ExtractFileDir(FProjectFile);
+      Dialog.FileName := ExtractFileName(FProjectFile);
+    end
+    else if FModelFile <> String.Empty then
+    begin
+      Dialog.InitialDir := ExtractFileDir(FModelFile);
+      Dialog.FileName := TPath.GetFileNameWithoutExtension(FModelFile) +
+        PROJECT_FILE_EXTENSION;
+    end
+    else
+      Dialog.FileName := 'project' + PROJECT_FILE_EXTENSION;
+    if not Dialog.Execute or (Dialog.FileName = String.Empty) then
+      Exit;
+    FileName := Dialog.FileName;
+  finally
+    Dialog.Free;
+  end;
+  SaveProjectFile(FileName);
+end;
+
+// Writes the project file: the credits, the model, the directions, the
+// Animations list and the export choices
+procedure TMainForm.SaveProjectFile(const AFileName: String);
+var
+  Root, Item: TJSONObject;
+begin
+  FinishFrameEdit(True, False);
+  Root := TJSONObject.Create;
+  try
+    Root.AddPair('format', PROJECT_FILE_FORMAT);
+    Root.AddPair('version', TJSONNumber.Create(PROJECT_FILE_VERSION));
+    Root.AddPair('credits', CreditsToJson(FCredits));
+    if FModelFile <> String.Empty then
+      Root.AddPair('file', ExpandFileName(FModelFile))
+    else
+      Root.AddPair('file', TJSONNull.Create);
+    Root.AddPair('directions', DirectionsToJson(FSettings.DirectionCount,
+      FSettings.DirectionStart, FSettings.DirectionOrderList, FSettings.DirectionSnap));
+    if GorillaModel <> nil then
+      Root.AddPair('animations', AnimationListToJson);
+    Item := TJSONObject.Create;
+    Root.AddPair('export', Item);
+    Item.AddPair('grab_width', TJSONNumber.Create(FSettings.GrabWidth));
+    Item.AddPair('grab_height', TJSONNumber.Create(FSettings.GrabHeight));
+    Item.AddPair('animation_fps', TJSONNumber.Create(FSettings.AnimationFps));
+    Item.AddPair('metadata', TJSONBool.Create(FSettings.ExportMetadata));
+    Item.AddPair('directions', TJSONBool.Create(FSettings.ExportDirections));
+    Item.AddPair('atlas_page_size', TJSONNumber.Create(FSettings.AtlasPageSize));
+    Item.AddPair('atlas_non_power_of_2', TJSONBool.Create(FSettings.AtlasNonPowerOf2));
+    try
+      // UTF-8 without a byte order mark, which some JSON readers reject
+      TFile.WriteAllBytes(OSFriendlyPath(AFileName), JsonToBytes(Root));
+      FProjectFile := AFileName;
+      DebugMemo.Lines.Add('Saved the project to ' + AFileName);
+    except
+      on E: Exception do
+        ShowMessage('Can''t save the project to ' + AFileName + sLineBreak + E.Message);
+    end;
+  finally
+    Root.Free;
+  end;
+end;
+
+// File, Load Project...: a project file, applied
+procedure TMainForm.LoadCreditsItemClick(Sender: TObject);
+var
+  Dialog: TOpenDialog;
+  FileName: String;
+begin
+  if Capturing then
+    Exit;
+  Dialog := TOpenDialog.Create(nil);
+  try
+    Dialog.Title := 'Load Project';
+    Dialog.Filter := PROJECT_FILTER;
+    Dialog.DefaultExt := PROJECT_FILE_EXTENSION.Substring(1);
+    Dialog.Options := [TOpenOption.ofFileMustExist, TOpenOption.ofHideReadOnly,
+      TOpenOption.ofEnableSizing];
+    if FProjectFile <> String.Empty then
+      Dialog.InitialDir := ExtractFileDir(FProjectFile)
+    else if FModelFile <> String.Empty then
+      Dialog.InitialDir := ExtractFileDir(FModelFile);
+    if not Dialog.Execute or (Dialog.FileName = String.Empty) then
+      Exit;
+    FileName := Dialog.FileName;
+  finally
+    Dialog.Free;
+  end;
+  LoadProjectFile(FileName);
+end;
+
+// Reads a project file and applies what it holds: the credits; the export
+// choices; the directions, kept as Model, Directions keeps them; and, if
+// the model it names exists, that model, loaded if it is not the one shown,
+// with the Animations list applied once it is in. True if that model is
+// being loaded.
+function TMainForm.LoadProjectFile(const AFileName: String): Boolean;
+var
+  Value, Part: TJSONValue;
+  Root, Choices: TJSONObject;
+  Text, ModelFile, Error: String;
+  Version, Number: Integer;
+  Flag: Boolean;
+  Count: Integer;
+  Start: Single;
+  Order: TArray<Integer>;
+  Snap, HasList: Boolean;
+  State: TAnimationListState;
+  Notes: TArray<String>;
+begin
+  Result := False;
+  if Capturing then
+    Exit;
+  Notes := nil;
+  HasList := False;
+  ModelFile := String.Empty;
+  try
+    Value := TJSONObject.ParseJSONValue(TFile.ReadAllText(OSFriendlyPath(AFileName),
+      TEncoding.UTF8));
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Can''t read the project ' + AFileName + sLineBreak + E.Message);
+      Exit;
+    end;
+  end;
+  try
+    if not (Value is TJSONObject) then
+    begin
+      ShowMessage(AFileName + ' is not a Sprite3D project: it is not a JSON object.');
+      Exit;
+    end;
+    Root := TJSONObject(Value);
+    if Root.TryGetValue<String>('format', Text) and (Text <> PROJECT_FILE_FORMAT) then
+    begin
+      ShowMessage(Format('%s is not a Sprite3D project: its format is "%s".',
+        [AFileName, Text]));
+      Exit;
+    end;
+    if Root.TryGetValue<Integer>('version', Version) and (Version > PROJECT_FILE_VERSION) then
+      Notes := Notes + [Format('It is version %d, from a newer Sprite3D; what this one ' +
+        'knows of it was read.', [Version])];
+
+    FCredits := CreditsFromJson(Root.GetValue('credits'));
+
+    // The export choices
+    Choices := Root.GetValue('export') as TJSONObject;
+    if Choices <> nil then
+    begin
+      if Choices.TryGetValue<Integer>('grab_width', Number) then
+        FSettings.GrabWidth := Number;   // limited to the allowed range
+      if Choices.TryGetValue<Integer>('grab_height', Number) then
+        FSettings.GrabHeight := Number;
+      FOffscreen.Width := FSettings.GrabWidth;
+      FOffscreen.Height := FSettings.GrabHeight;
+      FitViewportToAspect;
+      if Choices.TryGetValue<Integer>('animation_fps', Number) then
+        ApplyAnimationFps(Number);
+      if Choices.TryGetValue<Boolean>('metadata', Flag) then
+        FSettings.ExportMetadata := Flag;
+      if Choices.TryGetValue<Boolean>('directions', Flag) then
+      begin
+        FSettings.ExportDirections := Flag;
+        FBatchDirections.IsChecked := Flag;
+      end;
+      if Choices.TryGetValue<Integer>('atlas_page_size', Number) then
+        FSettings.AtlasPageSize := Number;
+      if Choices.TryGetValue<Boolean>('atlas_non_power_of_2', Flag) then
+        FSettings.AtlasNonPowerOf2 := Flag;
+      UpdateBatchControls;
+    end;
+
+    // The directions
+    Part := Root.GetValue('directions');
+    if Part <> nil then
+      try
+        DirectionsFromJson(Part, Count, Start, Order, Snap);
+        FSettings.DirectionSnap := Snap;
+        FSettings.DirectionCount := Count;
+        FSettings.DirectionStart := Start;
+        FSettings.DirectionClockwise := True;
+        FSettings.DirectionOrder := DirectionOrderToText(Order);
+      except
+        on E: EDirectionsFile do
+          Notes := Notes + ['Its directions were left as they were: ' + E.Message];
+      end;
+
+    // The Animations list, applied once its model is in
+    Part := Root.GetValue('animations');
+    if Part <> nil then
+    begin
+      HasList := ReadAnimationList(Part, State, Error);
+      if not HasList then
+        Notes := Notes + ['Its Animations list was not applied: ' + Error];
+    end;
+    if not Root.TryGetValue<String>('file', ModelFile) then
+      ModelFile := String.Empty;
+  finally
+    Value.Free;
+  end;
+
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      Notes := Notes + ['Can''t save the settings: ' + E.Message];
+  end;
+  FProjectFile := AFileName;
+  DebugMemo.Lines.Add('Loaded the project ' + AFileName);
+
+  // Its model, if it is there; the list goes with it
+  ModelFile := OSFriendlyPath(ModelFile);
+  if (ModelFile <> String.Empty) and FileExists(ModelFile) and
+    not SameFileName(ExpandFileName(ModelFile), ExpandFileName(FModelFile)) then
+  begin
+    FPendingListModel := ExpandFileName(ModelFile);
+    FPendingList := State;
+    FHasPendingList := HasList;
+    SwitchModel(ModelFile);
+    Result := True;
+  end
+  else
+  begin
+    if (ModelFile <> String.Empty) and not FileExists(ModelFile) then
+      Notes := Notes + ['Its model is not there: ' + ModelFile];
+    if HasList and (GorillaModel <> nil) then
+      ApplyAnimationList(State, ExtractFileName(AFileName));
+  end;
+  if Length(Notes) > 0 then
+    ShowMessage('Loaded ' + ExtractFileName(AFileName) + sLineBreak + sLineBreak +
+      String.Join(sLineBreak, Notes));
 end;
 
 procedure TMainForm.OpenModelMenuItemClick(Sender: TObject);
@@ -2609,6 +3686,8 @@ begin
       FSettings.GrabHeight := ANew.GrabHeight;
       FOffscreen.Width := FSettings.GrabWidth;
       FOffscreen.Height := FSettings.GrabHeight;
+      // The view on screen takes the grabs' new shape
+      FitViewportToAspect;
       DebugMemo.Lines.Add(Format('Grabs are now %d x %d pixels',
         [FSettings.GrabWidth, FSettings.GrabHeight]));
     end;
@@ -2618,6 +3697,10 @@ begin
       FSettings.ViewFps := ANew.ViewFps;   // limited to the allowed range
       ApplyViewFps;
     end;
+
+    // Every JSON file written from now on, settings.json included
+    if ANew.MinifyJson <> AOld.MinifyJson then
+      FSettings.MinifyJson := ANew.MinifyJson;
 
     if ANew.SaveFolder <> AOld.SaveFolder then
     begin
@@ -3513,6 +4596,8 @@ begin
   // Every animation is used until Model, Animations Used says otherwise
   FAnimationNames := FLoadAnims;
   FUsedAnimations := Copy(FLoadAnims);
+  // Frame counts typed in were for the old model's animations
+  FFrameOverrides.Clear;
   RebuildAnimationList;
 
   // The angles as the dials have them, unless the camera is locked
@@ -3547,6 +4632,21 @@ begin
   // A locked camera stays where it is, whatever the new model's size
   if not CameraLocked and not FitModel then
     Caption := 'Problem fitting Camera';
+
+  // A project's Animations list, for this model, once the load has ended
+  if FHasPendingList and SameFileName(ExpandFileName(FModelFile), FPendingListModel) then
+    TThread.ForceQueue(nil, ApplyPendingList)
+  else
+    FHasPendingList := False;
+end;
+
+// The Animations list of the project that asked for the model just loaded
+procedure TMainForm.ApplyPendingList;
+begin
+  if MainFormGone or not FHasPendingList then
+    Exit;
+  FHasPendingList := False;
+  ApplyAnimationList(FPendingList, ExtractFileName(FProjectFile));
 end;
 
 // Ends the load, whether it worked, failed with AError or was aborted:
@@ -3573,6 +4673,9 @@ begin
   FLoadAnims := nil;
   FLoadBounds := nil;
   FLoadError := AError;
+  // A project's Animations list waits for its model only while it loads
+  if AError <> String.Empty then
+    FHasPendingList := False;
   Caption := ProjectionCaption;
   UpdateNoModelPanel;
   Dialog := FLoadDialog;
@@ -3720,7 +4823,7 @@ begin
   // HookAnimationItems
   AnimationListBox.OnMouseUp := AnimationItemMouseUp;
   AddItem(FAnimationPopup, 'Save as sprite strip', SaveStripItemClick);
-  AddItem(FAnimationPopup, 'Save as Texture Atlas', SaveAtlasItemClick);
+  AddItem(FAnimationPopup, 'Save as Spritesheet', SaveSheetItemClick);
   AddItem(FAnimationPopup, 'Save as AniGif', SaveGifItemClick);
   // MP4 needs the FFmpeg libraries: offered once StartVideo finds they load
   FMp4Item := AddItem(FAnimationPopup, 'Save as MP4 video', SaveMp4ItemClick);
@@ -3738,7 +4841,7 @@ begin
   FAnimationMenu.Text := 'Animation';
   MainMenu1.AddObject(FAnimationMenu);
   AddItem(FAnimationMenu, 'Save as sprite strip', SaveStripItemClick);
-  AddItem(FAnimationMenu, 'Save as Texture Atlas', SaveAtlasItemClick);
+  AddItem(FAnimationMenu, 'Save as Spritesheet', SaveSheetItemClick);
   AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
   // MP4 is added by StartVideo if the video libraries load
   {$ENDIF}
@@ -3758,6 +4861,8 @@ begin
   Dialog.Overscan := FSettings.Overscan;
   Dialog.Filter := FSettings.ResampleFilter;
   Dialog.OverscanEnabled := FOverscanOn;
+  Dialog.AtlasPageSize := FSettings.AtlasPageSize;
+  Dialog.AtlasNonPowerOf2 := FSettings.AtlasNonPowerOf2;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
   Dialog.OnAccept := AnimationDialogAccept;
@@ -3768,6 +4873,7 @@ begin
     begin
       ApplyAnimationFps(Dialog.Fps);
       ApplyOverscan(Dialog.OverscanEnabled, Dialog.Overscan, Dialog.Filter);
+      ApplyAtlasSettings(Dialog.AtlasPageSize, Dialog.AtlasNonPowerOf2);
     end;
   finally
     Dialog.Free;
@@ -3783,6 +4889,7 @@ begin
   Dialog := TAnimationSettingsForm(Sender);
   ApplyAnimationFps(Dialog.Fps);
   ApplyOverscan(Dialog.OverscanEnabled, Dialog.Overscan, Dialog.Filter);
+  ApplyAtlasSettings(Dialog.AtlasPageSize, Dialog.AtlasNonPowerOf2);
 end;
 {$ENDIF}
 
@@ -3942,7 +5049,11 @@ var
   I: Integer;
 begin
   for I := 0 to AnimationListBox.Count - 1 do
+  begin
     AnimationListBox.ListItems[I].OnMouseUp := AnimationItemMouseUp;
+    AnimationListBox.ListItems[I].OnMouseDown := AnimationItemMouseDown;
+    AnimationListBox.ListItems[I].OnDblClick := AnimationItemDblClick;
+  end;
 end;
 
 // Fills AnimationListBox with (None) and the animations used, in the
@@ -3956,6 +5067,10 @@ var
   WasNone: Boolean;
   Current: TGorillaAnimation;
 begin
+  // An open frame count editor goes with the entries it sits on, and so
+  // does one closed but not yet freed
+  FinishFrameEdit(False, True);
+  FreeAndNil(FSpentEditor);
   WasNone := AnimationListBox.ItemIndex = 0;
   if AnimationListBox.ItemIndex > 0 then
     Previous := AnimationListBox.Items[AnimationListBox.ItemIndex]
@@ -3994,6 +5109,7 @@ begin
   end;
   UpdateFrameCounts;
   UpdateTransportControls;
+  UpdateListFileItems;
 
   if Assigned(GorillaModel) and Assigned(GorillaModel.AnimationManager) then
   begin
@@ -4039,7 +5155,8 @@ begin
   Anim := GorillaModel.AnimationManager.GetAnimation(AnimationListBox.Items[AIndex]);
   if Anim = nil then
     Exit;
-  Source := TSprite3DAnimationFrames.Create(GorillaModel, Anim, FSettings.AnimationFps);
+  Source := TSprite3DAnimationFrames.Create(GorillaModel, Anim, FSettings.AnimationFps,
+    FrameOverride(Anim.Id));
   try
     Result := Source.FrameCount;
   finally
@@ -4072,15 +5189,174 @@ end;
 procedure TMainForm.UpdateFrameCounts;
 var
   I, Count: Integer;
+  Lbl: TLabel;
 begin
   for I := 0 to AnimationListBox.Count - 1 do
   begin
     Count := AnimationFrameCount(I);
+    Lbl := FrameCountLabel(AnimationListBox.ListItems[I]);
     if Count > 0 then
-      FrameCountLabel(AnimationListBox.ListItems[I]).Text := IntToStr(Count)
+      Lbl.Text := IntToStr(Count)
     else
-      FrameCountLabel(AnimationListBox.ListItems[I]).Text := String.Empty;
+      Lbl.Text := String.Empty;
+    // A count typed in, in place of the entry's own, in italics
+    Lbl.StyledSettings := Lbl.StyledSettings - [TStyledSetting.Style];
+    if (I > 0) and (FrameOverride(AnimationListBox.Items[I]) > 0) then
+      Lbl.TextSettings.Font.Style := [TFontStyle.fsItalic]
+    else
+      Lbl.TextSettings.Font.Style := [];
   end;
+end;
+
+// A frame count typed in for an animation, or 0 for its own
+function TMainForm.FrameOverride(const AName: String): Integer;
+begin
+  if (FFrameOverrides = nil) or not FFrameOverrides.TryGetValue(AName, Result) then
+    Result := 0;
+end;
+
+// Sets, or with 0 clears, the frame count typed in for an animation; the
+// counts shown, and the animation playing if it is that one, follow
+procedure TMainForm.SetFrameOverride(const AName: String; const ACount: Integer);
+begin
+  if ACount = FrameOverride(AName) then
+    Exit;
+  if ACount > 0 then
+    FFrameOverrides.AddOrSetValue(AName, ACount)
+  else
+    FFrameOverrides.Remove(AName);
+  UpdateFrameCounts;
+  if (FPlayer <> nil) and (FPlayer.Animation.Id = AName) then
+  begin
+    // The frames stepped through are the export frames: start it again
+    // with the new count, held if it was held
+    FChangePlayed := False;
+    PlaySelectedAnimation;
+  end;
+  UpdateTransportControls;
+  if ACount > 0 then
+    DebugMemo.Lines.Add(Format('%s: exported in %d frames', [AName, ACount]))
+  else
+    DebugMemo.Lines.Add(Format('%s: frame count as the frame rate gives', [AName]));
+end;
+
+// Where on its entry the mouse went down, for a double-click to tell the
+// frame count from the name
+procedure TMainForm.AnimationItemMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  FItemDownX := X;
+end;
+
+// A double-click on an entry's frame count opens it for editing; one on the
+// name does nothing more than its clicks did
+procedure TMainForm.AnimationItemDblClick(Sender: TObject);
+var
+  Item: TListBoxItem;
+  Lbl: TLabel;
+begin
+  if not (Sender is TListBoxItem) then
+    Exit;
+  Item := TListBoxItem(Sender);
+  Lbl := FrameCountLabel(Item);
+  if FItemDownX < Lbl.Position.X - Lbl.Margins.Left then
+    Exit;
+  for var I := 1 to AnimationListBox.Count - 1 do
+    if AnimationListBox.ListItems[I] = Item then
+    begin
+      StartFrameEdit(I);
+      Break;
+    end;
+end;
+
+// An edit box over entry AEntry's frame count: Enter, or leaving it, keeps
+// what was typed, Escape does not; empty or 0 goes back to the count the
+// frame rate gives. (None), entry 0, is always one frame.
+procedure TMainForm.StartFrameEdit(const AEntry: Integer);
+var
+  Item: TListBoxItem;
+  Lbl: TLabel;
+begin
+  if Capturing or (AEntry < 1) or (AEntry >= AnimationListBox.Count) then
+    Exit;
+  FinishFrameEdit(False, False);
+  Item := AnimationListBox.ListItems[AEntry];
+  Lbl := FrameCountLabel(Item);
+  FFrameEditName := AnimationListBox.Items[AEntry];
+  FFrameEditor := TEdit.Create(nil);
+  FFrameEditor.Stored := False;
+  FFrameEditor.Parent := Item;
+  FFrameEditor.Align := TAlignLayout.Right;
+  FFrameEditor.Width := Lbl.Width;
+  FFrameEditor.Margins.Rect := Lbl.Margins.Rect;
+  FFrameEditor.FilterChar := '0123456789';
+  FFrameEditor.MaxLength := 4;
+  FFrameEditor.TextSettings.HorzAlign := TTextAlign.Trailing;
+  FFrameEditor.Text := Lbl.Text;
+  FFrameEditor.Hint := 'Frames to export this animation in; empty or 0 for the count ' +
+    'the frame rate gives';
+  FFrameEditor.ShowHint := True;
+  FFrameEditor.OnKeyDown := FrameEditorKeyDown;
+  FFrameEditor.OnExit := FrameEditorExit;
+  Lbl.Visible := False;
+  FFrameEditor.SetFocus;
+  FFrameEditor.SelectAll;
+end;
+
+// Closes the frame count editor, keeping what was typed if ACommit. It is
+// freed at once if AFreeNow, as when the entries are about to go; otherwise
+// from a fresh main-loop turn, as this may be running in its own event.
+procedure TMainForm.FinishFrameEdit(const ACommit, AFreeNow: Boolean);
+var
+  Editor: TEdit;
+  Text: String;
+begin
+  Editor := FFrameEditor;
+  if Editor = nil then
+    Exit;
+  FFrameEditor := nil;
+  Editor.OnExit := nil;
+  Editor.OnKeyDown := nil;
+  Text := Editor.Text.Trim;
+  if Editor.Parent is TListBoxItem then
+    FrameCountLabel(TListBoxItem(Editor.Parent)).Visible := True;
+  if AFreeNow then
+    Editor.Free
+  else
+  begin
+    Editor.Visible := False;
+    FreeAndNil(FSpentEditor);   // one left from before, not in any event now
+    FSpentEditor := Editor;
+    TThread.ForceQueue(nil, FreeSpentEditor);
+  end;
+  if ACommit then
+    SetFrameOverride(FFrameEditName, EnsureRange(StrToIntDef(Text, 0), 0, 9999));
+end;
+
+procedure TMainForm.FreeSpentEditor;
+begin
+  if not MainFormGone then
+    FreeAndNil(FSpentEditor);
+end;
+
+procedure TMainForm.FrameEditorKeyDown(Sender: TObject; var Key: Word; var KeyChar: Char;
+  Shift: TShiftState);
+begin
+  if Key = vkReturn then
+  begin
+    Key := 0;
+    FinishFrameEdit(True, False);
+  end
+  else if Key = vkEscape then
+  begin
+    Key := 0;
+    FinishFrameEdit(False, False);
+  end;
+end;
+
+procedure TMainForm.FrameEditorExit(Sender: TObject);
+begin
+  FinishFrameEdit(True, False);
 end;
 
 // Model, Directions...: how many directions, where the first points, the
@@ -4268,9 +5544,9 @@ begin
   StartSingleCapture(skStrip);
 end;
 
-procedure TMainForm.SaveAtlasItemClick(Sender: TObject);
+procedure TMainForm.SaveSheetItemClick(Sender: TObject);
 begin
-  StartSingleCapture(skAtlas);
+  StartSingleCapture(skSheet);
 end;
 
 procedure TMainForm.SaveGifItemClick(Sender: TObject);
@@ -4304,7 +5580,14 @@ begin
   end;
   if not FSettings.HasSaveFolder and not ChooseSaveFolder then
     Exit;   // no folder, no capture
-  if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), SaveFolder,
+  if FSettings.ExportDirections then
+  begin
+    // One capture per direction: run as a batch of this one entry, with
+    // its progress dialog
+    StartBatch([Max(0, AnimationListBox.ItemIndex)], AKind, SaveFolder);
+    Exit;
+  end;
+  if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), -1, SaveFolder,
     procedure(AResult: String)
     begin
       if AResult <> String.Empty then
@@ -4322,7 +5605,7 @@ end;
 // the file was saved, or else what went wrong; it is not called when this
 // returns False, which it does, with AError set, if the capture could not
 // start at all.
-function TMainForm.StartCapture(const AKind: TSheetKind; const AIndex: Integer;
+function TMainForm.StartCapture(const AKind: TSheetKind; const AIndex, ADirection: Integer;
   const AFolder: String; const AOnFinished: TProc<String>;
   out AError: String): Boolean;
 var
@@ -4335,6 +5618,13 @@ var
   Bytes: Int64;
   Kind: TSheetKind;
   OnFinished: TProc<String>;
+  Metadata, OriginKnown: Boolean;
+  Origin: TPoint;
+  AnimationName: String;
+  Entry, Direction: Integer;
+  HasDirection, LastDirection: Boolean;
+  Bearings: TArray<Single>;
+  Meta: TSprite3DSheetMeta;
 begin
   Result := False;
   AError := String.Empty;
@@ -4351,6 +5641,11 @@ begin
   if (AIndex < 0) or (AIndex >= AnimationListBox.Count) then
   begin
     AError := 'There is no such entry in the animation list.';
+    Exit;
+  end;
+  if (AKind = skAtlas) and not FBatchActive then
+  begin
+    AError := 'A texture atlas is made by batch Export only.';
     Exit;
   end;
   if (AKind = skMp4) and not VideoAvailable then
@@ -4383,13 +5678,32 @@ begin
       Exit;
     end;
     Stem := SafeFileStem(AnimationListBox.Items[AIndex]);
-    Source := TSprite3DAnimationFrames.Create(GorillaModel, Anim, FSettings.AnimationFps);
+    Source := TSprite3DAnimationFrames.Create(GorillaModel, Anim, FSettings.AnimationFps,
+      FrameOverride(AnimationListBox.Items[AIndex]));
   end;
+
+  // A direction of Model, Directions: the camera is turned to it before
+  // the source starts, so a still's turntable starts from it too
+  HasDirection := (ADirection >= 0) and (ADirection < Length(FBatchBearings));
+  Direction := Max(0, ADirection);
+  LastDirection := not HasDirection or (ADirection = High(FBatchBearings));
+  if HasDirection then
+  begin
+    Bearings := Copy(FBatchBearings);
+    // GIFs and videos are one file per direction
+    if AKind in [skGif, skMp4] then
+      Stem := Stem + Format('_dir%.2d', [ADirection + 1]);
+  end
+  else
+    Bearings := nil;
 
   Count := Source.FrameCount;
   CycleSeconds := Source.Duration;
-  // The frames, and the strip or atlas made from them
+  // The frames, and the strip or spritesheet made from them
   Bytes := Int64(Count) * FOffscreen.Width * FOffscreen.Height * 4 * 2;
+  // A strip or spritesheet of directions keeps every direction's frames
+  if HasDirection and (AKind in [skStrip, skSheet]) then
+    Bytes := Bytes * Length(FBatchBearings);
   if Bytes > MAX_CAPTURE_BYTES then
   begin
     Source.Free;
@@ -4400,7 +5714,7 @@ begin
   end;
 
   // Exports carry no background, whatever the view shows behind the model:
-  // strips, atlases and GIFs are transparent around it, and MP4s, which
+  // strips, spritesheets and GIFs are transparent around it, and MP4s, which
   // cannot be, are laid over black. EndCapture puts the view's back.
   var NoBackdrop := TSprite3DBackgroundSpec.Default;
   NoBackdrop.Kind := TSprite3DBackgroundKind.None;
@@ -4412,13 +5726,31 @@ begin
   FCaptureFramed := not CameraLocked;
   if FCaptureFramed then
     FCaptureRestore := GorillaCamera.SaveFraming;
+  if HasDirection then
+    TurnToDirection(FBatchBearings[ADirection]);
   Source.Start;
   if FCaptureFramed and
     not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
     DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
 
+  // Where the centre of rotation falls in every frame: the framing holds for
+  // the whole capture and the model never moves, so once is enough. For a
+  // strip or spritesheet the view is slid by under half a pixel so that it
+  // falls on the centre of a pixel, and the metadata's origin is that
+  // pixel, whole numbers, whether or not the metadata is saved, so the image
+  // is the same either way.
+  Metadata := FSettings.ExportMetadata and (AKind in [skStrip, skSheet]);
+  Origin := TPoint.Zero;
+  OriginKnown := (AKind in [skStrip, skSheet, skAtlas]) and
+    SnapCaptureOrigin(FOffscreen.Width, FOffscreen.Height, Origin);
+  // The entry's name, as listed: the animation's, or (None) for the still
+  AnimationName := AnimationListBox.Items[AIndex];
+  // Credits, dates and model for the metadata, as they are now
+  Meta := ExportMeta(1, 1);
+
   // Locals, not parameters, for the procedures below to capture
   Kind := AKind;
+  Entry := AIndex;
   Folder := AFolder;
   OnFinished := AOnFinished;
   Capture := TSprite3DFrameCapture.Create(FOffscreen, Source,
@@ -4439,12 +5771,62 @@ begin
           OnFinished(Outcome);
         Exit;
       end;
+      if Kind = skAtlas then
+      begin
+        // Kept for the pages, made once every animation of the batch is in
+        var Part: TAtlasPart;
+        Part.Name := AnimationName;
+        Part.Entry := Entry;
+        Part.Frames := AFrames;
+        Part.Origin := Origin;
+        Part.OriginKnown := OriginKnown;
+        Part.Direction := Direction;
+        FAtlasParts := FAtlasParts + [Part];
+        DebugMemo.Lines.Add(Format('Captured %s (%d frames) for the texture atlas',
+          [AnimationName, Length(AFrames)]));
+        if FExportDialog <> nil then
+          if HasDirection then
+            FExportDialog.AddLine(Format('Captured %s, direction %d (%d frames)',
+              [AnimationName, Direction + 1, Length(AFrames)]))
+          else
+            FExportDialog.AddLine(Format('Captured %s (%d frames)',
+              [AnimationName, Length(AFrames)]));
+        if Assigned(OnFinished) then
+          OnFinished(String.Empty);
+        Exit;
+      end;
+      Frames := AFrames;
+      if HasDirection and (Kind in [skStrip, skSheet]) then
+      begin
+        // One image for every direction of the animation: its frames are
+        // kept until the last direction is in, then saved together
+        FDirFrames := FDirFrames + AFrames;
+        if not LastDirection then
+        begin
+          if Assigned(OnFinished) then
+            OnFinished(String.Empty);
+          Exit;
+        end;
+        Frames := FDirFrames;
+        FDirFrames := nil;
+        if FDirFailed then
+        begin
+          Outcome := Stem + ': not saved, as a direction could not be captured';
+          DebugMemo.Lines.Add(Outcome);
+          if Assigned(OnFinished) then
+            OnFinished(Outcome);
+          Exit;
+        end;
+      end
+      else if not HasDirection then
+        Bearings := nil;
       // Composing and encoding the file is pure arithmetic on the frames,
       // and can take a while for a GIF or a video, so it is done on a
       // worker thread; the window stays responsive meanwhile, and the result
       // is reported on the main thread
       Caption := Format('Saving %s...', [Stem]);
-      Frames := AFrames;
+      if FBatchActive then
+        ShowExportStep(1, BatchStepTitle + sLineBreak + 'Saving...');
       Task := TTask.Run(
         procedure
         var
@@ -4455,7 +5837,14 @@ begin
           Failure := String.Empty;
           FrameCount := Length(Frames);
           try
-            Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds);
+            // A GIF or video is one direction; a strip or spritesheet holds
+            // every direction captured
+            if Kind in [skGif, skMp4] then
+              Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds, Metadata, Origin,
+                OriginKnown, AnimationName, nil, Meta)
+            else
+              Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds, Metadata, Origin,
+                OriginKnown, AnimationName, Bearings, Meta);
           except
             on E: Exception do
               Failure := 'Can''t save ' + Stem + ' in ' + Folder + sLineBreak + E.Message;
@@ -4469,7 +5858,12 @@ begin
               FSaveTasks := RemoveTask(FSaveTasks, Task);
               Task := nil;
               if Failure = String.Empty then
-                DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [Saved, FrameCount]))
+              begin
+                DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [Saved, FrameCount]));
+                if FExportDialog <> nil then
+                  FExportDialog.AddLine(Format('Saved %s (%d frames)',
+                    [ExtractFileName(Saved), FrameCount]));
+              end
               else
                 DebugMemo.Lines.Add(Failure);
               if not Capturing then
@@ -4483,6 +5877,9 @@ begin
     procedure(const ADone, ATotal: Integer)
     begin
       Caption := Format('Capturing %s: frame %d of %d', [Stem, ADone, ATotal]);
+      if FBatchActive then
+        ShowExportStep(ADone / Max(1, ATotal), BatchStepTitle + sLineBreak +
+          Format('Capturing frame %d of %d', [ADone, ATotal]));
     end);
   Capture.SourceStarted;
   FCapture := Capture;
@@ -4681,10 +6078,9 @@ begin
     FFrameTotalLabel.Text := Total;
 end;
 
-// The frame rate readout, top left over the view on a dark backing, made
-// here rather than in the form designer. It lets clicks through, and is refreshed with the frame
-// readout a few times a second, as a value changing every frame cannot be
-// read anyway.
+// The frame rate readout, top left over the view on a dark backing, made here rather than in
+// the form designer. It lets clicks through, and is refreshed with the frame readout a few
+// times a second, as a value changing every frame cannot be read anyway.
 procedure TMainForm.BuildFpsReadout;
 begin
   // A dark, mostly opaque backing whatever the theme, with white text, so
@@ -4751,7 +6147,8 @@ begin
     FreeAndNil(FPlayer);
     if (GorillaModel.AnimationManager.Current <> Anim) or not Anim.IsRunning then
       GorillaModel.AnimationManager.PlayAnimation(Anim);
-    FPlayer := TSprite3DAnimationPlayer.Create(GorillaModel, Anim, FSettings.AnimationFps);
+    FPlayer := TSprite3DAnimationPlayer.Create(GorillaModel, Anim, FSettings.AnimationFps,
+      FrameOverride(Anim.Id));
   end;
   Result := True;
 end;
@@ -4776,14 +6173,18 @@ begin
   if (FPlayer = nil) or (FPlayer.Animation <> Anim) or
     (GorillaModel.AnimationManager.Current <> Anim) or not Anim.IsRunning then
   begin
-    // Not playing: from the start, as choosing it would
+    // Not playing: from the start, playing
+    FreeAndNil(FPlayer);
+    FHoldNew := False;
     PlaySelectedAnimation;
+    TransportChanged;
     Exit;
   end;
   if FPlayer.Held then
     FPlayer.Play
   else
     FPlayer.Pause;
+  FHoldNew := FPlayer.Held;
   TransportChanged;
 end;
 
@@ -4838,7 +6239,7 @@ begin
   FBatchLayout := TLayout.Create(Self);
   FBatchLayout.Parent := ControlsLayout;
   FBatchLayout.Align := TAlignLayout.Bottom;
-  FBatchLayout.Height := 64;
+  FBatchLayout.Height := 94;
   FBatchLayout.Padding.Rect := TRectF.Create(4, 4, 4, 4);
 
   // First row: All, then what to save
@@ -4861,18 +6262,50 @@ begin
   FBatchKindBox.Align := TAlignLayout.Client;
   // In TSheetKind's order: the item index is the kind
   FBatchKindBox.Items.Add('Sprite strip');
+  FBatchKindBox.Items.Add('Spritesheet');
   FBatchKindBox.Items.Add('Texture Atlas');
   FBatchKindBox.Items.Add('AniGif');
   // MP4 video is added by StartVideo if the video libraries load
   FBatchKindBox.ItemIndex := Ord(skStrip);
+  FBatchKindIndex := Ord(skStrip);
+  FBatchKindBox.OnChange := BatchKindChange;
 
-  // Second row: Export, and Abort beside it
+  // Second row, above Export: the metadata and directions choices
   Row := TLayout.Create(Self);
   Row.Parent := FBatchLayout;
   Row.Align := TAlignLayout.Top;
   Row.Margins.Top := 4;
   Row.Height := 26;
   Row.Position.Y := 100;   // below the first row
+
+  FBatchMetadata := TCheckBox.Create(Self);
+  FBatchMetadata.Parent := Row;
+  FBatchMetadata.Align := TAlignLayout.Left;
+  FBatchMetadata.Width := 84;
+  FBatchMetadata.Text := 'Metadata';
+  FBatchMetadata.Hint := 'Save a .json file of the same name beside each strip or ' +
+    'spritesheet, with its layout, origin and each frame''s empty border';
+  FBatchMetadata.ShowHint := True;
+  FBatchMetadata.IsChecked := FSettings.ExportMetadata;
+  FBatchMetadata.OnChange := BatchMetadataChange;
+
+  FBatchDirections := TCheckBox.Create(Self);
+  FBatchDirections.Parent := Row;
+  FBatchDirections.Align := TAlignLayout.Client;
+  FBatchDirections.Text := 'Directions';
+  FBatchDirections.Hint := 'Export every animation in each direction set in Model, ' +
+    'Directions, in their order';
+  FBatchDirections.ShowHint := True;
+  FBatchDirections.IsChecked := FSettings.ExportDirections;
+  FBatchDirections.OnChange := BatchDirectionsChange;
+
+  // Third row: Export, and Abort beside it
+  Row := TLayout.Create(Self);
+  Row.Parent := FBatchLayout;
+  Row.Align := TAlignLayout.Top;
+  Row.Margins.Top := 4;
+  Row.Height := 26;
+  Row.Position.Y := 200;   // below the second row
 
   FAbortButton := TButton.Create(Self);
   FAbortButton.Parent := Row;
@@ -4897,20 +6330,122 @@ begin
   UpdateBatchControls;
 end;
 
+// What to save changed: Metadata is offered for strips and spritesheets only
+procedure TMainForm.BatchKindChange(Sender: TObject);
+begin
+  if FSyncingChecks then
+    Exit;
+  if FBatchKindBox.ItemIndex = Ord(skAtlas) then
+    // Once the drop-down has closed, from a fresh main-loop turn
+    TThread.ForceQueue(nil, ChooseAtlasFolder)
+  else
+  begin
+    FBatchKindIndex := FBatchKindBox.ItemIndex;
+    FBatchKindBox.Hint := String.Empty;
+  end;
+  UpdateBatchControls;
+end;
+
+// Texture Atlas was chosen: where its pages go, in a folder dialog opening
+// at the save folder, as for Export. Without a folder the drop-down goes
+// back to what it was.
+procedure TMainForm.ChooseAtlasFolder;
+var
+  Folder: String;
+begin
+  if MainFormGone or (FBatchKindBox.ItemIndex <> Ord(skAtlas)) then
+    Exit;
+  if ChooseExportFolder(Folder) then
+  begin
+    FAtlasFolder := Folder;
+    FBatchKindIndex := Ord(skAtlas);
+    FBatchKindBox.Hint := 'Texture atlas pages are saved in ' + Folder;
+    DebugMemo.Lines.Add('Texture atlas pages will be saved in ' + Folder);
+  end
+  else
+  begin
+    FSyncingChecks := True;
+    try
+      FBatchKindBox.ItemIndex := FBatchKindIndex;
+    finally
+      FSyncingChecks := False;
+    end;
+  end;
+  UpdateBatchControls;
+end;
+
+// Kept in settings.json; used by every texture atlas made from now on
+procedure TMainForm.ApplyAtlasSettings(const APageSize: Integer;
+  const ANonPowerOf2: Boolean);
+begin
+  if (FSettings.AtlasPageSize = APageSize) and (FSettings.AtlasNonPowerOf2 = ANonPowerOf2) then
+    Exit;
+  FSettings.AtlasPageSize := APageSize;   // limited to ATLAS_PAGE_SIZES
+  FSettings.AtlasNonPowerOf2 := ANonPowerOf2;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
+// Kept in settings.json, and used by every strip or spritesheet saved from now on,
+// from Export or the pop-up menu
+procedure TMainForm.BatchMetadataChange(Sender: TObject);
+begin
+  // Ticked by UpdateBatchControls for a texture atlas: not the user's choice
+  if FSyncingChecks then
+    Exit;
+  FSettings.ExportMetadata := FBatchMetadata.IsChecked;
+end;
+
+// Kept in settings.json for the directions export to come; no effect yet
+procedure TMainForm.BatchDirectionsChange(Sender: TObject);
+begin
+  FSettings.ExportDirections := FBatchDirections.IsChecked;
+end;
+
+// Ticks or clears the given entries of the Animations list, leaving the
+// selected entry, and so the animation playing, as they were: FMX can move
+// the selection to an entry whose tick changes, so it is put back, and the
+// change plays nothing meanwhile. Entries not in the list are skipped.
+procedure TMainForm.SetEntryChecks(const AEntries: TArray<Integer>; const AChecked: Boolean);
+var
+  Selected: Integer;
+begin
+  Selected := AnimationListBox.ItemIndex;
+  FKeepingSelection := True;
+  try
+    for var Entry in AEntries do
+      if (Entry >= 0) and (Entry < AnimationListBox.Count) then
+        AnimationListBox.ListItems[Entry].IsChecked := AChecked;
+    if AnimationListBox.ItemIndex <> Selected then
+      AnimationListBox.ItemIndex := Selected;
+  finally
+    FKeepingSelection := False;
+  end;
+end;
+
 // All ticks every animation, or clears every entry. (None), entry 0, is not
 // an animation, so ticking All leaves it as it is; it is only exported when
 // ticked by hand. Clearing All clears it too.
 procedure TMainForm.BatchAllChange(Sender: TObject);
 var
   I: Integer;
+  Entries: TArray<Integer>;
 begin
   if FSyncingChecks then
     Exit;
+  Entries := nil;
+  for I := 0 to AnimationListBox.Count - 1 do
+    if (I > 0) or not FBatchAll.IsChecked then
+      Entries := Entries + [I];
   FSyncingChecks := True;
   try
-    for I := 0 to AnimationListBox.Count - 1 do
-      if (I > 0) or not FBatchAll.IsChecked then
-        AnimationListBox.ListItems[I].IsChecked := FBatchAll.IsChecked;
+    // The selected entry, and the animation playing, stay as they are
+    SetEntryChecks(Entries, FBatchAll.IsChecked);
   finally
     FSyncingChecks := False;
   end;
@@ -4951,10 +6486,30 @@ begin
   FExportButton.Enabled := not Capturing;
   FBatchKindBox.Enabled := not Capturing;
   FBatchAll.Enabled := not Capturing;
-  FAbortButton.Enabled := FBatchActive and not FBatchAborted;
+  // Only strips, spritesheets and atlases have metadata. An atlas always
+  // has it, as without it there is no telling its animations apart: the box
+  // shows ticked and cannot be changed while Texture Atlas is chosen, and
+  // shows the choice kept for strips and spritesheets again after
+  var WasSyncing := FSyncingChecks;
+  FSyncingChecks := True;
+  try
+    if FBatchKindBox.ItemIndex = Ord(skAtlas) then
+      FBatchMetadata.IsChecked := True
+    else
+      FBatchMetadata.IsChecked := FSettings.ExportMetadata;
+  finally
+    FSyncingChecks := WasSyncing;
+  end;
+  FBatchMetadata.Enabled := not Capturing and
+    (FBatchKindBox.ItemIndex in [Ord(skStrip), Ord(skSheet)]);
+  FBatchDirections.Enabled := not Capturing;
+  UpdateListFileItems;
+  FAbortButton.Enabled := FBatchActive and not FBatchAborted and not FAtlasSaving;
   // The lock cannot change while a capture has its own framing on the camera
   UpdateCameraLockControls;
-  if FBatchActive and FBatchAborted then
+  if FAtlasSaving then
+    FExportButton.Text := 'Saving atlas...'
+  else if FBatchActive and FBatchAborted then
     FExportButton.Text := 'Stopping...'
   else if FBatchActive then
     FExportButton.Text := 'Exporting...'
@@ -5000,13 +6555,62 @@ begin
     ShowMessage('Tick the animations to export first.');
     Exit;
   end;
-  if not ChooseExportFolder(Folder) then
-    Exit;   // cancelled
-
-  FBatchItems := Items;
-  FBatchPos := 0;
   FBatchKind := TSheetKind(EnsureRange(FBatchKindBox.ItemIndex, Ord(Low(TSheetKind)),
     Ord(High(TSheetKind))));
+  // A texture atlas goes to the folder chosen with it, if it is still there
+  if (FBatchKind = skAtlas) and (FAtlasFolder <> String.Empty) and
+    TDirectory.Exists(FAtlasFolder) then
+    Folder := FAtlasFolder
+  else if not ChooseExportFolder(Folder) then
+    Exit   // cancelled
+  else if FBatchKind = skAtlas then
+    FAtlasFolder := Folder;
+
+  StartBatch(Items, FBatchKind, Folder);
+end;
+
+// Runs a batch: every entry of AItems, in order, saved as AKind in
+// AFolder, behind the progress dialog. With Directions ticked, each entry is
+// captured once per direction of Model, Directions, in their order, before
+// the next entry.
+procedure TMainForm.StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
+  const AFolder: String);
+var
+  Items: TArray<Integer>;
+  Folder: String;
+begin
+  Folder := AFolder;
+  FBatchKind := AKind;
+  // Each entry, then each of its directions
+  if FSettings.ExportDirections then
+    FBatchBearings := FSettings.DirectionBearings
+  else
+    FBatchBearings := nil;
+  Items := nil;
+  FBatchDirs := nil;
+  for var Entry in AItems do
+    if Length(FBatchBearings) = 0 then
+    begin
+      Items := Items + [Entry];
+      FBatchDirs := FBatchDirs + [-1];
+    end
+    else
+      for var D := 0 to High(FBatchBearings) do
+      begin
+        Items := Items + [Entry];
+        FBatchDirs := FBatchDirs + [D];
+      end;
+  FBatchEntryCount := Length(AItems);
+  // Timed from here to the report
+  FBatchClock := TStopwatch.StartNew;
+  FBatchCaptureMs := -1;
+  FDirFrames := nil;
+  FDirFailed := False;
+  FBatchItems := Items;
+  FBatchPos := 0;
+  FAtlasParts := nil;
+  // The entry selected now is selected again, and played, once it is done
+  FBatchSelected := AnimationListBox.ItemIndex;
   FBatchFolder := Folder;
   FBatchSaved := 0;
   FBatchErrors := nil;
@@ -5014,8 +6618,135 @@ begin
   FBatchActive := True;
   UpdateBatchControls;
   DebugMemo.Lines.Add(Format('Exporting %d animations as %s to %s',
-    [Length(Items), FBatchKindBox.Items[Ord(FBatchKind)], Folder]));
+    [FBatchEntryCount, FBatchKindBox.Items[Ord(FBatchKind)], Folder]));
+  // Every drawing is off screen: the view need not redraw meanwhile
+  PauseViewForExport(True);
+
+  // The progress, Abort, and at the end the outcome, in a dialog of its own
+  FExportDialog := TExportProgressForm.Create(nil);
+  if Length(FBatchBearings) > 0 then
+    FExportDialog.Caption := Format('Exporting %d animations in %d directions as %s',
+      [FBatchEntryCount, Length(FBatchBearings), FBatchKindBox.Items[Ord(FBatchKind)]])
+  else
+    FExportDialog.Caption := Format('Exporting %d animations as %s',
+      [FBatchEntryCount, FBatchKindBox.Items[Ord(FBatchKind)]]);
+  FExportDialog.OnAbort := ExportDialogAbort;
+  FExportDialog.OnClosed := ExportDialogClosed;
+  FExportDialog.AddLine('To ' + Folder);
+  ShowExportStep(0, 'Starting...');
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog frees itself when closed
+  FExportDialog.ShowAndFree;
   RunNextBatchItem;
+  {$ELSE}
+  // The batch runs from queued calls, which the modal dialog's own loop
+  // carries out; ShowModal returns once Close is pressed at the end
+  TThread.ForceQueue(nil, ContinueBatch);
+  try
+    FExportDialog.ShowModal;
+  finally
+    var Dialog := FExportDialog;
+    FExportDialog := nil;
+    Dialog.Free;
+  end;
+  {$ENDIF}
+end;
+
+// The batch's progress in its dialog: AItemFraction of the way through the
+// entry under way, and what is happening, after which entry it is
+procedure TMainForm.ShowExportStep(const AItemFraction: Single; const AStatus: String);
+var
+  Total: Integer;
+begin
+  if FExportDialog = nil then
+    Exit;
+  Total := Max(1, Length(FBatchItems));
+  FExportDialog.SetProgress((Min(FBatchPos, Total) + EnsureRange(AItemFraction, 0, 1)) /
+    Total, AStatus);
+end;
+
+// Which list entry, counted from 1, batch step APos is of
+function TMainForm.BatchEntryOrdinal(const APos: Integer): Integer;
+begin
+  Result := 0;
+  for var I := 0 to Min(APos, High(FBatchItems)) do
+    if (I = 0) or (FBatchItems[I] <> FBatchItems[I - 1]) then
+      Inc(Result);
+end;
+
+// The batch step under way, for the progress dialog: which animation of how
+// many, and which direction, if directions are used
+function TMainForm.BatchStepTitle: String;
+var
+  Entry, Direction: Integer;
+  Point: String;
+begin
+  Result := String.Empty;
+  if (FBatchPos < 0) or (FBatchPos > High(FBatchItems)) then
+    Exit;
+  Entry := FBatchItems[FBatchPos];
+  Result := Format('Animation %d of %d: %s', [BatchEntryOrdinal(FBatchPos),
+    FBatchEntryCount, AnimationListBox.Items[Entry]]);
+  Direction := FBatchDirs[FBatchPos];
+  if Direction >= 0 then
+  begin
+    Point := CompassPointName(FBatchBearings[Direction]);
+    if Point = String.Empty then
+      Point := FormatFloat('0.##', FBatchBearings[Direction],
+        TFormatSettings.Invariant) + #176;
+    Result := Result + Format(', direction %d of %d (%s)',
+      [Direction + 1, Length(FBatchBearings), Point]);
+  end;
+end;
+
+// Turns the camera for a direction: the view it shows is the one the
+// azimuth dial would give turned on by ABearing, so bearing 0 is the view
+// as it is. A locked camera is turned too, as a direction needs it; either
+// way EndCapture turns it back.
+procedure TMainForm.TurnToDirection(const ABearing: Single);
+var
+  WasLocked: Boolean;
+begin
+  if not FDirTurned then
+    FDirRestoreAzimuth := GorillaCamera.Azimuth;
+  FDirTurned := True;
+  WasLocked := GorillaCamera.Locked;
+  GorillaCamera.Locked := False;
+  try
+    // The dial's azimuth is the camera's reversed
+    GorillaCamera.Azimuth := Wrap360(FDirRestoreAzimuth - ABearing);
+  finally
+    GorillaCamera.Locked := WasLocked;
+  end;
+end;
+
+// Abort in the progress dialog: as the Abort button under the list
+procedure TMainForm.ExportDialogAbort(Sender: TObject);
+begin
+  AbortButtonClick(Sender);
+end;
+
+// The progress dialog has closed; on Android and iOS it frees itself
+procedure TMainForm.ExportDialogClosed(Sender: TObject);
+begin
+  if Sender = FExportDialog then
+    FExportDialog := nil;
+end;
+
+// Stops the view's own timed redraws while a batch exports, and starts them
+// again after. A grab makes the viewport draw a frame itself, which is all
+// an export needs, so the view is not redrawn in between. On macOS and iOS
+// grabs are screenshots of the view, so it is left drawing there.
+procedure TMainForm.PauseViewForExport(const APause: Boolean);
+begin
+  {$IF not DEFINED(MACOS)}
+  if APause = FViewPaused then
+    Exit;
+  FViewPaused := APause;
+  GorillaViewport.UseFixedFrameRate := not APause;
+  if not APause then
+    GorillaViewport.Invalidate;
+  {$ENDIF}
 end;
 
 // The batch's next entry, queued after an entry has been saved; nothing if
@@ -5035,24 +6766,32 @@ var
   Started: Boolean;
 begin
   Started := False;
-  while not Started and not FBatchAborted and (FBatchPos <= High(FBatchItems)) do
+  // Abort takes effect at the start of an entry, so every direction of the
+  // one under way is still captured and saved
+  while not Started and (FBatchPos <= High(FBatchItems)) and not (FBatchAborted and
+    ((FBatchPos = 0) or (FBatchItems[FBatchPos] <> FBatchItems[FBatchPos - 1]))) do
   begin
-    Started := StartCapture(FBatchKind, FBatchItems[FBatchPos], FBatchFolder,
+    if (FBatchPos = 0) or (FBatchItems[FBatchPos] <> FBatchItems[FBatchPos - 1]) then
+    begin
+      // A new entry: no frames of other directions kept for it yet
+      FDirFrames := nil;
+      FDirFailed := False;
+    end;
+    Started := StartCapture(FBatchKind, FBatchItems[FBatchPos], FBatchDirs[FBatchPos],
+      FBatchFolder,
       procedure(AResult: String)
-      var
-        Entry: Integer;
       begin
-        if AResult = String.Empty then
+        if AResult <> String.Empty then
         begin
-          Inc(FBatchSaved);
-          // Done: untick it, and let All follow
-          Entry := FBatchItems[FBatchPos];
-          if Entry < AnimationListBox.Count then
-            AnimationListBox.ListItems[Entry].IsChecked := False;
-          AnimationListBoxChangeCheck(AnimationListBox);
-        end
-        else
           FBatchErrors := FBatchErrors + [AResult];
+          FDirFailed := True;
+        end
+        else if (FBatchKind <> skAtlas) and ((FBatchDirs[FBatchPos] < 0) or
+          (FBatchDirs[FBatchPos] = High(FBatchBearings))) then
+          // Counted once its last direction is saved; a texture atlas's
+          // animations are counted once their pages are. The ticks stay as
+          // they are.
+          Inc(FBatchSaved);
         Inc(FBatchPos);
         // The next entry from a fresh main-loop turn, by a method rather
         // than another anonymous one nested in this
@@ -5062,6 +6801,7 @@ begin
     begin
       FBatchErrors := FBatchErrors + [Error];
       DebugMemo.Lines.Add(Error);
+      FDirFailed := True;
       Inc(FBatchPos);
     end;
   end;
@@ -5069,23 +6809,368 @@ begin
     FinishBatch;
 end;
 
-// Reports the batch and gives the list back its own animation
+// Ends the batch: for a texture atlas, makes and saves its pages first,
+// which reports when done; otherwise reports straight away
 procedure TMainForm.FinishBatch;
+begin
+  if FQuitConfirmed then
+  begin
+    // Quitting: nothing more is saved, and nothing is reported
+    FBatchActive := False;
+    FAtlasParts := nil;
+    PauseViewForExport(False);
+    Exit;
+  end;
+  if (FBatchKind = skAtlas) and (Length(FAtlasParts) > 0) then
+    SaveAtlasBatch
+  else
+    ReportBatch;
+end;
+
+// How many list entries have every one of their parts among ASaved: the
+// animations of a texture atlas saved in every direction
+function DistinctWholeEntries(const AParts: TArray<TAtlasPart>;
+  const ASaved: TArray<Integer>): Integer;
+var
+  IsSaved: TArray<Boolean>;
+  Entries: TArray<Integer>;
+  Whole, Seen: Boolean;
+begin
+  Result := 0;
+  SetLength(IsSaved, Length(AParts));
+  for var Index in ASaved do
+    if (Index >= 0) and (Index < Length(AParts)) then
+      IsSaved[Index] := True;
+  Entries := nil;
+  for var I := 0 to High(AParts) do
+  begin
+    Seen := False;
+    for var Entry in Entries do
+      Seen := Seen or (Entry = AParts[I].Entry);
+    if Seen then
+      Continue;
+    Entries := Entries + [AParts[I].Entry];
+    Whole := True;
+    for var J := I to High(AParts) do
+      if AParts[J].Entry = AParts[I].Entry then
+        Whole := Whole and IsSaved[J];
+    if Whole then
+      Inc(Result);
+  end;
+end;
+
+// The animations captured for a texture atlas made into pages and saved, on
+// a worker thread, as SaveSheet does for one animation; then the batch is
+// reported, the saved entries unticked
+procedure TMainForm.SaveAtlasBatch;
+var
+  Parts: TArray<TAtlasPart>;
+  Folder, Stem: String;
+  PageSize: Integer;
+  NonPowerOf2, Metadata: Boolean;
+  Bearings: TArray<Single>;
+  Meta: TSprite3DSheetMeta;
+  Task: ITask;
+begin
+  Parts := FAtlasParts;
+  FAtlasParts := nil;
+  Folder := FBatchFolder;
+  Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
+  PageSize := FSettings.AtlasPageSize;
+  NonPowerOf2 := FSettings.AtlasNonPowerOf2;
+  Metadata := True;   // an atlas always has its metadata
+  Bearings := Copy(FBatchBearings);
+  Meta := ExportMeta(1, 1);
+  FAtlasSaving := True;
+  // The capturing is done; the rest is making and writing the pages
+  FBatchCaptureMs := FBatchClock.ElapsedMilliseconds;
+  UpdateBatchControls;
+  Caption := 'Saving texture atlas...';
+  if FExportDialog <> nil then
+    FExportDialog.SetProgress(1, 'Saving the texture atlas pages...');
+  Task := TTask.Run(
+    procedure
+    var
+      Files, Notes: TArray<String>;
+      Saved: TArray<Integer>;
+    begin
+      Files := nil;
+      Notes := nil;
+      Saved := nil;
+      try
+        Files := SaveAtlas(Parts, Folder, Stem, PageSize, NonPowerOf2, Metadata, Bearings,
+          Meta, Saved, Notes);
+      except
+        on E: Exception do
+          Notes := Notes + ['Can''t save the texture atlas in ' + Folder + sLineBreak +
+            E.Message];
+      end;
+      TThread.Queue(nil,
+        procedure
+        begin
+          if MainFormGone then
+            Exit;
+          FSaveTasks := RemoveTask(FSaveTasks, Task);
+          Task := nil;
+          FAtlasSaving := False;
+          for var Written in Files do
+          begin
+            DebugMemo.Lines.Add('Saved ' + Written);
+            if FExportDialog <> nil then
+              FExportDialog.AddLine('Saved ' + ExtractFileName(Written));
+          end;
+          for var Note in Notes do
+            DebugMemo.Lines.Add(Note);
+          FBatchErrors := FBatchErrors + Notes;
+          // Each animation on a saved page is done; the ticks stay as they are
+          // An animation is saved once every direction of it is
+          FBatchSaved := FBatchSaved + DistinctWholeEntries(Parts, Saved);
+          Parts := nil;
+          if not Capturing then
+            Caption := ProjectionCaption;
+          ReportBatch;
+        end);
+    end);
+  FSaveTasks := FSaveTasks + [Task];
+end;
+
+// Plans the pages of AParts, in order, at most APageSize each way, every
+// frame in turn so that every page but the last is full and an animation can
+// carry on onto the next, and saves each as AStem_atlas_01.png, _02 and so on
+// in AFolder, with its .json if AMetadata. ASaved gets the indices of the
+// parts whose every page was saved; ANotes, what went wrong: frames too large
+// for a page, a page that could not be written, or origins that differ on a
+// page. Returns the files written.
+// Runs on a worker thread, so touches no controls.
+function TMainForm.SaveAtlas(const AParts: TArray<TAtlasPart>; const AFolder,
+  AStem: String; const APageSize: Integer; const ANonPowerOf2, AMetadata: Boolean;
+  const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta;
+  out ASaved: TArray<Integer>; out ANotes: TArray<String>): TArray<String>;
+var
+  Counts: TArray<Integer>;
+  Failed: TArray<Boolean>;
+  Pages: TArray<TSprite3DAtlasPage>;
+  Frames: TArray<TSprite3DImage>;
+  Info: TSprite3DSheetInfo;
+  Ref: TSprite3DFrameRef;
+  Folder, FileName: String;
+  W, H, P, Listed, First, Total: Integer;
+begin
+  Result := nil;
+  ASaved := nil;
+  ANotes := nil;
+  if Length(AParts) = 0 then
+    Exit;
+  Folder := OSFriendlyPath(AFolder);
+  ForceDirectories(Folder);
+  SetLength(Counts, Length(AParts));
+  SetLength(Failed, Length(AParts));
+  Total := 0;
+  for var I := 0 to High(AParts) do
+  begin
+    Counts[I] := Length(AParts[I].Frames);
+    Inc(Total, Counts[I]);
+  end;
+  W := AParts[0].Frames[0].Width;
+  H := AParts[0].Frames[0].Height;
+  // Every frame in turn, filling each page before the next: an animation
+  // carries on from one page onto the next
+  Pages := PlanAtlasPages(Counts, W, H, APageSize, ANonPowerOf2);
+  if Length(Pages) = 0 then
+  begin
+    ANotes := ANotes + [Format('Frames of %d x %d do not fit on a %d x %d atlas page; ' +
+      'choose a larger page size in Model, Animation Settings, or a smaller grab size.',
+      [W, H, APageSize, APageSize])];
+    Exit;
+  end;
+  // The pages of an earlier atlas of this model go first, so none is left
+  // over from a larger one
+  DeleteAtlasPages(Folder, AStem, ANotes);
+  for P := 0 to High(Pages) do
+  begin
+    FileName := TPath.Combine(Folder, Format('%s_atlas_%.2d.png', [AStem, P + 1]));
+    try
+      // Every field set here or below; Default() would mean Gorilla's
+      // TGorillaOAuthMode.Default in this unit
+      Frames := nil;
+      // The batch's directions as bearings, or none for the single dummy 0
+      SetLength(Info.Directions, Length(ADirections));
+      for var K := 0 to High(ADirections) do
+        Info.Directions[K] := ADirections[K];
+      Info.Animations := nil;
+      Info.AnimationFrames := nil;
+      Info.Frames := nil;
+      for var Slice in Pages[P].Slices do
+      begin
+        // Each animation listed once per page, with its whole length
+        Listed := -1;
+        for var K := 0 to High(Info.Animations) do
+          if Info.Animations[K] = AParts[Slice.Animation].Name then
+            Listed := K;
+        if Listed < 0 then
+        begin
+          Info.Animations := Info.Animations + [AParts[Slice.Animation].Name];
+          // Its frames in each direction: every direction has as many
+          Info.AnimationFrames := Info.AnimationFrames + [Counts[Slice.Animation]];
+          Listed := High(Info.Animations);
+        end;
+        First := Slice.First;
+        for var K := 0 to Slice.Count - 1 do
+        begin
+          Frames := Frames + [AParts[Slice.Animation].Frames[First + K]];
+          Ref.Animation := Listed;
+          Ref.Direction := AParts[Slice.Animation].Direction;
+          Ref.Frame := First + K;
+          Info.Frames := Info.Frames + [Ref];
+        end;
+      end;
+      SavePng(ComposeAtlasPage(Frames, Pages[P]), FileName);
+      if AMetadata then
+      begin
+        Info.Width := Pages[P].Width;
+        Info.Height := Pages[P].Height;
+        Info.Cols := Pages[P].Cols;
+        Info.Rows := Pages[P].Rows;
+        // Page P + 1 of them all, as the file name numbers it
+        Info.Meta := AMeta;
+        Info.Meta.Page := P + 1;
+        Info.Meta.PageCount := Length(Pages);
+        // Every frame of every page
+        Info.Meta.TotalFrames := Total;
+        // Every animation of a batch is framed alike, so they share one
+        // origin; the first's is given, and a difference is reported
+        Info.Origin := AParts[Pages[P].Slices[0].Animation].Origin;
+        Info.OriginKnown := AParts[Pages[P].Slices[0].Animation].OriginKnown;
+        for var Slice in Pages[P].Slices do
+          if (AParts[Slice.Animation].OriginKnown <> Info.OriginKnown) or
+            (AParts[Slice.Animation].Origin <> Info.Origin) then
+          begin
+            ANotes := ANotes + [Format('%s: the animations'' origins differ; the ' +
+              'first''s is given', [ExtractFileName(FileName)])];
+            Break;
+          end;
+        SaveSheetMetadata(TPath.ChangeExtension(FileName, '.json'), Frames, Info);
+        Result := Result + [Format('%s and its .json (%d animations, %d frames, %d x %d)',
+          [FileName, Length(Info.Animations), Pages[P].FrameCount, Pages[P].Width,
+          Pages[P].Height])];
+      end
+      else
+        Result := Result + [Format('%s (%d animations, %d frames, %d x %d)',
+          [FileName, Length(Info.Animations), Pages[P].FrameCount, Pages[P].Width,
+          Pages[P].Height])];
+    except
+      on E: Exception do
+      begin
+        ANotes := ANotes + ['Can''t save ' + FileName + sLineBreak + E.Message];
+        // Every animation with frames on this page is not wholly saved
+        for var Slice in Pages[P].Slices do
+          Failed[Slice.Animation] := True;
+      end;
+    end;
+    Frames := nil;
+  end;
+  // An animation is saved once every page with its frames on is
+  for var I := 0 to High(AParts) do
+    if (Counts[I] > 0) and not Failed[I] then
+      ASaved := ASaved + [I];
+end;
+
+// Deletes AStem_atlas_<number>.png in AFolder, any number of digits, and the
+// .json beside each; nothing else, not even AStem_atlas_x.png. What cannot
+// be deleted is added to ANotes. Runs on a worker thread.
+procedure TMainForm.DeleteAtlasPages(const AFolder, AStem: String;
+  var ANotes: TArray<String>);
+var
+  Prefix, Digits, Json: String;
+  IsNumber: Boolean;
+begin
+  if not TDirectory.Exists(AFolder) then
+    Exit;
+  Prefix := AStem + '_atlas_';
+  for var PageFile in TDirectory.GetFiles(AFolder, Prefix + '*.png') do
+  begin
+    // The wildcard matches more than a number, and ignores case on Windows
+    Digits := TPath.GetFileNameWithoutExtension(PageFile);
+    if not SameText(Copy(Digits, 1, Length(Prefix)), Prefix) then
+      Continue;
+    Digits := Copy(Digits, Length(Prefix) + 1, MaxInt);
+    IsNumber := Digits <> String.Empty;
+    for var C in Digits do
+      if not CharInSet(C, ['0'..'9']) then
+        IsNumber := False;
+    if not IsNumber or not SameText(TPath.GetExtension(PageFile), '.png') then
+      Continue;
+    try
+      TFile.Delete(PageFile);
+      Json := TPath.ChangeExtension(PageFile, '.json');
+      if TFile.Exists(Json) then
+        TFile.Delete(Json);
+    except
+      on E: Exception do
+        ANotes := ANotes + ['Can''t delete the old atlas page ' + PageFile + sLineBreak +
+          E.Message];
+    end;
+  end;
+end;
+
+// A length of time for a report: tenths of a second under a minute, such as
+// 12.3 s, then minutes and seconds, 1 min 05 s, then hours, 1 h 02 min
+function DurationText(const AMilliseconds: Int64): String;
+var
+  Seconds: Int64;
+begin
+  if AMilliseconds < 60000 then
+    Exit(FormatFloat('0.0', Max(0, AMilliseconds) / 1000, TFormatSettings.Invariant) +
+      ' s');
+  Seconds := (AMilliseconds + 500) div 1000;
+  if Seconds < 3600 then
+    Result := Format('%d min %.2d s', [Seconds div 60, Seconds mod 60])
+  else
+    Result := Format('%d h %.2d min', [Seconds div 3600, (Seconds mod 3600) div 60]);
+end;
+
+// Reports the batch and gives the list back its own animation
+procedure TMainForm.ReportBatch;
 var
   Report: String;
 begin
   FBatchActive := False;
   UpdateBatchControls;
-  // The batch left its last animation playing; play the selected one again
+  // The batch left its last animation playing: the entry selected before
+  // it, which it does not change, is selected and played again
+  if (FBatchSelected >= 0) and (FBatchSelected < AnimationListBox.Count) and
+    (AnimationListBox.ItemIndex <> FBatchSelected) then
+  begin
+    FKeepingSelection := True;
+    try
+      AnimationListBox.ItemIndex := FBatchSelected;
+    finally
+      FKeepingSelection := False;
+    end;
+  end;
   FChangePlayed := False;
   PlaySelectedAnimation;
   Report := Format('Exported %d of %d animations to %s',
-    [FBatchSaved, Length(FBatchItems), FBatchFolder]);
+    [FBatchSaved, FBatchEntryCount, FBatchFolder]);
+  if Length(FBatchBearings) > 0 then
+    Report := Report + Format(', each in %d directions', [Length(FBatchBearings)]);
   if FBatchAborted then
     Report := Report + sLineBreak + Format('Aborted: %d not exported',
-      [Length(FBatchItems) - FBatchPos]);
+      [FBatchEntryCount - BatchEntryOrdinal(FBatchPos - 1)]);
+  // How long it took; for a texture atlas, the capturing and the pages too
+  FBatchClock.Stop;
+  Report := Report + sLineBreak + 'Took ' + DurationText(FBatchClock.ElapsedMilliseconds);
+  if FBatchCaptureMs >= 0 then
+    Report := Report + Format(': capturing %s, making and saving the pages %s',
+      [DurationText(FBatchCaptureMs),
+      DurationText(FBatchClock.ElapsedMilliseconds - FBatchCaptureMs)]);
+  FDirFrames := nil;
   DebugMemo.Lines.Add(Report);
-  if Length(FBatchErrors) > 0 then
+  PauseViewForExport(False);
+  // The outcome stays in the progress dialog until it is closed
+  if FExportDialog <> nil then
+    FExportDialog.Finish(Report, FBatchErrors)
+  else if Length(FBatchErrors) > 0 then
     ShowMessage(Report + sLineBreak + sLineBreak + String.Join(sLineBreak, FBatchErrors))
   else
     ShowMessage(Report);
@@ -5140,6 +7225,23 @@ procedure TMainForm.EndCapture;
 begin
   // Grabs and icons show the background again, as the view does
   FOffscreen.Backdrop := FBackground.Spec;
+  // The turn to a direction, even on a locked camera
+  if FDirTurned then
+  begin
+    var WasLocked := GorillaCamera.Locked;
+    GorillaCamera.Locked := False;
+    try
+      GorillaCamera.Azimuth := FDirRestoreAzimuth;
+    finally
+      GorillaCamera.Locked := WasLocked;
+    end;
+    FDirTurned := False;
+  end;
+  // The slide that put the centre of rotation on a pixel, even on a locked
+  // camera; a framing the capture set is put back over it anyway
+  if FOriginSnapped then
+    GorillaCamera.OrbitCenter.Point := FOriginRestore;
+  FOriginSnapped := False;
   // Only a framing the capture set is put back
   if FCaptureFramed then
     GorillaCamera.RestoreFraming(FCaptureRestore);
@@ -5154,31 +7256,153 @@ begin
   Caption := ProjectionCaption;
 end;
 
+// Slides the view, by under half a pixel each way, so the model's centre of
+// rotation falls exactly on the centre of a pixel of an AWidth by AHeight
+// grab, and gives that pixel, counted from 0 at the top left, as AOrigin:
+// whole numbers. ShiftView is exact in orthographic projection and very
+// nearly so in perspective, so the point is measured again after each
+// slide, a few times at most. Which way a slide moves the picture is
+// checked as it goes rather than assumed. False, with AOrigin (0, 0) and the
+// view as it was, if the point is behind the camera. EndCapture undoes the
+// slide.
+function TMainForm.SnapCaptureOrigin(const AWidth, AHeight: Integer;
+  out AOrigin: TPoint): Boolean;
+const
+  TOLERANCE = 0.01;   // of a pixel
+  TRIES = 4;
+var
+  X, Y, DX, DY, NX, NY: Single;
+  SignX, SignY: Single;
+  I: Integer;
+
+  function Measure(out AX, AY: Single): Boolean;
+  begin
+    Result := GorillaCamera.ProjectToView(GorillaModel.RotationCenter.Point, GorillaModel,
+      AWidth, AHeight, AX, AY);
+  end;
+
+begin
+  AOrigin := TPoint.Zero;
+  Result := (GorillaModel <> nil) and Measure(X, Y);
+  if not Result then
+    Exit;
+  FOriginRestore := GorillaCamera.OrbitCenter.Point;
+  FOriginSnapped := True;
+  // ShiftView moves the picture the other way to the view: right is -X,
+  // and up moves the picture down, +Y
+  SignX := -1;
+  SignY := 1;
+  for I := 1 to TRIES do
+  begin
+    // To the centre of the pixel the point is in
+    DX := Floor(X) + 0.5 - X;
+    DY := Floor(Y) + 0.5 - Y;
+    if (Abs(DX) <= TOLERANCE) and (Abs(DY) <= TOLERANCE) then
+      Break;
+    GorillaCamera.ShiftView(SignX * DX, SignY * DY, AWidth, AHeight);
+    if not Measure(NX, NY) then
+      Break;
+    // A slide that made it worse went the wrong way: undo it twice over
+    if (Abs(DX) > TOLERANCE) and (Abs(Floor(X) + 0.5 - NX) > Abs(DX)) then
+    begin
+      GorillaCamera.ShiftView(-2 * SignX * DX, 0, AWidth, AHeight);
+      SignX := -SignX;
+    end;
+    if (Abs(DY) > TOLERANCE) and (Abs(Floor(Y) + 0.5 - NY) > Abs(DY)) then
+    begin
+      GorillaCamera.ShiftView(0, -2 * SignY * DY, AWidth, AHeight);
+      SignY := -SignY;
+    end;
+    if not Measure(X, Y) then
+      Break;
+  end;
+  AOrigin := TPoint.Create(Floor(X), Floor(Y));
+end;
+
 // Lays out and writes the captured frames in AFolder, creating it if need
 // be; names follow the pop-up menu's rules, and an existing file of the same
-// name is replaced. Returns the file written, with the codec in brackets
-// for an MP4, for the log; raises if it cannot be written.
+// name is replaced. With ADirections, the frames are every direction's in
+// turn, as many for each: a strip has one row per direction, and a
+// spritesheet holds them all in its square grid. With AMetadata, a strip or
+// spritesheet also gets its metadata beside it, the same name with .json,
+// AOrigin giving the pixel the centre of rotation falls on in a frame, if
+// AOriginKnown, AAnimation the name of the animation saved, and ADirections
+// the directions' bearings. Returns the file written, with the codec in
+// brackets for an MP4, or with the metadata added, for the log; raises if
+// it cannot be written. Runs on a worker thread, so touches no controls.
 function TMainForm.SaveSheet(const AKind: TSheetKind;
   const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
-  const ACycleSeconds: Double): String;
+  const ACycleSeconds: Double; const AMetadata: Boolean; const AOrigin: TPoint;
+  const AOriginKnown: Boolean; const AAnimation: String;
+  const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta): String;
 var
-  Cells: Integer;
+  Cells, Directions, PerDirection: Integer;
   Folder: String;
+
+  // The metadata of an image of ACols by ARows frames: this one animation,
+  // in each of its directions
+  function SheetInfo(const ACols, ARows: Integer): TSprite3DSheetInfo;
+  begin
+    // Every field set; Default() would mean Gorilla's
+    // TGorillaOAuthMode.Default in this unit
+    SetLength(Result.Directions, Length(ADirections));
+    for var K := 0 to High(ADirections) do
+      Result.Directions[K] := ADirections[K];
+    Result.Width := ACols * AFrames[0].Width;
+    Result.Height := ARows * AFrames[0].Height;
+    Result.Cols := ACols;
+    Result.Rows := ARows;
+    Result.Origin := AOrigin;
+    Result.OriginKnown := AOriginKnown;
+    Result.Animations := [AAnimation];
+    Result.AnimationFrames := [PerDirection];
+    Result.Meta := AMeta;   // one image: page 1 of 1
+    // Frame I is frame I mod PerDirection of direction I div PerDirection
+    SetLength(Result.Frames, Length(AFrames));
+    for var I := 0 to High(AFrames) do
+    begin
+      Result.Frames[I].Animation := 0;
+      Result.Frames[I].Direction := I div PerDirection;
+      Result.Frames[I].Frame := I mod PerDirection;
+    end;
+  end;
+
 begin
   Folder := OSFriendlyPath(AFolder);
   ForceDirectories(Folder);
+  Directions := Max(1, Length(ADirections));
+  PerDirection := Max(1, Length(AFrames) div Directions);
   case AKind of
     skStrip:
       begin
         Result := TPath.Combine(Folder,
-          Format('%s_strip%d.png', [AStem, Length(AFrames)]));
-        SavePng(ComposeStrip(AFrames), Result);
+          Format('%s_strip%d.png', [AStem, PerDirection]));
+        // One row per direction
+        if Directions > 1 then
+          SavePng(ComposeRows(AFrames, PerDirection), Result)
+        else
+          SavePng(ComposeStrip(AFrames), Result);
+        if AMetadata then
+        begin
+          SaveSheetMetadata(TPath.ChangeExtension(Result, '.json'), AFrames,
+            SheetInfo(PerDirection, Directions));
+          Result := Result + ' and its .json';
+        end;
       end;
-    skAtlas:
+    skSheet:
       begin
         Result := TPath.Combine(Folder, AStem + '.png');
-        SavePng(ComposeAtlas(AFrames, Cells), Result);
+        SavePng(ComposeSheet(AFrames, Cells), Result);
+        if AMetadata then
+        begin
+          SaveSheetMetadata(TPath.ChangeExtension(Result, '.json'), AFrames,
+            SheetInfo(Cells, Cells));
+          Result := Result + ' and its .json';
+        end;
       end;
+    skAtlas:
+      // Kept until the batch ends, then made into pages by SaveAtlas
+      raise EInvalidOperation.Create('A texture atlas is saved by SaveAtlas.');
     skGif:
       begin
         // Each frame's share of the cycle, in hundredths of a second

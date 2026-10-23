@@ -239,6 +239,31 @@ type
     /// <returns>True on success; False, with LastError set, otherwise.</returns>
     function Unregister: Boolean;
 
+    //** @abstract(Makes this program the default for the types without asking, for types
+    //** that are the application's own.)
+    //**
+    //** Only for file types no other program has a claim to, such as the application's own
+    //** documents: it does not keep the previous defaults, as MakeDefault does. On Windows
+    //** it sets each extension's own default ProgID in @code(HKCU\Software\Classes), which
+    //** a choice made in Windows' own How do you want to open dialog with Always still
+    //** overrides; on Linux it sets each MIME type's default in @code(mimeapps.list). Call
+    //** Register first. On macOS the bundle's document types do this, so it does nothing.
+    //**
+    //** @returns(True on success; False, with LastError set, on failure or where the platform
+    //** does not allow it.)
+    /// <summary>Makes this program the default for the types without asking, for types that
+    /// are the application's own.</summary>
+    /// <remarks>Only for file types no other program has a claim to, such as the
+    /// application's own documents: it does not keep the previous defaults, as MakeDefault
+    /// does. On Windows it sets each extension's own default ProgID in
+    /// <c>HKCU\Software\Classes</c>, which a choice made in Windows' own How do you want to
+    /// open dialog with Always still overrides; on Linux it sets each MIME type's default in
+    /// <c>mimeapps.list</c>. Call Register first. On macOS the bundle's document types do
+    /// this, so it does nothing.</remarks>
+    /// <returns>True on success; False, with LastError set, on failure or where the platform
+    /// does not allow it.</returns>
+    function Claim: Boolean;
+
     //** @abstract(Makes this program the default for every type, recording the old defaults.)
     //**
     //** For each type not yet in ABackup, the current per-user default is added to it first,
@@ -743,6 +768,36 @@ begin
   ShellExecute(0, 'open', PChar(Uri), nil, nil, SW_SHOWNORMAL);
 end;
 
+function TSprite3DFileAssociations.Claim: Boolean;
+var
+  Reg: TRegistry;
+begin
+  FLastError := String.Empty;
+  Reg := TRegistry.Create(KEY_READ or KEY_WRITE);
+  try
+    try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      // The extension's own default: this ProgID opens it
+      for var FileType in FFileTypes do
+        if Reg.OpenKey(CLASSES_KEY + FileType.Extension, True) then
+        begin
+          Reg.WriteString(String.Empty, FProgId);
+          Reg.CloseKey;
+        end;
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        Fail('Can''t make this program the default: ' + E.Message);
+        Result := False;
+      end;
+    end;
+  finally
+    Reg.Free;
+  end;
+  NotifyShell;
+end;
+
 {$ELSEIF DEFINED(S3D_DESKTOP_LINUX)}
 { ------------------------------------------------------------------ Linux }
 
@@ -1132,6 +1187,30 @@ begin
   // Desktops differ; there is no one settings page to open
 end;
 
+function TSprite3DFileAssociations.Claim: Boolean;
+var
+  Lines: TStringList;
+begin
+  FLastError := String.Empty;
+  Lines := ReadLines(MimeAppsFileName);
+  try
+    try
+      for var FileType in FFileTypes do
+        WriteDefault(Lines, FileType.MimeType, DesktopId);
+      WriteLines(MimeAppsFileName, Lines);
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        Fail('Can''t make this program the default: ' + E.Message);
+        Result := False;
+      end;
+    end;
+  finally
+    Lines.Free;
+  end;
+end;
+
 {$ELSEIF DEFINED(S3D_DESKTOP_MACOS)}
 { ------------------------------------------------------------------ macOS }
 
@@ -1421,6 +1500,13 @@ begin
   // macOS has no settings page for default applications
 end;
 
+function TSprite3DFileAssociations.Claim: Boolean;
+begin
+  // The bundle's document types claim them
+  FLastError := String.Empty;
+  Result := True;
+end;
+
 {$ELSE}
 { ------------------------------------------------------- Android and iOS }
 
@@ -1460,6 +1546,12 @@ end;
 
 procedure TSprite3DFileAssociations.OpenSystemDefaults;
 begin
+end;
+
+function TSprite3DFileAssociations.Claim: Boolean;
+begin
+  FLastError := 'Not supported on this platform';
+  Result := False;
 end;
 
 {$ENDIF}

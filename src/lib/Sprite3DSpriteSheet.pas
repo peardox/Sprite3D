@@ -1,12 +1,12 @@
-//** @abstract(Lays out a sequence of frames as a sprite strip, a texture atlas or an
-//** animated GIF, and writes them to files.)
+//** @abstract(Lays out a sequence of frames as a sprite strip, a spritesheet, texture atlas
+//** pages or an animated GIF, and writes them to files.)
 //**
 //** The frames are TSprite3DImage records: plain RGBA pixels with straight (not
 //** premultiplied) alpha, top row first, all the same size. ImageFromBitmap makes one from an
 //** FMX bitmap, such as a grab from TSprite3DOffscreen, so the frames take no GPU resources
 //** and no canvas is involved.
 //**
-//** ComposeStrip puts the frames side by side in one row; ComposeAtlas puts them in a square
+//** ComposeStrip puts the frames side by side in one row; ComposeSheet puts them in a square
 //** grid, left to right and then top to bottom. SavePng writes such an image as a PNG file and
 //** SaveAnimatedGif writes the frames as a looping GIF. Both writers are plain Pascal over
 //** streams, using only System.ZLib, so they behave the same on every platform and are not
@@ -18,20 +18,33 @@
 //** less than half opaque become transparent. Every frame replaces the last (disposal "restore
 //** to background"), so transparent sprites animate cleanly.
 //**
+//** A texture atlas puts the frames of several animations on shared pages: PlanAtlasPages
+//** decides which frames go on each page, filling every page but the last, and how large
+//** each page is, and ComposeAtlasPage lays a page out.
+//**
+//** MeasureFrameEmpty measures the fully transparent border round a frame, and
+//** SaveSheetMetadata writes a strip's, a spritesheet's or an atlas page's metadata as JSON
+//** beside it: the image's size and layout, where the model's centre of rotation falls in a
+//** frame, the animations it holds, and each frame's transparent border with the smallest of
+//** each side over all of them.
+//**
 //** Nothing here keeps state, and every routine may be called on any thread, except
 //** ImageFromBitmap, which reads an FMX bitmap and so belongs on the main thread.
 //**
 //** @preformatted(
 //** frames: TArray<TSprite3DImage>
 //** |-- ComposeStrip  -> TSprite3DImage, Count x 1 frames  -> SavePng
-//** |-- ComposeAtlas  -> TSprite3DImage, N x N frames      -> SavePng
-//** `-- SaveAnimatedGif                                    -> .gif
+//** |-- ComposeRows   -> TSprite3DImage, rows of N frames   -> SavePng
+//** |-- ComposeSheet  -> TSprite3DImage, N x N frames      -> SavePng
+//** |-- PlanAtlasPages, then ComposeAtlasPage per page     -> SavePng
+//** |-- SaveAnimatedGif                                    -> .gif
+//** `-- SaveSheetMetadata, from MeasureFrameEmpty          -> .json beside the .png
 //** )
 unit Sprite3DSpriteSheet;
 
 {
-  Lays out a sequence of frames as a sprite strip, a texture atlas or an
-  animated GIF, and writes them to files.
+  Lays out a sequence of frames as a sprite strip, a spritesheet, texture
+  atlas pages or an animated GIF, and writes them to files.
 
   The frames are TSprite3DImage records: plain RGBA pixels with straight
   (not premultiplied) alpha, top row first, all the same size.
@@ -39,7 +52,7 @@ unit Sprite3DSpriteSheet;
   TSprite3DOffscreen, so the frames take no GPU resources and no canvas is
   involved.
 
-  ComposeStrip puts the frames side by side in one row; ComposeAtlas puts
+  ComposeStrip puts the frames side by side in one row; ComposeSheet puts
   them in a square grid, left to right and then top to bottom. SavePng
   writes such an image as a PNG file and SaveAnimatedGif writes the frames
   as a looping GIF. Both writers are plain Pascal over streams, using only
@@ -53,20 +66,35 @@ unit Sprite3DSpriteSheet;
   frame replaces the last (disposal "restore to background"), so transparent
   sprites animate cleanly.
 
+  A texture atlas puts the frames of several animations on shared pages:
+  PlanAtlasPages decides which frames go on each page, filling every page
+  but the last, and how large each page is, and ComposeAtlasPage lays a page
+  out.
+
+  MeasureFrameEmpty measures the fully transparent border round a frame,
+  and SaveSheetMetadata writes a strip's, a spritesheet's or an atlas page's
+  metadata as JSON beside it: the image's size and layout, where the model's
+  centre of rotation falls in a frame, the animations it holds, and each
+  frame's transparent border with the smallest of each side over all of
+  them.
+
   Nothing here keeps state, and every routine may be called on any thread,
   except ImageFromBitmap, which reads an FMX bitmap and so belongs on the
   main thread.
 
     frames: TArray<TSprite3DImage>
     |-- ComposeStrip  -> TSprite3DImage, Count x 1 frames  -> SavePng
-    |-- ComposeAtlas  -> TSprite3DImage, N x N frames      -> SavePng
-    `-- SaveAnimatedGif                                    -> .gif
+    |-- ComposeRows   -> TSprite3DImage, rows of N frames   -> SavePng
+    |-- ComposeSheet  -> TSprite3DImage, N x N frames      -> SavePng
+    |-- PlanAtlasPages, then ComposeAtlasPage per page     -> SavePng
+    |-- SaveAnimatedGif                                    -> .gif
+    `-- SaveSheetMetadata, from MeasureFrameEmpty          -> .json beside the .png
 }
 
 interface
 
 uses
-  System.SysUtils, System.Classes, FMX.Graphics;
+  System.SysUtils, System.Classes, System.Types, FMX.Graphics;
 
 type
   //** @abstract(An image as plain RGBA bytes with straight alpha, top row first.)
@@ -108,6 +136,188 @@ type
     /// <exception cref="EArgumentException">If either size is less than 1.</exception>
     /// <exception cref="EOutOfMemory">If the pixels cannot be allocated.</exception>
     class function Create(const AWidth, AHeight: Integer): TSprite3DImage; static;
+  end;
+
+  //** @abstract(The fully transparent border round a frame: how many whole columns or rows
+  //** at each edge have nothing in them.)
+  //**
+  //** The frame's pixels run from (0, 0) at the top left to (width - 1, height - 1) at the
+  //** bottom right. Left is the number of columns from the left edge before the first one
+  //** with any pixel that is not fully transparent, Right the number after the last such
+  //** column, and Top and Bottom the same for rows; so what is drawn lies in columns Left to
+  //** width - 1 - Right and rows Top to height - 1 - Bottom. A frame with nothing in it at all
+  //** is empty from every side: Left and Right are its width, Top and Bottom its height.
+  /// <summary>The fully transparent border round a frame: how many whole columns or rows at
+  /// each edge have nothing in them.</summary>
+  /// <remarks>The frame's pixels run from (0, 0) at the top left to (width - 1, height - 1)
+  /// at the bottom right. Left is the number of columns from the left edge before the first
+  /// one with any pixel that is not fully transparent, Right the number after the last such
+  /// column, and Top and Bottom the same for rows; so what is drawn lies in columns Left to
+  /// width - 1 - Right and rows Top to height - 1 - Bottom. A frame with nothing in it at all
+  /// is empty from every side: Left and Right are its width, Top and Bottom its
+  /// height.</remarks>
+  TSprite3DFrameEmpty = record
+    //** @abstract(Empty columns at the left edge.)
+    /// <summary>Empty columns at the left edge.</summary>
+    Left: Integer;
+    //** @abstract(Empty rows at the top edge.)
+    /// <summary>Empty rows at the top edge.</summary>
+    Top: Integer;
+    //** @abstract(Empty columns at the right edge.)
+    /// <summary>Empty columns at the right edge.</summary>
+    Right: Integer;
+    //** @abstract(Empty rows at the bottom edge.)
+    /// <summary>Empty rows at the bottom edge.</summary>
+    Bottom: Integer;
+  end;
+
+  //** @abstract(A run of one animation's frames on a texture atlas page.)
+  /// <summary>A run of one animation's frames on a texture atlas page.</summary>
+  TSprite3DAtlasSlice = record
+    //** @abstract(The animation, as an index into the frame counts given to PlanAtlasPages.)
+    /// <summary>The animation, as an index into the frame counts given to
+    /// PlanAtlasPages.</summary>
+    Animation: Integer;
+    //** @abstract(Its first frame on the page, counted from 0 within the animation.)
+    /// <summary>Its first frame on the page, counted from 0 within the animation.</summary>
+    First: Integer;
+    //** @abstract(How many of its frames, from First on, are on the page.)
+    /// <summary>How many of its frames, from First on, are on the page.</summary>
+    Count: Integer;
+  end;
+
+  //** @abstract(One page of a texture atlas, as PlanAtlasPages lays it out.)
+  /// <summary>One page of a texture atlas, as PlanAtlasPages lays it out.</summary>
+  TSprite3DAtlasPage = record
+    //** @abstract(The runs of frames on the page, in order: which animation, and which of its
+    //** frames.)
+    /// <summary>The runs of frames on the page, in order: which animation, and which of its
+    /// frames.</summary>
+    Slices: TArray<TSprite3DAtlasSlice>;
+    //** @abstract(The number of frames on the page, the Count of all its slices.)
+    /// <summary>The number of frames on the page, the Count of all its slices.</summary>
+    FrameCount: Integer;
+    //** @abstract(The columns of the page's grid of cells.)
+    /// <summary>The columns of the page's grid of cells.</summary>
+    Cols: Integer;
+    //** @abstract(The rows of the page's grid of cells.)
+    /// <summary>The rows of the page's grid of cells.</summary>
+    Rows: Integer;
+    //** @abstract(The page's width in pixels: a power of 2, or Cols cells wide.)
+    /// <summary>The page's width in pixels: a power of 2, or Cols cells wide.</summary>
+    Width: Integer;
+    //** @abstract(The page's height in pixels: a power of 2, or Rows cells high.)
+    /// <summary>The page's height in pixels: a power of 2, or Rows cells high.</summary>
+    Height: Integer;
+  end;
+
+  //** @abstract(Which frame of which animation and direction an image's frame is.)
+  /// <summary>Which frame of which animation and direction an image's frame is.</summary>
+  TSprite3DFrameRef = record
+    //** @abstract(The animation, as an index into TSprite3DSheetInfo.Animations.)
+    /// <summary>The animation, as an index into TSprite3DSheetInfo.Animations.</summary>
+    Animation: Integer;
+    //** @abstract(The direction, as an index into TSprite3DSheetInfo.Directions; 0 for the
+    //** single dummy direction.)
+    /// <summary>The direction, as an index into TSprite3DSheetInfo.Directions; 0 for the
+    /// single dummy direction.</summary>
+    Direction: Integer;
+    //** @abstract(The frame within that animation and direction, counted from 0.)
+    /// <summary>The frame within that animation and direction, counted from 0.</summary>
+    Frame: Integer;
+  end;
+
+  //** @abstract(The @code(meta) section SaveSheetMetadata writes first: which page, who made
+  //** it, and when.)
+  //**
+  //** Empty text is written as @code(null).
+  /// <summary>The <c>meta</c> section SaveSheetMetadata writes first: which page, who made
+  /// it, and when.</summary>
+  /// <remarks>Empty text is written as <c>null</c>.</remarks>
+  TSprite3DSheetMeta = record
+    //** @abstract(This image's page, from 1, as its file name numbers it; 1 for a strip or
+    //** spritesheet.)
+    /// <summary>This image's page, from 1, as its file name numbers it; 1 for a strip or
+    /// spritesheet.</summary>
+    Page: Integer;
+    //** @abstract(How many pages the export made; 1 for a strip or spritesheet.)
+    /// <summary>How many pages the export made; 1 for a strip or spritesheet.</summary>
+    PageCount: Integer;
+    //** @abstract(How many frames the export made in all, over every page; 0 or less means
+    //** this image's frames, as for a strip or spritesheet.)
+    /// <summary>How many frames the export made in all, over every page; 0 or less means this
+    /// image's frames, as for a strip or spritesheet.</summary>
+    TotalFrames: Integer;
+    //** @abstract(Who created the sprite set.)
+    /// <summary>Who created the sprite set.</summary>
+    Creator: String;
+    //** @abstract(Where the creator's work is.)
+    /// <summary>Where the creator's work is.</summary>
+    CreatorUrl: String;
+    //** @abstract(Who made the models.)
+    /// <summary>Who made the models.</summary>
+    Modeller: String;
+    //** @abstract(Where the modeller's work is.)
+    /// <summary>Where the modeller's work is.</summary>
+    ModellerUrl: String;
+    //** @abstract(Who made the textures.)
+    /// <summary>Who made the textures.</summary>
+    Artist: String;
+    //** @abstract(Where the artist's work is.)
+    /// <summary>Where the artist's work is.</summary>
+    ArtistUrl: String;
+    //** @abstract(The day the project started, as ISO 8601 text.)
+    /// <summary>The day the project started, as ISO 8601 text.</summary>
+    Created: String;
+    //** @abstract(When this export was made, as ISO 8601 text.)
+    /// <summary>When this export was made, as ISO 8601 text.</summary>
+    Modified: String;
+    //** @abstract(The model file exported, as a full path.)
+    /// <summary>The model file exported, as a full path.</summary>
+    ModelFile: String;
+  end;
+
+  //** @abstract(What SaveSheetMetadata writes about an image besides its frames.)
+  /// <summary>What SaveSheetMetadata writes about an image besides its frames.</summary>
+  TSprite3DSheetInfo = record
+    //** @abstract(The whole image's width, in pixels.)
+    /// <summary>The whole image's width, in pixels.</summary>
+    Width: Integer;
+    //** @abstract(The whole image's height, in pixels.)
+    /// <summary>The whole image's height, in pixels.</summary>
+    Height: Integer;
+    //** @abstract(The columns of the image's grid of cells.)
+    /// <summary>The columns of the image's grid of cells.</summary>
+    Cols: Integer;
+    //** @abstract(The rows of the image's grid of cells.)
+    /// <summary>The rows of the image's grid of cells.</summary>
+    Rows: Integer;
+    //** @abstract(The pixel the centre of rotation falls on in a frame.)
+    /// <summary>The pixel the centre of rotation falls on in a frame.</summary>
+    Origin: TPoint;
+    //** @abstract(False writes @code(null) for the origin, Origin being unused.)
+    /// <summary>False writes <c>null</c> for the origin, Origin being unused.</summary>
+    OriginKnown: Boolean;
+    //** @abstract(The directions the image holds, as compass bearings in degrees, in the order
+    //** they are exported; empty for the single dummy 0.)
+    /// <summary>The directions the image holds, as compass bearings in degrees, in the order
+    /// they are exported; empty for the single dummy 0.</summary>
+    Directions: TArray<Double>;
+    //** @abstract(The names of the animations the image holds, in order.)
+    /// <summary>The names of the animations the image holds, in order.</summary>
+    Animations: TArray<String>;
+    //** @abstract(How many frames each of Animations has in all, on this image or not.)
+    /// <summary>How many frames each of Animations has in all, on this image or
+    /// not.</summary>
+    AnimationFrames: TArray<Integer>;
+    //** @abstract(For each of the image's frames, in order, which animation, direction and
+    //** frame it is.)
+    /// <summary>For each of the image's frames, in order, which animation, direction and
+    /// frame it is.</summary>
+    Frames: TArray<TSprite3DFrameRef>;
+    //** @abstract(The @code(meta) section: page, credits, dates and model.)
+    /// <summary>The <c>meta</c> section: page, credits, dates and model.</summary>
+    Meta: TSprite3DSheetMeta;
   end;
 
 //** @abstract(Copies an FMX bitmap into a TSprite3DImage, removing premultiplied alpha.)
@@ -156,7 +366,37 @@ function ImageFromBitmap(const ABitmap: TBitmap): TSprite3DImage;
 /// <exception cref="EOutOfMemory">If the strip is too large to allocate.</exception>
 function ComposeStrip(const AFrames: TArray<TSprite3DImage>): TSprite3DImage;
 
-//** @abstract(Puts the frames in a square grid: a texture atlas.)
+//** @abstract(Puts the frames in rows of ACols: a strip of several rows, such as one row per
+//** direction.)
+//**
+//** Frame I is in column @code(I mod ACols) and row @code(I div ACols); there are as many
+//** rows as the frames need, and cells after the last frame are fully transparent.
+//**
+//** @param(AFrames The frames, in order; at least one, all the same size.)
+//**
+//** @param(ACols The number of columns; at least 1.)
+//**
+//** @returns(The image, ACols frames wide.)
+//**
+//** @raises(EArgumentException If there are no frames, they differ in size, or ACols is
+//** below 1.)
+//**
+//** @raises(EOutOfMemory If the image is too large to allocate.)
+/// <summary>Puts the frames in rows of ACols: a strip of several rows, such as one row per
+/// direction.</summary>
+/// <remarks>Frame I is in column <c>I mod ACols</c> and row <c>I div ACols</c>; there are as
+/// many rows as the frames need, and cells after the last frame are fully
+/// transparent.</remarks>
+/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
+/// <param name="ACols">The number of columns; at least 1.</param>
+/// <returns>The image, ACols frames wide.</returns>
+/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
+/// ACols is below 1.</exception>
+/// <exception cref="EOutOfMemory">If the image is too large to allocate.</exception>
+function ComposeRows(const AFrames: TArray<TSprite3DImage>;
+  const ACols: Integer): TSprite3DImage;
+
+//** @abstract(Puts the frames in a square grid: a spritesheet.)
 //**
 //** The grid has ACells columns and ACells rows, where ACells is the smallest number whose
 //** square holds every frame, so 30 frames make a 6 by 6 grid. Frame I is in column
@@ -168,12 +408,12 @@ function ComposeStrip(const AFrames: TArray<TSprite3DImage>): TSprite3DImage;
 //**
 //** @param(ACells On return, the number of columns, which is also the number of rows.)
 //**
-//** @returns(The atlas.)
+//** @returns(The spritesheet.)
 //**
 //** @raises(EArgumentException If there are no frames or they differ in size.)
 //**
-//** @raises(EOutOfMemory If the atlas is too large to allocate.)
-/// <summary>Puts the frames in a square grid: a texture atlas.</summary>
+//** @raises(EOutOfMemory If the spritesheet is too large to allocate.)
+/// <summary>Puts the frames in a square grid: a spritesheet.</summary>
 /// <remarks>The grid has ACells columns and ACells rows, where ACells is the smallest number
 /// whose square holds every frame, so 30 frames make a 6 by 6 grid. Frame I is in column
 /// <c>I mod ACells</c> and row <c>I div ACells</c>: the frames run left to right along a row,
@@ -182,11 +422,11 @@ function ComposeStrip(const AFrames: TArray<TSprite3DImage>): TSprite3DImage;
 /// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
 /// <param name="ACells">On return, the number of columns, which is also the number of
 /// rows.</param>
-/// <returns>The atlas.</returns>
+/// <returns>The spritesheet.</returns>
 /// <exception cref="EArgumentException">If there are no frames or they differ in
 /// size.</exception>
-/// <exception cref="EOutOfMemory">If the atlas is too large to allocate.</exception>
-function ComposeAtlas(const AFrames: TArray<TSprite3DImage>;
+/// <exception cref="EOutOfMemory">If the spritesheet is too large to allocate.</exception>
+function ComposeSheet(const AFrames: TArray<TSprite3DImage>;
   out ACells: Integer): TSprite3DImage;
 
 //** @abstract(Writes an image as a 32-bit RGBA PNG file.)
@@ -255,6 +495,230 @@ procedure SavePng(const AImage: TSprite3DImage; const AFileName: String);
 procedure SaveAnimatedGif(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ADelay: Integer);
 
+//** @abstract(Measures the fully transparent border round a frame.)
+//**
+//** A pixel counts as empty only when its alpha is 0; anything at all drawn there, however
+//** faint, counts as part of the sprite.
+//**
+//** @param(AFrame The frame.)
+//**
+//** @returns(The border; see TSprite3DFrameEmpty.)
+/// <summary>Measures the fully transparent border round a frame.</summary>
+/// <remarks>A pixel counts as empty only when its alpha is 0; anything at all drawn there,
+/// however faint, counts as part of the sprite.</remarks>
+/// <param name="AFrame">The frame.</param>
+/// <returns>The border; see TSprite3DFrameEmpty.</returns>
+function MeasureFrameEmpty(const AFrame: TSprite3DImage): TSprite3DFrameEmpty;
+
+//** @abstract(Plans the pages of a texture atlas: which frames of which animations go on each
+//** page, and each page's grid and size.)
+//**
+//** A texture atlas is the frames of several animations on shared pages. Every frame is a
+//** cell of AFrameWidth by AFrameHeight; a page is a grid of such cells no larger than
+//** AMaxSize each way, so it holds at most @code(@(AMaxSize div AFrameWidth@) * @(AMaxSize
+//** div AFrameHeight@)) frames. The animations' frames are taken in order, every frame of
+//** the first, then every frame of the next, and so on, and fill each page in turn: an
+//** animation that does not fit in what is left of a page carries on at the start of the
+//** next. So every page but the last is full, a full grid with no cell to spare.
+//**
+//** Each page is then made as small as its frames allow; for a full page that is the
+//** largest page. With ANonPowerOf2 False, its width and height are the smallest powers of 2
+//** whose grid of whole cells holds them, the smaller area first and then the squarer; its
+//** grid is every whole cell that fits. With ANonPowerOf2 True, it is exactly as large as a
+//** grid of whole cells that holds them, chosen the same way. The frames fill the grid left
+//** to right and then top to bottom. Animations with no frames are skipped.
+//**
+//** @param(AFrameCounts The number of frames of each animation, in the order they are to
+//** be laid out.)
+//**
+//** @param(AFrameWidth The width of every frame, in pixels; at least 1.)
+//**
+//** @param(AFrameHeight The height of every frame, in pixels; at least 1.)
+//**
+//** @param(AMaxSize The most a page may be each way, in pixels, such as one of 1024 to
+//** 16384.)
+//**
+//** @param(ANonPowerOf2 True lets a page be any size; False keeps both sides powers of 2.)
+//**
+//** @returns(The pages, in order; empty if there are no frames, or a frame is larger than
+//** AMaxSize.)
+/// <summary>Plans the pages of a texture atlas: which frames of which animations go on each
+/// page, and each page's grid and size.</summary>
+/// <remarks><para>A texture atlas is the frames of several animations on shared pages. Every
+/// frame is a cell of AFrameWidth by AFrameHeight; a page is a grid of such cells no larger
+/// than AMaxSize each way, so it holds at most <c>(AMaxSize div AFrameWidth) * (AMaxSize div
+/// AFrameHeight)</c> frames. The animations' frames are taken in order, every frame of the
+/// first, then every frame of the next, and so on, and fill each page in turn: an animation
+/// that does not fit in what is left of a page carries on at the start of the next. So every
+/// page but the last is full, a full grid with no cell to spare.</para>
+/// <para>Each page is then made as small as its frames allow; for a full page that is the
+/// largest page. With ANonPowerOf2 False, its width and height are the smallest powers of 2
+/// whose grid of whole cells holds them, the smaller area first and then the squarer; its
+/// grid is every whole cell that fits. With ANonPowerOf2 True, it is exactly as large as a
+/// grid of whole cells that holds them, chosen the same way. The frames fill the grid left
+/// to right and then top to bottom. Animations with no frames are skipped.</para></remarks>
+/// <param name="AFrameCounts">The number of frames of each animation, in the order they are
+/// to be laid out.</param>
+/// <param name="AFrameWidth">The width of every frame, in pixels; at least 1.</param>
+/// <param name="AFrameHeight">The height of every frame, in pixels; at least 1.</param>
+/// <param name="AMaxSize">The most a page may be each way, in pixels, such as one of 1024 to
+/// 16384.</param>
+/// <param name="ANonPowerOf2">True lets a page be any size; False keeps both sides powers of
+/// 2.</param>
+/// <returns>The pages, in order; empty if there are no frames, or a frame is larger than
+/// AMaxSize.</returns>
+function PlanAtlasPages(const AFrameCounts: TArray<Integer>; const AFrameWidth,
+  AFrameHeight, AMaxSize: Integer;
+  const ANonPowerOf2: Boolean): TArray<TSprite3DAtlasPage>;
+
+//** @abstract(Lays out one texture atlas page from PlanAtlasPages.)
+//**
+//** Frame I goes in column @code(I mod APage.Cols) and row @code(I div APage.Cols); the rest
+//** of the page, spare cells and any strip too narrow for a whole cell, is fully
+//** transparent.
+//**
+//** @param(AFrames The page's frames, in order: the frames of each of APage.Slices in
+//** turn; all the same size.)
+//**
+//** @param(APage The page.)
+//**
+//** @returns(The page, APage.Width by APage.Height.)
+//**
+//** @raises(EArgumentException If there are no frames, they differ in size, or there are
+//** more than the page's grid holds.)
+//**
+//** @raises(EOutOfMemory If the page is too large to allocate.)
+/// <summary>Lays out one texture atlas page from PlanAtlasPages.</summary>
+/// <remarks>Frame I goes in column <c>I mod APage.Cols</c> and row <c>I div APage.Cols</c>;
+/// the rest of the page, spare cells and any strip too narrow for a whole cell, is fully
+/// transparent.</remarks>
+/// <param name="AFrames">The page's frames, in order: the frames of each of APage.Slices in
+/// turn; all the same size.</param>
+/// <param name="APage">The page.</param>
+/// <returns>The page, APage.Width by APage.Height.</returns>
+/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
+/// there are more than the page's grid holds.</exception>
+/// <exception cref="EOutOfMemory">If the page is too large to allocate.</exception>
+function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
+  const APage: TSprite3DAtlasPage): TSprite3DImage;
+
+//** @abstract(Writes the metadata of a sprite strip, spritesheet or texture atlas page as a
+//** JSON file.)
+//**
+//** Each frame is measured with MeasureFrameEmpty. The file is:
+//**
+//** @preformatted(
+//** {
+//**   "meta": {
+//**     "page": 1, "page_count": 1, "total_frames": 8,
+//**     "creator": "...", "creator_url": "...",
+//**     "modeller": "...", "modeller_url": "...",
+//**     "artist": "...", "artist_url": "...",
+//**     "created": "2026-10-01", "modified": "2026-10-23T16:40:00.000+01:00",
+//**     "file": "C:\\Models\\hero.glb"
+//**   },
+//**   "image": {
+//**     "size": { "width": 2048, "height": 256 },
+//**     "sprite_size": { "width": 256, "height": 256 },
+//**     "layout": { "cols": 8, "rows": 1, "frame_count": 8 },
+//**     "origin": { "x": 127, "y": 201 },
+//**     "sprite_empty": { "left": 61, "top": 12, "right": 58, "bottom": 40 },
+//**     "directions": [0],
+//**     "animations": ["walk"],
+//**     "animation_frames": [8],
+//**     "unused": 0
+//**   },
+//**   "frames": [
+//**     {
+//**       "animation": 0,
+//**       "direction": 0,
+//**       "frame": 0,
+//**       "empty": { "left": 64, "top": 12, "right": 60, "bottom": 40 }
+//**     },
+//**     ...
+//**   ]
+//** }
+//** )
+//**
+//** @code(meta) comes first, from AInfo.Meta: the page, from 1, the number of pages, the
+//** number of frames the export made over every page in @code(total_frames), the credits,
+//** the day the project started, when this export was made, and the model file; empty
+//** text is @code(null). @code(size) is the whole image's, from AInfo, and
+//** @code(sprite_size) one frame's, the grab size. @code(origin) is the pixel the model's
+//** centre of rotation falls on in every frame, in the frame's own pixels, (0, 0) the top
+//** left pixel, as whole numbers; @code(null) for each if it is not known.
+//** @code(sprite_empty) holds, for each side, the smallest of the frames' empty borders, so
+//** cropping every frame by it loses nothing from any of them. @code(directions) lists the
+//** directions the image holds, as compass bearings in degrees in the order they are
+//** exported; one direction is the single dummy entry 0.
+//** @code(animations) names the animations the image holds, and @code(animation_frames)
+//** gives how many frames each has in all, so one that carries on onto another atlas page
+//** shows its whole length. @code(unused) is the number of the grid's cells after the last
+//** frame, which hold nothing. @code(frames) has one entry per frame, in the order of the
+//** cells, saying which animation and direction it is, as indices into @code(animations)
+//** and @code(directions), which frame of that animation and direction, counted from 0, and
+//** its empty sections in @code(empty). The file is replaced if it exists; the folder must
+//** exist.
+//**
+//** @param(AFileName The file to write, normally the image's name with the extension
+//** .json.)
+//**
+//** @param(AFrames The frames, in order, as laid out in the image; at least one, all the same
+//** size.)
+//**
+//** @param(AInfo The image's size, grid, origin, directions, animations, and which each
+//** frame is.)
+//**
+//** @raises(EArgumentException If there are no frames, they differ in size, AInfo's grid
+//** cannot hold them, or AInfo.Frames does not match them or names an animation or
+//** direction it does not list.)
+//**
+//** @raises(EInOutError or another file exception if the file cannot be written.)
+/// <summary>Writes the metadata of a sprite strip, spritesheet or texture atlas page as a JSON
+/// file.</summary>
+/// <remarks><para>Each frame is measured with MeasureFrameEmpty. The file holds first a
+/// <c>meta</c> object, from AInfo.Meta, with <c>page</c>, <c>page_count</c>,
+/// <c>total_frames</c> (the frames the export made over every page), <c>creator</c>,
+/// <c>creator_url</c>, <c>modeller</c>, <c>modeller_url</c>,
+/// <c>artist</c>, <c>artist_url</c>, <c>created</c>, <c>modified</c> and <c>file</c>, empty
+/// text being <c>null</c>; then an <c>image</c> object, with <c>size</c> and
+/// <c>sprite_size</c> (each <c>width</c>,
+/// <c>height</c>), <c>layout</c> (<c>cols</c>, <c>rows</c>, <c>frame_count</c>), <c>origin</c>
+/// (<c>x</c>, <c>y</c>),
+/// <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>, <c>bottom</c>),
+/// <c>directions</c>, <c>animations</c>, <c>animation_frames</c> and <c>unused</c>, and a
+/// <c>frames</c> array of one object per frame, with <c>animation</c>, <c>direction</c>,
+/// <c>frame</c> and <c>empty</c>, an object of its <c>left</c>, <c>top</c>,
+/// <c>right</c>, <c>bottom</c>.</para>
+/// <para><c>size</c> is the whole image's, from AInfo, and <c>sprite_size</c> one frame's,
+/// the grab size. <c>origin</c> is the pixel the model's
+/// centre of rotation falls on in every frame, in the frame's own pixels, (0, 0) the top left
+/// pixel, as whole numbers; <c>null</c> for each if it is not known. <c>sprite_empty</c>
+/// holds, for each side, the smallest of the frames' empty borders, so cropping every frame
+/// by it loses nothing from any of them. <c>directions</c> lists the directions the image
+/// holds, as compass bearings in degrees in the order they are exported; one direction is
+/// the single dummy entry 0. <c>animations</c> names the animations
+/// the image holds, and <c>animation_frames</c> gives how many frames each has in all, so one
+/// that carries on onto another atlas page shows its whole length. <c>unused</c> is the
+/// number of the grid's cells after the last frame, which hold nothing. <c>frames</c> has one
+/// entry per frame, in the order of the cells, saying which animation and direction it is,
+/// as indices into <c>animations</c> and <c>directions</c>, which frame of that animation
+/// and direction, counted from 0, and its empty sections in <c>empty</c>. The file is
+/// replaced if it exists; the folder must exist.</para></remarks>
+/// <param name="AFileName">The file to write, normally the image's name with the extension
+/// .json.</param>
+/// <param name="AFrames">The frames, in order, as laid out in the image; at least one, all
+/// the same size.</param>
+/// <param name="AInfo">The image's size, grid, origin, directions, animations, and which
+/// each frame is.</param>
+/// <exception cref="EArgumentException">If there are no frames, they differ in size, AInfo's
+/// grid cannot hold them, or AInfo.Frames does not match them or names an animation or
+/// direction it does not list.</exception>
+/// <exception cref="EInOutError">Or another file exception, if the file cannot be
+/// written.</exception>
+procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
+  const AInfo: TSprite3DSheetInfo);
+
 //** @abstract(A name made safe to use as a file name on every platform.)
 //**
 //** Characters that Windows, macOS, Linux, Android or iOS reject or treat specially in file
@@ -277,8 +741,8 @@ function SafeFileStem(const AName: String): String;
 implementation
 
 uses
-  System.Types, System.UITypes, System.Math, System.ZLib, System.Generics.Collections,
-  System.Generics.Defaults, OSPaths;
+  System.UITypes, System.Math, System.ZLib, System.Generics.Collections,
+  System.Generics.Defaults, System.JSON, System.IOUtils, OSPaths, JsonText;
 
 { TSprite3DImage }
 
@@ -380,7 +844,21 @@ begin
     Blit(AFrames[I], Result, I * W, 0);
 end;
 
-function ComposeAtlas(const AFrames: TArray<TSprite3DImage>;
+function ComposeRows(const AFrames: TArray<TSprite3DImage>;
+  const ACols: Integer): TSprite3DImage;
+var
+  W, H, I, Rows: Integer;
+begin
+  CheckFrames(AFrames, W, H);
+  if ACols < 1 then
+    raise EArgumentException.Create('A strip needs at least one column.');
+  Rows := (Length(AFrames) + ACols - 1) div ACols;
+  Result := TSprite3DImage.Create(W * ACols, H * Rows);
+  for I := 0 to High(AFrames) do
+    Blit(AFrames[I], Result, (I mod ACols) * W, (I div ACols) * H);
+end;
+
+function ComposeSheet(const AFrames: TArray<TSprite3DImage>;
   out ACells: Integer): TSprite3DImage;
 var
   W, H, I: Integer;
@@ -943,6 +1421,330 @@ begin
     end;
   finally
     Lzw.Free;
+  end;
+end;
+
+{ Metadata }
+
+function MeasureFrameEmpty(const AFrame: TSprite3DImage): TSprite3DFrameEmpty;
+var
+  X, Y, MinX, MaxX, MinY, MaxY: Integer;
+  Alpha: PByte;
+begin
+  MinX := AFrame.Width;
+  MaxX := -1;
+  MinY := AFrame.Height;
+  MaxY := -1;
+  if Length(AFrame.Pixels) >= Int64(AFrame.Width) * AFrame.Height * 4 then
+    for Y := 0 to AFrame.Height - 1 do
+    begin
+      Alpha := @AFrame.Pixels[(NativeInt(Y) * AFrame.Width) * 4 + 3];
+      for X := 0 to AFrame.Width - 1 do
+      begin
+        if Alpha^ <> 0 then
+        begin
+          if X < MinX then
+            MinX := X;
+          if X > MaxX then
+            MaxX := X;
+          if Y < MinY then
+            MinY := Y;
+          MaxY := Y;
+        end;
+        Inc(Alpha, 4);
+      end;
+    end;
+  if MaxX < 0 then
+  begin
+    // Nothing drawn: empty from every side
+    Result.Left := AFrame.Width;
+    Result.Right := AFrame.Width;
+    Result.Top := AFrame.Height;
+    Result.Bottom := AFrame.Height;
+  end
+  else
+  begin
+    Result.Left := MinX;
+    Result.Right := AFrame.Width - 1 - MaxX;
+    Result.Top := MinY;
+    Result.Bottom := AFrame.Height - 1 - MaxY;
+  end;
+end;
+
+// The smallest page for ACount cells of AW by AH, at most AMaxSize each way:
+// powers of 2 unless ANonPowerOf2, then the least area, then the squarer.
+// False if none holds them.
+function SizeAtlasPage(const ACount, AW, AH, AMaxSize: Integer; const ANonPowerOf2: Boolean;
+  var APage: TSprite3DAtlasPage): Boolean;
+var
+  BestArea: Int64;
+  BestSkew: Integer;
+
+  procedure Consider(const AWidth, AHeight, ACols, ARows: Integer);
+  var
+    Area: Int64;
+    Skew: Integer;
+  begin
+    if Int64(ACols) * ARows < ACount then
+      Exit;
+    Area := Int64(AWidth) * AHeight;
+    Skew := Abs(AWidth - AHeight);
+    if (Area < BestArea) or ((Area = BestArea) and (Skew < BestSkew)) then
+    begin
+      BestArea := Area;
+      BestSkew := Skew;
+      APage.Width := AWidth;
+      APage.Height := AHeight;
+      APage.Cols := ACols;
+      APage.Rows := ARows;
+    end;
+  end;
+
+var
+  MaxCols, MaxRows, C, R, PW, PH: Integer;
+begin
+  BestArea := High(Int64);
+  BestSkew := MaxInt;
+  MaxCols := AMaxSize div AW;
+  MaxRows := AMaxSize div AH;
+  if ANonPowerOf2 then
+    for C := 1 to Min(MaxCols, ACount) do
+    begin
+      R := (ACount + C - 1) div C;
+      if R <= MaxRows then
+        Consider(C * AW, R * AH, C, R);
+    end
+  else
+  begin
+    PW := 1;
+    while PW <= AMaxSize do
+    begin
+      if PW >= AW then
+      begin
+        PH := 1;
+        while PH <= AMaxSize do
+        begin
+          if PH >= AH then
+            Consider(PW, PH, PW div AW, PH div AH);
+          PH := PH * 2;
+        end;
+      end;
+      PW := PW * 2;
+    end;
+  end;
+  Result := BestArea < High(Int64);
+end;
+
+function PlanAtlasPages(const AFrameCounts: TArray<Integer>; const AFrameWidth,
+  AFrameHeight, AMaxSize: Integer;
+  const ANonPowerOf2: Boolean): TArray<TSprite3DAtlasPage>;
+var
+  Capacity: Int64;
+  Page: TSprite3DAtlasPage;
+  Pages: TArray<TSprite3DAtlasPage>;
+  Slice: TSprite3DAtlasSlice;
+  Done, Room: Integer;
+
+  procedure ClosePage;
+  begin
+    if Page.FrameCount = 0 then
+      Exit;
+    // The page always fits: it holds no more than the full page's grid
+    if SizeAtlasPage(Page.FrameCount, AFrameWidth, AFrameHeight, AMaxSize, ANonPowerOf2,
+      Page) then
+      Pages := Pages + [Page];
+    Page := Default(TSprite3DAtlasPage);
+  end;
+
+begin
+  Pages := nil;
+  Page := Default(TSprite3DAtlasPage);
+  if (AFrameWidth < 1) or (AFrameHeight < 1) then
+    Capacity := 0
+  else
+    Capacity := Int64(AMaxSize div AFrameWidth) * (AMaxSize div AFrameHeight);
+  if Capacity < 1 then
+    Exit(nil);   // not even one frame fits a page
+  for var I := 0 to High(AFrameCounts) do
+  begin
+    Done := 0;
+    // As much of the animation as the page has room for, then the rest on
+    // the next page, and the next
+    while Done < AFrameCounts[I] do
+    begin
+      if Page.FrameCount >= Capacity then
+        ClosePage;
+      Room := Capacity - Page.FrameCount;
+      Slice.Animation := I;
+      Slice.First := Done;
+      Slice.Count := Min(Room, AFrameCounts[I] - Done);
+      Page.Slices := Page.Slices + [Slice];
+      Inc(Page.FrameCount, Slice.Count);
+      Inc(Done, Slice.Count);
+    end;
+  end;
+  ClosePage;
+  Result := Pages;
+end;
+
+function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
+  const APage: TSprite3DAtlasPage): TSprite3DImage;
+var
+  W, H, I: Integer;
+begin
+  CheckFrames(AFrames, W, H);
+  if (APage.Cols < 1) or (Int64(APage.Cols) * APage.Rows < Length(AFrames)) or
+    (APage.Cols * W > APage.Width) or (APage.Rows * H > APage.Height) then
+    raise EArgumentException.CreateFmt('%d frames of %d x %d do not fit a %d x %d page.',
+      [Length(AFrames), W, H, APage.Width, APage.Height]);
+  Result := TSprite3DImage.Create(APage.Width, APage.Height);
+  for I := 0 to High(AFrames) do
+    Blit(AFrames[I], Result, (I mod APage.Cols) * W, (I div APage.Cols) * H);
+end;
+
+procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
+  const AInfo: TSprite3DSheetInfo);
+var
+  W, H, I, Directions: Integer;
+  Empties: TArray<TSprite3DFrameEmpty>;
+  Least: TSprite3DFrameEmpty;
+  Root, Image, Item: TJSONObject;
+  Frames, List: TJSONArray;
+
+  function Sides(const AEmpty: TSprite3DFrameEmpty): TJSONObject;
+  begin
+    Result := TJSONObject.Create;
+    Result.AddPair('left', TJSONNumber.Create(AEmpty.Left));
+    Result.AddPair('top', TJSONNumber.Create(AEmpty.Top));
+    Result.AddPair('right', TJSONNumber.Create(AEmpty.Right));
+    Result.AddPair('bottom', TJSONNumber.Create(AEmpty.Bottom));
+  end;
+
+  // Text, or null if there is none
+  function Text(const AValue: String): TJSONValue;
+  begin
+    if AValue.Trim = String.Empty then
+      Result := TJSONNull.Create
+    else
+      Result := TJSONString.Create(AValue.Trim);
+  end;
+
+  // A whole number, written without a decimal point, or null if not known
+  function Coordinate(const AValue: Integer): TJSONValue;
+  begin
+    if AInfo.OriginKnown then
+      Result := TJSONNumber.Create(AValue)
+    else
+      Result := TJSONNull.Create;
+  end;
+
+begin
+  CheckFrames(AFrames, W, H);
+  if (AInfo.Cols < 1) or (AInfo.Rows < 1) or
+    (Int64(AInfo.Cols) * AInfo.Rows < Length(AFrames)) then
+    raise EArgumentException.CreateFmt('%d frames do not fit %d columns by %d rows.',
+      [Length(AFrames), AInfo.Cols, AInfo.Rows]);
+  if Length(AInfo.AnimationFrames) <> Length(AInfo.Animations) then
+    raise EArgumentException.Create('Each animation needs its frame count.');
+  if Length(AInfo.Frames) <> Length(AFrames) then
+    raise EArgumentException.Create('Each frame needs its animation, direction and number.');
+  // The single dummy direction, if none is listed
+  Directions := Max(1, Length(AInfo.Directions));
+  for var Ref in AInfo.Frames do
+    if (Ref.Animation < 0) or (Ref.Animation >= Length(AInfo.Animations)) or
+      (Ref.Direction < 0) or (Ref.Direction >= Directions) or (Ref.Frame < 0) then
+      raise EArgumentException.Create('A frame names an animation or direction that is ' +
+        'not listed.');
+  SetLength(Empties, Length(AFrames));
+  for I := 0 to High(AFrames) do
+    Empties[I] := MeasureFrameEmpty(AFrames[I]);
+  // The smallest of each side over every frame
+  Least := Empties[0];
+  for I := 1 to High(Empties) do
+  begin
+    Least.Left := Min(Least.Left, Empties[I].Left);
+    Least.Top := Min(Least.Top, Empties[I].Top);
+    Least.Right := Min(Least.Right, Empties[I].Right);
+    Least.Bottom := Min(Least.Bottom, Empties[I].Bottom);
+  end;
+
+  Root := TJSONObject.Create;
+  try
+    // Which page, who made it and when, first
+    Item := TJSONObject.Create;
+    Root.AddPair('meta', Item);
+    Item.AddPair('page', TJSONNumber.Create(Max(1, AInfo.Meta.Page)));
+    Item.AddPair('page_count', TJSONNumber.Create(Max(1, AInfo.Meta.PageCount)));
+    // Over every page; a single image's own when not given
+    if AInfo.Meta.TotalFrames > 0 then
+      Item.AddPair('total_frames', TJSONNumber.Create(AInfo.Meta.TotalFrames))
+    else
+      Item.AddPair('total_frames', TJSONNumber.Create(Length(AFrames)));
+    Item.AddPair('creator', Text(AInfo.Meta.Creator));
+    Item.AddPair('creator_url', Text(AInfo.Meta.CreatorUrl));
+    Item.AddPair('modeller', Text(AInfo.Meta.Modeller));
+    Item.AddPair('modeller_url', Text(AInfo.Meta.ModellerUrl));
+    Item.AddPair('artist', Text(AInfo.Meta.Artist));
+    Item.AddPair('artist_url', Text(AInfo.Meta.ArtistUrl));
+    Item.AddPair('created', Text(AInfo.Meta.Created));
+    Item.AddPair('modified', Text(AInfo.Meta.Modified));
+    Item.AddPair('file', Text(AInfo.Meta.ModelFile));
+    Image := TJSONObject.Create;
+    Root.AddPair('image', Image);
+    Item := TJSONObject.Create;
+    Image.AddPair('size', Item);
+    Item.AddPair('width', TJSONNumber.Create(AInfo.Width));
+    Item.AddPair('height', TJSONNumber.Create(AInfo.Height));
+    // One frame, the grab size
+    Item := TJSONObject.Create;
+    Image.AddPair('sprite_size', Item);
+    Item.AddPair('width', TJSONNumber.Create(W));
+    Item.AddPair('height', TJSONNumber.Create(H));
+    Item := TJSONObject.Create;
+    Image.AddPair('layout', Item);
+    Item.AddPair('cols', TJSONNumber.Create(AInfo.Cols));
+    Item.AddPair('rows', TJSONNumber.Create(AInfo.Rows));
+    Item.AddPair('frame_count', TJSONNumber.Create(Length(AFrames)));
+    Item := TJSONObject.Create;
+    Image.AddPair('origin', Item);
+    Item.AddPair('x', Coordinate(AInfo.Origin.X));
+    Item.AddPair('y', Coordinate(AInfo.Origin.Y));
+    Image.AddPair('sprite_empty', Sides(Least));
+    List := TJSONArray.Create;
+    Image.AddPair('directions', List);
+    if Length(AInfo.Directions) = 0 then
+      List.Add(0)
+    else
+      for var Direction in AInfo.Directions do
+        List.Add(Direction);
+    List := TJSONArray.Create;
+    Image.AddPair('animations', List);
+    for var Name in AInfo.Animations do
+      List.Add(Name);
+    List := TJSONArray.Create;
+    Image.AddPair('animation_frames', List);
+    for var Count in AInfo.AnimationFrames do
+      List.Add(Count);
+    Image.AddPair('unused', TJSONNumber.Create(Int64(AInfo.Cols) * AInfo.Rows -
+      Length(AFrames)));
+    // One entry per frame, in the order of the cells: which it is, and its
+    // empty sections
+    Frames := TJSONArray.Create;
+    Root.AddPair('frames', Frames);
+    for I := 0 to High(AFrames) do
+    begin
+      Item := TJSONObject.Create;
+      Frames.AddElement(Item);
+      Item.AddPair('animation', TJSONNumber.Create(AInfo.Frames[I].Animation));
+      Item.AddPair('direction', TJSONNumber.Create(AInfo.Frames[I].Direction));
+      Item.AddPair('frame', TJSONNumber.Create(AInfo.Frames[I].Frame));
+      // One set of empty sections per frame
+      Item.AddPair('empty', Sides(Empties[I]));
+    end;
+    // UTF-8 without a byte order mark, which some JSON readers reject
+    TFile.WriteAllBytes(OSFriendlyPath(AFileName), JsonToBytes(Root));
+  finally
+    Root.Free;
   end;
 end;
 

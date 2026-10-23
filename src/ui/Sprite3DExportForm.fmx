@@ -1,0 +1,93 @@
+object ExportProgressForm: TExportProgressForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Exporting'
+  ClientHeight = 300
+  ClientWidth = 440
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  DesignerMasterStyle = 0
+  object MainLayout: TLayout
+    Align = Client
+    Padding.Left = 16.000000000000000000
+    Padding.Top = 16.000000000000000000
+    Padding.Right = 16.000000000000000000
+    Size.Width = 440.000000000000000000
+    Size.Height = 256.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object ExportProgressBar: TProgressBar
+      Align = Top
+      Orientation = Horizontal
+      Position.X = 16.000000000000000000
+      Position.Y = 16.000000000000000000
+      Size.Width = 408.000000000000000000
+      Size.Height = 20.000000000000000000
+      Size.PlatformDefault = False
+      Max = 100.000000000000000000
+    end
+    object StatusLabel: TLabel
+      Align = Top
+      Margins.Top = 8.000000000000000000
+      Position.X = 16.000000000000000000
+      Position.Y = 44.000000000000000000
+      Size.Width = 408.000000000000000000
+      Size.Height = 34.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.VertAlign = Leading
+      TextSettings.WordWrap = True
+      Text = 'Starting...'
+      TabOrder = 1
+    end
+    object ResultMemo: TMemo
+      Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+      DataDetectorTypes = []
+      ReadOnly = True
+      TextSettings.WordWrap = True
+      Align = Client
+      Margins.Top = 8.000000000000000000
+      Margins.Bottom = 4.000000000000000000
+      Size.Width = 408.000000000000000000
+      Size.Height = 166.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Viewport.Width = 404.000000000000000000
+      Viewport.Height = 162.000000000000000000
+    end
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 256.000000000000000000
+    Size.Width = 440.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object AbortButton: TButton
+      Anchors = [akLeft, akBottom]
+      Cancel = True
+      Position.X = 16.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'Abort'
+      Hint = 'Stop once the animation being exported is saved'
+      ShowHint = True
+      OnClick = AbortButtonClick
+    end
+    object CloseButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      Enabled = False
+      Position.X = 344.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 1
+      Text = 'Close'
+      OnClick = CloseButtonClick
+    end
+  end
+end

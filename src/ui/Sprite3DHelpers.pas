@@ -47,7 +47,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
-  Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc,
+  System.JSON, Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc,
   Sprite3DResample, Sprite3DSweep;
 
 const
@@ -120,6 +120,15 @@ const
   //** @abstract(The number of directions until Model, Directions changes it.)
   /// <summary>The number of directions until Model, Directions changes it.</summary>
   DIRECTION_COUNT_DEFAULT = 8;
+  //** @abstract(The largest a texture atlas page may be, each way, as Model, Animation Settings
+  //** offers it: 1k, 2k, 4k, 8k and 16k pixels.)
+  /// <summary>The largest a texture atlas page may be, each way, as Model, Animation Settings
+  /// offers it: 1k, 2k, 4k, 8k and 16k pixels.</summary>
+  ATLAS_PAGE_SIZES: array[0..4] of Integer = (1024, 2048, 4096, 8192, 16384);
+  //** @abstract(The texture atlas page size until Model, Animation Settings changes it.)
+  /// <summary>The texture atlas page size until Model, Animation Settings changes
+  /// it.</summary>
+  ATLAS_PAGE_SIZE_DEFAULT = 4096;
   //** @abstract(The @code(format) a directions file names itself with, so another JSON file
   //** is not taken for one.)
   /// <summary>The <c>format</c> a directions file names itself with, so another JSON file is
@@ -132,6 +141,19 @@ const
   /// <summary>The extension Model, Directions gives the directions files it
   /// exports.</summary>
   DIRECTIONS_FILE_EXTENSION = '.json';
+  //** @abstract(The extension of Sprite3D project files: credits, the model, directions and
+  //** the Animations list, which File, Save Project saves and the system opens with
+  //** Sprite3D.)
+  /// <summary>The extension of Sprite3D project files: credits, the model, directions and the
+  /// Animations list, which File, Save Project saves and the system opens with
+  /// Sprite3D.</summary>
+  PROJECT_FILE_EXTENSION = '.sprite3d';
+  //** @abstract(The @code(format) a project file names itself with.)
+  /// <summary>The <c>format</c> a project file names itself with.</summary>
+  PROJECT_FILE_FORMAT = 'Sprite3D project';
+  //** @abstract(The newest project file layout this version writes and reads.)
+  /// <summary>The newest project file layout this version writes and reads.</summary>
+  PROJECT_FILE_VERSION = 1;
   //** @abstract(The smallest width or height File, Grab renders, in pixels.)
   /// <summary>The smallest width or height File, Grab renders, in pixels.</summary>
   GRAB_SIZE_MIN = 8;
@@ -159,6 +181,39 @@ type
   /// directions.</summary>
   /// <remarks>The message says what is wrong, in words fit to show the user.</remarks>
   EDirectionsFile = class(Exception);
+
+  //** @abstract(Who made a sprite set, as File, Save Project sets it and the metadata's
+  //** @code(meta) gives it.)
+  //**
+  //** Every field may be empty. Created is a date as ISO 8601 text, @code(yyyy-mm-dd).
+  /// <summary>Who made a sprite set, as File, Save Project sets it and the metadata's
+  /// <c>meta</c> gives it.</summary>
+  /// <remarks>Every field may be empty. Created is a date as ISO 8601 text,
+  /// <c>yyyy-mm-dd</c>.</remarks>
+  TSprite3DCredits = record
+    //** @abstract(Who created the sprite set.)
+    /// <summary>Who created the sprite set.</summary>
+    Creator: String;
+    //** @abstract(Where the creator's work is.)
+    /// <summary>Where the creator's work is.</summary>
+    CreatorUrl: String;
+    //** @abstract(Who made the models.)
+    /// <summary>Who made the models.</summary>
+    Modeller: String;
+    //** @abstract(Where the modeller's work is.)
+    /// <summary>Where the modeller's work is.</summary>
+    ModellerUrl: String;
+    //** @abstract(Who made the textures.)
+    /// <summary>Who made the textures.</summary>
+    Artist: String;
+    //** @abstract(Where the artist's work is.)
+    /// <summary>Where the artist's work is.</summary>
+    ArtistUrl: String;
+    //** @abstract(The day the project started, as @code(yyyy-mm-dd); empty if not set.)
+    /// <summary>The day the project started, as <c>yyyy-mm-dd</c>; empty if not
+    /// set.</summary>
+    Created: String;
+  end;
 
   //** @abstract(What the application loads when it starts and no file was asked for.)
   //**
@@ -230,6 +285,9 @@ type
     //** @abstract(The frame rate the view is drawn at, VIEW_FPS_MIN to MaxViewFps.)
     /// <summary>The frame rate the view is drawn at, VIEW_FPS_MIN to MaxViewFps.</summary>
     ViewFps: Integer;
+    //** @abstract(Whether JSON files are written minified.)
+    /// <summary>Whether JSON files are written minified.</summary>
+    MinifyJson: Boolean;
     //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
     //** kept.)
     /// <summary>The most ViewFps may be: the display's refresh rate, set by the caller; not
@@ -298,18 +356,25 @@ type
     FGrabHeight: Integer;
     FAnimationFps: Integer;
     FViewFps: Integer;
+    FMinifyJson: Boolean;
     FDirectionCount: Integer;
     FDirectionStart: Single;
     FDirectionClockwise: Boolean;
     FDirectionOrder: String;
     FDirectionSnap: Boolean;
+    FExportMetadata: Boolean;
+    FExportDirections: Boolean;
+    FAtlasPageSize: Integer;
+    FAtlasNonPowerOf2: Boolean;
     FOverscan: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
     procedure SetViewFps(const Value: Integer);
+    procedure SetMinifyJson(const Value: Boolean);
     procedure SetDirectionCount(const Value: Integer);
     procedure SetDirectionStart(const Value: Single);
     procedure SetOverscan(const Value: Integer);
+    procedure SetAtlasPageSize(const Value: Integer);
     procedure SetGrabWidth(const Value: Integer);
     procedure SetGrabHeight(const Value: Integer);
     function GetBackgroundSpec: TSprite3DBackgroundSpec;
@@ -682,6 +747,18 @@ type
     /// as <c>viewFps</c>. Written values are limited to VIEW_FPS_MIN to
     /// VIEW_FPS_MAX.</remarks>
     property ViewFps: Integer read FViewFps write SetViewFps;
+    //** @abstract(Whether JSON files are written minified, with no indents or line breaks;
+    //** False by default.)
+    //**
+    //** Set in File, Settings. Stored as @code(minifyJson). Writing it, loading settings.json
+    //** included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes follows,
+    //** settings.json itself among them.
+    /// <summary>Whether JSON files are written minified, with no indents or line breaks; False
+    /// by default.</summary>
+    /// <remarks>Set in File, Settings. Stored as <c>minifyJson</c>. Writing it, loading
+    /// settings.json included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes
+    /// follows, settings.json itself among them.</remarks>
+    property MinifyJson: Boolean read FMinifyJson write SetMinifyJson;
     //** @abstract(How many directions Model, Directions has around its compass;
     //** DIRECTION_COUNT_DEFAULT by default.)
     //**
@@ -742,6 +819,57 @@ type
     /// <remarks>Stored as <c>directionSnap</c>. True locks DirectionStart to whole multiples of
     /// 360 divided by DirectionCount, counted from north.</remarks>
     property DirectionSnap: Boolean read FDirectionSnap write FDirectionSnap;
+    //** @abstract(Whether a sprite strip or spritesheet is saved with its metadata; False by
+    //** default.)
+    //**
+    //** Stored as @code(exportMetadata); set by the Metadata box above Export. True writes,
+    //** beside each strip or spritesheet, a JSON file of the same name with the extension
+    //** .json, made by SaveSheetMetadata: the image's size and layout, where the centre of
+    //** rotation falls in a frame, and each frame's transparent border. AniGifs and MP4 videos
+    //** have none, and texture atlas pages always have it, whatever this says.
+    /// <summary>Whether a sprite strip or spritesheet is saved with its metadata; False by
+    /// default.</summary>
+    /// <remarks>Stored as <c>exportMetadata</c>; set by the Metadata box above Export. True
+    /// writes, beside each strip or spritesheet, a JSON file of the same name with the
+    /// extension .json, made by SaveSheetMetadata: the image's size and layout, where the
+    /// centre of rotation falls in a frame, and each frame's transparent border. AniGifs and
+    /// MP4 videos have none, and texture atlas pages always have it, whatever this
+    /// says.</remarks>
+    property ExportMetadata: Boolean read FExportMetadata write FExportMetadata;
+    //** @abstract(Whether exports are to be made for every direction of Model, Directions;
+    //** False by default.)
+    //**
+    //** Stored as @code(exportDirections); set by the Directions box above Export. Kept for
+    //** the directions export to come: it has no effect yet, and the metadata's
+    //** @code(directions) is the single dummy entry 0.
+    /// <summary>Whether exports are to be made for every direction of Model, Directions; False
+    /// by default.</summary>
+    /// <remarks>Stored as <c>exportDirections</c>; set by the Directions box above Export.
+    /// Kept for the directions export to come: it has no effect yet, and the metadata's
+    /// <c>directions</c> is the single dummy entry 0.</remarks>
+    property ExportDirections: Boolean read FExportDirections write FExportDirections;
+    //** @abstract(The largest a texture atlas page may be, in pixels each way;
+    //** ATLAS_PAGE_SIZE_DEFAULT by default.)
+    //**
+    //** Stored as @code(atlasPageSize); set in Model, Animation Settings. A written value that
+    //** is not one of ATLAS_PAGE_SIZES becomes the nearest that is.
+    /// <summary>The largest a texture atlas page may be, in pixels each way;
+    /// ATLAS_PAGE_SIZE_DEFAULT by default.</summary>
+    /// <remarks>Stored as <c>atlasPageSize</c>; set in Model, Animation Settings. A written
+    /// value that is not one of ATLAS_PAGE_SIZES becomes the nearest that is.</remarks>
+    property AtlasPageSize: Integer read FAtlasPageSize write SetAtlasPageSize;
+    //** @abstract(Whether a texture atlas page may be any size, rather than a power of 2 each
+    //** way; False by default.)
+    //**
+    //** Stored as @code(atlasNonPowerOf2); set in Model, Animation Settings. False makes each
+    //** page's width and height the smallest powers of 2 that hold its frames; True makes the
+    //** page exactly as large as its grid of frames.
+    /// <summary>Whether a texture atlas page may be any size, rather than a power of 2 each
+    /// way; False by default.</summary>
+    /// <remarks>Stored as <c>atlasNonPowerOf2</c>; set in Model, Animation Settings. False
+    /// makes each page's width and height the smallest powers of 2 that hold its frames; True
+    /// makes the page exactly as large as its grid of frames.</remarks>
+    property AtlasNonPowerOf2: Boolean read FAtlasNonPowerOf2 write FAtlasNonPowerOf2;
     //** @abstract(The overscan factor Model, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
@@ -971,6 +1099,103 @@ procedure SaveDirectionsFile(const AFileName: String; const ACount: Integer;
 /// be read.</exception>
 procedure LoadDirectionsFile(const AFileName: String; out ACount: Integer;
   out AStart: Single; out AOrder: TArray<Integer>; out ASnap: Boolean);
+
+//** @abstract(A set of directions as the JSON object SaveDirectionsFile writes.)
+//**
+//** For keeping directions inside another JSON file, such as a project file. The caller
+//** owns the object.
+//**
+//** @param(ACount How many directions; one of DIRECTION_COUNTS.)
+//**
+//** @param(AStart The red marker's bearing, in degrees clockwise from north.)
+//**
+//** @param(AOrder The order, as positions from 0; one that does not fit ACount is written
+//** as the plain clockwise order.)
+//**
+//** @param(ASnap Whether the dial is locked to steps of one direction.)
+//**
+//** @returns(The object, with every member SaveDirectionsFile writes.)
+/// <summary>A set of directions as the JSON object SaveDirectionsFile writes.</summary>
+/// <remarks>For keeping directions inside another JSON file, such as a project file. The
+/// caller owns the object.</remarks>
+/// <param name="ACount">How many directions; one of DIRECTION_COUNTS.</param>
+/// <param name="AStart">The red marker's bearing, in degrees clockwise from north.</param>
+/// <param name="AOrder">The order, as positions from 0; one that does not fit ACount is
+/// written as the plain clockwise order.</param>
+/// <param name="ASnap">Whether the dial is locked to steps of one direction.</param>
+/// <returns>The object, with every member SaveDirectionsFile writes.</returns>
+function DirectionsToJson(const ACount: Integer; const AStart: Single;
+  const AOrder: TArray<Integer>; const ASnap: Boolean): TJSONObject;
+
+//** @abstract(Reads a set of directions from a JSON object, as LoadDirectionsFile reads a
+//** file.)
+//**
+//** @param(AValue The object, such as one DirectionsToJson made.)
+//**
+//** @param(ACount Set to the number of directions, one of DIRECTION_COUNTS.)
+//**
+//** @param(AStart Set to the red marker's bearing, wrapped into 0 up to 360.)
+//**
+//** @param(AOrder Set to the order, as positions from 0, every one once.)
+//**
+//** @param(ASnap Set to whether the dial is locked to steps of one direction.)
+//**
+//** @raises(EDirectionsFile If AValue is not an object of directions, or holds a count or
+//** order that cannot be used; the message says which.)
+/// <summary>Reads a set of directions from a JSON object, as LoadDirectionsFile reads a
+/// file.</summary>
+/// <param name="AValue">The object, such as one DirectionsToJson made.</param>
+/// <param name="ACount">Set to the number of directions, one of DIRECTION_COUNTS.</param>
+/// <param name="AStart">Set to the red marker's bearing, wrapped into 0 up to 360.</param>
+/// <param name="AOrder">Set to the order, as positions from 0, every one once.</param>
+/// <param name="ASnap">Set to whether the dial is locked to steps of one
+/// direction.</param>
+/// <exception cref="EDirectionsFile">If AValue is not an object of directions, or holds a
+/// count or order that cannot be used; the message says which.</exception>
+procedure DirectionsFromJson(const AValue: TJSONValue; out ACount: Integer;
+  out AStart: Single; out AOrder: TArray<Integer>; out ASnap: Boolean);
+
+//** @abstract(Whether a file is a Sprite3D project file, judged by its extension,
+//** PROJECT_FILE_EXTENSION.)
+//**
+//** @param(AFileName A file name or path.)
+//**
+//** @returns(True if its extension is PROJECT_FILE_EXTENSION, in any case.)
+/// <summary>Whether a file is a Sprite3D project file, judged by its extension,
+/// PROJECT_FILE_EXTENSION.</summary>
+/// <param name="AFileName">A file name or path.</param>
+/// <returns>True if its extension is PROJECT_FILE_EXTENSION, in any case.</returns>
+function IsProjectFile(const AFileName: String): Boolean;
+
+//** @abstract(Credits as the @code(credits) object of a project file.)
+//**
+//** Members are @code(creator), @code(creator_url), @code(modeller), @code(modeller_url),
+//** @code(artist), @code(artist_url) and @code(created); empty ones are written as
+//** @code(null). The caller owns the object.
+//**
+//** @param(ACredits The credits.)
+//**
+//** @returns(The object.)
+/// <summary>Credits as the <c>credits</c> object of a project file.</summary>
+/// <remarks>Members are <c>creator</c>, <c>creator_url</c>, <c>modeller</c>,
+/// <c>modeller_url</c>, <c>artist</c>, <c>artist_url</c> and <c>created</c>; empty ones are
+/// written as <c>null</c>. The caller owns the object.</remarks>
+/// <param name="ACredits">The credits.</param>
+/// <returns>The object.</returns>
+function CreditsToJson(const ACredits: TSprite3DCredits): TJSONObject;
+
+//** @abstract(Reads credits from the @code(credits) object of a project file.)
+//**
+//** Members left out, @code(null) or not text are read as empty.
+//**
+//** @param(AValue The object; anything else gives empty credits.)
+//**
+//** @returns(The credits.)
+/// <summary>Reads credits from the <c>credits</c> object of a project file.</summary>
+/// <remarks>Members left out, <c>null</c> or not text are read as empty.</remarks>
+/// <param name="AValue">The object; anything else gives empty credits.</param>
+/// <returns>The credits.</returns>
+function CreditsFromJson(const AValue: TJSONValue): TSprite3DCredits;
 
 //** @abstract(Formats an angle from Wrap360 as whole degrees for a readout.)
 //**
@@ -1469,6 +1694,35 @@ function CreateModelAssociations: TSprite3DFileAssociations;
 function ApplyFileAssociations(const ASettings: TSprite3DAppSettings;
   const AOpenWith, AAlways: Boolean; out AMessage: String): Boolean;
 
+//** @abstract(Makes Sprite3D open its own project files, PROJECT_FILE_EXTENSION, when one is
+//** double-clicked.)
+//**
+//** Called each time the application starts, so the files open with the copy of the
+//** program last run, whatever is chosen for model files in File, Settings. On Windows the
+//** extension gets a ProgID of its own, @code(Sprite3D.Project), and is made to open with it;
+//** a choice made with Always in Windows' own How do you want to open dialog still wins. On
+//** Linux the project MIME type, @code(application/x-sprite3d), goes into the application's
+//** desktop entry, with the model types if they are registered, and is made to open with it.
+//** On macOS the bundle's document types do this, and elsewhere there are no associations,
+//** so it does nothing.
+//**
+//** @param(AMessage Set to what went wrong; empty if nothing did.)
+//**
+//** @returns(True on success, or where there is nothing to do.)
+/// <summary>Makes Sprite3D open its own project files, PROJECT_FILE_EXTENSION, when one is
+/// double-clicked.</summary>
+/// <remarks>Called each time the application starts, so the files open with the copy of the
+/// program last run, whatever is chosen for model files in File, Settings. On Windows the
+/// extension gets a ProgID of its own, <c>Sprite3D.Project</c>, and is made to open with it;
+/// a choice made with Always in Windows' own How do you want to open dialog still wins. On
+/// Linux the project MIME type, <c>application/x-sprite3d</c>, goes into the application's
+/// desktop entry, with the model types if they are registered, and is made to open with it.
+/// On macOS the bundle's document types do this, and elsewhere there are no associations,
+/// so it does nothing.</remarks>
+/// <param name="AMessage">Set to what went wrong; empty if nothing did.</param>
+/// <returns>True on success, or where there is nothing to do.</returns>
+function RegisterProjectFiles(out AMessage: String): Boolean;
+
 //** @abstract(True where the GPU preference can be set: Windows only.)
 //**
 //** @returns(True on Windows.)
@@ -1517,9 +1771,9 @@ function ReadGeneralSettings(const ASettings: TSprite3DAppSettings): TSprite3DGe
 implementation
 
 uses
-  System.Classes, System.Math, System.IOUtils, System.JSON, System.Hash, System.StrUtils,
+  System.Classes, System.Math, System.IOUtils, System.Hash, System.StrUtils,
   System.Threading, System.SyncObjs, System.Generics.Collections,
-  OSPaths, Sprite3DStyles, Sprite3DTitleBar,
+  OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
   {$ENDIF}
@@ -1576,11 +1830,16 @@ begin
   FGrabHeight := GRAB_SIZE_DEFAULT;
   FAnimationFps := ANIMATION_FPS_DEFAULT;
   FViewFps := VIEW_FPS_DEFAULT;
+  SetMinifyJson(False);
   FDirectionCount := DIRECTION_COUNT_DEFAULT;
   FDirectionStart := 0;
   FDirectionClockwise := True;
   FDirectionOrder := String.Empty;
   FDirectionSnap := False;
+  FExportMetadata := False;
+  FExportDirections := False;
+  FAtlasPageSize := ATLAS_PAGE_SIZE_DEFAULT;
+  FAtlasNonPowerOf2 := False;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
   FResampleFilter := rfBox;
 end;
@@ -1622,9 +1881,23 @@ begin
   FViewFps := EnsureRange(Value, VIEW_FPS_MIN, VIEW_FPS_MAX);
 end;
 
+procedure TSprite3DAppSettings.SetMinifyJson(const Value: Boolean);
+begin
+  FMinifyJson := Value;
+  JsonText.MinifyJson := Value;   // every JSON file written from now on
+end;
+
 procedure TSprite3DAppSettings.SetOverscan(const Value: Integer);
 begin
   FOverscan := EnsureRange(Value, OVERSCAN_FACTOR_MIN, OVERSCAN_FACTOR_MAX);
+end;
+
+procedure TSprite3DAppSettings.SetAtlasPageSize(const Value: Integer);
+begin
+  FAtlasPageSize := ATLAS_PAGE_SIZES[0];
+  for var Size in ATLAS_PAGE_SIZES do
+    if Abs(Size - Value) < Abs(FAtlasPageSize - Value) then
+      FAtlasPageSize := Size;
 end;
 
 // Neon writes through the setters too, so a hand-edited settings.json can't
@@ -1757,17 +2030,15 @@ begin
     Result := Result + [StrToIntDef(Part.Trim, 0) - 1];
 end;
 
-procedure SaveDirectionsFile(const AFileName: String; const ACount: Integer;
-  const AStart: Single; const AOrder: TArray<Integer>; const ASnap: Boolean);
+function DirectionsToJson(const ACount: Integer; const AStart: Single;
+  const AOrder: TArray<Integer>; const ASnap: Boolean): TJSONObject;
 var
-  FileName: String;
   Order: TArray<Integer>;
   Root, Item: TJSONObject;
   Positions, Items: TJSONArray;
   Count: Integer;
   Start, Bearing: Single;
 begin
-  FileName := OSFriendlyPath(AFileName);
   Count := NearestDirectionCount(ACount);
   Start := Wrap360(AStart);
   Order := AOrder;
@@ -1797,18 +2068,34 @@ begin
       Item.AddPair('bearing', TJSONNumber.Create(Bearing));
       Item.AddPair('point', CompassPointName(Bearing));
     end;
+  except
+    Root.Free;
+    raise;
+  end;
+  Result := Root;
+end;
+
+procedure SaveDirectionsFile(const AFileName: String; const ACount: Integer;
+  const AStart: Single; const AOrder: TArray<Integer>; const ASnap: Boolean);
+var
+  FileName: String;
+  Root: TJSONObject;
+begin
+  FileName := OSFriendlyPath(AFileName);
+  Root := DirectionsToJson(ACount, AStart, AOrder, ASnap);
+  try
     if ExtractFileDir(FileName) <> String.Empty then
       ForceDirectories(ExtractFileDir(FileName));
-    TFile.WriteAllText(FileName, Root.Format(2), TEncoding.UTF8);
+    // UTF-8 without a byte order mark, which some JSON readers reject
+    TFile.WriteAllBytes(FileName, JsonToBytes(Root));
   finally
     Root.Free;
   end;
 end;
 
-procedure LoadDirectionsFile(const AFileName: String; out ACount: Integer;
+procedure DirectionsFromJson(const AValue: TJSONValue; out ACount: Integer;
   out AStart: Single; out AOrder: TArray<Integer>; out ASnap: Boolean);
 var
-  Value: TJSONValue;
   Root: TJSONObject;
   Positions: TJSONArray;
   Text: String;
@@ -1816,58 +2103,124 @@ var
   Start: Double;
   Clockwise, Snap, Known: Boolean;
 begin
+  if not (AValue is TJSONObject) then
+    raise EDirectionsFile.Create('This is not a set of directions: it is not a JSON ' +
+      'object.');
+  Root := TJSONObject(AValue);
+  if Root.TryGetValue<String>('format', Text) and (Text <> DIRECTIONS_FILE_FORMAT) then
+    raise EDirectionsFile.CreateFmt('This file is not a directions file: its format is ' +
+      '"%s".', [Text]);
+  if Root.TryGetValue<Integer>('version', Version) and
+    (Version > DIRECTIONS_FILE_VERSION) then
+    raise EDirectionsFile.CreateFmt('This directions file is version %d, from a newer ' +
+      'Sprite3D; this one reads up to version %d.', [Version, DIRECTIONS_FILE_VERSION]);
+  if not Root.TryGetValue<Integer>('count', Count) then
+    raise EDirectionsFile.Create('This directions file does not say how many directions ' +
+      'there are ("count").');
+  Known := False;
+  for var Allowed in DIRECTION_COUNTS do
+    Known := Known or (Allowed = Count);
+  if not Known then
+    raise EDirectionsFile.CreateFmt('This directions file has %d directions; the number ' +
+      'must be 1, 2, or a multiple of 4 or 6 up to 64.', [Count]);
+  if not Root.TryGetValue<Double>('start', Start) then
+    raise EDirectionsFile.Create('This directions file does not say where the first ' +
+      'position points ("start").');
+  if not Root.TryGetValue<Boolean>('snap', Snap) then
+    Snap := False;
+  if not Root.TryGetValue<Boolean>('clockwise', Clockwise) then
+    Clockwise := True;
+  AOrder := nil;
+  Positions := Root.GetValue('order') as TJSONArray;
+  if Positions = nil then
+    AOrder := PlainDirectionOrder(Count, Clockwise)
+  else
+  begin
+    for var Item in Positions do
+    begin
+      if not ((Item is TJSONNumber) and TryStrToInt(Item.Value, Position)) then
+        Position := 0;   // not a whole number: rejected below
+      AOrder := AOrder + [Position - 1];
+    end;
+    if not IsDirectionOrder(AOrder, Count) then
+      raise EDirectionsFile.CreateFmt('The order in this directions file ("order") must ' +
+        'hold every position from 1 to %d exactly once.', [Count]);
+  end;
+  ACount := Count;
+  AStart := Wrap360(Start);
+  ASnap := Snap;
+end;
+
+procedure LoadDirectionsFile(const AFileName: String; out ACount: Integer;
+  out AStart: Single; out AOrder: TArray<Integer>; out ASnap: Boolean);
+var
+  Value: TJSONValue;
+begin
   Value := TJSONObject.ParseJSONValue(TFile.ReadAllText(OSFriendlyPath(AFileName),
     TEncoding.UTF8));
   try
-    if not (Value is TJSONObject) then
-      raise EDirectionsFile.Create('This file is not a directions file: it is not a JSON ' +
-        'object.');
-    Root := TJSONObject(Value);
-    if Root.TryGetValue<String>('format', Text) and (Text <> DIRECTIONS_FILE_FORMAT) then
-      raise EDirectionsFile.CreateFmt('This file is not a directions file: its format is ' +
-        '"%s".', [Text]);
-    if Root.TryGetValue<Integer>('version', Version) and
-      (Version > DIRECTIONS_FILE_VERSION) then
-      raise EDirectionsFile.CreateFmt('This directions file is version %d, from a newer ' +
-        'Sprite3D; this one reads up to version %d.', [Version, DIRECTIONS_FILE_VERSION]);
-    if not Root.TryGetValue<Integer>('count', Count) then
-      raise EDirectionsFile.Create('This directions file does not say how many directions ' +
-        'there are ("count").');
-    Known := False;
-    for var Allowed in DIRECTION_COUNTS do
-      Known := Known or (Allowed = Count);
-    if not Known then
-      raise EDirectionsFile.CreateFmt('This directions file has %d directions; the number ' +
-        'must be 1, 2, or a multiple of 4 or 6 up to 64.', [Count]);
-    if not Root.TryGetValue<Double>('start', Start) then
-      raise EDirectionsFile.Create('This directions file does not say where the first ' +
-        'position points ("start").');
-    if not Root.TryGetValue<Boolean>('snap', Snap) then
-      Snap := False;
-    if not Root.TryGetValue<Boolean>('clockwise', Clockwise) then
-      Clockwise := True;
-    AOrder := nil;
-    Positions := Root.GetValue('order') as TJSONArray;
-    if Positions = nil then
-      AOrder := PlainDirectionOrder(Count, Clockwise)
-    else
-    begin
-      for var Item in Positions do
-      begin
-        if not ((Item is TJSONNumber) and TryStrToInt(Item.Value, Position)) then
-          Position := 0;   // not a whole number: rejected below
-        AOrder := AOrder + [Position - 1];
-      end;
-      if not IsDirectionOrder(AOrder, Count) then
-        raise EDirectionsFile.CreateFmt('The order in this directions file ("order") must ' +
-          'hold every position from 1 to %d exactly once.', [Count]);
-    end;
-    ACount := Count;
-    AStart := Wrap360(Start);
-    ASnap := Snap;
+    DirectionsFromJson(Value, ACount, AStart, AOrder, ASnap);
   finally
     Value.Free;
   end;
+end;
+
+function IsProjectFile(const AFileName: String): Boolean;
+begin
+  Result := SameText(ExtractFileExt(AFileName), PROJECT_FILE_EXTENSION);
+end;
+
+function CreditsToJson(const ACredits: TSprite3DCredits): TJSONObject;
+var
+  Obj: TJSONObject;
+
+  procedure Add(const AName, AValue: String);
+  begin
+    if AValue.Trim = String.Empty then
+      Obj.AddPair(AName, TJSONNull.Create)
+    else
+      Obj.AddPair(AName, AValue.Trim);
+  end;
+
+begin
+  Obj := TJSONObject.Create;
+  Result := Obj;
+  Add('creator', ACredits.Creator);
+  Add('creator_url', ACredits.CreatorUrl);
+  Add('modeller', ACredits.Modeller);
+  Add('modeller_url', ACredits.ModellerUrl);
+  Add('artist', ACredits.Artist);
+  Add('artist_url', ACredits.ArtistUrl);
+  Add('created', ACredits.Created);
+end;
+
+function CreditsFromJson(const AValue: TJSONValue): TSprite3DCredits;
+
+  function Get(const AName: String): String;
+  begin
+    if not TJSONObject(AValue).TryGetValue<String>(AName, Result) then
+      Result := String.Empty;
+  end;
+
+begin
+  // Every field set; Default() would mean Gorilla's TGorillaOAuthMode.Default
+  // in this unit
+  Result.Creator := String.Empty;
+  Result.CreatorUrl := String.Empty;
+  Result.Modeller := String.Empty;
+  Result.ModellerUrl := String.Empty;
+  Result.Artist := String.Empty;
+  Result.ArtistUrl := String.Empty;
+  Result.Created := String.Empty;
+  if not (AValue is TJSONObject) then
+    Exit;
+  Result.Creator := Get('creator');
+  Result.CreatorUrl := Get('creator_url');
+  Result.Modeller := Get('modeller');
+  Result.ModellerUrl := Get('modeller_url');
+  Result.Artist := Get('artist');
+  Result.ArtistUrl := Get('artist_url');
+  Result.Created := Get('created');
 end;
 
 function CompassPointName(const ADegrees: Single): String;
@@ -2264,7 +2617,8 @@ begin
     end;
     try
       ForceDirectories(ExtractFilePath(FileName));
-      TFile.WriteAllText(FileName, Root.ToJSON, TEncoding.UTF8);
+      // UTF-8 without a byte order mark, indented or minified as asked
+      TFile.WriteAllBytes(FileName, JsonToBytes(Root));
     except
       // Not kept: measured again next time
     end;
@@ -2425,6 +2779,53 @@ const
     ('glTF binary model', 'glTF model', 'FBX model', 'Wavefront OBJ model',
      'USD binary model', 'Collada model', 'STL model', 'PLY model');
 
+// Sprite3D's own project files, as the associations know them
+function ProjectFileType: TSprite3DFileType;
+begin
+  Result := TSprite3DFileType.Create(PROJECT_FILE_EXTENSION, 'application/x-sprite3d',
+    'Sprite3D project');
+end;
+
+function RegisterProjectFiles(out AMessage: String): Boolean;
+{$IF DEFINED(MSWINDOWS) or (DEFINED(LINUX) and not DEFINED(ANDROID))}
+var
+  Project, Models: TSprite3DFileAssociations;
+{$ENDIF}
+begin
+  AMessage := String.Empty;
+  Result := True;
+  {$IF DEFINED(MSWINDOWS)}
+  Project := TSprite3DFileAssociations.Create(APP_NAME, APP_NAME + '.Project',
+    'Sprite3D project', [ProjectFileType]);
+  try
+    Result := Project.Register and Project.Claim;
+    if not Result then
+      AMessage := Project.LastError;
+  finally
+    Project.Free;
+  end;
+  {$ELSEIF DEFINED(LINUX) and not DEFINED(ANDROID)}
+  Project := TSprite3DFileAssociations.Create(APP_NAME, APP_NAME + '.Project',
+    'Sprite3D project', [ProjectFileType]);
+  Models := CreateModelAssociations;
+  try
+    // The desktop entry lists every type it opens: the models too, if they
+    // are registered, as they would be dropped otherwise
+    if Models.IsRegistered then
+      Result := Models.Register
+    else
+      Result := Project.Register;
+    // The default for the project type alone, never for the models
+    Result := Result and Project.Claim;
+    if not Result then
+      AMessage := Project.LastError + Models.LastError;
+  finally
+    Models.Free;
+    Project.Free;
+  end;
+  {$ENDIF}
+end;
+
 function CreateModelAssociations: TSprite3DFileAssociations;
 var
   Types: TArray<TSprite3DFileType>;
@@ -2434,6 +2835,11 @@ begin
   for I := 0 to High(MODEL_EXTENSIONS) do
     Types[I] := TSprite3DFileType.Create(MODEL_EXTENSIONS[I], MODEL_MIME_TYPES[I],
       MODEL_DESCRIPTIONS[I]);
+  {$IF DEFINED(LINUX) and not DEFINED(ANDROID)}
+  // Linux has one desktop entry for every type, so Sprite3D's own project
+  // files go in with the models, or registering these would drop them
+  Types := Types + [ProjectFileType];
+  {$ENDIF}
   Result := TSprite3DFileAssociations.Create(APP_NAME, APP_NAME + '.Model',
     '3D model', Types);
 end;
@@ -2576,6 +2982,7 @@ begin
   Result.GrabHeight := ASettings.GrabHeight;
   Result.SaveFolder := ASettings.SaveFolder;
   Result.ViewFps := ASettings.ViewFps;
+  Result.MinifyJson := ASettings.MinifyJson;
   // The caller knows the display; until it says, at least the rate in use
   Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then

@@ -1,8 +1,8 @@
-//** @abstract(The Model, Animation Settings dialog: the frame rate animations are saved at, and
-//** overscan.)
+//** @abstract(The Model, Animation Settings dialog: the frame rate animations are saved at,
+//** overscan, and texture atlas pages.)
 //**
 //** One slider, marked FPS, sets the frames per second that the animation list's Save as
-//** sprite strip, Save as Texture Atlas and Save as AniGif, and batch Export, use, from
+//** sprite strip, Save as Spritesheet and Save as AniGif, and batch Export, use, from
 //** ANIMATION_FPS_MIN to ANIMATION_FPS_MAX. The number beside it shows the value as the
 //** slider moves.
 //**
@@ -14,6 +14,10 @@
 //** screenshots, the tick box is disabled and a note says why. The slider and the drop-down
 //** are only enabled while the box is ticked.
 //**
+//** Under Texture Atlas, Page size chooses the largest a texture atlas page may be each way,
+//** one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick box below lets pages be any
+//** size rather than powers of 2 each way.
+//**
 //** OK accepts the values and Cancel leaves the old ones; keeping them, and applying them,
 //** is the caller's job.
 //**
@@ -23,11 +27,11 @@
 unit Sprite3DAnimationForm;
 
 {
-  The Model, Animation Settings dialog: the frame rate animations are saved at, and
-  overscan.
+  The Model, Animation Settings dialog: the frame rate animations are saved
+  at, overscan, and texture atlas pages.
 
   One slider, marked FPS, sets the frames per second that the animation
-  list's Save as sprite strip, Save as Texture Atlas and Save as AniGif, and
+  list's Save as sprite strip, Save as Spritesheet and Save as AniGif, and
   batch Export, use, from ANIMATION_FPS_MIN to ANIMATION_FPS_MAX. The number
   beside it shows the value as the slider moves.
 
@@ -39,6 +43,10 @@ unit Sprite3DAnimationForm;
   where that is below OVERSCAN_FACTOR_MIN, as where grabs are screenshots,
   the tick box is disabled and a note says why. The slider and the drop-down
   are only enabled while the box is ticked.
+
+  Under Texture Atlas, Page size chooses the largest a texture atlas page
+  may be each way, one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick
+  box below lets pages be any size rather than powers of 2 each way.
 
   OK accepts the values and Cancel leaves the old ones; keeping them, and
   applying them, is the caller's job.
@@ -105,6 +113,26 @@ type
     /// <summary>Says how far overscan can go at the grab size, or why it cannot be
     /// used.</summary>
     OverscanNoteLabel: TLabel;
+    //** @abstract(The heading "Texture Atlas".)
+    /// <summary>The heading "Texture Atlas".</summary>
+    AtlasHeaderLabel: TLabel;
+    //** @abstract(The row with AtlasSizeLabel and AtlasSizeCombo.)
+    /// <summary>The row with AtlasSizeLabel and AtlasSizeCombo.</summary>
+    AtlasSizeLayout: TLayout;
+    //** @abstract(The caption "Page size".)
+    /// <summary>The caption "Page size".</summary>
+    AtlasSizeLabel: TLabel;
+    //** @abstract(The largest an atlas page may be each way, one entry per ATLAS_PAGE_SIZES in
+    //** its order.)
+    /// <summary>The largest an atlas page may be each way, one entry per ATLAS_PAGE_SIZES in
+    /// its order.</summary>
+    AtlasSizeCombo: TComboBox;
+    //** @abstract(Lets atlas pages be any size, rather than powers of 2 each way.)
+    /// <summary>Lets atlas pages be any size, rather than powers of 2 each way.</summary>
+    AtlasNonPowerOf2Check: TCheckBox;
+    //** @abstract(A line explaining what the page size is for.)
+    /// <summary>A line explaining what the page size is for.</summary>
+    AtlasNoteLabel: TLabel;
     //** @abstract(The strip holding the Cancel and OK buttons.)
     /// <summary>The strip holding the Cancel and OK buttons.</summary>
     ButtonLayout: TLayout;
@@ -171,6 +199,10 @@ type
     function GetFilter: TSprite3DResampleFilter;
     procedure SetFilter(const Value: TSprite3DResampleFilter);
     procedure UpdateOverscanControls;
+    function GetAtlasPageSize: Integer;
+    procedure SetAtlasPageSize(const Value: Integer);
+    function GetAtlasNonPowerOf2: Boolean;
+    procedure SetAtlasNonPowerOf2(const Value: Boolean);
   public
     //** @abstract(Shows the dialog without blocking and frees it when it closes.)
     //**
@@ -219,6 +251,18 @@ type
     //** @abstract(The resampling filter chosen.)
     /// <summary>The resampling filter chosen.</summary>
     property Filter: TSprite3DResampleFilter read GetFilter write SetFilter;
+    //** @abstract(The largest a texture atlas page may be each way, in pixels; one of
+    //** ATLAS_PAGE_SIZES.)
+    //**
+    //** A value that is not one of them shows as the nearest that is.
+    /// <summary>The largest a texture atlas page may be each way, in pixels; one of
+    /// ATLAS_PAGE_SIZES.</summary>
+    /// <remarks>A value that is not one of them shows as the nearest that is.</remarks>
+    property AtlasPageSize: Integer read GetAtlasPageSize write SetAtlasPageSize;
+    //** @abstract(Whether texture atlas pages may be any size, rather than powers of 2.)
+    /// <summary>Whether texture atlas pages may be any size, rather than powers of
+    /// 2.</summary>
+    property AtlasNonPowerOf2: Boolean read GetAtlasNonPowerOf2 write SetAtlasNonPowerOf2;
     //** @abstract(Called on OK when shown with ShowAndFree.)
     /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
@@ -256,6 +300,43 @@ begin
   OverscanTrack.Value := OVERSCAN_FACTOR_DEFAULT;
   OverscanCheck.IsChecked := False;
   SetMaxOverscan(OVERSCAN_FACTOR_MAX);
+
+  // The page sizes, in ATLAS_PAGE_SIZES' order: 1k, 2k and so on
+  AtlasSizeCombo.Items.Clear;
+  for var Size in ATLAS_PAGE_SIZES do
+    AtlasSizeCombo.Items.Add(Format('%dk (%d x %d)', [Size div 1024, Size, Size]));
+  SetAtlasPageSize(ATLAS_PAGE_SIZE_DEFAULT);
+  AtlasNonPowerOf2Check.IsChecked := False;
+end;
+
+function TAnimationSettingsForm.GetAtlasPageSize: Integer;
+begin
+  if (AtlasSizeCombo.ItemIndex >= Low(ATLAS_PAGE_SIZES)) and
+    (AtlasSizeCombo.ItemIndex <= High(ATLAS_PAGE_SIZES)) then
+    Result := ATLAS_PAGE_SIZES[AtlasSizeCombo.ItemIndex]
+  else
+    Result := ATLAS_PAGE_SIZE_DEFAULT;
+end;
+
+procedure TAnimationSettingsForm.SetAtlasPageSize(const Value: Integer);
+var
+  Best: Integer;
+begin
+  Best := Low(ATLAS_PAGE_SIZES);
+  for var I := Low(ATLAS_PAGE_SIZES) to High(ATLAS_PAGE_SIZES) do
+    if Abs(ATLAS_PAGE_SIZES[I] - Value) < Abs(ATLAS_PAGE_SIZES[Best] - Value) then
+      Best := I;
+  AtlasSizeCombo.ItemIndex := Best;
+end;
+
+function TAnimationSettingsForm.GetAtlasNonPowerOf2: Boolean;
+begin
+  Result := AtlasNonPowerOf2Check.IsChecked;
+end;
+
+procedure TAnimationSettingsForm.SetAtlasNonPowerOf2(const Value: Boolean);
+begin
+  AtlasNonPowerOf2Check.IsChecked := Value;
 end;
 
 procedure TAnimationSettingsForm.OverscanTrackChange(Sender: TObject);

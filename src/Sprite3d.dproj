@@ -373,6 +373,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="common\OSPaths.pas"/>
+        <DCCReference Include="common\JsonText.pas"/>
         <DCCReference Include="common\GpuPreference.pas"/>
         <DCCReference Include="common\DisplayData.pas"/>
         <DCCReference Include="lib\Sprite3DFileAssoc.pas"/>
@@ -398,6 +399,14 @@ $(PreBuildEvent)]]></PreBuildEvent>
         </DCCReference>
         <DCCReference Include="ui\Sprite3DDirectionsForm.pas">
             <Form>DirectionsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DExportForm.pas">
+            <Form>ExportProgressForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DCreditsForm.pas">
+            <Form>CreditsForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="lib\Sprite3DVideo.pas"/>

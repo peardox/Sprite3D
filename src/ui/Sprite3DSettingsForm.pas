@@ -14,6 +14,7 @@
 //**     |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
 //**     |   |                          GrabFolderText, GrabFolderResetButton
 //**     |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
+//**     |   |-- FilesGroup             MinifyJsonCheck, MinifyJsonNote
 //**     |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
 //**     `-- ButtonLayout               OkButton, CancelButton
 //** )
@@ -54,6 +55,7 @@ unit Sprite3DSettingsForm;
         |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
         |   |                          GrabFolderText, GrabFolderResetButton
         |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
+        |   |-- FilesGroup             MinifyJsonCheck, MinifyJsonNote
         |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
         `-- ButtonLayout               OkButton, CancelButton
 
@@ -146,6 +148,15 @@ type
     //** @abstract(The GPU choices; Windows only.)
     /// <summary>The GPU choices; Windows only.</summary>
     GpuGroup: TGroupBox;
+    //** @abstract(How Sprite3D writes its files.)
+    /// <summary>How Sprite3D writes its files.</summary>
+    FilesGroup: TGroupBox;
+    //** @abstract(Writes every JSON file minified, with no indents or line breaks.)
+    /// <summary>Writes every JSON file minified, with no indents or line breaks.</summary>
+    MinifyJsonCheck: TCheckBox;
+    //** @abstract(Says which files Minify JSON changes.)
+    /// <summary>Says which files Minify JSON changes.</summary>
+    MinifyJsonNote: TLabel;
     //** @abstract(The view's frame rate.)
     /// <summary>The view's frame rate.</summary>
     FrameRateGroup: TGroupBox;
@@ -466,6 +477,8 @@ begin
     [VIEW_FPS_MIN, Round(FrameRateTrack.Max)]);
   FrameRateTrackChange(FrameRateTrack);
 
+  MinifyJsonCheck.IsChecked := Value.MinifyJson;
+
   case Value.GpuMode of
     gmPowerSaving: GpuLowRadio.IsChecked := True;
     gmHighPerformance: GpuHighRadio.IsChecked := True;
@@ -510,6 +523,8 @@ begin
     (FValues.ViewFps < Round(FrameRateTrack.Max)) then
     FValues.ViewFps := EnsureRange(Round(FrameRateTrack.Value), VIEW_FPS_MIN,
       Max(VIEW_FPS_MIN, FValues.MaxViewFps));
+
+  FValues.MinifyJson := MinifyJsonCheck.IsChecked;
 
   if GpuGroup.Visible then
   begin

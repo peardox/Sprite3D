@@ -4,7 +4,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Animation Settings'
-  ClientHeight = 290
+  ClientHeight = 440
   ClientWidth = 360
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -19,7 +19,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
     Padding.Top = 12.000000000000000000
     Padding.Right = 12.000000000000000000
     Size.Width = 360.000000000000000000
-    Size.Height = 246.000000000000000000
+    Size.Height = 396.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object FpsLayout: TLayout
@@ -73,8 +73,8 @@ object AnimationSettingsForm: TAnimationSettingsForm
       Size.Height = 32.000000000000000000
       Size.PlatformDefault = False
       Text = 
-        'Frames per second for animations saved as strips, atlases and GI' +
-        'Fs.'
+        'Frames per second for animations saved as strips, spritesheets, atlase' +
+        's and GIFs.'
       TabOrder = 1
     end
     object OverscanLayout: TLayout
@@ -158,10 +158,74 @@ object AnimationSettingsForm: TAnimationSettingsForm
       Text = ''
       TabOrder = 4
     end
+    object AtlasHeaderLabel: TLabel
+      Align = Top
+      StyledSettings = [Family, Size, FontColor]
+      Margins.Top = 16.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 236.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 20.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Font.StyleExt = {00070000000000000004000000}
+      Text = 'Texture Atlas'
+      TabOrder = 5
+    end
+    object AtlasSizeLayout: TLayout
+      Align = Top
+      Margins.Top = 4.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 260.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 6
+      object AtlasSizeLabel: TLabel
+        Align = Left
+        Size.Width = 96.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Page size'
+        TabOrder = 0
+      end
+      object AtlasSizeCombo: TComboBox
+        Align = Client
+        Size.Width = 240.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+      end
+    end
+    object AtlasNonPowerOf2Check: TCheckBox
+      Align = Top
+      Margins.Top = 4.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 296.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 7
+      Text = 'Pages need not be a power of 2'
+    end
+    object AtlasNoteLabel: TLabel
+      Align = Top
+      AutoSize = True
+      Margins.Top = 4.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 332.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 48.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.WordWrap = True
+      Text = 
+        'The largest one atlas page may be each way. Animations go on a pag' +
+        'e in list order while they fit, then on the next.'
+      TabOrder = 8
+    end
   end
   object ButtonLayout: TLayout
     Align = Bottom
-    Position.Y = 246.000000000000000000
+    Position.Y = 396.000000000000000000
     Size.Width = 360.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False

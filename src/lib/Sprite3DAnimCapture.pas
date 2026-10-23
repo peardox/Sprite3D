@@ -243,7 +243,8 @@ type
     FDuration: Single;
     procedure SeekTo(const ATime: Single);
   public
-    //** @abstract(Prepares to capture one cycle of AAnimation of AModel at AFrameRate.)
+    //** @abstract(Prepares to capture one cycle of AAnimation of AModel at AFrameRate, or in
+    //** AFrameCount frames.)
     //**
     //** @param(AModel The model the animation belongs to; it must outlive this object.)
     //**
@@ -251,23 +252,30 @@ type
     //**
     //** @param(AFrameRate The frames per second wanted; at least 1.)
     //**
+    //** @param(AFrameCount The number of frames wanted, in place of what AFrameRate gives,
+    //** such as one chosen by hand; 0, the default, for what AFrameRate gives.)
+    //**
     //** @raises(EArgumentException If AModel or AAnimation is nil, or AFrameRate is less
     //** than 1.)
-    /// <summary>Prepares to capture one cycle of AAnimation of AModel at
-    /// AFrameRate.</summary>
+    /// <summary>Prepares to capture one cycle of AAnimation of AModel at AFrameRate, or in
+    /// AFrameCount frames.</summary>
     /// <param name="AModel">The model the animation belongs to; it must outlive this
     /// object.</param>
     /// <param name="AAnimation">One of AModel's animations; it must outlive this
     /// object.</param>
     /// <param name="AFrameRate">The frames per second wanted; at least 1.</param>
+    /// <param name="AFrameCount">The number of frames wanted, in place of what AFrameRate
+    /// gives, such as one chosen by hand; 0, the default, for what AFrameRate gives.</param>
     /// <exception cref="EArgumentException">If AModel or AAnimation is nil, or AFrameRate is
     /// less than 1.</exception>
     constructor Create(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation;
-      const AFrameRate: Integer);
-    //** @abstract(The number of frames: the length times the chosen rate, rounded.)
+      const AFrameRate: Integer; const AFrameCount: Integer = 0);
+    //** @abstract(The number of frames: the count chosen, or the length times the chosen
+    //** rate, rounded.)
     //**
     //** @returns(The frame count; at least 1.)
-    /// <summary>The number of frames: the length times the chosen rate, rounded.</summary>
+    /// <summary>The number of frames: the count chosen, or the length times the chosen rate,
+    /// rounded.</summary>
     /// <returns>The frame count; at least 1.</returns>
     function FrameCount: Integer; override;
     //** @abstract(The animation's length in seconds.)
@@ -544,6 +552,7 @@ type
     FModel: TGorillaModel;
     FAnimation: TGorillaAnimation;
     FFrameRate: Integer;
+    FFrameCount: Integer;                // frames chosen by hand; 0 for FFrameRate's
     FFrames: TSprite3DAnimationFrames;   // the export frames, at FFrameRate
     FHeld: Boolean;
     FFrame: Integer;                     // the frame held
@@ -563,6 +572,10 @@ type
     //** @param(AFrameRate The export frame rate, which sets the frames held and stepped
     //** through.)
     //**
+    //** @param(AFrameCount The number of export frames, in place of what AFrameRate gives,
+    //** such as one chosen by hand; 0, the default, for what AFrameRate gives. It is kept
+    //** when FrameRate changes.)
+    //**
     //** @raises(EArgumentException If AModel or AAnimation is nil, or AFrameRate is below 1.)
     /// <summary>Starts following an animation that has just started from its
     /// beginning.</summary>
@@ -571,10 +584,13 @@ type
     /// pose.</param>
     /// <param name="AFrameRate">The export frame rate, which sets the frames held and stepped
     /// through.</param>
+    /// <param name="AFrameCount">The number of export frames, in place of what AFrameRate
+    /// gives, such as one chosen by hand; 0, the default, for what AFrameRate gives. It is
+    /// kept when FrameRate changes.</param>
     /// <exception cref="EArgumentException">If AModel or AAnimation is nil, or AFrameRate is
     /// below 1.</exception>
     constructor Create(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation;
-      const AFrameRate: Integer);
+      const AFrameRate: Integer; const AFrameCount: Integer = 0);
     //** @abstract(Lets a held animation play on from its frame, then frees the player.)
     /// <summary>Lets a held animation play on from its frame, then frees the player.</summary>
     destructor Destroy; override;
@@ -648,7 +664,8 @@ end;
 { TSprite3DAnimationPlayer }
 
 constructor TSprite3DAnimationPlayer.Create(const AModel: TGorillaModel;
-  const AAnimation: TGorillaAnimation; const AFrameRate: Integer);
+  const AAnimation: TGorillaAnimation; const AFrameRate: Integer;
+  const AFrameCount: Integer);
 begin
   inherited Create;
   if AFrameRate < 1 then
@@ -656,8 +673,9 @@ begin
   FModel := AModel;
   FAnimation := AAnimation;
   FFrameRate := AFrameRate;
+  FFrameCount := Max(0, AFrameCount);
   // Raises for a missing model or animation
-  FFrames := TSprite3DAnimationFrames.Create(AModel, AAnimation, AFrameRate);
+  FFrames := TSprite3DAnimationFrames.Create(AModel, AAnimation, AFrameRate, FFrameCount);
   FOffset := 0;
   FClock := TStopwatch.StartNew;
 end;
@@ -756,7 +774,7 @@ begin
   Phase := FFrame / FrameCount;
   FFrameRate := Rate;
   FreeAndNil(FFrames);
-  FFrames := TSprite3DAnimationFrames.Create(FModel, FAnimation, Rate);
+  FFrames := TSprite3DAnimationFrames.Create(FModel, FAnimation, Rate, FFrameCount);
   if FHeld then
   begin
     FFrame := Round(Phase * FrameCount) mod FrameCount;
@@ -782,7 +800,8 @@ end;
 { TSprite3DAnimationFrames }
 
 constructor TSprite3DAnimationFrames.Create(const AModel: TGorillaModel;
-  const AAnimation: TGorillaAnimation; const AFrameRate: Integer);
+  const AAnimation: TGorillaAnimation; const AFrameRate: Integer;
+  const AFrameCount: Integer);
 const
   // Only used if Gorilla reports neither a length nor a baked rate
   FALLBACK_LENGTH = 1.0;
@@ -804,9 +823,12 @@ begin
       FDuration := FCachedFrames / FAnimation.FrameRate
     else
       FDuration := FALLBACK_LENGTH;
-  // A whole number of equal steps in one cycle, as near the rate as that
-  // allows
-  FFrames := Max(1, Round(FDuration * AFrameRate));
+  // A whole number of equal steps in one cycle: as many as asked for, or as
+  // near the rate as that allows
+  if AFrameCount > 0 then
+    FFrames := AFrameCount
+  else
+    FFrames := Max(1, Round(FDuration * AFrameRate));
 end;
 
 function TSprite3DAnimationFrames.FrameCount: Integer;

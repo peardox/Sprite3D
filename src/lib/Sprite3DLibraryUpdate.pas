@@ -168,7 +168,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, System.ZLib, System.Math, System.Net.HttpClient,
-  System.Net.URLClient, Sprite3DNativeLibs, Sprite3DBzip2, OSPaths;
+  System.Net.URLClient, Sprite3DNativeLibs, Sprite3DBzip2, OSPaths, JsonText;
 
 const
   INSTALLED_FILE = 'installed.json';
@@ -405,8 +405,7 @@ begin
       Installed.AddPair('url', FUrl);
       Installed.AddPair('file', ExtractFileName(Target));
       // UTF-8 without a byte-order mark
-      TFile.WriteAllBytes(TPath.Combine(FFolder, INSTALLED_FILE),
-        TEncoding.UTF8.GetBytes(Installed.ToJSON));
+      TFile.WriteAllBytes(TPath.Combine(FFolder, INSTALLED_FILE), JsonToBytes(Installed));
     finally
       Installed.Free;
     end;

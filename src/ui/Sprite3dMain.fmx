@@ -8,6 +8,7 @@ object MainForm: TMainForm
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
+  OnCloseQuery = FormCloseQuery
   OnDestroy = FormDestroy
   OnShow = FormShow
   DesignerMasterStyle = 0
@@ -49,6 +50,16 @@ object MainForm: TMainForm
           Size.Height = 694.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
+          object AspectLayout: TRectangle
+            Align = Client
+            Fill.Color = xFF303030
+            HitTest = False
+            Size.Width = 560.000000000000000000
+            Size.Height = 694.000000000000000000
+            Size.PlatformDefault = False
+            Stroke.Kind = None
+            OnResize = AspectLayoutResize
+          end
         end
         object ControlsLayout: TLayout
           Align = Right
@@ -173,6 +184,18 @@ object MainForm: TMainForm
         Text = 'Open Model'
         OnClick = OpenModelMenuItemClick
       end
+      object LoadAnimationSettingsItem: TMenuItem
+        Enabled = False
+        Locked = True
+        Text = 'Load Animation Settings...'
+        OnClick = LoadAnimationSettingsItemClick
+      end
+      object SaveAnimationSettingsItem: TMenuItem
+        Enabled = False
+        Locked = True
+        Text = 'Save Animation Settings...'
+        OnClick = SaveAnimationSettingsItemClick
+      end
       object GrabMenuItem: TMenuItem
         Locked = True
         Text = 'Grab'
@@ -182,6 +205,16 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Save As Icon'
         OnClick = SaveAsIconMenuItemClick
+      end
+      object CreditsItem: TMenuItem
+        Locked = True
+        Text = 'Save Project...'
+        OnClick = CreditsItemClick
+      end
+      object LoadCreditsItem: TMenuItem
+        Locked = True
+        Text = 'Load Project...'
+        OnClick = LoadCreditsItemClick
       end
       object SettingsMenuItem: TMenuItem
         Locked = True
