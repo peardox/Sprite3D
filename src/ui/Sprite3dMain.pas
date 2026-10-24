@@ -1612,6 +1612,12 @@ type
     FGrabHidAxes: TModelAxes;
     FGrabHidGrid: TModelGrid;
     FCaptureFramed: Boolean;
+    // The camera's distance from its orbit centre, and its orthographic
+    // height, as the last capture was framed, for the metadata's camera: a
+    // batch frames every capture alike, and an atlas's metadata is written
+    // after the camera is put back
+    FCaptureDistance: Single;
+    FCaptureOrthoHeight: Single;
     // The capture under way, or nil; it frees itself when it reports
     FCapture: TSprite3DFrameCapture;
     // The on-screen framing, put back when a capture ends
@@ -3082,7 +3088,8 @@ begin
 end;
 
 // The meta section of the metadata saved now: page APage of APageCount, the
-// image's own frames as the total, the credits, the day the project started, now, and the model
+// image's own frames as the total, the 2-pass and overscan choices, the
+// camera, the credits, the day the project started, now, and the model
 function TMainForm.ExportMeta(const APage, APageCount: Integer): TSprite3DSheetMeta;
 begin
   Result.Page := APage;
@@ -3098,6 +3105,28 @@ begin
   // Local time, with its offset from UTC
   Result.Modified := DateToISO8601(Now, False);
   Result.ModelFile := FModelFile;
+  Result.TwoPass := FBatchTwoPass.IsChecked;
+  Result.OverscanEnabled := FOverscanOn;
+  Result.Overscan := FSettings.Overscan;
+  // The view checked in View, Camera, by the name settings.json keeps it by
+  Result.Camera.View := String.Empty;
+  for var I := 0 to CameraMenu.ItemsCount - 1 do
+    if IsCameraViewItem(CameraMenu.Items[I]) and CameraMenu.Items[I].IsChecked then
+      Result.Camera.View := CameraViewKey(CameraMenu.Items[I]);
+  Result.Camera.Orthographic :=
+    GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpOrthographic;
+  // The readouts, as shown; a direction's turn is not in them
+  Result.Camera.Azimuth := FAzimuth;
+  Result.Camera.Inclination := FPolarAngle;
+  Result.Camera.Roll := FRoll;
+  // As the capture was framed, not the view: the export fits the camera to
+  // what it saves, the combined swept volume for a batch
+  Result.Camera.Distance := FCaptureDistance;
+  Result.Camera.OrthoHeight := FCaptureOrthoHeight;
+  Result.Camera.PanEnabled := FPanEnabled;
+  Result.Camera.PanX := FPanX;
+  Result.Camera.PanZ := FPanZ;
+  Result.Camera.Locked := CameraLocked;
 end;
 
 // File, Save Project...: the credits, and on OK they are kept for every
@@ -5737,6 +5766,8 @@ begin
   if FCaptureFramed and
     not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
     DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
+  FCaptureDistance := GorillaCamera.Distance;
+  FCaptureOrthoHeight := GorillaCamera.OrthoHeight;
 
   // Where the centre of rotation falls in every frame: the framing holds for
   // the whole capture and the model never moves, so once is enough. For a

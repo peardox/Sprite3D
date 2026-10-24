@@ -227,13 +227,71 @@ type
     Frame: Integer;
   end;
 
-  //** @abstract(The @code(meta) section SaveSheetMetadata writes first: which page, who made
-  //** it, and when.)
+  //** @abstract(The @code(camera) section SaveSheetMetadata writes: the camera as the export
+  //** started.)
   //**
-  //** Empty text is written as @code(null).
+  //** The angles are the readouts' own, as the dials show them; with directions, each
+  //** direction's bearing turns the view on from Azimuth.
+  /// <summary>The <c>camera</c> section SaveSheetMetadata writes: the camera as the export
+  /// started.</summary>
+  /// <remarks>The angles are the readouts' own, as the dials show them; with directions,
+  /// each direction's bearing turns the view on from Azimuth.</remarks>
+  TSprite3DSheetCamera = record
+    //** @abstract(The View, Camera view checked, such as Isometric or Variable.)
+    /// <summary>The View, Camera view checked, such as Isometric or Variable.</summary>
+    View: String;
+    //** @abstract(True for orthographic projection, False for perspective.)
+    /// <summary>True for orthographic projection, False for perspective.</summary>
+    Orthographic: Boolean;
+    //** @abstract(The Azimuth readout, in degrees.)
+    /// <summary>The Azimuth readout, in degrees.</summary>
+    Azimuth: Single;
+    //** @abstract(The Inclination readout, in degrees.)
+    /// <summary>The Inclination readout, in degrees.</summary>
+    Inclination: Single;
+    //** @abstract(The Roll readout, in degrees.)
+    /// <summary>The Roll readout, in degrees.</summary>
+    Roll: Single;
+    //** @abstract(The camera's distance from its orbit centre as the frames were captured,
+    //** in scene units.)
+    //**
+    //** The export fits the camera to what it saves, so this is the capture's distance, not
+    //** the on-screen view's: for a batch, fitted to the combined swept volume of every
+    //** animation used.
+    /// <summary>The camera's distance from its orbit centre as the frames were captured, in
+    /// scene units.</summary>
+    /// <remarks>The export fits the camera to what it saves, so this is the capture's
+    /// distance, not the on-screen view's: for a batch, fitted to the combined swept volume
+    /// of every animation used.</remarks>
+    Distance: Single;
+    //** @abstract(The height of scene the frames show, in scene units, as captured; used
+    //** only with Orthographic.)
+    /// <summary>The height of scene the frames show, in scene units, as captured; used only
+    /// with Orthographic.</summary>
+    OrthoHeight: Single;
+    //** @abstract(Whether the pan is applied.)
+    /// <summary>Whether the pan is applied.</summary>
+    PanEnabled: Boolean;
+    //** @abstract(The pan along the model's X axis, as a multiple of its radius.)
+    /// <summary>The pan along the model's X axis, as a multiple of its radius.</summary>
+    PanX: Single;
+    //** @abstract(The pan along the model's Z axis, as a multiple of its radius.)
+    /// <summary>The pan along the model's Z axis, as a multiple of its radius.</summary>
+    PanZ: Single;
+    //** @abstract(Whether View, Camera, Lock Camera is ticked.)
+    /// <summary>Whether View, Camera, Lock Camera is ticked.</summary>
+    Locked: Boolean;
+  end;
+
+  //** @abstract(The @code(meta) section SaveSheetMetadata writes first: which page, who made
+  //** it, and when; and the export's choices and camera, for the other sections.)
+  //**
+  //** Empty text is written as @code(null). TwoPass and the overscan go in the @code(image)
+  //** section, and Camera is the @code(camera) section.
   /// <summary>The <c>meta</c> section SaveSheetMetadata writes first: which page, who made
-  /// it, and when.</summary>
-  /// <remarks>Empty text is written as <c>null</c>.</remarks>
+  /// it, and when; and the export's choices and camera, for the other sections.</summary>
+  /// <remarks>Empty text is written as <c>null</c>. TwoPass and the overscan go in the
+  /// <c>image</c> section, and Camera is the <c>camera</c> section.</remarks>
   TSprite3DSheetMeta = record
     //** @abstract(This image's page, from 1, as its file name numbers it; 1 for a strip or
     //** spritesheet.)
@@ -275,6 +333,18 @@ type
     //** @abstract(The model file exported, as a full path.)
     /// <summary>The model file exported, as a full path.</summary>
     ModelFile: String;
+    //** @abstract(Whether 2-pass was ticked above Export.)
+    /// <summary>Whether 2-pass was ticked above Export.</summary>
+    TwoPass: Boolean;
+    //** @abstract(Whether Overscan was ticked in Model, Animation Settings.)
+    /// <summary>Whether Overscan was ticked in Model, Animation Settings.</summary>
+    OverscanEnabled: Boolean;
+    //** @abstract(The overscan factor set in Model, Animation Settings, used or not.)
+    /// <summary>The overscan factor set in Model, Animation Settings, used or not.</summary>
+    Overscan: Integer;
+    //** @abstract(The camera as the export started.)
+    /// <summary>The camera as the export started.</summary>
+    Camera: TSprite3DSheetCamera;
   end;
 
   //** @abstract(What SaveSheetMetadata writes about an image besides its frames.)
@@ -626,7 +696,16 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //**     "directions": [0],
 //**     "animations": ["walk"],
 //**     "animation_frames": [8],
-//**     "unused": 0
+//**     "unused": 0,
+//**     "two_pass": false,
+//**     "overscan": { "enabled": true, "factor": 4 }
+//**   },
+//**   "camera": {
+//**     "view": "Isometric", "projection": "orthographic",
+//**     "azimuth": 45, "inclination": 35.2644, "roll": 0,
+//**     "distance": 12.5, "ortho_height": 3.2,
+//**     "pan": { "enabled": false, "x": 0, "z": 0 },
+//**     "locked": false
 //**   },
 //**   "frames": [
 //**     {
@@ -654,7 +733,12 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** @code(animations) names the animations the image holds, and @code(animation_frames)
 //** gives how many frames each has in all, so one that carries on onto another atlas page
 //** shows its whole length. @code(unused) is the number of the grid's cells after the last
-//** frame, which hold nothing. @code(frames) has one entry per frame, in the order of the
+//** frame, which hold nothing. @code(two_pass) is whether 2-pass was ticked, and
+//** @code(overscan) whether overscan was on and its factor. @code(camera) is the camera as
+//** the export started: the View, Camera view, the projection, the Azimuth, Inclination and
+//** Roll readouts in degrees, the distance from the orbit centre and, orthographic, the
+//** height of scene shown, both as captured, in scene units, the pan, and whether the
+//** camera was locked. @code(frames) has one entry per frame, in the order of the
 //** cells, saying which animation and direction it is, as indices into @code(animations)
 //** and @code(directions), which frame of that animation and direction, counted from 0, and
 //** its empty sections in @code(empty). The file is replaced if it exists; the folder must
@@ -679,17 +763,19 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// <remarks><para>Each frame is measured with MeasureFrameEmpty. The file holds first a
 /// <c>meta</c> object, from AInfo.Meta, with <c>page</c>, <c>page_count</c>,
 /// <c>total_frames</c> (the frames the export made over every page), <c>creator</c>,
-/// <c>creator_url</c>, <c>modeller</c>, <c>modeller_url</c>,
-/// <c>artist</c>, <c>artist_url</c>, <c>created</c>, <c>modified</c> and <c>file</c>, empty
-/// text being <c>null</c>; then an <c>image</c> object, with <c>size</c> and
-/// <c>sprite_size</c> (each <c>width</c>,
+/// <c>creator_url</c>, <c>modeller</c>, <c>modeller_url</c>, <c>artist</c>, <c>artist_url</c>,
+/// <c>created</c>, <c>modified</c> and <c>file</c>, empty text being <c>null</c>; then an
+/// <c>image</c> object, with <c>size</c> and <c>sprite_size</c> (each <c>width</c>,
 /// <c>height</c>), <c>layout</c> (<c>cols</c>, <c>rows</c>, <c>frame_count</c>), <c>origin</c>
-/// (<c>x</c>, <c>y</c>),
-/// <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>, <c>bottom</c>),
-/// <c>directions</c>, <c>animations</c>, <c>animation_frames</c> and <c>unused</c>, and a
-/// <c>frames</c> array of one object per frame, with <c>animation</c>, <c>direction</c>,
-/// <c>frame</c> and <c>empty</c>, an object of its <c>left</c>, <c>top</c>,
-/// <c>right</c>, <c>bottom</c>.</para>
+/// (<c>x</c>, <c>y</c>), <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>,
+/// <c>bottom</c>), <c>directions</c>, <c>animations</c>, <c>animation_frames</c>,
+/// <c>unused</c>, <c>two_pass</c> and <c>overscan</c> (<c>enabled</c>, <c>factor</c>); then a
+/// <c>camera</c> object, with <c>view</c>, <c>projection</c>, <c>azimuth</c>,
+/// <c>inclination</c>, <c>roll</c>, <c>distance</c>, <c>ortho_height</c>, <c>pan</c>
+/// (<c>enabled</c>, <c>x</c>, <c>z</c>) and <c>locked</c>, the camera as the export started;
+/// and a <c>frames</c> array of one object per frame, with <c>animation</c>, <c>direction</c>,
+/// <c>frame</c> and <c>empty</c>, an object of its <c>left</c>, <c>top</c>, <c>right</c>,
+/// <c>bottom</c>.</para>
 /// <para><c>size</c> is the whole image's, from AInfo, and <c>sprite_size</c> one frame's,
 /// the grab size. <c>origin</c> is the pixel the model's
 /// centre of rotation falls on in every frame, in the frame's own pixels, (0, 0) the top left
@@ -700,7 +786,12 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// the single dummy entry 0. <c>animations</c> names the animations
 /// the image holds, and <c>animation_frames</c> gives how many frames each has in all, so one
 /// that carries on onto another atlas page shows its whole length. <c>unused</c> is the
-/// number of the grid's cells after the last frame, which hold nothing. <c>frames</c> has one
+/// number of the grid's cells after the last frame, which hold nothing. <c>two_pass</c> is
+/// whether 2-pass was ticked, and <c>overscan</c> whether overscan was on and its factor.
+/// <c>camera</c> is the camera as the export started: the View, Camera view, the
+/// projection, the Azimuth, Inclination and Roll readouts in degrees, the distance from the
+/// orbit centre and, orthographic, the height of scene shown, both as captured, in scene
+/// units, the pan, and whether the camera was locked. <c>frames</c> has one
 /// entry per frame, in the order of the cells, saying which animation and direction it is,
 /// as indices into <c>animations</c> and <c>directions</c>, which frame of that animation
 /// and direction, counted from 0, and its empty sections in <c>empty</c>. The file is
@@ -1629,6 +1720,13 @@ var
       Result := TJSONString.Create(AValue.Trim);
   end;
 
+  // An angle or factor, to four places, which is more than a Single holds
+  // reliably
+  function Amount(const AValue: Single): TJSONNumber;
+  begin
+    Result := TJSONNumber.Create(RoundTo(AValue, -4));
+  end;
+
   // A whole number, written without a decimal point, or null if not known
   function Coordinate(const AValue: Integer): TJSONValue;
   begin
@@ -1727,6 +1825,34 @@ begin
       List.Add(Count);
     Image.AddPair('unused', TJSONNumber.Create(Int64(AInfo.Cols) * AInfo.Rows -
       Length(AFrames)));
+    Image.AddPair('two_pass', TJSONBool.Create(AInfo.Meta.TwoPass));
+    Item := TJSONObject.Create;
+    Image.AddPair('overscan', Item);
+    Item.AddPair('enabled', TJSONBool.Create(AInfo.Meta.OverscanEnabled));
+    Item.AddPair('factor', TJSONNumber.Create(AInfo.Meta.Overscan));
+    // The camera as the export started
+    Item := TJSONObject.Create;
+    Root.AddPair('camera', Item);
+    Item.AddPair('view', Text(AInfo.Meta.Camera.View));
+    if AInfo.Meta.Camera.Orthographic then
+      Item.AddPair('projection', 'orthographic')
+    else
+      Item.AddPair('projection', 'perspective');
+    Item.AddPair('azimuth', Amount(AInfo.Meta.Camera.Azimuth));
+    Item.AddPair('inclination', Amount(AInfo.Meta.Camera.Inclination));
+    Item.AddPair('roll', Amount(AInfo.Meta.Camera.Roll));
+    // As captured: the export's own fit, not the on-screen view's
+    Item.AddPair('distance', Amount(AInfo.Meta.Camera.Distance));
+    if AInfo.Meta.Camera.Orthographic then
+      Item.AddPair('ortho_height', Amount(AInfo.Meta.Camera.OrthoHeight))
+    else
+      Item.AddPair('ortho_height', TJSONNull.Create);
+    var Pan := TJSONObject.Create;
+    Item.AddPair('pan', Pan);
+    Pan.AddPair('enabled', TJSONBool.Create(AInfo.Meta.Camera.PanEnabled));
+    Pan.AddPair('x', Amount(AInfo.Meta.Camera.PanX));
+    Pan.AddPair('z', Amount(AInfo.Meta.Camera.PanZ));
+    Item.AddPair('locked', TJSONBool.Create(AInfo.Meta.Camera.Locked));
     // One entry per frame, in the order of the cells: which it is, and its
     // empty sections
     Frames := TJSONArray.Create;

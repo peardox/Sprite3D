@@ -36,7 +36,20 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
     "directions": [0],
     "animations": ["walk"],
     "animation_frames": [24],
-    "unused": 0
+    "unused": 0,
+    "two_pass": false,
+    "overscan": { "enabled": true, "factor": 4 }
+  },
+  "camera": {
+    "view": "Isometric",
+    "projection": "orthographic",
+    "azimuth": 45,
+    "inclination": 35.2644,
+    "roll": 0,
+    "distance": 12.5,
+    "ortho_height": 3.2,
+    "pan": { "enabled": false, "x": 0, "z": 0 },
+    "locked": false
   },
   "frames": [
     {
@@ -95,6 +108,16 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.animations` | the names of the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas |
 | `image.animation_frames` | how many frames each of `animations` has in each direction, in the same order, including any on other atlas pages |
 | `image.unused` | the number of empty cells after the last frame: `cols` × `rows` − `frame_count`; 0 on every atlas page but the last |
+| `image.two_pass` | whether **2-pass** was ticked above Export |
+| `image.overscan.enabled` | whether **Overscan** was ticked in Model, Animation Settings |
+| `image.overscan.factor` | the overscan factor set there, from its slider; given even when overscan is off |
+| `camera.view` | the View, Camera view checked: `Variable`, `Isometric`, `Pixel2To1`, `ThreeQuarter`, `HeadOn`, `TopDown` or `Side`, as `settings.json` names them |
+| `camera.projection` | `orthographic` or `perspective`, from View, Orthographic |
+| `camera.azimuth`, `camera.inclination`, `camera.roll` | the three readouts, in degrees, as the dials show them, to four decimal places |
+| `camera.distance` | the camera's distance from its orbit centre as the frames were captured, in scene units |
+| `camera.ortho_height` | for orthographic projection, the height of scene the frames show, in scene units, as captured; `null` for perspective |
+| `camera.pan.enabled`, `camera.pan.x`, `camera.pan.z` | whether the pan is applied, and the pan along the model's X and Z axes as multiples of its radius; kept even when not applied |
+| `camera.locked` | whether View, Camera, Lock Camera was ticked |
 | `frames[i]` | the frame in cell *i*, in cell order: one entry per frame |
 | `frames[i].animation` | which animation it is, as an index into `animations` |
 | `frames[i].direction` | which direction it is, as an index into `directions`; 0 without directions |
@@ -106,6 +129,14 @@ The file is UTF-8 without a byte order mark, indented two spaces, or minified, w
 ## Meta
 
 `meta` comes first, so a tool can see what a file is and who made it before reading the rest. `page` and `page_count` say which page of how many the file describes: always 1 of 1 for a strip or spritesheet, and for a texture atlas the number in the file name, `hero_atlas_02.json` being page 2. `total_frames` counts every frame of the export, so a tool reading one atlas page knows how many to expect over them all; for a strip or spritesheet it equals the image's `frame_count`. The credits and `created` come from **File, Save Project...**, as they stand when the export starts; any not set are `null`. `modified` is the moment the export started, in local time with its offset from UTC, and `file` the full path of the model, as loaded. Credits are saved, with the model, the directions, the Animations list and the export choices, in a `.sprite3d` project file; see the README's *File, Save Project*.
+
+## Export choices and camera
+
+`two_pass` and `overscan` record the choices the frames were made with: whether **2-pass** was ticked (it has no effect on the frames yet), and whether overscan was on and at what factor. Overscan draws each frame larger and scales it down, so its edges are smoother; see *Overscan* in the README.
+
+`camera` records how the model was viewed when the export started, so the same view can be set up again, or matched by other art. The angles are the readouts' own, as the dials show them. With directions, each direction turns the view on from `azimuth` by its bearing in `image.directions`; the camera's own `azimuth` is not changed by it. The camera is turned back once each capture ends, so every file of an export has the same `camera`.
+
+`distance` and `ortho_height` are the capture's, not the on-screen view's. An export fits the camera to what it saves, as large as the grab allows, without changing the angles: a batch, a texture atlas among them, to the combined swept volume of every animation used, so every animation is framed alike, and a single animation saved from the right-click menu to its own. The view's distance slider does not take part. With perspective, `distance` sets the scale; with orthographic, `ortho_height` does, the frame showing that much of the scene top to bottom, and `distance` only places the camera.
 
 ## Frame coordinates
 

@@ -1444,12 +1444,6 @@ $(PreBuildEvent)]]></PreBuildEvent>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="OSXARM64\Debug\Sprite3d.dSYM" Configuration="Debug" Class="ProjectOSXDebug">
-                    <Platform Name="OSXARM64">
-                        <RemoteName>Sprite3d</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
                 <DeployFile LocalName="OSXARM64\Debug\Sprite3d.entitlements" Configuration="Debug" Class="ProjectOSXEntitlements">
                     <Platform Name="OSXARM64">
                         <Overwrite>true</Overwrite>
