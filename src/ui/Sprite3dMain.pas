@@ -525,6 +525,11 @@ type
     //** @abstract(How many frames it has.)
     /// <summary>How many frames it has.</summary>
     Count: Integer;
+    //** @abstract(How long it takes to play once, in seconds: its own length, whatever
+    //** number of frames it was saved at.)
+    /// <summary>How long it takes to play once, in seconds: its own length, whatever number
+    /// of frames it was saved at.</summary>
+    Time: Double;
     //** @abstract(The pixel the centre of rotation falls on in its frames.)
     /// <summary>The pixel the centre of rotation falls on in its frames.</summary>
     Origin: TPoint;
@@ -5969,6 +5974,7 @@ begin
         Part.Name := AnimationName;
         Part.Entry := Entry;
         Part.Count := Length(AFrames);
+        Part.Time := CycleSeconds;
         Part.Origin := Origin;
         Part.OriginKnown := OriginKnown;
         Part.Direction := Direction;
@@ -7522,6 +7528,7 @@ begin
     Info.Directions[K] := ADirections[K];
   Info.Animations := nil;
   Info.AnimationFrames := nil;
+  Info.AnimationTimes := nil;
   Info.Frames := nil;
   for var Cell in ACells do
   begin
@@ -7536,6 +7543,7 @@ begin
       Info.Animations := Info.Animations + [AParts[PartIndex].Name];
       // Its frames in each direction: every direction has as many
       Info.AnimationFrames := Info.AnimationFrames + [AParts[PartIndex].Count];
+      Info.AnimationTimes := Info.AnimationTimes + [AParts[PartIndex].Time];
       Listed := High(Info.Animations);
     end;
     Frames := Frames + [Cell.Image];
@@ -8192,6 +8200,8 @@ var
     Result.OriginKnown := AOriginKnown;
     Result.Animations := [AAnimation];
     Result.AnimationFrames := [PerDirection];
+    // Its own length, whatever number of frames it was saved at
+    Result.AnimationTimes := [ACycleSeconds];
     Result.Meta := AMeta;   // one image: page 1 of 1
     // Frame I is frame I mod PerDirection of direction I div PerDirection
     SetLength(Result.Frames, Length(AFrames));

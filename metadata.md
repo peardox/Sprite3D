@@ -34,8 +34,7 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
     "origin": { "x": 127, "y": 214 },
     "sprite_empty": { "left": 58, "top": 9, "right": 61, "bottom": 30 },
     "directions": [0],
-    "animations": ["walk"],
-    "animation_frames": [24],
+    "animations": [{ "name": "walk", "frame_count": 24, "time": 1.0333 }],
     "unused": 0,
     "two_pass": false,
     "overscan": { "enabled": true, "factor": 4 }
@@ -74,8 +73,10 @@ On an atlas page, the frames of several animations follow one another, and an an
 ```json
   "image": {
     ...
-    "animations": ["walk", "idle"],
-    "animation_frames": [24, 12],
+    "animations": [
+      { "name": "walk", "frame_count": 24, "time": 1.0333 },
+      { "name": "idle", "frame_count": 12, "time": 2.0 }
+    ],
     ...
   },
   "frames": [
@@ -105,8 +106,10 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.origin.x`, `image.origin.y` | the pixel the model's centre of rotation falls on in every frame; integers |
 | `image.sprite_empty` | the smallest empty section on each side over all the frames |
 | `image.directions` | the directions the image holds, as bearings in degrees in export order; `[0]` without directions (see below) |
-| `image.animations` | the names of the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas |
-| `image.animation_frames` | how many frames each of `animations` has in each direction, in the same order, including any on other atlas pages |
+| `image.animations` | the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas |
+| `image.animations[i].name` | the animation's name, as the Animations list shows it |
+| `image.animations[i].frame_count` | how many frames it has in each direction, including any on other atlas pages |
+| `image.animations[i].time` | how long it takes to play once, in seconds: the animation's own length, whatever number of frames it was saved at |
 | `image.unused` | the number of empty cells after the last frame: `cols` × `rows` − `frame_count`; 0 on every atlas page but the last |
 | `image.two_pass` | whether the frames were made by a **2-pass** export's second pass |
 | `image.overscan.enabled` | whether **Overscan** was ticked in Model, Animation Settings |
@@ -174,7 +177,7 @@ A batch exported as **Texture Atlas** is packed onto pages no larger than the **
    - **Pages need not be a power of 2**: every number of columns is tried, with as many rows as it needs, and the least area, then the squarest, wins; the page is exactly `cols` × `rows` cells.
 4. **Naming.** Pages are numbered from 01: `<model>_atlas_01.png`, `_02` and so on, each with its own `.json`. Any `<model>_atlas_<number>.png` already in the folder, with its `.json`, is deleted first, so an earlier atlas with more pages leaves none behind.
 
-A page's `animations` lists only the animations with frames on that page; `animation_frames` still gives each one's whole length, and `frame` in each entry says which part of it the page holds. A page's `origin` is the first animation's on it. Every animation of a batch is framed with the same camera, so they all share one; if they ever differ, the Debug tab says so.
+A page's `animations` lists only the animations with frames on that page; each one's `frame_count` still gives its whole length, and `frame` in each entry says which part of it the page holds. A page's `origin` is the first animation's on it. Every animation of a batch is framed with the same camera, so they all share one; if they ever differ, the Debug tab says so.
 
 ## Empty sections
 
@@ -224,7 +227,13 @@ The origin can lie outside the frame, or inside a frame's empty sections, if the
 
 ## Animations
 
-`animations` names the animations the image holds, in the order they first appear in it, as the Animations list shows them, such as `"walk"`, or `"(None)"` for the still of the bind pose. A strip or spritesheet holds one animation, so it has a single entry; an atlas page lists every animation with frames on it. `animation_frames` gives each one's whole frame count in the same order, wherever its frames are. Each `frames[i]` names its animation by its index in `animations`, so an animation's frames are found by their `animation`, and put in order by their `frame`, across as many pages as they span.
+`animations` lists the animations the image holds, in the order they first appear in it, one object each:
+
+- `name`, as the Animations list shows it, such as `"walk"`, or `"(None)"` for the still of the bind pose.
+- `frame_count`, its whole frame count in each direction, wherever its frames are.
+- `time`, how long it takes to play once, in seconds. This is the animation's own length, and stays the same when its number of frames is changed in the Animations list: fewer frames over the same time is a lower frame rate for that animation alone. `frame_count / time` is the rate to play it back at. The still of the bind pose, one frame, is given 1 second.
+
+A strip or spritesheet holds one animation, so it has a single entry; an atlas page lists every animation with frames on it. Each `frames[i]` names its animation by its index in `animations`, so an animation's frames are found by their `animation`, and put in order by their `frame`, across as many pages as they span.
 
 ## Unused
 
@@ -241,7 +250,7 @@ With directions, each animation is captured once per direction, in their order, 
 - **Texture atlas.** The same order, each animation's directions in turn, filling the pages as before; a page's `animations` lists each animation once, whatever directions of it the page holds.
 - **AniGif and MP4.** One file per direction, `<animation>_dir01.gif`, `_dir02` and so on, numbered in direction order; they have no metadata.
 
-`animation_frames` gives the frames of one direction of each animation, which is how many each direction has, and the range of each frame's `frame`.
+Each animation's `frame_count` is the frames of one direction of it, which is how many each direction has, and the range of each frame's `frame`; its `time` is likewise one direction's.
 
 ## In the code
 

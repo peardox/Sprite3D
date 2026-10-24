@@ -380,6 +380,11 @@ type
     /// <summary>How many frames each of Animations has in all, on this image or
     /// not.</summary>
     AnimationFrames: TArray<Integer>;
+    //** @abstract(How long each of Animations takes to play once, in seconds: the animation's
+    //** own length, whatever number of frames it was saved at.)
+    /// <summary>How long each of Animations takes to play once, in seconds: the animation's
+    /// own length, whatever number of frames it was saved at.</summary>
+    AnimationTimes: TArray<Double>;
     //** @abstract(For each of the image's frames, in order, which animation, direction and
     //** frame it is.)
     /// <summary>For each of the image's frames, in order, which animation, direction and
@@ -722,8 +727,9 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //**     "origin": { "x": 127, "y": 201 },
 //**     "sprite_empty": { "left": 61, "top": 12, "right": 58, "bottom": 40 },
 //**     "directions": [0],
-//**     "animations": ["walk"],
-//**     "animation_frames": [8],
+//**     "animations": [
+//**       { "name": "walk", "frame_count": 8, "time": 1.0333 }
+//**     ],
 //**     "unused": 0,
 //**     "two_pass": false,
 //**     "overscan": { "enabled": true, "factor": 4 }
@@ -758,9 +764,12 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** cropping every frame by it loses nothing from any of them. @code(directions) lists the
 //** directions the image holds, as compass bearings in degrees in the order they are
 //** exported; one direction is the single dummy entry 0.
-//** @code(animations) names the animations the image holds, and @code(animation_frames)
-//** gives how many frames each has in all, so one that carries on onto another atlas page
-//** shows its whole length. @code(unused) is the number of the grid's cells after the last
+//** @code(animations) lists the animations the image holds, each as its @code(name), its
+//** @code(frame_count), how many frames it has in all, so one that carries on onto another
+//** atlas page shows its whole length, and its @code(time), how long it takes to play once
+//** in seconds, its own length whatever number of frames it was saved at, so
+//** frame_count / time is its frame rate. @code(unused) is the number of the grid's cells
+//** after the last
 //** frame, which hold nothing. @code(two_pass) is whether a 2-pass export made them, and
 //** @code(overscan) whether overscan was on and its factor. @code(camera) is the camera as
 //** the export started: the View, Camera view, the projection, the Azimuth, Inclination and
@@ -796,7 +805,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// <c>image</c> object, with <c>size</c> and <c>sprite_size</c> (each <c>width</c>,
 /// <c>height</c>), <c>layout</c> (<c>cols</c>, <c>rows</c>, <c>frame_count</c>), <c>origin</c>
 /// (<c>x</c>, <c>y</c>), <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>,
-/// <c>bottom</c>), <c>directions</c>, <c>animations</c>, <c>animation_frames</c>,
+/// <c>bottom</c>), <c>directions</c>, <c>animations</c> (each <c>name</c>,
+/// <c>frame_count</c>, <c>time</c>),
 /// <c>unused</c>, <c>two_pass</c> and <c>overscan</c> (<c>enabled</c>, <c>factor</c>); then a
 /// <c>camera</c> object, with <c>view</c>, <c>projection</c>, <c>azimuth</c>,
 /// <c>inclination</c>, <c>roll</c>, <c>distance</c>, <c>ortho_height</c>, <c>pan</c>
@@ -811,9 +821,11 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// holds, for each side, the smallest of the frames' empty borders, so cropping every frame
 /// by it loses nothing from any of them. <c>directions</c> lists the directions the image
 /// holds, as compass bearings in degrees in the order they are exported; one direction is
-/// the single dummy entry 0. <c>animations</c> names the animations
-/// the image holds, and <c>animation_frames</c> gives how many frames each has in all, so one
-/// that carries on onto another atlas page shows its whole length. <c>unused</c> is the
+/// the single dummy entry 0. <c>animations</c> lists the animations the image holds, each as
+/// its <c>name</c>, its <c>frame_count</c>, how many frames it has in all, so one that carries
+/// on onto another atlas page shows its whole length, and its <c>time</c>, how long it takes
+/// to play once in seconds, its own length whatever number of frames it was saved at, so
+/// frame_count / time is its frame rate. <c>unused</c> is the
 /// number of the grid's cells after the last frame, which hold nothing. <c>two_pass</c> is
 /// whether a 2-pass export made them, and <c>overscan</c> whether overscan was on and its factor.
 /// <c>camera</c> is the camera as the export started: the View, Camera view, the
@@ -1776,6 +1788,8 @@ begin
       [Length(AFrames), AInfo.Cols, AInfo.Rows]);
   if Length(AInfo.AnimationFrames) <> Length(AInfo.Animations) then
     raise EArgumentException.Create('Each animation needs its frame count.');
+  if Length(AInfo.AnimationTimes) <> Length(AInfo.Animations) then
+    raise EArgumentException.Create('Each animation needs its time.');
   if Length(AInfo.Frames) <> Length(AFrames) then
     raise EArgumentException.Create('Each frame needs its animation, direction and number.');
   // The single dummy direction, if none is listed
@@ -1948,14 +1962,18 @@ begin
     else
       for var Direction in AInfo.Directions do
         List.Add(Direction);
+    // Each animation's name, its frames in all, and its own length in
+    // seconds, which a changed frame count leaves as it is
     List := TJSONArray.Create;
     Image.AddPair('animations', List);
-    for var Name in AInfo.Animations do
-      List.Add(Name);
-    List := TJSONArray.Create;
-    Image.AddPair('animation_frames', List);
-    for var Count in AInfo.AnimationFrames do
-      List.Add(Count);
+    for I := 0 to High(AInfo.Animations) do
+    begin
+      Item := TJSONObject.Create;
+      List.AddElement(Item);
+      Item.AddPair('name', AInfo.Animations[I]);
+      Item.AddPair('frame_count', TJSONNumber.Create(AInfo.AnimationFrames[I]));
+      Item.AddPair('time', Amount(AInfo.AnimationTimes[I]));
+    end;
     Image.AddPair('unused', TJSONNumber.Create(Int64(AInfo.Cols) * AInfo.Rows -
       Length(AEmpties)));
     Image.AddPair('two_pass', TJSONBool.Create(AInfo.Meta.TwoPass));
