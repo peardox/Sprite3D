@@ -81,6 +81,11 @@ type
     //** @abstract(Closes the dialog; enabled once the export has ended.)
     /// <summary>Closes the dialog; enabled once the export has ended.</summary>
     CloseButton: TButton;
+    //** @abstract(Ticked, the dialog closes by itself once the export has finished without
+    //** problems.)
+    /// <summary>Ticked, the dialog closes by itself once the export has finished without
+    /// problems.</summary>
+    AutoCloseCheck: TCheckBox;
     //** @abstract(Calls OnAbort, once, and says the export is stopping.)
     //**
     //** @param(Sender AbortButton.)
@@ -113,13 +118,26 @@ type
     /// <param name="Sender">The form.</param>
     /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    //** @abstract(Calls OnAutoCloseChange when the user ticks or clears Autoclose.)
+    //**
+    //** @param(Sender AutoCloseCheck.)
+    /// <summary>Calls OnAutoCloseChange when the user ticks or clears Autoclose.</summary>
+    /// <param name="Sender">AutoCloseCheck.</param>
+    procedure AutoCloseCheckChange(Sender: TObject);
   private
     FOnAbort: TNotifyEvent;
     FOnClosed: TNotifyEvent;
     FAborted: Boolean;
     FFinished: Boolean;
     FFreeOnClose: Boolean;
+    FRemainingPass: Integer;
+    FOnAutoCloseChange: TNotifyEvent;
+    FSettingAutoClose: Boolean;
     procedure RequestAbort;
+    procedure AutoCloseNow;
+    function GetAutoClose: Boolean;
+    procedure SetAutoClose(const Value: Boolean);
+    function RemainingCaption: String;
   public
     //** @abstract(Shows how far the export has got and what it is doing.)
     //**
@@ -166,6 +184,17 @@ type
     /// <param name="ANote">The note, after <c>Time remaining:</c>; empty clears the
     /// line.</param>
     procedure SetRemainingNote(const ANote: String);
+    //** @abstract(Which pass of a 2-pass export the time remaining is for; 0, the default,
+    //** for an export of one pass.)
+    //**
+    //** With a pass set, the line reads @code(Time remaining for Pass N:) and the time is
+    //** for that pass alone. Setting it clears the line until the next SetRemaining.
+    /// <summary>Which pass of a 2-pass export the time remaining is for; 0, the default, for
+    /// an export of one pass.</summary>
+    /// <remarks>With a pass set, the line reads <c>Time remaining for Pass N:</c> and the
+    /// time is for that pass alone. Setting it clears the line until the next
+    /// SetRemaining.</remarks>
+    procedure SetRemainingPass(const APass: Integer);
     //** @abstract(Shows the outcome, as the export has ended, and lets the dialog be closed.)
     //**
     //** The status line shows AReport; the list gets AReport and then each of AProblems.
@@ -205,6 +234,24 @@ type
     /// <summary>Called as the dialog closes, before ShowAndFree frees it.</summary>
     /// <remarks>For an owner keeping a reference to the dialog, to let it go.</remarks>
     property OnClosed: TNotifyEvent read FOnClosed write FOnClosed;
+    //** @abstract(Whether Autoclose when done is ticked.)
+    //**
+    //** Ticked, Finish closes the dialog by itself, as Close would, once the export has
+    //** ended, unless it was aborted or there were problems, which stay on show. Setting it
+    //** does not call OnAutoCloseChange.
+    /// <summary>Whether Autoclose when done is ticked.</summary>
+    /// <remarks>Ticked, Finish closes the dialog by itself, as Close would, once the export
+    /// has ended, unless it was aborted or there were problems, which stay on show. Setting
+    /// it does not call OnAutoCloseChange.</remarks>
+    property AutoClose: Boolean read GetAutoClose write SetAutoClose;
+    //** @abstract(Drops a close Autoclose has queued but not yet made.)
+    /// <summary>Drops a close Autoclose has queued but not yet made.</summary>
+    destructor Destroy; override;
+    //** @abstract(Called when the user ticks or clears Autoclose when done, so the owner can
+    //** keep the choice.)
+    /// <summary>Called when the user ticks or clears Autoclose when done, so the owner can
+    /// keep the choice.</summary>
+    property OnAutoCloseChange: TNotifyEvent read FOnAutoCloseChange write FOnAutoCloseChange;
   end;
 
 implementation
@@ -257,9 +304,9 @@ begin
   if FFinished then
     Exit;
   if AMilliseconds < 0 then
-    RemainingLabel.Text := 'Time remaining: estimating...'
+    RemainingLabel.Text := RemainingCaption + ': estimating...'
   else
-    RemainingLabel.Text := 'Time remaining: about ' + HoursMinutesSeconds(AMilliseconds);
+    RemainingLabel.Text := RemainingCaption + ': about ' + HoursMinutesSeconds(AMilliseconds);
 end;
 
 procedure TExportProgressForm.SetRemainingNote(const ANote: String);
@@ -269,7 +316,24 @@ begin
   if ANote = String.Empty then
     RemainingLabel.Text := String.Empty
   else
-    RemainingLabel.Text := 'Time remaining: ' + ANote;
+    RemainingLabel.Text := RemainingCaption + ': ' + ANote;
+end;
+
+procedure TExportProgressForm.SetRemainingPass(const APass: Integer);
+begin
+  if FFinished then
+    Exit;
+  FRemainingPass := APass;
+  RemainingLabel.Text := String.Empty;
+end;
+
+// The start of the time remaining line, naming the pass of a 2-pass export
+function TExportProgressForm.RemainingCaption: String;
+begin
+  if FRemainingPass > 0 then
+    Result := Format('Time remaining for Pass %d', [FRemainingPass])
+  else
+    Result := 'Time remaining';
 end;
 
 procedure TExportProgressForm.RequestAbort;
@@ -332,6 +396,45 @@ begin
   CloseButton.Enabled := True;
   CloseButton.Cancel := True;   // Escape now closes
   CloseButton.SetFocus;
+  // Closed by itself if asked, once this has returned, unless there is
+  // something to read: problems, or an export cut short
+  if AutoCloseCheck.IsChecked and not FAborted and (Length(AProblems) = 0) then
+    TThread.ForceQueue(nil, AutoCloseNow);
+end;
+
+destructor TExportProgressForm.Destroy;
+begin
+  // Closed some other way first: the queued close must not reach a freed form
+  TThread.RemoveQueuedEvents(nil, AutoCloseNow);
+  inherited;
+end;
+
+procedure TExportProgressForm.AutoCloseNow;
+begin
+  // Still wanted: it may have been cleared meanwhile
+  if FFinished and AutoCloseCheck.IsChecked then
+    CloseButtonClick(CloseButton);
+end;
+
+function TExportProgressForm.GetAutoClose: Boolean;
+begin
+  Result := AutoCloseCheck.IsChecked;
+end;
+
+procedure TExportProgressForm.SetAutoClose(const Value: Boolean);
+begin
+  FSettingAutoClose := True;
+  try
+    AutoCloseCheck.IsChecked := Value;
+  finally
+    FSettingAutoClose := False;
+  end;
+end;
+
+procedure TExportProgressForm.AutoCloseCheckChange(Sender: TObject);
+begin
+  if not FSettingAutoClose and Assigned(FOnAutoCloseChange) then
+    FOnAutoCloseChange(Self);
 end;
 
 procedure TExportProgressForm.ShowAndFree;

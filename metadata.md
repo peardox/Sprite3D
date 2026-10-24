@@ -108,7 +108,7 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.animations` | the names of the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas |
 | `image.animation_frames` | how many frames each of `animations` has in each direction, in the same order, including any on other atlas pages |
 | `image.unused` | the number of empty cells after the last frame: `cols` × `rows` − `frame_count`; 0 on every atlas page but the last |
-| `image.two_pass` | whether **2-pass** was ticked above Export |
+| `image.two_pass` | whether the frames were made by a **2-pass** export's second pass |
 | `image.overscan.enabled` | whether **Overscan** was ticked in Model, Animation Settings |
 | `image.overscan.factor` | the overscan factor set there, from its slider; given even when overscan is off |
 | `camera.view` | the View, Camera view checked: `Variable`, `Isometric`, `Pixel2To1`, `ThreeQuarter`, `HeadOn`, `TopDown` or `Side`, as `settings.json` names them |
@@ -132,7 +132,7 @@ The file is UTF-8 without a byte order mark, indented two spaces, or minified, w
 
 ## Export choices and camera
 
-`two_pass` and `overscan` record the choices the frames were made with: whether **2-pass** was ticked (it has no effect on the frames yet), and whether overscan was on and at what factor. Overscan draws each frame larger and scales it down, so its edges are smoother; see *Overscan* in the README.
+`two_pass` and `overscan` record the choices the frames were made with: whether they were made by a **2-pass** export, reframed from a first, measuring pass so the sprite fills the frame (see *Batch export* in the README), and whether overscan was on and at what factor. Overscan draws each frame larger and scales it down, so its edges are smoother; see *Overscan* in the README.
 
 `camera` records how the model was viewed when the export started, so the same view can be set up again, or matched by other art. The angles are the readouts' own, as the dials show them. With directions, each direction turns the view on from `azimuth` by its bearing in `image.directions`; the camera's own `azimuth` is not changed by it. The camera is turned back once each capture ends, so every file of an export has the same `camera`.
 

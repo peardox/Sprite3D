@@ -48,7 +48,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
   FMX.Graphics, FMX.Types3D, FMX.Controls3D,
   System.JSON, Gorilla.Model, Sprite3DStorage, Sprite3DBackground, Sprite3DFileAssoc,
-  Sprite3DResample, Sprite3DSweep;
+  Sprite3DResample, Sprite3DSweep, Neon.Core.Attributes;
 
 const
   //** @abstract(The application's name, used for its per-user folder.)
@@ -366,6 +366,11 @@ type
     FExportDirections: Boolean;
     FAtlasPageSize: Integer;
     FAtlasNonPowerOf2: Boolean;
+    FExportKind: String;
+    FAtlasFolder: String;
+    FDebugEnabled: Boolean;
+    FDebugFrameBorders: Boolean;
+    FExportAutoClose: Boolean;
     FOverscan: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
@@ -872,6 +877,61 @@ type
     /// makes each page's width and height the smallest powers of 2 that hold its frames; True
     /// makes the page exactly as large as its grid of frames.</remarks>
     property AtlasNonPowerOf2: Boolean read FAtlasNonPowerOf2 write FAtlasNonPowerOf2;
+    //** @abstract(What Export saves, as the drop-down under the animation controls chose it;
+    //** @code(strip) by default.)
+    //**
+    //** Stored as @code(exportKind): @code(strip), @code(sheet), @code(atlas), @code(gif) or
+    //** @code(mp4). Anything else counts as @code(strip), and @code(mp4) while the video
+    //** libraries have not loaded is shown as @code(strip) until they do.
+    /// <summary>What Export saves, as the drop-down under the animation controls chose it;
+    /// <c>strip</c> by default.</summary>
+    /// <remarks>Stored as <c>exportKind</c>: <c>strip</c>, <c>sheet</c>, <c>atlas</c>,
+    /// <c>gif</c> or <c>mp4</c>. Anything else counts as <c>strip</c>, and <c>mp4</c> while
+    /// the video libraries have not loaded is shown as <c>strip</c> until they do.</remarks>
+    property ExportKind: String read FExportKind write FExportKind;
+    //** @abstract(The folder texture atlas pages are saved in, chosen with Texture Atlas in
+    //** the drop-down; empty by default.)
+    //**
+    //** Stored as @code(atlasFolder). A folder that no longer exists is asked for again.
+    /// <summary>The folder texture atlas pages are saved in, chosen with Texture Atlas in the
+    /// drop-down; empty by default.</summary>
+    /// <remarks>Stored as <c>atlasFolder</c>. A folder that no longer exists is asked for
+    /// again.</remarks>
+    property AtlasFolder: String read FAtlasFolder write FAtlasFolder;
+    //** @abstract(Whether the debugging aids are offered; False by default.)
+    //**
+    //** Stored as @code(debug_enabled), and only changed by editing settings.json by hand:
+    //** nothing in the application sets it. True adds File, Debug to the menu and says so in
+    //** the Debug tab at startup.
+    /// <summary>Whether the debugging aids are offered; False by default.</summary>
+    /// <remarks>Stored as <c>debug_enabled</c>, and only changed by editing settings.json by
+    /// hand: nothing in the application sets it. True adds File, Debug to the menu and says so
+    /// in the Debug tab at startup.</remarks>
+    //** @abstract(Whether the export progress dialog closes by itself when an export ends
+    //** without problems; False by default.)
+    //**
+    //** Stored as @code(exportAutoClose); set by Autoclose when done in that dialog.
+    /// <summary>Whether the export progress dialog closes by itself when an export ends without
+    /// problems; False by default.</summary>
+    /// <remarks>Stored as <c>exportAutoClose</c>; set by Autoclose when done in that
+    /// dialog.</remarks>
+    property ExportAutoClose: Boolean read FExportAutoClose write FExportAutoClose;
+    [NeonProperty('debug_enabled')]
+    property DebugEnabled: Boolean read FDebugEnabled write FDebugEnabled;
+    //** @abstract(Whether every exported frame gets a 1-pixel black border; False by default.)
+    //**
+    //** Stored as @code(debug_frame_borders); set by File, Debug, Frame Borders, which is
+    //** offered only while DebugEnabled. Has no effect while DebugEnabled is False. The border
+    //** is drawn on the saved images only: the metadata is measured from the frames as
+    //** rendered.
+    /// <summary>Whether every exported frame gets a 1-pixel black border; False by
+    /// default.</summary>
+    /// <remarks>Stored as <c>debug_frame_borders</c>; set by File, Debug, Frame Borders, which
+    /// is offered only while DebugEnabled. Has no effect while DebugEnabled is False. The
+    /// border is drawn on the saved images only: the metadata is measured from the frames as
+    /// rendered.</remarks>
+    [NeonProperty('debug_frame_borders')]
+    property DebugFrameBorders: Boolean read FDebugFrameBorders write FDebugFrameBorders;
     //** @abstract(The overscan factor Model, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
@@ -1842,6 +1902,11 @@ begin
   FExportDirections := False;
   FAtlasPageSize := ATLAS_PAGE_SIZE_DEFAULT;
   FAtlasNonPowerOf2 := False;
+  FExportKind := 'strip';
+  FAtlasFolder := String.Empty;
+  FDebugEnabled := False;
+  FDebugFrameBorders := False;
+  FExportAutoClose := False;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
   FResampleFilter := rfBox;
 end;
