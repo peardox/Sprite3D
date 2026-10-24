@@ -333,8 +333,8 @@ type
     //** @abstract(The model file exported, as a full path.)
     /// <summary>The model file exported, as a full path.</summary>
     ModelFile: String;
-    //** @abstract(Whether 2-pass was ticked above Export.)
-    /// <summary>Whether 2-pass was ticked above Export.</summary>
+    //** @abstract(Whether the frames were made by a 2-pass export's second pass.)
+    /// <summary>Whether the frames were made by a 2-pass export's second pass.</summary>
     TwoPass: Boolean;
     //** @abstract(Whether Overscan was ticked in Model, Animation Settings.)
     /// <summary>Whether Overscan was ticked in Model, Animation Settings.</summary>
@@ -380,6 +380,11 @@ type
     /// <summary>How many frames each of Animations has in all, on this image or
     /// not.</summary>
     AnimationFrames: TArray<Integer>;
+    //** @abstract(How long each of Animations takes to play once, in seconds: the animation's
+    //** own length, whatever number of frames it was saved at.)
+    /// <summary>How long each of Animations takes to play once, in seconds: the animation's
+    /// own length, whatever number of frames it was saved at.</summary>
+    AnimationTimes: TArray<Double>;
     //** @abstract(For each of the image's frames, in order, which animation, direction and
     //** frame it is.)
     /// <summary>For each of the image's frames, in order, which animation, direction and
@@ -388,6 +393,34 @@ type
     //** @abstract(The @code(meta) section: page, credits, dates and model.)
     /// <summary>The <c>meta</c> section: page, credits, dates and model.</summary>
     Meta: TSprite3DSheetMeta;
+  end;
+
+  //** @abstract(An image's metadata, measured from its frames and kept to be written later.)
+  //**
+  //** Made by MeasureSheetMetadata while the frames are at hand and written by
+  //** WriteSheetMetadata, so the frames can be let go as soon as the image is saved. It holds
+  //** each frame's empty border, not the frames.
+  /// <summary>An image's metadata, measured from its frames and kept to be written
+  /// later.</summary>
+  /// <remarks>Made by MeasureSheetMetadata while the frames are at hand and written by
+  /// WriteSheetMetadata, so the frames can be let go as soon as the image is saved. It holds
+  /// each frame's empty border, not the frames.</remarks>
+  TSprite3DSheetMetadata = record
+    //** @abstract(The file to write.)
+    /// <summary>The file to write.</summary>
+    FileName: String;
+    //** @abstract(One frame's width in pixels.)
+    /// <summary>One frame's width in pixels.</summary>
+    FrameWidth: Integer;
+    //** @abstract(One frame's height in pixels.)
+    /// <summary>One frame's height in pixels.</summary>
+    FrameHeight: Integer;
+    //** @abstract(Each frame's empty border, in the order of the cells.)
+    /// <summary>Each frame's empty border, in the order of the cells.</summary>
+    Empties: TArray<TSprite3DFrameEmpty>;
+    //** @abstract(The rest of what is written; Meta may be changed before writing.)
+    /// <summary>The rest of what is written; Meta may be changed before writing.</summary>
+    Info: TSprite3DSheetInfo;
   end;
 
 //** @abstract(Copies an FMX bitmap into a TSprite3DImage, removing premultiplied alpha.)
@@ -694,8 +727,9 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //**     "origin": { "x": 127, "y": 201 },
 //**     "sprite_empty": { "left": 61, "top": 12, "right": 58, "bottom": 40 },
 //**     "directions": [0],
-//**     "animations": ["walk"],
-//**     "animation_frames": [8],
+//**     "animations": [
+//**       { "name": "walk", "frame_count": 8, "time": 1.0333 }
+//**     ],
 //**     "unused": 0,
 //**     "two_pass": false,
 //**     "overscan": { "enabled": true, "factor": 4 }
@@ -730,10 +764,13 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** cropping every frame by it loses nothing from any of them. @code(directions) lists the
 //** directions the image holds, as compass bearings in degrees in the order they are
 //** exported; one direction is the single dummy entry 0.
-//** @code(animations) names the animations the image holds, and @code(animation_frames)
-//** gives how many frames each has in all, so one that carries on onto another atlas page
-//** shows its whole length. @code(unused) is the number of the grid's cells after the last
-//** frame, which hold nothing. @code(two_pass) is whether 2-pass was ticked, and
+//** @code(animations) lists the animations the image holds, each as its @code(name), its
+//** @code(frame_count), how many frames it has in all, so one that carries on onto another
+//** atlas page shows its whole length, and its @code(time), how long it takes to play once
+//** in seconds, its own length whatever number of frames it was saved at, so
+//** frame_count / time is its frame rate. @code(unused) is the number of the grid's cells
+//** after the last
+//** frame, which hold nothing. @code(two_pass) is whether a 2-pass export made them, and
 //** @code(overscan) whether overscan was on and its factor. @code(camera) is the camera as
 //** the export started: the View, Camera view, the projection, the Azimuth, Inclination and
 //** Roll readouts in degrees, the distance from the orbit centre and, orthographic, the
@@ -768,7 +805,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// <c>image</c> object, with <c>size</c> and <c>sprite_size</c> (each <c>width</c>,
 /// <c>height</c>), <c>layout</c> (<c>cols</c>, <c>rows</c>, <c>frame_count</c>), <c>origin</c>
 /// (<c>x</c>, <c>y</c>), <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>,
-/// <c>bottom</c>), <c>directions</c>, <c>animations</c>, <c>animation_frames</c>,
+/// <c>bottom</c>), <c>directions</c>, <c>animations</c> (each <c>name</c>,
+/// <c>frame_count</c>, <c>time</c>),
 /// <c>unused</c>, <c>two_pass</c> and <c>overscan</c> (<c>enabled</c>, <c>factor</c>); then a
 /// <c>camera</c> object, with <c>view</c>, <c>projection</c>, <c>azimuth</c>,
 /// <c>inclination</c>, <c>roll</c>, <c>distance</c>, <c>ortho_height</c>, <c>pan</c>
@@ -783,11 +821,13 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// holds, for each side, the smallest of the frames' empty borders, so cropping every frame
 /// by it loses nothing from any of them. <c>directions</c> lists the directions the image
 /// holds, as compass bearings in degrees in the order they are exported; one direction is
-/// the single dummy entry 0. <c>animations</c> names the animations
-/// the image holds, and <c>animation_frames</c> gives how many frames each has in all, so one
-/// that carries on onto another atlas page shows its whole length. <c>unused</c> is the
+/// the single dummy entry 0. <c>animations</c> lists the animations the image holds, each as
+/// its <c>name</c>, its <c>frame_count</c>, how many frames it has in all, so one that carries
+/// on onto another atlas page shows its whole length, and its <c>time</c>, how long it takes
+/// to play once in seconds, its own length whatever number of frames it was saved at, so
+/// frame_count / time is its frame rate. <c>unused</c> is the
 /// number of the grid's cells after the last frame, which hold nothing. <c>two_pass</c> is
-/// whether 2-pass was ticked, and <c>overscan</c> whether overscan was on and its factor.
+/// whether a 2-pass export made them, and <c>overscan</c> whether overscan was on and its factor.
 /// <c>camera</c> is the camera as the export started: the View, Camera view, the
 /// projection, the Azimuth, Inclination and Roll readouts in degrees, the distance from the
 /// orbit centre and, orthographic, the height of scene shown, both as captured, in scene
@@ -809,6 +849,49 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// written.</exception>
 procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
   const AInfo: TSprite3DSheetInfo);
+
+//** @abstract(Copies of the frames, each with a 1-pixel border of opaque black round its edge.)
+//**
+//** A debugging aid, to show where each frame's cell ends in a strip, spritesheet or atlas
+//** page. The frames themselves are left as they are, so they can still be measured.
+/// <summary>Copies of the frames, each with a 1-pixel border of opaque black round its
+/// edge.</summary>
+/// <remarks>A debugging aid, to show where each frame's cell ends in a strip, spritesheet or
+/// atlas page. The frames themselves are left as they are, so they can still be
+/// measured.</remarks>
+function FramesWithBorder(const AFrames: TArray<TSprite3DImage>): TArray<TSprite3DImage>;
+
+//** @abstract(Checks and measures what SaveSheetMetadata would write, without writing it.)
+//**
+//** The frames are checked against AInfo as SaveSheetMetadata checks them, and each is
+//** measured with MeasureFrameEmpty; the result holds no frames, so they can be let go.
+//**
+//** @raises(EArgumentException in the same cases as SaveSheetMetadata.)
+/// <summary>Checks and measures what SaveSheetMetadata would write, without writing
+/// it.</summary>
+/// <remarks>The frames are checked against AInfo as SaveSheetMetadata checks them, and each is
+/// measured with MeasureFrameEmpty; the result holds no frames, so they can be let
+/// go.</remarks>
+/// <exception cref="EArgumentException">In the same cases as SaveSheetMetadata.</exception>
+function MeasureSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
+  const AInfo: TSprite3DSheetInfo): TSprite3DSheetMetadata;
+
+//** @abstract(The smallest of each side over the given empty borders, as sprite_empty is.)
+/// <summary>The smallest of each side over the given empty borders, as sprite_empty
+/// is.</summary>
+function LeastFrameEmpty(const AEmpties: TArray<TSprite3DFrameEmpty>): TSprite3DFrameEmpty;
+
+//** @abstract(Writes metadata measured by MeasureSheetMetadata, as SaveSheetMetadata does.)
+//**
+//** @param(ASpriteEmpty If given, written as @code(sprite_empty) in place of the least of the
+//** image's own frames, as for a whole 2-pass export.)
+/// <summary>Writes metadata measured by MeasureSheetMetadata, as SaveSheetMetadata
+/// does.</summary>
+/// <param name="ASpriteEmpty">If given, written as <c>sprite_empty</c> in place of the least
+/// of the image's own frames, as for a whole 2-pass export.</param>
+procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata); overload;
+procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata;
+  const ASpriteEmpty: TSprite3DFrameEmpty); overload;
 
 //** @abstract(A name made safe to use as a file name on every platform.)
 //**
@@ -1693,12 +1776,105 @@ begin
     Blit(AFrames[I], Result, (I mod APage.Cols) * W, (I div APage.Cols) * H);
 end;
 
-procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
-  const AInfo: TSprite3DSheetInfo);
+function MeasureSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
+  const AInfo: TSprite3DSheetInfo): TSprite3DSheetMetadata;
 var
   W, H, I, Directions: Integer;
-  Empties: TArray<TSprite3DFrameEmpty>;
-  Least: TSprite3DFrameEmpty;
+begin
+  CheckFrames(AFrames, W, H);
+  if (AInfo.Cols < 1) or (AInfo.Rows < 1) or
+    (Int64(AInfo.Cols) * AInfo.Rows < Length(AFrames)) then
+    raise EArgumentException.CreateFmt('%d frames do not fit %d columns by %d rows.',
+      [Length(AFrames), AInfo.Cols, AInfo.Rows]);
+  if Length(AInfo.AnimationFrames) <> Length(AInfo.Animations) then
+    raise EArgumentException.Create('Each animation needs its frame count.');
+  if Length(AInfo.AnimationTimes) <> Length(AInfo.Animations) then
+    raise EArgumentException.Create('Each animation needs its time.');
+  if Length(AInfo.Frames) <> Length(AFrames) then
+    raise EArgumentException.Create('Each frame needs its animation, direction and number.');
+  // The single dummy direction, if none is listed
+  Directions := Max(1, Length(AInfo.Directions));
+  for var Ref in AInfo.Frames do
+    if (Ref.Animation < 0) or (Ref.Animation >= Length(AInfo.Animations)) or
+      (Ref.Direction < 0) or (Ref.Direction >= Directions) or (Ref.Frame < 0) then
+      raise EArgumentException.Create('A frame names an animation or direction that is ' +
+        'not listed.');
+  Result.FileName := AFileName;
+  Result.FrameWidth := W;
+  Result.FrameHeight := H;
+  Result.Info := AInfo;
+  SetLength(Result.Empties, Length(AFrames));
+  for I := 0 to High(AFrames) do
+    Result.Empties[I] := MeasureFrameEmpty(AFrames[I]);
+end;
+
+function FramesWithBorder(const AFrames: TArray<TSprite3DImage>): TArray<TSprite3DImage>;
+
+  procedure Paint(var AImage: TSprite3DImage; const AX, AY: Integer);
+  var
+    At: NativeInt;
+  begin
+    At := (NativeInt(AY) * AImage.Width + AX) * 4;
+    AImage.Pixels[At] := 0;         // R
+    AImage.Pixels[At + 1] := 0;     // G
+    AImage.Pixels[At + 2] := 0;     // B
+    AImage.Pixels[At + 3] := 255;   // A
+  end;
+
+begin
+  SetLength(Result, Length(AFrames));
+  for var I := 0 to High(AFrames) do
+  begin
+    Result[I] := AFrames[I];
+    // Its own pixels, so the frame given is not drawn on
+    Result[I].Pixels := Copy(AFrames[I].Pixels);
+    if (Result[I].Width < 1) or (Result[I].Height < 1) or
+      (Length(Result[I].Pixels) < Int64(Result[I].Width) * Result[I].Height * 4) then
+      Continue;
+    for var X := 0 to Result[I].Width - 1 do
+    begin
+      Paint(Result[I], X, 0);
+      Paint(Result[I], X, Result[I].Height - 1);
+    end;
+    for var Y := 0 to Result[I].Height - 1 do
+    begin
+      Paint(Result[I], 0, Y);
+      Paint(Result[I], Result[I].Width - 1, Y);
+    end;
+  end;
+end;
+
+function LeastFrameEmpty(const AEmpties: TArray<TSprite3DFrameEmpty>): TSprite3DFrameEmpty;
+var
+  I: Integer;
+begin
+  // The smallest of each side over every frame; nothing drawn when there
+  // are none
+  if Length(AEmpties) = 0 then
+  begin
+    Result.Left := 0;
+    Result.Top := 0;
+    Result.Right := 0;
+    Result.Bottom := 0;
+    Exit;
+  end;
+  Result := AEmpties[0];
+  for I := 1 to High(AEmpties) do
+  begin
+    Result.Left := Min(Result.Left, AEmpties[I].Left);
+    Result.Top := Min(Result.Top, AEmpties[I].Top);
+    Result.Right := Min(Result.Right, AEmpties[I].Right);
+    Result.Bottom := Min(Result.Bottom, AEmpties[I].Bottom);
+  end;
+end;
+
+// Writes the metadata file from what has been measured; ALeast is written as
+// sprite_empty
+procedure WriteMetadataFile(const AFileName: String; const AFrameWidth, AFrameHeight: Integer;
+  const AEmpties: TArray<TSprite3DFrameEmpty>; const AInfo: TSprite3DSheetInfo;
+  const ALeast: TSprite3DFrameEmpty);
+var
+  I: Integer;
   Root, Image, Item: TJSONObject;
   Frames, List: TJSONArray;
 
@@ -1737,35 +1913,6 @@ var
   end;
 
 begin
-  CheckFrames(AFrames, W, H);
-  if (AInfo.Cols < 1) or (AInfo.Rows < 1) or
-    (Int64(AInfo.Cols) * AInfo.Rows < Length(AFrames)) then
-    raise EArgumentException.CreateFmt('%d frames do not fit %d columns by %d rows.',
-      [Length(AFrames), AInfo.Cols, AInfo.Rows]);
-  if Length(AInfo.AnimationFrames) <> Length(AInfo.Animations) then
-    raise EArgumentException.Create('Each animation needs its frame count.');
-  if Length(AInfo.Frames) <> Length(AFrames) then
-    raise EArgumentException.Create('Each frame needs its animation, direction and number.');
-  // The single dummy direction, if none is listed
-  Directions := Max(1, Length(AInfo.Directions));
-  for var Ref in AInfo.Frames do
-    if (Ref.Animation < 0) or (Ref.Animation >= Length(AInfo.Animations)) or
-      (Ref.Direction < 0) or (Ref.Direction >= Directions) or (Ref.Frame < 0) then
-      raise EArgumentException.Create('A frame names an animation or direction that is ' +
-        'not listed.');
-  SetLength(Empties, Length(AFrames));
-  for I := 0 to High(AFrames) do
-    Empties[I] := MeasureFrameEmpty(AFrames[I]);
-  // The smallest of each side over every frame
-  Least := Empties[0];
-  for I := 1 to High(Empties) do
-  begin
-    Least.Left := Min(Least.Left, Empties[I].Left);
-    Least.Top := Min(Least.Top, Empties[I].Top);
-    Least.Right := Min(Least.Right, Empties[I].Right);
-    Least.Bottom := Min(Least.Bottom, Empties[I].Bottom);
-  end;
-
   Root := TJSONObject.Create;
   try
     // Which page, who made it and when, first
@@ -1777,7 +1924,7 @@ begin
     if AInfo.Meta.TotalFrames > 0 then
       Item.AddPair('total_frames', TJSONNumber.Create(AInfo.Meta.TotalFrames))
     else
-      Item.AddPair('total_frames', TJSONNumber.Create(Length(AFrames)));
+      Item.AddPair('total_frames', TJSONNumber.Create(Length(AEmpties)));
     Item.AddPair('creator', Text(AInfo.Meta.Creator));
     Item.AddPair('creator_url', Text(AInfo.Meta.CreatorUrl));
     Item.AddPair('modeller', Text(AInfo.Meta.Modeller));
@@ -1796,18 +1943,18 @@ begin
     // One frame, the grab size
     Item := TJSONObject.Create;
     Image.AddPair('sprite_size', Item);
-    Item.AddPair('width', TJSONNumber.Create(W));
-    Item.AddPair('height', TJSONNumber.Create(H));
+    Item.AddPair('width', TJSONNumber.Create(AFrameWidth));
+    Item.AddPair('height', TJSONNumber.Create(AFrameHeight));
     Item := TJSONObject.Create;
     Image.AddPair('layout', Item);
     Item.AddPair('cols', TJSONNumber.Create(AInfo.Cols));
     Item.AddPair('rows', TJSONNumber.Create(AInfo.Rows));
-    Item.AddPair('frame_count', TJSONNumber.Create(Length(AFrames)));
+    Item.AddPair('frame_count', TJSONNumber.Create(Length(AEmpties)));
     Item := TJSONObject.Create;
     Image.AddPair('origin', Item);
     Item.AddPair('x', Coordinate(AInfo.Origin.X));
     Item.AddPair('y', Coordinate(AInfo.Origin.Y));
-    Image.AddPair('sprite_empty', Sides(Least));
+    Image.AddPair('sprite_empty', Sides(ALeast));
     List := TJSONArray.Create;
     Image.AddPair('directions', List);
     if Length(AInfo.Directions) = 0 then
@@ -1815,16 +1962,20 @@ begin
     else
       for var Direction in AInfo.Directions do
         List.Add(Direction);
+    // Each animation's name, its frames in all, and its own length in
+    // seconds, which a changed frame count leaves as it is
     List := TJSONArray.Create;
     Image.AddPair('animations', List);
-    for var Name in AInfo.Animations do
-      List.Add(Name);
-    List := TJSONArray.Create;
-    Image.AddPair('animation_frames', List);
-    for var Count in AInfo.AnimationFrames do
-      List.Add(Count);
+    for I := 0 to High(AInfo.Animations) do
+    begin
+      Item := TJSONObject.Create;
+      List.AddElement(Item);
+      Item.AddPair('name', AInfo.Animations[I]);
+      Item.AddPair('frame_count', TJSONNumber.Create(AInfo.AnimationFrames[I]));
+      Item.AddPair('time', Amount(AInfo.AnimationTimes[I]));
+    end;
     Image.AddPair('unused', TJSONNumber.Create(Int64(AInfo.Cols) * AInfo.Rows -
-      Length(AFrames)));
+      Length(AEmpties)));
     Image.AddPair('two_pass', TJSONBool.Create(AInfo.Meta.TwoPass));
     Item := TJSONObject.Create;
     Image.AddPair('overscan', Item);
@@ -1857,7 +2008,7 @@ begin
     // empty sections
     Frames := TJSONArray.Create;
     Root.AddPair('frames', Frames);
-    for I := 0 to High(AFrames) do
+    for I := 0 to High(AEmpties) do
     begin
       Item := TJSONObject.Create;
       Frames.AddElement(Item);
@@ -1865,13 +2016,31 @@ begin
       Item.AddPair('direction', TJSONNumber.Create(AInfo.Frames[I].Direction));
       Item.AddPair('frame', TJSONNumber.Create(AInfo.Frames[I].Frame));
       // One set of empty sections per frame
-      Item.AddPair('empty', Sides(Empties[I]));
+      Item.AddPair('empty', Sides(AEmpties[I]));
     end;
     // UTF-8 without a byte order mark, which some JSON readers reject
     TFile.WriteAllBytes(OSFriendlyPath(AFileName), JsonToBytes(Root));
   finally
     Root.Free;
   end;
+end;
+
+procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata);
+begin
+  WriteSheetMetadata(AMetadata, LeastFrameEmpty(AMetadata.Empties));
+end;
+
+procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata;
+  const ASpriteEmpty: TSprite3DFrameEmpty);
+begin
+  WriteMetadataFile(AMetadata.FileName, AMetadata.FrameWidth, AMetadata.FrameHeight,
+    AMetadata.Empties, AMetadata.Info, ASpriteEmpty);
+end;
+
+procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
+  const AInfo: TSprite3DSheetInfo);
+begin
+  WriteSheetMetadata(MeasureSheetMetadata(AFileName, AFrames, AInfo));
 end;
 
 function SafeFileStem(const AName: String): String;

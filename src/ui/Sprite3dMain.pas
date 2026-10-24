@@ -168,6 +168,7 @@
 //** |       |-- ViewportLayout   the area left of the control panel
 //** |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
 //** |       `-- ControlsLayout   dials and their labels
+//** |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
 //**
@@ -403,6 +404,7 @@ unit Sprite3dMain;
     |       |-- ViewportLayout   the area left of the control panel
     |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
     |       `-- ControlsLayout   dials and their labels
+    |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
     `-- DebugTab "Debug"
         `-- DebugMemo
 
@@ -462,6 +464,7 @@ uses
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
+  Sprite3DResultsView,
   System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -513,8 +516,8 @@ type
 
   //** @abstract(One animation captured for a texture atlas, kept until the batch ends and the
   //** pages are made.)
-  /// <summary>One animation captured for a texture atlas, kept until the batch ends and the
-  /// pages are made.</summary>
+  /// <summary>One animation captured for a texture atlas: what its pages' metadata says of
+  /// it. Its frames go into the pages as they fill.</summary>
   TAtlasPart = record
     //** @abstract(The entry's name as the Animations list shows it.)
     /// <summary>The entry's name as the Animations list shows it.</summary>
@@ -522,9 +525,14 @@ type
     //** @abstract(The entry's index in the Animations list, to untick once saved.)
     /// <summary>The entry's index in the Animations list, to untick once saved.</summary>
     Entry: Integer;
-    //** @abstract(Its frames, in order.)
-    /// <summary>Its frames, in order.</summary>
-    Frames: TArray<TSprite3DImage>;
+    //** @abstract(How many frames it has.)
+    /// <summary>How many frames it has.</summary>
+    Count: Integer;
+    //** @abstract(How long it takes to play once, in seconds: its own length, whatever
+    //** number of frames it was saved at.)
+    /// <summary>How long it takes to play once, in seconds: its own length, whatever number
+    /// of frames it was saved at.</summary>
+    Time: Double;
     //** @abstract(The pixel the centre of rotation falls on in its frames.)
     /// <summary>The pixel the centre of rotation falls on in its frames.</summary>
     Origin: TPoint;
@@ -536,6 +544,20 @@ type
     /// <summary>The direction it was captured in, as an index into the batch's directions; 0
     /// when directions are not used.</summary>
     Direction: Integer;
+  end;
+
+  //** @abstract(A frame captured for a texture atlas, waiting for its page to fill.)
+  /// <summary>A frame captured for a texture atlas, waiting for its page to fill.</summary>
+  TAtlasCell = record
+    //** @abstract(Which animation it is, as an index into the batch's parts.)
+    /// <summary>Which animation it is, as an index into the batch's parts.</summary>
+    Part: Integer;
+    //** @abstract(Which frame of that animation it is, counted from 0.)
+    /// <summary>Which frame of that animation it is, counted from 0.</summary>
+    Frame: Integer;
+    //** @abstract(The frame.)
+    /// <summary>The frame.</summary>
+    Image: TSprite3DImage;
   end;
 
   //** @abstract(Where a model load has got to; see TMainForm.SwitchModel.)
@@ -579,6 +601,11 @@ type
     /// <summary>The tab captioned "View", with the viewport and camera controls; active at
     /// start-up.</summary>
     GorillaTab: TTabItem;
+    //** @abstract(The tab captioned "Results", between View and Debug, where exports are
+    //** played back; its controls are TSprite3DResultsView's.)
+    /// <summary>The tab captioned "Results", between View and Debug, where exports are played
+    /// back; its controls are TSprite3DResultsView's.</summary>
+    ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
     /// <summary>The tab captioned "Debug", holding DebugMemo.</summary>
     DebugTab: TTabItem;
@@ -1628,6 +1655,33 @@ type
     // EndCapture even when the camera is locked
     FOriginSnapped: Boolean;
     FOriginRestore: TPoint3D;
+    // A 2-pass export. FTwoPassRun: this batch runs two passes. FBatchPass:
+    // 0 for an ordinary batch, 1 while the first pass measures (overscan off,
+    // nothing saved), 2 while the second pass exports. FTwoPassBounds, once
+    // FTwoPassMeasured, is how far every frame the first pass drew reached.
+    // From it, once FTwoPassAdjusted, every capture of the
+    // second pass slides its picture by FTwoPassMoveX across and
+    // FTwoPassMoveY down, in pixels of the plain fit, then multiplies
+    // OrthoHeight, or in perspective Distance, by FTwoPassScale. Like the
+    // rest of a capture's framing, it is undone when the capture ends.
+    // FTwoPassBounds is to a fraction of a pixel where the edge pixels are
+    // partly covered.
+    FTwoPassRun: Boolean;
+    FBatchPass: Integer;
+    FTwoPassBounds: TRectF;
+    FTwoPassMeasured: Boolean;
+    // The pixel the first capture of a batch put the centre of rotation on;
+    // every later capture of the batch is snapped to the same pixel, so the
+    // whole batch shares one origin
+    FBatchOrigin: TPoint;
+    FBatchOriginSet: Boolean;
+    FTwoPassAdjusted: Boolean;
+    FTwoPassMoveX: Single;
+    FTwoPassMoveY: Single;
+    FTwoPassScale: Single;
+    // When the pass under way started, on FBatchClock, so a 2-pass export's
+    // time remaining is for that pass alone; 0 for the first pass
+    FPassStartMs: Int64;
     // Batch export, below the animation list: All, what to save, Export
     FBatchLayout: TLayout;
     // The play, pause and step buttons under the animation list, for the
@@ -1659,8 +1713,9 @@ type
     FBatchKindBox: TComboBox;
     // Above Export: whether a strip or spritesheet is saved with its metadata,
     // whether to export every direction, and whether to export in two passes
-    // (for the two-pass export to come; no effect yet). 2-pass is not kept:
-    // it starts clear each session and is in no project file
+    // (a measuring pass, then the export reframed from what it measured).
+    // 2-pass is not kept: it starts clear each session and is in no project
+    // file
     FBatchMetadata: TCheckBox;
     FBatchDirections: TCheckBox;
     FBatchTwoPass: TCheckBox;
@@ -1679,13 +1734,29 @@ type
     FBatchFolder: String;
     FBatchSaved: Integer;
     FBatchErrors: TArray<String>;
-    // A Texture Atlas batch: the animations captured so far, made into pages
-    // when the batch ends; the folder chosen when Texture Atlas was picked;
-    // the pages are being written; the drop-down's choice before the last
-    // change, to go back to if no folder is chosen
+    // A Texture Atlas batch: the animations captured so far; their frames
+    // not yet on a saved page, each page being saved as soon as it is full;
+    // how many pages have been saved; the parts with a page that could not
+    // be; the metadata of the pages saved, written when the batch ends; the
+    // folder chosen when Texture Atlas was picked; the last page is being
+    // written; the drop-down's choice before the last change, to go back to
+    // if no folder is chosen
     FAtlasParts: TArray<TAtlasPart>;
+    FAtlasQueue: TArray<TAtlasCell>;
+    FAtlasPageCount: Integer;
+    FAtlasFailed: TArray<Boolean>;
+    FAtlasPending: TArray<TSprite3DSheetMetadata>;
     FAtlasFolder: String;
     FAtlasSaving: Boolean;
+    // A batch's metadata, measured as each image was saved and written once
+    // the batch ends, after every image
+    FPendingMetadata: TArray<TSprite3DSheetMetadata>;
+    // File, Debug and its Frame Borders item, made only while debug_enabled
+    // is true in settings.json
+    FDebugMenu: TMenuItem;
+    FFrameBordersItem: TMenuItem;
+    // The Results tab's player
+    FResults: TSprite3DResultsView;
     FBatchKindIndex: Integer;
     // The batch's progress dialog, while it is open, and whether the view's
     // own redraws were stopped for the batch
@@ -1848,7 +1919,7 @@ type
       const AFolder: String; const AOnFinished: TProc<String>;
       out AError: String): Boolean;
     procedure StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
-      const AFolder: String);
+      const AFolder: String; const ATwoPass: Boolean = False);
     procedure TurnToDirection(const ABearing: Single);
     function BatchStepTitle: String;
     function BatchEntryOrdinal(const APos: Integer): Integer;
@@ -1882,10 +1953,12 @@ type
     procedure UpdateView;
     procedure BatchAllChange(Sender: TObject);
     procedure BatchKindChange(Sender: TObject);
+    procedure RestoreBatchKind;
     procedure SetEntryChecks(const AEntries: TArray<Integer>; const AChecked: Boolean);
     procedure ShowExportStep(const AItemFraction: Single; const AStatus: String);
     procedure ExportDialogAbort(Sender: TObject);
     procedure ExportDialogClosed(Sender: TObject);
+    procedure ExportDialogAutoCloseChange(Sender: TObject);
     procedure PauseViewForExport(const APause: Boolean);
     function FrameOverride(const AName: String): Integer;
     procedure SetFrameOverride(const AName: String; const ACount: Integer);
@@ -1923,12 +1996,21 @@ type
     procedure ContinueBatch;
     procedure FinishBatch;
     procedure ReportBatch;
-    procedure SaveAtlasBatch;
     procedure ChooseAtlasFolder;
-    function SaveAtlas(const AParts: TArray<TAtlasPart>; const AFolder, AStem: String;
-      const APageSize: Integer; const ANonPowerOf2, AMetadata: Boolean;
-      const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta;
-      out ASaved: TArray<Integer>; out ANotes: TArray<String>): TArray<String>;
+    procedure AddAtlasPart(const APart: TAtlasPart; const AFrames: TArray<TSprite3DImage>);
+    procedure SaveAtlasPages(const AFinal: Boolean; const AThen: TProc);
+    procedure FinishAtlas;
+    function SaveAtlasPage(const ACells: TArray<TAtlasCell>; const AParts: TArray<TAtlasPart>;
+      const AFileName: String; const APage, APageSize: Integer;
+      const ANonPowerOf2, ABorders: Boolean; const ADirections: TArray<Single>;
+      const AMeta: TSprite3DSheetMeta; out AMetadata: TSprite3DSheetMetadata;
+      var ANotes: TArray<String>): String;
+    procedure WriteBatchMetadata;
+    procedure BuildDebugMenu;
+    procedure BuildResultsView;
+    procedure TabControl1Change(Sender: TObject);
+    procedure FrameBordersItemClick(Sender: TObject);
+    function FrameBordersOn: Boolean;
     procedure ApplyAtlasSettings(const APageSize: Integer; const ANonPowerOf2: Boolean);
     procedure DeleteAtlasPages(const AFolder, AStem: String; var ANotes: TArray<String>);
     procedure UpdateBatchControls;
@@ -1936,11 +2018,19 @@ type
       const AWidth, AHeight: Integer): Boolean;
     procedure EndCapture;
     function SnapCaptureOrigin(const AWidth, AHeight: Integer; out AOrigin: TPoint): Boolean;
+    procedure SetMeasuringOverscan(const AMeasuring: Boolean);
+    procedure MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>);
+    procedure ComputeTwoPassAdjust;
+    procedure ApplyTwoPassAdjust(const AWidth, AHeight: Integer);
+    procedure SlidePicture(const ARight, ADown: Single; const AWidth, AHeight: Integer);
+    procedure StartSecondPass;
+
     function SaveSheet(const AKind: TSheetKind; const AFrames: TArray<TSprite3DImage>;
       const AFolder, AStem: String; const ACycleSeconds: Double;
       const AMetadata: Boolean; const AOrigin: TPoint; const AOriginKnown: Boolean;
       const AAnimation: String; const ADirections: TArray<Single>;
-      const AMeta: TSprite3DSheetMeta): String;
+      const AMeta: TSprite3DSheetMeta; const ABorders, ADeferMetadata: Boolean;
+      out APending: TSprite3DSheetMetadata; out AHasPending: Boolean): String;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -2096,6 +2186,10 @@ begin
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
+  // debug_enabled is only ever set by hand in settings.json; said only when on
+  if FSettings.DebugEnabled then
+    DebugMemo.Lines.Add('Debug enabled (debug_enabled is true in ' +
+      FSettings.FileName + ')');
   FFrameOverrides := TDictionary<String, Integer>.Create;
   // An animation chosen first shows held on its first frame
   FHoldNew := True;
@@ -2164,6 +2258,10 @@ begin
   {$ENDIF}
   // View, Camera, Lock Camera; before the menu is moved or mirrored
   BuildLockCameraItem;
+  // File, Debug, only while debug_enabled; likewise before the menu moves
+  BuildDebugMenu;
+  // The Results tab's player, reading where exports last went once shown
+  BuildResultsView;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   BuildMobileMenu;
@@ -2589,6 +2687,9 @@ begin
       // cancels the capture under way and waits for files being written
       FBatchAborted := True;
       FAtlasParts := nil;
+      FAtlasQueue := nil;
+      FAtlasPending := nil;
+      FPendingMetadata := nil;
       DebugMemo.Lines.Add('Quitting: export abandoned');
       // Closed again from a fresh main-loop turn, once this close has ended
       TThread.ForceQueue(nil, QuitAfterConfirm);
@@ -2607,6 +2708,12 @@ begin
   MainFormGone := True;   // queued work arriving from here on does nothing
   if Assigned(FReadoutTimer) then
     FReadoutTimer.Enabled := False;
+  // The tabs change as the form is torn down: the Results view, freed with
+  // the form as its owner, is not to hear of it
+  TabControl1.OnChange := nil;
+  if Assigned(FResults) then
+    FResults.SetActive(False);
+  FResults := nil;
   FreeAndNil(FDisplays);
   FreeAndNil(FPlayer);
   // A load under way is dropped, its dialog with it
@@ -3105,7 +3212,8 @@ begin
   // Local time, with its offset from UTC
   Result.Modified := DateToISO8601(Now, False);
   Result.ModelFile := FModelFile;
-  Result.TwoPass := FBatchTwoPass.IsChecked;
+  // Whether these frames were made by a 2-pass export's second pass
+  Result.TwoPass := FBatchActive and FTwoPassRun;
   Result.OverscanEnabled := FOverscanOn;
   Result.Overscan := FSettings.Overscan;
   // The view checked in View, Camera, by the name settings.json keeps it by
@@ -4375,7 +4483,12 @@ begin
       FMp4Item.Enabled := True;
     // In TSheetKind's order: the item index is the kind
     if Assigned(FBatchKindBox) and (FBatchKindBox.Items.Count = Ord(skMp4)) then
+    begin
       FBatchKindBox.Items.Add('MP4 video');
+      // MP4 chosen last session, now it can be
+      if not Capturing then
+        RestoreBatchKind;
+    end;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     if Assigned(FAnimationMenu) then
     begin
@@ -5621,13 +5734,54 @@ begin
     StartBatch([Max(0, AnimationListBox.ItemIndex)], AKind, SaveFolder);
     Exit;
   end;
+  FSettings.LastExportFolder := SaveFolder;
   if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), -1, SaveFolder,
     procedure(AResult: String)
     begin
       if AResult <> String.Empty then
-        ShowMessage(AResult);
+        ShowMessage(AResult)
+      else if Assigned(FResults) then
+        FResults.FolderChanged(SaveFolder);
     end, Error) then
     ShowMessage(Error);
+end;
+
+// What to say in the Debug tab when frames are drawn right up to their edge,
+// an empty border of 0 on some side, so the sprite may be cut off: how many
+// of AFrames do, and how many on each side; empty if none does. AName is
+// the image they are saved in. Frames with nothing drawn are left out. Runs
+// on a worker thread.
+function EdgeTouchNote(const AName: String; const AFrames: TArray<TSprite3DImage>): String;
+var
+  Empty: TSprite3DFrameEmpty;
+  Touching, Left, Top, Right, Bottom: Integer;
+begin
+  Result := String.Empty;
+  Touching := 0;
+  Left := 0;
+  Top := 0;
+  Right := 0;
+  Bottom := 0;
+  for var Frame in AFrames do
+  begin
+    Empty := MeasureFrameEmpty(Frame);
+    if Empty.Left >= Frame.Width then
+      Continue;   // nothing drawn
+    if Empty.Left = 0 then
+      Inc(Left);
+    if Empty.Top = 0 then
+      Inc(Top);
+    if Empty.Right = 0 then
+      Inc(Right);
+    if Empty.Bottom = 0 then
+      Inc(Bottom);
+    if (Empty.Left = 0) or (Empty.Top = 0) or (Empty.Right = 0) or (Empty.Bottom = 0) then
+      Inc(Touching);
+  end;
+  if Touching > 0 then
+    Result := Format('%s: %d of %d frames have an empty border of 0 (left %d, top %d, ' +
+      'right %d, bottom %d); the sprite may be cut off',
+      [AName, Touching, Length(AFrames), Left, Top, Right, Bottom]);
 end;
 
 // Grabs every frame of the list entry AIndex, then saves them as AKind in
@@ -5659,9 +5813,12 @@ var
   HasDirection, LastDirection: Boolean;
   Bearings: TArray<Single>;
   Meta: TSprite3DSheetMeta;
+  Measuring: Boolean;
 begin
   Result := False;
   AError := String.Empty;
+  // A 2-pass export's first pass: the frames are drawn only to be measured
+  Measuring := FBatchActive and (FBatchPass = 1);
   if Assigned(FCapture) or FOffscreen.Busy then
   begin
     AError := 'A capture or a grab is already under way.';
@@ -5766,6 +5923,13 @@ begin
   if FCaptureFramed and
     not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
     DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
+  // A 2-pass export's second pass: the framing reworked from what the first
+  // pass measured, so the sprite fills the frame. The fit is the same as the
+  // first pass's, so its pixels are the ones measured.
+  if FCaptureFramed and FBatchActive and (FBatchPass = 2) and FTwoPassAdjusted then
+    ApplyTwoPassAdjust(FOffscreen.Width, FOffscreen.Height);
+  // The camera as these frames are drawn, which the metadata records: for a
+  // 2-pass export, the second pass's
   FCaptureDistance := GorillaCamera.Distance;
   FCaptureOrthoHeight := GorillaCamera.OrthoHeight;
 
@@ -5777,7 +5941,8 @@ begin
   // is the same either way.
   Metadata := FSettings.ExportMetadata and (AKind in [skStrip, skSheet]);
   Origin := TPoint.Zero;
-  OriginKnown := (AKind in [skStrip, skSheet, skAtlas]) and
+  // A measuring pass saves nothing, so has no origin to place
+  OriginKnown := not Measuring and (AKind in [skStrip, skSheet, skAtlas]) and
     SnapCaptureOrigin(FOffscreen.Width, FOffscreen.Height, Origin);
   // The entry's name, as listed: the animation's, or (None) for the still
   AnimationName := AnimationListBox.Items[AIndex];
@@ -5795,6 +5960,7 @@ begin
       Outcome: String;
       Frames: TArray<TSprite3DImage>;
       Task: ITask;
+      DeferMetadata, Borders: Boolean;
     begin
       FCapture := nil;
       EndCapture;
@@ -5807,19 +5973,35 @@ begin
           OnFinished(Outcome);
         Exit;
       end;
+      if Measuring then
+      begin
+        // The first pass: each frame's empty border is folded into the
+        // batch's, and the frames are let go; nothing is built or saved
+        MeasureTwoPassFrames(AFrames);
+        if FExportDialog <> nil then
+          if HasDirection then
+            FExportDialog.AddLine(Format('Measured %s, direction %d (%d frames)',
+              [AnimationName, Direction + 1, Length(AFrames)]))
+          else
+            FExportDialog.AddLine(Format('Measured %s (%d frames)',
+              [AnimationName, Length(AFrames)]));
+        if Assigned(OnFinished) then
+          OnFinished(String.Empty);
+        Exit;
+      end;
       if Kind = skAtlas then
       begin
-        // Kept for the pages, made once every animation of the batch is in
+        // Its frames join those waiting for a page; every page they fill is
+        // saved straight away and its frames let go, before the next capture
         var Part: TAtlasPart;
         Part.Name := AnimationName;
         Part.Entry := Entry;
-        Part.Frames := AFrames;
+        Part.Count := Length(AFrames);
+        Part.Time := CycleSeconds;
         Part.Origin := Origin;
         Part.OriginKnown := OriginKnown;
         Part.Direction := Direction;
-        FAtlasParts := FAtlasParts + [Part];
-        DebugMemo.Lines.Add(Format('Captured %s (%d frames) for the texture atlas',
-          [AnimationName, Length(AFrames)]));
+        AddAtlasPart(Part, AFrames);
         if FExportDialog <> nil then
           if HasDirection then
             FExportDialog.AddLine(Format('Captured %s, direction %d (%d frames)',
@@ -5827,8 +6009,12 @@ begin
           else
             FExportDialog.AddLine(Format('Captured %s (%d frames)',
               [AnimationName, Length(AFrames)]));
-        if Assigned(OnFinished) then
-          OnFinished(String.Empty);
+        SaveAtlasPages(False,
+          procedure
+          begin
+            if Assigned(OnFinished) then
+              OnFinished(String.Empty);
+          end);
         Exit;
       end;
       Frames := AFrames;
@@ -5863,24 +6049,35 @@ begin
       Caption := Format('Saving %s...', [Stem]);
       if FBatchActive then
         ShowExportStep(1, BatchStepTitle + sLineBreak + 'Saving...');
+      // A batch saves each image as soon as it is made, so its frames can be
+      // let go, and writes all the metadata once the batch ends
+      DeferMetadata := FBatchActive;
+      Borders := FrameBordersOn;
       Task := TTask.Run(
         procedure
         var
-          Saved, Failure: String;
+          Saved, Failure, EdgeNote: String;
           FrameCount: Integer;
+          Pending: TSprite3DSheetMetadata;
+          HasPending: Boolean;
         begin
           Saved := String.Empty;
           Failure := String.Empty;
+          HasPending := False;
+          // Frames whose drawing reaches the edge, for the Debug tab
+          EdgeNote := EdgeTouchNote(Stem, Frames);
           FrameCount := Length(Frames);
           try
             // A GIF or video is one direction; a strip or spritesheet holds
             // every direction captured
             if Kind in [skGif, skMp4] then
               Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds, Metadata, Origin,
-                OriginKnown, AnimationName, nil, Meta)
+                OriginKnown, AnimationName, nil, Meta, Borders, DeferMetadata, Pending,
+                HasPending)
             else
               Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds, Metadata, Origin,
-                OriginKnown, AnimationName, Bearings, Meta);
+                OriginKnown, AnimationName, Bearings, Meta, Borders, DeferMetadata, Pending,
+                HasPending);
           except
             on E: Exception do
               Failure := 'Can''t save ' + Stem + ' in ' + Folder + sLineBreak + E.Message;
@@ -5895,13 +6092,17 @@ begin
               Task := nil;
               if Failure = String.Empty then
               begin
-                DebugMemo.Lines.Add(Format('Saved %s (%d frames)', [Saved, FrameCount]));
+                // Its metadata, written with the rest at the end
+                if HasPending then
+                  FPendingMetadata := FPendingMetadata + [Pending];
                 if FExportDialog <> nil then
                   FExportDialog.AddLine(Format('Saved %s (%d frames)',
                     [ExtractFileName(Saved), FrameCount]));
               end
               else
                 DebugMemo.Lines.Add(Failure);
+              if EdgeNote <> String.Empty then
+                DebugMemo.Lines.Add(EdgeNote);
               if not Capturing then
                 Caption := ProjectionCaption;
               if Assigned(OnFinished) then
@@ -5920,8 +6121,6 @@ begin
   Capture.SourceStarted;
   FCapture := Capture;
   UpdateBatchControls;
-  DebugMemo.Lines.Add(Format('Capturing %s: %d frames of %d x %d',
-    [Stem, Count, FOffscreen.Width, FOffscreen.Height]));
   Result := Capture.Run;
   if not Result then
   begin
@@ -5932,16 +6131,6 @@ begin
     AError := Stem + ': the capture could not start.';
   end;
 end;
-
-const
-  // The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
-  // button's text colour
-  ICON_FIRST = 'M5 6h2v12H5z M8 12l6-6v12z M14 12l6-6v12z';
-  ICON_PREVIOUS = 'M7 12l7-6v12z M15 6h2v12h-2z';
-  ICON_PLAY = 'M8 5v14l11-7z';
-  ICON_PAUSE = 'M6 5h4v14H6z M14 5h4v14h-4z';
-  ICON_NEXT = 'M7 6h2v12H7z M10 6v12l7-6z';
-  ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
 
 // The buttons that play, pause and step the selected animation, in a row
 // under the animation list and above the batch controls, made here rather
@@ -6305,6 +6494,8 @@ begin
   FBatchKindBox.ItemIndex := Ord(skStrip);
   FBatchKindIndex := Ord(skStrip);
   FBatchKindBox.OnChange := BatchKindChange;
+  // As it was left last session; MP4 waits for StartVideo to offer it
+  RestoreBatchKind;
 
   // Second row, above Export: the metadata, directions and two-pass choices
   Row := TLayout.Create(Self);
@@ -6340,7 +6531,8 @@ begin
   FBatchTwoPass.Parent := Row;
   FBatchTwoPass.Align := TAlignLayout.Client;
   FBatchTwoPass.Text := '2-pass';
-  FBatchTwoPass.Hint := 'Export in two passes (to come; no effect yet)';
+  FBatchTwoPass.Hint := 'Export in two passes: the first, without overscan, measures the ' +
+    'frames; the second exports them reframed to fill the frame';
   FBatchTwoPass.ShowHint := True;
   FBatchTwoPass.IsChecked := False;   // not kept between sessions
 
@@ -6375,6 +6567,23 @@ begin
   UpdateBatchControls;
 end;
 
+// The name settings.json keeps a kind of export by
+function SheetKindKey(const AKind: TSheetKind): String;
+begin
+  case AKind of
+    skSheet:
+      Result := 'sheet';
+    skAtlas:
+      Result := 'atlas';
+    skGif:
+      Result := 'gif';
+    skMp4:
+      Result := 'mp4';
+  else
+    Result := 'strip';
+  end;
+end;
+
 // What to save changed: Metadata is offered for strips and spritesheets only
 procedure TMainForm.BatchKindChange(Sender: TObject);
 begin
@@ -6387,6 +6596,41 @@ begin
   begin
     FBatchKindIndex := FBatchKindBox.ItemIndex;
     FBatchKindBox.Hint := String.Empty;
+    // Kept for next session
+    FSettings.ExportKind := SheetKindKey(TSheetKind(FBatchKindIndex));
+  end;
+  UpdateBatchControls;
+end;
+
+// The drop-down as settings.json last kept it: the kind of export, if the
+// drop-down offers it, and for a texture atlas its folder, if it is still
+// there; otherwise the folder is asked for at Export. Choosing it here asks
+// for nothing.
+procedure TMainForm.RestoreBatchKind;
+var
+  Index: Integer;
+begin
+  if FBatchKindBox = nil then
+    Exit;
+  Index := Ord(skStrip);
+  for var Kind := Low(TSheetKind) to High(TSheetKind) do
+    if SameText(FSettings.ExportKind, SheetKindKey(Kind)) then
+      Index := Ord(Kind);
+  if Index >= FBatchKindBox.Items.Count then
+    Exit;   // MP4 before the video libraries have loaded
+  FSyncingChecks := True;
+  try
+    FBatchKindBox.ItemIndex := Index;
+  finally
+    FSyncingChecks := False;
+  end;
+  FBatchKindIndex := Index;
+  FBatchKindBox.Hint := String.Empty;
+  if (Index = Ord(skAtlas)) and (FSettings.AtlasFolder <> String.Empty) and
+    TDirectory.Exists(FSettings.AtlasFolder) then
+  begin
+    FAtlasFolder := FSettings.AtlasFolder;
+    FBatchKindBox.Hint := 'Texture atlas pages are saved in ' + FAtlasFolder;
   end;
   UpdateBatchControls;
 end;
@@ -6404,6 +6648,9 @@ begin
   begin
     FAtlasFolder := Folder;
     FBatchKindIndex := Ord(skAtlas);
+    // Both kept for next session
+    FSettings.ExportKind := SheetKindKey(skAtlas);
+    FSettings.AtlasFolder := Folder;
     FBatchKindBox.Hint := 'Texture atlas pages are saved in ' + Folder;
     DebugMemo.Lines.Add('Texture atlas pages will be saved in ' + Folder);
   end
@@ -6611,17 +6858,24 @@ begin
   else if not ChooseExportFolder(Folder) then
     Exit   // cancelled
   else if FBatchKind = skAtlas then
+  begin
     FAtlasFolder := Folder;
+    FSettings.AtlasFolder := Folder;
+  end;
 
-  StartBatch(Items, FBatchKind, Folder);
+  StartBatch(Items, FBatchKind, Folder, FBatchTwoPass.IsChecked);
 end;
 
 // Runs a batch: every entry of AItems, in order, saved as AKind in
 // AFolder, behind the progress dialog. With Directions ticked, each entry is
 // captured once per direction of Model, Directions, in their order, before
-// the next entry.
+// the next entry. With ATwoPass, the whole batch is first run through once
+// with overscan off, saving nothing, only to measure how much empty border
+// its frames leave; the second pass is then the export itself, overscan as
+// chosen, with every capture's framing slid and scaled so the sprite fills
+// the frame to within TWO_PASS_MARGIN pixels.
 procedure TMainForm.StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
-  const AFolder: String);
+  const AFolder: String; const ATwoPass: Boolean);
 var
   Items: TArray<Integer>;
   Folder: String;
@@ -6660,13 +6914,29 @@ begin
   // The entry selected now is selected again, and played, once it is done
   FBatchSelected := AnimationListBox.ItemIndex;
   FBatchFolder := Folder;
+  // Where the Results tab looks first
+  FSettings.LastExportFolder := Folder;
   FBatchSaved := 0;
   FBatchErrors := nil;
   FBatchAborted := False;
+  // 2-pass: the first pass measures, with overscan off whatever is chosen,
+  // as its frames are only looked at for their empty borders
+  FTwoPassRun := ATwoPass;
+  FTwoPassMeasured := False;
+  FTwoPassAdjusted := False;
+  FAtlasQueue := nil;
+  FAtlasPageCount := 0;
+  FAtlasFailed := nil;
+  FAtlasPending := nil;
+  FPendingMetadata := nil;
+  FBatchOriginSet := False;
+  if FTwoPassRun then
+    FBatchPass := 1
+  else
+    FBatchPass := 0;
+  SetMeasuringOverscan(FBatchPass = 1);
   FBatchActive := True;
   UpdateBatchControls;
-  DebugMemo.Lines.Add(Format('Exporting %d animations as %s to %s',
-    [FBatchEntryCount, FBatchKindBox.Items[Ord(FBatchKind)], Folder]));
   // Every drawing is off screen: the view need not redraw meanwhile
   PauseViewForExport(True);
 
@@ -6680,7 +6950,16 @@ begin
       [FBatchEntryCount, FBatchKindBox.Items[Ord(FBatchKind)]]);
   FExportDialog.OnAbort := ExportDialogAbort;
   FExportDialog.OnClosed := ExportDialogClosed;
+  // Autoclose when done, as it was left
+  FExportDialog.AutoClose := FSettings.ExportAutoClose;
+  FExportDialog.OnAutoCloseChange := ExportDialogAutoCloseChange;
   FExportDialog.AddLine('To ' + Folder);
+  FPassStartMs := 0;
+  if FTwoPassRun then
+  begin
+    FExportDialog.SetRemainingPass(1);
+    FExportDialog.AddLine('Pass 1 of 2: measuring, overscan off, nothing saved');
+  end;
   ShowExportStep(0, 'Starting...');
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog frees itself when closed
@@ -6690,10 +6969,13 @@ begin
   // The batch runs from queued calls, which the modal dialog's own loop
   // carries out; ShowModal returns once Close is pressed at the end
   TThread.ForceQueue(nil, ContinueBatch);
+  // Held here as well: the dialog's OnClosed, ExportDialogClosed, clears
+  // FExportDialog as it closes, before ShowModal returns, so freeing it by
+  // that field would free nothing and leak every dialog
+  var Dialog := FExportDialog;
   try
-    FExportDialog.ShowModal;
+    Dialog.ShowModal;
   finally
-    var Dialog := FExportDialog;
     FExportDialog := nil;
     Dialog.Free;
   end;
@@ -6713,21 +6995,31 @@ const
   ESTIMATE_EVERY_MS = 500;
 var
   Total: Integer;
-  Fraction: Double;
+  Fraction, BarFraction: Double;
   Elapsed: Int64;
 begin
   if FExportDialog = nil then
     Exit;
   Total := Max(1, Length(FBatchItems));
+  // How far through the pass under way, the only pass of an ordinary export
   Fraction := (Min(FBatchPos, Total) + EnsureRange(AItemFraction, 0, 1)) / Total;
-  FExportDialog.SetProgress(Fraction, AStatus);
+  // A 2-pass export goes through the batch twice; each pass is half the bar
+  BarFraction := Fraction;
+  if FTwoPassRun then
+    if FBatchPass = 2 then
+      BarFraction := 0.5 + Fraction / 2
+    else
+      BarFraction := Fraction / 2;
+  FExportDialog.SetProgress(BarFraction, AStatus);
   if FBatchAborted then
   begin
     // The status line says it is stopping; the estimate was for the lot
     FExportDialog.SetRemainingNote(String.Empty);
     Exit;
   end;
-  Elapsed := FBatchClock.ElapsedMilliseconds;
+  // The time remaining is for the pass under way: a measuring pass draws
+  // without overscan and saves nothing, so it says little about the export
+  Elapsed := FBatchClock.ElapsedMilliseconds - FPassStartMs;
   if (Fraction < ESTIMATE_AFTER_FRACTION) or (Elapsed < ESTIMATE_AFTER_MS) then
   begin
     if FBatchRemainingAt < 0 then
@@ -6736,7 +7028,7 @@ begin
   end;
   if (FBatchRemainingAt >= 0) and (Elapsed - FBatchRemainingAt < ESTIMATE_EVERY_MS) then
     Exit;
-  FBatchRemainingAt := Elapsed;
+  FBatchRemainingAt := Elapsed;   // on the pass's own clock
   // The rest at the rate so far; every step is taken to be alike, so a
   // batch of animations of very different lengths makes it rougher
   FExportDialog.SetRemaining(Round(Elapsed * (1 - Fraction) / Fraction));
@@ -6764,6 +7056,10 @@ begin
   Entry := FBatchItems[FBatchPos];
   Result := Format('Animation %d of %d: %s', [BatchEntryOrdinal(FBatchPos),
     FBatchEntryCount, AnimationListBox.Items[Entry]]);
+  if FBatchPass = 1 then
+    Result := 'Pass 1 of 2, measuring. ' + Result
+  else if FBatchPass = 2 then
+    Result := 'Pass 2 of 2. ' + Result;
   Direction := FBatchDirs[FBatchPos];
   if Direction >= 0 then
   begin
@@ -6801,6 +7097,22 @@ end;
 procedure TMainForm.ExportDialogAbort(Sender: TObject);
 begin
   AbortButtonClick(Sender);
+end;
+
+// Autoclose when done ticked or cleared in the progress dialog: kept in
+// settings.json straight away
+procedure TMainForm.ExportDialogAutoCloseChange(Sender: TObject);
+begin
+  if not (Sender is TExportProgressForm) then
+    Exit;
+  FSettings.ExportAutoClose := TExportProgressForm(Sender).AutoClose;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
 end;
 
 // The progress dialog has closed; on Android and iOS it frees itself
@@ -6858,7 +7170,12 @@ begin
       FBatchFolder,
       procedure(AResult: String)
       begin
-        if AResult <> String.Empty then
+        if FBatchPass = 1 then
+        begin
+          // Measuring saves nothing, and a capture that failed here is
+          // already logged; it is tried again, and reported, in pass 2
+        end
+        else if AResult <> String.Empty then
         begin
           FBatchErrors := FBatchErrors + [AResult];
           FDirFailed := True;
@@ -6876,7 +7193,9 @@ begin
       end, Error);
     if not Started then
     begin
-      FBatchErrors := FBatchErrors + [Error];
+      // Reported once, by the pass that exports
+      if FBatchPass <> 1 then
+        FBatchErrors := FBatchErrors + [Error];
       DebugMemo.Lines.Add(Error);
       FDirFailed := True;
       Inc(FBatchPos);
@@ -6890,18 +7209,72 @@ end;
 // which reports when done; otherwise reports straight away
 procedure TMainForm.FinishBatch;
 begin
+  // Overscan as chosen again, if a measuring pass turned it off
+  SetMeasuringOverscan(False);
   if FQuitConfirmed then
   begin
     // Quitting: nothing more is saved, and nothing is reported
+    FBatchPass := 0;
     FBatchActive := False;
     FAtlasParts := nil;
+    FAtlasQueue := nil;
+    FAtlasPending := nil;
+    FPendingMetadata := nil;
     PauseViewForExport(False);
     Exit;
   end;
+  if FBatchPass = 1 then
+  begin
+    if FBatchAborted then
+    begin
+      // Stopped while measuring: nothing has been exported
+      FBatchPos := 0;
+      ReportBatch;
+    end
+    else
+      StartSecondPass;
+    Exit;
+  end;
+  // Every image is saved by now, but for a texture atlas's last page, which
+  // is saved first; then every metadata file, then the report
   if (FBatchKind = skAtlas) and (Length(FAtlasParts) > 0) then
-    SaveAtlasBatch
+    SaveAtlasPages(True, FinishAtlas)
   else
+  begin
+    WriteBatchMetadata;
     ReportBatch;
+  end;
+end;
+
+// The end of a 2-pass export's first pass: works out the framing from what
+// it measured, then runs the batch again from the start as an ordinary
+// export, overscan as chosen, with that framing on top of every fit
+procedure TMainForm.StartSecondPass;
+begin
+  ComputeTwoPassAdjust;
+  FBatchPass := 2;
+  FBatchPos := 0;
+  // The origin is the second pass's own
+  FBatchOriginSet := False;
+  FDirFrames := nil;
+  FDirFailed := False;
+  FAtlasParts := nil;
+  FAtlasQueue := nil;
+  FAtlasPageCount := 0;
+  FAtlasFailed := nil;
+  FAtlasPending := nil;
+  FPendingMetadata := nil;
+  // The time remaining starts over for this pass, as an export's frames
+  // take longer to make than a measuring pass's
+  FBatchRemainingAt := -1;
+  FPassStartMs := FBatchClock.ElapsedMilliseconds;
+  if FExportDialog <> nil then
+  begin
+    FExportDialog.SetRemainingPass(2);
+    FExportDialog.AddLine('Pass 2 of 2: exporting');
+  end;
+  ShowExportStep(0, 'Starting pass 2...');
+  TThread.ForceQueue(nil, ContinueBatch);
 end;
 
 // How many list entries have every one of their parts among ASaved: the
@@ -6936,55 +7309,149 @@ begin
   end;
 end;
 
-// The animations captured for a texture atlas made into pages and saved, on
-// a worker thread, as SaveSheet does for one animation; then the batch is
-// reported, the saved entries unticked
-procedure TMainForm.SaveAtlasBatch;
+// A texture atlas animation just captured: kept for its pages' metadata,
+// its frames added to those waiting for a page. Frames too large for any
+// page are let go, and the animation reported as not saved.
+procedure TMainForm.AddAtlasPart(const APart: TAtlasPart;
+  const AFrames: TArray<TSprite3DImage>);
 var
+  Index, PageSize: Integer;
+  Cell: TAtlasCell;
+begin
+  Index := Length(FAtlasParts);
+  FAtlasParts := FAtlasParts + [APart];
+  FAtlasFailed := FAtlasFailed + [False];
+  if Length(AFrames) = 0 then
+    Exit;
+  PageSize := FSettings.AtlasPageSize;
+  if (AFrames[0].Width > PageSize) or (AFrames[0].Height > PageSize) then
+  begin
+    FAtlasFailed[Index] := True;
+    FBatchErrors := FBatchErrors + [Format('%s: frames of %d x %d do not fit on a %d x %d ' +
+      'atlas page; choose a larger page size in Model, Animation Settings, or a smaller ' +
+      'grab size.', [APart.Name, AFrames[0].Width, AFrames[0].Height, PageSize, PageSize])];
+    Exit;
+  end;
+  Cell.Part := Index;
+  for var I := 0 to High(AFrames) do
+  begin
+    Cell.Frame := I;
+    Cell.Image := AFrames[I];
+    FAtlasQueue := FAtlasQueue + [Cell];
+  end;
+end;
+
+// Saves, on a worker thread, every texture atlas page the waiting frames
+// fill, in order, numbered on from those already saved, and lets their
+// frames go; with AFinal, the frames left over too, as the last page. Each
+// page's metadata is measured and kept, to be written when the batch ends.
+// AThen runs on the main thread once they are saved, or straight away if
+// there is no page to save.
+procedure TMainForm.SaveAtlasPages(const AFinal: Boolean; const AThen: TProc);
+var
+  PerPage, PageSize, First: Integer;
+  NonPowerOf2, Borders: Boolean;
+  Pages: TArray<TArray<TAtlasCell>>;
   Parts: TArray<TAtlasPart>;
   Folder, Stem: String;
-  PageSize: Integer;
-  NonPowerOf2, Metadata: Boolean;
   Bearings: TArray<Single>;
   Meta: TSprite3DSheetMeta;
   Task: ITask;
 begin
-  Parts := FAtlasParts;
-  FAtlasParts := nil;
-  Folder := FBatchFolder;
-  Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
+  Pages := nil;
   PageSize := FSettings.AtlasPageSize;
   NonPowerOf2 := FSettings.AtlasNonPowerOf2;
-  Metadata := True;   // an atlas always has its metadata
-  Bearings := Copy(FBatchBearings);
-  Meta := ExportMeta(1, 1);
-  FAtlasSaving := True;
-  // The capturing is done; the rest is making and writing the pages
-  FBatchCaptureMs := FBatchClock.ElapsedMilliseconds;
-  UpdateBatchControls;
-  Caption := 'Saving texture atlas...';
-  if FExportDialog <> nil then
+  Borders := FrameBordersOn;
+  if Length(FAtlasQueue) > 0 then
   begin
-    FExportDialog.SetProgress(1, 'Saving the texture atlas pages...');
-    // How long the pages take is not known until they are made
-    FExportDialog.SetRemainingNote('saving the pages, not estimated');
+    // A full page holds as many frames as fit each way; every page but the
+    // last is full, so a full page is laid out the same whatever follows
+    PerPage := Max(1, (PageSize div Max(1, FAtlasQueue[0].Image.Width)) *
+      (PageSize div Max(1, FAtlasQueue[0].Image.Height)));
+    while Length(FAtlasQueue) >= PerPage do
+    begin
+      SetLength(Pages, Length(Pages) + 1);
+      Pages[High(Pages)] := System.Copy(FAtlasQueue, 0, PerPage);
+      System.Delete(FAtlasQueue, 0, PerPage);
+    end;
+    if AFinal and (Length(FAtlasQueue) > 0) then
+    begin
+      SetLength(Pages, Length(Pages) + 1);
+      Pages[High(Pages)] := FAtlasQueue;
+      FAtlasQueue := nil;
+    end;
   end;
+  if Length(Pages) = 0 then
+  begin
+    AThen();
+    Exit;
+  end;
+  First := FAtlasPageCount + 1;
+  Inc(FAtlasPageCount, Length(Pages));
+  Parts := System.Copy(FAtlasParts);
+  Folder := FBatchFolder;
+  Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
+  Bearings := Copy(FBatchBearings);
+  // The camera these frames were drawn with: for a 2-pass export, the
+  // second pass's
+  Meta := ExportMeta(1, 1);
+  if AFinal then
+  begin
+    FAtlasSaving := True;
+    UpdateBatchControls;
+    Caption := 'Saving texture atlas...';
+  end;
+  if FExportDialog <> nil then
+    ShowExportStep(1, BatchStepTitle + sLineBreak + 'Saving the texture atlas page...');
   Task := TTask.Run(
     procedure
     var
-      Files, Notes: TArray<String>;
-      Saved: TArray<Integer>;
+      Files, Notes, EdgeNotes: TArray<String>;
+      Kept: TArray<TSprite3DSheetMetadata>;
+      Failed: TArray<Integer>;
+      Metadata: TSprite3DSheetMetadata;
+      FileName: String;
     begin
       Files := nil;
       Notes := nil;
-      Saved := nil;
-      try
-        Files := SaveAtlas(Parts, Folder, Stem, PageSize, NonPowerOf2, Metadata, Bearings,
-          Meta, Saved, Notes);
-      except
-        on E: Exception do
-          Notes := Notes + ['Can''t save the texture atlas in ' + Folder + sLineBreak +
-            E.Message];
+      EdgeNotes := nil;
+      Kept := nil;
+      Failed := nil;
+      // The pages of an earlier atlas of this model go first, so none is
+      // left over from a larger one
+      if First = 1 then
+        try
+          DeleteAtlasPages(OSFriendlyPath(Folder), Stem, Notes);
+        except
+          on E: Exception do
+            Notes := Notes + [E.Message];
+        end;
+      for var P := 0 to High(Pages) do
+      begin
+        FileName := TPath.Combine(OSFriendlyPath(Folder),
+          Format('%s_atlas_%.2d.png', [Stem, First + P]));
+        try
+          ForceDirectories(OSFriendlyPath(Folder));
+          Files := Files + [SaveAtlasPage(Pages[P], Parts, FileName, First + P, PageSize,
+            NonPowerOf2, Borders, Bearings, Meta, Metadata, Notes)];
+          var PageFrames: TArray<TSprite3DImage> := nil;
+          for var Cell in Pages[P] do
+            PageFrames := PageFrames + [Cell.Image];
+          var EdgeNote := EdgeTouchNote(ExtractFileName(FileName), PageFrames);
+          if EdgeNote <> String.Empty then
+            EdgeNotes := EdgeNotes + [EdgeNote];
+          Kept := Kept + [Metadata];
+        except
+          on E: Exception do
+          begin
+            Notes := Notes + ['Can''t save ' + FileName + sLineBreak + E.Message];
+            // Every animation with frames on this page is not wholly saved
+            for var Cell in Pages[P] do
+              Failed := Failed + [Cell.Part];
+          end;
+        end;
+        // Its frames are done with
+        Pages[P] := nil;
       end;
       TThread.Queue(nil,
         procedure
@@ -6993,167 +7460,150 @@ begin
             Exit;
           FSaveTasks := RemoveTask(FSaveTasks, Task);
           Task := nil;
-          FAtlasSaving := False;
+          FAtlasPending := FAtlasPending + Kept;
+          for var Part in Failed do
+            if (Part >= 0) and (Part < Length(FAtlasFailed)) then
+              FAtlasFailed[Part] := True;
           for var Written in Files do
           begin
-            DebugMemo.Lines.Add('Saved ' + Written);
             if FExportDialog <> nil then
               FExportDialog.AddLine('Saved ' + ExtractFileName(Written));
           end;
           for var Note in Notes do
             DebugMemo.Lines.Add(Note);
+          for var Note in EdgeNotes do
+            DebugMemo.Lines.Add(Note);
           FBatchErrors := FBatchErrors + Notes;
-          // Each animation on a saved page is done; the ticks stay as they are
-          // An animation is saved once every direction of it is
-          FBatchSaved := FBatchSaved + DistinctWholeEntries(Parts, Saved);
-          Parts := nil;
-          if not Capturing then
-            Caption := ProjectionCaption;
-          ReportBatch;
+          if not FQuitConfirmed then
+            AThen();
         end);
     end);
   FSaveTasks := FSaveTasks + [Task];
 end;
 
-// Plans the pages of AParts, in order, at most APageSize each way, every
-// frame in turn so that every page but the last is full and an animation can
-// carry on onto the next, and saves each as AStem_atlas_01.png, _02 and so on
-// in AFolder, with its .json if AMetadata. ASaved gets the indices of the
-// parts whose every page was saved; ANotes, what went wrong: frames too large
-// for a page, a page that could not be written, or origins that differ on a
-// page. Returns the files written.
-// Runs on a worker thread, so touches no controls.
-function TMainForm.SaveAtlas(const AParts: TArray<TAtlasPart>; const AFolder,
-  AStem: String; const APageSize: Integer; const ANonPowerOf2, AMetadata: Boolean;
-  const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta;
-  out ASaved: TArray<Integer>; out ANotes: TArray<String>): TArray<String>;
+// The texture atlas's last page is saved: every page's metadata now knows
+// how many pages and frames there are in all, and is written with the rest;
+// the animations whose every page was saved are counted; then the report
+procedure TMainForm.FinishAtlas;
 var
-  Counts: TArray<Integer>;
-  Failed: TArray<Boolean>;
+  Total: Integer;
+  Saved: TArray<Integer>;
+begin
+  FAtlasSaving := False;
+  Total := 0;
+  for var Part in FAtlasParts do
+    Inc(Total, Part.Count);
+  for var I := 0 to High(FAtlasPending) do
+  begin
+    FAtlasPending[I].Info.Meta.PageCount := FAtlasPageCount;
+    FAtlasPending[I].Info.Meta.TotalFrames := Total;
+  end;
+  FPendingMetadata := FPendingMetadata + FAtlasPending;
+  FAtlasPending := nil;
+  Saved := nil;
+  for var I := 0 to High(FAtlasParts) do
+    if (FAtlasParts[I].Count > 0) and not FAtlasFailed[I] then
+      Saved := Saved + [I];
+  // An animation is saved once every direction of it is
+  FBatchSaved := FBatchSaved + DistinctWholeEntries(FAtlasParts, Saved);
+  FAtlasParts := nil;
+  FAtlasFailed := nil;
+  if not Capturing then
+    Caption := ProjectionCaption;
+  WriteBatchMetadata;
+  ReportBatch;
+end;
+
+// One texture atlas page, ACells in order, laid out as PlanAtlasPages lays
+// out a page of that many frames, saved as AFileName; its metadata is
+// measured into AMetadata, to be written later, its page count and total
+// frames still to be filled in. AParts says which animation each cell's part
+// is. Returns the file written, for the log. Runs on a worker thread.
+function TMainForm.SaveAtlasPage(const ACells: TArray<TAtlasCell>;
+  const AParts: TArray<TAtlasPart>; const AFileName: String; const APage, APageSize: Integer;
+  const ANonPowerOf2, ABorders: Boolean; const ADirections: TArray<Single>;
+  const AMeta: TSprite3DSheetMeta; out AMetadata: TSprite3DSheetMetadata;
+  var ANotes: TArray<String>): String;
+var
   Pages: TArray<TSprite3DAtlasPage>;
+  Page: TSprite3DAtlasPage;
   Frames: TArray<TSprite3DImage>;
   Info: TSprite3DSheetInfo;
   Ref: TSprite3DFrameRef;
-  Folder, FileName: String;
-  W, H, P, Listed, First, Total: Integer;
+  Listed, PartIndex: Integer;
 begin
-  Result := nil;
-  ASaved := nil;
-  ANotes := nil;
-  if Length(AParts) = 0 then
-    Exit;
-  Folder := OSFriendlyPath(AFolder);
-  ForceDirectories(Folder);
-  SetLength(Counts, Length(AParts));
-  SetLength(Failed, Length(AParts));
-  Total := 0;
-  for var I := 0 to High(AParts) do
+  Pages := PlanAtlasPages([Length(ACells)], ACells[0].Image.Width, ACells[0].Image.Height,
+    APageSize, ANonPowerOf2);
+  if Length(Pages) <> 1 then
+    raise EArgumentException.CreateFmt('%d frames do not make one atlas page.',
+      [Length(ACells)]);
+  Page := Pages[0];
+  // Every field set here or below; Default() would mean Gorilla's
+  // TGorillaOAuthMode.Default in this unit
+  Frames := nil;
+  SetLength(Info.Directions, Length(ADirections));
+  for var K := 0 to High(ADirections) do
+    Info.Directions[K] := ADirections[K];
+  Info.Animations := nil;
+  Info.AnimationFrames := nil;
+  Info.AnimationTimes := nil;
+  Info.Frames := nil;
+  for var Cell in ACells do
   begin
-    Counts[I] := Length(AParts[I].Frames);
-    Inc(Total, Counts[I]);
-  end;
-  W := AParts[0].Frames[0].Width;
-  H := AParts[0].Frames[0].Height;
-  // Every frame in turn, filling each page before the next: an animation
-  // carries on from one page onto the next
-  Pages := PlanAtlasPages(Counts, W, H, APageSize, ANonPowerOf2);
-  if Length(Pages) = 0 then
-  begin
-    ANotes := ANotes + [Format('Frames of %d x %d do not fit on a %d x %d atlas page; ' +
-      'choose a larger page size in Model, Animation Settings, or a smaller grab size.',
-      [W, H, APageSize, APageSize])];
-    Exit;
-  end;
-  // The pages of an earlier atlas of this model go first, so none is left
-  // over from a larger one
-  DeleteAtlasPages(Folder, AStem, ANotes);
-  for P := 0 to High(Pages) do
-  begin
-    FileName := TPath.Combine(Folder, Format('%s_atlas_%.2d.png', [AStem, P + 1]));
-    try
-      // Every field set here or below; Default() would mean Gorilla's
-      // TGorillaOAuthMode.Default in this unit
-      Frames := nil;
-      // The batch's directions as bearings, or none for the single dummy 0
-      SetLength(Info.Directions, Length(ADirections));
-      for var K := 0 to High(ADirections) do
-        Info.Directions[K] := ADirections[K];
-      Info.Animations := nil;
-      Info.AnimationFrames := nil;
-      Info.Frames := nil;
-      for var Slice in Pages[P].Slices do
-      begin
-        // Each animation listed once per page, with its whole length
-        Listed := -1;
-        for var K := 0 to High(Info.Animations) do
-          if Info.Animations[K] = AParts[Slice.Animation].Name then
-            Listed := K;
-        if Listed < 0 then
-        begin
-          Info.Animations := Info.Animations + [AParts[Slice.Animation].Name];
-          // Its frames in each direction: every direction has as many
-          Info.AnimationFrames := Info.AnimationFrames + [Counts[Slice.Animation]];
-          Listed := High(Info.Animations);
-        end;
-        First := Slice.First;
-        for var K := 0 to Slice.Count - 1 do
-        begin
-          Frames := Frames + [AParts[Slice.Animation].Frames[First + K]];
-          Ref.Animation := Listed;
-          Ref.Direction := AParts[Slice.Animation].Direction;
-          Ref.Frame := First + K;
-          Info.Frames := Info.Frames + [Ref];
-        end;
-      end;
-      SavePng(ComposeAtlasPage(Frames, Pages[P]), FileName);
-      if AMetadata then
-      begin
-        Info.Width := Pages[P].Width;
-        Info.Height := Pages[P].Height;
-        Info.Cols := Pages[P].Cols;
-        Info.Rows := Pages[P].Rows;
-        // Page P + 1 of them all, as the file name numbers it
-        Info.Meta := AMeta;
-        Info.Meta.Page := P + 1;
-        Info.Meta.PageCount := Length(Pages);
-        // Every frame of every page
-        Info.Meta.TotalFrames := Total;
-        // Every animation of a batch is framed alike, so they share one
-        // origin; the first's is given, and a difference is reported
-        Info.Origin := AParts[Pages[P].Slices[0].Animation].Origin;
-        Info.OriginKnown := AParts[Pages[P].Slices[0].Animation].OriginKnown;
-        for var Slice in Pages[P].Slices do
-          if (AParts[Slice.Animation].OriginKnown <> Info.OriginKnown) or
-            (AParts[Slice.Animation].Origin <> Info.Origin) then
-          begin
-            ANotes := ANotes + [Format('%s: the animations'' origins differ; the ' +
-              'first''s is given', [ExtractFileName(FileName)])];
-            Break;
-          end;
-        SaveSheetMetadata(TPath.ChangeExtension(FileName, '.json'), Frames, Info);
-        Result := Result + [Format('%s and its .json (%d animations, %d frames, %d x %d)',
-          [FileName, Length(Info.Animations), Pages[P].FrameCount, Pages[P].Width,
-          Pages[P].Height])];
-      end
-      else
-        Result := Result + [Format('%s (%d animations, %d frames, %d x %d)',
-          [FileName, Length(Info.Animations), Pages[P].FrameCount, Pages[P].Width,
-          Pages[P].Height])];
-    except
-      on E: Exception do
-      begin
-        ANotes := ANotes + ['Can''t save ' + FileName + sLineBreak + E.Message];
-        // Every animation with frames on this page is not wholly saved
-        for var Slice in Pages[P].Slices do
-          Failed[Slice.Animation] := True;
-      end;
+    PartIndex := Cell.Part;
+    // Each animation listed once per page, with its whole length
+    Listed := -1;
+    for var K := 0 to High(Info.Animations) do
+      if Info.Animations[K] = AParts[PartIndex].Name then
+        Listed := K;
+    if Listed < 0 then
+    begin
+      Info.Animations := Info.Animations + [AParts[PartIndex].Name];
+      // Its frames in each direction: every direction has as many
+      Info.AnimationFrames := Info.AnimationFrames + [AParts[PartIndex].Count];
+      Info.AnimationTimes := Info.AnimationTimes + [AParts[PartIndex].Time];
+      Listed := High(Info.Animations);
     end;
-    Frames := nil;
+    Frames := Frames + [Cell.Image];
+    Ref.Animation := Listed;
+    Ref.Direction := AParts[PartIndex].Direction;
+    Ref.Frame := Cell.Frame;
+    Info.Frames := Info.Frames + [Ref];
   end;
-  // An animation is saved once every page with its frames on is
-  for var I := 0 to High(AParts) do
-    if (Counts[I] > 0) and not Failed[I] then
-      ASaved := ASaved + [I];
+  // With ABorders each frame has a black border in the page, but not in what
+  // the metadata is measured from
+  if ABorders then
+    SavePng(ComposeAtlasPage(FramesWithBorder(Frames), Page), AFileName)
+  else
+    SavePng(ComposeAtlasPage(Frames, Page), AFileName);
+  Info.Width := Page.Width;
+  Info.Height := Page.Height;
+  Info.Cols := Page.Cols;
+  Info.Rows := Page.Rows;
+  // Page APage; the page count and total frames are known once the last
+  // page is saved
+  Info.Meta := AMeta;
+  Info.Meta.Page := APage;
+  Info.Meta.PageCount := 1;
+  Info.Meta.TotalFrames := 0;
+  // Every animation of a batch is framed alike, and snapped to the same
+  // pixel, so they share one origin; the first's is given, and a difference
+  // is reported, except for a 2-pass export, whose second pass is reframed
+  // from the first and gives its own origin
+  Info.Origin := AParts[ACells[0].Part].Origin;
+  Info.OriginKnown := AParts[ACells[0].Part].OriginKnown;
+  if not AMeta.TwoPass then
+    for var Cell in ACells do
+      if (AParts[Cell.Part].OriginKnown <> Info.OriginKnown) or
+        (AParts[Cell.Part].Origin <> Info.Origin) then
+      begin
+        ANotes := ANotes + [Format('%s: the animations'' origins differ; the ' +
+          'first''s is given', [ExtractFileName(AFileName)])];
+        Break;
+      end;
+  AMetadata := MeasureSheetMetadata(TPath.ChangeExtension(AFileName, '.json'), Frames, Info);
+  Result := Format('%s (%d animations, %d frames, %d x %d)', [AFileName,
+    Length(Info.Animations), Length(Frames), Page.Width, Page.Height]);
 end;
 
 // Deletes AStem_atlas_<number>.png in AFolder, any number of digits, and the
@@ -7216,6 +7666,7 @@ var
   Report: String;
 begin
   FBatchActive := False;
+  FBatchPass := 0;
   UpdateBatchControls;
   // The batch left its last animation playing: the entry selected before
   // it, which it does not change, is selected and played again
@@ -7235,6 +7686,8 @@ begin
     [FBatchSaved, FBatchEntryCount, FBatchFolder]);
   if Length(FBatchBearings) > 0 then
     Report := Report + Format(', each in %d directions', [Length(FBatchBearings)]);
+  if FTwoPassRun then
+    Report := Report + ', in two passes';
   if FBatchAborted then
     Report := Report + sLineBreak + Format('Aborted: %d not exported',
       [FBatchEntryCount - BatchEntryOrdinal(FBatchPos - 1)]);
@@ -7246,6 +7699,9 @@ begin
       [DurationText(FBatchCaptureMs),
       DurationText(FBatchClock.ElapsedMilliseconds - FBatchCaptureMs)]);
   FDirFrames := nil;
+  // The Results tab, if it shows this folder, shows what was just saved
+  if Assigned(FResults) then
+    FResults.FolderChanged(FBatchFolder);
   DebugMemo.Lines.Add(Report);
   PauseViewForExport(False);
   // The outcome stays in the progress dialog until it is closed
@@ -7354,7 +7810,7 @@ const
 var
   X, Y, DX, DY, NX, NY: Single;
   SignX, SignY: Single;
-  I: Integer;
+  I, TX, TY: Integer;
 
   function Measure(out AX, AY: Single): Boolean;
   begin
@@ -7373,23 +7829,36 @@ begin
   // and up moves the picture down, +Y
   SignX := -1;
   SignY := 1;
+  // The pixel the point is in; but within a batch, every capture is framed
+  // alike, so the point falls within a pixel of the first capture's, and
+  // it goes on that same pixel. Otherwise a point that falls on the line
+  // between two pixels, as recentring the sprite can leave it, would go
+  // into one or the other by rounding alone.
+  TX := Floor(X);
+  TY := Floor(Y);
+  if FBatchActive and FBatchOriginSet and (Abs(FBatchOrigin.X + 0.5 - X) <= 1) and
+    (Abs(FBatchOrigin.Y + 0.5 - Y) <= 1) then
+  begin
+    TX := FBatchOrigin.X;
+    TY := FBatchOrigin.Y;
+  end;
   for I := 1 to TRIES do
   begin
-    // To the centre of the pixel the point is in
-    DX := Floor(X) + 0.5 - X;
-    DY := Floor(Y) + 0.5 - Y;
+    // To the centre of the pixel chosen
+    DX := TX + 0.5 - X;
+    DY := TY + 0.5 - Y;
     if (Abs(DX) <= TOLERANCE) and (Abs(DY) <= TOLERANCE) then
       Break;
     GorillaCamera.ShiftView(SignX * DX, SignY * DY, AWidth, AHeight);
     if not Measure(NX, NY) then
       Break;
     // A slide that made it worse went the wrong way: undo it twice over
-    if (Abs(DX) > TOLERANCE) and (Abs(Floor(X) + 0.5 - NX) > Abs(DX)) then
+    if (Abs(DX) > TOLERANCE) and (Abs(TX + 0.5 - NX) > Abs(DX)) then
     begin
       GorillaCamera.ShiftView(-2 * SignX * DX, 0, AWidth, AHeight);
       SignX := -SignX;
     end;
-    if (Abs(DY) > TOLERANCE) and (Abs(Floor(Y) + 0.5 - NY) > Abs(DY)) then
+    if (Abs(DY) > TOLERANCE) and (Abs(TY + 0.5 - NY) > Abs(DY)) then
     begin
       GorillaCamera.ShiftView(0, -2 * SignY * DY, AWidth, AHeight);
       SignY := -SignY;
@@ -7397,7 +7866,343 @@ begin
     if not Measure(X, Y) then
       Break;
   end;
-  AOrigin := TPoint.Create(Floor(X), Floor(Y));
+  AOrigin := TPoint.Create(TX, TY);
+  // The batch's origin, for the captures after this one
+  if FBatchActive and not FBatchOriginSet then
+  begin
+    FBatchOrigin := AOrigin;
+    FBatchOriginSet := True;
+  end;
+end;
+
+const
+  // How many empty pixels a 2-pass export aims to leave round the sprite on
+  // the side with least room: one, so nothing drawn ever touches the edge
+  TWO_PASS_MARGIN = 1;
+  // Where that side's edge is aimed, in pixels in from the frame's edge:
+  // halfway across the pixel after the empty ones
+  TWO_PASS_EDGE = TWO_PASS_MARGIN + 0.5;
+
+// A 2-pass export's first pass draws without overscan, whatever is chosen,
+// as it only measures; AMeasuring False puts the chosen overscan back
+procedure TMainForm.SetMeasuringOverscan(const AMeasuring: Boolean);
+begin
+  if AMeasuring or not FOverscanOn then
+    FOffscreen.Overscan := 1
+  else
+    FOffscreen.Overscan := FSettings.Overscan;
+end;
+
+// The first pass's frames: how far the drawn part reaches each way, over
+// every frame of every animation and direction of the batch so far. Each
+// side starts from the outermost pixel drawn on; where that line's pixels
+// are at most partly covered, the edge is taken to be that far into the
+// pixel, so the edge is known to a fraction of a pixel when the drawing is
+// smoothed. A frame with nothing drawn on it is left out.
+procedure TMainForm.MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>);
+
+  // How fully the most covered pixel of a row or column is drawn, 0 to 1
+  function LineCover(const AFrame: TSprite3DImage; const AStart, AStep,
+    ACount: Integer): Single;
+  var
+    Most: Integer;
+  begin
+    Most := 0;
+    for var I := 0 to ACount - 1 do
+      Most := Max(Most, Integer(AFrame.Pixels[(NativeInt(AStart) + I * AStep) * 4 + 3]));
+    Result := Most / 255;
+  end;
+
+var
+  Empty: TSprite3DFrameEmpty;
+  Reach: TRectF;
+  W, H, X0, X1, Y0, Y1: Integer;
+begin
+  for var Frame in AFrames do
+  begin
+    W := Frame.Width;
+    H := Frame.Height;
+    if Length(Frame.Pixels) < Int64(W) * H * 4 then
+      Continue;
+    Empty := MeasureFrameEmpty(Frame);
+    if Empty.Left >= W then
+      Continue;   // nothing drawn
+    X0 := Empty.Left;
+    X1 := W - 1 - Empty.Right;
+    Y0 := Empty.Top;
+    Y1 := H - 1 - Empty.Bottom;
+    // The outermost column or row drawn on, less what of it is not covered
+    Reach.Left := X0 + 1 - LineCover(Frame, X0, W, H);
+    Reach.Right := X1 + LineCover(Frame, X1, W, H);
+    Reach.Top := Y0 + 1 - LineCover(Frame, Y0 * W, 1, W);
+    Reach.Bottom := Y1 + LineCover(Frame, Y1 * W, 1, W);
+    if not FTwoPassMeasured then
+      FTwoPassBounds := Reach
+    else
+    begin
+      FTwoPassBounds.Left := Min(FTwoPassBounds.Left, Reach.Left);
+      FTwoPassBounds.Top := Min(FTwoPassBounds.Top, Reach.Top);
+      FTwoPassBounds.Right := Max(FTwoPassBounds.Right, Reach.Right);
+      FTwoPassBounds.Bottom := Max(FTwoPassBounds.Bottom, Reach.Bottom);
+    end;
+    FTwoPassMeasured := True;
+  end;
+end;
+
+// The second pass's framing, from where the first pass's drawing reached.
+// The picture is slid so the drawn part's centre falls on the frame's
+// centre, then drawn larger or smaller about that centre until, on the side
+// with least room, its edge lies TWO_PASS_EDGE pixels in from the frame's
+// edge: halfway across the second pixel, so that pixel is drawn on and the
+// outermost one is left empty, an empty border of TWO_PASS_MARGIN, with
+// half a pixel to spare either way. The other two sides keep the drawn
+// part's shape, so are left with more. With nothing measured, or a locked
+// camera, which is captured as it stands, the second pass is an ordinary
+// export.
+procedure TMainForm.ComputeTwoPassAdjust;
+const
+  // Scaling beyond this either way is taken to be a bad measurement
+  SCALE_LIMIT = 100;
+var
+  W, H: Integer;
+  DrawnW, DrawnH, RoomW, RoomH: Single;
+  Grow: Double;
+  Note: String;
+begin
+  FTwoPassAdjusted := False;
+  W := FOffscreen.Width;
+  H := FOffscreen.Height;
+  if CameraLocked then
+    Note := '2-pass: the camera is locked, so it is used as it stands'
+  else if not FTwoPassMeasured then
+    Note := '2-pass: nothing was drawn to measure, so the framing is left as it is'
+  else
+  begin
+    DrawnW := FTwoPassBounds.Right - FTwoPassBounds.Left;
+    DrawnH := FTwoPassBounds.Bottom - FTwoPassBounds.Top;
+    RoomW := W - 2 * TWO_PASS_EDGE;
+    RoomH := H - 2 * TWO_PASS_EDGE;
+    if (DrawnW <= 0) or (DrawnH <= 0) or (RoomW < 1) or (RoomH < 1) then
+      Note := '2-pass: the frame is too small to reframe, so the framing is left as it is'
+    else
+    begin
+      Grow := Min(RoomW / DrawnW, RoomH / DrawnH);
+      if (Grow > SCALE_LIMIT) or (Grow < 1 / SCALE_LIMIT) then
+        Note := Format('2-pass: the sprite would be drawn %.4g times as large, which is ' +
+          'too far off to trust, so the framing is left as it is', [Grow])
+      else
+      begin
+        // The drawn part's centre to the frame's
+        FTwoPassMoveX := W / 2 - (FTwoPassBounds.Left + FTwoPassBounds.Right) / 2;
+        FTwoPassMoveY := H / 2 - (FTwoPassBounds.Top + FTwoPassBounds.Bottom) / 2;
+        // OrthoHeight, or Distance, shrinks as the picture grows
+        FTwoPassScale := 1 / Grow;
+        FTwoPassAdjusted := True;
+        // The slide is not reported: the sprite is always recentred, so the
+        // origin always moves, and the metadata gives where it ends up
+        Note := Format('2-pass: the sprite will be drawn %.4f times as large', [Grow]);
+        // Drawing that reached the edge may have gone past it, so it is
+        // larger than measured and will not shrink quite as far as aimed
+        if (FTwoPassBounds.Left <= 0) or (FTwoPassBounds.Top <= 0) or
+          (FTwoPassBounds.Right >= W) or (FTwoPassBounds.Bottom >= H) then
+          Note := Note + '. The sprite touched the edge of the frame, so it may have been ' +
+            'cut off and its empty border may not come down to ' + IntToStr(TWO_PASS_MARGIN);
+        if not GorillaCamera.IsOrthographic then
+          Note := Note + '. In perspective the result is close rather than exact';
+      end;
+    end;
+  end;
+  if FExportDialog <> nil then
+    FExportDialog.AddLine(Note);
+end;
+
+// Puts the second pass's framing on top of a capture's fit, for a grab of
+// AWidth by AHeight: the slide first, in the fit's own pixels, as measured,
+// then the change of size, about the centre of the view. In orthographic
+// projection OrthoHeight, and OrthoWidth if it is set, change; in
+// perspective Distance does, though never so far that the camera is inside
+// the model's bounds. EndCapture puts back the framing as it was.
+procedure TMainForm.ApplyTwoPassAdjust(const AWidth, AHeight: Integer);
+var
+  Radius, NewDistance: Single;
+begin
+  SlidePicture(FTwoPassMoveX, FTwoPassMoveY, AWidth, AHeight);
+  if GorillaCamera.IsOrthographic then
+  begin
+    GorillaCamera.OrthoHeight := GorillaCamera.OrthoHeight * FTwoPassScale;
+    if GorillaCamera.OrthoWidth > 0 then
+      GorillaCamera.OrthoWidth := GorillaCamera.OrthoWidth * FTwoPassScale;
+  end
+  else
+  begin
+    NewDistance := GorillaCamera.Distance * FTwoPassScale;
+    Radius := 0.5 * Sqrt(Sqr(FModelBox.Width) + Sqr(FModelBox.Height) +
+      Sqr(FModelBox.Depth));
+    // Never nearer than the model's radius, nor nearer than the fit if that
+    // was already nearer still
+    Radius := Min(Radius, GorillaCamera.Distance);
+    if (Radius > 0) and (NewDistance < Radius) then
+      NewDistance := Radius;
+    GorillaCamera.Distance := NewDistance;
+  end;
+end;
+
+// Slides the picture ARight pixels right and ADown pixels down, in a view
+// of AWidth by AHeight, by sliding the view the other way. As in
+// SnapCaptureOrigin, which way the slide moves the picture is checked on
+// the model's centre of rotation rather than assumed, and put right if it
+// went the wrong way.
+procedure TMainForm.SlidePicture(const ARight, ADown: Single;
+  const AWidth, AHeight: Integer);
+const
+  TOLERANCE = 0.01;   // of a pixel
+var
+  X0, Y0, X1, Y1: Single;
+  Known: Boolean;
+begin
+  if (Abs(ARight) <= TOLERANCE) and (Abs(ADown) <= TOLERANCE) then
+    Exit;
+  Known := (GorillaModel <> nil) and GorillaCamera.ProjectToView(
+    GorillaModel.RotationCenter.Point, GorillaModel, AWidth, AHeight, X0, Y0);
+  // The picture moves the other way to the view: right is -X, and sliding
+  // the view up moves the picture down
+  GorillaCamera.ShiftView(-ARight, ADown, AWidth, AHeight);
+  if not Known or not GorillaCamera.ProjectToView(GorillaModel.RotationCenter.Point,
+    GorillaModel, AWidth, AHeight, X1, Y1) then
+    Exit;
+  if (Abs(ARight) > TOLERANCE) and ((X1 - X0) * ARight < 0) then
+    GorillaCamera.ShiftView(2 * ARight, 0, AWidth, AHeight);
+  if (Abs(ADown) > TOLERANCE) and ((Y1 - Y0) * ADown < 0) then
+    GorillaCamera.ShiftView(0, -2 * ADown, AWidth, AHeight);
+end;
+
+// Writes every metadata file the batch measured, in the order the images
+// were saved, once every image is saved. For a 2-pass export, each gives as
+// sprite_empty the least on each side over every frame of the second pass,
+// the whole export's, so they all give the same; otherwise each gives its
+// own frames'. Each frame's own empty is its own either way.
+procedure TMainForm.WriteBatchMetadata;
+var
+  All: TArray<TSprite3DFrameEmpty>;
+  Least: TSprite3DFrameEmpty;
+  Unified: Boolean;
+  Note: String;
+begin
+  if Length(FPendingMetadata) = 0 then
+    Exit;
+  Unified := FTwoPassRun and (FBatchPass = 2);
+  if Unified then
+  begin
+    All := nil;
+    for var Pending in FPendingMetadata do
+      All := All + Pending.Empties;
+    Least := LeastFrameEmpty(All);
+    All := nil;
+  end;
+  Caption := 'Saving metadata...';
+  if FExportDialog <> nil then
+    FExportDialog.SetProgress(1, 'Saving the metadata...');
+  for var Pending in FPendingMetadata do
+    try
+      if Unified then
+        WriteSheetMetadata(Pending, Least)
+      else
+        WriteSheetMetadata(Pending);
+      if FExportDialog <> nil then
+        FExportDialog.AddLine('Saved ' + ExtractFileName(Pending.FileName));
+    except
+      on E: Exception do
+      begin
+        Note := 'Can''t save ' + Pending.FileName + sLineBreak + E.Message;
+        DebugMemo.Lines.Add(Note);
+        FBatchErrors := FBatchErrors + [Note];
+      end;
+    end;
+  FPendingMetadata := nil;
+  if Unified then
+  begin
+    Note := Format('2-pass: sprite_empty for every frame of the export: left %d, top %d, ' +
+      'right %d, bottom %d', [Least.Left, Least.Top, Least.Right, Least.Bottom]);
+    if Min(Min(Least.Left, Least.Top), Min(Least.Right, Least.Bottom)) <>
+      TWO_PASS_MARGIN then
+      Note := Note + Format('; aimed at %d on the side with least room', [TWO_PASS_MARGIN]);
+    if FExportDialog <> nil then
+      FExportDialog.AddLine(Note);
+  end;
+  if not Capturing then
+    Caption := ProjectionCaption;
+end;
+
+// File, Debug, Frame Borders, made only while debug_enabled is true in
+// settings.json, just above Exit, ticked as debug_frame_borders says
+procedure TMainForm.BuildDebugMenu;
+var
+  Separator: TMenuItem;
+begin
+  if not FSettings.DebugEnabled then
+    Exit;
+  Separator := TMenuItem.Create(Self);
+  Separator.Text := '-';
+  FileMenu.InsertObject(ExitMenuItem.Index, Separator);
+  FDebugMenu := TMenuItem.Create(Self);
+  FDebugMenu.Text := 'Debug';
+  FileMenu.InsertObject(ExitMenuItem.Index, FDebugMenu);
+  FFrameBordersItem := TMenuItem.Create(Self);
+  FFrameBordersItem.Text := 'Frame Borders';
+  FFrameBordersItem.IsChecked := FSettings.DebugFrameBorders;
+  FFrameBordersItem.OnClick := FrameBordersItemClick;
+  FDebugMenu.AddObject(FFrameBordersItem);
+end;
+
+// Ticks or unticks Frame Borders, kept in settings.json as
+// debug_frame_borders straight away
+procedure TMainForm.FrameBordersItemClick(Sender: TObject);
+begin
+  FFrameBordersItem.IsChecked := not FFrameBordersItem.IsChecked;
+  FSettings.DebugFrameBorders := FFrameBordersItem.IsChecked;
+  if FSettings.DebugFrameBorders then
+    DebugMemo.Lines.Add('Frame borders on: every exported frame gets a 1-pixel black border')
+  else
+    DebugMemo.Lines.Add('Frame borders off');
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
+// The Results tab's player, built into ResultsTab. Select Folder opens, and
+// the tab first shows, where exports last went; it plays only while its tab
+// is showing.
+procedure TMainForm.BuildResultsView;
+begin
+  FResults := TSprite3DResultsView.Create(Self, ResultsTab);
+  FResults.OnDefaultFolder :=
+    function: String
+    begin
+      Result := String.Empty;
+      if FSettings <> nil then
+        Result := FSettings.LastExportFolder;
+      {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+      if Result = String.Empty then
+        Result := DefaultGrabFolder;
+      {$ENDIF}
+    end;
+  TabControl1.OnChange := TabControl1Change;
+end;
+
+procedure TMainForm.TabControl1Change(Sender: TObject);
+begin
+  if Assigned(FResults) then
+    FResults.SetActive(TabControl1.ActiveTab = ResultsTab);
+end;
+
+// Whether exported frames get a black border: only while debugging is on
+function TMainForm.FrameBordersOn: Boolean;
+begin
+  Result := FSettings.DebugEnabled and FSettings.DebugFrameBorders;
 end;
 
 // Lays out and writes the captured frames in AFolder, creating it if need
@@ -7415,10 +8220,15 @@ function TMainForm.SaveSheet(const AKind: TSheetKind;
   const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
   const ACycleSeconds: Double; const AMetadata: Boolean; const AOrigin: TPoint;
   const AOriginKnown: Boolean; const AAnimation: String;
-  const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta): String;
+  const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta;
+  const ABorders, ADeferMetadata: Boolean; out APending: TSprite3DSheetMetadata;
+  out AHasPending: Boolean): String;
 var
   Cells, Directions, PerDirection: Integer;
   Folder: String;
+  // What goes into the image: the frames, or with ABorders copies with a black
+  // border; the metadata is always measured from the frames themselves
+  Shown: TArray<TSprite3DImage>;
 
   // The metadata of an image of ACols by ARows frames: this one animation,
   // in each of its directions
@@ -7437,6 +8247,8 @@ var
     Result.OriginKnown := AOriginKnown;
     Result.Animations := [AAnimation];
     Result.AnimationFrames := [PerDirection];
+    // Its own length, whatever number of frames it was saved at
+    Result.AnimationTimes := [ACycleSeconds];
     Result.Meta := AMeta;   // one image: page 1 of 1
     // Frame I is frame I mod PerDirection of direction I div PerDirection
     SetLength(Result.Frames, Length(AFrames));
@@ -7448,7 +8260,32 @@ var
     end;
   end;
 
+  // The image's metadata, ACols by ARows frames: written now, saying so for
+  // the log, or with ADeferMetadata measured and handed back to be written
+  // once the batch ends, so the frames need not be kept
+  function SaveMetadata(const AImage: String; const ACols, ARows: Integer): String;
+  begin
+    Result := String.Empty;
+    if ADeferMetadata then
+    begin
+      APending := MeasureSheetMetadata(TPath.ChangeExtension(AImage, '.json'), AFrames,
+        SheetInfo(ACols, ARows));
+      AHasPending := True;
+    end
+    else
+    begin
+      SaveSheetMetadata(TPath.ChangeExtension(AImage, '.json'), AFrames,
+        SheetInfo(ACols, ARows));
+      Result := ' and its .json';
+    end;
+  end;
+
 begin
+  AHasPending := False;
+  if ABorders then
+    Shown := FramesWithBorder(AFrames)
+  else
+    Shown := AFrames;
   Folder := OSFriendlyPath(AFolder);
   ForceDirectories(Folder);
   Directions := Max(1, Length(ADirections));
@@ -7460,42 +8297,34 @@ begin
           Format('%s_strip%d.png', [AStem, PerDirection]));
         // One row per direction
         if Directions > 1 then
-          SavePng(ComposeRows(AFrames, PerDirection), Result)
+          SavePng(ComposeRows(Shown, PerDirection), Result)
         else
-          SavePng(ComposeStrip(AFrames), Result);
+          SavePng(ComposeStrip(Shown), Result);
         if AMetadata then
-        begin
-          SaveSheetMetadata(TPath.ChangeExtension(Result, '.json'), AFrames,
-            SheetInfo(PerDirection, Directions));
-          Result := Result + ' and its .json';
-        end;
+          Result := Result + SaveMetadata(Result, PerDirection, Directions);
       end;
     skSheet:
       begin
         Result := TPath.Combine(Folder, AStem + '.png');
-        SavePng(ComposeSheet(AFrames, Cells), Result);
+        SavePng(ComposeSheet(Shown, Cells), Result);
         if AMetadata then
-        begin
-          SaveSheetMetadata(TPath.ChangeExtension(Result, '.json'), AFrames,
-            SheetInfo(Cells, Cells));
-          Result := Result + ' and its .json';
-        end;
+          Result := Result + SaveMetadata(Result, Cells, Cells);
       end;
     skAtlas:
-      // Kept until the batch ends, then made into pages by SaveAtlas
-      raise EInvalidOperation.Create('A texture atlas is saved by SaveAtlas.');
+      // Made into pages as they fill, by SaveAtlasPages
+      raise EInvalidOperation.Create('A texture atlas is saved by SaveAtlasPages.');
     skGif:
       begin
         // Each frame's share of the cycle, in hundredths of a second
         Result := TPath.Combine(Folder, AStem + '.gif');
-        SaveAnimatedGif(AFrames, Result,
+        SaveAnimatedGif(Shown, Result,
           Max(1, Round(100 * ACycleSeconds / Max(1, Length(AFrames)))));
       end;
   else
     begin
       // H.264 when OpenH264 is present, otherwise MPEG-4 Part 2
       Result := TPath.Combine(Folder, AStem + '.mp4');
-      Result := Result + ' (' + SaveMp4Video(AFrames, Result, ACycleSeconds) + ')';
+      Result := Result + ' (' + SaveMp4Video(Shown, Result, ACycleSeconds) + ')';
     end;
   end;
 end;

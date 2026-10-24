@@ -90,6 +90,17 @@ object ExportProgressForm: TExportProgressForm
       ShowHint = True
       OnClick = AbortButtonClick
     end
+    object AutoCloseCheck: TCheckBox
+      Align = Center
+      Size.Width = 150.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = 'Autoclose when done'
+      Hint = 'Close this dialog by itself once the export has finished without problems'
+      ShowHint = True
+      OnChange = AutoCloseCheckChange
+    end
     object CloseButton: TButton
       Anchors = [akRight, akBottom]
       Default = True

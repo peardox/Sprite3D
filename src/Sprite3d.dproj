@@ -111,7 +111,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_UnitSearchPath>ffmpeg;..\delphi-neon\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>ffmpeg;..\delphi-neon\Source;..\FastMM5;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
@@ -405,6 +405,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <Form>ExportProgressForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
+        <DCCReference Include="ui\Sprite3DResultsView.pas"/>
         <DCCReference Include="ui\Sprite3DCreditsForm.pas">
             <Form>CreditsForm</Form>
             <FormType>fmx</FormType>
