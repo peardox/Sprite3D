@@ -57,15 +57,44 @@ const
   //** @abstract(The name of the settings file in SupportFolder.)
   /// <summary>The name of the settings file in SupportFolder.</summary>
   SETTINGS_FILE_NAME = 'settings.json';
-  //** @abstract(The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
-  //** button's text colour, shared by the View tab's player and the Results tab's.)
-  /// <summary>The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
-  /// button's text colour, shared by the View tab's player and the Results tab's.</summary>
+  //** @abstract(The First frame button's icon, a bar and two left-pointing triangles.)
+  //**
+  //** Like the other ICON_ constants, an SVG path in a 24 by 24 box, for a TPath drawn in the
+  //** button's text colour; shared by the View tab's player and the Results tab's.
+  /// <summary>The First frame button's icon, a bar and two left-pointing triangles.</summary>
+  /// <remarks>Like the other ICON_ constants, an SVG path in a 24 by 24 box, for a TPath drawn
+  /// in the button's text colour; shared by the View tab's player and the Results
+  /// tab's.</remarks>
   ICON_FIRST = 'M5 6h2v12H5z M8 12l6-6v12z M14 12l6-6v12z';
+  //** @abstract(The Previous frame button's icon, a left-pointing triangle and a bar.)
+  //**
+  //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
+  /// <summary>The Previous frame button's icon, a left-pointing triangle and a bar.</summary>
+  /// <remarks>An SVG path in a 24 by 24 box; see <see cref="ICON_FIRST"/>.</remarks>
   ICON_PREVIOUS = 'M7 12l7-6v12z M15 6h2v12h-2z';
+  //** @abstract(The Play button's icon, a right-pointing triangle.)
+  //**
+  //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
+  /// <summary>The Play button's icon, a right-pointing triangle.</summary>
+  /// <remarks>An SVG path in a 24 by 24 box; see <see cref="ICON_FIRST"/>.</remarks>
   ICON_PLAY = 'M8 5v14l11-7z';
+  //** @abstract(The Pause icon, two bars, shown on the Play button while playing.)
+  //**
+  //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
+  /// <summary>The Pause icon, two bars, shown on the Play button while playing.</summary>
+  /// <remarks>An SVG path in a 24 by 24 box; see <see cref="ICON_FIRST"/>.</remarks>
   ICON_PAUSE = 'M6 5h4v14H6z M14 5h4v14h-4z';
+  //** @abstract(The Next frame button's icon, a bar and a right-pointing triangle.)
+  //**
+  //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
+  /// <summary>The Next frame button's icon, a bar and a right-pointing triangle.</summary>
+  /// <remarks>An SVG path in a 24 by 24 box; see <see cref="ICON_FIRST"/>.</remarks>
   ICON_NEXT = 'M7 6h2v12H7z M10 6v12l7-6z';
+  //** @abstract(The Last frame button's icon, two right-pointing triangles and a bar.)
+  //**
+  //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
+  /// <summary>The Last frame button's icon, two right-pointing triangles and a bar.</summary>
+  /// <remarks>An SVG path in a 24 by 24 box; see <see cref="ICON_FIRST"/>.</remarks>
   ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
   //** @abstract(The largest camera pan either way, as a multiple of the model's radius.)
   //**
@@ -900,24 +929,16 @@ type
     /// <c>gif</c> or <c>mp4</c>. Anything else counts as <c>strip</c>, and <c>mp4</c> while
     /// the video libraries have not loaded is shown as <c>strip</c> until they do.</remarks>
     property ExportKind: String read FExportKind write FExportKind;
-    //** @abstract(The folder texture atlas pages are saved in, chosen with Texture Atlas in
-    //** the drop-down; empty by default.)
+    //** @abstract(The folder the last texture atlas was exported to; empty until there has
+    //** been one.)
     //**
-    //** Stored as @code(atlasFolder). A folder that no longer exists is asked for again.
-    /// <summary>The folder texture atlas pages are saved in, chosen with Texture Atlas in the
-    /// drop-down; empty by default.</summary>
-    /// <remarks>Stored as <c>atlasFolder</c>. A folder that no longer exists is asked for
-    /// again.</remarks>
+    //** Stored as @code(atlasFolder). Export always asks for a folder; for a texture atlas
+    //** the folder dialog opens here, if the folder is still there.
+    /// <summary>The folder the last texture atlas was exported to; empty until there has been
+    /// one.</summary>
+    /// <remarks>Stored as <c>atlasFolder</c>. Export always asks for a folder; for a texture
+    /// atlas the folder dialog opens here, if the folder is still there.</remarks>
     property AtlasFolder: String read FAtlasFolder write FAtlasFolder;
-    //** @abstract(Whether the debugging aids are offered; False by default.)
-    //**
-    //** Stored as @code(debug_enabled), and only changed by editing settings.json by hand:
-    //** nothing in the application sets it. True adds File, Debug to the menu and says so in
-    //** the Debug tab at startup.
-    /// <summary>Whether the debugging aids are offered; False by default.</summary>
-    /// <remarks>Stored as <c>debug_enabled</c>, and only changed by editing settings.json by
-    /// hand: nothing in the application sets it. True adds File, Debug to the menu and says so
-    /// in the Debug tab at startup.</remarks>
     //** @abstract(Whether the export progress dialog closes by itself when an export ends
     //** without problems; False by default.)
     //**
@@ -930,13 +951,23 @@ type
     //** @abstract(The folder the last export went to, from Export or the right-click menu;
     //** empty until there has been one.)
     //**
-    //** Stored as @code(lastExportFolder). The Results tab reads it when it first shows, and
-    //** its Select Folder opens there.
+    //** Stored as @code(lastExportFolder). Every export's folder dialog opens here, as does
+    //** the Results tab's Select Folder, and the Results tab reads it when it first shows.
     /// <summary>The folder the last export went to, from Export or the right-click menu; empty
     /// until there has been one.</summary>
-    /// <remarks>Stored as <c>lastExportFolder</c>. The Results tab reads it when it first
-    /// shows, and its Select Folder opens there.</remarks>
+    /// <remarks>Stored as <c>lastExportFolder</c>. Every export's folder dialog opens here, as
+    /// does the Results tab's Select Folder, and the Results tab reads it when it first
+    /// shows.</remarks>
     property LastExportFolder: String read FLastExportFolder write FLastExportFolder;
+    //** @abstract(Whether the debugging aids are offered; False by default.)
+    //**
+    //** Stored as @code(debug_enabled), and only changed by editing settings.json by hand:
+    //** nothing in the application sets it. True adds File, Debug to the menu and says so in
+    //** the Debug tab at startup.
+    /// <summary>Whether the debugging aids are offered; False by default.</summary>
+    /// <remarks>Stored as <c>debug_enabled</c>, and only changed by editing settings.json by
+    /// hand: nothing in the application sets it. True adds File, Debug to the menu and says so
+    /// in the Debug tab at startup.</remarks>
     [NeonProperty('debug_enabled')]
     property DebugEnabled: Boolean read FDebugEnabled write FDebugEnabled;
     //** @abstract(Whether every exported frame gets a 1-pixel black border; False by default.)

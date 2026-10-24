@@ -9,9 +9,33 @@
 //** the first selected. The selected animation's frames for the current direction, the first
 //** to begin with, are cut from the .png files, each @code(sprite_size), and played in the
 //** middle of the drawing area at the animation's own rate, its @code(frame_count) frames
-//** over its @code(time) seconds. Under it are the player buttons, as on the View tab, a pair
-//** to step through the directions, and a Zoom slider that never lets the animation grow
-//** larger than the space it has. AniGif and MP4 exports are not read yet.
+//** over its @code(time) seconds, with a 1-pixel yellow border round it. Under it are the
+//** player buttons, as on the View tab, a pair to step through the directions, a Zoom slider
+//** that never lets the animation grow larger than the space it has, and a side, Left, Top,
+//** Right or Bottom, with buttons that jump, paused, to the previous or next frame, in any
+//** animation and direction read, whose empty border on that side is its image's
+//** @code(sprite_empty), and say which of how many such frames it is. AniGif and MP4 exports
+//** are not read yet.
+//**
+//** The layout:
+//**
+//** @preformatted(
+//** parent
+//** |-- FolderLayout @(bottom@)
+//** |   |-- Select Folder and the folder read
+//** |   `-- the empty finder @(right, under the list@): the side, the previous and next
+//** |       frame at its sprite_empty anywhere, and which match of how many is showing
+//** |-- ListLayout @(right@)          the animations found
+//** `-- ViewerLayout @(client@)
+//**     |-- AnimationControlsLayout @(bottom@)
+//**     |   |-- the player buttons, the frame readout, the directions
+//**     |   `-- Zoom
+//**     `-- DrawingLayout @(client@)
+//**         |-- the yellow border @(centred@), 2 pixels larger each way
+//**         `-- AnimationLayout @(centred@)   the frame showing, sprite_size x zoom
+//** )
+unit Sprite3DResultsView;
+
 {
   The Results tab: plays back the animations exported to a folder, from
   their metadata and images alone.
@@ -25,24 +49,31 @@
   selected. The selected animation's frames for the current direction, the
   first to begin with, are cut from the .png files, each sprite_size, and
   played in the middle of the drawing area at the animation's own rate, its
-  frame_count frames over its time seconds. Under it are the player buttons,
-  as on the View tab, a pair to step through the directions, and a Zoom
-  slider that never lets the animation grow larger than the space it has.
-  AniGif and MP4 exports are not read yet.
+  frame_count frames over its time seconds, with a 1-pixel yellow border
+  round it. Under it are the player buttons, as on the View tab, a pair to
+  step through the directions, a Zoom slider that never lets the animation
+  grow larger than the space it has, and a side, Left, Top, Right or Bottom,
+  with buttons that jump, paused, to the previous or next frame, in any
+  animation and direction read, whose empty border on that side is its
+  image's sprite_empty, and say which of how many such frames it is. AniGif
+  and MP4 exports are not read yet.
 
   The layout:
 
   parent
-  |-- FolderLayout (bottom)       Select Folder and the folder read
+  |-- FolderLayout (bottom)
+  |   |-- Select Folder and the folder read
+  |   `-- the empty finder (right, under the list): the side, the previous and next
+  |       frame at its sprite_empty anywhere, and which match of how many is showing
   |-- ListLayout (right)          the animations found
   `-- ViewerLayout (client)
       |-- AnimationControlsLayout (bottom)
       |   |-- the player buttons, the frame readout, the directions
       |   `-- Zoom
       `-- DrawingLayout (client)
+          |-- the yellow border (centred), 2 pixels larger each way
           `-- AnimationLayout (centred)   the frame showing, sprite_size x zoom
 }
-unit Sprite3DResultsView;
 
 interface
 
@@ -52,6 +83,11 @@ uses
   FMX.Layouts, FMX.StdCtrls, FMX.ListBox;
 
 type
+  //** @abstract(The four sides of an empty border, in the order left, top, right, bottom.)
+  /// <summary>The four sides of an empty border, in the order left, top, right,
+  /// bottom.</summary>
+  TResultsSides = array[0..3] of Integer;
+
   //** @abstract(Where one frame is: which image, and which cell of its grid.)
   /// <summary>Where one frame is: which image, and which cell of its grid.</summary>
   TResultsCell = record
@@ -64,6 +100,34 @@ type
     //** @abstract(How many cells the image's grid has across.)
     /// <summary>How many cells the image's grid has across.</summary>
     Cols: Integer;
+    //** @abstract(Whether Empty and SpriteEmpty were given in the metadata.)
+    /// <summary>Whether Empty and SpriteEmpty were given in the metadata.</summary>
+    HasEmpty: Boolean;
+    //** @abstract(This frame's empty border, frames[i].empty: left, top, right, bottom.)
+    /// <summary>This frame's empty border, frames[i].empty: left, top, right,
+    /// bottom.</summary>
+    Empty: TResultsSides;
+    //** @abstract(The image's image.sprite_empty, the least of its frames' empty borders:
+    //** left, top, right, bottom.)
+    /// <summary>The image's image.sprite_empty, the least of its frames' empty borders:
+    /// left, top, right, bottom.</summary>
+    SpriteEmpty: TResultsSides;
+  end;
+
+  //** @abstract(Where one frame is among a folder's animations: which animation, which of its
+  //** directions, and which frame.)
+  /// <summary>Where one frame is among a folder's animations: which animation, which of its
+  /// directions, and which frame.</summary>
+  TResultsFrameRef = record
+    //** @abstract(The animation, as an index into the animations read.)
+    /// <summary>The animation, as an index into the animations read.</summary>
+    Animation: Integer;
+    //** @abstract(The direction, as an index into that animation's Directions.)
+    /// <summary>The direction, as an index into that animation's Directions.</summary>
+    Direction: Integer;
+    //** @abstract(The frame, counted from 0.)
+    /// <summary>The frame, counted from 0.</summary>
+    Frame: Integer;
   end;
 
   //** @abstract(One direction of an animation: its bearing and where each frame is.)
@@ -106,28 +170,40 @@ type
 //**
 //** Every .json in AFolder, in name order, is read. One is used only if it is Sprite3D
 //** metadata whose @code(animations) are objects with @code(name), @code(frame_count) and
-//** @code(time), and the .png of the same name is beside it. Each animation is listed once,
-//** in the order first found, with each of its directions, by bearing, in the order first
-//** found; where two files hold the same frame, the first one read is used. A file whose
-//** @code(sprite_size) differs from that already found for one of its animations adds nothing
-//** to that animation.
+//** @code(time), and the .png of the same name is beside it; metadata from before that
+//** change is skipped. Each animation is listed once, in the order first found, with each of
+//** its directions, by bearing, in the order first found; where two files hold the same
+//** frame, the first one read is used. A file whose @code(sprite_size) or
+//** @code(frame_count) for an animation differs from what was already found for it adds
+//** nothing to that animation. Each frame's @code(empty) and its image's
+//** @code(sprite_empty) are kept with it. Only the .json files are read, not the images.
+//** Blocks while reading; touches no controls, so may be called on any thread.
 //**
-//** @param(AFolder The folder to read.)
+//** @param(AFolder The folder to read; nothing is found if it is empty or not there.)
 //**
 //** @param(AUsed Set to how many metadata files were used.)
 //**
 //** @param(ASkipped Set to how many .json files could not be used.)
+//**
+//** @returns(The animations found, each with at least one frame placed; empty if none. A
+//** dynamic array of records, owned by the caller.)
 /// <summary>The animations described by the metadata files in a folder.</summary>
 /// <remarks>Every .json in AFolder, in name order, is read. One is used only if it is
 /// Sprite3D metadata whose <c>animations</c> are objects with <c>name</c>,
-/// <c>frame_count</c> and <c>time</c>, and the .png of the same name is beside it. Each
-/// animation is listed once, in the order first found, with each of its directions, by
-/// bearing, in the order first found; where two files hold the same frame, the first one
-/// read is used. A file whose <c>sprite_size</c> differs from that already found for one of
-/// its animations adds nothing to that animation.</remarks>
-/// <param name="AFolder">The folder to read.</param>
+/// <c>frame_count</c> and <c>time</c>, and the .png of the same name is beside it; metadata
+/// from before that change is skipped. Each animation is listed once, in the order first
+/// found, with each of its directions, by bearing, in the order first found; where two files
+/// hold the same frame, the first one read is used. A file whose <c>sprite_size</c> or
+/// <c>frame_count</c> for an animation differs from what was already found for it adds
+/// nothing to that animation. Each frame's <c>empty</c> and its image's <c>sprite_empty</c>
+/// are kept with it. Only the .json files are read, not the images. Blocks while reading;
+/// touches no controls, so may be called on any thread.</remarks>
+/// <param name="AFolder">The folder to read; nothing is found if it is empty or not
+/// there.</param>
 /// <param name="AUsed">Set to how many metadata files were used.</param>
 /// <param name="ASkipped">Set to how many .json files could not be used.</param>
+/// <returns>The animations found, each with at least one frame placed; empty if none. A
+/// dynamic array of records, owned by the caller.</returns>
 function ReadResultsFolder(const AFolder: String; out AUsed, ASkipped: Integer):
   TArray<TResultsAnimation>;
 
@@ -162,6 +238,19 @@ type
     FRateLabel: TLabel;
     FZoomTrack: TTrackBar;
     FZoomLabel: TLabel;
+    // Around the animation, on the drawing area
+    FBorder: TRectangle;
+    // Third row: which side, and the frames whose empty on it is the
+    // image's sprite_empty
+    FEdgeLayout: TLayout;
+    FEdgeBox: TComboBox;
+    FEdgePreviousButton: TButton;
+    FEdgeNextButton: TButton;
+    FEdgeLabel: TLabel;
+    // Every frame of every animation and direction read whose empty border
+    // on the chosen side is its image's sprite_empty, in list order, then
+    // direction, then frame; rebuilt when the folder or the side changes
+    FEdgeMatches: TArray<TResultsFrameRef>;
     FTimer: TTimer;
     // What was read, and what is showing
     FFolder: String;
@@ -193,6 +282,14 @@ type
     procedure LastButtonClick(Sender: TObject);
     procedure DirPreviousButtonClick(Sender: TObject);
     procedure DirNextButtonClick(Sender: TObject);
+    procedure EdgeBoxChange(Sender: TObject);
+    procedure EdgePreviousButtonClick(Sender: TObject);
+    procedure EdgeNextButtonClick(Sender: TObject);
+    procedure SeekEdge(const AStep: Integer);
+    procedure FindEdgeMatches;
+    function EdgeMatchIndex: Integer;
+    procedure JumpTo(const ARef: TResultsFrameRef);
+    procedure UpdateEdgeLabel;
     procedure ZoomTrackChange(Sender: TObject);
     procedure DrawingLayoutResized(Sender: TObject);
     procedure TimerTimer(Sender: TObject);
@@ -210,33 +307,95 @@ type
     function CurrentAnimation: TResultsAnimation;
     function FrameSeconds: Double;
   public
-    //** @abstract(Builds the controls in AParent, empty until a folder is read.)
-    /// <summary>Builds the controls in AParent, empty until a folder is read.</summary>
+    //** @abstract(Builds the Results tab's controls in AParent, empty until a folder is
+    //** read.)
+    //**
+    //** Nothing is read yet: the first folder is read by @link(SetActive) or
+    //** @link(LoadFolder). Main thread only.
+    //**
+    //** @param(AOwner Owns the view, and frees it and every control it makes; normally the
+    //** main form.)
+    //**
+    //** @param(AParent The control the view is built in, normally the Results tab; it must
+    //** outlive the view.)
+    /// <summary>Builds the Results tab's controls in AParent, empty until a folder is
+    /// read.</summary>
+    /// <remarks>Nothing is read yet: the first folder is read by <see cref="SetActive"/> or
+    /// <see cref="LoadFolder"/>. Main thread only.</remarks>
+    /// <param name="AOwner">Owns the view, and frees it and every control it makes; normally
+    /// the main form.</param>
+    /// <param name="AParent">The control the view is built in, normally the Results tab; it
+    /// must outlive the view.</param>
     constructor Create(AOwner: TComponent; const AParent: TFmxObject); reintroduce;
-    //** @abstract(Frees the frames.)
-    /// <summary>Frees the frames.</summary>
+    //** @abstract(Stops playing and frees the frames.)
+    //**
+    //** The controls' events are unhooked first, so none reaches the view while its owner
+    //** frees them. Main thread only.
+    /// <summary>Stops playing and frees the frames.</summary>
+    /// <remarks>The controls' events are unhooked first, so none reaches the view while its
+    /// owner frees them. Main thread only.</remarks>
     destructor Destroy; override;
-    //** @abstract(Reads AFolder's metadata, lists its animations and selects the first.)
-    /// <summary>Reads AFolder's metadata, lists its animations and selects the
+    //** @abstract(Reads a folder's metadata, lists its animations and plays the first.)
+    //**
+    //** The folder is read with @link(ReadResultsFolder), replacing whatever was shown. The
+    //** first animation is selected at its first direction and played at its own rate; its
+    //** images are loaded then. If nothing usable is found, the drawing area says so. Blocks
+    //** while the metadata and the first animation's images are read. Main thread only.
+    //**
+    //** @param(AFolder The folder to read.)
+    /// <summary>Reads a folder's metadata, lists its animations and plays the
     /// first.</summary>
+    /// <remarks>The folder is read with <see cref="ReadResultsFolder"/>, replacing whatever
+    /// was shown. The first animation is selected at its first direction and played at its
+    /// own rate; its images are loaded then. If nothing usable is found, the drawing area says
+    /// so. Blocks while the metadata and the first animation's images are read. Main thread
+    /// only.</remarks>
+    /// <param name="AFolder">The folder to read.</param>
     procedure LoadFolder(const AFolder: String);
-    //** @abstract(Whether the tab is showing: playing only runs while it is. The first time,
-    //** the folder OnDefaultFolder gives is read.)
-    /// <summary>Whether the tab is showing: playing only runs while it is. The first time,
-    /// the folder OnDefaultFolder gives is read.</summary>
+    //** @abstract(Tells the view whether its tab is showing, so it plays only while it is.)
+    //**
+    //** Hidden, the player's timer stops; shown, it carries on from the frame showing. The
+    //** first time it is shown, or the first time after @link(FolderChanged) for the folder
+    //** read, a folder is read: the one read before, or else the one OnDefaultFolder gives,
+    //** if it is there. Main thread only.
+    //**
+    //** @param(AActive True when the tab has been shown, False when another has.)
+    /// <summary>Tells the view whether its tab is showing, so it plays only while it
+    /// is.</summary>
+    /// <remarks>Hidden, the player's timer stops; shown, it carries on from the frame showing.
+    /// The first time it is shown, or the first time after <see cref="FolderChanged"/> for
+    /// the folder read, a folder is read: the one read before, or else the one
+    /// OnDefaultFolder gives, if it is there. Main thread only.</remarks>
+    /// <param name="AActive">True when the tab has been shown, False when another
+    /// has.</param>
     procedure SetActive(const AActive: Boolean);
-    //** @abstract(An export has written to AFolder: if it is the folder read, it is read
-    //** again, now if the tab is showing, otherwise when it next shows.)
-    /// <summary>An export has written to AFolder: if it is the folder read, it is read
-    /// again, now if the tab is showing, otherwise when it next shows.</summary>
+    //** @abstract(Tells the view an export has written to a folder, so it can show the new
+    //** files.)
+    //**
+    //** If AFolder is the folder read, it is read again: now if the tab is showing,
+    //** otherwise when it is next shown. Any other folder is ignored. Main thread only.
+    //**
+    //** @param(AFolder The folder the export wrote to.)
+    /// <summary>Tells the view an export has written to a folder, so it can show the new
+    /// files.</summary>
+    /// <remarks>If AFolder is the folder read, it is read again: now if the tab is showing,
+    /// otherwise when it is next shown. Any other folder is ignored. Main thread
+    /// only.</remarks>
+    /// <param name="AFolder">The folder the export wrote to.</param>
     procedure FolderChanged(const AFolder: String);
-    //** @abstract(Gives the folder Select Folder opens at, and that is read when the tab
-    //** first shows: where exports last went.)
-    /// <summary>Gives the folder Select Folder opens at, and that is read when the tab first
-    /// shows: where exports last went.</summary>
+    //** @abstract(Gives the folder where exports last went, for Select Folder and the first
+    //** look.)
+    //**
+    //** Select Folder... opens there, and it is read the first time the tab shows if no
+    //** folder has been read yet. It may return an empty string. Called on the main thread.
+    /// <summary>Gives the folder where exports last went, for Select Folder and the first
+    /// look.</summary>
+    /// <remarks>Select Folder... opens there, and it is read the first time the tab shows if
+    /// no folder has been read yet. It may return an empty string. Called on the main
+    /// thread.</remarks>
     property OnDefaultFolder: TFunc<String> read FOnDefaultFolder write FOnDefaultFolder;
-    //** @abstract(The folder read, or empty.)
-    /// <summary>The folder read, or empty.</summary>
+    //** @abstract(The folder last read, or empty if none has been.)
+    /// <summary>The folder last read, or empty if none has been.</summary>
     property Folder: String read FFolder;
   end;
 
@@ -281,6 +440,30 @@ begin
   Result := High(AAnimation.Directions);
 end;
 
+const
+  SIDE_NAMES: array[0..3] of String = ('left', 'top', 'right', 'bottom');
+  // The edge buttons' icons, plain triangles in a 24 by 24 box, pointing
+  // left and right
+  ICON_BACK = 'M16 6v12l-9-6z';
+  // The animation list's width; the empty finder below it is as wide
+  LIST_WIDTH = 300;
+  ICON_FORWARD = 'M8 6v12l9-6z';
+  SIDE_CAPTIONS: array[0..3] of String = ('Left', 'Top', 'Right', 'Bottom');
+
+// An empty border object, { left, top, right, bottom }, into ASides; False,
+// with ASides all 0, if AValue is not one
+function ReadSides(const AValue: TJSONValue; out ASides: TResultsSides): Boolean;
+begin
+  for var K := 0 to 3 do
+    ASides[K] := 0;
+  Result := AValue is TJSONObject;
+  if not Result then
+    Exit;
+  for var K := 0 to 3 do
+    if not TJSONObject(AValue).TryGetValue<Integer>(SIDE_NAMES[K], ASides[K]) then
+      Exit(False);
+end;
+
 // Adds what one metadata file says to AAnimations; False if it is not
 // metadata this can use
 function ReadMetadataFile(const AFileName: String;
@@ -291,6 +474,8 @@ var
   List, Frames: TJSONArray;
   Png, Name: String;
   SpriteWidth, SpriteHeight, Cols, Count, AnimationIndex, DirectionIndex, Frame: Integer;
+  SpriteEmpty, FrameEmpty: TResultsSides;
+  HasSpriteEmpty: Boolean;
   Time: Double;
   Bearings: TArray<Double>;
   // For each of this file's animations, its index in AAnimations, or -1 if
@@ -320,6 +505,8 @@ begin
       not Image.TryGetValue<Integer>('layout.cols', Cols) or
       (SpriteWidth < 1) or (SpriteHeight < 1) or (Cols < 1) then
       Exit;
+    // The least empty border of the image's frames, to compare each with
+    HasSpriteEmpty := ReadSides(Image.Values['sprite_empty'], SpriteEmpty);
     // The directions, by bearing; one dummy 0 without directions
     Bearings := nil;
     if Image.Values['directions'] is TJSONArray then
@@ -388,6 +575,12 @@ begin
         AAnimations[AnimationIndex].Directions[DirectionIndex].Frames[Frame].FileName := Png;
         AAnimations[AnimationIndex].Directions[DirectionIndex].Frames[Frame].Cell := I;
         AAnimations[AnimationIndex].Directions[DirectionIndex].Frames[Frame].Cols := Cols;
+        AAnimations[AnimationIndex].Directions[DirectionIndex].Frames[Frame].HasEmpty :=
+          HasSpriteEmpty and ReadSides(Item.Values['empty'], FrameEmpty);
+        AAnimations[AnimationIndex].Directions[DirectionIndex].Frames[Frame].Empty :=
+          FrameEmpty;
+        AAnimations[AnimationIndex].Directions[DirectionIndex].Frames[Frame].SpriteEmpty :=
+          SpriteEmpty;
       end;
     end;
     Result := True;
@@ -456,6 +649,8 @@ begin
     FDrawingLayout.OnResized := nil;
   if Assigned(FZoomTrack) then
     FZoomTrack.OnChange := nil;
+  if Assigned(FEdgeBox) then
+    FEdgeBox.OnChange := nil;
   FreeAndNil(FFrames);
   inherited;
 end;
@@ -546,6 +741,40 @@ begin
     'last export went';
   FFolderButton.ShowHint := True;
   FFolderButton.OnClick := FolderButtonClick;
+  // At the right of the same row, below the animation list and as wide,
+  // left-aligned under it: a side, and back and forward to the frames
+  // whose empty border on that side is the image's sprite_empty
+  FEdgeLayout := TLayout.Create(Self);
+  FEdgeLayout.Parent := FFolderLayout;
+  FEdgeLayout.Align := TAlignLayout.Right;
+  // The list sits 4 pixels inside its layout each side, and this row's right
+  // padding is 4: so this, the list's own width, starts under its left edge
+  FEdgeLayout.Width := LIST_WIDTH - 8;
+  FEdgeBox := TComboBox.Create(Self);
+  FEdgeBox.Parent := FEdgeLayout;
+  FEdgeBox.Position.X := 0;
+  FEdgeBox.Align := TAlignLayout.Left;
+  FEdgeBox.Width := 84;
+  for var Caption in SIDE_CAPTIONS do
+    FEdgeBox.Items.Add(Caption);
+  FEdgeBox.ItemIndex := 0;
+  FEdgeBox.Hint := 'The side to look at: the frames whose empty border on it is the ' +
+    'least of all the frames, sprite_empty';
+  FEdgeBox.ShowHint := True;
+  FEdgeBox.OnChange := EdgeBoxChange;
+  FEdgePreviousButton := AddIconButton(FEdgeLayout, ICON_BACK,
+    'The previous frame at sprite_empty on this side, in any animation and direction',
+    EdgePreviousButtonClick);
+  FEdgePreviousButton.Margins.Left := 4;
+  FEdgeNextButton := AddIconButton(FEdgeLayout, ICON_FORWARD,
+    'The next frame at sprite_empty on this side, in any animation and direction',
+    EdgeNextButtonClick);
+  FEdgeLabel := AddLabel(FEdgeLayout, TAlignLayout.Client, 0);
+  FEdgeLabel.Margins.Left := 6;
+  // The values themselves are in the hint, as the row is narrow
+  FEdgeLabel.HitTest := True;
+  FEdgeLabel.ShowHint := True;
+
   FFolderLabel := TLabel.Create(Self);
   FFolderLabel.Parent := FFolderLayout;
   FFolderLabel.Align := TAlignLayout.Client;
@@ -557,7 +786,7 @@ begin
   FListLayout := TLayout.Create(Self);
   FListLayout.Parent := FParent;
   FListLayout.Align := TAlignLayout.Right;
-  FListLayout.Width := 220;
+  FListLayout.Width := LIST_WIDTH;
   FListLayout.Padding.Rect := TRectF.Create(4, 4, 4, 0);
   FList := TListBox.Create(Self);
   FList.Parent := FListLayout;
@@ -625,6 +854,18 @@ begin
   FDrawingLayout.Align := TAlignLayout.Client;
   FDrawingLayout.ClipChildren := True;
   FDrawingLayout.OnResized := DrawingLayoutResized;
+  // A 1-pixel yellow border round the animation, drawn on the drawing area
+  // just outside it: centred like it and 2 pixels larger each way, so it
+  // covers none of the animation's own pixels
+  FBorder := TRectangle.Create(Self);
+  FBorder.Parent := FDrawingLayout;
+  FBorder.Align := TAlignLayout.Center;
+  FBorder.Fill.Kind := TBrushKind.None;
+  FBorder.Stroke.Kind := TBrushKind.Solid;
+  FBorder.Stroke.Color := TAlphaColors.Yellow;
+  FBorder.Stroke.Thickness := 1;
+  FBorder.HitTest := False;
+  FBorder.Visible := False;
   FAnimationLayout := TLayout.Create(Self);
   FAnimationLayout.Parent := FDrawingLayout;
   FAnimationLayout.Align := TAlignLayout.Center;
@@ -706,6 +947,7 @@ begin
   FFolder := AFolder;
   FLoaded := True;
   FAnimations := ReadResultsFolder(AFolder, Used, Skipped);
+  FEdgeMatches := nil;
   FAnimationIndex := -1;
   FFrames.Clear;
   FImage.Bitmap.SetSize(0, 0);
@@ -741,6 +983,7 @@ begin
   ShowMessageText(String.Empty);
   // The first is the default
   FList.ItemIndex := 0;
+  FindEdgeMatches;
   if FAnimationIndex <> 0 then
     SelectAnimation(0);
 end;
@@ -849,6 +1092,9 @@ begin
   FFrame := EnsureRange(AFrame, 0, FFrames.Count - 1);
   FImage.Bitmap := FFrames[FFrame];
   FFrameLabel.Text := Format('%d / %d', [FFrame + 1, FFrames.Count]);
+  // Only while held: playing, it would change too fast to read
+  if not FPlaying then
+    UpdateEdgeLabel;
 end;
 
 // Shows AFrame, wrapping round, held there; playing carries on from it
@@ -948,6 +1194,175 @@ begin
     SelectDirection((FDirectionIndex + 1) mod Count);
 end;
 
+// Every frame read, of every animation and direction, whose empty border
+// on the side chosen equals its own image's sprite_empty on that side: the
+// frames that come closest to that edge. Every image has at least one, so
+// there is at least one for each sprite_empty value read. In the list's
+// order, then each animation's directions in order, then frame order.
+procedure TSprite3DResultsView.FindEdgeMatches;
+var
+  Side: Integer;
+  Cell: TResultsCell;
+  Ref: TResultsFrameRef;
+begin
+  FEdgeMatches := nil;
+  Side := EnsureRange(FEdgeBox.ItemIndex, 0, 3);
+  for var A := 0 to High(FAnimations) do
+    for var D := 0 to High(FAnimations[A].Directions) do
+      for var F := 0 to High(FAnimations[A].Directions[D].Frames) do
+      begin
+        Cell := FAnimations[A].Directions[D].Frames[F];
+        if Cell.HasEmpty and (Cell.Empty[Side] = Cell.SpriteEmpty[Side]) then
+        begin
+          Ref.Animation := A;
+          Ref.Direction := D;
+          Ref.Frame := F;
+          FEdgeMatches := FEdgeMatches + [Ref];
+        end;
+      end;
+end;
+
+// Where the frame showing is among the matches: its index if it is one;
+// otherwise -(1 + the index of the first match after it), so a search
+// knows where to start from
+function TSprite3DResultsView.EdgeMatchIndex: Integer;
+var
+  Here, There: Int64;
+
+  function Key(const AAnimation, ADirection, AFrame: Integer): Int64;
+  begin
+    // List order, then direction, then frame, as FEdgeMatches is
+    Result := (Int64(AAnimation) shl 40) or (Int64(ADirection) shl 20) or AFrame;
+  end;
+
+begin
+  Here := Key(FAnimationIndex, FDirectionIndex, FFrame);
+  for var I := 0 to High(FEdgeMatches) do
+  begin
+    There := Key(FEdgeMatches[I].Animation, FEdgeMatches[I].Direction,
+      FEdgeMatches[I].Frame);
+    if There = Here then
+      Exit(I);
+    if There > Here then
+      Exit(-(1 + I));
+  end;
+  Result := -(1 + Length(FEdgeMatches));
+end;
+
+// Shows a particular frame of a particular animation and direction, paused:
+// the animation selected in the list, its direction's frames built if they
+// are not showing already
+procedure TSprite3DResultsView.JumpTo(const ARef: TResultsFrameRef);
+begin
+  if (ARef.Animation < 0) or (ARef.Animation > High(FAnimations)) then
+    Exit;
+  SetPlaying(False);
+  if ARef.Animation <> FAnimationIndex then
+  begin
+    FSyncing := True;
+    try
+      FList.ItemIndex := ARef.Animation;
+    finally
+      FSyncing := False;
+    end;
+    FAnimationIndex := ARef.Animation;
+    FDirectionIndex := ARef.Direction;
+    BuildFrames;
+    UpdateZoomRange;
+  end
+  else if ARef.Direction <> FDirectionIndex then
+  begin
+    FDirectionIndex := ARef.Direction;
+    BuildFrames;
+  end;
+  StepTo(ARef.Frame);
+  UpdateControls;
+end;
+
+// The previous or next match, AStep -1 or 1, round and round, over every
+// animation and direction read, from the frame showing, which is shown
+// paused; nothing happens if there is none
+procedure TSprite3DResultsView.SeekEdge(const AStep: Integer);
+var
+  Count, At, Target: Integer;
+begin
+  Count := Length(FEdgeMatches);
+  if Count = 0 then
+  begin
+    UpdateEdgeLabel;
+    Exit;
+  end;
+  At := EdgeMatchIndex;
+  if At >= 0 then
+    // On a match: the one before or after it
+    Target := At + AStep
+  else if AStep > 0 then
+    // Between matches: the first after the frame showing
+    Target := -At - 1
+  else
+    // ... or the last before it
+    Target := -At - 2;
+  JumpTo(FEdgeMatches[((Target mod Count) + Count) mod Count]);
+end;
+
+procedure TSprite3DResultsView.EdgePreviousButtonClick(Sender: TObject);
+begin
+  SeekEdge(-1);
+end;
+
+procedure TSprite3DResultsView.EdgeNextButtonClick(Sender: TObject);
+begin
+  SeekEdge(1);
+end;
+
+procedure TSprite3DResultsView.EdgeBoxChange(Sender: TObject);
+begin
+  FindEdgeMatches;
+  UpdateEdgeLabel;
+end;
+
+// The side's sprite_empty for the frame showing, and which of the matches
+// it is, as "match 3 of 7", or how many there are if it is not one
+procedure TSprite3DResultsView.UpdateEdgeLabel;
+var
+  Side, At: Integer;
+  Cell: TResultsCell;
+  Text: String;
+begin
+  if FEdgeLabel = nil then
+    Exit;
+  if not HasFrames or (FAnimationIndex < 0) then
+  begin
+    FEdgeLabel.Text := String.Empty;
+    FEdgeLabel.Hint := String.Empty;
+    Exit;
+  end;
+  if Length(FEdgeMatches) = 0 then
+  begin
+    FEdgeLabel.Text := 'No empty borders';
+    FEdgeLabel.Hint := 'The metadata read gives no empty borders';
+    Exit;
+  end;
+  Side := EnsureRange(FEdgeBox.ItemIndex, 0, 3);
+  Cell := CurrentAnimation.Directions[FDirectionIndex].Frames[FFrame];
+  At := EdgeMatchIndex;
+  if At >= 0 then
+    FEdgeLabel.Text := Format('Match %d of %d', [At + 1, Length(FEdgeMatches)])
+  else
+    FEdgeLabel.Text := Format('- of %d', [Length(FEdgeMatches)]);
+  // The values, in the hint
+  if Cell.HasEmpty then
+    Text := Format('sprite_empty %s is %d; this frame''s empty %s is %d', [SIDE_NAMES[Side],
+      Cell.SpriteEmpty[Side], SIDE_NAMES[Side], Cell.Empty[Side]])
+  else
+    Text := 'This frame has no empty border in the metadata';
+  if At >= 0 then
+    Text := Text + Format(': match %d of %d', [At + 1, Length(FEdgeMatches)])
+  else
+    Text := Text + Format(': not a match; %d in all', [Length(FEdgeMatches)]);
+  FEdgeLabel.Hint := Text;
+end;
+
 // Zoom can never be more than fits the drawing area; the slider's top is
 // that, and a value past it comes down to it
 procedure TSprite3DResultsView.UpdateZoomRange;
@@ -958,8 +1373,9 @@ begin
   if FAnimationIndex < 0 then
     Exit;
   Animation := CurrentAnimation;
-  Fit := Min(FDrawingLayout.Width / Max(1, Animation.SpriteWidth),
-    FDrawingLayout.Height / Max(1, Animation.SpriteHeight));
+  // The border takes a pixel each side
+  Fit := Min((FDrawingLayout.Width - 2) / Max(1, Animation.SpriteWidth),
+    (FDrawingLayout.Height - 2) / Max(1, Animation.SpriteHeight));
   if Fit <= 0 then
     Exit;   // not laid out yet
   FSyncing := True;
@@ -984,6 +1400,9 @@ begin
   Zoom := Min(FZoomTrack.Value, FZoomTrack.Max);
   FAnimationLayout.Width := Max(1, Round(CurrentAnimation.SpriteWidth * Zoom));
   FAnimationLayout.Height := Max(1, Round(CurrentAnimation.SpriteHeight * Zoom));
+  FBorder.Width := FAnimationLayout.Width + 2;
+  FBorder.Height := FAnimationLayout.Height + 2;
+  FBorder.Visible := HasFrames;
   FZoomLabel.Text := Format('Zoom %.2fx', [Zoom]);
 end;
 
@@ -1011,6 +1430,10 @@ begin
   FNextButton.Enabled := Usable;
   FLastButton.Enabled := Usable;
   FZoomTrack.Enabled := Usable;
+  FEdgeBox.Enabled := Usable;
+  FEdgePreviousButton.Enabled := Usable;
+  FEdgeNextButton.Enabled := Usable;
+  UpdateEdgeLabel;
   if FPlaying then
   begin
     FMX.Objects.TPath(FPlayButton.TagObject).Data.Data := ICON_PAUSE;

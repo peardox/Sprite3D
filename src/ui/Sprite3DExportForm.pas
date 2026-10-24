@@ -188,12 +188,16 @@ type
     //** for an export of one pass.)
     //**
     //** With a pass set, the line reads @code(Time remaining for Pass N:) and the time is
-    //** for that pass alone. Setting it clears the line until the next SetRemaining.
+    //** for that pass alone. Setting it clears the line until the next SetRemaining. Ignored
+    //** after Finish. Main thread only.
+    //**
+    //** @param(APass The pass, 1 or 2; 0 for an export of one pass.)
     /// <summary>Which pass of a 2-pass export the time remaining is for; 0, the default, for
     /// an export of one pass.</summary>
     /// <remarks>With a pass set, the line reads <c>Time remaining for Pass N:</c> and the
     /// time is for that pass alone. Setting it clears the line until the next
-    /// SetRemaining.</remarks>
+    /// SetRemaining. Ignored after Finish. Main thread only.</remarks>
+    /// <param name="APass">The pass, 1 or 2; 0 for an export of one pass.</param>
     procedure SetRemainingPass(const APass: Integer);
     //** @abstract(Shows the outcome, as the export has ended, and lets the dialog be closed.)
     //**

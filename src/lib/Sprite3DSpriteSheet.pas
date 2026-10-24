@@ -853,43 +853,138 @@ procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSpri
 //** @abstract(Copies of the frames, each with a 1-pixel border of opaque black round its edge.)
 //**
 //** A debugging aid, to show where each frame's cell ends in a strip, spritesheet or atlas
-//** page. The frames themselves are left as they are, so they can still be measured.
+//** page. Each copy has its own pixels; the frames given are not changed, so they can still
+//** be measured. A frame with no pixels, or fewer than its size needs, is copied without a
+//** border. Safe on any thread; it touches nothing but its arguments.
+//**
+//** @param(AFrames The frames, in RGBA, as captured.)
+//**
+//** @returns(One new image per frame, in the same order; the caller owns them, as records
+//** that free themselves.)
 /// <summary>Copies of the frames, each with a 1-pixel border of opaque black round its
 /// edge.</summary>
 /// <remarks>A debugging aid, to show where each frame's cell ends in a strip, spritesheet or
-/// atlas page. The frames themselves are left as they are, so they can still be
-/// measured.</remarks>
+/// atlas page. Each copy has its own pixels; the frames given are not changed, so they can
+/// still be measured. A frame with no pixels, or fewer than its size needs, is copied without
+/// a border. Safe on any thread; it touches nothing but its arguments.</remarks>
+/// <param name="AFrames">The frames, in RGBA, as captured.</param>
+/// <returns>One new image per frame, in the same order; the caller owns them, as records that
+/// free themselves.</returns>
 function FramesWithBorder(const AFrames: TArray<TSprite3DImage>): TArray<TSprite3DImage>;
 
 //** @abstract(Checks and measures what SaveSheetMetadata would write, without writing it.)
 //**
-//** The frames are checked against AInfo as SaveSheetMetadata checks them, and each is
-//** measured with MeasureFrameEmpty; the result holds no frames, so they can be let go.
+//** The frames are checked against AInfo as @link(SaveSheetMetadata) checks them, and each
+//** is measured with @link(MeasureFrameEmpty). The result holds each frame's empty border,
+//** not the frames, so they can be let go as soon as this returns; pass it to
+//** @link(WriteSheetMetadata) later, after changing its @code(Info.Meta) if need be. Nothing
+//** is written. Safe on any thread.
 //**
-//** @raises(EArgumentException in the same cases as SaveSheetMetadata.)
+//** @param(AFileName The metadata file to write later, normally the image's name with the
+//** extension .json.)
+//**
+//** @param(AFrames The frames, in order, as laid out in the image; at least one, all the
+//** same size.)
+//**
+//** @param(AInfo The image's size, grid, origin, directions, animations, and which each frame
+//** is.)
+//**
+//** @returns(What WriteSheetMetadata needs; a record, owned by the caller.)
+//**
+//** @raises(EArgumentException In the same cases as SaveSheetMetadata: there are no frames,
+//** they differ in size, AInfo's grid cannot hold them, an animation has no frame count or
+//** time, or AInfo.Frames does not match the frames or names an animation or direction it
+//** does not list.)
+//**
+//** @seealso(WriteSheetMetadata)
 /// <summary>Checks and measures what SaveSheetMetadata would write, without writing
 /// it.</summary>
-/// <remarks>The frames are checked against AInfo as SaveSheetMetadata checks them, and each is
-/// measured with MeasureFrameEmpty; the result holds no frames, so they can be let
-/// go.</remarks>
-/// <exception cref="EArgumentException">In the same cases as SaveSheetMetadata.</exception>
+/// <remarks>The frames are checked against AInfo as <see cref="SaveSheetMetadata"/> checks
+/// them, and each is measured with <see cref="MeasureFrameEmpty"/>. The result holds each
+/// frame's empty border, not the frames, so they can be let go as soon as this returns; pass
+/// it to <see cref="WriteSheetMetadata"/> later, after changing its <c>Info.Meta</c> if need
+/// be. Nothing is written. Safe on any thread.</remarks>
+/// <param name="AFileName">The metadata file to write later, normally the image's name with
+/// the extension .json.</param>
+/// <param name="AFrames">The frames, in order, as laid out in the image; at least one, all
+/// the same size.</param>
+/// <param name="AInfo">The image's size, grid, origin, directions, animations, and which each
+/// frame is.</param>
+/// <returns>What WriteSheetMetadata needs; a record, owned by the caller.</returns>
+/// <exception cref="EArgumentException">In the same cases as SaveSheetMetadata: there are no
+/// frames, they differ in size, AInfo's grid cannot hold them, an animation has no frame
+/// count or time, or AInfo.Frames does not match the frames or names an animation or
+/// direction it does not list.</exception>
+/// <seealso cref="WriteSheetMetadata"/>
 function MeasureSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
   const AInfo: TSprite3DSheetInfo): TSprite3DSheetMetadata;
 
 //** @abstract(The smallest of each side over the given empty borders, as sprite_empty is.)
+//**
+//** Cropping every frame by the result loses nothing from any of them. Frames with nothing
+//** drawn count as empty right across, so they never lower it unless every frame is empty.
+//** Safe on any thread.
+//**
+//** @param(AEmpties Empty borders, as @link(MeasureFrameEmpty) gives them; may be from
+//** several images.)
+//**
+//** @returns(The least left, top, right and bottom; all 0 if AEmpties is empty.)
 /// <summary>The smallest of each side over the given empty borders, as sprite_empty
 /// is.</summary>
+/// <remarks>Cropping every frame by the result loses nothing from any of them. Frames with
+/// nothing drawn count as empty right across, so they never lower it unless every frame is
+/// empty. Safe on any thread.</remarks>
+/// <param name="AEmpties">Empty borders, as <see cref="MeasureFrameEmpty"/> gives them; may
+/// be from several images.</param>
+/// <returns>The least left, top, right and bottom; all 0 if AEmpties is empty.</returns>
 function LeastFrameEmpty(const AEmpties: TArray<TSprite3DFrameEmpty>): TSprite3DFrameEmpty;
 
 //** @abstract(Writes metadata measured by MeasureSheetMetadata, as SaveSheetMetadata does.)
 //**
-//** @param(ASpriteEmpty If given, written as @code(sprite_empty) in place of the least of the
-//** image's own frames, as for a whole 2-pass export.)
+//** The file is written exactly as @link(SaveSheetMetadata) would have written it from the
+//** frames, @code(sprite_empty) being the least of the image's own frames' empty borders.
+//** It is replaced if it exists; its folder must exist. Blocks until written; may be called
+//** on any thread.
+//**
+//** @param(AMetadata What @link(MeasureSheetMetadata) returned, its Info.Meta changed if need
+//** be.)
+//**
+//** @raises(EInOutError Or another file exception, if the file cannot be written.)
 /// <summary>Writes metadata measured by MeasureSheetMetadata, as SaveSheetMetadata
 /// does.</summary>
-/// <param name="ASpriteEmpty">If given, written as <c>sprite_empty</c> in place of the least
-/// of the image's own frames, as for a whole 2-pass export.</param>
+/// <remarks>The file is written exactly as <see cref="SaveSheetMetadata"/> would have written
+/// it from the frames, <c>sprite_empty</c> being the least of the image's own frames' empty
+/// borders. It is replaced if it exists; its folder must exist. Blocks until written; may be
+/// called on any thread.</remarks>
+/// <param name="AMetadata">What <see cref="MeasureSheetMetadata"/> returned, its Info.Meta
+/// changed if need be.</param>
+/// <exception cref="EInOutError">Or another file exception, if the file cannot be
+/// written.</exception>
 procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata); overload;
+//** @abstract(Writes metadata measured by MeasureSheetMetadata with a given sprite_empty.)
+//**
+//** As the overload without ASpriteEmpty, but @code(sprite_empty) is ASpriteEmpty rather
+//** than the least of the image's own frames, as a 2-pass export writes the least over every
+//** frame it made into every one of its files. Each frame's own @code(empty) is unchanged.
+//** Blocks until written; may be called on any thread.
+//**
+//** @param(AMetadata What @link(MeasureSheetMetadata) returned, its Info.Meta changed if need
+//** be.)
+//**
+//** @param(ASpriteEmpty The values written as @code(sprite_empty).)
+//**
+//** @raises(EInOutError Or another file exception, if the file cannot be written.)
+/// <summary>Writes metadata measured by MeasureSheetMetadata with a given
+/// sprite_empty.</summary>
+/// <remarks>As the overload without ASpriteEmpty, but <c>sprite_empty</c> is ASpriteEmpty
+/// rather than the least of the image's own frames, as a 2-pass export writes the least over
+/// every frame it made into every one of its files. Each frame's own <c>empty</c> is
+/// unchanged. Blocks until written; may be called on any thread.</remarks>
+/// <param name="AMetadata">What <see cref="MeasureSheetMetadata"/> returned, its Info.Meta
+/// changed if need be.</param>
+/// <param name="ASpriteEmpty">The values written as <c>sprite_empty</c>.</param>
+/// <exception cref="EInOutError">Or another file exception, if the file cannot be
+/// written.</exception>
 procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata;
   const ASpriteEmpty: TSprite3DFrameEmpty); overload;
 

@@ -1991,12 +1991,11 @@ type
     procedure AnimationListBoxChangeCheck(Sender: TObject);
     procedure ExportButtonClick(Sender: TObject);
     procedure AbortButtonClick(Sender: TObject);
-    function ChooseExportFolder(out AFolder: String): Boolean;
+    function ChooseExportFolder(const AStart: String; out AFolder: String): Boolean;
     procedure RunNextBatchItem;
     procedure ContinueBatch;
     procedure FinishBatch;
     procedure ReportBatch;
-    procedure ChooseAtlasFolder;
     procedure AddAtlasPart(const APart: TAtlasPart; const AFrames: TArray<TSprite3DImage>);
     procedure SaveAtlasPages(const AFinal: Boolean; const AThen: TProc);
     procedure FinishAtlas;
@@ -5716,7 +5715,7 @@ end;
 // The pop-up menu's action: the selected entry, saved in SaveFolder
 procedure TMainForm.StartSingleCapture(const AKind: TSheetKind);
 var
-  Error: String;
+  Error, Folder: String;
 begin
   if Capturing or FOffscreen.Busy then
     Exit;   // a capture or a grab is under way
@@ -5725,23 +5724,24 @@ begin
     ShowMessage('Open a model first.');
     Exit;
   end;
-  if not FSettings.HasSaveFolder and not ChooseSaveFolder then
-    Exit;   // no folder, no capture
+  // Asked every time, opening where the last export went
+  if not ChooseExportFolder(String.Empty, Folder) then
+    Exit;   // cancelled: nothing is saved
   if FSettings.ExportDirections then
   begin
     // One capture per direction: run as a batch of this one entry, with
     // its progress dialog
-    StartBatch([Max(0, AnimationListBox.ItemIndex)], AKind, SaveFolder);
+    StartBatch([Max(0, AnimationListBox.ItemIndex)], AKind, Folder);
     Exit;
   end;
-  FSettings.LastExportFolder := SaveFolder;
-  if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), -1, SaveFolder,
+  FSettings.LastExportFolder := Folder;
+  if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), -1, Folder,
     procedure(AResult: String)
     begin
       if AResult <> String.Empty then
         ShowMessage(AResult)
       else if Assigned(FResults) then
-        FResults.FolderChanged(SaveFolder);
+        FResults.FolderChanged(Folder);
     end, Error) then
     ShowMessage(Error);
 end;
@@ -6589,23 +6589,16 @@ procedure TMainForm.BatchKindChange(Sender: TObject);
 begin
   if FSyncingChecks then
     Exit;
-  if FBatchKindBox.ItemIndex = Ord(skAtlas) then
-    // Once the drop-down has closed, from a fresh main-loop turn
-    TThread.ForceQueue(nil, ChooseAtlasFolder)
-  else
-  begin
-    FBatchKindIndex := FBatchKindBox.ItemIndex;
-    FBatchKindBox.Hint := String.Empty;
-    // Kept for next session
-    FSettings.ExportKind := SheetKindKey(TSheetKind(FBatchKindIndex));
-  end;
+  // Kept for next session; the folder is asked for at Export
+  FBatchKindIndex := FBatchKindBox.ItemIndex;
+  FBatchKindBox.Hint := String.Empty;
+  FSettings.ExportKind := SheetKindKey(TSheetKind(FBatchKindIndex));
   UpdateBatchControls;
 end;
 
 // The drop-down as settings.json last kept it: the kind of export, if the
-// drop-down offers it, and for a texture atlas its folder, if it is still
-// there; otherwise the folder is asked for at Export. Choosing it here asks
-// for nothing.
+// drop-down offers it, and for a texture atlas the folder its folder dialog
+// opens at, if it is still there. Choosing it here asks for nothing.
 procedure TMainForm.RestoreBatchKind;
 var
   Index: Integer;
@@ -6630,38 +6623,6 @@ begin
     TDirectory.Exists(FSettings.AtlasFolder) then
   begin
     FAtlasFolder := FSettings.AtlasFolder;
-    FBatchKindBox.Hint := 'Texture atlas pages are saved in ' + FAtlasFolder;
-  end;
-  UpdateBatchControls;
-end;
-
-// Texture Atlas was chosen: where its pages go, in a folder dialog opening
-// at the save folder, as for Export. Without a folder the drop-down goes
-// back to what it was.
-procedure TMainForm.ChooseAtlasFolder;
-var
-  Folder: String;
-begin
-  if MainFormGone or (FBatchKindBox.ItemIndex <> Ord(skAtlas)) then
-    Exit;
-  if ChooseExportFolder(Folder) then
-  begin
-    FAtlasFolder := Folder;
-    FBatchKindIndex := Ord(skAtlas);
-    // Both kept for next session
-    FSettings.ExportKind := SheetKindKey(skAtlas);
-    FSettings.AtlasFolder := Folder;
-    FBatchKindBox.Hint := 'Texture atlas pages are saved in ' + Folder;
-    DebugMemo.Lines.Add('Texture atlas pages will be saved in ' + Folder);
-  end
-  else
-  begin
-    FSyncingChecks := True;
-    try
-      FBatchKindBox.ItemIndex := FBatchKindIndex;
-    finally
-      FSyncingChecks := False;
-    end;
   end;
   UpdateBatchControls;
 end;
@@ -6811,15 +6772,21 @@ begin
     FExportButton.Text := 'Export';
 end;
 
-// Where a batch goes: a folder dialog opening at SaveFolder, in which a new
-// sub-folder can be made. Android and iOS have no folder dialog, so there
-// the fixed Grabs folder is used. SaveFolder itself is left as it is.
-function TMainForm.ChooseExportFolder(out AFolder: String): Boolean;
+// Where an export goes, asked every time: a folder dialog opening at
+// AStart, or where the last export went, or the grab folder, or Documents,
+// the first of them that is there, in which a new sub-folder can be made.
+// Android and iOS have no folder dialog, so there the fixed Grabs folder is
+// used. SaveFolder itself is left as it is.
+function TMainForm.ChooseExportFolder(const AStart: String; out AFolder: String): Boolean;
 begin
   AFolder := DefaultGrabFolder;
   if AFolder <> String.Empty then
     Exit(True);
-  AFolder := SaveFolder;
+  AFolder := AStart;
+  if (AFolder = String.Empty) or not TDirectory.Exists(AFolder) then
+    AFolder := FSettings.LastExportFolder;
+  if (AFolder = String.Empty) or not TDirectory.Exists(AFolder) then
+    AFolder := SaveFolder;
   if (AFolder = String.Empty) or not TDirectory.Exists(AFolder) then
     AFolder := TPath.GetDocumentsPath;
   Result := SelectDirectory('Export Location', String.Empty, AFolder) and
@@ -6831,7 +6798,7 @@ procedure TMainForm.ExportButtonClick(Sender: TObject);
 var
   I: Integer;
   Items: TArray<Integer>;
-  Folder: String;
+  Folder, Start: String;
 begin
   if Capturing or FOffscreen.Busy then
     Exit;
@@ -6851,13 +6818,15 @@ begin
   end;
   FBatchKind := TSheetKind(EnsureRange(FBatchKindBox.ItemIndex, Ord(Low(TSheetKind)),
     Ord(High(TSheetKind))));
-  // A texture atlas goes to the folder chosen with it, if it is still there
-  if (FBatchKind = skAtlas) and (FAtlasFolder <> String.Empty) and
-    TDirectory.Exists(FAtlasFolder) then
-    Folder := FAtlasFolder
-  else if not ChooseExportFolder(Folder) then
-    Exit   // cancelled
-  else if FBatchKind = skAtlas then
+  // Asked every time, opening where this kind of export last went: a
+  // texture atlas's own folder, otherwise the last export's
+  if FBatchKind = skAtlas then
+    Start := FAtlasFolder
+  else
+    Start := String.Empty;
+  if not ChooseExportFolder(Start, Folder) then
+    Exit;   // cancelled: nothing is exported
+  if FBatchKind = skAtlas then
   begin
     FAtlasFolder := Folder;
     FSettings.AtlasFolder := Folder;

@@ -86,7 +86,7 @@ uses
 
 begin
   { Report any dumb memory leaks - switch to false for release }
-  ReportMemoryLeaksOnShutdown := True;
+  // ReportMemoryLeaksOnShutdown := True;
   {$IF DEFINED(MSWINDOWS)}
   // FastMM5 also writes every leak, in full, to
   // Sprite3d_MemoryManager_EventLog.txt in the executable's folder, its
