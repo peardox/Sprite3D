@@ -254,6 +254,15 @@ Each entry has a tick box. Below the list:
 - **Saving as it goes.** Each image is saved as soon as it is complete, a strip or spritesheet once its last direction is captured and a texture atlas page once it is full, and its frames are let go, so a batch holds only what it still needs. What its metadata will say is worked out from the frames then, and kept; every `.json` is written once the batch ends, after all the images, so the list shows the images saved one by one and then the metadata files. A 2-pass export needs this, as its `sprite_empty` is the whole second pass's. The right-click menu's saves write the `.json` straight after the image.
 - **Quitting mid-export.** Closing the window while anything is being captured, exported or written asks *Still exporting. Do you really want to quit?* No carries on with the export. Yes stops it and quits: the capture under way and anything not yet saved, such as a texture atlas's pages, are dropped, while files already being written are finished first, so none is left half written.
 
+### Results
+
+The **Results** tab, between View and Debug, plays back what has been exported, using only the exported files themselves:
+
+- **Select Folder...**, at the bottom, chooses the folder to read. It opens where the last export went, kept in `settings.json` as `lastExportFolder`, and that folder is also read the first time the tab is shown. After an export to the folder being shown, the tab reads it again.
+- **The list** on the right is every animation found in the folder's metadata: every `.json` beside its `.png`, read in name order, whose `animations` are objects with `name`, `frame_count` and `time`. Metadata from before that change, and AniGifs and MP4s, are not read yet. An animation saved more than once, in a strip and an atlas say, is listed once, the first file read supplying its frames. The first animation is selected.
+- **The animation** is drawn in the middle of the drawing area, each frame cut from its image at `image.sprite_size`, pixels kept sharp when magnified. It plays straight away at its own rate, its `frame_count` frames over its `time` seconds, so an animation whose frame count was changed plays at the rate that gives.
+- **The controls** under it are the View tab's player buttons, first, previous, play or pause, next and last, with the frame showing, then **<** and **>** to step through the animation's directions, starting from the first, with its bearing shown, and the frame count, time and frame rate. **Zoom** magnifies it, its top end always the largest that fits the space, so it never grows past the drawing area, however the window is sized.
+
 ### Debugging
 
 `settings.json` has a hidden `debug_enabled`, false unless you change it by hand; nothing in the application sets it. While it is true:

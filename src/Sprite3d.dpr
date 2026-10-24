@@ -62,6 +62,7 @@ uses
   Sprite3DLoadForm in 'ui\Sprite3DLoadForm.pas' {ModelLoadForm},
   Sprite3DDirectionsForm in 'ui\Sprite3DDirectionsForm.pas' {DirectionsForm},
   Sprite3DExportForm in 'ui\Sprite3DExportForm.pas' {ExportProgressForm},
+  Sprite3DResultsView in 'ui\Sprite3DResultsView.pas',
   Sprite3DCreditsForm in 'ui\Sprite3DCreditsForm.pas' {CreditsForm},
   Sprite3DVideo in 'lib\Sprite3DVideo.pas',
   Sprite3DOpenH264 in 'lib\Sprite3DOpenH264.pas',

@@ -414,6 +414,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DNativeLibs.pas"/>
         <DCCReference Include="lib\Sprite3DBzip2.pas"/>
         <DCCReference Include="lib\Sprite3DLibraryUpdate.pas"/>
+        <DCCReference Include="ui\Sprite3DResultsView.pas"/>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>

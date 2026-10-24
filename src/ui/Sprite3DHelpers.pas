@@ -57,6 +57,16 @@ const
   //** @abstract(The name of the settings file in SupportFolder.)
   /// <summary>The name of the settings file in SupportFolder.</summary>
   SETTINGS_FILE_NAME = 'settings.json';
+  //** @abstract(The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
+  //** button's text colour, shared by the View tab's player and the Results tab's.)
+  /// <summary>The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
+  /// button's text colour, shared by the View tab's player and the Results tab's.</summary>
+  ICON_FIRST = 'M5 6h2v12H5z M8 12l6-6v12z M14 12l6-6v12z';
+  ICON_PREVIOUS = 'M7 12l7-6v12z M15 6h2v12h-2z';
+  ICON_PLAY = 'M8 5v14l11-7z';
+  ICON_PAUSE = 'M6 5h4v14H6z M14 5h4v14h-4z';
+  ICON_NEXT = 'M7 6h2v12H7z M10 6v12l7-6z';
+  ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
   //** @abstract(The largest camera pan either way, as a multiple of the model's radius.)
   //**
   //** The radius is half the diagonal of the model's bounding box, so a pan of 1 moves the
@@ -371,6 +381,7 @@ type
     FDebugEnabled: Boolean;
     FDebugFrameBorders: Boolean;
     FExportAutoClose: Boolean;
+    FLastExportFolder: String;
     FOverscan: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
@@ -916,6 +927,16 @@ type
     /// <remarks>Stored as <c>exportAutoClose</c>; set by Autoclose when done in that
     /// dialog.</remarks>
     property ExportAutoClose: Boolean read FExportAutoClose write FExportAutoClose;
+    //** @abstract(The folder the last export went to, from Export or the right-click menu;
+    //** empty until there has been one.)
+    //**
+    //** Stored as @code(lastExportFolder). The Results tab reads it when it first shows, and
+    //** its Select Folder opens there.
+    /// <summary>The folder the last export went to, from Export or the right-click menu; empty
+    /// until there has been one.</summary>
+    /// <remarks>Stored as <c>lastExportFolder</c>. The Results tab reads it when it first
+    /// shows, and its Select Folder opens there.</remarks>
+    property LastExportFolder: String read FLastExportFolder write FLastExportFolder;
     [NeonProperty('debug_enabled')]
     property DebugEnabled: Boolean read FDebugEnabled write FDebugEnabled;
     //** @abstract(Whether every exported frame gets a 1-pixel black border; False by default.)
@@ -1907,6 +1928,7 @@ begin
   FDebugEnabled := False;
   FDebugFrameBorders := False;
   FExportAutoClose := False;
+  FLastExportFolder := String.Empty;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
   FResampleFilter := rfBox;
 end;

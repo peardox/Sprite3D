@@ -168,6 +168,7 @@
 //** |       |-- ViewportLayout   the area left of the control panel
 //** |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
 //** |       `-- ControlsLayout   dials and their labels
+//** |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
 //**
@@ -403,6 +404,7 @@ unit Sprite3dMain;
     |       |-- ViewportLayout   the area left of the control panel
     |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
     |       `-- ControlsLayout   dials and their labels
+    |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
     `-- DebugTab "Debug"
         `-- DebugMemo
 
@@ -462,6 +464,7 @@ uses
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
+  Sprite3DResultsView,
   System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -598,6 +601,11 @@ type
     /// <summary>The tab captioned "View", with the viewport and camera controls; active at
     /// start-up.</summary>
     GorillaTab: TTabItem;
+    //** @abstract(The tab captioned "Results", between View and Debug, where exports are
+    //** played back; its controls are TSprite3DResultsView's.)
+    /// <summary>The tab captioned "Results", between View and Debug, where exports are played
+    /// back; its controls are TSprite3DResultsView's.</summary>
+    ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
     /// <summary>The tab captioned "Debug", holding DebugMemo.</summary>
     DebugTab: TTabItem;
@@ -1747,6 +1755,8 @@ type
     // is true in settings.json
     FDebugMenu: TMenuItem;
     FFrameBordersItem: TMenuItem;
+    // The Results tab's player
+    FResults: TSprite3DResultsView;
     FBatchKindIndex: Integer;
     // The batch's progress dialog, while it is open, and whether the view's
     // own redraws were stopped for the batch
@@ -1997,6 +2007,8 @@ type
       var ANotes: TArray<String>): String;
     procedure WriteBatchMetadata;
     procedure BuildDebugMenu;
+    procedure BuildResultsView;
+    procedure TabControl1Change(Sender: TObject);
     procedure FrameBordersItemClick(Sender: TObject);
     function FrameBordersOn: Boolean;
     procedure ApplyAtlasSettings(const APageSize: Integer; const ANonPowerOf2: Boolean);
@@ -2248,6 +2260,8 @@ begin
   BuildLockCameraItem;
   // File, Debug, only while debug_enabled; likewise before the menu moves
   BuildDebugMenu;
+  // The Results tab's player, reading where exports last went once shown
+  BuildResultsView;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   BuildMobileMenu;
@@ -5714,11 +5728,14 @@ begin
     StartBatch([Max(0, AnimationListBox.ItemIndex)], AKind, SaveFolder);
     Exit;
   end;
+  FSettings.LastExportFolder := SaveFolder;
   if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), -1, SaveFolder,
     procedure(AResult: String)
     begin
       if AResult <> String.Empty then
-        ShowMessage(AResult);
+        ShowMessage(AResult)
+      else if Assigned(FResults) then
+        FResults.FolderChanged(SaveFolder);
     end, Error) then
     ShowMessage(Error);
 end;
@@ -6108,16 +6125,6 @@ begin
     AError := Stem + ': the capture could not start.';
   end;
 end;
-
-const
-  // The transport buttons' icons: SVG paths in a 24 by 24 box, drawn in the
-  // button's text colour
-  ICON_FIRST = 'M5 6h2v12H5z M8 12l6-6v12z M14 12l6-6v12z';
-  ICON_PREVIOUS = 'M7 12l7-6v12z M15 6h2v12h-2z';
-  ICON_PLAY = 'M8 5v14l11-7z';
-  ICON_PAUSE = 'M6 5h4v14H6z M14 5h4v14h-4z';
-  ICON_NEXT = 'M7 6h2v12H7z M10 6v12l7-6z';
-  ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
 
 // The buttons that play, pause and step the selected animation, in a row
 // under the animation list and above the batch controls, made here rather
@@ -6901,6 +6908,8 @@ begin
   // The entry selected now is selected again, and played, once it is done
   FBatchSelected := AnimationListBox.ItemIndex;
   FBatchFolder := Folder;
+  // Where the Results tab looks first
+  FSettings.LastExportFolder := Folder;
   FBatchSaved := 0;
   FBatchErrors := nil;
   FBatchAborted := False;
@@ -7681,6 +7690,9 @@ begin
       [DurationText(FBatchCaptureMs),
       DurationText(FBatchClock.ElapsedMilliseconds - FBatchCaptureMs)]);
   FDirFrames := nil;
+  // The Results tab, if it shows this folder, shows what was just saved
+  if Assigned(FResults) then
+    FResults.FolderChanged(FBatchFolder);
   DebugMemo.Lines.Add(Report);
   PauseViewForExport(False);
   // The outcome stays in the progress dialog until it is closed
@@ -8150,6 +8162,32 @@ begin
       ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
         E.Message);
   end;
+end;
+
+// The Results tab's player, built into ResultsTab. Select Folder opens, and
+// the tab first shows, where exports last went; it plays only while its tab
+// is showing.
+procedure TMainForm.BuildResultsView;
+begin
+  FResults := TSprite3DResultsView.Create(Self, ResultsTab);
+  FResults.OnDefaultFolder :=
+    function: String
+    begin
+      Result := String.Empty;
+      if FSettings <> nil then
+        Result := FSettings.LastExportFolder;
+      {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+      if Result = String.Empty then
+        Result := DefaultGrabFolder;
+      {$ENDIF}
+    end;
+  TabControl1.OnChange := TabControl1Change;
+end;
+
+procedure TMainForm.TabControl1Change(Sender: TObject);
+begin
+  if Assigned(FResults) then
+    FResults.SetActive(TabControl1.ActiveTab = ResultsTab);
 end;
 
 // Whether exported frames get a black border: only while debugging is on

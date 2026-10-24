@@ -1,3 +1,6 @@
 [submodule "delphi-neon"]
 	path = delphi-neon
 	url = https://github.com/paolo-rossi/delphi-neon
+[submodule "FastMM5"]
+	path = FastMM5
+	url = https://github.com/pleriche/FastMM5.git

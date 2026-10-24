@@ -130,6 +130,20 @@ object MainForm: TMainForm
         Data = {0000}
       end
     end
+    object ResultsTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 60.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Results'
+      ExplicitSize.cx = 60.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+    end
     object DebugTab: TTabItem
       CustomIcon = <
         item
