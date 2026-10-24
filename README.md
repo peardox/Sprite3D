@@ -270,6 +270,8 @@ The **Results** tab, between View and Debug, plays back what has been exported, 
 - The Debug tab says so at startup. Nothing is said while it is false.
 - **File, Debug, Frame Borders** is added to the menu, a tick that turns on `debug_frame_borders`, kept in `settings.json`. While it is ticked, every exported frame gets a 1-pixel opaque black border round its edge, in strips, spritesheets, atlas pages, AniGifs and MP4s, so each cell's bounds can be seen. The border is only in the saved images: the metadata, and a 2-pass export's measuring, use the frames as rendered. With `debug_enabled` false the borders are never drawn, whatever `debug_frame_borders` says.
 
+**Memory leaks.** Leaks still allocated when the program closes are shown in a message box, as `ReportMemoryLeaksOnShutdown` is set in `Sprite3d.dpr` (switch it off for a release build). On Windows, [FastMM5](https://github.com/pleriche/FastMM5), a submodule in `FastMM5`, is the memory manager, and it also writes the whole report, every leaked block and what it holds, to `Sprite3d_MemoryManager_EventLog.txt` in the executable's folder. The file is deleted when the program starts, so it only ever holds the last run's leaks; no file means nothing leaked. Ctrl+C in the message box copies its text too. On other platforms the system's memory manager is used and leaks are not reported.
+
 Whether debugging is on or not, any saved image with a frame whose empty border is 0 on some side, so that the sprite may be cut off, is reported in the Debug tab, with how many frames do and on which sides.
 
 ### Texture atlas

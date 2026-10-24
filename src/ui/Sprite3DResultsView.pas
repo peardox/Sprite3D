@@ -443,9 +443,20 @@ end;
 
 destructor TSprite3DResultsView.Destroy;
 begin
+  // Nothing reacts while the controls go: freeing the list or resizing the
+  // drawing area would otherwise call back into a half-freed view
   if Assigned(FTimer) then
+  begin
     FTimer.Enabled := False;
-  FFrames.Free;
+    FTimer.OnTimer := nil;
+  end;
+  if Assigned(FList) then
+    FList.OnChange := nil;
+  if Assigned(FDrawingLayout) then
+    FDrawingLayout.OnResized := nil;
+  if Assigned(FZoomTrack) then
+    FZoomTrack.OnChange := nil;
+  FreeAndNil(FFrames);
   inherited;
 end;
 

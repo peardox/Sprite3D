@@ -5,7 +5,8 @@
 //** viewport, frames it with TSprite3DCamera and grabs it off screen with TSprite3DOffscreen.
 //** TMainForm, in Sprite3dMain, holds the view and every command. Leaks still allocated at
 //** shut-down are reported, as ReportMemoryLeaksOnShutdown is set; switch it off for a
-//** release build. Builds for Windows, macOS, Linux, Android and iOS.
+//** release build. On Windows FastMM5 is the memory manager and also writes them, in full, to
+//** Sprite3d_MemoryManager_EventLog.txt beside the executable. Builds for Windows, macOS, Linux, Android and iOS.
 //**
 //** @preformatted(
 //** ui/    the forms and the settings kept between sessions
@@ -13,7 +14,7 @@
 //** common/  display information, GPU preference and system folder helpers
 //** )
 program Sprite3d;
-
+// {$DEFINE REPORT_LEAKS}
 {
   Sprite3D: renders a 3D model from a chosen angle and saves it as images,
   icons, sprite sheets, animated GIFs or MP4 video.
@@ -22,7 +23,9 @@ program Sprite3d;
   Gorilla3D viewport, frames it with TSprite3DCamera and grabs it off screen
   with TSprite3DOffscreen. TMainForm, in Sprite3dMain, holds the view and
   every command. Leaks still allocated at shut-down are reported, as
-  ReportMemoryLeaksOnShutdown is set; switch it off for a release build.
+  ReportMemoryLeaksOnShutdown is set; switch it off for a release build. On
+  Windows FastMM5 is the memory manager and also writes them, in full, to
+  Sprite3d_MemoryManager_EventLog.txt beside the executable.
   Builds for Windows, macOS, Linux, Android and iOS.
 
     ui/      the forms and the settings kept between sessions
@@ -31,6 +34,11 @@ program Sprite3d;
 }
 
 uses
+  // On Windows FastMM5 is the memory manager, so it must come first; it
+  // writes the full leak report to a file beside the executable
+  {$IFDEF MSWINDOWS}
+  FastMM5,
+  {$ENDIF}
   System.StartUpCopy,
   FMX.Forms,
   Sprite3dMain in 'ui\Sprite3dMain.pas' {MainForm},
@@ -79,6 +87,17 @@ uses
 begin
   { Report any dumb memory leaks - switch to false for release }
   ReportMemoryLeaksOnShutdown := True;
+  {$IF DEFINED(MSWINDOWS)}
+  // FastMM5 also writes every leak, in full, to
+  // Sprite3d_MemoryManager_EventLog.txt in the executable's folder, its
+  // default place, so no path is given. It adds to that file each run, so
+  // the last run's is deleted first, leaving this run's leaks alone in it.
+  {$IF DEFINED(REPORT_LEAKS)}
+  FastMM_DeleteEventLogFile;
+  FastMM_LogToFileEvents := FastMM_LogToFileEvents +
+    [mmetUnexpectedMemoryLeakSummary, mmetUnexpectedMemoryLeakDetail];
+  {$ENDIF}
+  {$ENDIF}
 
   Application.Initialize;
  Application.CreateForm(TMainForm, MainForm);

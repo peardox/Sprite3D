@@ -2708,6 +2708,12 @@ begin
   MainFormGone := True;   // queued work arriving from here on does nothing
   if Assigned(FReadoutTimer) then
     FReadoutTimer.Enabled := False;
+  // The tabs change as the form is torn down: the Results view, freed with
+  // the form as its owner, is not to hear of it
+  TabControl1.OnChange := nil;
+  if Assigned(FResults) then
+    FResults.SetActive(False);
+  FResults := nil;
   FreeAndNil(FDisplays);
   FreeAndNil(FPlayer);
   // A load under way is dropped, its dialog with it
@@ -6963,10 +6969,13 @@ begin
   // The batch runs from queued calls, which the modal dialog's own loop
   // carries out; ShowModal returns once Close is pressed at the end
   TThread.ForceQueue(nil, ContinueBatch);
+  // Held here as well: the dialog's OnClosed, ExportDialogClosed, clears
+  // FExportDialog as it closes, before ShowModal returns, so freeing it by
+  // that field would free nothing and leak every dialog
+  var Dialog := FExportDialog;
   try
-    FExportDialog.ShowModal;
+    Dialog.ShowModal;
   finally
-    var Dialog := FExportDialog;
     FExportDialog := nil;
     Dialog.Free;
   end;
