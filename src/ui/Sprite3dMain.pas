@@ -1810,6 +1810,19 @@ type
     // of that was capturing before a texture atlas's pages were made
     FBatchClock: TStopwatch;
     FBatchCaptureMs: Int64;
+    // How many frames a texture atlas batch put on its pages, for File,
+    // Debug, Benchmark
+    FBatchFrames: Integer;
+    // File, Debug, Benchmark: whether it is running, the folder its runs'
+    // folders go in, ortho or persp for their names, the overscan of the run
+    // under way, 1 for none, each finished run's line of results, and
+    // whether a run was aborted or went wrong, which ends it
+    FBenchmarkActive: Boolean;
+    FBenchmarkRoot: String;
+    FBenchmarkPrefix: String;
+    FBenchmarkOverscan: Integer;
+    FBenchmarkRows: TArray<String>;
+    FBenchmarkStop: Boolean;
     // When the dialog's time remaining was last changed, on FBatchClock; -1
     // before the first estimate
     FBatchRemainingAt: Int64;
@@ -2041,6 +2054,10 @@ type
     procedure ResultsZoomChange(Sender: TObject);
     procedure FrameBordersItemClick(Sender: TObject);
     procedure DisableDebugItemClick(Sender: TObject);
+    procedure BenchmarkItemClick(Sender: TObject);
+    procedure BenchmarkStep;
+    procedure RecordBenchmarkRun;
+    procedure EndBenchmark;
     function FrameBordersOn: Boolean;
     procedure ApplyAtlasSettings(const APageSize: Integer; const ANonPowerOf2: Boolean);
     procedure DeleteAtlasPages(const AFolder, AStem: String; var ANotes: TArray<String>);
@@ -6992,6 +7009,7 @@ begin
   // Timed from here to the report
   FBatchClock := TStopwatch.StartNew;
   FBatchCaptureMs := -1;
+  FBatchFrames := 0;
   FBatchRemainingAt := -1;
   FDirFrames := nil;
   FDirFailed := False;
@@ -7038,7 +7056,8 @@ begin
   FExportDialog.OnAbort := ExportDialogAbort;
   FExportDialog.OnClosed := ExportDialogClosed;
   // Autoclose when done, as it was left
-  FExportDialog.AutoClose := FSettings.ExportAutoClose;
+  // A benchmark goes on to its next run by itself; what is chosen is kept
+  FExportDialog.AutoClose := FBenchmarkActive or FSettings.ExportAutoClose;
   FExportDialog.OnAutoCloseChange := ExportDialogAutoCloseChange;
   FExportDialog.AddLine('To ' + Folder);
   FPassStartMs := 0;
@@ -7066,6 +7085,9 @@ begin
     FExportDialog := nil;
     Dialog.Free;
   end;
+  // A benchmark's next run, once this one's dialog is gone
+  if FBenchmarkActive then
+    TThread.ForceQueue(nil, BenchmarkStep);
   {$ENDIF}
 end;
 
@@ -7581,6 +7603,7 @@ begin
   Total := 0;
   for var Part in FAtlasParts do
     Inc(Total, Part.Count);
+  FBatchFrames := Total;
   for var I := 0 to High(FAtlasPending) do
   begin
     FAtlasPending[I].Info.Meta.PageCount := FAtlasPageCount;
@@ -7793,6 +7816,8 @@ begin
   DebugMemo.Lines.Add(Report);
   PauseViewForExport(False);
   // The outcome stays in the progress dialog until it is closed
+  if FBenchmarkActive then
+    RecordBenchmarkRun;
   if FExportDialog <> nil then
     FExportDialog.Finish(Report, FBatchErrors)
   else if Length(FBatchErrors) > 0 then
@@ -7803,6 +7828,11 @@ begin
   FBatchItems := nil;
   FBatchAborted := False;
   UpdateBatchControls;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // The dialog does not block here: the benchmark's next run straight on
+  if FBenchmarkActive then
+    TThread.ForceQueue(nil, BenchmarkStep);
+  {$ENDIF}
 end;
 
 // Stops the batch after the entry being captured; that one still finishes
@@ -7975,7 +8005,12 @@ const
 // as it only measures; AMeasuring False puts the chosen overscan back
 procedure TMainForm.SetMeasuringOverscan(const AMeasuring: Boolean);
 begin
-  if AMeasuring or not FOverscanOn then
+  if AMeasuring then
+    FOffscreen.Overscan := 1
+  // A benchmark's run uses its own overscan, whatever is chosen
+  else if FBenchmarkActive then
+    FOffscreen.Overscan := FBenchmarkOverscan
+  else if not FOverscanOn then
     FOffscreen.Overscan := 1
   else
     FOffscreen.Overscan := FSettings.Overscan;
@@ -8241,6 +8276,10 @@ begin
   FFrameBordersItem.IsChecked := FSettings.DebugFrameBorders;
   FFrameBordersItem.OnClick := FrameBordersItemClick;
   FDebugMenu.AddObject(FFrameBordersItem);
+  Item := TMenuItem.Create(Self);
+  Item.Text := 'Benchmark';
+  Item.OnClick := BenchmarkItemClick;
+  FDebugMenu.AddObject(Item);
   // Only debug_enabled can be turned off: --debug lasts for the run
   if FSettings.DebugEnabled then
   begin
@@ -8284,6 +8323,150 @@ begin
     FDebugMenu.Visible := False;
     FDebugSeparator.Visible := False;
   end;
+end;
+
+const
+  // File, Debug, Benchmark exports once at each overscan from 1, none, to this
+  BENCHMARK_LAST_OVERSCAN = OVERSCAN_FACTOR_MAX;
+
+// File, Debug, Benchmark: asks for a folder, then exports the model shown as
+// a texture atlas, every animation, with metadata, directions and 2-pass, once
+// with no overscan and once at each overscan from 2 to 16, each run into a
+// folder of its own, ortho1x to ortho16x or persp1x to persp16x after the
+// projection. Each run is timed from start to finish, both passes and the
+// pages; once they are all done, or one is aborted or goes wrong, the Debug
+// tab gets a line per run: overscan, seconds, frames per second
+procedure TMainForm.BenchmarkItemClick(Sender: TObject);
+var
+  Root: String;
+  Entries: TArray<Integer>;
+begin
+  if FBenchmarkActive or FBatchActive or Capturing or FOffscreen.Busy then
+    Exit;
+  if GorillaModel = nil then
+  begin
+    ShowMessage('Open a model first.');
+    Exit;
+  end;
+  if AnimationListBox.Count < 2 then
+  begin
+    ShowMessage('This model has no animations to benchmark.');
+    Exit;
+  end;
+  if not ChooseExportFolder(String.Empty, Root) then
+    Exit;   // cancelled
+  // As the benchmark exports, shown and kept as if chosen by hand: Texture
+  // Atlas, which always has metadata, every animation, directions and 2-pass
+  FBatchKindBox.ItemIndex := Ord(skAtlas);
+  FBatchDirections.IsChecked := True;
+  FSettings.ExportDirections := True;
+  FBatchTwoPass.IsChecked := True;
+  Entries := nil;
+  for var I := 1 to AnimationListBox.Count - 1 do
+    Entries := Entries + [I];
+  FSyncingChecks := True;
+  try
+    FBatchAll.IsChecked := True;
+    SetEntryChecks(Entries, True);
+  finally
+    FSyncingChecks := False;
+  end;
+  UpdateView;
+  UpdateBatchControls;
+
+  FBenchmarkRoot := Root;
+  if GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpOrthographic then
+    FBenchmarkPrefix := 'ortho'
+  else
+    FBenchmarkPrefix := 'persp';
+  FBenchmarkOverscan := 0;
+  FBenchmarkRows := nil;
+  FBenchmarkStop := False;
+  FBenchmarkActive := True;
+  DebugMemo.Lines.Add(Format('Benchmark started: %d runs into %s', [BENCHMARK_LAST_OVERSCAN,
+    Root]));
+  // From a fresh main-loop turn, not from within the menu's click
+  TThread.ForceQueue(nil, BenchmarkStep);
+end;
+
+// The benchmark's next run, at the next overscan, or its results after the
+// last, or after a run that was aborted or went wrong
+procedure TMainForm.BenchmarkStep;
+var
+  Folder: String;
+  Items: TArray<Integer>;
+begin
+  if not FBenchmarkActive then
+    Exit;
+  if MainFormGone or FQuitConfirmed then
+  begin
+    // Quitting: nothing more is run or reported
+    FBenchmarkActive := False;
+    Exit;
+  end;
+  if FBenchmarkStop or (FBenchmarkOverscan >= BENCHMARK_LAST_OVERSCAN) or
+    (GorillaModel = nil) then
+  begin
+    EndBenchmark;
+    Exit;
+  end;
+  Inc(FBenchmarkOverscan);
+  Folder := TPath.Combine(FBenchmarkRoot, Format('%s%dx', [FBenchmarkPrefix,
+    FBenchmarkOverscan]));
+  try
+    TDirectory.CreateDirectory(Folder);
+  except
+    on E: Exception do
+    begin
+      DebugMemo.Lines.Add('Benchmark: can''t make ' + Folder + ': ' + E.Message);
+      FBenchmarkStop := True;
+      EndBenchmark;
+      Exit;
+    end;
+  end;
+  Items := nil;
+  for var I := 1 to AnimationListBox.Count - 1 do
+    Items := Items + [I];
+  StartBatch(Items, skAtlas, Folder, True);
+end;
+
+// A benchmark run's line, from the batch just reported: its overscan, how
+// long it took in seconds and the frames it made per second, or, if it was
+// aborted or went wrong, nothing, and the benchmark ends
+procedure TMainForm.RecordBenchmarkRun;
+var
+  Seconds, Fps: Double;
+begin
+  if FBatchAborted or (Length(FBatchErrors) > 0) then
+  begin
+    DebugMemo.Lines.Add(Format('Benchmark: the %dx run was aborted or went wrong, so the ' +
+      'benchmark stops there', [FBenchmarkOverscan]));
+    FBenchmarkStop := True;
+    Exit;
+  end;
+  Seconds := FBatchClock.ElapsedMilliseconds / 1000;
+  if Seconds > 0 then
+    Fps := FBatchFrames / Seconds
+  else
+    Fps := 0;
+  FBenchmarkRows := FBenchmarkRows + [Format('%d,%.3f,%.2f', [FBenchmarkOverscan, Seconds,
+    Fps], TFormatSettings.Invariant)];
+end;
+
+// The benchmark is over: overscan as chosen again, and every run's line in
+// the Debug tab, comma-separated
+procedure TMainForm.EndBenchmark;
+begin
+  FBenchmarkActive := False;
+  SetMeasuringOverscan(False);
+  if Length(FBenchmarkRows) < BENCHMARK_LAST_OVERSCAN then
+    DebugMemo.Lines.Add(Format('Benchmark: %d of %d runs finished',
+      [Length(FBenchmarkRows), BENCHMARK_LAST_OVERSCAN]));
+  DebugMemo.Lines.Add('Benchmark Results start');
+  for var Row in FBenchmarkRows do
+    DebugMemo.Lines.Add(Row);
+  DebugMemo.Lines.Add('Benchmark Results end');
+  FBenchmarkRows := nil;
 end;
 
 // Ticks or unticks Frame Borders, kept in settings.json as
