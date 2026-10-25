@@ -115,7 +115,7 @@
 //** a second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled
 //** to it: one cycle is cut into the whole number of equal steps nearest that rate, so the
 //** saved frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns
-//** overscan on, for this session only: every grab, icon and export is drawn 2 to 16 times
+//** overscan on, for this session only: every grab, icon and export is drawn 2 to 8 times
 //** larger each way, as far as the GPU allows at the grab size, and scaled down with the
 //** resampling filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in
 //** settings.json.
@@ -127,8 +127,8 @@
 //** folder chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can be made
 //** there for the batch. SaveFolder itself is not changed. A failed entry is reported at the
 //** end and does not stop the others. Each entry is unticked as soon as it is saved, so a
-//** failed one stays ticked for another try. Abort, enabled only while a batch runs, lets the
-//** entry being captured finish and save, then drops the rest. On Android and iOS, which have
+//** failed one stays ticked for another try. Abort, in the progress dialog, stops the batch
+//** at once, saving nothing more. On Android and iOS, which have
 //** no folder dialog, the batch goes to the Grabs folder.
 //**
 //** The drop-down's Texture Atlas asks for its folder as it is chosen. Its batch captures
@@ -300,8 +300,8 @@ unit Sprite3dMain;
 
   The Animations list shows, to the right of each entry under the Frames
   title, how many frames saving it makes at the Animation, Animation Settings
-  frame rate: the animation's length times the rate, rounded, or 1 for (None),
-  a single still frame. Animation, Animations Used opens a dialog that ticks which
+  frame rate: the animation's length times the rate, rounded, or 1 for a
+  static model's entry, a single still frame. Animation, Animations Used opens a dialog that ticks which
   animations are used; the others are left out of the list, so they are not
   played, saved or exported, and out of the combined swept volume. A new model
   starts with every animation used.
@@ -313,7 +313,7 @@ unit Sprite3dMain;
   TSprite3DAnimationPlayer; any of the four frame buttons pauses the animation
   on its frame. After them, a readout always shows the frame showing, held or
   playing, and the frames in all, with the "/" in a fixed place; it reads "- /
-  -" when there is no animation to count, as for (None). A readout over the
+  -" when there is no animation to count, as for a static model. A readout over the
   top left of the view, white on a dark backing, shows the frames per second
   the viewport draws, which File, Settings sets, kept within the refresh rate
   of the display the window is on, and checked again whenever the window moves
@@ -338,8 +338,9 @@ unit Sprite3dMain;
   as a video-only <animation>.mp4 through Sprite3DVideo, H.264 when Cisco's
   OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only
   when the FFmpeg libraries load; DebugMemo says at start-up whether they did
-  and from where. The (None) entry, which has no animation, captures instead a
-  single still frame of the model in its bind pose, named after the model. On
+  and from where. A static model, one with no animations, has one entry,
+  named after its file, which captures a single still frame of the model as
+  loaded. On
   Android and iOS, which have no right-click, the same items are in an
   Animation group of the menu drawer and act on the selected entry.
 
@@ -358,22 +359,21 @@ unit Sprite3dMain;
   animation is resampled to it: one cycle is cut into the whole number of
   equal steps nearest that rate, so the saved frames still loop exactly; see
   TSprite3DAnimationFrames. The same dialog turns overscan on, for this
-  session only: every grab, icon and export is drawn 2 to 16 times larger
+  session only: every grab, icon and export is drawn 2 to 8 times larger
   each way, as far as the GPU allows at the grab size, and scaled down with
   the resampling filter chosen there, by TSprite3DOffscreen. The factor and
   filter are kept in settings.json.
 
-  Each entry also has a tick box. Below the list, All ticks every animation,
-  leaving (None) as it is so the turn is exported only when ticked by hand,
-  or clears every entry; a drop-down chooses Sprite strip, Spritesheet,
+  Each entry also has a tick box. Below the list, All ticks or clears every
+  entry; a drop-down chooses Sprite strip, Spritesheet,
   Texture Atlas, AniGif or, when FFmpeg loaded, MP4 video, and Export saves
   every ticked entry that way, one after another, in a folder
   chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can
   be made there for the batch. SaveFolder itself is not changed. A failed
   entry is reported at the end and does not stop the others. Each entry is
   unticked as soon as it is saved, so a failed one stays ticked for another
-  try. Abort, enabled only while a batch runs, lets the entry being captured
-  finish and save, then drops the rest. On Android and iOS, which have no
+  try. Abort, in the progress dialog, stops the batch at once, saving
+  nothing more. On Android and iOS, which have no
   folder dialog, the batch goes to the Grabs folder.
 
   View, Camera, Lock Camera fixes the camera where it is. While it is ticked
@@ -393,7 +393,7 @@ unit Sprite3dMain;
   is framed alike, and Show Animation Volume draws it. Otherwise, with one
   ticked or none, as for a model without animations, it frames the volume of
   what is on screen alone: the selected animation's, paused or playing, or the
-  rest pose's for (None). Either way the volume fills the view on the tighter
+  rest pose's for a static model. Either way the volume fills the view on the tighter
   axis, and the orbit centre is on the turning axis, so turning the azimuth
   dial keeps the model in view.
 
@@ -549,9 +549,11 @@ type
     /// <summary>How long it takes to play once, in seconds: its own length, whatever number
     /// of frames it was saved at.</summary>
     Time: Double;
-    //** @abstract(The pixel the centre of rotation falls on in its frames.)
-    /// <summary>The pixel the centre of rotation falls on in its frames.</summary>
-    Origin: TPoint;
+    //** @abstract(Where the centre of rotation falls in its frames, to a fraction of a
+    //** pixel.)
+    /// <summary>Where the centre of rotation falls in its frames, to a fraction of a
+    /// pixel.</summary>
+    Origin: TPointF;
     //** @abstract(Whether Origin is known.)
     /// <summary>Whether Origin is known.</summary>
     OriginKnown: Boolean;
@@ -896,8 +898,8 @@ type
     /// <summary>The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
     /// header's padding, over the frame counts in AnimationListBox.</summary>
     FramesLabel: TLabel;
-    //** @abstract(The model's animations, by name, after a first entry, @code(@(None@)), that
-    //** stops any animation; see AnimationListBoxClick.)
+    //** @abstract(The model's animations, by name, or for a static model, one with no
+    //** animations, one entry named after its file; see AnimationListBoxClick.)
     //**
     //** Only the animations ticked in Animation, Animations Used are listed. Each entry shows,
     //** at its right, the number of frames saving it makes at the Animation, Animation Settings
@@ -905,8 +907,8 @@ type
     //** with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
     //** selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
     //** spritesheet or an animated GIF; see the unit description.
-    /// <summary>The model's animations, by name, after a first entry, <c>(None)</c>, that stops
-    /// any animation; see <see cref="AnimationListBoxClick"/>.</summary>
+    /// <summary>The model's animations, by name, or for a static model, one with no animations,
+    /// one entry named after its file; see <see cref="AnimationListBoxClick"/>.</summary>
     /// <remarks>Only the animations ticked in Animation, Animations Used are listed. Each entry
     /// shows, at its right, the number of frames saving it makes at the Model, Animation
     /// Settings frame rate. Choosing an entry plays it, whether by a click or by moving the
@@ -1159,7 +1161,6 @@ type
     //**   "model": "hero.glb",
     //**   "selected": "walk",
     //**   "animations": [
-    //**     { "name": "(None)", "checked": false },
     //**     { "name": "walk", "checked": true, "frames": 24 },
     //**     { "name": "run", "checked": true }
     //**   ]
@@ -1445,21 +1446,21 @@ type
     /// turn from View, Camera, Head On.</remarks>
     /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
-    //** @abstract(Plays the chosen animation, or stops any for @code(@(None@)).)
+    //** @abstract(Plays the chosen animation, or shows a static model as loaded.)
     //**
     //** A click that moved the selection has already been played by AnimationListBoxChange,
     //** so it is not played twice; a click on the entry already selected plays it again.
     //** Ignored while an animation is being saved, which needs the animation it started.
     //**
     //** @param(Sender AnimationListBox.)
-    /// <summary>Plays the chosen animation, or stops any for <c>(None)</c>.</summary>
+    /// <summary>Plays the chosen animation, or shows a static model as loaded.</summary>
     /// <remarks>A click that moved the selection has already been played by
     /// <see cref="AnimationListBoxChange"/>, so it is not played twice; a click on the entry
     /// already selected plays it again. Ignored while an animation is being saved, which needs
     /// the animation it started.</remarks>
     /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxClick(Sender: TObject);
-    //** @abstract(Plays the newly selected animation, or stops any for @code(@(None@)),
+    //** @abstract(Plays the newly selected animation, or shows a static model as loaded,
     //** whatever moved the selection.)
     //**
     //** Runs whenever the selection moves: the Up and Down arrow keys, Home, End and the page
@@ -1468,7 +1469,7 @@ type
     //** being saved, and when the list is emptied for another model.
     //**
     //** @param(Sender AnimationListBox.)
-    /// <summary>Plays the newly selected animation, or stops any for <c>(None)</c>, whatever
+    /// <summary>Plays the newly selected animation, or shows a static model as loaded, whatever
     /// moved the selection.</summary>
     /// <remarks>Runs whenever the selection moves: the Up and Down arrow keys, Home, End and
     /// the page keys, a click on another entry, or code setting ItemIndex. So stepping through
@@ -1483,7 +1484,7 @@ type
     //** swept volume as a percentage of the combined one, measuring the animations first if
     //** they have not been; Cancel changes nothing. On OK the animations list is rebuilt with
     //** only those ticked, keeping the selection if it is still listed; if the animation
-    //** playing is left out, the model is shown at rest, as @code(@(None@)) does. The model is
+    //** playing is left out, nothing is selected and the model is shown at rest. The model is
     //** then refitted, to the swept volume joined over the rest pose and the animations used.
     //** Does nothing without a model, or while an animation is being saved. On Android and iOS
     //** the dialog does not block, and the choice is applied when it closes.
@@ -1495,7 +1496,7 @@ type
     /// its own swept volume as a percentage of the combined one, measuring the animations first
     /// if they have not been; Cancel changes nothing. On OK the animations list is rebuilt with
     /// only those ticked, keeping the selection if it is still listed; if the animation playing
-    /// is left out, the model is shown at rest, as <c>(None)</c> does. The model is then
+    /// is left out, nothing is selected and the model is shown at rest. The model is then
     /// refitted, to the swept volume joined over the rest pose and the animations used. Does
     /// nothing without a model, or while an animation is being saved. On Android and iOS the
     /// dialog does not block, and the choice is applied when it closes.</remarks>
@@ -1675,34 +1676,38 @@ type
     FCaptureRestore: TSprite3DFraming;
     // The viewport was resized during the capture: refit when it ends
     FRefitAfterCapture: Boolean;
-    // The orbit centre before SnapCaptureOrigin slid the view, put back by
-    // EndCapture even when the camera is locked
-    FOriginSnapped: Boolean;
-    FOriginRestore: TPoint3D;
     // A 2-pass export. FTwoPassRun: this batch runs two passes. FBatchPass:
     // 0 for an ordinary batch, 1 while the first pass measures (overscan off,
     // nothing saved), 2 while the second pass exports. FTwoPassBounds, once
     // FTwoPassMeasured, is how far every frame the first pass drew reached.
     // From it, once FTwoPassAdjusted, every capture of the
-    // second pass slides its picture by FTwoPassMoveX across and
-    // FTwoPassMoveY down, in pixels of the plain fit, then multiplies
-    // OrthoHeight, or in perspective Distance, by FTwoPassScale. Like the
-    // rest of a capture's framing, it is undone when the capture ends.
+    // second pass slides its picture, then multiplies OrthoHeight, or in
+    // perspective Distance, by FTwoPassScale, which together put its centre
+    // of rotation on FTwoPassTarget. Like the rest of a capture's framing,
+    // it is undone when the capture ends.
     // FTwoPassBounds is to a fraction of a pixel where the edge pixels are
-    // partly covered.
+    // partly covered. FTwoPassReach is the same reach measured from each
+    // capture's centre of rotation, which the second pass places.
+    // FTwoPassPadding is the padding aimed at, the empty border on the axis
+    // with least room: Padding from Animation, Animation Settings, 0 by
+    // default, within PaddingLimit of the grab size.
     FTwoPassRun: Boolean;
     FBatchPass: Integer;
     FTwoPassBounds: TRectF;
+    FTwoPassReach: TRectF;
     FTwoPassMeasured: Boolean;
-    // The pixel the first capture of a batch put the centre of rotation on;
-    // every later capture of the batch is snapped to the same pixel, so the
-    // whole batch shares one origin
-    FBatchOrigin: TPoint;
-    FBatchOriginSet: Boolean;
+    FTwoPassPadding: Integer;
+    // A 2-pass export of a static model, one with no animations, or with
+    // Exact ticked: the first pass measures at TWO_PASS_FINE_OVERSCAN with
+    // the Box filter, to find the edge to a fraction of a pixel, and both
+    // passes are framed with TWO_PASS_FINE_FIT_MARGIN to spare, so the
+    // measuring never touches the frame's edge
+    FTwoPassFine: Boolean;
     FTwoPassAdjusted: Boolean;
-    FTwoPassMoveX: Single;
-    FTwoPassMoveY: Single;
     FTwoPassScale: Single;
+    // Where the second pass puts the centre of rotation, in pixels of the
+    // frame, (0, 0) its top left corner
+    FTwoPassTarget: TPointF;
     // When the pass under way started, on FBatchClock, so a 2-pass export's
     // time remaining is for that pass alone; 0 for the first pass
     FPassStartMs: Int64;
@@ -1736,16 +1741,22 @@ type
     FBatchAll: TCheckBox;
     FBatchKindBox: TComboBox;
     // Above Export: whether a strip or spritesheet is saved with its metadata,
-    // whether to export every direction, and whether to export in two passes
-    // (a measuring pass, then the export reframed from what it measured).
-    // 2-pass is not kept: it starts clear each session and is in no project
-    // file
+    // whether to export every direction, and whether an animated model's
+    // measuring pass is exact. Every export runs in two passes: a measuring
+    // pass, then the export reframed from what it measured. Exact is not
+    // kept: it starts clear each session and is in no project file.
     FBatchMetadata: TCheckBox;
     FBatchDirections: TCheckBox;
-    FBatchTwoPass: TCheckBox;
+    FBatchExact: TCheckBox;
+    // Set by WriteBatchMetadata when an export measured at 1x missed the
+    // padding on both axes, so Exact is suggested once its dialog has gone,
+    // with the sprite_empty it came out at
+    FSuggestExact: Boolean;
+    FSuggestEmpty: TSprite3DFrameEmpty;
+    // True while the code, not the user, changes the Exact tick
+    FSyncingExact: Boolean;
     FExportButton: TButton;
-    FAbortButton: TButton;
-    // Abort was clicked: the batch stops once the current entry is saved
+    // Abort was clicked in the progress dialog: the batch stops at once
     FBatchAborted: Boolean;
     // True while the code changes ticks, so the tick handlers ignore it
     FSyncingChecks: Boolean;
@@ -1780,6 +1791,7 @@ type
     FDebugMenu: TMenuItem;
     FDebugSeparator: TMenuItem;
     FFrameBordersItem: TMenuItem;
+    FSaveOversampledItem: TMenuItem;
     // The Results tab's player, and whether its tab is the one showing
     FResults: TSprite3DResultsView;
     FResultsShowing: Boolean;
@@ -1814,14 +1826,18 @@ type
     // Debug, Benchmark
     FBatchFrames: Integer;
     // File, Debug, Benchmark: whether it is running, the folder its runs'
-    // folders go in, ortho or persp for their names, the overscan of the run
-    // under way, 1 for none, each finished run's line of results, and
-    // whether a run was aborted or went wrong, which ends it
+    // folders and its results file go in, ortho or persp for their names,
+    // when it started as YYMMDDHHMMSS, which ends every name, the overscan of
+    // the run under way, 1 for none, each finished run's line of results,
+    // and whether a run was aborted or went wrong, which ends it
     FBenchmarkActive: Boolean;
     FBenchmarkRoot: String;
     FBenchmarkPrefix: String;
+    FBenchmarkStamp: String;
     FBenchmarkOverscan: Integer;
     FBenchmarkRows: TArray<String>;
+    // The entries every benchmark run exports
+    FBenchmarkItems: TArray<Integer>;
     FBenchmarkStop: Boolean;
     // When the dialog's time remaining was last changed, on FBatchClock; -1
     // before the first estimate
@@ -1961,7 +1977,7 @@ type
       const AFolder: String; const AOnFinished: TProc<String>;
       out AError: String): Boolean;
     procedure StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
-      const AFolder: String; const ATwoPass: Boolean = False);
+      const AFolder: String);
     procedure TurnToDirection(const ABearing: Single);
     function BatchStepTitle: String;
     function BatchEntryOrdinal(const APos: Integer): Integer;
@@ -2030,6 +2046,10 @@ type
     procedure QuitAfterConfirm;
     procedure BatchMetadataChange(Sender: TObject);
     procedure BatchDirectionsChange(Sender: TObject);
+    procedure BatchExactChange(Sender: TObject);
+    procedure SetExactCheck(const AChecked: Boolean);
+    procedure ConfirmExact;
+    procedure SuggestExact;
     procedure AnimationListBoxChangeCheck(Sender: TObject);
     procedure ExportButtonClick(Sender: TObject);
     procedure AbortButtonClick(Sender: TObject);
@@ -2053,6 +2073,11 @@ type
     procedure ResultsShowGridChange(Sender: TObject);
     procedure ResultsZoomChange(Sender: TObject);
     procedure FrameBordersItemClick(Sender: TObject);
+    procedure SaveOversampledItemClick(Sender: TObject);
+    procedure CompareImagesItemClick(Sender: TObject);
+    function ChooseCompareFile(const ATitle, AStart: String; out AFileName: String): Boolean;
+    procedure OffscreenOverscanKept(Sender: TObject; const AFileName: String;
+      const AWidth, AHeight: Integer; const AError: String);
     procedure DisableDebugItemClick(Sender: TObject);
     procedure BenchmarkItemClick(Sender: TObject);
     procedure BenchmarkStep;
@@ -2060,14 +2085,23 @@ type
     procedure EndBenchmark;
     function FrameBordersOn: Boolean;
     procedure ApplyAtlasSettings(const APageSize: Integer; const ANonPowerOf2: Boolean);
+    procedure ApplyPadding(const APadding: Integer);
     procedure DeleteAtlasPages(const AFolder, AStem: String; var ANotes: TArray<String>);
     procedure UpdateBatchControls;
     function FrameCaptureFraming(const ASource: TSprite3DFrameSource;
       const AWidth, AHeight: Integer): Boolean;
     procedure EndCapture;
-    function SnapCaptureOrigin(const AWidth, AHeight: Integer; out AOrigin: TPoint): Boolean;
+    function MeasureCaptureOrigin(const AWidth, AHeight: Integer; out AOrigin: TPointF): Boolean;
     procedure SetMeasuringOverscan(const AMeasuring: Boolean);
-    procedure MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>);
+    function ExportOverscan: Integer;
+    function ModelIsAnimated: Boolean;
+    function IsAnimationEntry(const AIndex: Integer): Boolean;
+    function IsStillEntry(const AIndex: Integer): Boolean;
+    function StillEntryName: String;
+    function IsListOnlyName(const AName: String): Boolean;
+    procedure MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>;
+      const APivotX, APivotY: Single);
+    function EdgeTouchExpected: Boolean;
     procedure ComputeTwoPassAdjust;
     procedure ApplyTwoPassAdjust(const AWidth, AHeight: Integer);
     procedure SlidePicture(const ARight, ADown: Single; const AWidth, AHeight: Integer);
@@ -2075,7 +2109,7 @@ type
 
     function SaveSheet(const AKind: TSheetKind; const AFrames: TArray<TSprite3DImage>;
       const AFolder, AStem: String; const ACycleSeconds: Double;
-      const AMetadata: Boolean; const AOrigin: TPoint; const AOriginKnown: Boolean;
+      const AMetadata: Boolean; const AOrigin: TPointF; const AOriginKnown: Boolean;
       const AAnimation: String; const ADirections: TArray<Single>;
       const AMeta: TSprite3DSheetMeta; const ABorders, ADeferMetadata: Boolean;
       out APending: TSprite3DSheetMetadata; out AHasPending: Boolean): String;
@@ -2148,6 +2182,23 @@ uses
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
   Sprite3DCreditsForm, System.DateUtils, JsonText;
 
+const
+  // Where a 2-pass export aims the edge on the axis with least room, in
+  // pixels in from the padding, the empty pixels it leaves there. With
+  // overscan, halfway across the next pixel, as smoothed edges partly
+  // cover it. Without, frames have hard edges: a pixel is drawn only if its
+  // centre is inside the sprite, so the edge is aimed a quarter of a pixel
+  // in, well past that pixel's centre and short of the padding.
+  TWO_PASS_EDGE_SMOOTH = 0.5;
+  TWO_PASS_EDGE_HARD = 0.25;
+  // A fine 2-pass export's measuring pass: drawn at this overscan and
+  // scaled down with the Box filter, an exact average, so its edge pixels
+  // are covered as far as the sprite covers them, and the edge is found to
+  // about an eighth of a pixel; and the room left round the fit in both
+  // passes, as a fraction of the view
+  TWO_PASS_FINE_OVERSCAN = 4;
+  TWO_PASS_FINE_FIT_MARGIN = 0.02;
+
 {$R *.fmx}
 
 var
@@ -2178,11 +2229,12 @@ const
   // milliseconds: often enough for the frame number to follow playback
   READOUT_INTERVAL_MS = 100;
 
-  // The first entry of AnimationListBox, which stops any animation and
-  // shows the model as loaded
-  NO_ANIMATION = '(None)';
-  // What the (None) entry captures instead of an animation is one still
-  // frame, the model in its bind pose; a GIF or MP4 of it lasts this long
+  // The first entry earlier versions put in the Animations list, before the
+  // animations, which stopped any animation and showed the model as loaded;
+  // saved animation settings may still name it, and it is ignored
+  OLD_NO_ANIMATION = '(None)';
+  // What a static model's entry captures is one still frame, the model as
+  // loaded; a GIF or MP4 of it lasts this long
   STILL_SECONDS = 1.0;
   // Marks the frame-count label FrameCountLabel puts on each list entry
   FRAME_LABEL_TAG = 3001;
@@ -2231,6 +2283,7 @@ begin
   FOffscreen.OnAfterGrab := OffscreenAfterGrab;
   FOffscreen.OnOverscanReduced := OffscreenOverscanReduced;
   FOffscreen.OnShiftView := OffscreenShiftView;
+  FOffscreen.OnOverscanKept := OffscreenOverscanKept;
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
@@ -2496,8 +2549,9 @@ begin
   FChangePlayedIndex := AnimationListBox.ItemIndex;
 end;
 
-// Plays the selected animation, or stops any for (None); nothing while a
-// capture is driving the animation
+// Plays the selected animation, or, for a static model's entry or no entry
+// selected, shows the model as loaded; nothing while a capture is driving
+// the animation
 procedure TMainForm.PlaySelectedAnimation;
 var
   ani: String;
@@ -2515,7 +2569,7 @@ begin
   FreeAndNil(FPlayer);
   if Assigned(GorillaModel) then
     begin
-      if AnimationListBox.ItemIndex > 0 then
+      if IsAnimationEntry(AnimationListBox.ItemIndex) then
         begin
           ani := AnimationListBox.Items[AnimationListBox.ItemIndex];
           var Anim := GorillaModel.AnimationManager.PlayAnimation(ani);
@@ -2527,7 +2581,7 @@ begin
               FPlayer.ShowFrame(0);
           end;
         end
-      else if AnimationListBox.ItemIndex = 0 then
+      else
         begin
           // The model as loaded: Gorilla puts it back in its bind pose
           GorillaModel.ResetToBindPose();
@@ -3104,7 +3158,7 @@ begin
       end;
   Missing := nil;
   for var I := 0 to High(AState.Names) do
-    if AState.Names[I] <> NO_ANIMATION then
+    if not IsListOnlyName(AState.Names[I]) then
     begin
       Listed := False;
       for var Known in FAnimationNames do
@@ -3124,7 +3178,7 @@ begin
   FinishFrameEdit(False, True);
   FFrameOverrides.Clear;
   for var I := 0 to High(AState.Names) do
-    if (AState.Names[I] <> NO_ANIMATION) and (AState.Frames[I] > 0) then
+    if not IsListOnlyName(AState.Names[I]) and (AState.Frames[I] > 0) then
       FFrameOverrides.AddOrSetValue(AState.Names[I], AState.Frames[I]);
   ApplyUsedAnimations(Used);
   Ticks := nil;
@@ -3258,6 +3312,7 @@ begin
   Result.PageCount := APageCount;
   // Set by the export, once it knows what it is making
   Result.ExportType := String.Empty;
+  Result.IsAnimated := ModelIsAnimated;
   Result.TotalFrames := 0;   // the image's own frames, unless set
   Result.Creator := FCredits.Creator;
   Result.CreatorUrl := FCredits.CreatorUrl;
@@ -3271,8 +3326,24 @@ begin
   Result.ModelFile := FModelFile;
   // Whether these frames were made by a 2-pass export's second pass
   Result.TwoPass := FBatchActive and FTwoPassRun;
-  Result.OverscanEnabled := FOverscanOn;
-  Result.Overscan := FSettings.Overscan;
+  // Whether its first pass measured exactly: Exact ticked, or a static model
+  Result.Exact := FBatchActive and FTwoPassRun and FTwoPassFine;
+  // The overscan the frames are drawn at: during an export, the export's
+  // own, a benchmark run's included, rather than the choice in Animation,
+  // Animation Settings, which a benchmark leaves alone
+  if FBatchActive then
+  begin
+    Result.OverscanEnabled := ExportOverscan > 1;
+    if Result.OverscanEnabled then
+      Result.Overscan := ExportOverscan
+    else
+      Result.Overscan := FSettings.Overscan;
+  end
+  else
+  begin
+    Result.OverscanEnabled := FOverscanOn;
+    Result.Overscan := FSettings.Overscan;
+  end;
   // The view checked in View, Camera, by the name settings.json keeps it by
   Result.Camera.View := String.Empty;
   for var I := 0 to CameraMenu.ItemsCount - 1 do
@@ -3901,6 +3972,14 @@ begin
     if ANew.MinifyJson <> AOld.MinifyJson then
       FSettings.MinifyJson := ANew.MinifyJson;
 
+    // The Results tab's empty border values, explained in a hint or not
+    if ANew.ResultsEdgeHint <> AOld.ResultsEdgeHint then
+    begin
+      FSettings.ResultsEdgeHint := ANew.ResultsEdgeHint;
+      if Assigned(FResults) then
+        FResults.ShowEdgeHint := FSettings.ResultsEdgeHint;
+    end;
+
     if ANew.SaveFolder <> AOld.SaveFolder then
     begin
       // Only ever emptied by the dialog: the next grab asks for a folder,
@@ -4384,14 +4463,13 @@ begin
   Result := FitCameraToSweep(GorillaCamera, GorillaModel, ViewVolume, AWidth, AHeight);
 end;
 
-// How many animations are ticked for export; (None), entry 0, the turn,
-// is not an animation and does not count
+// How many entries are ticked for export
 function TMainForm.TickedAnimationCount: Integer;
 var
   I: Integer;
 begin
   Result := 0;
-  for I := 1 to AnimationListBox.Count - 1 do
+  for I := 0 to AnimationListBox.Count - 1 do
     if AnimationListBox.ListItems[I].IsChecked then
       Inc(Result);
 end;
@@ -4407,12 +4485,12 @@ end;
 
 // The volume the view is fitted to and grabs are framed by: the combined one
 // when UsesCombinedView, otherwise the selected animation's own, or the rest
-// pose's for (None) and for a model without animations
+// pose's for a static model or with nothing selected
 function TMainForm.ViewVolume: TSweptVolume;
 begin
   if UsesCombinedView then
     Exit(SweepFitVolume);
-  if AnimationListBox.ItemIndex > 0 then
+  if IsAnimationEntry(AnimationListBox.ItemIndex) then
   begin
     Result := AnimationSweptVolume(AnimationListBox.Items[AnimationListBox.ItemIndex]);
     if Result.Valid then
@@ -4789,7 +4867,6 @@ var
 begin
   FreeAndNil(FPlayer);   // its animation goes with the old model
   AnimationListBox.Items.Clear;
-  AnimationListBox.Items.Add(NO_ANIMATION);
   Old := GorillaModel;
   GorillaModel := FLoadModel;
   FLoadModel := nil;
@@ -4801,7 +4878,7 @@ begin
   GorillaModel.Visible := True;
   // Measuring stepped the animations through their poses and left the
   // model however the last of them did; put it in its bind pose, exactly as
-  // choosing (None) does, so it shows, and its bounding box measures, the
+  // showing a static model does, so it shows, and its bounding box measures, the
   // same either way
   GorillaModel.ResetToBindPose();
 
@@ -5105,6 +5182,9 @@ begin
   Dialog.OnOverscanWarningChange := AnimationDialogWarningChange;
   Dialog.AtlasPageSize := FSettings.AtlasPageSize;
   Dialog.AtlasNonPowerOf2 := FSettings.AtlasNonPowerOf2;
+  // Padding: up to a quarter of the grab size
+  Dialog.MaxPadding := PaddingLimit(FSettings.GrabWidth, FSettings.GrabHeight);
+  Dialog.SpritePadding := FSettings.Padding;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog reports OK and frees itself
   Dialog.OnAccept := AnimationDialogAccept;
@@ -5116,6 +5196,7 @@ begin
       ApplyAnimationFps(Dialog.Fps);
       ApplyOverscan(Dialog.OverscanEnabled, Dialog.Overscan, Dialog.Filter);
       ApplyAtlasSettings(Dialog.AtlasPageSize, Dialog.AtlasNonPowerOf2);
+      ApplyPadding(Dialog.SpritePadding);
     end;
   finally
     Dialog.Free;
@@ -5146,6 +5227,7 @@ begin
   ApplyAnimationFps(Dialog.Fps);
   ApplyOverscan(Dialog.OverscanEnabled, Dialog.Overscan, Dialog.Filter);
   ApplyAtlasSettings(Dialog.AtlasPageSize, Dialog.AtlasNonPowerOf2);
+  ApplyPadding(Dialog.SpritePadding);
 end;
 {$ENDIF}
 
@@ -5312,23 +5394,22 @@ begin
   end;
 end;
 
-// Fills AnimationListBox with (None) and the animations used, in the
-// model's order, with their frame counts and no batch ticks. The selected
-// entry stays selected if it is still listed, without being played again.
-// If the animation playing is no longer listed, the model is shown at rest,
-// as choosing (None) would.
+// Fills AnimationListBox with the animations used, in the model's order,
+// or, for a static model, one with no animations, its one entry, named after
+// its file; with their frame counts and no batch ticks. The selected entry
+// stays selected if it is still listed, without being played again. If the
+// animation playing is no longer listed, nothing is selected and the model
+// is shown at rest.
 procedure TMainForm.RebuildAnimationList;
 var
   Previous, Name: String;
-  WasNone: Boolean;
   Current: TGorillaAnimation;
 begin
   // An open frame count editor goes with the entries it sits on, and so
   // does one closed but not yet freed
   FinishFrameEdit(False, True);
   FreeAndNil(FSpentEditor);
-  WasNone := AnimationListBox.ItemIndex = 0;
-  if AnimationListBox.ItemIndex > 0 then
+  if AnimationListBox.ItemIndex >= 0 then
     Previous := AnimationListBox.Items[AnimationListBox.ItemIndex]
   else
     Previous := String.Empty;
@@ -5338,10 +5419,14 @@ begin
     AnimationListBox.BeginUpdate;
     try
       AnimationListBox.Items.Clear;
-      AnimationListBox.Items.Add(NO_ANIMATION);
-      for Name in FAnimationNames do
-        if IsUsedAnimation(Name) then
-          AnimationListBox.Items.Add(Name);
+      if ModelIsAnimated then
+      begin
+        for Name in FAnimationNames do
+          if IsUsedAnimation(Name) then
+            AnimationListBox.Items.Add(Name);
+      end
+      else if GorillaModel <> nil then
+        AnimationListBox.Items.Add(StillEntryName);
     finally
       AnimationListBox.EndUpdate;
     end;
@@ -5357,9 +5442,7 @@ begin
       end;
     end;
     if Previous <> String.Empty then
-      AnimationListBox.ItemIndex := AnimationListBox.Items.IndexOf(Previous)
-    else if WasNone then
-      AnimationListBox.ItemIndex := 0;
+      AnimationListBox.ItemIndex := AnimationListBox.Items.IndexOf(Previous);
   finally
     FRebuildingList := False;
   end;
@@ -5374,12 +5457,12 @@ begin
     begin
       FRebuildingList := True;
       try
-        AnimationListBox.ItemIndex := 0;
+        AnimationListBox.ItemIndex := -1;
       finally
         FRebuildingList := False;
       end;
       FChangePlayed := False;
-      PlaySelectedAnimation;   // (None): stops it
+      PlaySelectedAnimation;   // nothing selected: stops it
     end;
   end;
 end;
@@ -5395,18 +5478,18 @@ begin
 end;
 
 // The frames saving entry AIndex makes at the Animation, Animation Settings
-// rate, worked out as a capture does: 1 for (None), a still of the bind
-// pose, otherwise the animation's length times the rate, rounded. 0 if the
-// animation cannot be found.
+// rate, worked out as a capture does: 1 for a static model's entry, a still
+// of the model as loaded, otherwise the animation's length times the rate,
+// rounded. 0 if the animation cannot be found.
 function TMainForm.AnimationFrameCount(const AIndex: Integer): Integer;
 var
   Anim: TGorillaAnimation;
   Source: TSprite3DAnimationFrames;
 begin
   Result := 0;
-  if AIndex = 0 then
+  if IsStillEntry(AIndex) then
     Exit(1);
-  if (GorillaModel = nil) or (GorillaModel.AnimationManager = nil) then
+  if not IsAnimationEntry(AIndex) or (GorillaModel.AnimationManager = nil) then
     Exit;
   Anim := GorillaModel.AnimationManager.GetAnimation(AnimationListBox.Items[AIndex]);
   if Anim = nil then
@@ -5457,7 +5540,7 @@ begin
       Lbl.Text := String.Empty;
     // A count typed in, in place of the entry's own, in italics
     Lbl.StyledSettings := Lbl.StyledSettings - [TStyledSetting.Style];
-    if (I > 0) and (FrameOverride(AnimationListBox.Items[I]) > 0) then
+    if IsAnimationEntry(I) and (FrameOverride(AnimationListBox.Items[I]) > 0) then
       Lbl.TextSettings.Font.Style := [TFontStyle.fsItalic]
     else
       Lbl.TextSettings.Font.Style := [];
@@ -5517,7 +5600,7 @@ begin
   Lbl := FrameCountLabel(Item);
   if FItemDownX < Lbl.Position.X - Lbl.Margins.Left then
     Exit;
-  for var I := 1 to AnimationListBox.Count - 1 do
+  for var I := 0 to AnimationListBox.Count - 1 do
     if AnimationListBox.ListItems[I] = Item then
     begin
       StartFrameEdit(I);
@@ -5527,13 +5610,13 @@ end;
 
 // An edit box over entry AEntry's frame count: Enter, or leaving it, keeps
 // what was typed, Escape does not; empty or 0 goes back to the count the
-// frame rate gives. (None), entry 0, is always one frame.
+// frame rate gives. A static model's entry is always one frame.
 procedure TMainForm.StartFrameEdit(const AEntry: Integer);
 var
   Item: TListBoxItem;
   Lbl: TLabel;
 begin
-  if Capturing or (AEntry < 1) or (AEntry >= AnimationListBox.Count) then
+  if Capturing or not IsAnimationEntry(AEntry) then
     Exit;
   FinishFrameEdit(False, False);
   Item := AnimationListBox.ListItems[AEntry];
@@ -5825,7 +5908,7 @@ end;
 // The pop-up menu's action: the selected entry, saved in SaveFolder
 procedure TMainForm.StartSingleCapture(const AKind: TSheetKind);
 var
-  Error, Folder: String;
+  Folder: String;
 begin
   if Capturing or FOffscreen.Busy then
     Exit;   // a capture or a grab is under way
@@ -5834,26 +5917,17 @@ begin
     ShowMessage('Open a model first.');
     Exit;
   end;
+  if AnimationListBox.ItemIndex < 0 then
+  begin
+    ShowMessage('Choose an entry in the Animations list first.');
+    Exit;
+  end;
   // Asked every time, opening where the last export went
   if not ChooseExportFolder(String.Empty, Folder) then
     Exit;   // cancelled: nothing is saved
-  if FSettings.ExportDirections then
-  begin
-    // One capture per direction: run as a batch of this one entry, with
-    // its progress dialog
-    StartBatch([Max(0, AnimationListBox.ItemIndex)], AKind, Folder);
-    Exit;
-  end;
-  FSettings.LastExportFolder := Folder;
-  if not StartCapture(AKind, Max(0, AnimationListBox.ItemIndex), -1, Folder,
-    procedure(AResult: String)
-    begin
-      if AResult <> String.Empty then
-        ShowMessage(AResult)
-      else if Assigned(FResults) then
-        FResults.FolderChanged(Folder);
-    end, Error) then
-    ShowMessage(Error);
+  // Run as a batch of this one entry, with its progress dialog, as every
+  // export is 2-pass, and in each direction if Directions is ticked
+  StartBatch([AnimationListBox.ItemIndex], AKind, Folder);
 end;
 
 // What to say in the Debug tab when frames are drawn right up to their edge,
@@ -5913,8 +5987,8 @@ begin
 end;
 
 // Grabs every frame of the list entry AIndex, then saves them as AKind in
-// AFolder. An animation is stepped through its own frames; (None), entry 0,
-// turns the model once instead. The camera is framed once for the whole
+// AFolder. An animation is stepped through its own frames; a static model's
+// entry is one still frame instead. The camera is framed once for the whole
 // run, so every frame is drawn at the same scale and the frames line up,
 // and the on-screen framing is put back when the capture ends.
 // AOnFinished is called once the capture has ended, with an empty string if
@@ -5935,13 +6009,15 @@ var
   Kind: TSheetKind;
   OnFinished: TProc<String>;
   Metadata, OriginKnown: Boolean;
-  Origin: TPoint;
+  Origin: TPointF;
   AnimationName: String;
   Entry, Direction: Integer;
-  HasDirection, LastDirection: Boolean;
+  HasDirection, LastDirection, AllDirections: Boolean;
+  SaveSeconds: Double;
   Bearings: TArray<Single>;
   Meta: TSprite3DSheetMeta;
-  Measuring: Boolean;
+  Measuring, CheckEdges: Boolean;
+  PivotX, PivotY: Single;
 begin
   Result := False;
   AError := String.Empty;
@@ -5978,11 +6054,11 @@ begin
   UpdateTransportControls;
 
 
-  if AIndex = 0 then
+  if IsStillEntry(AIndex) then
   begin
-    // No animation: one still frame of the model in its bind pose, named
-    // after the model. A turntable source of one frame shows the view as it
-    // is, without turning it.
+    // A static model: one still frame of the model as loaded, named after
+    // the model. A turntable source of one frame shows the view as it is,
+    // without turning it.
     Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
     Source := TSprite3DTurntableFrames.Create(GorillaCamera, 1, STILL_SECONDS);
   end
@@ -6006,11 +6082,15 @@ begin
   HasDirection := (ADirection >= 0) and (ADirection < Length(FBatchBearings));
   Direction := Max(0, ADirection);
   LastDirection := not HasDirection or (ADirection = High(FBatchBearings));
+  // Whether every direction goes in one file: always for a spritesheet, and
+  // for a static model's strip, GIF or MP4 too, its one frame per direction
+  AllDirections := HasDirection and ((AKind = skSheet) or
+    (not ModelIsAnimated and (AKind in [skStrip, skGif, skMp4])));
   if HasDirection then
   begin
     Bearings := Copy(FBatchBearings);
-    // GIFs and videos are one file per direction
-    if AKind in [skGif, skMp4] then
+    // GIFs and videos are otherwise one file per direction
+    if (AKind in [skGif, skMp4]) and not AllDirections then
       Stem := Stem + Format('_dir%.2d', [ADirection + 1]);
   end
   else
@@ -6018,22 +6098,26 @@ begin
   // Strips and spritesheets are named after the model and the animation:
   // <model>_<animation>.png for a spritesheet, holding every direction, and
   // <model>_<animation>_dirNN_strip<frames>.png for a strip, one per
-  // direction, numbered from 1 whether or not directions are used. The
-  // still of the bind pose, (None), is called still.
+  // direction, numbered from 1 whether or not directions are used. A static
+  // model has no animation: its entry is named after its file, and its
+  // strip, holding every direction, is <model>_static_strip<frames>.png.
   if AKind in [skStrip, skSheet] then
   begin
-    if AIndex = 0 then
-      Stem := 'still'
+    if (AKind = skStrip) and not ModelIsAnimated then
+      Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel)) +
+        '_static'
     else
-      Stem := SafeFileStem(AnimationListBox.Items[AIndex]);
-    Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel)) + '_' +
-      Stem;
-    if AKind = skStrip then
     begin
-      Stem := Stem + Format('_dir%.2d', [Direction + 1]);
-      // Its one direction alone
-      if HasDirection then
-        Bearings := [FBatchBearings[ADirection]];
+      Stem := SafeFileStem(AnimationListBox.Items[AIndex]);
+      Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel)) + '_' +
+        Stem;
+      if AKind = skStrip then
+      begin
+        Stem := Stem + Format('_dir%.2d', [Direction + 1]);
+        // Its one direction alone
+        if HasDirection then
+          Bearings := [FBatchBearings[ADirection]];
+      end;
     end;
   end;
 
@@ -6041,10 +6125,16 @@ begin
   CycleSeconds := Source.Duration;
   // The frames, and the strip or spritesheet made from them
   Bytes := Int64(Count) * FOffscreen.Width * FOffscreen.Height * 4 * 2;
-  // A spritesheet of directions keeps every direction's frames; a strip is
-  // one direction's
-  if HasDirection and (AKind = skSheet) then
+  // A spritesheet of directions keeps every direction's frames, as does a
+  // static model's strip, GIF or MP4; an animated model's strip is one
+  // direction's
+  if AllDirections then
     Bytes := Bytes * Length(FBatchBearings);
+  // A static model's GIF or MP4 of every direction shows each for the
+  // still's time
+  SaveSeconds := CycleSeconds;
+  if AllDirections and (AKind in [skGif, skMp4]) then
+    SaveSeconds := CycleSeconds * Length(FBatchBearings);
   if Bytes > MAX_CAPTURE_BYTES then
   begin
     Source.Free;
@@ -6084,17 +6174,26 @@ begin
   FCaptureOrthoHeight := GorillaCamera.OrthoHeight;
 
   // Where the centre of rotation falls in every frame: the framing holds for
-  // the whole capture and the model never moves, so once is enough. For a
-  // strip or spritesheet the view is slid by under half a pixel so that it
-  // falls on the centre of a pixel, and the metadata's origin is that
-  // pixel, whole numbers, whether or not the metadata is saved, so the image
-  // is the same either way.
+  // the whole capture and the model never moves, so once is enough. It is
+  // measured where it falls, to a fraction of a pixel; the view is not
+  // moved to put it on a pixel.
   Metadata := FSettings.ExportMetadata and (AKind in [skStrip, skSheet]);
-  Origin := TPoint.Zero;
-  // A measuring pass saves nothing, so has no origin to place
+  Origin := TPointF.Zero;
+  // A measuring pass saves nothing, so has no origin to give
   OriginKnown := not Measuring and (AKind in [skStrip, skSheet, skAtlas]) and
-    SnapCaptureOrigin(FOffscreen.Width, FOffscreen.Height, Origin);
-  // The entry's name, as listed: the animation's, or (None) for the still
+    MeasureCaptureOrigin(FOffscreen.Width, FOffscreen.Height, Origin);
+  // A measuring pass: where the centre of rotation falls, which the reach of
+  // its frames is measured from
+  if not Measuring or not GorillaCamera.ProjectToView(GorillaModel.RotationCenter.Point,
+    GorillaModel, FOffscreen.Width, FOffscreen.Height, PivotX, PivotY) then
+  begin
+    // Behind the camera: from the centre of the frame instead
+    PivotX := FOffscreen.Width / 2;
+    PivotY := FOffscreen.Height / 2;
+  end;
+  // Frames reaching the edge are reported, unless the export aims for that
+  CheckEdges := not EdgeTouchExpected;
+  // The entry's name, as listed: the animation's, or a static model's file's
   AnimationName := AnimationListBox.Items[AIndex];
   // Credits, dates and model for the metadata, as they are now
   Meta := ExportMeta(1, 1);
@@ -6128,7 +6227,7 @@ begin
       begin
         // The first pass: each frame's empty border is folded into the
         // batch's, and the frames are let go; nothing is built or saved
-        MeasureTwoPassFrames(AFrames);
+        MeasureTwoPassFrames(AFrames, PivotX, PivotY);
         if FExportDialog <> nil then
           if HasDirection then
             FExportDialog.AddLine(Format('Measured %s, direction %d (%d frames)',
@@ -6169,11 +6268,12 @@ begin
         Exit;
       end;
       Frames := AFrames;
-      if HasDirection and (Kind = skSheet) then
+      if AllDirections then
       begin
-        // One spritesheet for every direction of the animation: its frames
-        // are kept until the last direction is in, then saved together; a
-        // strip is saved for each direction as it comes
+        // One file for every direction: a spritesheet, or a static model's
+        // strip, GIF or MP4. The frames are kept until the last direction is
+        // in, then saved together; an animated model's strip, GIF or MP4 is
+        // saved for each direction as it comes
         FDirFrames := FDirFrames + AFrames;
         if not LastDirection then
         begin
@@ -6217,13 +6317,16 @@ begin
           Failure := String.Empty;
           HasPending := False;
           // Frames whose drawing reaches the edge, for the Debug tab
-          EdgeNote := EdgeTouchNote(Stem, Frames);
+          if CheckEdges then
+            EdgeNote := EdgeTouchNote(Stem, Frames)
+          else
+            EdgeNote := String.Empty;
           FrameCount := Length(Frames);
           try
             // A GIF or video is one direction; a strip or spritesheet holds
             // every direction captured
             if Kind in [skGif, skMp4] then
-              Saved := SaveSheet(Kind, Frames, Folder, Stem, CycleSeconds, Metadata, Origin,
+              Saved := SaveSheet(Kind, Frames, Folder, Stem, SaveSeconds, Metadata, Origin,
                 OriginKnown, AnimationName, nil, Meta, Borders, DeferMetadata, Pending,
                 HasPending)
             else
@@ -6288,7 +6391,7 @@ end;
 // under the animation list and above the batch controls, made here rather
 // than in the form designer: first frame, previous frame, play or pause,
 // next frame and last frame, each an icon with its name as a hint, and the
-// readout of the frame showing at the right. With (None) selected there is
+// readout of the frame showing at the right. With a static model there is
 // nothing for them to act on.
 procedure TMainForm.BuildTransportControls;
 var
@@ -6375,12 +6478,13 @@ begin
     FMX.Objects.TPath(Button.TagObject).Fill.Color := Button.ResultingTextSettings.FontColor;
 end;
 
-// The selected animation, or nil for (None), no selection or no model
+// The selected animation, or nil for a static model, no selection or no
+// model
 function TMainForm.SelectedAnimation: TGorillaAnimation;
 begin
   Result := nil;
   if (GorillaModel = nil) or not Assigned(GorillaModel.AnimationManager) or
-    (AnimationListBox.ItemIndex <= 0) then
+    not IsAnimationEntry(AnimationListBox.ItemIndex) then
     Exit;
   Result := GorillaModel.AnimationManager.GetAnimation(
     AnimationListBox.Items[AnimationListBox.ItemIndex]);
@@ -6428,7 +6532,7 @@ end;
 
 // The frame readout: the frame showing, counted from 1, of the frames an
 // export makes, held or playing; for an animation playing without a player
-// the frames alone; and "- / -" for (None), no model or a capture
+// the frames alone; and "- / -" for a static model, no model or a capture
 procedure TMainForm.UpdateFrameReadout;
 var
   Anim: TGorillaAnimation;
@@ -6649,7 +6753,7 @@ begin
   // As it was left last session; MP4 waits for StartVideo to offer it
   RestoreBatchKind;
 
-  // Second row, above Export: the metadata, directions and two-pass choices
+  // Second row, above Export: the metadata, directions and exact choices
   Row := TLayout.Create(Self);
   Row.Parent := FBatchLayout;
   Row.Align := TAlignLayout.Top;
@@ -6679,32 +6783,24 @@ begin
   FBatchDirections.IsChecked := FSettings.ExportDirections;
   FBatchDirections.OnChange := BatchDirectionsChange;
 
-  FBatchTwoPass := TCheckBox.Create(Self);
-  FBatchTwoPass.Parent := Row;
-  FBatchTwoPass.Align := TAlignLayout.Client;
-  FBatchTwoPass.Text := '2-pass';
-  FBatchTwoPass.Hint := 'Export in two passes: the first, without overscan, measures the ' +
-    'frames; the second exports them reframed to fill the frame';
-  FBatchTwoPass.ShowHint := True;
-  FBatchTwoPass.IsChecked := False;   // not kept between sessions
+  FBatchExact := TCheckBox.Create(Self);
+  FBatchExact.Parent := Row;
+  FBatchExact.Align := TAlignLayout.Client;
+  FBatchExact.Text := 'Exact';
+  FBatchExact.Hint := Format('Measure an animated model as finely as a static one: the ' +
+    'first pass draws at %dx overscan, so the padding comes out exactly as set, at the ' +
+    'cost of a slower first pass', [TWO_PASS_FINE_OVERSCAN]);
+  FBatchExact.ShowHint := True;
+  FBatchExact.IsChecked := False;   // not kept between sessions
+  FBatchExact.OnChange := BatchExactChange;
 
-  // Third row: Export, and Abort beside it
+  // Third row: Export; Abort is in the progress dialog
   Row := TLayout.Create(Self);
   Row.Parent := FBatchLayout;
   Row.Align := TAlignLayout.Top;
   Row.Margins.Top := 4;
   Row.Height := 26;
   Row.Position.Y := 200;   // below the second row
-
-  FAbortButton := TButton.Create(Self);
-  FAbortButton.Parent := Row;
-  FAbortButton.Align := TAlignLayout.Right;
-  FAbortButton.Margins.Left := 4;
-  FAbortButton.Width := 56;
-  FAbortButton.Text := 'Abort';
-  FAbortButton.Hint := 'Stop the export once the current animation is saved';
-  FAbortButton.ShowHint := True;
-  FAbortButton.OnClick := AbortButtonClick;
 
   FExportButton := TButton.Create(Self);
   FExportButton.Parent := Row;
@@ -6762,6 +6858,22 @@ begin
   UpdateBatchControls;
 end;
 
+// Kept in settings.json as padding; used by every export from now on
+procedure TMainForm.ApplyPadding(const APadding: Integer);
+begin
+  if FSettings.Padding = APadding then
+    Exit;
+  FSettings.Padding := APadding;
+  DebugMemo.Lines.Add(Format('Exports now aim at padding of %d pixels', [FSettings.Padding]));
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
 // Kept in settings.json; used by every texture atlas made from now on
 procedure TMainForm.ApplyAtlasSettings(const APageSize: Integer;
   const ANonPowerOf2: Boolean);
@@ -6796,6 +6908,127 @@ begin
   FSettings.ExportDirections := FBatchDirections.IsChecked;
 end;
 
+// Exact ticked by hand: the warning first, if it is still wanted, the tick
+// taken back until it is answered
+procedure TMainForm.BatchExactChange(Sender: TObject);
+begin
+  if FSyncingExact then
+    Exit;
+  if FBatchExact.IsChecked and FSettings.ShowExactWarning then
+  begin
+    SetExactCheck(False);
+    ConfirmExact;
+  end;
+end;
+
+// Ticks or clears Exact without the warning
+procedure TMainForm.SetExactCheck(const AChecked: Boolean);
+begin
+  FSyncingExact := True;
+  try
+    FBatchExact.IsChecked := AChecked;
+  finally
+    FSyncingExact := False;
+  end;
+end;
+
+// The Exact warning, a modal sub-dialog made here, as the overscan one in
+// Animation, Animation Settings is: OK, on the right, ticks Exact, Cancel,
+// on the left, leaves it clear; Do not show this again, between them, stops
+// it appearing again either way, kept in settings.json straight away.
+// ShowModal with a result procedure works on every platform: on the desktop
+// it blocks, on Android and iOS it returns at once and the procedure runs
+// when the dialog closes.
+procedure TMainForm.ConfirmExact;
+var
+  Warning: TForm;
+  Text: TLabel;
+  Buttons: TLayout;
+  OkButton, CancelButton: TButton;
+  NeverCheck: TCheckBox;
+  W, H: Integer;
+begin
+  W := FSettings.GrabWidth;
+  H := FSettings.GrabHeight;
+  // Owned, and so freed, by the main form, over which it is centred
+  Warning := TForm.CreateNew(Self);
+  Warning.Caption := 'Exact';
+  Warning.BorderStyle := TFmxFormBorderStyle.Single;
+  Warning.BorderIcons := [TBorderIcon.biSystemMenu];
+  Warning.Position := TFormPosition.OwnerFormCenter;
+  Warning.ClientWidth := 460;
+  Warning.ClientHeight := 250;
+
+  Buttons := TLayout.Create(Warning);
+  Buttons.Parent := Warning;
+  Buttons.Align := TAlignLayout.Bottom;
+  Buttons.Height := 44;
+  Buttons.Padding.Rect := TRectF.Create(16, 8, 16, 10);
+  OkButton := TButton.Create(Warning);
+  OkButton.Parent := Buttons;
+  OkButton.Align := TAlignLayout.Right;
+  OkButton.Width := 80;
+  OkButton.Text := 'OK';
+  OkButton.ModalResult := mrOk;
+  OkButton.Default := True;
+  CancelButton := TButton.Create(Warning);
+  CancelButton.Parent := Buttons;
+  CancelButton.Align := TAlignLayout.Left;
+  CancelButton.Width := 80;
+  CancelButton.Text := 'Cancel';
+  CancelButton.ModalResult := mrCancel;
+  CancelButton.Cancel := True;
+  // Between Cancel, on the left, and OK, on the right, as in the other
+  // dialogs
+  NeverCheck := TCheckBox.Create(Warning);
+  NeverCheck.Parent := Buttons;
+  NeverCheck.Align := TAlignLayout.Center;
+  NeverCheck.Width := 170;
+  NeverCheck.Height := 19;
+  NeverCheck.Text := 'Do not show this again';
+
+  Text := TLabel.Create(Warning);
+  Text.Parent := Warning;
+  Text.Align := TAlignLayout.Client;
+  Text.Margins.Rect := TRectF.Create(16, 16, 16, 4);
+  Text.TextSettings.WordWrap := True;
+  Text.TextSettings.VertAlign := TTextAlign.Leading;
+  Text.Text := Format('Exact measures an animated model the way a static one always is. ' +
+    'The first, measuring pass draws every frame of every ticked animation, in every ' +
+    'direction, at %dx overscan, %d x %d, and scales it back down to %d x %d with the Box ' +
+    'filter, so the sprite''s edges are found to about an eighth of a pixel and the ' +
+    'padding comes out exactly as set.', [TWO_PASS_FINE_OVERSCAN,
+    W * TWO_PASS_FINE_OVERSCAN, H * TWO_PASS_FINE_OVERSCAN, W, H]) + sLineBreak +
+    sLineBreak + Format('That first pass draws %d times as many pixels as it otherwise ' +
+    'would, so it takes far longer; the export itself is unchanged. It is recommended ' +
+    'only when the padding must be exact, such as for the final production-ready frames.',
+    [TWO_PASS_FINE_OVERSCAN * TWO_PASS_FINE_OVERSCAN]);
+
+  Warning.ShowModal(
+    procedure(AResult: TModalResult)
+    begin
+      if NeverCheck.IsChecked and FSettings.ShowExactWarning then
+      begin
+        FSettings.ShowExactWarning := False;
+        try
+          FSettings.Save;
+        except
+          on E: Exception do
+            DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+              E.Message);
+        end;
+      end;
+      if AResult = mrOk then
+        SetExactCheck(True);
+      // Let go once it has closed, rather than kept until the program ends
+      TThread.ForceQueue(nil,
+        procedure
+        begin
+          Warning.Free;
+        end);
+    end);
+end;
+
 // Ticks or clears the given entries of the Animations list, leaving the
 // selected entry, and so the animation playing, as they were: FMX can move
 // the selection to an entry whose tick changes, so it is put back, and the
@@ -6817,9 +7050,7 @@ begin
   end;
 end;
 
-// All ticks every animation, or clears every entry. (None), entry 0, is not
-// an animation, so ticking All leaves it as it is; it is only exported when
-// ticked by hand. Clearing All clears it too.
+// All ticks or clears every entry
 procedure TMainForm.BatchAllChange(Sender: TObject);
 var
   I: Integer;
@@ -6829,8 +7060,7 @@ begin
     Exit;
   Entries := nil;
   for I := 0 to AnimationListBox.Count - 1 do
-    if (I > 0) or not FBatchAll.IsChecked then
-      Entries := Entries + [I];
+    Entries := Entries + [I];
   FSyncingChecks := True;
   try
     // The selected entry, and the animation playing, stay as they are
@@ -6841,8 +7071,7 @@ begin
   UpdateView;   // ticked or not decides the volume shown
 end;
 
-// A tick changed by hand: All shows whether every animation is ticked,
-// whatever (None), entry 0, is set to
+// A tick changed by hand: All shows whether every entry is ticked
 procedure TMainForm.AnimationListBoxChangeCheck(Sender: TObject);
 var
   I: Integer;
@@ -6850,8 +7079,8 @@ var
 begin
   if FSyncingChecks or (FBatchAll = nil) then
     Exit;
-  Every := AnimationListBox.Count > 1;
-  for I := 1 to AnimationListBox.Count - 1 do
+  Every := AnimationListBox.Count > 0;
+  for I := 0 to AnimationListBox.Count - 1 do
     if not AnimationListBox.ListItems[I].IsChecked then
     begin
       Every := False;
@@ -6892,9 +7121,8 @@ begin
   FBatchMetadata.Enabled := not Capturing and
     (FBatchKindBox.ItemIndex in [Ord(skStrip), Ord(skSheet)]);
   FBatchDirections.Enabled := not Capturing;
-  FBatchTwoPass.Enabled := not Capturing;
+  FBatchExact.Enabled := not Capturing;
   UpdateListFileItems;
-  FAbortButton.Enabled := FBatchActive and not FBatchAborted and not FAtlasSaving;
   // The lock cannot change while a capture has its own framing on the camera
   UpdateCameraLockControls;
   if FAtlasSaving then
@@ -6967,19 +7195,19 @@ begin
     FSettings.AtlasFolder := Folder;
   end;
 
-  StartBatch(Items, FBatchKind, Folder, FBatchTwoPass.IsChecked);
+  StartBatch(Items, FBatchKind, Folder);
 end;
 
 // Runs a batch: every entry of AItems, in order, saved as AKind in
 // AFolder, behind the progress dialog. With Directions ticked, each entry is
 // captured once per direction of Animation, Directions, in their order, before
-// the next entry. With ATwoPass, the whole batch is first run through once
-// with overscan off, saving nothing, only to measure how much empty border
+// the next entry. Every batch runs in two passes: the whole batch is first
+// run through once, saving nothing, only to measure how much empty border
 // its frames leave; the second pass is then the export itself, overscan as
 // chosen, with every capture's framing slid and scaled so the sprite fills
-// the frame to within TWO_PASS_MARGIN pixels.
+// the frame to within the padding chosen in Animation, Animation Settings.
 procedure TMainForm.StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
-  const AFolder: String; const ATwoPass: Boolean);
+  const AFolder: String);
 var
   Items: TArray<Integer>;
   Folder: String;
@@ -7024,9 +7252,13 @@ begin
   FBatchSaved := 0;
   FBatchErrors := nil;
   FBatchAborted := False;
+  FSuggestExact := False;
   // 2-pass: the first pass measures, with overscan off whatever is chosen,
   // as its frames are only looked at for their empty borders
-  FTwoPassRun := ATwoPass;
+  FTwoPassRun := True;
+  // A static model, one with no animations, is measured finely; an animated
+  // one at 1x, unless Exact is ticked
+  FTwoPassFine := not ModelIsAnimated or (Assigned(FBatchExact) and FBatchExact.IsChecked);
   FTwoPassMeasured := False;
   FTwoPassAdjusted := False;
   FAtlasQueue := nil;
@@ -7034,7 +7266,6 @@ begin
   FAtlasFailed := nil;
   FAtlasPending := nil;
   FPendingMetadata := nil;
-  FBatchOriginSet := False;
   if FTwoPassRun then
     FBatchPass := 1
   else
@@ -7064,7 +7295,11 @@ begin
   if FTwoPassRun then
   begin
     FExportDialog.SetRemainingPass(1);
-    FExportDialog.AddLine('Pass 1 of 2: measuring, overscan off, nothing saved');
+    if FTwoPassFine then
+      FExportDialog.AddLine(Format('Pass 1 of 2: measuring at %dx overscan with the Box ' +
+        'filter, nothing saved', [TWO_PASS_FINE_OVERSCAN]))
+    else
+      FExportDialog.AddLine('Pass 1 of 2: measuring, overscan off, nothing saved');
   end;
   ShowExportStep(0, 'Starting...');
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
@@ -7088,6 +7323,9 @@ begin
   // A benchmark's next run, once this one's dialog is gone
   if FBenchmarkActive then
     TThread.ForceQueue(nil, BenchmarkStep);
+  // Exact suggested, if the padding was missed, once the dialog is gone
+  if FSuggestExact then
+    TThread.ForceQueue(nil, SuggestExact);
   {$ENDIF}
 end;
 
@@ -7264,10 +7502,8 @@ var
   Started: Boolean;
 begin
   Started := False;
-  // Abort takes effect at the start of an entry, so every direction of the
-  // one under way is still captured and saved
-  while not Started and (FBatchPos <= High(FBatchItems)) and not (FBatchAborted and
-    ((FBatchPos = 0) or (FBatchItems[FBatchPos] <> FBatchItems[FBatchPos - 1]))) do
+  // Abort stops it at once: nothing more is started
+  while not Started and (FBatchPos <= High(FBatchItems)) and not FBatchAborted do
   begin
     if (FBatchPos = 0) or (FBatchItems[FBatchPos] <> FBatchItems[FBatchPos - 1]) then
     begin
@@ -7320,6 +7556,13 @@ procedure TMainForm.FinishBatch;
 begin
   // Overscan as chosen again, if a measuring pass turned it off
   SetMeasuringOverscan(False);
+  // A first frame to keep, asked for but never drawn overscanned: said, at
+  // the end of the export it was asked for in
+  if (FOffscreen.KeepOverscanFile <> String.Empty) and (FBatchPass = 2) and
+    not FBatchAborted then
+    DebugMemo.Lines.Add('Can''t save ' + FOffscreen.KeepOverscanFile + ': no frame of ' +
+      'this export was drawn larger than the grab');
+  FOffscreen.KeepOverscanFile := String.Empty;
   if FQuitConfirmed then
   begin
     // Quitting: nothing more is saved, and nothing is reported
@@ -7363,8 +7606,6 @@ begin
   ComputeTwoPassAdjust;
   FBatchPass := 2;
   FBatchPos := 0;
-  // The origin is the second pass's own
-  FBatchOriginSet := False;
   FDirFrames := nil;
   FDirFailed := False;
   FAtlasParts := nil;
@@ -7380,8 +7621,22 @@ begin
   if FExportDialog <> nil then
   begin
     FExportDialog.SetRemainingPass(2);
-    FExportDialog.AddLine('Pass 2 of 2: exporting');
+    if ExportOverscan > 1 then
+      FExportDialog.AddLine(Format('Pass 2 of 2: exporting at %dx overscan with %s',
+        [ExportOverscan, ResampleFilterName(FSettings.ResampleFilter)]))
+    else
+      FExportDialog.AddLine('Pass 2 of 2: exporting, overscan off');
   end;
+  // File, Debug, Save Oversampled Frame: the export's first frame, as drawn
+  // before it is scaled down, in its folder; warm-up grabs, drawn without
+  // overscan, leave it for the first frame kept
+  if FSettings.DebugActive and FSettings.DebugSaveOversampled then
+    if ExportOverscan > 1 then
+      FOffscreen.KeepOverscanFile := TPath.Combine(OSFriendlyPath(FBatchFolder),
+        'Oversampled.png')
+    else
+      DebugMemo.Lines.Add('Save Oversampled Frame: overscan is off for this export, so ' +
+        'Oversampled.png is not saved');
   ShowExportStep(0, 'Starting pass 2...');
   TThread.ForceQueue(nil, ContinueBatch);
 end;
@@ -7459,7 +7714,7 @@ end;
 procedure TMainForm.SaveAtlasPages(const AFinal: Boolean; const AThen: TProc);
 var
   PerPage, PageSize, First: Integer;
-  NonPowerOf2, Borders: Boolean;
+  NonPowerOf2, Borders, CheckEdges: Boolean;
   Pages: TArray<TArray<TAtlasCell>>;
   Parts: TArray<TAtlasPart>;
   Folder, Stem: String;
@@ -7471,6 +7726,8 @@ begin
   PageSize := FSettings.AtlasPageSize;
   NonPowerOf2 := FSettings.AtlasNonPowerOf2;
   Borders := FrameBordersOn;
+  // Frames reaching the edge are reported, unless the export aims for that
+  CheckEdges := not EdgeTouchExpected;
   if Length(FAtlasQueue) > 0 then
   begin
     // A full page holds as many frames as fit each way; every page but the
@@ -7547,7 +7804,9 @@ begin
           var PageFrames: TArray<TSprite3DImage> := nil;
           for var Cell in Pages[P] do
             PageFrames := PageFrames + [Cell.Image];
-          var EdgeNote := EdgeTouchNote(ExtractFileName(FileName), PageFrames);
+          var EdgeNote := String.Empty;
+          if CheckEdges then
+            EdgeNote := EdgeTouchNote(ExtractFileName(FileName), PageFrames);
           if EdgeNote <> String.Empty then
             EdgeNotes := EdgeNotes + [EdgeNote];
           Kept := Kept + [Metadata];
@@ -7697,16 +7956,17 @@ begin
   Info.Meta.Page := APage;
   Info.Meta.PageCount := 1;
   Info.Meta.TotalFrames := 0;
-  // Every animation of a batch is framed alike, and snapped to the same
-  // pixel, so they share one origin; the first's is given, and a difference
-  // is reported, except for a 2-pass export, whose second pass is reframed
-  // from the first and gives its own origin
+  // Every animation of a batch is framed alike, so they share one origin,
+  // to within a hundredth of a pixel; the first's is given, and a
+  // difference is reported, except for a 2-pass export, whose second pass is
+  // reframed from the first and gives its own origin
   Info.Origin := AParts[ACells[0].Part].Origin;
   Info.OriginKnown := AParts[ACells[0].Part].OriginKnown;
   if not AMeta.TwoPass then
     for var Cell in ACells do
       if (AParts[Cell.Part].OriginKnown <> Info.OriginKnown) or
-        (AParts[Cell.Part].Origin <> Info.Origin) then
+        (Abs(AParts[Cell.Part].Origin.X - Info.Origin.X) > 0.01) or
+        (Abs(AParts[Cell.Part].Origin.Y - Info.Origin.Y) > 0.01) then
       begin
         ANotes := ANotes + [Format('%s: the animations'' origins differ; the ' +
           'first''s is given', [ExtractFileName(AFileName)])];
@@ -7832,25 +8092,50 @@ begin
   // The dialog does not block here: the benchmark's next run straight on
   if FBenchmarkActive then
     TThread.ForceQueue(nil, BenchmarkStep);
+  // ... and Exact suggested, if the padding was missed
+  if FSuggestExact then
+    TThread.ForceQueue(nil, SuggestExact);
   {$ENDIF}
 end;
 
-// Stops the batch after the entry being captured; that one still finishes
-// and is saved, as a half-made capture has nothing worth keeping
+// Stops the batch at once, with nothing more done: the capture under way is
+// dropped, no texture atlas page or metadata still to come is saved, and no
+// Exact is suggested. Files already being written are finished. The
+// progress dialog closes by itself once the batch has ended.
 procedure TMainForm.AbortButtonClick(Sender: TObject);
 begin
   if not FBatchActive or FBatchAborted then
     Exit;
   FBatchAborted := True;
-  DebugMemo.Lines.Add('Export aborted; stopping after the current animation');
+  FSuggestExact := False;
+  // Nothing more to save
+  FAtlasParts := nil;
+  FAtlasQueue := nil;
+  FAtlasPending := nil;
+  FPendingMetadata := nil;
+  FDirFrames := nil;
+  DebugMemo.Lines.Add('Export aborted');
+  if FExportDialog <> nil then
+    FExportDialog.NoteAborted;
   UpdateBatchControls;
+  if Assigned(FCapture) then
+  begin
+    // Its frames are let go and its report never comes, so the view is put
+    // back and the batch ended here, from a fresh main-loop turn
+    FCapture.Cancel;
+    FCapture := nil;
+    EndCapture;
+    TThread.ForceQueue(nil, ContinueBatch);
+  end;
+  // Otherwise between entries, or saving one: the batch ends at its next
+  // step, as RunNextBatchItem starts nothing more
 end;
 
 // Frames the camera once for every frame of ASource, for a target of
 // AWidth x AHeight, with the pan on top as for every fit. A single
 // animation saved from the list's pop-up menu, or the Animation menu on
 // Android and iOS, is framed to its own swept volume, so it fills the
-// target as far as its own poses allow. A batch, and the (None) still, are
+// target as far as its own poses allow. A batch, and a static model's still, are
 // framed to the combined swept volume, which holds every pose of every
 // animation used, so every animation of a batch is framed alike. Either way
 // the orbit centre is on the turning axis, so a turn of the camera's
@@ -7868,7 +8153,13 @@ begin
   end
   else
     Volume := SweepFitVolume;
-  Result := FitCameraToSweep(GorillaCamera, GorillaModel, Volume, AWidth, AHeight);
+  // A fine 2-pass export leaves room in both passes, so its measuring pass
+  // never draws up to the edge and is never cut off
+  if FBatchActive and FTwoPassFine then
+    Result := FitCameraToSweep(GorillaCamera, GorillaModel, Volume, AWidth, AHeight,
+      TWO_PASS_FINE_FIT_MARGIN)
+  else
+    Result := FitCameraToSweep(GorillaCamera, GorillaModel, Volume, AWidth, AHeight);
   if Result and FPanEnabled then
     GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
       ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
@@ -7892,11 +8183,6 @@ begin
     end;
     FDirTurned := False;
   end;
-  // The slide that put the centre of rotation on a pixel, even on a locked
-  // camera; a framing the capture set is put back over it anyway
-  if FOriginSnapped then
-    GorillaCamera.OrbitCenter.Point := FOriginRestore;
-  FOriginSnapped := False;
   // Only a framing the capture set is put back
   if FCaptureFramed then
     GorillaCamera.RestoreFraming(FCaptureRestore);
@@ -7911,109 +8197,93 @@ begin
   Caption := ProjectionCaption;
 end;
 
-// Slides the view, by under half a pixel each way, so the model's centre of
-// rotation falls exactly on the centre of a pixel of an AWidth by AHeight
-// grab, and gives that pixel, counted from 0 at the top left, as AOrigin:
-// whole numbers. ShiftView is exact in orthographic projection and very
-// nearly so in perspective, so the point is measured again after each
-// slide, a few times at most. Which way a slide moves the picture is
-// checked as it goes rather than assumed. False, with AOrigin (0, 0) and the
-// view as it was, if the point is behind the camera. EndCapture undoes the
-// slide.
-function TMainForm.SnapCaptureOrigin(const AWidth, AHeight: Integer;
-  out AOrigin: TPoint): Boolean;
-const
-  TOLERANCE = 0.01;   // of a pixel
-  TRIES = 4;
+// Where the model's centre of rotation falls in an AWidth by AHeight grab,
+// to a fraction of a pixel, as AOrigin: in the frame's pixels, counted from
+// 0, so a whole number is the centre of that pixel and 127.5 the line
+// between pixels 127 and 128. False, with AOrigin (0, 0), if the point is
+// behind the camera.
+function TMainForm.MeasureCaptureOrigin(const AWidth, AHeight: Integer;
+  out AOrigin: TPointF): Boolean;
 var
-  X, Y, DX, DY, NX, NY: Single;
-  SignX, SignY: Single;
-  I, TX, TY: Integer;
-
-  function Measure(out AX, AY: Single): Boolean;
-  begin
-    Result := GorillaCamera.ProjectToView(GorillaModel.RotationCenter.Point, GorillaModel,
-      AWidth, AHeight, AX, AY);
-  end;
-
+  X, Y: Single;
 begin
-  AOrigin := TPoint.Zero;
-  Result := (GorillaModel <> nil) and Measure(X, Y);
-  if not Result then
-    Exit;
-  FOriginRestore := GorillaCamera.OrbitCenter.Point;
-  FOriginSnapped := True;
-  // ShiftView moves the picture the other way to the view: right is -X,
-  // and up moves the picture down, +Y
-  SignX := -1;
-  SignY := 1;
-  // The pixel the point is in; but within a batch, every capture is framed
-  // alike, so the point falls within a pixel of the first capture's, and
-  // it goes on that same pixel. Otherwise a point that falls on the line
-  // between two pixels, as recentring the sprite can leave it, would go
-  // into one or the other by rounding alone.
-  TX := Floor(X);
-  TY := Floor(Y);
-  if FBatchActive and FBatchOriginSet and (Abs(FBatchOrigin.X + 0.5 - X) <= 1) and
-    (Abs(FBatchOrigin.Y + 0.5 - Y) <= 1) then
+  AOrigin := TPointF.Zero;
+  Result := (GorillaModel <> nil) and GorillaCamera.ProjectToView(
+    GorillaModel.RotationCenter.Point, GorillaModel, AWidth, AHeight, X, Y);
+  if Result then
+    AOrigin := TPointF.Create(X - 0.5, Y - 0.5);
+end;
+
+// A 2-pass export's first pass draws without overscan, whatever is chosen,
+// as it only measures, or, for a fine 2-pass export, at
+// TWO_PASS_FINE_OVERSCAN with the Box filter; AMeasuring False puts the
+// export's overscan and the chosen filter back
+procedure TMainForm.SetMeasuringOverscan(const AMeasuring: Boolean);
+begin
+  if AMeasuring and FTwoPassFine then
   begin
-    TX := FBatchOrigin.X;
-    TY := FBatchOrigin.Y;
-  end;
-  for I := 1 to TRIES do
+    FOffscreen.Overscan := TWO_PASS_FINE_OVERSCAN;
+    FOffscreen.Resample := rfBox;
+  end
+  else if AMeasuring then
+    FOffscreen.Overscan := 1
+  else
   begin
-    // To the centre of the pixel chosen
-    DX := TX + 0.5 - X;
-    DY := TY + 0.5 - Y;
-    if (Abs(DX) <= TOLERANCE) and (Abs(DY) <= TOLERANCE) then
-      Break;
-    GorillaCamera.ShiftView(SignX * DX, SignY * DY, AWidth, AHeight);
-    if not Measure(NX, NY) then
-      Break;
-    // A slide that made it worse went the wrong way: undo it twice over
-    if (Abs(DX) > TOLERANCE) and (Abs(TX + 0.5 - NX) > Abs(DX)) then
-    begin
-      GorillaCamera.ShiftView(-2 * SignX * DX, 0, AWidth, AHeight);
-      SignX := -SignX;
-    end;
-    if (Abs(DY) > TOLERANCE) and (Abs(TY + 0.5 - NY) > Abs(DY)) then
-    begin
-      GorillaCamera.ShiftView(0, -2 * SignY * DY, AWidth, AHeight);
-      SignY := -SignY;
-    end;
-    if not Measure(X, Y) then
-      Break;
-  end;
-  AOrigin := TPoint.Create(TX, TY);
-  // The batch's origin, for the captures after this one
-  if FBatchActive and not FBatchOriginSet then
-  begin
-    FBatchOrigin := AOrigin;
-    FBatchOriginSet := True;
+    FOffscreen.Overscan := ExportOverscan;
+    FOffscreen.Resample := FSettings.ResampleFilter;
   end;
 end;
 
-const
-  // How many empty pixels a 2-pass export aims to leave round the sprite on
-  // the side with least room: one, so nothing drawn ever touches the edge
-  TWO_PASS_MARGIN = 1;
-  // Where that side's edge is aimed, in pixels in from the frame's edge:
-  // halfway across the pixel after the empty ones
-  TWO_PASS_EDGE = TWO_PASS_MARGIN + 0.5;
-
-// A 2-pass export's first pass draws without overscan, whatever is chosen,
-// as it only measures; AMeasuring False puts the chosen overscan back
-procedure TMainForm.SetMeasuringOverscan(const AMeasuring: Boolean);
+// Whether the model shown has any animations at all, whether or not
+// Animation, Animations Used lists them. A model with none is static.
+function TMainForm.ModelIsAnimated: Boolean;
 begin
-  if AMeasuring then
-    FOffscreen.Overscan := 1
-  // A benchmark's run uses its own overscan, whatever is chosen
-  else if FBenchmarkActive then
-    FOffscreen.Overscan := FBenchmarkOverscan
+  Result := (GorillaModel <> nil) and (Length(FAnimationNames) > 0);
+end;
+
+// Whether entry AIndex of the Animations list is an animation: every entry
+// is, for an animated model
+function TMainForm.IsAnimationEntry(const AIndex: Integer): Boolean;
+begin
+  Result := ModelIsAnimated and (AIndex >= 0) and (AIndex < AnimationListBox.Count);
+end;
+
+// Whether entry AIndex of the Animations list is a static model's one
+// entry, named after its file: a still of the model as loaded
+function TMainForm.IsStillEntry(const AIndex: Integer): Boolean;
+begin
+  Result := (GorillaModel <> nil) and not ModelIsAnimated and (AIndex >= 0) and
+    (AIndex < AnimationListBox.Count);
+end;
+
+// What a static model's one entry is called: its file's name, without the
+// extension
+function TMainForm.StillEntryName: String;
+begin
+  Result := TPath.GetFileNameWithoutExtension(FModelFile);
+  if Result = String.Empty then
+    Result := 'Model';
+end;
+
+// Whether AName, from saved animation settings, is a list entry that is not
+// one of the model's animations: a static model's entry, or the (None)
+// entry earlier versions listed first
+function TMainForm.IsListOnlyName(const AName: String): Boolean;
+begin
+  Result := (AName = OLD_NO_ANIMATION) or
+    ((GorillaModel <> nil) and not ModelIsAnimated and (AName = StillEntryName));
+end;
+
+// The overscan an export draws at: a benchmark run's own, whatever is
+// chosen, otherwise the one chosen, 1 while overscan is off
+function TMainForm.ExportOverscan: Integer;
+begin
+  if FBenchmarkActive then
+    Result := FBenchmarkOverscan
   else if not FOverscanOn then
-    FOffscreen.Overscan := 1
+    Result := 1
   else
-    FOffscreen.Overscan := FSettings.Overscan;
+    Result := FSettings.Overscan;
 end;
 
 // The first pass's frames: how far the drawn part reaches each way, over
@@ -8021,8 +8291,11 @@ end;
 // side starts from the outermost pixel drawn on; where that line's pixels
 // are at most partly covered, the edge is taken to be that far into the
 // pixel, so the edge is known to a fraction of a pixel when the drawing is
-// smoothed. A frame with nothing drawn on it is left out.
-procedure TMainForm.MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>);
+// smoothed. A frame with nothing drawn on it is left out. The reach is kept
+// as it is, and from APivotX, APivotY, where the capture's centre of rotation
+// falls, unsnapped, as the second pass places the sprite by that point.
+procedure TMainForm.MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>;
+  const APivotX, APivotY: Single);
 
   // How fully the most covered pixel of a row or column is drawn, 0 to 1
   function LineCover(const AFrame: TSprite3DImage; const AStart, AStep,
@@ -8038,7 +8311,7 @@ procedure TMainForm.MeasureTwoPassFrames(const AFrames: TArray<TSprite3DImage>);
 
 var
   Empty: TSprite3DFrameEmpty;
-  Reach: TRectF;
+  Reach, FromPivot: TRectF;
   W, H, X0, X1, Y0, Y1: Integer;
 begin
   for var Frame in AFrames do
@@ -8059,97 +8332,134 @@ begin
     Reach.Right := X1 + LineCover(Frame, X1, W, H);
     Reach.Top := Y0 + 1 - LineCover(Frame, Y0 * W, 1, W);
     Reach.Bottom := Y1 + LineCover(Frame, Y1 * W, 1, W);
+    FromPivot := Reach;
+    FromPivot.Offset(-APivotX, -APivotY);
     if not FTwoPassMeasured then
-      FTwoPassBounds := Reach
+    begin
+      FTwoPassBounds := Reach;
+      FTwoPassReach := FromPivot;
+    end
     else
     begin
       FTwoPassBounds.Left := Min(FTwoPassBounds.Left, Reach.Left);
       FTwoPassBounds.Top := Min(FTwoPassBounds.Top, Reach.Top);
       FTwoPassBounds.Right := Max(FTwoPassBounds.Right, Reach.Right);
       FTwoPassBounds.Bottom := Max(FTwoPassBounds.Bottom, Reach.Bottom);
+      FTwoPassReach.Left := Min(FTwoPassReach.Left, FromPivot.Left);
+      FTwoPassReach.Top := Min(FTwoPassReach.Top, FromPivot.Top);
+      FTwoPassReach.Right := Max(FTwoPassReach.Right, FromPivot.Right);
+      FTwoPassReach.Bottom := Max(FTwoPassReach.Bottom, FromPivot.Bottom);
     end;
     FTwoPassMeasured := True;
   end;
 end;
 
-// The second pass's framing, from where the first pass's drawing reached.
-// The picture is slid so the drawn part's centre falls on the frame's
-// centre, then drawn larger or smaller about that centre until, on the side
-// with least room, its edge lies TWO_PASS_EDGE pixels in from the frame's
-// edge: halfway across the second pixel, so that pixel is drawn on and the
-// outermost one is left empty, an empty border of TWO_PASS_MARGIN, with
-// half a pixel to spare either way. The other two sides keep the drawn
-// part's shape, so are left with more. With nothing measured, or a locked
-// camera, which is captured as it stands, the second pass is an ordinary
-// export.
+// The second pass's framing, from where the first pass's drawing reached,
+// measured from the centre of rotation. The picture is drawn larger or
+// smaller about that point, and placed so the drawn part is centred, until
+// on the axis with least room both edges lie the padding in from the
+// frame's edges, and then halfway across the next pixel with overscan, or a
+// quarter of a pixel, past that pixel's centre, without, as frames without
+// overscan have hard edges. See TWO_PASS_EDGE_SMOOTH. The other axis keeps the
+// drawn part's shape, so is left with more. The origin is wherever the
+// centre of rotation then falls, to a fraction of a pixel. With nothing
+// measured, or a locked camera, which is captured as it stands, the second
+// pass is an ordinary export.
 procedure TMainForm.ComputeTwoPassAdjust;
 const
   // Scaling beyond this either way is taken to be a bad measurement
   SCALE_LIMIT = 100;
 var
   W, H: Integer;
-  DrawnW, DrawnH, RoomW, RoomH: Single;
-  Grow: Double;
+  Edge: Single;
+  Grow, GrowX, GrowY: Double;
   Note: String;
 begin
   FTwoPassAdjusted := False;
   W := FOffscreen.Width;
   H := FOffscreen.Height;
+  // The padding chosen, within what the grab size allows; the second
+  // pass's overscan is already set
+  FTwoPassPadding := EnsureRange(FSettings.Padding, 0, PaddingLimit(W, H));
+  if FOffscreen.Overscan <= 1 then
+    Edge := FTwoPassPadding + TWO_PASS_EDGE_HARD
+  else
+    Edge := FTwoPassPadding + TWO_PASS_EDGE_SMOOTH;
   if CameraLocked then
     Note := '2-pass: the camera is locked, so it is used as it stands'
   else if not FTwoPassMeasured then
     Note := '2-pass: nothing was drawn to measure, so the framing is left as it is'
   else
   begin
-    DrawnW := FTwoPassBounds.Right - FTwoPassBounds.Left;
-    DrawnH := FTwoPassBounds.Bottom - FTwoPassBounds.Top;
-    RoomW := W - 2 * TWO_PASS_EDGE;
-    RoomH := H - 2 * TWO_PASS_EDGE;
-    if (DrawnW <= 0) or (DrawnH <= 0) or (RoomW < 1) or (RoomH < 1) then
+    GrowX := 0;
+    GrowY := 0;
+    if FTwoPassReach.Width > 0 then
+      GrowX := (W - 2 * Edge) / FTwoPassReach.Width;
+    if FTwoPassReach.Height > 0 then
+      GrowY := (H - 2 * Edge) / FTwoPassReach.Height;
+    Grow := Min(GrowX, GrowY);
+    if (FTwoPassReach.Width <= 0) or (FTwoPassReach.Height <= 0) or (Grow <= 0) then
       Note := '2-pass: the frame is too small to reframe, so the framing is left as it is'
+    else if (Grow > SCALE_LIMIT) or (Grow < 1 / SCALE_LIMIT) then
+      Note := Format('2-pass: the sprite would be drawn %.4g times as large, which is ' +
+        'too far off to trust, so the framing is left as it is', [Grow])
     else
     begin
-      Grow := Min(RoomW / DrawnW, RoomH / DrawnH);
-      if (Grow > SCALE_LIMIT) or (Grow < 1 / SCALE_LIMIT) then
-        Note := Format('2-pass: the sprite would be drawn %.4g times as large, which is ' +
-          'too far off to trust, so the framing is left as it is', [Grow])
-      else
-      begin
-        // The drawn part's centre to the frame's
-        FTwoPassMoveX := W / 2 - (FTwoPassBounds.Left + FTwoPassBounds.Right) / 2;
-        FTwoPassMoveY := H / 2 - (FTwoPassBounds.Top + FTwoPassBounds.Bottom) / 2;
-        // OrthoHeight, or Distance, shrinks as the picture grows
-        FTwoPassScale := 1 / Grow;
-        FTwoPassAdjusted := True;
-        // The slide is not reported: the sprite is always recentred, so the
-        // origin always moves, and the metadata gives where it ends up
-        Note := Format('2-pass: the sprite will be drawn %.4f times as large', [Grow]);
-        // Drawing that reached the edge may have gone past it, so it is
-        // larger than measured and will not shrink quite as far as aimed
-        if (FTwoPassBounds.Left <= 0) or (FTwoPassBounds.Top <= 0) or
-          (FTwoPassBounds.Right >= W) or (FTwoPassBounds.Bottom >= H) then
-          Note := Note + '. The sprite touched the edge of the frame, so it may have been ' +
-            'cut off and its empty border may not come down to ' + IntToStr(TWO_PASS_MARGIN);
-        if not GorillaCamera.IsOrthographic then
-          Note := Note + '. In perspective the result is close rather than exact';
-      end;
+      // Where the centre of rotation goes so the drawn part is centred
+      FTwoPassTarget.X := W / 2 - (FTwoPassReach.Left + FTwoPassReach.Right) / 2 * Grow;
+      FTwoPassTarget.Y := H / 2 - (FTwoPassReach.Top + FTwoPassReach.Bottom) / 2 * Grow;
+      // OrthoHeight, or Distance, shrinks as the picture grows
+      FTwoPassScale := 1 / Grow;
+      FTwoPassAdjusted := True;
+      // The slide is not reported: the sprite is always recentred, so the
+      // origin always moves, and the metadata gives where it ends up
+      Note := Format('2-pass: the sprite will be drawn %.4f times as large, aiming at an ' +
+        'padding of %d on the axis with least room', [Grow, FTwoPassPadding]);
+      // Drawing that reached the edge may have gone past it, so it is
+      // larger than measured and will not shrink quite as far as aimed
+      if (FTwoPassBounds.Left <= 0) or (FTwoPassBounds.Top <= 0) or
+        (FTwoPassBounds.Right >= W) or (FTwoPassBounds.Bottom >= H) then
+        Note := Note + '. The sprite touched the edge of the frame, so it may have been ' +
+          'cut off and its padding may not come down to ' + IntToStr(FTwoPassPadding);
+      if not GorillaCamera.IsOrthographic then
+        Note := Note + '. In perspective the result is close rather than exact';
     end;
   end;
   if FExportDialog <> nil then
     FExportDialog.AddLine(Note);
 end;
 
+// Whether frames now being saved are meant to reach the edge of the frame:
+// a 2-pass export's second pass aiming at padding of 0, where frames
+// drawn up to the edge are the aim, not a fault to report
+function TMainForm.EdgeTouchExpected: Boolean;
+begin
+  Result := FBatchActive and (FBatchPass = 2) and FTwoPassAdjusted and (FTwoPassPadding = 0);
+end;
+
 // Puts the second pass's framing on top of a capture's fit, for a grab of
-// AWidth by AHeight: the slide first, in the fit's own pixels, as measured,
-// then the change of size, about the centre of the view. In orthographic
-// projection OrthoHeight, and OrthoWidth if it is set, change; in
-// perspective Distance does, though never so far that the camera is inside
-// the model's bounds. EndCapture puts back the framing as it was.
+// AWidth by AHeight: the slide first, in the fit's own pixels, then the
+// change of size, about the centre of the view, so that together they put
+// this capture's centre of rotation on FTwoPassTarget. In
+// orthographic projection OrthoHeight, and OrthoWidth if it is set, change;
+// in perspective Distance does, though never so far that the camera is
+// inside the model's bounds, and the point lands near the place rather than
+// exactly on it. EndCapture puts back the
+// framing as it was.
 procedure TMainForm.ApplyTwoPassAdjust(const AWidth, AHeight: Integer);
 var
-  Radius, NewDistance: Single;
+  Radius, NewDistance, PivotX, PivotY: Single;
+  Grow: Double;
 begin
-  SlidePicture(FTwoPassMoveX, FTwoPassMoveY, AWidth, AHeight);
+  // Where the centre of rotation is now, and where it must be before the
+  // change of size, which moves it away from the centre of the view
+  if (GorillaModel <> nil) and GorillaCamera.ProjectToView(GorillaModel.RotationCenter.Point,
+    GorillaModel, AWidth, AHeight, PivotX, PivotY) then
+  begin
+    Grow := 1 / FTwoPassScale;
+    SlidePicture((FTwoPassTarget.X - AWidth / 2) / Grow + AWidth / 2 - PivotX,
+      (FTwoPassTarget.Y - AHeight / 2) / Grow + AHeight / 2 - PivotY, AWidth, AHeight);
+  end;
   if GorillaCamera.IsOrthographic then
   begin
     GorillaCamera.OrthoHeight := GorillaCamera.OrthoHeight * FTwoPassScale;
@@ -8172,7 +8482,7 @@ end;
 
 // Slides the picture ARight pixels right and ADown pixels down, in a view
 // of AWidth by AHeight, by sliding the view the other way. As in
-// SnapCaptureOrigin, which way the slide moves the picture is checked on
+// the view's other slides, which way the slide moves the picture is checked on
 // the model's centre of rotation rather than assumed, and put right if it
 // went the wrong way.
 procedure TMainForm.SlidePicture(const ARight, ADown: Single;
@@ -8246,14 +8556,42 @@ begin
   begin
     Note := Format('2-pass: sprite_empty for every frame of the export: left %d, top %d, ' +
       'right %d, bottom %d', [Least.Left, Least.Top, Least.Right, Least.Bottom]);
-    if Min(Min(Least.Left, Least.Top), Min(Least.Right, Least.Bottom)) <>
-      TWO_PASS_MARGIN then
-      Note := Note + Format('; aimed at %d on the side with least room', [TWO_PASS_MARGIN]);
+    if FTwoPassAdjusted and (Min(Min(Least.Left, Least.Top), Min(Least.Right, Least.Bottom)) <>
+      FTwoPassPadding) then
+      Note := Note + Format('; padding aimed at %d on the axis with least room',
+        [FTwoPassPadding]);
     if FExportDialog <> nil then
       FExportDialog.AddLine(Note);
+    // Measured at 1x, Exact unticked, the padding can be a pixel out: if
+    // neither axis came out with the padding on both sides, Exact is
+    // suggested once the export's dialog has gone; never for a benchmark,
+    // which runs unattended
+    FSuggestExact := FTwoPassAdjusted and not FTwoPassFine and not FBenchmarkActive and
+      not FBatchAborted and
+      not (((Least.Left = FTwoPassPadding) and (Least.Right = FTwoPassPadding)) or
+      ((Least.Top = FTwoPassPadding) and (Least.Bottom = FTwoPassPadding)));
+    FSuggestEmpty := Least;
   end;
   if not Capturing then
     Caption := ProjectionCaption;
+end;
+
+// The export just ended was measured at 1x and missed the padding on both
+// axes: a modal message saying so, and that Exact may do better
+procedure TMainForm.SuggestExact;
+begin
+  if not FSuggestExact or MainFormGone then
+    Exit;
+  FSuggestExact := False;
+  ShowMessage(Format('The padding asked for is %d pixels, on both sides of the axis with ' +
+    'least room, but this export came out with a sprite_empty of left %d, right %d, top ' +
+    '%d and bottom %d, so neither left and right nor top and bottom are both %d.',
+    [FTwoPassPadding, FSuggestEmpty.Left, FSuggestEmpty.Right, FSuggestEmpty.Top,
+    FSuggestEmpty.Bottom, FTwoPassPadding]) + sLineBreak + sLineBreak +
+    'The first pass measured this animated model without overscan, which finds the ' +
+    'sprite''s hard edges only to within half a pixel, so the fit can be a pixel out. ' +
+    Format('Ticking Exact, beside Directions, measures at %dx overscan instead, which may ' +
+    'improve the result, at the cost of a slower first pass.', [TWO_PASS_FINE_OVERSCAN]));
 end;
 
 // File, Debug, made only while debugging is on, just above Exit: Frame
@@ -8276,6 +8614,18 @@ begin
   FFrameBordersItem.IsChecked := FSettings.DebugFrameBorders;
   FFrameBordersItem.OnClick := FrameBordersItemClick;
   FDebugMenu.AddObject(FFrameBordersItem);
+  FSaveOversampledItem := TMenuItem.Create(Self);
+  FSaveOversampledItem.Text := 'Save Oversampled Frame';
+  FSaveOversampledItem.IsChecked := FSettings.DebugSaveOversampled;
+  FSaveOversampledItem.OnClick := SaveOversampledItemClick;
+  FDebugMenu.AddObject(FSaveOversampledItem);
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  // File dialogs are desktop only
+  Item := TMenuItem.Create(Self);
+  Item.Text := 'Compare Images...';
+  Item.OnClick := CompareImagesItemClick;
+  FDebugMenu.AddObject(Item);
+  {$ENDIF}
   Item := TMenuItem.Create(Self);
   Item.Text := 'Benchmark';
   Item.OnClick := BenchmarkItemClick;
@@ -8330,10 +8680,12 @@ const
   BENCHMARK_LAST_OVERSCAN = OVERSCAN_FACTOR_MAX;
 
 // File, Debug, Benchmark: asks for a folder, then exports the model shown as
-// a texture atlas, every animation, with metadata, directions and 2-pass, once
-// with no overscan and once at each overscan from 2 to 16, each run into a
-// folder of its own, ortho1x to ortho16x or persp1x to persp16x after the
-// projection. Each run is timed from start to finish, both passes and the
+// a texture atlas, with metadata and directions, the entries ticked if two or
+// more are, otherwise every entry, ticked for it, once
+// with no overscan and once at each overscan from 2 to 8, each run into a
+// folder of its own, ortho1x_<stamp> to ortho8x_<stamp> or persp1x_<stamp>
+// to persp8x_<stamp> after the projection, <stamp> being when it started,
+// YYMMDDHHMMSS. Each run is timed from start to finish, both passes and the
 // pages; once they are all done, or one is aborted or goes wrong, the Debug
 // tab gets a line per run: overscan, seconds, frames per second
 procedure TMainForm.BenchmarkItemClick(Sender: TObject);
@@ -8348,29 +8700,37 @@ begin
     ShowMessage('Open a model first.');
     Exit;
   end;
-  if AnimationListBox.Count < 2 then
+  if AnimationListBox.Count < 1 then
   begin
-    ShowMessage('This model has no animations to benchmark.');
+    ShowMessage('The Animations list is empty: there is nothing to benchmark.');
     Exit;
   end;
   if not ChooseExportFolder(String.Empty, Root) then
     Exit;   // cancelled
   // As the benchmark exports, shown and kept as if chosen by hand: Texture
-  // Atlas, which always has metadata, every animation, directions and 2-pass
+  // Atlas, which always has metadata, and directions; and All, unless two or
+  // more entries are ticked already, which are then what it exports
   FBatchKindBox.ItemIndex := Ord(skAtlas);
   FBatchDirections.IsChecked := True;
   FSettings.ExportDirections := True;
-  FBatchTwoPass.IsChecked := True;
-  Entries := nil;
-  for var I := 1 to AnimationListBox.Count - 1 do
-    Entries := Entries + [I];
-  FSyncingChecks := True;
-  try
-    FBatchAll.IsChecked := True;
-    SetEntryChecks(Entries, True);
-  finally
-    FSyncingChecks := False;
+  if TickedAnimationCount < 2 then
+  begin
+    Entries := nil;
+    for var I := 0 to AnimationListBox.Count - 1 do
+      Entries := Entries + [I];
+    FSyncingChecks := True;
+    try
+      FBatchAll.IsChecked := True;
+      SetEntryChecks(Entries, True);
+    finally
+      FSyncingChecks := False;
+    end;
   end;
+  // The entries every run exports, as ticked now
+  FBenchmarkItems := nil;
+  for var I := 0 to AnimationListBox.Count - 1 do
+    if AnimationListBox.ListItems[I].IsChecked then
+      FBenchmarkItems := FBenchmarkItems + [I];
   UpdateView;
   UpdateBatchControls;
 
@@ -8379,6 +8739,9 @@ begin
     FBenchmarkPrefix := 'ortho'
   else
     FBenchmarkPrefix := 'persp';
+  // Local time, ending every folder and file name the benchmark makes, so
+  // another benchmark into the same folder leaves this one alone
+  FBenchmarkStamp := FormatDateTime('yymmddhhnnss', Now);
   FBenchmarkOverscan := 0;
   FBenchmarkRows := nil;
   FBenchmarkStop := False;
@@ -8411,8 +8774,8 @@ begin
     Exit;
   end;
   Inc(FBenchmarkOverscan);
-  Folder := TPath.Combine(FBenchmarkRoot, Format('%s%dx', [FBenchmarkPrefix,
-    FBenchmarkOverscan]));
+  Folder := TPath.Combine(FBenchmarkRoot, Format('%s%dx_%s', [FBenchmarkPrefix,
+    FBenchmarkOverscan, FBenchmarkStamp]));
   try
     TDirectory.CreateDirectory(Folder);
   except
@@ -8425,9 +8788,9 @@ begin
     end;
   end;
   Items := nil;
-  for var I := 1 to AnimationListBox.Count - 1 do
-    Items := Items + [I];
-  StartBatch(Items, skAtlas, Folder, True);
+  // The entries ticked when it started
+  Items := Copy(FBenchmarkItems);
+  StartBatch(Items, skAtlas, Folder);
 end;
 
 // A benchmark run's line, from the batch just reported: its overscan, how
@@ -8453,9 +8816,13 @@ begin
     Fps], TFormatSettings.Invariant)];
 end;
 
-// The benchmark is over: overscan as chosen again, and every run's line in
-// the Debug tab, comma-separated
+// The benchmark is over: overscan as chosen again, and every run's line,
+// comma-separated, in the Debug tab and, the lines alone, in
+// benchmark_<YYMMDDHHMMSS>.csv in the folder chosen, UTF-8 without a byte
+// order mark
 procedure TMainForm.EndBenchmark;
+var
+  FileName: String;
 begin
   FBenchmarkActive := False;
   SetMeasuringOverscan(False);
@@ -8466,7 +8833,218 @@ begin
   for var Row in FBenchmarkRows do
     DebugMemo.Lines.Add(Row);
   DebugMemo.Lines.Add('Benchmark Results end');
+  FileName := TPath.Combine(FBenchmarkRoot, 'benchmark_' + FBenchmarkStamp + '.csv');
+  if Length(FBenchmarkRows) > 0 then
+  try
+    // GetBytes writes no byte order mark
+    TFile.WriteAllBytes(FileName, TEncoding.UTF8.GetBytes(
+      String.Join(sLineBreak, FBenchmarkRows) + sLineBreak));
+    DebugMemo.Lines.Add('Benchmark results saved to ' + FileName);
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the benchmark results to ' + FileName + ': ' +
+        E.Message);
+  end;
   FBenchmarkRows := nil;
+end;
+
+const
+  // The images File, Debug, Compare Images offers: what FMX can load
+  COMPARE_IMAGE_FILTER = 'Images (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff)|' +
+    '*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff';
+  // What each pixel of the differences image means: alike in red, green,
+  // blue and alpha; red, green or blue differ; alpha differs; both differ
+  COMPARE_SAME = TAlphaColor($FF000000);
+  COMPARE_RGB = TAlphaColor($FFC0C0C0);
+  COMPARE_ALPHA = TAlphaColor($FF404040);
+  COMPARE_BOTH = TAlphaColor($FFFFFFFF);
+
+// An image to compare, from an open dialog titled ATitle, opening in AStart;
+// False if cancelled
+function TMainForm.ChooseCompareFile(const ATitle, AStart: String;
+  out AFileName: String): Boolean;
+var
+  Dialog: TOpenDialog;
+begin
+  AFileName := String.Empty;
+  Dialog := TOpenDialog.Create(nil);
+  try
+    Dialog.Title := ATitle;
+    Dialog.Filter := COMPARE_IMAGE_FILTER;
+    Dialog.Options := [TOpenOption.ofFileMustExist, TOpenOption.ofHideReadOnly,
+      TOpenOption.ofEnableSizing];
+    Dialog.InitialDir := AStart;
+    Result := Dialog.Execute and (Dialog.FileName <> String.Empty);
+    if Result then
+      AFileName := Dialog.FileName;
+  finally
+    Dialog.Free;
+  end;
+end;
+
+// File, Debug, Compare Images...: two images of the same size, chosen one
+// after the other, compared pixel by pixel into a third, saved where a save
+// dialog says, differences.png unless changed: black where the two are
+// alike in every channel, light grey where only red, green or blue differ,
+// dark grey where only alpha does, and white where both do. Each pixel is
+// compared as the image loads, whatever its file format; the result is
+// always a PNG. How many pixels fell in each class goes to the Debug tab.
+procedure TMainForm.CompareImagesItemClick(Sender: TObject);
+var
+  First, Second, Output: String;
+  A, B, Diff: TBitmap;
+  DataA, DataB, DataDiff: TBitmapData;
+  CA, CB: TAlphaColor;
+  RgbDiffers, AlphaDiffers: Boolean;
+  Same, Rgb, Alpha, Both: Int64;
+  Dialog: TSaveDialog;
+begin
+  if not ChooseCompareFile('First File to Compare', FSettings.LastExportFolder, First) then
+    Exit;
+  if not ChooseCompareFile('Second File to Compare', ExtractFileDir(First), Second) then
+    Exit;
+  A := nil;
+  B := nil;
+  Diff := nil;
+  try
+    try
+      A := TBitmap.CreateFromFile(First);
+      B := TBitmap.CreateFromFile(Second);
+    except
+      on E: Exception do
+      begin
+        ShowMessage('Can''t load the images to compare:' + sLineBreak + E.Message);
+        Exit;
+      end;
+    end;
+    if (A.Width <> B.Width) or (A.Height <> B.Height) then
+    begin
+      ShowMessage(Format('The images are not the same size, so cannot be compared:' +
+        sLineBreak + '%s is %d x %d' + sLineBreak + '%s is %d x %d',
+        [ExtractFileName(First), A.Width, A.Height, ExtractFileName(Second), B.Width,
+        B.Height]));
+      Exit;
+    end;
+
+    Same := 0;
+    Rgb := 0;
+    Alpha := 0;
+    Both := 0;
+    Diff := TBitmap.Create(A.Width, A.Height);
+    if not A.Map(TMapAccess.Read, DataA) then
+      raise EInvalidOperation.Create('The first image could not be read.');
+    try
+      if not B.Map(TMapAccess.Read, DataB) then
+        raise EInvalidOperation.Create('The second image could not be read.');
+      try
+        if not Diff.Map(TMapAccess.Write, DataDiff) then
+          raise EInvalidOperation.Create('The differences image could not be made.');
+        try
+          for var Y := 0 to A.Height - 1 do
+            for var X := 0 to A.Width - 1 do
+            begin
+              CA := DataA.GetPixel(X, Y);
+              CB := DataB.GetPixel(X, Y);
+              RgbDiffers := (CA and $00FFFFFF) <> (CB and $00FFFFFF);
+              AlphaDiffers := (CA shr 24) <> (CB shr 24);
+              if RgbDiffers and AlphaDiffers then
+              begin
+                DataDiff.SetPixel(X, Y, COMPARE_BOTH);
+                Inc(Both);
+              end
+              else if RgbDiffers then
+              begin
+                DataDiff.SetPixel(X, Y, COMPARE_RGB);
+                Inc(Rgb);
+              end
+              else if AlphaDiffers then
+              begin
+                DataDiff.SetPixel(X, Y, COMPARE_ALPHA);
+                Inc(Alpha);
+              end
+              else
+              begin
+                DataDiff.SetPixel(X, Y, COMPARE_SAME);
+                Inc(Same);
+              end;
+            end;
+        finally
+          Diff.Unmap(DataDiff);
+        end;
+      finally
+        B.Unmap(DataB);
+      end;
+    finally
+      A.Unmap(DataA);
+    end;
+
+    // Where to save it: differences.png beside the first, unless changed
+    Dialog := TSaveDialog.Create(nil);
+    try
+      Dialog.Title := 'Save Differences';
+      Dialog.Filter := 'PNG image (*.png)|*.png';
+      Dialog.DefaultExt := 'png';
+      Dialog.Options := [TOpenOption.ofOverwritePrompt, TOpenOption.ofHideReadOnly,
+        TOpenOption.ofPathMustExist, TOpenOption.ofEnableSizing];
+      Dialog.InitialDir := ExtractFileDir(First);
+      Dialog.FileName := 'differences.png';
+      if not Dialog.Execute or (Dialog.FileName = String.Empty) then
+        Exit;
+      // Always a PNG, whatever was typed
+      Output := TPath.ChangeExtension(Dialog.FileName, '.png');
+    finally
+      Dialog.Free;
+    end;
+    try
+      Diff.SaveToFile(Output);
+    except
+      on E: Exception do
+      begin
+        ShowMessage('Can''t save ' + Output + sLineBreak + E.Message);
+        Exit;
+      end;
+    end;
+    DebugMemo.Lines.Add(Format('Compared %s with %s, %d x %d: %d alike, %d differing in ' +
+      'RGB only, %d in alpha only, %d in both; saved to %s', [First, Second, A.Width,
+      A.Height, Same, Rgb, Alpha, Both, Output]));
+  finally
+    Diff.Free;
+    B.Free;
+    A.Free;
+  end;
+end;
+
+// Ticks or unticks Save Oversampled Frame, kept in settings.json as
+// debug_save_oversampled straight away
+procedure TMainForm.SaveOversampledItemClick(Sender: TObject);
+begin
+  FSaveOversampledItem.IsChecked := not FSaveOversampledItem.IsChecked;
+  FSettings.DebugSaveOversampled := FSaveOversampledItem.IsChecked;
+  if FSettings.DebugSaveOversampled then
+    DebugMemo.Lines.Add('Save Oversampled Frame on: an export with overscan saves its ' +
+      'first frame, as drawn before it is scaled down, as Oversampled.png in its folder')
+  else
+    DebugMemo.Lines.Add('Save Oversampled Frame off');
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+  end;
+end;
+
+// The first overscanned frame of an export, as drawn, has been saved, or
+// could not be
+procedure TMainForm.OffscreenOverscanKept(Sender: TObject; const AFileName: String;
+  const AWidth, AHeight: Integer; const AError: String);
+begin
+  if AError = String.Empty then
+    DebugMemo.Lines.Add(Format('Saved the first frame as drawn at %dx overscan, %d x %d, ' +
+      'before it was scaled down to %d x %d: %s', [ExportOverscan, AWidth, AHeight,
+      FOffscreen.Width, FOffscreen.Height, AFileName]))
+  else
+    DebugMemo.Lines.Add('Can''t save ' + AFileName + ': ' + AError);
 end;
 
 // Ticks or unticks Frame Borders, kept in settings.json as
@@ -8507,6 +9085,7 @@ begin
     end;
   // Show grid, as it was left, kept as soon as it changes
   FResults.ShowGrid := FSettings.ResultsShowGrid;
+  FResults.ShowEdgeHint := FSettings.ResultsEdgeHint;
   FResults.OnShowGridChange := ResultsShowGridChange;
   // The zoom last chosen, shown as far as the space then allows
   FResults.Zoom := FSettings.ResultsZoom;
@@ -8567,15 +9146,15 @@ end;
 // turn, as many for each: a spritesheet holds them all in its square grid,
 // and a strip, which is given one direction's at a time, one row each. With
 // AMetadata, a strip or spritesheet also gets its metadata beside it, the
-// same name with .json, AOrigin giving the pixel the centre of rotation
-// falls on in a frame, if AOriginKnown, AAnimation the name of the animation
+// same name with .json, AOrigin giving where the centre of rotation falls
+// in a frame, if AOriginKnown, AAnimation the name of the animation
 // saved, and ADirections the directions' bearings. Returns the file written,
 // with the codec in brackets for an MP4, or with the metadata added, for the
 // log; raises if it cannot be written. Runs on a worker thread, so touches
 // no controls.
 function TMainForm.SaveSheet(const AKind: TSheetKind;
   const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
-  const ACycleSeconds: Double; const AMetadata: Boolean; const AOrigin: TPoint;
+  const ACycleSeconds: Double; const AMetadata: Boolean; const AOrigin: TPointF;
   const AOriginKnown: Boolean; const AAnimation: String;
   const ADirections: TArray<Single>; const AMeta: TSprite3DSheetMeta;
   const ABorders, ADeferMetadata: Boolean; out APending: TSprite3DSheetMetadata;
@@ -8649,6 +9228,16 @@ begin
   PerDirection := Max(1, Length(AFrames) div Directions);
   case AKind of
     skStrip:
+      if not AMeta.IsAnimated then
+      begin
+        // A static model's: one frame per direction, all in one row
+        Result := TPath.Combine(Folder,
+          Format('%s_strip%d.png', [AStem, Length(AFrames)]));
+        SavePng(ComposeStrip(Shown), Result);
+        if AMetadata then
+          Result := Result + SaveMetadata(Result, Length(AFrames), 1);
+      end
+      else
       begin
         Result := TPath.Combine(Folder,
           Format('%s_strip%d.png', [AStem, PerDirection]));

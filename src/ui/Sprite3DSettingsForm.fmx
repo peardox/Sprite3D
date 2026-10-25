@@ -186,6 +186,28 @@ object GeneralSettingsForm: TGeneralSettingsForm
               Text = 'Golden Graphite'
             end
           end
+          object ResultsGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 440.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 60.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Results'
+            TabOrder = 3
+            object ResultsEdgeHintCheck: TCheckBox
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Explain the empty border values in a hint'
+            end
+          end
         end
         object RightColumn: TLayout
           Align = Client

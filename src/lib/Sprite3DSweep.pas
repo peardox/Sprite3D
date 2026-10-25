@@ -1837,7 +1837,7 @@ end;
 
 // The Id of the animation the model is playing, if it has a volume here;
 // otherwise empty, for the rest pose. A stopped animation that is still the
-// current one leaves the model at rest, as View's "(None)" does.
+// current one leaves the model at rest, as a static model is shown.
 function TModelSweep.PlayingName: String;
 var
   Current: TGorillaAnimation;

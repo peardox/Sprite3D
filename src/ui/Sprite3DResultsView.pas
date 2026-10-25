@@ -17,9 +17,11 @@
 //** has, and beside it a Grid Size slider for the checker's squares, in sprite pixels. The
 //** checker zooms with the animation; Show grid, at the right of the Select Folder row, hides
 //** or shows it. Directly under the list, level with that row, is a side, Left, Top, Right or
-//** Bottom, with buttons that jump, paused, to the previous or next frame, in any animation and
-//** direction read, whose empty border on that side is its image's @code(sprite_empty), and say
-//** which of how many such frames it is. AniGif and MP4 exports are not read yet.
+//** Bottom, with buttons that jump, paused, to the previous or next edge case: a frame, in any
+//** animation and direction read, whose empty border on a side is its image's
+//** @code(sprite_empty). They go through every side's in turn, left, top, right then bottom,
+//** the side showing following, and say which of them all and which of its side's it is.
+//** AniGif and MP4 exports are not read yet.
 //**
 //** The layout:
 //**
@@ -28,12 +30,13 @@
 //** |-- ListLayout @(right, the full height@)
 //** |   |-- the animations found
 //** |   `-- the empty finder @(bottom, level with the Select Folder row@): the side, the
-//** |       previous and next frame at its sprite_empty anywhere, and which match is showing
+//** |       previous and next edge case on any side, and which is showing
 //** `-- MainLayout @(client@)
 //**     |-- FolderLayout @(bottom@)
 //**     |   |-- Select Folder
 //**     |   |-- the folder read and its model, with an ellipsis if need be
-//**     |   `-- Show grid @(right, apart from the empty finder@)
+//**     |   `-- @(right@) the frame's empty border on each side, while paused, then Show
+//**     |       grid, apart from the empty finder
 //**     `-- ViewerLayout @(client@)
 //**         |-- AnimationControlsLayout @(bottom@)
 //**         |   |-- the player buttons, the frame readout, the directions
@@ -70,9 +73,11 @@ unit Sprite3DResultsView;
   the animation; Show grid, at the right of the Select Folder row, hides or
   shows it. Directly under the list, level with that row, is a side, Left,
   Top, Right or Bottom, with buttons that jump, paused, to the previous or
-  next frame, in any animation and direction read, whose empty border on
-  that side is its image's sprite_empty, and say which of how many such
-  frames it is. AniGif and MP4 exports are not read yet.
+  next edge case: a frame, in any animation and direction read, whose empty
+  border on a side is its image's sprite_empty. They go through every side's
+  in turn, left, top, right then bottom, the side showing following, and say
+  which of them all and which of its side's it is. AniGif and MP4 exports are
+  not read yet.
 
   The layout:
 
@@ -80,12 +85,13 @@ unit Sprite3DResultsView;
   |-- ListLayout (right, the full height)
   |   |-- the animations found
   |   `-- the empty finder (bottom, level with the Select Folder row): the side, the
-  |       previous and next frame at its sprite_empty anywhere, and which match is showing
+  |       previous and next edge case on any side, and which is showing
   `-- MainLayout (client)
       |-- FolderLayout (bottom)
       |   |-- Select Folder
       |   |-- the folder read and its model, with an ellipsis if need be
-      |   `-- Show grid (right, apart from the empty finder)
+      |   `-- (right) the frame's empty border on each side, then Show grid, apart
+      |       from the empty finder
       `-- ViewerLayout (client)
           |-- AnimationControlsLayout (bottom)
           |   |-- the player buttons, the frame readout, the directions
@@ -257,6 +263,11 @@ type
     FGridLayout: TLayout;
     FZoomHalf: TLayout;
     FGridCheck: TCheckBox;
+    // At the right of the Select Folder row: the frame's empty border on each
+    // side, then Show grid; and whether the values' hint is shown
+    FFolderRightLayout: TLayout;
+    FEmptyLabel: TLabel;
+    FShowEdgeHint: Boolean;
     FMainLayout: TLayout;
     FOnShowGridChange: TNotifyEvent;
     // The zoom chosen; what is shown is this or, if less, what fits
@@ -293,10 +304,20 @@ type
     FEdgePreviousButton: TButton;
     FEdgeNextButton: TButton;
     FEdgeLabel: TLabel;
-    // Every frame of every animation and direction read whose empty border
-    // on the chosen side is its image's sprite_empty, in list order, then
-    // direction, then frame; rebuilt when the folder or the side changes
+    // Every edge case read: each frame, of every animation and direction,
+    // whose empty border on a side is its image's sprite_empty on that side,
+    // side by side, left, top, right then bottom, and within a side in list
+    // order, then direction, then frame; FEdgeSides says which side each
+    // is, and FEdgeSideStart and FEdgeSideCount where each side's run is.
+    // Rebuilt when the folder changes. FEdgeAt is the edge case last gone
+    // to, or -1; it is let go once another frame shows.
     FEdgeMatches: TArray<TResultsFrameRef>;
+    FEdgeSides: TArray<Integer>;
+    FEdgeSideStart: array[0..3] of Integer;
+    FEdgeSideCount: array[0..3] of Integer;
+    FEdgeAt: Integer;
+    // True while the code, not the user, changes the side shown
+    FSyncingEdgeBox: Boolean;
     FTimer: TTimer;
     // What was read, and what is showing
     FFolder: String;
@@ -334,8 +355,12 @@ type
     procedure SeekEdge(const AStep: Integer);
     procedure FindEdgeMatches;
     function EdgeMatchIndex: Integer;
+    function IsShowing(const ARef: TResultsFrameRef): Boolean;
+    procedure ShowEdgeSide(const ASide: Integer);
     procedure JumpTo(const ARef: TResultsFrameRef);
     procedure UpdateEdgeLabel;
+    procedure UpdateEmptyLabel;
+    procedure SetShowEdgeHint(const Value: Boolean);
     procedure ZoomTrackChange(Sender: TObject);
     procedure DrawingLayoutResized(Sender: TObject);
     procedure TimerTimer(Sender: TObject);
@@ -461,6 +486,14 @@ type
     /// <summary>Called on the main thread when Show grid is ticked or cleared by hand, so the
     /// owner can keep the choice.</summary>
     property OnShowGridChange: TNotifyEvent read FOnShowGridChange write FOnShowGridChange;
+    //** @abstract(Whether the frame's empty border values, at the right of the Select Folder
+    //** row, have a hint saying what they are; True until set.)
+    //**
+    //** File, Settings turns it off. Main thread only.
+    /// <summary>Whether the frame's empty border values, at the right of the Select Folder
+    /// row, have a hint saying what they are; True until set.</summary>
+    /// <remarks>File, Settings turns it off. Main thread only.</remarks>
+    property ShowEdgeHint: Boolean read FShowEdgeHint write SetShowEdgeHint;
     //** @abstract(The zoom chosen, as a multiple of the sprite size; 1 until set.)
     //**
     //** What is shown is this, or less where the drawing area is too small for it: the Zoom
@@ -545,6 +578,13 @@ const
   EDGE_FINDER = 'Edge Case Finder';
   // The height of the Select Folder row and of the empty finder level with it
   BOTTOM_ROW_HEIGHT = 36;
+  // At the right of the Select Folder row: the space the empty border
+  // values have, wide enough for four 4-digit values, the gap between them
+  // and Show grid, Show grid's width, and the space right of it
+  EMPTY_VALUES_WIDTH = 150;
+  EMPTY_VALUES_GAP = 16;
+  GRID_CHECK_WIDTH = 90;
+  GRID_CHECK_RIGHT = 16;
   // The animation list's width; the empty finder below it is as wide
   LIST_WIDTH = 300;
   ICON_FORWARD = 'M8 6v12l9-6z';
@@ -753,6 +793,8 @@ begin
   FParent := AParent;
   FFrames := TObjectList<TBitmap>.Create(True);
   FAnimationIndex := -1;
+  FEdgeAt := -1;
+  FShowEdgeHint := True;
   FDirectionIndex := 0;
   FZoomWanted := 1;
   FTimer := TTimer.Create(Self);
@@ -887,16 +929,19 @@ begin
   for var Caption in SIDE_CAPTIONS do
     FEdgeBox.Items.Add(Caption);
   FEdgeBox.ItemIndex := 0;
-  FEdgeBox.Hint := 'The side to look at: the frames whose empty border on it is the ' +
-    'least of all the frames, sprite_empty';
+  FEdgeBox.Hint := 'The side of the edge case showing, and the side the next one is ' +
+    'looked for from: edge cases are the frames whose empty border on a side is the ' +
+    'least of all the frames, sprite_empty, gone through left, top, right then bottom';
   FEdgeBox.ShowHint := True;
   FEdgeBox.OnChange := EdgeBoxChange;
   FEdgePreviousButton := AddIconButton(FEdgeLayout, ICON_BACK,
-    'The previous frame at sprite_empty on this side, in any animation and direction',
+    'The previous edge case, in any animation and direction, on to the side before after ' +
+    'the first on this side',
     EdgePreviousButtonClick);
   FEdgePreviousButton.Margins.Left := 4;
   FEdgeNextButton := AddIconButton(FEdgeLayout, ICON_FORWARD,
-    'The next frame at sprite_empty on this side, in any animation and direction',
+    'The next edge case, in any animation and direction, on to the side after after the ' +
+    'last on this side',
     EdgeNextButtonClick);
   FEdgeLabel := AddLabel(FEdgeLayout, TAlignLayout.Client, 0);
   FEdgeLabel.Margins.Left := 6;
@@ -928,13 +973,30 @@ begin
     'last export went';
   FFolderButton.ShowHint := True;
   FFolderButton.OnClick := FolderButtonClick;
-  // Show grid, at the right of the row, kept apart from the empty finder
+  // At the right of the row, in a layout of their own, fixed in size, with
+  // each at a fixed place in it rather than aligned, so Show grid never
+  // moves whether the values show or not: the frame's empty border on each
+  // side, right-aligned in its own space, a gap, then Show grid, kept apart
+  // from the empty finder
+  FFolderRightLayout := TLayout.Create(Self);
+  FFolderRightLayout.Parent := FFolderLayout;
+  FFolderRightLayout.Align := TAlignLayout.Right;
+  FFolderRightLayout.Width := EMPTY_VALUES_WIDTH + EMPTY_VALUES_GAP + GRID_CHECK_WIDTH +
+    GRID_CHECK_RIGHT;
+  FEmptyLabel := TLabel.Create(Self);
+  FEmptyLabel.Parent := FFolderRightLayout;
+  FEmptyLabel.Align := TAlignLayout.Vertical;
+  FEmptyLabel.Position.X := 0;
+  FEmptyLabel.Width := EMPTY_VALUES_WIDTH;
+  FEmptyLabel.TextSettings.HorzAlign := TTextAlign.Trailing;
+  FEmptyLabel.TextSettings.WordWrap := False;
+  FEmptyLabel.HitTest := True;
+  FEmptyLabel.Text := String.Empty;
   FGridCheck := TCheckBox.Create(Self);
-  FGridCheck.Parent := FFolderLayout;
-  FGridCheck.Align := TAlignLayout.Right;
-  FGridCheck.Width := 90;
-  FGridCheck.Margins.Left := 8;
-  FGridCheck.Margins.Right := 16;
+  FGridCheck.Parent := FFolderRightLayout;
+  FGridCheck.Align := TAlignLayout.Vertical;
+  FGridCheck.Position.X := EMPTY_VALUES_WIDTH + EMPTY_VALUES_GAP;
+  FGridCheck.Width := GRID_CHECK_WIDTH;
   FGridCheck.Text := 'Show grid';
   FGridCheck.Hint := 'Draw the checker behind the animation, showing where it is ' +
     'transparent';
@@ -1159,6 +1221,8 @@ begin
     FFolderLabel.Text := FFolderLabel.Text + '  (' + String.Join(', ', Models) + ')';
   FFolderLabel.Hint := FFolderLabel.Text;
   FEdgeMatches := nil;
+  FEdgeSides := nil;
+  FEdgeAt := -1;
   FAnimationIndex := -1;
   FFrames.Clear;
   FImage.Bitmap.SetSize(0, 0);
@@ -1405,50 +1469,73 @@ begin
     SelectDirection((FDirectionIndex + 1) mod Count);
 end;
 
-// Every frame read, of every animation and direction, whose empty border
-// on the side chosen equals its own image's sprite_empty on that side: the
-// frames that come closest to that edge. Every image has at least one, so
-// there is at least one for each sprite_empty value read. In the list's
-// order, then each animation's directions in order, then frame order.
+// Every edge case read: each frame, of every animation and direction, whose
+// empty border on a side equals its own image's sprite_empty on that side,
+// the frames that come closest to that edge. Every image has at least one on
+// each side. Side by side, left, top, right then bottom; within a side, in
+// the list's order, then each animation's directions in order, then frame
+// order. A frame can be an edge case on more than one side.
 procedure TSprite3DResultsView.FindEdgeMatches;
 var
-  Side: Integer;
   Cell: TResultsCell;
   Ref: TResultsFrameRef;
 begin
   FEdgeMatches := nil;
-  Side := EnsureRange(FEdgeBox.ItemIndex, 0, 3);
-  for var A := 0 to High(FAnimations) do
-    for var D := 0 to High(FAnimations[A].Directions) do
-      for var F := 0 to High(FAnimations[A].Directions[D].Frames) do
-      begin
-        Cell := FAnimations[A].Directions[D].Frames[F];
-        if Cell.HasEmpty and (Cell.Empty[Side] = Cell.SpriteEmpty[Side]) then
+  FEdgeSides := nil;
+  FEdgeAt := -1;
+  for var Side := 0 to 3 do
+  begin
+    FEdgeSideStart[Side] := Length(FEdgeMatches);
+    for var A := 0 to High(FAnimations) do
+      for var D := 0 to High(FAnimations[A].Directions) do
+        for var F := 0 to High(FAnimations[A].Directions[D].Frames) do
         begin
-          Ref.Animation := A;
-          Ref.Direction := D;
-          Ref.Frame := F;
-          FEdgeMatches := FEdgeMatches + [Ref];
+          Cell := FAnimations[A].Directions[D].Frames[F];
+          if Cell.HasEmpty and (Cell.Empty[Side] = Cell.SpriteEmpty[Side]) then
+          begin
+            Ref.Animation := A;
+            Ref.Direction := D;
+            Ref.Frame := F;
+            FEdgeMatches := FEdgeMatches + [Ref];
+            FEdgeSides := FEdgeSides + [Side];
+          end;
         end;
-      end;
+    FEdgeSideCount[Side] := Length(FEdgeMatches) - FEdgeSideStart[Side];
+  end;
 end;
 
-// Where the frame showing is among the matches: its index if it is one;
-// otherwise -(1 + the index of the first match after it), so a search
-// knows where to start from
+// Whether ARef is the frame showing
+function TSprite3DResultsView.IsShowing(const ARef: TResultsFrameRef): Boolean;
+begin
+  Result := (ARef.Animation = FAnimationIndex) and (ARef.Direction = FDirectionIndex) and
+    (ARef.Frame = FFrame);
+end;
+
+// Where the frame showing is among the edge cases: the one last gone to, if
+// it is still showing; otherwise the frame's own edge case on the side shown
+// in the drop-down, if it is one. If it is neither, -(1 + the index of the
+// first edge case on that side after it), so a search knows where to start
+// from, which may be the start of the next side.
 function TSprite3DResultsView.EdgeMatchIndex: Integer;
 var
+  Side, Last: Integer;
   Here, There: Int64;
 
   function Key(const AAnimation, ADirection, AFrame: Integer): Int64;
   begin
-    // List order, then direction, then frame, as FEdgeMatches is
+    // List order, then direction, then frame, as each side's run is
     Result := (Int64(AAnimation) shl 40) or (Int64(ADirection) shl 20) or AFrame;
   end;
 
 begin
+  if (FEdgeAt >= 0) and (FEdgeAt <= High(FEdgeMatches)) and
+    IsShowing(FEdgeMatches[FEdgeAt]) then
+    Exit(FEdgeAt);
+  FEdgeAt := -1;
+  Side := EnsureRange(FEdgeBox.ItemIndex, 0, 3);
+  Last := FEdgeSideStart[Side] + FEdgeSideCount[Side] - 1;
   Here := Key(FAnimationIndex, FDirectionIndex, FFrame);
-  for var I := 0 to High(FEdgeMatches) do
+  for var I := FEdgeSideStart[Side] to Last do
   begin
     There := Key(FEdgeMatches[I].Animation, FEdgeMatches[I].Direction,
       FEdgeMatches[I].Frame);
@@ -1457,7 +1544,7 @@ begin
     if There > Here then
       Exit(-(1 + I));
   end;
-  Result := -(1 + Length(FEdgeMatches));
+  Result := -(1 + Last + 1);
 end;
 
 // Shows a particular frame of a particular animation and direction, paused:
@@ -1490,9 +1577,10 @@ begin
   UpdateControls;
 end;
 
-// The previous or next match, AStep -1 or 1, round and round, over every
-// animation and direction read, from the frame showing, which is shown
-// paused; nothing happens if there is none
+// The previous or next edge case, AStep -1 or 1, round and round, over
+// every side, animation and direction read, from the frame showing, which is
+// shown paused, and the drop-down then shows its side; nothing happens if
+// there is none
 procedure TSprite3DResultsView.SeekEdge(const AStep: Integer);
 var
   Count, At, Target: Integer;
@@ -1513,7 +1601,24 @@ begin
   else
     // ... or the last before it
     Target := -At - 2;
-  JumpTo(FEdgeMatches[((Target mod Count) + Count) mod Count]);
+  Target := ((Target mod Count) + Count) mod Count;
+  ShowEdgeSide(FEdgeSides[Target]);
+  JumpTo(FEdgeMatches[Target]);
+  FEdgeAt := Target;
+  UpdateEdgeLabel;
+end;
+
+// The drop-down set to ASide, without that counting as the user's choice
+procedure TSprite3DResultsView.ShowEdgeSide(const ASide: Integer);
+begin
+  if FEdgeBox.ItemIndex = ASide then
+    Exit;
+  FSyncingEdgeBox := True;
+  try
+    FEdgeBox.ItemIndex := ASide;
+  finally
+    FSyncingEdgeBox := False;
+  end;
 end;
 
 procedure TSprite3DResultsView.EdgePreviousButtonClick(Sender: TObject);
@@ -1526,21 +1631,60 @@ begin
   SeekEdge(1);
 end;
 
+// A side chosen by hand: the edge cases are looked for from there, so Next
+// goes to that side's first after the frame showing
 procedure TSprite3DResultsView.EdgeBoxChange(Sender: TObject);
 begin
-  FindEdgeMatches;
+  if FSyncingEdgeBox then
+    Exit;
+  FEdgeAt := -1;
   UpdateEdgeLabel;
 end;
 
-// Which of the matches the frame showing is, and its empty border on the
-// side, as "3 of 7 (1px from edge)"; "Edge Case Finder" on any other frame. The
-// values, and how many matches there are, are in the hint either way.
+// The frame showing's empty border on each side, as "(left,top,right,bottom)",
+// such as "(12,0,9,31)", while paused; nothing while playing, without a frame
+// or without empty borders in the metadata. Its hint, unless ShowEdgeHint is
+// False, says what they are.
+procedure TSprite3DResultsView.UpdateEmptyLabel;
+var
+  Cell: TResultsCell;
+begin
+  if FEmptyLabel = nil then
+    Exit;
+  FEmptyLabel.Text := String.Empty;
+  if HasFrames and (FAnimationIndex >= 0) and not FPlaying then
+  begin
+    Cell := CurrentAnimation.Directions[FDirectionIndex].Frames[FFrame];
+    if Cell.HasEmpty then
+      FEmptyLabel.Text := Format('(%d,%d,%d,%d)', [Cell.Empty[0], Cell.Empty[1],
+        Cell.Empty[2], Cell.Empty[3]]);
+  end;
+  FEmptyLabel.ShowHint := FShowEdgeHint and (FEmptyLabel.Text <> String.Empty);
+  if FEmptyLabel.ShowHint then
+    FEmptyLabel.Hint := 'The frame''s empty border, in pixels: (left, top, right, ' +
+      'bottom), the columns or rows wholly transparent at that edge of the frame. A value ' +
+      'equal to the image''s sprite_empty on that side makes the frame an edge case.'
+  else
+    FEmptyLabel.Hint := String.Empty;
+end;
+
+procedure TSprite3DResultsView.SetShowEdgeHint(const Value: Boolean);
+begin
+  FShowEdgeHint := Value;
+  UpdateEmptyLabel;
+end;
+
+// Which of the edge cases the frame showing is, of all of them and of its
+// side's, as "12 of 40 (3 of 9 top)"; "Edge Case Finder" on any other frame.
+// The values, and how many edge cases there are, are in the hint either way.
 procedure TSprite3DResultsView.UpdateEdgeLabel;
 var
   Side, At: Integer;
   Cell: TResultsCell;
   Text: String;
 begin
+  // The values beside Show grid follow the frame showing too
+  UpdateEmptyLabel;
   if FEdgeLabel = nil then
     Exit;
   if not HasFrames or (FAnimationIndex < 0) then
@@ -1555,13 +1699,16 @@ begin
     FEdgeLabel.Hint := 'The metadata read gives no empty borders';
     Exit;
   end;
-  Side := EnsureRange(FEdgeBox.ItemIndex, 0, 3);
   Cell := CurrentAnimation.Directions[FDirectionIndex].Frames[FFrame];
   At := EdgeMatchIndex;
   if At >= 0 then
-    // Which match, and the empty border on that side that makes it one
-    FEdgeLabel.Text := Format('%d of %d (%dpx from edge)', [At + 1, Length(FEdgeMatches),
-      Cell.Empty[Side]])
+    Side := FEdgeSides[At]
+  else
+    Side := EnsureRange(FEdgeBox.ItemIndex, 0, 3);
+  if At >= 0 then
+    // Which edge case of all, and which of its side's
+    FEdgeLabel.Text := Format('%d of %d (%d of %d %s)', [At + 1, Length(FEdgeMatches),
+      At - FEdgeSideStart[Side] + 1, FEdgeSideCount[Side], SIDE_NAMES[Side]])
   else
     FEdgeLabel.Text := EDGE_FINDER;
   // The values, in the hint
@@ -1571,9 +1718,12 @@ begin
   else
     Text := 'This frame has no empty border in the metadata';
   if At >= 0 then
-    Text := Text + Format(': match %d of %d', [At + 1, Length(FEdgeMatches)])
+    Text := Text + Format(': edge case %d of %d, %d of %d on the %s', [At + 1,
+      Length(FEdgeMatches), At - FEdgeSideStart[Side] + 1, FEdgeSideCount[Side],
+      SIDE_NAMES[Side]])
   else
-    Text := Text + Format(': not a match; %d in all', [Length(FEdgeMatches)]);
+    Text := Text + Format(': not an edge case on the %s; %d in all', [SIDE_NAMES[Side],
+      Length(FEdgeMatches)]);
   FEdgeLabel.Hint := Text;
 end;
 

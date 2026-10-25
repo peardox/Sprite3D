@@ -44,10 +44,12 @@
 //** more drawings. Each drawing is matted and scaled down before the next is made, so only
 //** one enlarged drawing exists at a time, and what is delivered is always Width by Height.
 //** A GPU or driver can report a size it then fails to draw at: if an overscanned drawing
-//** comes back smaller than asked for, or wholly transparent, that size is remembered as too
-//** large for the rest of the session, OnOverscanReduced is called, and the grab is made
-//** again with smaller drawings and more of them. Overscan does not apply on macOS and iOS,
-//** where grabs are screenshots.
+//** comes back smaller than asked for, that size is remembered as too large for the rest of
+//** the session, OnOverscanReduced is called, and the grab is made again with smaller
+//** drawings and more of them. A wholly transparent one may only be an empty frame, so the
+//** grab is first made again at the grab's own size: if that is empty too, it is the grab,
+//** and nothing is remembered; otherwise the size failed, as before. Overscan does not apply
+//** on macOS and iOS, where grabs are screenshots.
 //**
 //** The matting and the scaling down of each drawing are done on a worker thread, a task
 //** from the RTL's thread pool, as they are pure arithmetic on the pixels read back; the
@@ -115,11 +117,14 @@ unit Sprite3DOffscreen;
   drawings. Each drawing is matted and scaled down before the next is made,
   so only one enlarged drawing exists at a time, and what is delivered is
   always Width by Height. A GPU or driver can report a size it then fails to
-  draw at: if an overscanned drawing comes back smaller than asked for, or
-  wholly transparent, that size is remembered as too large for the rest of
-  the session, OnOverscanReduced is called, and the grab is made again with
-  smaller drawings and more of them. Overscan does not apply on macOS and
-  iOS, where grabs are screenshots.
+  draw at: if an overscanned drawing comes back smaller than asked for, that
+  size is remembered as too large for the rest of the session,
+  OnOverscanReduced is called, and the grab is made again with smaller
+  drawings and more of them. A wholly transparent one may only be an empty
+  frame, so the grab is first made again at the grab's own size: if that is
+  empty too, it is the grab, and nothing is remembered; otherwise the size
+  failed, as before. Overscan does not apply on macOS and iOS, where grabs
+  are screenshots.
 
   The matting and the scaling down of each drawing are done on a worker
   thread, a task from the RTL's thread pool, as they are pure arithmetic on
@@ -154,7 +159,7 @@ const
   DEFAULT_OFFSCREEN_HEIGHT = 256;
   //** @abstract(The largest Overscan factor TSprite3DOffscreen accepts.)
   /// <summary>The largest Overscan factor TSprite3DOffscreen accepts.</summary>
-  OVERSCAN_MAX = 16;
+  OVERSCAN_MAX = 8;
   //** @abstract(The most pixels across or down an overscanned target may have, whatever the
   //** GPU allows.)
   //**
@@ -218,6 +223,27 @@ type
   /// rest of Overscan is made up with shifted drawings.</param>
   TSprite3DOverscanEvent = procedure(Sender: TObject; const AFailedSize,
     AMaxOverscan: Integer) of object;
+
+  //** @abstract(Signature of TSprite3DOffscreen.OnOverscanKept.)
+  //**
+  //** @param(Sender The TSprite3DOffscreen.)
+  //**
+  //** @param(AFileName The file the drawing was saved in, or was to be.)
+  //**
+  //** @param(AWidth The drawing's width in pixels, before it was scaled down.)
+  //**
+  //** @param(AHeight The drawing's height in pixels, before it was scaled down.)
+  //**
+  //** @param(AError Empty if it was saved, otherwise why not.)
+  /// <summary>Signature of TSprite3DOffscreen.OnOverscanKept.</summary>
+  /// <param name="Sender">The TSprite3DOffscreen.</param>
+  /// <param name="AFileName">The file the drawing was saved in, or was to be.</param>
+  /// <param name="AWidth">The drawing's width in pixels, before it was scaled down.</param>
+  /// <param name="AHeight">The drawing's height in pixels, before it was scaled
+  /// down.</param>
+  /// <param name="AError">Empty if it was saved, otherwise why not.</param>
+  TSprite3DOverscanKeptEvent = procedure(Sender: TObject; const AFileName: String;
+    const AWidth, AHeight: Integer; const AError: String) of object;
 
   //** @abstract(Signature of TSprite3DOffscreen.OnShiftView.)
   //**
@@ -330,17 +356,28 @@ type
     FPixelScale: Single;   // pixels read per target pixel, from display scaling
     FOnOverscanReduced: TSprite3DOverscanEvent;
     FOnShiftView: TSprite3DShiftViewEvent;
+    FKeepOverscanFile: String;   // the next overscanned drawing is saved here
+    // An overscanned matte came back wholly transparent: the grab is being
+    // made again at 1x, to tell an empty frame from a target the GPU could
+    // not draw, which was FSuspectSize pixels on its larger side
+    FVerifyClear: Boolean;
+    FSuspectSize: Integer;
+    FOnOverscanKept: TSprite3DOverscanKeptEvent;
     FJitter: Integer;       // shifted drawings each way for this grab; 1 for one
     FJitterIndex: Integer;  // the drawing under way, 0 to FJitter * FJitter - 1
     FShifted: Boolean;      // OnShiftView has slid the view for this drawing
     FAccum: TArray<Single>; // the drawings so far, scaled down and added up
     procedure RetrySmaller;
+    procedure RetryAfter(const AFailedSize: Integer);
+    procedure VerifyClear;
     function DirectOverscan(const AWidth, AHeight: Integer): Integer;
     procedure StartDrawings;
     procedure Collect(const APixels: TBytes; const AMatte: Boolean);
     procedure Restore;
     procedure SetOverscan(const Value: Integer);
     procedure ProcessDrawing(const AFirst, ASecond: TBytes; const AMatte: Boolean);
+    procedure SaveKept(const APixels: TBytes; const AWidth, AHeight: Integer;
+      const AFileName: String);
     procedure SetWidth(const Value: Integer);
     procedure SetHeight(const Value: Integer);
     procedure ApplyTargetSize;
@@ -601,6 +638,28 @@ type
     /// main thread, outside the render loop; it must not call Grab or Cancel.</remarks>
     property OnOverscanReduced: TSprite3DOverscanEvent read FOnOverscanReduced
       write FOnOverscanReduced;
+    //** @abstract(A PNG file to save the next overscanned drawing in, as drawn, before it is
+    //** scaled down; empty, as it starts, for none.)
+    //**
+    //** For checking overscan. The next drawing made larger than the grab, whose size it does
+    //** not match, is saved there, as a matte with its transparency where the grab has one, and
+    //** the property is emptied, so only one is saved; drawings at the grab's own size leave it
+    //** set. With shifted drawings it is the first of them. Saving happens on the main thread
+    //** once the drawing is read; OnOverscanKept then says how it went.
+    /// <summary>A PNG file to save the next overscanned drawing in, as drawn, before it is
+    /// scaled down; empty, as it starts, for none.</summary>
+    /// <remarks>For checking overscan. The next drawing made larger than the grab, whose size
+    /// it does not match, is saved there, as a matte with its transparency where the grab has
+    /// one, and the property is emptied, so only one is saved; drawings at the grab's own size
+    /// leave it set. With shifted drawings it is the first of them. Saving happens on the main
+    /// thread once the drawing is read; OnOverscanKept then says how it went.</remarks>
+    property KeepOverscanFile: String read FKeepOverscanFile write FKeepOverscanFile;
+    //** @abstract(Runs on the main thread once KeepOverscanFile has been saved, or could not
+    //** be.)
+    /// <summary>Runs on the main thread once KeepOverscanFile has been saved, or could not
+    /// be.</summary>
+    property OnOverscanKept: TSprite3DOverscanKeptEvent read FOnOverscanKept
+      write FOnOverscanKept;
     //** @abstract(Slides the view by a fraction of a pixel for one of a grab's shifted
     //** drawings, or puts it back.)
     //**
@@ -1231,7 +1290,14 @@ var
   Direct: Integer;
 begin
   Direct := DirectOverscan(FWidth, FHeight);
-  if FOverscan <= Direct then
+  // Checking whether a wholly transparent overscanned drawing was really
+  // empty: one drawing at the grab's own size
+  if FVerifyClear then
+  begin
+    FScan := 1;
+    FJitter := 1;
+  end
+  else if FOverscan <= Direct then
   begin
     FScan := FOverscan;
     FJitter := 1;
@@ -1552,6 +1618,7 @@ procedure TSprite3DOffscreen.Cancel;
 begin
   FPending := False;
   FBusy := False;
+  FVerifyClear := False;
   FReads := nil;
   FAccum := nil;
   FOnGrabbed := nil;
@@ -1691,6 +1758,23 @@ begin
   Finish(nil, 0, 0, AError);
 end;
 
+// Whether every pixel of APixels, RGBA, is wholly transparent. Pure: any
+// thread.
+function AllClear(const APixels: TBytes): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  I := 3;
+  while I < Length(APixels) do
+  begin
+    if APixels[I] <> 0 then
+      Exit;
+    Inc(I, 4);
+  end;
+  Result := True;
+end;
+
 // Whether an overscanned drawing did not draw: it read back smaller than the
 // target asked for, or, for a matte (ACheckClear), every pixel is fully
 // transparent, which a framed model never is. Pure: any thread.
@@ -1721,6 +1805,12 @@ end;
 // start, with smaller drawings and more of them, from outside the render.
 // Cancel before then drops it.
 procedure TSprite3DOffscreen.RetrySmaller;
+begin
+  RetryAfter(Max(FGrabWidth, FGrabHeight) * FScan);
+end;
+
+// RetrySmaller's work, for a target AFailedSize pixels on its larger side
+procedure TSprite3DOffscreen.RetryAfter(const AFailedSize: Integer);
 var
   Alive: IAliveFlag;
   Me: TSprite3DOffscreen;
@@ -1728,11 +1818,12 @@ var
   Failed: Integer;
   Step: TThreadProcedure;
 begin
-  Failed := Max(FGrabWidth, FGrabHeight) * FScan;
+  Failed := AFailedSize;
   LearnedTargetLimit := Min(LearnedTargetLimit, Failed - 1);
   Callback := FOnGrabbed;
   FOnGrabbed := nil;
   FReads := nil;
+  FAccum := nil;
   Alive := FAlive as IAliveFlag;
   Me := Self;
   Step :=
@@ -1747,6 +1838,45 @@ begin
           Me.SinglePassOverscan(Me.FGrabWidth, Me.FGrabHeight));
       if not Me.Grab(Callback) and Assigned(Callback) then
         Callback(nil, 'The grab could not be started again with smaller drawings.');
+    end;
+  System.Classes.TThread.ForceQueue(nil, Step);
+end;
+
+// An overscanned matte came back wholly transparent, which a GPU that could
+// not draw the target gives, but so does a frame with nothing in view, such
+// as one where the model has gone. The grab is made again, from the start,
+// as one drawing at the grab's own size, which any GPU can draw: if that is
+// empty too, the frame is empty, and is the grab; if not, the target really
+// was too large, and that is learnt, as RetrySmaller does. So an empty frame
+// never cuts overscan down for the rest of the session.
+procedure TSprite3DOffscreen.VerifyClear;
+var
+  Alive: IAliveFlag;
+  Me: TSprite3DOffscreen;
+  Callback: TSprite3DGrabProc;
+  Step: TThreadProcedure;
+begin
+  FSuspectSize := Max(FGrabWidth, FGrabHeight) * FScan;
+  Callback := FOnGrabbed;
+  FOnGrabbed := nil;
+  FReads := nil;
+  FAccum := nil;
+  Alive := FAlive as IAliveFlag;
+  Me := Self;
+  Step :=
+    procedure
+    begin
+      if not Alive.IsAlive or not Me.FBusy then
+        Exit;   // freed or cancelled meanwhile
+      Me.FBusy := False;
+      Me.Enabled := False;
+      Me.FVerifyClear := True;
+      if not Me.Grab(Callback) then
+      begin
+        Me.FVerifyClear := False;
+        if Assigned(Callback) then
+          Callback(nil, 'The grab could not be started again to check it.');
+      end;
     end;
   System.Classes.TThread.ForceQueue(nil, Step);
 end;
@@ -1788,7 +1918,8 @@ var
   Encoded: Boolean;
   ReadW, ReadH, GrabW, GrabH, Scan: Integer;
   Filter: TSprite3DResampleFilter;
-  IsMatte: Boolean;
+  IsMatte, Verifying: Boolean;
+  Keep: String;
 begin
   Alive := FAlive as IAliveFlag;
   Me := Self;
@@ -1802,6 +1933,32 @@ begin
   GrabH := FGrabHeight;
   Scan := FScan;
   Filter := FResample;
+  Verifying := FVerifyClear;
+  // An overscanned drawing to keep, as asked: taken now, so only one is
+  Keep := String.Empty;
+  if (FKeepOverscanFile <> String.Empty) and ((ReadW <> GrabW) or (ReadH <> GrabH)) then
+  begin
+    Keep := FKeepOverscanFile;
+    FKeepOverscanFile := String.Empty;
+  end
+  else if (FKeepOverscanFile <> String.Empty) and (FOverscan > 1) and (FJitter <= 1) and
+    not FVerifyClear then
+  begin
+    // Overscan asked for, but drawn at the grab's own size: nothing larger
+    // to keep, which is what the file is meant to show, so say so, from the
+    // main queue, as this runs inside the render
+    var Missed := FKeepOverscanFile;
+    var Factor := FOverscan;
+    FKeepOverscanFile := String.Empty;
+    System.Classes.TThread.ForceQueue(nil,
+      procedure
+      begin
+        if Alive.IsAlive and Assigned(Me.FOnOverscanKept) then
+          Me.FOnOverscanKept(Me, Missed, ReadW, ReadH, Format('overscan %dx was asked ' +
+            'for, but the drawing came back at the grab''s own size, %d x %d', [Factor,
+            ReadW, ReadH]));
+      end);
+  end;
   // Nothing is pending until the next drawing is started, so the pass can
   // stop drawing every frame while the worker is busy; it cannot be
   // switched off from inside its own render, so from the main queue
@@ -1814,12 +1971,15 @@ begin
   TTask.Run(
     procedure
     var
-      Pixels: TBytes;
-      Failed: Boolean;
+      Pixels, Kept: TBytes;
+      Failed, TooSmall, StillClear: Boolean;
       Error: String;
     begin
       Failed := False;
+      TooSmall := False;
+      StillClear := False;
       Error := String.Empty;
+      Kept := nil;
       try
         if IsMatte then
           Pixels := BuildMatte(First, Second, Encoded)
@@ -1832,6 +1992,15 @@ begin
         First := nil;
         Second := nil;
         Failed := OverscanFailed(Pixels, ReadW, ReadH, GrabW, GrabH, Scan, IsMatte);
+        // Read back smaller than asked for is a sure failure; wholly
+        // transparent may only be an empty frame, so it is checked first
+        TooSmall := (Scan > 1) and ((ReadW < GrabW * Scan) or (ReadH < GrabH * Scan));
+        // The check: whether the drawing at the grab's own size is empty too
+        if Verifying and IsMatte then
+          StillClear := AllClear(Pixels);
+        // A copy as drawn, to be saved, if asked for
+        if not Failed and (Keep <> String.Empty) then
+          Kept := Copy(Pixels);
         // An overscanned drawing goes back to the grab's size here, before
         // any backdrop, and the large one is let go
         if not Failed and ((ReadW <> GrabW) or (ReadH <> GrabH)) then
@@ -1845,14 +2014,56 @@ begin
         begin
           if not Alive.IsAlive or not Me.FBusy then
             Exit;   // freed or cancelled meanwhile
+          // Kept as drawn, before anything else is done with the grab
+          if Kept <> nil then
+            Me.SaveKept(Kept, ReadW, ReadH, Keep)
+          else if (Keep <> String.Empty) and Failed then
+            Me.FKeepOverscanFile := Keep;   // the smaller retry is kept instead
+          if Verifying then
+          begin
+            Me.FVerifyClear := False;
+            if (Error = String.Empty) and IsMatte and not StillClear then
+            begin
+              // Not empty at 1x: the overscanned target really failed
+              Me.RetryAfter(Me.FSuspectSize);
+              Exit;
+            end;
+            // Empty at 1x as well: an empty frame, which is the grab
+          end;
           if Error <> String.Empty then
             Me.Finish(nil, 0, 0, 'Processing the grab failed: ' + Error)
-          else if Failed then
+          else if Failed and TooSmall then
             Me.RetrySmaller
+          else if Failed then
+            Me.VerifyClear
           else
             Me.Collect(Pixels, IsMatte);
         end);
     end);
+end;
+
+// Saves an overscanned drawing, as drawn, as the PNG AFileName, and says how
+// it went through OnOverscanKept; on the main thread
+procedure TSprite3DOffscreen.SaveKept(const APixels: TBytes; const AWidth,
+  AHeight: Integer; const AFileName: String);
+var
+  Bitmap: TBitmap;
+  Error: String;
+begin
+  Error := String.Empty;
+  try
+    Bitmap := PixelsToBitmap(APixels, AWidth, AHeight);
+    try
+      Bitmap.SaveToFile(AFileName);
+    finally
+      Bitmap.Free;
+    end;
+  except
+    on E: Exception do
+      Error := E.Message;
+  end;
+  if Assigned(FOnOverscanKept) then
+    FOnOverscanKept(Self, AFileName, AWidth, AHeight, Error);
 end;
 
 // One drawing done, at the grab's size: with no shifted drawings, it is the

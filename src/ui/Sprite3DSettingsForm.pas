@@ -14,7 +14,8 @@
 //**     |       |-- LeftColumn
 //**     |       |   |-- AssocGroup     OpenWithCheck, AlwaysCheck, AssocNote
 //**     |       |   |-- StartupGroup   None, Load default model, Load last model
-//**     |       |   `-- ThemeGroup     Default @(no theme@), Dark, Aqua, Ruby, Golden Graphite
+//**     |       |   |-- ThemeGroup     Default @(no theme@), Dark, Aqua, Ruby, Golden Graphite
+//**     |       |   `-- ResultsGroup   ResultsEdgeHintCheck
 //**     |       `-- RightColumn
 //**     |           |-- GrabGroup      GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
 //**     |           |                  GrabFolderText, GrabFolderResetButton
@@ -60,7 +61,8 @@ unit Sprite3DSettingsForm;
         |       |-- LeftColumn
         |       |   |-- AssocGroup     OpenWithCheck, AlwaysCheck, AssocNote
         |       |   |-- StartupGroup   None, Load default model, Load last model
-        |       |   `-- ThemeGroup     Default (no theme), Dark, Aqua, Ruby, Golden Graphite
+        |       |   |-- ThemeGroup     Default (no theme), Dark, Aqua, Ruby, Golden Graphite
+        |       |   `-- ResultsGroup   ResultsEdgeHintCheck
         |       `-- RightColumn
         |           |-- GrabGroup      GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
         |           |                  GrabFolderText, GrabFolderResetButton
@@ -116,10 +118,11 @@ type
     //** @abstract(Holds LeftColumn and RightColumn, as tall as the taller of them.)
     /// <summary>Holds LeftColumn and RightColumn, as tall as the taller of them.</summary>
     ColumnsLayout: TLayout;
-    //** @abstract(The left column: AssocGroup, StartupGroup and ThemeGroup.)
+    //** @abstract(The left column: AssocGroup, StartupGroup, ThemeGroup and ResultsGroup.)
     //**
     //** On Android and iOS it holds every group, in one column, and RightColumn is hidden.
-    /// <summary>The left column: AssocGroup, StartupGroup and ThemeGroup.</summary>
+    /// <summary>The left column: AssocGroup, StartupGroup, ThemeGroup and
+    /// ResultsGroup.</summary>
     /// <remarks>On Android and iOS it holds every group, in one column, and RightColumn is
     /// hidden.</remarks>
     LeftColumn: TLayout;
@@ -169,6 +172,13 @@ type
     //** @abstract(The Golden Graphite FMX style: dark grey with gold.)
     /// <summary>The Golden Graphite FMX style: dark grey with gold.</summary>
     ThemeGoldenRadio: TRadioButton;
+    //** @abstract(The Results tab's choices.)
+    /// <summary>The Results tab's choices.</summary>
+    ResultsGroup: TGroupBox;
+    //** @abstract(Gives the Results tab's empty border values a hint explaining them.)
+    /// <summary>Gives the Results tab's empty border values a hint explaining
+    /// them.</summary>
+    ResultsEdgeHintCheck: TCheckBox;
     //** @abstract(The GPU choices; Windows only.)
     /// <summary>The GPU choices; Windows only.</summary>
     GpuGroup: TGroupBox;
@@ -545,6 +555,7 @@ begin
   FrameRateTrackChange(FrameRateTrack);
 
   MinifyJsonCheck.IsChecked := Value.MinifyJson;
+  ResultsEdgeHintCheck.IsChecked := Value.ResultsEdgeHint;
 
   case Value.GpuMode of
     gmPowerSaving: GpuLowRadio.IsChecked := True;
@@ -592,6 +603,7 @@ begin
       Max(VIEW_FPS_MIN, FValues.MaxViewFps));
 
   FValues.MinifyJson := MinifyJsonCheck.IsChecked;
+  FValues.ResultsEdgeHint := ResultsEdgeHintCheck.IsChecked;
 
   if GpuGroup.Visible then
   begin

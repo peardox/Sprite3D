@@ -15,6 +15,7 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
 {
   "meta": {
     "export_type": "strip",
+    "is_animated": true,
     "page": 1,
     "page_count": 1,
     "total_frames": 8,
@@ -32,12 +33,13 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
     "size": { "width": 6144, "height": 256 },
     "sprite_size": { "width": 256, "height": 256 },
     "layout": { "cols": 24, "rows": 1, "frame_count": 24 },
-    "origin": { "x": 127, "y": 214 },
+    "origin": { "x": 127.5, "y": 214.25 },
     "sprite_empty": { "left": 58, "top": 9, "right": 61, "bottom": 30 },
     "directions": [0],
     "animations": [{ "name": "walk", "frame_count": 24, "time": 1.0333 }],
     "unused": 0,
-    "two_pass": false,
+    "two_pass": true,
+    "exact": false,
     "overscan": { "enabled": true, "factor": 4 }
   },
   "camera": {
@@ -92,6 +94,7 @@ On an atlas page, the frames of several animations follow one another, and an an
 | Member | Meaning |
 |---|---|
 | `meta.export_type` | what made the image: `strip` for a sprite strip, `sheet` for a spritesheet, `atlas` for a texture atlas page |
+| `meta.is_animated` | whether the model has any animations; `false` for a static model, which an export measures more finely, so it comes out at the padding chosen exactly |
 | `meta.page` | this image's page, from 1, as its file name numbers it; 1 for a strip or spritesheet |
 | `meta.page_count` | how many pages the export made; 1 for a strip or spritesheet |
 | `meta.total_frames` | how many frames the export made in all: for a texture atlas, over every page, every animation and every direction, the same on each page; for a strip or spritesheet, the file's own frames |
@@ -105,7 +108,7 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.sprite_size.width`, `image.sprite_size.height` | one frame, in pixels: the grab size from File, Settings, the same for every frame |
 | `image.layout.cols`, `image.layout.rows` | the grid of cells the frames are laid out in |
 | `image.layout.frame_count` | how many frames there are; a spritesheet can have more cells than frames |
-| `image.origin.x`, `image.origin.y` | the pixel the model's centre of rotation falls on in every frame; integers |
+| `image.origin.x`, `image.origin.y` | where the model's centre of rotation falls in every frame, to a thousandth of a pixel; a whole number is the centre of that pixel, so `127.5` is the line between pixels 127 and 128 |
 | `image.sprite_empty` | the smallest empty section on each side over all the frames |
 | `image.directions` | the directions the image holds, as bearings in degrees in export order; `[0]` without directions (see below) |
 | `image.animations` | the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas |
@@ -113,7 +116,8 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.animations[i].frame_count` | how many frames it has in each direction, including any on other atlas pages |
 | `image.animations[i].time` | how long it takes to play once, in seconds: the animation's own length, whatever number of frames it was saved at |
 | `image.unused` | the number of empty cells after the last frame: `cols` × `rows` − `frame_count`; 0 on every atlas page but the last |
-| `image.two_pass` | whether the frames were made by a **2-pass** export's second pass |
+| `image.two_pass` | whether the frames were made by a 2-pass export's second pass; every export is 2-pass, so it is always `true` |
+| `image.exact` | whether the export's first pass measured the frames exactly, at 4x overscan: `true` with **Exact** ticked, and always for a static model, which is always measured so |
 | `image.overscan.enabled` | whether **Overscan** was ticked in Animation, Animation Settings |
 | `image.overscan.factor` | the overscan factor set there, from its slider; given even when overscan is off |
 | `camera.view` | the View, Camera view checked: `Variable`, `Isometric`, `Pixel2To1`, `ThreeQuarter`, `HeadOn`, `TopDown` or `Side`, as `settings.json` names them |
@@ -137,7 +141,7 @@ The file is UTF-8 without a byte order mark, indented two spaces, or minified, w
 
 ## Export choices and camera
 
-`two_pass` and `overscan` record the choices the frames were made with: whether they were made by a **2-pass** export, reframed from a first, measuring pass so the sprite fills the frame (see *Batch export* in the README), and whether overscan was on and at what factor. Overscan draws each frame larger and scales it down, so its edges are smoother; see *Overscan* in the README.
+`two_pass`, `exact` and `overscan` record the choices the frames were made with: whether they were made by a **2-pass** export, reframed from a first, measuring pass so the sprite fills the frame (see *Batch export* in the README), whether that pass measured exactly, and whether overscan was on and at what factor. Overscan draws each frame larger and scales it down, so its edges are smoother; see *Overscan* in the README.
 
 `camera` records how the model was viewed when the export started, so the same view can be set up again, or matched by other art. The angles are the readouts' own, as the dials show them. With directions, each direction turns the view on from `azimuth` by its bearing in `image.directions`; the camera's own `azimuth` is not changed by it. The camera is turned back once each capture ends, so every file of an export has the same `camera`.
 
@@ -179,7 +183,7 @@ A batch exported as **Texture Atlas** is packed onto pages no larger than the **
    - **Pages need not be a power of 2**: every number of columns is tried, with as many rows as it needs, and the least area, then the squarest, wins; the page is exactly `cols` × `rows` cells.
 4. **Naming.** Pages are numbered from 01: `<model>_atlas_01.png`, `_02` and so on, each with its own `.json`. Any `<model>_atlas_<number>.png` already in the folder, with its `.json`, is deleted first, so an earlier atlas with more pages leaves none behind.
 
-A page's `animations` lists only the animations with frames on that page; each one's `frame_count` still gives its whole length, and `frame` in each entry says which part of it the page holds. A page's `origin` is the first animation's on it. Every animation of a batch is framed with the same camera, so they all share one; if they ever differ, the Debug tab says so.
+A page's `animations` lists only the animations with frames on that page; each one's `frame_count` still gives its whole length, and `frame` in each entry says which part of it the page holds. A page's `origin` is the first animation's on it. Every animation of a batch is framed with the same camera, so they all share one; if they ever differ by more than a hundredth of a pixel, the Debug tab says so.
 
 ## Empty sections
 
@@ -218,10 +222,9 @@ The origin is the model's **centre of rotation**: its own origin, (0, 0, 0) in t
 
 1. **Framed once.** The camera is framed once for the whole export, and the model never moves during it, so the origin falls in the same place in every frame. It is worked out once, as the capture starts.
 2. **Projected.** The centre of rotation is carried into the camera's space and through the camera's own projection for the grab size, in perspective or orthographic projection as the view is set. That gives where it falls in a frame, to a fraction of a pixel. This is `TSprite3DCamera.ProjectToView`.
-3. **Put on a pixel.** The view is then slid, by less than half a pixel across and down, so that the centre of rotation falls exactly on the centre of the pixel it was in. The slide is exact in orthographic projection and very nearly so in perspective, so the point is projected again after each slide, up to four times, until it is within a hundredth of a pixel of the centre. This is `SnapCaptureOrigin` in the main form.
-4. **Reported.** The origin is that pixel's column and row, written as JSON integers (`127`, never `127.0`), and the sprite is drawn so that it really is there.
+3. **Reported.** The origin is that place, in the frame's pixels, rounded to a thousandth of a pixel. The pixels are counted from 0 and a whole number is the centre of a pixel, so `127` is the middle of column 127, as earlier versions gave it, and `127.5` the line between columns 127 and 128. This is `MeasureCaptureOrigin` in the main form.
 
-The slide is made for every strip and spritesheet, whether or not Metadata is ticked, so an image is the same either way. It is far smaller than anything the framing would notice, and the view on screen is put back when the export ends, even when View, Camera, Lock Camera is ticked. With overscan on, each frame's shifted drawings are spread evenly round the same pixel, so the origin stays on it.
+The view is not moved to put the origin on a pixel, as earlier versions did, so the framing, and with 2-pass the fit, is not held back by it: a sprite can be centred exactly, so with 2-pass both edges on the axis with least room come out alike.
 
 If the centre of rotation is behind the camera, which a hand-placed locked camera could manage, it has no place in the frame, and `x` and `y` are `null`.
 
@@ -231,9 +234,9 @@ The origin can lie outside the frame, or inside a frame's empty sections, if the
 
 `animations` lists the animations the image holds, in the order they first appear in it, one object each:
 
-- `name`, as the Animations list shows it, such as `"walk"`, or `"(None)"` for the still of the bind pose.
+- `name`, as the Animations list shows it, such as `"walk"`, or, for a static model, its file's name without the extension, such as `"uvcube"`, for its single still frame.
 - `frame_count`, its whole frame count in each direction, wherever its frames are.
-- `time`, how long it takes to play once, in seconds. This is the animation's own length, and stays the same when its number of frames is changed in the Animations list: fewer frames over the same time is a lower frame rate for that animation alone. `frame_count / time` is the rate to play it back at. The still of the bind pose, one frame, is given 1 second.
+- `time`, how long it takes to play once, in seconds. This is the animation's own length, and stays the same when its number of frames is changed in the Animations list: fewer frames over the same time is a lower frame rate for that animation alone. `frame_count / time` is the rate to play it back at. A static model's still, one frame, is given 1 second.
 
 A strip or spritesheet holds one animation, so it has a single entry; an atlas page lists every animation with frames on it. Each `frames[i]` names its animation by its index in `animations`, so an animation's frames are found by their `animation`, and put in order by their `frame`, across as many pages as they span.
 
@@ -247,7 +250,7 @@ A strip or spritesheet holds one animation, so it has a single entry; an atlas p
 
 With directions, each animation is captured once per direction, in their order, before the next animation:
 
-- **Sprite strip.** One strip per direction, each a single row of that direction's frames, `<model>_<animation>_dir01_strip<frames>.png`, `_dir02` and so on, numbered in direction order. Its `directions` lists that one direction's bearing, so every frame's `direction` is 0.
+- **Sprite strip.** One strip per direction, each a single row of that direction's frames, `<model>_<animation>_dir01_strip<frames>.png`, `_dir02` and so on, numbered in direction order. Its `directions` lists that one direction's bearing, so every frame's `direction` is 0. A static model's strip is the exception: one strip, `<model>_static_strip<frames>.png`, a single row of one frame per direction, in direction order, whose `directions` lists every bearing, so frame *n* has `direction` *n*.
 - **Spritesheet.** Every direction's frames, the first direction's then the next's, in the square grid.
 - **Texture atlas.** The same order, each animation's directions in turn, filling the pages as before; a page's `animations` lists each animation once, whatever directions of it the page holds.
 - **AniGif and MP4.** One file per direction, `<animation>_dir01.gif`, `_dir02` and so on, numbered in direction order; they have no metadata.
@@ -260,7 +263,7 @@ Each animation's `frame_count` is the frames of one direction of it, which is ho
 |---|---|
 | `src/lib/Sprite3DSpriteSheet.pas` | `TSprite3DFrameEmpty`, `MeasureFrameEmpty` (one frame's empty sections) and `SaveSheetMetadata` (the whole file, from a `TSprite3DSheetInfo`), beside `ComposeStrip`, `ComposeSheet`, and `PlanAtlasPages` with `ComposeAtlasPage` for atlas pages |
 | `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.ProjectToView`, where a point falls in a view of a given size, and `ShiftView`, which slides the view by pixels |
-| `src/ui/Sprite3dMain.pas` | `StartCapture` decides whether metadata is written; `SnapCaptureOrigin` puts the origin on a pixel; `SaveSheet` writes a strip or spritesheet and then its `.json`; `SaveAtlasBatch` and `SaveAtlas` make and write the atlas pages at the end of a batch; `EndCapture` undoes the slide |
+| `src/ui/Sprite3dMain.pas` | `StartCapture` decides whether metadata is written; `MeasureCaptureOrigin` finds the origin; `SaveSheet` writes a strip or spritesheet and then its `.json`; `SaveAtlasBatch` and `SaveAtlas` make and write the atlas pages at the end of a batch; `EndCapture` puts the view back |
 | `src/ui/Sprite3DHelpers.pas` | the `ExportMetadata`, `ExportDirections`, `AtlasPageSize` and `AtlasNonPowerOf2` settings |
 | `src/ui/Sprite3DAnimationForm.pas` | Animation, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
 
