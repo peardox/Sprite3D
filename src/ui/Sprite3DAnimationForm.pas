@@ -1,4 +1,4 @@
-//** @abstract(The Model, Animation Settings dialog: the frame rate animations are saved at,
+//** @abstract(The Animation, Animation Settings dialog: the frame rate animations are saved at,
 //** overscan, and texture atlas pages.)
 //**
 //** One slider, marked FPS, sets the frames per second that the animation list's Save as
@@ -12,7 +12,10 @@
 //** smaller of OVERSCAN_FACTOR_MAX and MaxOverscan, which the caller sets to what the
 //** off-screen renderer can do; where that is below OVERSCAN_FACTOR_MIN, as where grabs are
 //** screenshots, the tick box is disabled and a note says why. The slider and the drop-down
-//** are only enabled while the box is ticked.
+//** are only enabled while the box is ticked. Ticking the box by hand first shows a modal
+//** warning of how much longer rendering takes, unless OverscanWarning is False: OK keeps
+//** the tick, Cancel takes it back, and Do not show this again, between them, stops it
+//** appearing again.
 //**
 //** Under Texture Atlas, Page size chooses the largest a texture atlas page may be each way,
 //** one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick box below lets pages be any
@@ -27,7 +30,7 @@
 unit Sprite3DAnimationForm;
 
 {
-  The Model, Animation Settings dialog: the frame rate animations are saved
+  The Animation, Animation Settings dialog: the frame rate animations are saved
   at, overscan, and texture atlas pages.
 
   One slider, marked FPS, sets the frames per second that the animation
@@ -42,7 +45,10 @@ unit Sprite3DAnimationForm;
   MaxOverscan, which the caller sets to what the off-screen renderer can do;
   where that is below OVERSCAN_FACTOR_MIN, as where grabs are screenshots,
   the tick box is disabled and a note says why. The slider and the drop-down
-  are only enabled while the box is ticked.
+  are only enabled while the box is ticked. Ticking the box by hand first
+  shows a modal warning of how much longer rendering takes, unless
+  OverscanWarning is False: OK keeps the tick, Cancel takes it back, and Do
+  not show this again, between them, stops it appearing again.
 
   Under Texture Atlas, Page size chooses the largest a texture atlas page
   may be each way, one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick
@@ -65,8 +71,8 @@ uses
   FMX.Controls.Presentation, FMX.Layouts, FMX.ListBox, Sprite3DResample;
 
 type
-  //** @abstract(The Model, Animation Settings dialog; see the unit description.)
-  /// <summary>The Model, Animation Settings dialog; see the unit description.</summary>
+  //** @abstract(The Animation, Animation Settings dialog; see the unit description.)
+  /// <summary>The Animation, Animation Settings dialog; see the unit description.</summary>
   TAnimationSettingsForm = class(TForm)
     //** @abstract(Holds the FPS row and the explanation.)
     /// <summary>Holds the FPS row and the explanation.</summary>
@@ -189,6 +195,14 @@ type
     FOnCancel: TNotifyEvent;
     FFreeOnClose: Boolean;
     FMaxOverscan: Integer;
+    FGrabWidth: Integer;
+    FGrabHeight: Integer;
+    FOverscanWarning: Boolean;
+    FOnOverscanWarningChange: TNotifyEvent;
+    // True while the code, not the user, changes the Overscan tick
+    FSettingOverscan: Boolean;
+    procedure SetOverscanCheck(const AChecked: Boolean);
+    procedure ConfirmOverscan;
     function GetFps: Integer;
     procedure SetFps(const Value: Integer);
     function GetOverscanEnabled: Boolean;
@@ -240,6 +254,34 @@ type
     /// <remarks>Setting it True has no effect while MaxOverscan is below
     /// OVERSCAN_FACTOR_MIN.</remarks>
     property OverscanEnabled: Boolean read GetOverscanEnabled write SetOverscanEnabled;
+    //** @abstract(The width of a grab, in pixels, for the overscan warning; 256 until set.)
+    /// <summary>The width of a grab, in pixels, for the overscan warning; 256 until
+    /// set.</summary>
+    property GrabWidth: Integer read FGrabWidth write FGrabWidth;
+    //** @abstract(The height of a grab, in pixels, for the overscan warning; 256 until set.)
+    /// <summary>The height of a grab, in pixels, for the overscan warning; 256 until
+    /// set.</summary>
+    property GrabHeight: Integer read FGrabHeight write FGrabHeight;
+    //** @abstract(Whether ticking Overscan first shows the warning; True until set.)
+    //**
+    //** Ticking Overscan by hand while this is True opens a modal warning that each frame is
+    //** drawn GrabWidth x GrabHeight times the factor and resampled back down, which takes
+    //** far longer. OK keeps the tick and Cancel takes it back. Ticking Do not show this
+    //** again in it sets this False, whether OK or Cancel is pressed, and calls
+    //** OnOverscanWarningChange. Setting OverscanEnabled never shows it.
+    /// <summary>Whether ticking Overscan first shows the warning; True until set.</summary>
+    /// <remarks>Ticking Overscan by hand while this is True opens a modal warning that each
+    /// frame is drawn GrabWidth x GrabHeight times the factor and resampled back down, which
+    /// takes far longer. OK keeps the tick and Cancel takes it back. Ticking Do not show this
+    /// again in it sets this False, whether OK or Cancel is pressed, and calls
+    /// OnOverscanWarningChange. Setting OverscanEnabled never shows it.</remarks>
+    property OverscanWarning: Boolean read FOverscanWarning write FOverscanWarning;
+    //** @abstract(Called on the main thread when Do not show this again changes
+    //** OverscanWarning, so the caller can keep it at once.)
+    /// <summary>Called on the main thread when Do not show this again changes
+    /// OverscanWarning, so the caller can keep it at once.</summary>
+    property OnOverscanWarningChange: TNotifyEvent read FOnOverscanWarningChange
+      write FOnOverscanWarningChange;
     //** @abstract(The overscan factor shown; limited to OVERSCAN_FACTOR_MIN to MaxOverscan.)
     //**
     //** It keeps its value while the box is not ticked, so it can be kept as a setting.
@@ -295,6 +337,9 @@ begin
     FilterCombo.Items.Add(ResampleFilterName(F));
   FilterCombo.ItemIndex := Ord(rfBox);
 
+  FGrabWidth := GRAB_SIZE_DEFAULT;
+  FGrabHeight := GRAB_SIZE_DEFAULT;
+  FOverscanWarning := True;
   OverscanTrack.Frequency := 1;
   OverscanTrack.Min := OVERSCAN_FACTOR_MIN;
   OverscanTrack.Value := OVERSCAN_FACTOR_DEFAULT;
@@ -344,9 +389,110 @@ begin
   OverscanValueLabel.Text := IntToStr(GetOverscan) + 'x';
 end;
 
+// Ticked by hand: the warning first, if it is still wanted, the tick taken
+// back until it is answered
 procedure TAnimationSettingsForm.OverscanCheckChange(Sender: TObject);
 begin
+  if not FSettingOverscan and OverscanCheck.IsChecked and FOverscanWarning then
+  begin
+    SetOverscanCheck(False);
+    ConfirmOverscan;
+    Exit;
+  end;
   UpdateOverscanControls;
+end;
+
+// Ticks or clears Overscan without the warning
+procedure TAnimationSettingsForm.SetOverscanCheck(const AChecked: Boolean);
+begin
+  FSettingOverscan := True;
+  try
+    OverscanCheck.IsChecked := AChecked;
+  finally
+    FSettingOverscan := False;
+  end;
+  UpdateOverscanControls;
+end;
+
+// The overscan warning, a modal sub-dialog made here: OK, on the right,
+// ticks Overscan, Cancel, on the left, leaves it clear; Do not show this
+// again, between them, stops it
+// appearing again either way. ShowModal with a result procedure works on
+// every platform: on the desktop it blocks, on Android and iOS it returns at
+// once and the procedure runs when the dialog closes.
+procedure TAnimationSettingsForm.ConfirmOverscan;
+var
+  Warning: TForm;
+  Text: TLabel;
+  Buttons: TLayout;
+  OkButton, CancelButton: TButton;
+  NeverCheck: TCheckBox;
+  Factor: Integer;
+begin
+  Factor := GetOverscan;
+  // Owned, and so freed, by this dialog, over which it is centred
+  Warning := TForm.CreateNew(Self);
+  Warning.Caption := 'Overscan';
+  Warning.BorderStyle := TFmxFormBorderStyle.Single;
+  Warning.BorderIcons := [TBorderIcon.biSystemMenu];
+  Warning.Position := TFormPosition.OwnerFormCenter;
+  Warning.ClientWidth := 460;
+  Warning.ClientHeight := 210;
+
+  Buttons := TLayout.Create(Warning);
+  Buttons.Parent := Warning;
+  Buttons.Align := TAlignLayout.Bottom;
+  Buttons.Height := 44;
+  Buttons.Padding.Rect := TRectF.Create(16, 8, 16, 10);
+  OkButton := TButton.Create(Warning);
+  OkButton.Parent := Buttons;
+  OkButton.Align := TAlignLayout.Right;
+  OkButton.Width := 80;
+  OkButton.Text := 'OK';
+  OkButton.ModalResult := mrOk;
+  OkButton.Default := True;
+  CancelButton := TButton.Create(Warning);
+  CancelButton.Parent := Buttons;
+  CancelButton.Align := TAlignLayout.Left;
+  CancelButton.Width := 80;
+  CancelButton.Text := 'Cancel';
+  CancelButton.ModalResult := mrCancel;
+  CancelButton.Cancel := True;
+  // Between Cancel, on the left, and OK, on the right, as in the other
+  // dialogs
+  NeverCheck := TCheckBox.Create(Warning);
+  NeverCheck.Parent := Buttons;
+  NeverCheck.Align := TAlignLayout.Center;
+  NeverCheck.Width := 170;
+  NeverCheck.Height := 19;
+  NeverCheck.Text := 'Do not show this again';
+
+  Text := TLabel.Create(Warning);
+  Text.Parent := Warning;
+  Text.Align := TAlignLayout.Client;
+  Text.Margins.Rect := TRectF.Create(16, 16, 16, 4);
+  Text.TextSettings.WordWrap := True;
+  Text.TextSettings.VertAlign := TTextAlign.Leading;
+  Text.Text := Format('Using this option will drastically increase render time, as each ' +
+    'frame needs to be rendered at a resolution of %d x %d, %d times the grab size each ' +
+    'way at the current factor of %dx, then resampled back down to %d x %d, which is a ' +
+    'highly CPU intensive operation.', [FGrabWidth * Factor, FGrabHeight * Factor, Factor,
+    Factor, FGrabWidth, FGrabHeight]) + sLineBreak + sLineBreak +
+    'It is recommended that you only use this option when you are ready to create the ' +
+    'final production-ready frames.';
+
+  Warning.ShowModal(
+    procedure(AResult: TModalResult)
+    begin
+      if NeverCheck.IsChecked and FOverscanWarning then
+      begin
+        FOverscanWarning := False;
+        if Assigned(FOnOverscanWarningChange) then
+          FOnOverscanWarningChange(Self);
+      end;
+      if AResult = mrOk then
+        SetOverscanCheck(True);
+    end);
 end;
 
 // The slider and drop-down only while overscan is ticked; the tick box only
@@ -356,8 +502,15 @@ var
   Possible: Boolean;
 begin
   Possible := FMaxOverscan >= OVERSCAN_FACTOR_MIN;
-  if not Possible then
-    OverscanCheck.IsChecked := False;
+  if not Possible and OverscanCheck.IsChecked then
+  begin
+    FSettingOverscan := True;
+    try
+      OverscanCheck.IsChecked := False;
+    finally
+      FSettingOverscan := False;
+    end;
+  end;
   OverscanCheck.Enabled := Possible;
   OverscanTrack.Enabled := Possible and OverscanCheck.IsChecked;
   FilterCombo.Enabled := Possible and OverscanCheck.IsChecked;
@@ -379,8 +532,8 @@ end;
 
 procedure TAnimationSettingsForm.SetOverscanEnabled(const Value: Boolean);
 begin
-  OverscanCheck.IsChecked := Value and (FMaxOverscan >= OVERSCAN_FACTOR_MIN);
-  UpdateOverscanControls;
+  // Set by the caller, not ticked by hand: no warning
+  SetOverscanCheck(Value and (FMaxOverscan >= OVERSCAN_FACTOR_MIN));
 end;
 
 function TAnimationSettingsForm.GetOverscan: Integer;

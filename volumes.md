@@ -74,7 +74,7 @@ Two wireframes can be shown from the View menu:
 | **Show Model Volume** | the swept volume of the animation playing, or of the rest pose when none is playing. It changes as soon as another animation plays, whether chosen with the mouse or the arrow keys | swept box aqua; tube walls and axis yellow |
 | **Show Animation Volume** | the **combined** volume: the rest pose and every animation used, joined into one. It is shown only while the view is fitted to it, that is while two or more animations in the Animations list are ticked for export, and never for a model without animations, or with none used, as it would only repeat the rest pose's volume | swept box fuchsia; tube walls and axis hot pink |
 
-**Model, Animations Used...** chooses which animations count. Unticked animations leave the Animations list, so they are not played or exported, and leave the combined volume. A model starts with every animation used.
+**Animation, Animations Used...** chooses which animations count. Unticked animations leave the Animations list, so they are not played or exported, and leave the combined volume. A model starts with every animation used.
 
 The dialog's right-hand column gives each animation's own swept volume, π(*R*² − *r*²)*h*, as a percentage of the combined volume of the rest pose and every animation ticked at the time, and works it out again whenever a tick changes. It is there to catch an animation that does not belong. One that reaches much further than the others, a death that throws the model across the floor, or a jump far higher than any other move, makes the combined volume, and so the framing of every export, much larger: the others then show small percentages beside it. Unticking it shows at once how far the combined volume shrinks without it, and an unticked animation can show more than 100%, as it is no longer part of the combined volume.
 
@@ -119,7 +119,7 @@ In orthographic projection the same steps set the orthographic size in place of 
 | `src/lib/Sprite3DSweep.pas` | `TSweptVolume`, `CalcSweptVolume`, `UnionSweptVolume`, `CombinedSweptVolume`, `MeasureAnimationBounds`, `SweepOutline`, `FitCameraToSweep`, and the wireframes: `TModelSweep` with `ShowModelSweep`, `TCombinedSweep` with `ShowCombinedSweep` |
 | `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.FitPointsOnAxis` |
 | `src/ui/Sprite3dMain.pas` | `FitModel`, `GrabFit` and `FrameCaptureFraming` use `FitCameraToSweep`; `SweepFitVolume` joins the volumes of the animations used; `ApplyShowSweep` and `ApplyShowCombinedSweep` draw the two wireframes |
-| `src/ui/Sprite3DAnimationsUsedForm.pas` | the Model, Animations Used dialog |
+| `src/ui/Sprite3DAnimationsUsedForm.pas` | the Animation, Animations Used dialog |
 
 Each routine's own documentation comments, in the source, give the details.
 

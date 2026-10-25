@@ -293,6 +293,14 @@ type
   /// <remarks>Empty text is written as <c>null</c>. TwoPass and the overscan go in the
   /// <c>image</c> section, and Camera is the <c>camera</c> section.</remarks>
   TSprite3DSheetMeta = record
+    //** @abstract(What kind of export made the image, written as @code(export_type):
+    //** @code(strip), @code(sheet) or @code(atlas).)
+    //**
+    //** Written as @code(null) if empty.
+    /// <summary>What kind of export made the image, written as <c>export_type</c>:
+    /// <c>strip</c>, <c>sheet</c> or <c>atlas</c>.</summary>
+    /// <remarks>Written as <c>null</c> if empty.</remarks>
+    ExportType: String;
     //** @abstract(This image's page, from 1, as its file name numbers it; 1 for a strip or
     //** spritesheet.)
     /// <summary>This image's page, from 1, as its file name numbers it; 1 for a strip or
@@ -336,11 +344,12 @@ type
     //** @abstract(Whether the frames were made by a 2-pass export's second pass.)
     /// <summary>Whether the frames were made by a 2-pass export's second pass.</summary>
     TwoPass: Boolean;
-    //** @abstract(Whether Overscan was ticked in Model, Animation Settings.)
-    /// <summary>Whether Overscan was ticked in Model, Animation Settings.</summary>
+    //** @abstract(Whether Overscan was ticked in Animation, Animation Settings.)
+    /// <summary>Whether Overscan was ticked in Animation, Animation Settings.</summary>
     OverscanEnabled: Boolean;
-    //** @abstract(The overscan factor set in Model, Animation Settings, used or not.)
-    /// <summary>The overscan factor set in Model, Animation Settings, used or not.</summary>
+    //** @abstract(The overscan factor set in Animation, Animation Settings, used or not.)
+    /// <summary>The overscan factor set in Animation, Animation Settings, used or
+    /// not.</summary>
     Overscan: Integer;
     //** @abstract(The camera as the export started.)
     /// <summary>The camera as the export started.</summary>
@@ -713,6 +722,7 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** @preformatted(
 //** {
 //**   "meta": {
+//**     "export_type": "strip",
 //**     "page": 1, "page_count": 1, "total_frames": 8,
 //**     "creator": "...", "creator_url": "...",
 //**     "modeller": "...", "modeller_url": "...",
@@ -753,7 +763,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** }
 //** )
 //**
-//** @code(meta) comes first, from AInfo.Meta: the page, from 1, the number of pages, the
+//** @code(meta) comes first, from AInfo.Meta: @code(export_type), the kind of export,
+//** @code(strip), @code(sheet) or @code(atlas); the page, from 1, the number of pages, the
 //** number of frames the export made over every page in @code(total_frames), the credits,
 //** the day the project started, when this export was made, and the model file; empty
 //** text is @code(null). @code(size) is the whole image's, from AInfo, and
@@ -798,7 +809,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// <summary>Writes the metadata of a sprite strip, spritesheet or texture atlas page as a JSON
 /// file.</summary>
 /// <remarks><para>Each frame is measured with MeasureFrameEmpty. The file holds first a
-/// <c>meta</c> object, from AInfo.Meta, with <c>page</c>, <c>page_count</c>,
+/// <c>meta</c> object, from AInfo.Meta, with <c>export_type</c> (<c>strip</c>, <c>sheet</c>
+/// or <c>atlas</c>), <c>page</c>, <c>page_count</c>,
 /// <c>total_frames</c> (the frames the export made over every page), <c>creator</c>,
 /// <c>creator_url</c>, <c>modeller</c>, <c>modeller_url</c>, <c>artist</c>, <c>artist_url</c>,
 /// <c>created</c>, <c>modified</c> and <c>file</c>, empty text being <c>null</c>; then an
@@ -2010,9 +2022,10 @@ var
 begin
   Root := TJSONObject.Create;
   try
-    // Which page, who made it and when, first
+    // What made it, which page, who made it and when, first
     Item := TJSONObject.Create;
     Root.AddPair('meta', Item);
+    Item.AddPair('export_type', Text(AInfo.Meta.ExportType));
     Item.AddPair('page', TJSONNumber.Create(Max(1, AInfo.Meta.Page)));
     Item.AddPair('page_count', TJSONNumber.Create(Max(1, AInfo.Meta.PageCount)));
     // Over every page; a single image's own when not given

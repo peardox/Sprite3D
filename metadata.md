@@ -5,8 +5,8 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
 ## When it is written
 
 - **Which exports.** Only for **Sprite strip**, **Spritesheet** and **Texture Atlas** exports: strips and spritesheets from the batch Export button or the right-click menu's Save as sprite strip and Save as Spritesheet, atlases from batch Export. AniGifs and MP4 videos have no metadata, so the box is greyed out while either is chosen. A texture atlas always has it, since without it there is no telling the animations on a page apart: while Texture Atlas is chosen the box shows ticked and greyed out, and choosing another format shows the choice kept for strips and spritesheets again.
-- **The file name.** It has the same name as the image, with the extension `.json`: `walk_strip24.png` gets `walk_strip24.json`, a spritesheet `walk.png` gets `walk.json`, and an atlas page `hero_atlas_01.png` gets `hero_atlas_01.json`. An existing file of that name is replaced.
-- **When.** It is written straight after the image, on the same worker thread, from the same frames. The Debug tab logs it as, for example, `Saved ...\walk_strip24.png and its .json (24 frames)`, or for an atlas page `Saved ...\hero_atlas_01.png and its .json (5 animations, 120 frames, 4096 x 2048)`.
+- **The file name.** It has the same name as the image, with the extension `.json`: `hero_walk_dir01_strip24.png` gets `hero_walk_dir01_strip24.json`, a spritesheet `hero_walk.png` gets `hero_walk.json`, and an atlas page `hero_atlas_01.png` gets `hero_atlas_01.json`. An existing file of that name is replaced.
+- **When.** It is written straight after the image, on the same worker thread, from the same frames. The Debug tab logs it as, for example, `Saved ...\hero_walk_dir01_strip24.png and its .json (24 frames)`, or for an atlas page `Saved ...\hero_atlas_01.png and its .json (5 animations, 120 frames, 4096 x 2048)`.
 - **Remembered.** The box is kept between sessions as `exportMetadata` in `settings.json`, and is off to begin with.
 
 ## The file
@@ -14,6 +14,7 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
 ```json
 {
   "meta": {
+    "export_type": "strip",
     "page": 1,
     "page_count": 1,
     "total_frames": 8,
@@ -90,6 +91,7 @@ On an atlas page, the frames of several animations follow one another, and an an
 
 | Member | Meaning |
 |---|---|
+| `meta.export_type` | what made the image: `strip` for a sprite strip, `sheet` for a spritesheet, `atlas` for a texture atlas page |
 | `meta.page` | this image's page, from 1, as its file name numbers it; 1 for a strip or spritesheet |
 | `meta.page_count` | how many pages the export made; 1 for a strip or spritesheet |
 | `meta.total_frames` | how many frames the export made in all: for a texture atlas, over every page, every animation and every direction, the same on each page; for a strip or spritesheet, the file's own frames |
@@ -112,7 +114,7 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.animations[i].time` | how long it takes to play once, in seconds: the animation's own length, whatever number of frames it was saved at |
 | `image.unused` | the number of empty cells after the last frame: `cols` × `rows` − `frame_count`; 0 on every atlas page but the last |
 | `image.two_pass` | whether the frames were made by a **2-pass** export's second pass |
-| `image.overscan.enabled` | whether **Overscan** was ticked in Model, Animation Settings |
+| `image.overscan.enabled` | whether **Overscan** was ticked in Animation, Animation Settings |
 | `image.overscan.factor` | the overscan factor set there, from its slider; given even when overscan is off |
 | `camera.view` | the View, Camera view checked: `Variable`, `Isometric`, `Pixel2To1`, `ThreeQuarter`, `HeadOn`, `TopDown` or `Side`, as `settings.json` names them |
 | `camera.projection` | `orthographic` or `perspective`, from View, Orthographic |
@@ -168,7 +170,7 @@ Each frame is measured on its own, as if it were a separate image of the grab si
 
 ## Texture atlas pages
 
-A batch exported as **Texture Atlas** is packed onto pages no larger than the **Page size** from Model, Animation Settings each way (1k to 16k pixels):
+A batch exported as **Texture Atlas** is packed onto pages no larger than the **Page size** from Animation, Animation Settings each way (1k to 16k pixels):
 
 1. **Capacity.** A full page holds ⌊page size ÷ grab width⌋ × ⌊page size ÷ grab height⌋ frames: 16 × 16 = 256 frames of 256 × 256 at 4k.
 2. **Packing.** Every frame of every animation is taken in turn, in list order, and goes in the next cell. When a page is full the next frame starts a new page, even in the middle of an animation, so every page but the last is completely full, `unused` 0, and an animation of any length fits.
@@ -241,11 +243,11 @@ A strip or spritesheet holds one animation, so it has a single entry; an atlas p
 
 ## Directions
 
-`directions` lists the directions the image holds, as compass bearings in degrees, in the order they were exported: with **Directions** ticked under the Animations list, every direction of Model, Directions, in the order set there, such as `[90, 180, 270, 0, 135, 225, 315, 45]`. Each frame's `direction` is an index into it. Without directions, `directions` is `[0]`, a single dummy entry, and every frame's `direction` is 0.
+`directions` lists the directions the image holds, as compass bearings in degrees, in the order they were exported: with **Directions** ticked under the Animations list, every direction of Animation, Directions, in the order set there, such as `[90, 180, 270, 0, 135, 225, 315, 45]`. Each frame's `direction` is an index into it. Without directions, `directions` is `[0]`, a single dummy entry, and every frame's `direction` is 0.
 
 With directions, each animation is captured once per direction, in their order, before the next animation:
 
-- **Sprite strip.** One row per direction, in order: `cols` is the frames of one direction and `rows` the number of directions. The file is still `<animation>_strip<frames>.png`, `<frames>` being one direction's.
+- **Sprite strip.** One strip per direction, each a single row of that direction's frames, `<model>_<animation>_dir01_strip<frames>.png`, `_dir02` and so on, numbered in direction order. Its `directions` lists that one direction's bearing, so every frame's `direction` is 0.
 - **Spritesheet.** Every direction's frames, the first direction's then the next's, in the square grid.
 - **Texture atlas.** The same order, each animation's directions in turn, filling the pages as before; a page's `animations` lists each animation once, whatever directions of it the page holds.
 - **AniGif and MP4.** One file per direction, `<animation>_dir01.gif`, `_dir02` and so on, numbered in direction order; they have no metadata.
@@ -260,7 +262,7 @@ Each animation's `frame_count` is the frames of one direction of it, which is ho
 | `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.ProjectToView`, where a point falls in a view of a given size, and `ShiftView`, which slides the view by pixels |
 | `src/ui/Sprite3dMain.pas` | `StartCapture` decides whether metadata is written; `SnapCaptureOrigin` puts the origin on a pixel; `SaveSheet` writes a strip or spritesheet and then its `.json`; `SaveAtlasBatch` and `SaveAtlas` make and write the atlas pages at the end of a batch; `EndCapture` undoes the slide |
 | `src/ui/Sprite3DHelpers.pas` | the `ExportMetadata`, `ExportDirections`, `AtlasPageSize` and `AtlasNonPowerOf2` settings |
-| `src/ui/Sprite3DAnimationForm.pas` | Model, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
+| `src/ui/Sprite3DAnimationForm.pas` | Animation, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
 
 Each routine's own documentation comments, in the source, give the details.
 

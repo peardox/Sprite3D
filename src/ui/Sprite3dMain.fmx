@@ -30,13 +30,13 @@ object MainForm: TMainForm
         item
         end>
       IsSelected = True
-      Size.Width = 45.000000000000000000
+      Size.Width = 52.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
       TabOrder = 0
-      Text = 'View'
-      ExplicitSize.cx = 35.000000000000000000
+      Text = 'Model'
+      ExplicitSize.cx = 52.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
       object MainLayout: TLayout
         Align = Client
@@ -198,18 +198,6 @@ object MainForm: TMainForm
         Text = 'Open Model'
         OnClick = OpenModelMenuItemClick
       end
-      object LoadAnimationSettingsItem: TMenuItem
-        Enabled = False
-        Locked = True
-        Text = 'Load Animation Settings...'
-        OnClick = LoadAnimationSettingsItemClick
-      end
-      object SaveAnimationSettingsItem: TMenuItem
-        Enabled = False
-        Locked = True
-        Text = 'Save Animation Settings...'
-        OnClick = SaveAnimationSettingsItemClick
-      end
       object GrabMenuItem: TMenuItem
         Locked = True
         Text = 'Grab'
@@ -235,6 +223,11 @@ object MainForm: TMainForm
         Text = 'Settings...'
         OnClick = SettingsMenuItemClick
       end
+      object BackgroundSettingsMenuItem: TMenuItem
+        Locked = True
+        Text = 'Background Settings...'
+        OnClick = BackgroundSettingsMenuItemClick
+      end
       object FileSeparatorItem: TMenuItem
         Locked = True
         Text = '-'
@@ -246,7 +239,7 @@ object MainForm: TMainForm
       end
     end
     object ModelMenu: TMenuItem
-      Text = 'Model'
+      Text = 'Animation'
       object AnimationsUsedItem: TMenuItem
         Locked = True
         Text = 'Animations Used...'
@@ -256,10 +249,17 @@ object MainForm: TMainForm
         Locked = True
         Text = '-'
       end
-      object BackgroundSettingsMenuItem: TMenuItem
+      object LoadAnimationSettingsItem: TMenuItem
+        Enabled = False
         Locked = True
-        Text = 'Background Settings...'
-        OnClick = BackgroundSettingsMenuItemClick
+        Text = 'Load Animation Settings...'
+        OnClick = LoadAnimationSettingsItemClick
+      end
+      object SaveAnimationSettingsItem: TMenuItem
+        Enabled = False
+        Locked = True
+        Text = 'Save Animation Settings...'
+        OnClick = SaveAnimationSettingsItemClick
       end
       object ModelActionsSeparatorItem: TMenuItem
         Locked = True
@@ -269,11 +269,6 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Directions...'
         OnClick = DirectionsItemClick
-      end
-      object OrientationItem: TMenuItem
-        Enabled = False
-        Locked = True
-        Text = 'Orientation'
       end
     end
     object ViewMenu: TMenuItem

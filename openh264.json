@@ -1,11 +1,11 @@
 {
   "_comment": "Where Sprite3D downloads Cisco's OpenH264 library for H.264 MP4 export, one address per platform. An empty address means H.264 is not offered there. Change an address, for example to a newer version, and the next start downloads it and replaces the old copy. Cisco's .bz2 files can be used as they are. win64arm is Windows on ARM (ARM64EC), which loads x64 libraries but not plain ARM64 ones, so give it the same x64 (win64) build as win64. iOS cannot load downloaded code, so it has no entry.",
   "win32": "",
-  "win64": "",
-  "win64arm": "",
-  "macx64": "",
-  "macarm": "",
-  "linux64": "",
+  "win64": "https://sprite3d.com/openh264/openh264-2.7.0-win64.dll.bz2",
+  "win64arm": "https://sprite3d.com/openh264/openh264-2.7.0-win-arm64.dll.bz2",
+  "macx64": "https://sprite3d.com/openh264/libopenh264-2.7.0-mac-x64.dylib.bz2",
+  "macarm": "https://sprite3d.com/openh264/libopenh264-2.7.0-mac-arm64.dylib.bz2",
+  "linux64": "https://sprite3d.com/openh264/libopenh264-2.7.0-linux64.8.so.bz2",
   "android32": "",
-  "android64": ""
+  "android64": "https://sprite3d.com/openh264/libopenh264-2.7.0-android-arm64.8.so.bz2"
 }

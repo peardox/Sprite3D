@@ -56,15 +56,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="..\dlls\win64arm\avcodec-62.dll">
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>avcodec-62.dll</RemoteName>
@@ -139,15 +130,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
     </ItemGroup>
     <ItemGroup Condition="'$(Platform)'=='Win32'">
         <DeployFile Include="..\dlls\win32\avcodec-62.dll">
@@ -190,15 +172,6 @@
         <DeployFile Include="..\dlls\win32\swscale-9.dll">
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>swscale-9.dll</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
             <DeployClass>File</DeployClass>
             <Operation>0</Operation>
             <LocalCommand/>
@@ -812,15 +785,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d\assets\internal\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="Android64\Debug\splash_image_def-v21.xml" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\res\drawable-anydpi-v21\</RemoteDir>
             <RemoteName>splash_image_def.xml</RemoteName>
@@ -1057,29 +1021,11 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d\assets\internal\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
     </ItemGroup>
     <ItemGroup Condition="'$(Platform)'=='Win64'">
         <DeployFile Include="..\dlls\win64\swscale-9.dll">
             <RemoteDir>Sprite3d\</RemoteDir>
             <RemoteName>swscale-9.dll</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
             <DeployClass>File</DeployClass>
             <Operation>0</Operation>
             <LocalCommand/>
@@ -1299,15 +1245,6 @@
             <Overwrite>True</Overwrite>
             <Required>True</Required>
         </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d.app\Contents\Resources\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="..\README.md" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d.app\Contents\Resources\StartUp\</RemoteDir>
             <RemoteName>README.md</RemoteName>
@@ -1459,15 +1396,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
             <Required>True</Required>
-        </DeployFile>
-        <DeployFile Include="..\openh264.json">
-            <RemoteDir>Sprite3d\</RemoteDir>
-            <RemoteName>openh264.json</RemoteName>
-            <DeployClass>File</DeployClass>
-            <Operation>0</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
         </DeployFile>
         <DeployFile Include="styles\buildstyles.cmd" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Sprite3d\</RemoteDir>

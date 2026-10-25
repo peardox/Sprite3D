@@ -1,4 +1,4 @@
-//** @abstract(The Model, Directions dialog: how many directions there are around the model,
+//** @abstract(The Animation, Directions dialog: how many directions there are around the model,
 //** where they point, and the order they are taken in.)
 //**
 //** The dialog shows a compass as a clock face: a white disc with N, E, S and W round its
@@ -49,7 +49,7 @@
 unit Sprite3DDirectionsForm;
 
 {
-  The Model, Directions dialog: how many directions there are around the
+  The Animation, Directions dialog: how many directions there are around the
   model, where they point, and the order they are taken in.
 
   The dialog shows a compass as a clock face: a white disc with N, E, S and
@@ -112,8 +112,8 @@ uses
   FMX.Objects, FMX.Controls.Presentation, FMX.Layouts, FMX.ListBox, FMX.Dialogs;
 
 type
-  //** @abstract(The Model, Directions dialog; see the unit description.)
-  /// <summary>The Model, Directions dialog; see the unit description.</summary>
+  //** @abstract(The Animation, Directions dialog; see the unit description.)
+  /// <summary>The Animation, Directions dialog; see the unit description.</summary>
   TDirectionsForm = class(TForm)
     //** @abstract(Where the compass is drawn, and clicked while the order is being changed.)
     /// <summary>Where the compass is drawn, and clicked while the order is being

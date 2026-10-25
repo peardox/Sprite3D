@@ -1,4 +1,4 @@
-//** @abstract(The Model, Animations Used dialog: which of the model's animations are used.)
+//** @abstract(The Animation, Animations Used dialog: which of the model's animations are used.)
 //**
 //** A list of the model's animations, each with a tick box, and an All tick box above it that
 //** ticks or clears every one; it shows ticked only while every animation is ticked. The
@@ -19,7 +19,7 @@
 unit Sprite3DAnimationsUsedForm;
 
 {
-  The Model, Animations Used dialog: which of the model's animations are
+  The Animation, Animations Used dialog: which of the model's animations are
   used.
 
   A list of the model's animations, each with a tick box, and an All tick box
@@ -52,8 +52,8 @@ uses
   FMX.Controls.Presentation, FMX.Layouts, FMX.ListBox, Sprite3DSweep;
 
 type
-  //** @abstract(The Model, Animations Used dialog; see the unit description.)
-  /// <summary>The Model, Animations Used dialog; see the unit description.</summary>
+  //** @abstract(The Animation, Animations Used dialog; see the unit description.)
+  /// <summary>The Animation, Animations Used dialog; see the unit description.</summary>
   TAnimationsUsedForm = class(TForm)
     //** @abstract(Holds the All tick box and the list.)
     /// <summary>Holds the All tick box and the list.</summary>

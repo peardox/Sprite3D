@@ -4,8 +4,8 @@ object GeneralSettingsForm: TGeneralSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Settings'
-  ClientHeight = 890
-  ClientWidth = 440
+  ClientHeight = 540
+  ClientWidth = 840
   Position = MainFormCenter
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -15,414 +15,433 @@ object GeneralSettingsForm: TGeneralSettingsForm
   DesignerMasterStyle = 0
   object BackPanel: TPanel
     Align = Client
-    Size.Width = 440.000000000000000000
+    Size.Width = 840.000000000000000000
     Size.Height = 790.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object ScrollBox: TVertScrollBox
       Align = Client
-      Size.Width = 440.000000000000000000
+      Size.Width = 840.000000000000000000
       Size.Height = 746.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
-      Viewport.Width = 440.000000000000000000
+      Viewport.Width = 840.000000000000000000
       Viewport.Height = 746.000000000000000000
-      object AssocGroup: TGroupBox
+      object ColumnsLayout: TLayout
         Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 8.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 132.000000000000000000
+        Size.Width = 840.000000000000000000
+        Size.Height = 480.000000000000000000
         Size.PlatformDefault = False
-        Text = 'Open model files'
-        TabOrder = 0
-        object OpenWithCheck: TCheckBox
-          Position.X = 16.000000000000000000
-          Position.Y = 28.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
+        object LeftColumn: TLayout
+          Align = Left
+          Size.Width = 420.000000000000000000
+          Size.Height = 480.000000000000000000
           Size.PlatformDefault = False
-          TabOrder = 0
-          Text = 'Offer Sprite3D in Open With'
-          OnChange = OpenWithCheckChange
-        end
-        object AlwaysCheck: TCheckBox
-          Position.X = 16.000000000000000000
-          Position.Y = 54.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 1
-          Text = 'Always open model files with Sprite3D'
-        end
-        object AssocNote: TLabel
-          Position.X = 16.000000000000000000
-          Position.Y = 80.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 44.000000000000000000
-          Size.PlatformDefault = False
-          TextSettings.VertAlign = Leading
-          TextSettings.WordWrap = True
-          Text = ''
-          TabOrder = 2
-        end
-      end
-      object StartupGroup: TGroupBox
-        Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 148.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 112.000000000000000000
-        Size.PlatformDefault = False
-        Text = 'Startup action'
-        TabOrder = 1
-        object StartupNoneRadio: TRadioButton
-          GroupName = 'Startup'
-          Position.X = 16.000000000000000000
-          Position.Y = 28.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 0
-          Text = 'None (don'#39't load a model)'
-        end
-        object StartupDefaultRadio: TRadioButton
-          GroupName = 'Startup'
-          Position.X = 16.000000000000000000
-          Position.Y = 54.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 1
-          Text = 'Load default model'
-        end
-        object StartupLastRadio: TRadioButton
-          GroupName = 'Startup'
-          Position.X = 16.000000000000000000
-          Position.Y = 80.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 2
-          Text = 'Load last model'
-        end
-      end
-      object ThemeGroup: TGroupBox
-        Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 268.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 164.000000000000000000
-        Size.PlatformDefault = False
-        Text = 'Theme'
-        TabOrder = 2
-        object ThemeDefaultRadio: TRadioButton
-          GroupName = 'Theme'
-          Position.X = 16.000000000000000000
-          Position.Y = 28.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 0
-          Text = 'Default (no theme)'
-        end
-        object ThemeDarkRadio: TRadioButton
-          GroupName = 'Theme'
-          Position.X = 16.000000000000000000
-          Position.Y = 54.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 1
-          Text = 'Dark'
-        end
-        object ThemeAquaRadio: TRadioButton
-          GroupName = 'Theme'
-          Position.X = 16.000000000000000000
-          Position.Y = 80.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 2
-          Text = 'Aqua Graphite'
-        end
-        object ThemeRubyRadio: TRadioButton
-          GroupName = 'Theme'
-          Position.X = 16.000000000000000000
-          Position.Y = 106.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 3
-          Text = 'Ruby Graphite'
-        end
-        object ThemeGoldenRadio: TRadioButton
-          GroupName = 'Theme'
-          Position.X = 16.000000000000000000
-          Position.Y = 132.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 4
-          Text = 'Golden Graphite'
-        end
-      end
-      object GrabGroup: TGroupBox
-        Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 440.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 152.000000000000000000
-        Size.PlatformDefault = False
-        Text = 'Grab size (pixels)'
-        TabOrder = 3
-        object GrabSizeCombo: TComboBox
-          Position.X = 16.000000000000000000
-          Position.Y = 28.000000000000000000
-          Size.Width = 180.000000000000000000
-          Size.Height = 22.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 0
-          OnChange = GrabSizeComboChange
-        end
-        object GrabCustomLayout: TLayout
-          Position.X = 16.000000000000000000
-          Position.Y = 60.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 24.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 1
-          object GrabWidthLabel: TLabel
-            Position.Y = 3.000000000000000000
-            Size.Width = 48.000000000000000000
-            Size.Height = 19.000000000000000000
+          object AssocGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 8.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 132.000000000000000000
             Size.PlatformDefault = False
-            Text = 'Width'
+            Text = 'Open model files'
             TabOrder = 0
+            object OpenWithCheck: TCheckBox
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Offer Sprite3D in Open With'
+              OnChange = OpenWithCheckChange
+            end
+            object AlwaysCheck: TCheckBox
+              Position.X = 16.000000000000000000
+              Position.Y = 54.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              Text = 'Always open model files with Sprite3D'
+            end
+            object AssocNote: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 80.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.VertAlign = Leading
+              TextSettings.WordWrap = True
+              Text = ''
+              TabOrder = 2
+            end
           end
-          object GrabWidthBox: TSpinBox
-            Touch.InteractiveGestures = [LongTap, DoubleTap]
+          object StartupGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 148.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 112.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Startup action'
             TabOrder = 1
-            Cursor = crIBeam
-            Min = 8.000000000000000000
-            Max = 1024.000000000000000000
-            Value = 256.000000000000000000
-            Position.X = 52.000000000000000000
-            Size.Width = 100.000000000000000000
-            Size.Height = 22.000000000000000000
-            Size.PlatformDefault = False
+            object StartupNoneRadio: TRadioButton
+              GroupName = 'Startup'
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'None (don'#39't load a model)'
+            end
+            object StartupDefaultRadio: TRadioButton
+              GroupName = 'Startup'
+              Position.X = 16.000000000000000000
+              Position.Y = 54.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              Text = 'Load default model'
+            end
+            object StartupLastRadio: TRadioButton
+              GroupName = 'Startup'
+              Position.X = 16.000000000000000000
+              Position.Y = 80.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 2
+              Text = 'Load last model'
+            end
           end
-          object GrabHeightLabel: TLabel
-            Position.X = 176.000000000000000000
-            Position.Y = 3.000000000000000000
-            Size.Width = 48.000000000000000000
-            Size.Height = 19.000000000000000000
+          object ThemeGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 268.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 164.000000000000000000
             Size.PlatformDefault = False
-            Text = 'Height'
+            Text = 'Theme'
             TabOrder = 2
+            object ThemeDefaultRadio: TRadioButton
+              GroupName = 'Theme'
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Default (no theme)'
+            end
+            object ThemeDarkRadio: TRadioButton
+              GroupName = 'Theme'
+              Position.X = 16.000000000000000000
+              Position.Y = 54.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              Text = 'Dark'
+            end
+            object ThemeAquaRadio: TRadioButton
+              GroupName = 'Theme'
+              Position.X = 16.000000000000000000
+              Position.Y = 80.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 2
+              Text = 'Aqua Graphite'
+            end
+            object ThemeRubyRadio: TRadioButton
+              GroupName = 'Theme'
+              Position.X = 16.000000000000000000
+              Position.Y = 106.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 3
+              Text = 'Ruby Graphite'
+            end
+            object ThemeGoldenRadio: TRadioButton
+              GroupName = 'Theme'
+              Position.X = 16.000000000000000000
+              Position.Y = 132.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 4
+              Text = 'Golden Graphite'
+            end
           end
-          object GrabHeightBox: TSpinBox
-            Touch.InteractiveGestures = [LongTap, DoubleTap]
-            TabOrder = 3
-            Cursor = crIBeam
-            Min = 8.000000000000000000
-            Max = 1024.000000000000000000
-            Value = 256.000000000000000000
-            Position.X = 228.000000000000000000
-            Size.Width = 100.000000000000000000
-            Size.Height = 22.000000000000000000
+        end
+        object RightColumn: TLayout
+          Align = Client
+          Size.Width = 420.000000000000000000
+          Size.Height = 480.000000000000000000
+          Size.PlatformDefault = False
+          object GrabGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 440.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 152.000000000000000000
             Size.PlatformDefault = False
+            Text = 'Grab size (pixels)'
+            TabOrder = 3
+            object GrabSizeCombo: TComboBox
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 180.000000000000000000
+              Size.Height = 22.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              OnChange = GrabSizeComboChange
+            end
+            object GrabCustomLayout: TLayout
+              Position.X = 16.000000000000000000
+              Position.Y = 60.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 24.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              object GrabWidthLabel: TLabel
+                Position.Y = 3.000000000000000000
+                Size.Width = 48.000000000000000000
+                Size.Height = 19.000000000000000000
+                Size.PlatformDefault = False
+                Text = 'Width'
+                TabOrder = 0
+              end
+              object GrabWidthBox: TSpinBox
+                Touch.InteractiveGestures = [LongTap, DoubleTap]
+                TabOrder = 1
+                Cursor = crIBeam
+                Min = 8.000000000000000000
+                Max = 1024.000000000000000000
+                Value = 256.000000000000000000
+                Position.X = 52.000000000000000000
+                Size.Width = 100.000000000000000000
+                Size.Height = 22.000000000000000000
+                Size.PlatformDefault = False
+              end
+              object GrabHeightLabel: TLabel
+                Position.X = 176.000000000000000000
+                Position.Y = 3.000000000000000000
+                Size.Width = 48.000000000000000000
+                Size.Height = 19.000000000000000000
+                Size.PlatformDefault = False
+                Text = 'Height'
+                TabOrder = 2
+              end
+              object GrabHeightBox: TSpinBox
+                Touch.InteractiveGestures = [LongTap, DoubleTap]
+                TabOrder = 3
+                Cursor = crIBeam
+                Min = 8.000000000000000000
+                Max = 1024.000000000000000000
+                Value = 256.000000000000000000
+                Position.X = 228.000000000000000000
+                Size.Width = 100.000000000000000000
+                Size.Height = 22.000000000000000000
+                Size.PlatformDefault = False
+              end
+            end
+            object GrabFolderLabel: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 94.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 18.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'Grab folder'
+              TabOrder = 2
+            end
+            object GrabFolderText: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 116.000000000000000000
+              Size.Width = 292.000000000000000000
+              Size.Height = 22.000000000000000000
+              Size.PlatformDefault = False
+              ShowHint = True
+              TextSettings.WordWrap = False
+              TextSettings.Trimming = Character
+              Text = '(none: asked for at the next grab)'
+              TabOrder = 3
+            end
+            object GrabFolderResetButton: TButton
+              Position.X = 316.000000000000000000
+              Position.Y = 115.000000000000000000
+              Size.Width = 84.000000000000000000
+              Size.Height = 24.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 4
+              Text = 'Reset'
+              OnClick = GrabFolderResetButtonClick
+            end
           end
-        end
-        object GrabFolderLabel: TLabel
-          Position.X = 16.000000000000000000
-          Position.Y = 94.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 18.000000000000000000
-          Size.PlatformDefault = False
-          Text = 'Grab folder'
-          TabOrder = 2
-        end
-        object GrabFolderText: TLabel
-          Position.X = 16.000000000000000000
-          Position.Y = 116.000000000000000000
-          Size.Width = 292.000000000000000000
-          Size.Height = 22.000000000000000000
-          Size.PlatformDefault = False
-          ShowHint = True
-          TextSettings.WordWrap = False
-          TextSettings.Trimming = Character
-          Text = '(none: asked for at the next grab)'
-          TabOrder = 3
-        end
-        object GrabFolderResetButton: TButton
-          Position.X = 316.000000000000000000
-          Position.Y = 115.000000000000000000
-          Size.Width = 84.000000000000000000
-          Size.Height = 24.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 4
-          Text = 'Reset'
-          OnClick = GrabFolderResetButtonClick
-        end
-      end
-      object FrameRateGroup: TGroupBox
-        Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 600.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 92.000000000000000000
-        Size.PlatformDefault = False
-        Text = 'View frame rate (frames per second)'
-        TabOrder = 4
-        object FrameRateTrack: TTrackBar
-          CanParentFocus = True
-          Frequency = 1.000000000000000000
-          Max = 60.000000000000000000
-          Min = 1.000000000000000000
-          Orientation = Horizontal
-          Position.X = 16.000000000000000000
-          Position.Y = 32.000000000000000000
-          Size.Width = 320.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 0
-          Value = 60.000000000000000000
-          OnChange = FrameRateTrackChange
-        end
-        object FrameRateValueLabel: TLabel
-          Position.X = 344.000000000000000000
-          Position.Y = 32.000000000000000000
-          Size.Width = 56.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TextSettings.HorzAlign = Trailing
-          Text = '60'
-          TabOrder = 1
-        end
-        object FrameRateNote: TLabel
-          Position.X = 16.000000000000000000
-          Position.Y = 60.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 20.000000000000000000
-          Size.PlatformDefault = False
-          TextSettings.VertAlign = Leading
-          Text = 'Up to the display'#39's refresh rate.'
-          TabOrder = 2
-        end
-      end
-      object FilesGroup: TGroupBox
-        Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 700.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 84.000000000000000000
-        Size.PlatformDefault = False
-        Text = 'Files'
-        TabOrder = 6
-        object MinifyJsonCheck: TCheckBox
-          Position.X = 12.000000000000000000
-          Position.Y = 28.000000000000000000
-          Size.Width = 400.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 0
-          Text = 'Minify JSON'
-        end
-        object MinifyJsonNote: TLabel
-          Position.X = 12.000000000000000000
-          Position.Y = 52.000000000000000000
-          Size.Width = 400.000000000000000000
-          Size.Height = 20.000000000000000000
-          Size.PlatformDefault = False
-          Text = 'Metadata, project, settings and other JSON files without indents.'
-          TabOrder = 1
-        end
-      end
-      object GpuGroup: TGroupBox
-        Align = Top
-        Margins.Left = 8.000000000000000000
-        Margins.Top = 8.000000000000000000
-        Margins.Right = 8.000000000000000000
-        Position.X = 8.000000000000000000
-        Position.Y = 792.000000000000000000
-        Size.Width = 424.000000000000000000
-        Size.Height = 138.000000000000000000
-        Size.PlatformDefault = False
-        Text = 'Graphics processor (Windows)'
-        TabOrder = 5
-        object GpuSystemRadio: TRadioButton
-          GroupName = 'Gpu'
-          Position.X = 16.000000000000000000
-          Position.Y = 28.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 0
-          Text = 'Let Windows decide'
-        end
-        object GpuLowRadio: TRadioButton
-          GroupName = 'Gpu'
-          Position.X = 16.000000000000000000
-          Position.Y = 54.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 1
-          Text = 'Low power (power saving GPU)'
-        end
-        object GpuHighRadio: TRadioButton
-          GroupName = 'Gpu'
-          Position.X = 16.000000000000000000
-          Position.Y = 80.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 19.000000000000000000
-          Size.PlatformDefault = False
-          TabOrder = 2
-          Text = 'High power (high performance GPU)'
-        end
-        object GpuNote: TLabel
-          Position.X = 16.000000000000000000
-          Position.Y = 108.000000000000000000
-          Size.Width = 384.000000000000000000
-          Size.Height = 20.000000000000000000
-          Size.PlatformDefault = False
-          TextSettings.VertAlign = Leading
-          TextSettings.WordWrap = True
-          Text = 'Takes effect the next time Sprite3D starts.'
-          TabOrder = 3
+          object FrameRateGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 600.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 92.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'View frame rate (frames per second)'
+            TabOrder = 4
+            object FrameRateTrack: TTrackBar
+              CanParentFocus = True
+              Frequency = 1.000000000000000000
+              Max = 60.000000000000000000
+              Min = 1.000000000000000000
+              Orientation = Horizontal
+              Position.X = 16.000000000000000000
+              Position.Y = 32.000000000000000000
+              Size.Width = 320.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Value = 60.000000000000000000
+              OnChange = FrameRateTrackChange
+            end
+            object FrameRateValueLabel: TLabel
+              Position.X = 344.000000000000000000
+              Position.Y = 32.000000000000000000
+              Size.Width = 56.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.HorzAlign = Trailing
+              Text = '60'
+              TabOrder = 1
+            end
+            object FrameRateNote: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 60.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 20.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.VertAlign = Leading
+              Text = 'Up to the display'#39's refresh rate.'
+              TabOrder = 2
+            end
+          end
+          object FilesGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 700.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 84.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Files'
+            TabOrder = 6
+            object MinifyJsonCheck: TCheckBox
+              Position.X = 12.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 400.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Minify JSON'
+            end
+            object MinifyJsonNote: TLabel
+              Position.X = 12.000000000000000000
+              Position.Y = 52.000000000000000000
+              Size.Width = 400.000000000000000000
+              Size.Height = 20.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'Metadata, project, settings and other JSON files without indents.'
+              TabOrder = 1
+            end
+          end
+          object GpuGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 792.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 138.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Graphics processor (Windows)'
+            TabOrder = 5
+            object GpuSystemRadio: TRadioButton
+              GroupName = 'Gpu'
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Let Windows decide'
+            end
+            object GpuLowRadio: TRadioButton
+              GroupName = 'Gpu'
+              Position.X = 16.000000000000000000
+              Position.Y = 54.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              Text = 'Low power (power saving GPU)'
+            end
+            object GpuHighRadio: TRadioButton
+              GroupName = 'Gpu'
+              Position.X = 16.000000000000000000
+              Position.Y = 80.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 2
+              Text = 'High power (high performance GPU)'
+            end
+            object GpuNote: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 108.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 20.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.VertAlign = Leading
+              TextSettings.WordWrap = True
+              Text = 'Takes effect the next time Sprite3D starts.'
+              TabOrder = 3
+            end
+          end
         end
       end
     end
     object ButtonLayout: TLayout
       Align = Bottom
       Position.Y = 746.000000000000000000
-      Size.Width = 440.000000000000000000
+      Size.Width = 840.000000000000000000
       Size.Height = 44.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
       object OkButton: TButton
+        Anchors = [akTop, akRight]
         Default = True
         ModalResult = 1
-        Position.X = 248.000000000000000000
+        Position.X = 648.000000000000000000
         Position.Y = 9.000000000000000000
         Size.Width = 80.000000000000000000
         Size.Height = 26.000000000000000000
@@ -432,9 +451,10 @@ object GeneralSettingsForm: TGeneralSettingsForm
         OnClick = ButtonClick
       end
       object CancelButton: TButton
+        Anchors = [akTop, akRight]
         Cancel = True
         ModalResult = 2
-        Position.X = 344.000000000000000000
+        Position.X = 744.000000000000000000
         Position.Y = 9.000000000000000000
         Size.Width = 80.000000000000000000
         Size.Height = 26.000000000000000000

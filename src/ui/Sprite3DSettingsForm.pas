@@ -1,21 +1,26 @@
 //** @abstract(The Settings dialog: file associations, what to load at start-up, the theme, the
 //** grab size, the view's frame rate and, on Windows, which GPU to use.)
 //**
-//** A small modal form, centred on the main form, laid out in its .fmx file with standard
-//** FMX controls in groups:
+//** A modal form, centred on the main form, laid out in its .fmx file with standard FMX
+//** controls in groups, in two columns so it stays short enough for smaller displays; on
+//** Android and iOS, which are too narrow for that, the groups go in one column that
+//** scrolls:
 //**
 //** @preformatted(
 //** TGeneralSettingsForm
 //** `-- BackPanel                      the form's opaque background
 //**     |-- ScrollBox
-//**     |   |-- AssocGroup             OpenWithCheck, AlwaysCheck, AssocNote
-//**     |   |-- StartupGroup           None, Load default model, Load last model
-//**     |   |-- ThemeGroup             Default @(no theme@), Dark, Aqua, Ruby and Golden Graphite
-//**     |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
-//**     |   |                          GrabFolderText, GrabFolderResetButton
-//**     |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
-//**     |   |-- FilesGroup             MinifyJsonCheck, MinifyJsonNote
-//**     |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
+//**     |   `-- ColumnsLayout          as tall as the taller column
+//**     |       |-- LeftColumn
+//**     |       |   |-- AssocGroup     OpenWithCheck, AlwaysCheck, AssocNote
+//**     |       |   |-- StartupGroup   None, Load default model, Load last model
+//**     |       |   `-- ThemeGroup     Default @(no theme@), Dark, Aqua, Ruby, Golden Graphite
+//**     |       `-- RightColumn
+//**     |           |-- GrabGroup      GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
+//**     |           |                  GrabFolderText, GrabFolderResetButton
+//**     |           |-- FrameRateGroup FrameRateTrack, FrameRateValueLabel, FrameRateNote
+//**     |           |-- FilesGroup     MinifyJsonCheck, MinifyJsonNote
+//**     |           `-- GpuGroup       Windows only: system, low power, high power, GpuNote
 //**     `-- ButtonLayout               OkButton, CancelButton
 //** )
 //**
@@ -43,20 +48,25 @@ unit Sprite3DSettingsForm;
   theme, the grab size, the view's frame rate and, on Windows, which GPU to
   use.
 
-  A small modal form, centred on the main form, laid out in its .fmx file
-  with standard FMX controls in groups:
+  A modal form, centred on the main form, laid out in its .fmx file with
+  standard FMX controls in groups, in two columns so it stays short enough
+  for smaller displays; on Android and iOS, which are too narrow for that,
+  the groups go in one column that scrolls:
 
     TGeneralSettingsForm
     `-- BackPanel                      the form's opaque background
         |-- ScrollBox
-        |   |-- AssocGroup             OpenWithCheck, AlwaysCheck, AssocNote
-        |   |-- StartupGroup           None, Load default model, Load last model
-        |   |-- ThemeGroup             Default (no theme), Dark, Aqua, Ruby and Golden Graphite
-        |   |-- GrabGroup              GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
-        |   |                          GrabFolderText, GrabFolderResetButton
-        |   |-- FrameRateGroup         FrameRateTrack, FrameRateValueLabel, FrameRateNote
-        |   |-- FilesGroup             MinifyJsonCheck, MinifyJsonNote
-        |   `-- GpuGroup               Windows only: system, low power, high power, GpuNote
+        |   `-- ColumnsLayout          as tall as the taller column
+        |       |-- LeftColumn
+        |       |   |-- AssocGroup     OpenWithCheck, AlwaysCheck, AssocNote
+        |       |   |-- StartupGroup   None, Load default model, Load last model
+        |       |   `-- ThemeGroup     Default (no theme), Dark, Aqua, Ruby, Golden Graphite
+        |       `-- RightColumn
+        |           |-- GrabGroup      GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
+        |           |                  GrabFolderText, GrabFolderResetButton
+        |           |-- FrameRateGroup FrameRateTrack, FrameRateValueLabel, FrameRateNote
+        |           |-- FilesGroup     MinifyJsonCheck, MinifyJsonNote
+        |           `-- GpuGroup       Windows only: system, low power, high power, GpuNote
         `-- ButtonLayout               OkButton, CancelButton
 
   Open With offers Sprite3D for model files in the system's Open With list;
@@ -103,6 +113,20 @@ type
     //** @abstract(Scrolls the groups on screens too small for them.)
     /// <summary>Scrolls the groups on screens too small for them.</summary>
     ScrollBox: TVertScrollBox;
+    //** @abstract(Holds LeftColumn and RightColumn, as tall as the taller of them.)
+    /// <summary>Holds LeftColumn and RightColumn, as tall as the taller of them.</summary>
+    ColumnsLayout: TLayout;
+    //** @abstract(The left column: AssocGroup, StartupGroup and ThemeGroup.)
+    //**
+    //** On Android and iOS it holds every group, in one column, and RightColumn is hidden.
+    /// <summary>The left column: AssocGroup, StartupGroup and ThemeGroup.</summary>
+    /// <remarks>On Android and iOS it holds every group, in one column, and RightColumn is
+    /// hidden.</remarks>
+    LeftColumn: TLayout;
+    //** @abstract(The right column: GrabGroup, FrameRateGroup, FilesGroup and GpuGroup.)
+    /// <summary>The right column: GrabGroup, FrameRateGroup, FilesGroup and
+    /// GpuGroup.</summary>
+    RightColumn: TLayout;
     //** @abstract(The file association choices.)
     /// <summary>The file association choices.</summary>
     AssocGroup: TGroupBox;
@@ -275,6 +299,9 @@ type
     procedure ReadControls;
     procedure UpdateAssocControls;
     procedure FitHeight;
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    procedure UseOneColumn;
+    {$ENDIF}
     function CustomIndex: Integer;
     procedure ShowGrabFolder;
   public
@@ -321,6 +348,10 @@ begin
   {$IF not DEFINED(MSWINDOWS)}
   GpuGroup.Visible := False;
   {$ENDIF}
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // A phone is too narrow for two columns
+  UseOneColumn;
+  {$ENDIF}
 
   // The preset sizes, then Custom last
   GrabSizeCombo.Items.Clear;
@@ -339,22 +370,58 @@ begin
   FitHeight;
 end;
 
-// The form as tall as the visible groups and the buttons. Mobile forms fill
-// the screen and scroll instead.
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+// Every group in the left column, in the order they were, the right column
+// hidden: for screens too narrow for two columns
+procedure TGeneralSettingsForm.UseOneColumn;
+var
+  Groups: TArray<TControl>;
+  Y: Single;
+begin
+  Groups := nil;
+  for var I := 0 to RightColumn.ChildrenCount - 1 do
+    if RightColumn.Children[I] is TControl then
+      Groups := Groups + [TControl(RightColumn.Children[I])];
+  // Below the left column's own, in order: top-aligned controls are laid
+  // out by their Y
+  Y := 10000;
+  for var Group in Groups do
+  begin
+    Group.Parent := LeftColumn;
+    Group.Position.Y := Y;
+    Y := Y + 1000;
+  end;
+  RightColumn.Visible := False;
+  LeftColumn.Align := TAlignLayout.Client;
+end;
+{$ENDIF}
+
+// The height of the visible groups in AColumn, with their margins
+function ColumnHeight(const AColumn: TControl): Single;
+var
+  Group: TControl;
+begin
+  Result := 0;
+  if not AColumn.Visible then
+    Exit;
+  for var I := 0 to AColumn.ChildrenCount - 1 do
+    if AColumn.Children[I] is TControl then
+    begin
+      Group := TControl(AColumn.Children[I]);
+      if Group.Visible then
+        Result := Result + Group.Height + Group.Margins.Top + Group.Margins.Bottom;
+    end;
+end;
+
+// The columns as tall as the taller of them, and the form as tall as that
+// and the buttons. Mobile forms fill the screen and scroll instead.
 procedure TGeneralSettingsForm.FitHeight;
 var
   Total: Single;
-  I: Integer;
-  Group: TControl;
 begin
-  Total := ButtonLayout.Height + ButtonLayout.Margins.Top + ButtonLayout.Margins.Bottom;
-  for I := 0 to ScrollBox.Content.ChildrenCount - 1 do
-    if ScrollBox.Content.Children[I] is TControl then
-    begin
-      Group := TControl(ScrollBox.Content.Children[I]);
-      if Group.Visible then
-        Total := Total + Group.Height + Group.Margins.Top + Group.Margins.Bottom;
-    end;
+  ColumnsLayout.Height := Max(ColumnHeight(LeftColumn), ColumnHeight(RightColumn)) + 8;
+  Total := ColumnsLayout.Height + ButtonLayout.Height + ButtonLayout.Margins.Top +
+    ButtonLayout.Margins.Bottom;
   ClientHeight := Round(Total) + 8;
 end;
 

@@ -1,15 +1,16 @@
 //** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
 //**
-//** The form has two tabs. The View tab holds a TGorillaViewport, created at run time, and a
-//** panel of three dials for Azimuth, inclination and Roll. The Debug tab holds a memo for log
-//** output. Below the Camera submenu, the View menu has six items that are ticked or not, each
-//** switched by choosing it: Show bounding box shows the model's bounding box, Show grid a grid
-//** on the model's floor, Show axes its own X, Y and Z axes through its centre of rotation,
-//** Show Model Volume the space it sweeps turning about its up axis in the animation playing,
-//** Show Animation Volume the one joined over the rest pose and every animation used, shown
-//** only while it is the volume the view frames, and Orthographic switches
-//** between perspective and orthographic projection. Model, Animations Used chooses which of
-//** the model's animations are listed and count towards the combined swept volume.
+//** The form has three tabs. The Model tab holds a TGorillaViewport, created at run time, and a
+//** panel of three dials for Azimuth, inclination and Roll. The Results tab plays back what has
+//** been exported; see Sprite3DResultsView. The Debug tab holds a memo for log output. Below
+//** the Camera submenu, the View menu has six items that are ticked or not, each switched by
+//** choosing it: Show bounding box shows the model's bounding box, Show grid a grid on the
+//** model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Show Model
+//** Volume the space it sweeps turning about its up axis in the animation playing, Show
+//** Animation Volume the one joined over the rest pose and every animation used, shown only
+//** while it is the volume the view frames, and Orthographic switches between perspective and
+//** orthographic projection. Animation, Animations Used chooses which of the model's animations
+//** are listed and count towards the combined swept volume.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
@@ -63,36 +64,37 @@
 //** off by default and kept in settings.json.
 //**
 //** The Animations list shows, to the right of each entry under the Frames title, how many
-//** frames saving it makes at the Model, Animation Settings frame rate: the animation's length
-//** times the rate, rounded, or 1 for @code(@(None@)), a single still frame. Model, Animations
-//** Used opens a dialog that ticks which animations are used; the others are left out of the
-//** list, so they are not played, saved or exported, and out of the combined swept volume. A
-//** new model starts with every animation used.
+//** frames saving it makes at the Animation, Animation Settings frame rate: the animation's
+//** length times the rate, rounded, or 1 for @code(@(None@)), a single still frame. Model,
+//** Animations Used opens a dialog that ticks which animations are used; the others are left
+//** out of the list, so they are not played, saved or exported, and out of the combined swept
+//** volume. A new model starts with every animation used.
 //**
 //** Under the list, five buttons with icons, named in their hints, act on the selected
 //** animation: first frame, previous frame, play or pause, next frame and last frame. The
-//** frames are those an export makes at the Model, Animation Settings frame rate, held exactly
-//** as the export shows them, by TSprite3DAnimationPlayer; any of the four frame buttons pauses
-//** the animation on its frame. After them, a readout always shows the frame showing, held or
-//** playing, and the frames in all, with the "/" in a fixed place; it reads "- / -" when there
-//** is no animation to count, as for @code(@(None@)). A readout over the top left of the view,
-//** white on a dark backing, shows the frames per second the viewport draws, which File,
-//** Settings sets, kept within the refresh rate of the display the window is on, and checked
-//** again whenever the window moves to another display. Play and pause share a button, whose
-//** icon and hint change to say which it does. Stepping wraps round from the last frame to the
-//** first and back. Choosing an entry plays it from the start, unless the controls are paused,
-//** when it starts paused on its first frame; starting a capture lets a held animation play on.
-//** Grabs and icons are saved as the view shows them, with the background and every helper
-//** showing. Animation exports show the model alone: the bounding box, axes, grid and volume
-//** wireframes are hidden for each drawing, and the background is left out, so they are
-//** transparent around the model, or black for MP4.
+//** frames are those an export makes at the Animation, Animation Settings frame rate, held
+//** exactly as the export shows them, by TSprite3DAnimationPlayer; any of the four frame
+//** buttons pauses the animation on its frame. After them, a readout always shows the frame
+//** showing, held or playing, and the frames in all, with the "/" in a fixed place; it reads "-
+//** / -" when there is no animation to count, as for @code(@(None@)). A readout over the top
+//** left of the view, white on a dark backing, shows the frames per second the viewport draws,
+//** which File, Settings sets, kept within the refresh rate of the display the window is on,
+//** and checked again whenever the window moves to another display. Play and pause share a
+//** button, whose icon and hint change to say which it does. Stepping wraps round from the last
+//** frame to the first and back. Choosing an entry plays it from the start, unless the controls
+//** are paused, when it starts paused on its first frame; starting a capture lets a held
+//** animation play on. Grabs and icons are saved as the view shows them, with the background
+//** and every helper showing. Animation exports show the model alone: the bounding box, axes,
+//** grid and volume wireframes are hidden for each drawing, and the background is left out, so
+//** they are transparent around the model, or black for MP4.
 //**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up
 //** menu with Save as sprite strip, Save as Spritesheet, Save as AniGif and Save as MP4
 //** video. Each grabs every frame of that animation off screen, from the first to the last, at
 //** the grab size and with one framing that fits every frame, and saves them in SaveFolder:
-//** side by side in one row as @code(<animation>_strip<frames>.png), in a square grid read left
-//** to right and top to bottom as @code(<animation>.png), as a looping @code(<animation>.gif),
+//** side by side in one row as @code(<model>_<animation>_dir<NN>_strip<frames>.png), one per
+//** direction, in a square grid read left to right and top to bottom as
+//** @code(<model>_<animation>.png), as a looping @code(<animation>.gif),
 //** or as a video-only @code(<animation>.mp4) through Sprite3DVideo, H.264 when Cisco's
 //** OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when the
 //** FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The
@@ -101,19 +103,22 @@
 //** right-click, the same items are in an Animation group of the menu drawer and act on the
 //** selected entry.
 //**
-//** At start-up the OpenH264 library, which makes MP4 files H.264, is taken from
-//** @code(openh264.json): an address for each platform, from which a copy is downloaded in
-//** the background into OpenH264Folder the first time, and again whenever the address changes.
-//** An empty address, or a failed download, leaves MP4 files as MPEG-4 Part 2. DebugMemo says
-//** which happened.
+//** At start-up the OpenH264 library, which makes MP4 files H.264, is the copy downloaded
+//** before into OpenH264Folder, if any. Once the first model is shown, the list of downloads
+//** at OPENH264_LIST_URL is fetched in the background, and the latest version for the platform
+//** downloaded if it is not that copy. No entry, a 404, no network or any other failure leaves
+//** the copy there, or MP4 files as MPEG-4 Part 2, and DebugMemo says which happened. While
+//** debugging is on, from @code(debug_enabled) in settings.json or @code(--debug) on the
+//** command line, none of this is done and OpenH264 is not used.
 //**
-//** Model, Animation Settings... sets the frame rate every saved animation uses, 30 frames a
-//** second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled to
-//** it: one cycle is cut into the whole number of equal steps nearest that rate, so the saved
-//** frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns overscan
-//** on, for this session only: every grab, icon and export is drawn 2 to 16 times larger each
-//** way, as far as the GPU allows at the grab size, and scaled down with the resampling filter
-//** chosen there, by TSprite3DOffscreen. The factor and filter are kept in settings.json.
+//** Animation, Animation Settings... sets the frame rate every saved animation uses, 30 frames
+//** a second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled
+//** to it: one cycle is cut into the whole number of equal steps nearest that rate, so the
+//** saved frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns
+//** overscan on, for this session only: every grab, icon and export is drawn 2 to 16 times
+//** larger each way, as far as the GPU allows at the grab size, and scaled down with the
+//** resampling filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in
+//** settings.json.
 //**
 //** Each entry also has a tick box. Below the list, All ticks every animation, leaving
 //** @code(@(None@)) as it is so the turn is exported only when ticked by hand, or clears every
@@ -128,7 +133,7 @@
 //**
 //** The drop-down's Texture Atlas asks for its folder as it is chosen. Its batch captures
 //** every ticked entry, then packs them, in list order, onto pages no larger than the page
-//** size in Model, Animation Settings, saved as @code(<model>_atlas_01.png), @code(_02) and
+//** size in Animation, Animation Settings, saved as @code(<model>_atlas_01.png), @code(_02) and
 //** so on; see SaveAtlas.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
@@ -163,7 +168,7 @@
 //**
 //** @preformatted(
 //** TabControl1
-//** |-- GorillaTab "View"
+//** |-- GorillaTab "Model"
 //** |   `-- MainLayout
 //** |       |-- ViewportLayout   the area left of the control panel
 //** |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
@@ -178,15 +183,16 @@
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
+//** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
-//** |-- ModelMenu "Model"
+//** |-- ModelMenu "Animation"
 //** |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
 //** |   |-- ModelSettingsSeparatorItem "-"
 //** |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
-//** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+//** |   |-- LoadAnimationSettingsItem "Load Animation Settings..."  reads the list
+//** |   |-- SaveAnimationSettingsItem "Save Animation Settings..."  writes the list
 //** |   |-- ModelActionsSeparatorItem "-"
-//** |   |-- DirectionsItem "Directions..."  how many directions, the first and their order
-//** |   `-- OrientationItem "Orientation"   disabled; for a later version
+//** |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
 //**     |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
@@ -216,8 +222,9 @@ unit Sprite3dMain;
   Demo form for TSprite3DCamera: loads a model and drives the camera with
   dials.
 
-  The form has two tabs. The View tab holds a TGorillaViewport, created at run
-  time, and a panel of three dials for Azimuth, inclination and Roll. The
+  The form has three tabs. The Model tab holds a TGorillaViewport, created at
+  run time, and a panel of three dials for Azimuth, inclination and Roll. The
+  Results tab plays back what has been exported; see Sprite3DResultsView. The
   Debug tab holds a memo for log output. Below the Camera submenu, the View
   menu has six items that are ticked or not, each switched by choosing it:
   Show bounding box shows the model's bounding box, Show grid a grid on the
@@ -227,7 +234,7 @@ unit Sprite3dMain;
   rest pose and every animation used, shown only while it is the volume the
   view frames, and Orthographic switches between
   perspective and orthographic projection.
-  Model, Animations Used chooses which of the model's animations are listed
+  Animation, Animations Used chooses which of the model's animations are listed
   and count towards the combined swept volume.
 
   The camera starts in the isometric view, and each readout always shows its
@@ -270,7 +277,7 @@ unit Sprite3dMain;
   Sprite3DHelpers. File, Save As Icon renders the view off screen at each of
   Windows' icon sizes and saves them together as one .ico file the user names.
   Behind the model the viewport can show a background; by default none is
-  drawn. Model, Background Settings... chooses None, Transparent (a two-grey
+  drawn. File, Background Settings... chooses None, Transparent (a two-grey
   checker standing for transparency), Solid or Gradient, which grabs and icons
   follow too.
 
@@ -292,9 +299,9 @@ unit Sprite3dMain;
   settings.json.
 
   The Animations list shows, to the right of each entry under the Frames
-  title, how many frames saving it makes at the Model, Animation Settings
+  title, how many frames saving it makes at the Animation, Animation Settings
   frame rate: the animation's length times the rate, rounded, or 1 for (None),
-  a single still frame. Model, Animations Used opens a dialog that ticks which
+  a single still frame. Animation, Animations Used opens a dialog that ticks which
   animations are used; the others are left out of the list, so they are not
   played, saved or exported, and out of the combined swept volume. A new model
   starts with every animation used.
@@ -325,8 +332,9 @@ unit Sprite3dMain;
   as AniGif and Save as MP4 video. Each grabs every frame of that animation
   off screen, from the first to the last, at the grab size and with one
   framing that fits every frame, and saves them in SaveFolder: side by side in
-  one row as <animation>_strip<frames>.png, in a square grid read left to
-  right and top to bottom as <animation>.png, as a looping <animation>.gif, or
+  one row as <model>_<animation>_dir<NN>_strip<frames>.png, one per
+  direction, in a square grid read left to right and top to bottom as
+  <model>_<animation>.png, as a looping <animation>.gif, or
   as a video-only <animation>.mp4 through Sprite3DVideo, H.264 when Cisco's
   OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only
   when the FFmpeg libraries load; DebugMemo says at start-up whether they did
@@ -335,13 +343,17 @@ unit Sprite3dMain;
   Android and iOS, which have no right-click, the same items are in an
   Animation group of the menu drawer and act on the selected entry.
 
-  At start-up the OpenH264 library, which makes MP4 files H.264, is taken
-  from openh264.json: an address for each platform, from which a copy is
-  downloaded in the background into OpenH264Folder the first time, and again
-  whenever the address changes. An empty address, or a failed download,
-  leaves MP4 files as MPEG-4 Part 2. DebugMemo says which happened.
+  At start-up the OpenH264 library, which makes MP4 files H.264, is the copy
+  downloaded before into OpenH264Folder, if any. Once the first model is
+  shown, the list of downloads at OPENH264_LIST_URL is fetched in the
+  background, and the latest version for the platform downloaded if it is
+  not that copy. No entry, a 404, no network or any other failure leaves the
+  copy there, or MP4 files as MPEG-4 Part 2, and DebugMemo says which
+  happened. While debugging is on, from debug_enabled in settings.json or
+  --debug on the command line, none of this is done and OpenH264 is not
+  used.
 
-  Model, Animation Settings... sets the frame rate every saved animation uses, 30
+  Animation, Animation Settings... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
   animation is resampled to it: one cycle is cut into the whole number of
   equal steps nearest that rate, so the saved frames still loop exactly; see
@@ -399,7 +411,7 @@ unit Sprite3dMain;
   showed only the first letter of each item.
 
     TabControl1
-    |-- GorillaTab "View"
+    |-- GorillaTab "Model"
     |   `-- MainLayout
     |       |-- ViewportLayout   the area left of the control panel
     |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
@@ -414,15 +426,16 @@ unit Sprite3dMain;
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
+    |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
     |   `-- ExitMenuItem "Exit"             closes the application
-    |-- ModelMenu "Model"
+    |-- ModelMenu "Animation"
     |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
     |   |-- ModelSettingsSeparatorItem "-"
     |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
-    |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+    |   |-- LoadAnimationSettingsItem "Load Animation Settings..."  reads the list
+    |   |-- SaveAnimationSettingsItem "Save Animation Settings..."  writes the list
     |   |-- ModelActionsSeparatorItem "-"
-    |   |-- DirectionsItem "Directions..."  how many directions, the first and their order
-    |   `-- OrientationItem "Orientation"   disabled; for a later version
+    |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
         |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
@@ -475,12 +488,15 @@ type
   //** @abstract(What the animation list's pop-up menu saves a capture as.)
   /// <summary>What the animation list's pop-up menu saves a capture as.</summary>
   TSheetKind = (
-    //** @abstract(One row of frames, saved as @code(<name>_strip<count>.png).)
-    /// <summary>One row of frames, saved as
-    /// <c>&lt;name&gt;_strip&lt;count&gt;.png</c>.</summary>
+    //** @abstract(One row of one direction's frames, saved as
+    //** @code(<model>_<animation>_dir<NN>_strip<count>.png).)
+    /// <summary>One row of one direction's frames, saved as
+    /// <c>&lt;model&gt;_&lt;animation&gt;_dir&lt;NN&gt;_strip&lt;count&gt;.png</c>.</summary>
     skStrip,
-    //** @abstract(A square grid of frames, saved as @code(<name>.png).)
-    /// <summary>A square grid of frames, saved as <c>&lt;name&gt;.png</c>.</summary>
+    //** @abstract(A square grid of every direction's frames, saved as
+    //** @code(<model>_<animation>.png).)
+    /// <summary>A square grid of every direction's frames, saved as
+    /// <c>&lt;model&gt;_&lt;animation&gt;.png</c>.</summary>
     skSheet,
     //** @abstract(Texture atlas pages: every animation of a batch packed onto shared pages,
     //** saved as @code(<model>_atlas_01.png) and so on; batch Export only.)
@@ -593,17 +609,21 @@ type
   /// thread.</remarks>
   /// <seealso cref="Sprite3DCamera.TSprite3DCamera"/>
   TMainForm = class(TForm)
-    //** @abstract(Fills the form and holds the View tab and the Debug tab.)
-    /// <summary>Fills the form and holds the View tab and the Debug tab.</summary>
+    //** @abstract(Fills the form and holds the Model, Results and Debug tabs.)
+    /// <summary>Fills the form and holds the Model, Results and Debug tabs.</summary>
     TabControl1: TTabControl;
-    //** @abstract(The tab captioned "View", with the viewport and camera controls; active at
+    //** @abstract(The tab captioned "Model", with the viewport and camera controls; active at
     //** start-up.)
-    /// <summary>The tab captioned "View", with the viewport and camera controls; active at
+    //**
+    //** Named GorillaTab, after the Gorilla3D viewport it holds; it was once captioned "View".
+    /// <summary>The tab captioned "Model", with the viewport and camera controls; active at
     /// start-up.</summary>
+    /// <remarks>Named GorillaTab, after the Gorilla3D viewport it holds; it was once captioned
+    /// "View".</remarks>
     GorillaTab: TTabItem;
-    //** @abstract(The tab captioned "Results", between View and Debug, where exports are
+    //** @abstract(The tab captioned "Results", between Model and Debug, where exports are
     //** played back; its controls are TSprite3DResultsView's.)
-    /// <summary>The tab captioned "Results", between View and Debug, where exports are played
+    /// <summary>The tab captioned "Results", between Model and Debug, where exports are played
     /// back; its controls are TSprite3DResultsView's.</summary>
     ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
@@ -614,8 +634,8 @@ type
     /// <summary>Log output; SwitchModel writes separator lines here when a model has
     /// animations.</summary>
     DebugMemo: TMemo;
-    //** @abstract(Fills the View tab and holds ViewportLayout and ControlsLayout.)
-    /// <summary>Fills the View tab and holds ViewportLayout and ControlsLayout.</summary>
+    //** @abstract(Fills the Model tab and holds ViewportLayout and ControlsLayout.)
+    /// <summary>Fills the Model tab and holds ViewportLayout and ControlsLayout.</summary>
     MainLayout: TLayout;
     //** @abstract(The area left of the control panel; holds AspectLayout, with the FPS
     //** readout and the no-model notice over it.)
@@ -676,14 +696,14 @@ type
     //** @abstract(The "Open Model" item; see OpenModelMenuItemClick.)
     /// <summary>The "Open Model" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
     OpenModelMenuItem: TMenuItem;
-    //** @abstract(The "Load Animation Settings..." item; see
+    //** @abstract(The Animation menu's "Load Animation Settings..." item; see
     //** LoadAnimationSettingsItemClick.)
-    /// <summary>The "Load Animation Settings..." item; see
+    /// <summary>The Animation menu's "Load Animation Settings..." item; see
     /// <see cref="LoadAnimationSettingsItemClick"/>.</summary>
     LoadAnimationSettingsItem: TMenuItem;
-    //** @abstract(The "Save Animation Settings..." item; see
+    //** @abstract(The Animation menu's "Save Animation Settings..." item; see
     //** SaveAnimationSettingsItemClick.)
-    /// <summary>The "Save Animation Settings..." item; see
+    /// <summary>The Animation menu's "Save Animation Settings..." item; see
     /// <see cref="SaveAnimationSettingsItemClick"/>.</summary>
     SaveAnimationSettingsItem: TMenuItem;
     //** @abstract(The "Save Project..." item; see CreditsItemClick.)
@@ -698,8 +718,9 @@ type
     //** @abstract(The "Save As Icon" item; see SaveAsIconMenuItemClick.)
     /// <summary>The "Save As Icon" item; see <see cref="SaveAsIconMenuItemClick"/>.</summary>
     SaveAsIconMenuItem: TMenuItem;
-    //** @abstract(The "Background Settings..." item; see BackgroundSettingsMenuItemClick.)
-    /// <summary>The "Background Settings..." item; see
+    //** @abstract(The File menu's "Background Settings..." item; see
+    //** BackgroundSettingsMenuItemClick.)
+    /// <summary>The File menu's "Background Settings..." item; see
     /// <see cref="BackgroundSettingsMenuItemClick"/>.</summary>
     BackgroundSettingsMenuItem: TMenuItem;
     //** @abstract(The "Settings..." item; see SettingsMenuItemClick.)
@@ -711,29 +732,31 @@ type
     //** @abstract(The "Exit" item; see ExitMenuItemClick.)
     /// <summary>The "Exit" item; see <see cref="ExitMenuItemClick"/>.</summary>
     ExitMenuItem: TMenuItem;
-    //** @abstract(The "Model" menu: AnimationsUsedItem, the Animation... and
-    //** BackgroundSettingsMenuItem settings, and DirectionsItem and OrientationItem.)
-    /// <summary>The "Model" menu: <see cref="AnimationsUsedItem"/>, the Animation... and
-    /// <see cref="BackgroundSettingsMenuItem"/> settings, and <see cref="DirectionsItem"/> and
-    /// <see cref="OrientationItem"/>.</summary>
+    //** @abstract(The menu captioned "Animation": AnimationsUsedItem, Animation Settings...,
+    //** LoadAnimationSettingsItem, SaveAnimationSettingsItem and DirectionsItem.)
+    //**
+    //** Named ModelMenu as it was once captioned "Model". On Android and iOS the Save as items
+    //** go at its foot too.
+    /// <summary>The menu captioned "Animation": <see cref="AnimationsUsedItem"/>, Animation
+    /// Settings..., <see cref="LoadAnimationSettingsItem"/>,
+    /// <see cref="SaveAnimationSettingsItem"/> and <see cref="DirectionsItem"/>.</summary>
+    /// <remarks>Named ModelMenu as it was once captioned "Model". On Android and iOS the Save
+    /// as items go at its foot too.</remarks>
     ModelMenu: TMenuItem;
     //** @abstract(The "Animations Used..." item; see AnimationsUsedItemClick.)
     /// <summary>The "Animations Used..." item; see
     /// <see cref="AnimationsUsedItemClick"/>.</summary>
     AnimationsUsedItem: TMenuItem;
-    //** @abstract(Separator line in the Model menu, above the settings items.)
-    /// <summary>Separator line in the Model menu, above the settings items.</summary>
+    //** @abstract(Separator line in the Animation menu, above the settings items.)
+    /// <summary>Separator line in the Animation menu, above the settings items.</summary>
     ModelSettingsSeparatorItem: TMenuItem;
-    //** @abstract(Separator line in the Model menu, above DirectionsItem.)
-    /// <summary>Separator line in the Model menu, above
+    //** @abstract(Separator line in the Animation menu, above DirectionsItem.)
+    /// <summary>Separator line in the Animation menu, above
     /// <see cref="DirectionsItem"/>.</summary>
     ModelActionsSeparatorItem: TMenuItem;
     //** @abstract(The "Directions..." item; see DirectionsItemClick.)
     /// <summary>The "Directions..." item; see <see cref="DirectionsItemClick"/>.</summary>
     DirectionsItem: TMenuItem;
-    //** @abstract(The "Orientation" item; disabled, as it does nothing yet.)
-    /// <summary>The "Orientation" item; disabled, as it does nothing yet.</summary>
-    OrientationItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     /// <summary>The "View" menu; holds <see cref="CameraMenu"/>.</summary>
     ViewMenu: TMenuItem;
@@ -820,7 +843,7 @@ type
     /// start-up.</summary>
     /// <remarks>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept
     /// turning about its up axis, joined over its rest pose and every animation ticked in
-    /// Model, Animations Used. It is drawn only while the view frames it: while two or more
+    /// Animation, Animations Used. It is drawn only while the view frames it: while two or more
     /// animations in the Animations list are ticked for export, playing or paused. It is drawn
     /// in fuchsia and hot pink whatever animation plays, so it can be shown alongside
     /// ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
@@ -876,15 +899,15 @@ type
     //** @abstract(The model's animations, by name, after a first entry, @code(@(None@)), that
     //** stops any animation; see AnimationListBoxClick.)
     //**
-    //** Only the animations ticked in Model, Animations Used are listed. Each entry shows, at
-    //** its right, the number of frames saving it makes at the Model, Animation Settings frame
-    //** rate. Choosing an entry plays it, whether by a click or by moving the selection with
-    //** the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
+    //** Only the animations ticked in Animation, Animations Used are listed. Each entry shows,
+    //** at its right, the number of frames saving it makes at the Animation, Animation Settings
+    //** frame rate. Choosing an entry plays it, whether by a click or by moving the selection
+    //** with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
     //** selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
     //** spritesheet or an animated GIF; see the unit description.
     /// <summary>The model's animations, by name, after a first entry, <c>(None)</c>, that stops
     /// any animation; see <see cref="AnimationListBoxClick"/>.</summary>
-    /// <remarks>Only the animations ticked in Model, Animations Used are listed. Each entry
+    /// <remarks>Only the animations ticked in Animation, Animations Used are listed. Each entry
     /// shows, at its right, the number of frames saving it makes at the Model, Animation
     /// Settings frame rate. Choosing an entry plays it, whether by a click or by moving the
     /// selection with the Up and Down arrow keys; see <see cref="AnimationListBoxChange"/>.
@@ -1160,7 +1183,7 @@ type
     //** Animations list.)
     //**
     //** The animations the file lists that the model has become the animations used, as
-    //** Model, Animations Used would make them, in the model's order; their ticks and frame
+    //** Animation, Animations Used would make them, in the model's order; their ticks and frame
     //** counts are set as the file says, every other count going back to the one the frame
     //** rate gives; and the entry the file has selected is selected and played. Animations
     //** the file names that the model does not have are left out and reported. A file that
@@ -1170,13 +1193,13 @@ type
     //** @param(Sender LoadAnimationSettingsItem.)
     /// <summary>Loads a file saved by SaveAnimationSettingsItemClick and applies it to the
     /// Animations list.</summary>
-    /// <remarks>The animations the file lists that the model has become the animations used,
-    /// as Model, Animations Used would make them, in the model's order; their ticks and frame
+    /// <remarks>The animations the file lists that the model has become the animations used, as
+    /// Animation, Animations Used would make them, in the model's order; their ticks and frame
     /// counts are set as the file says, every other count going back to the one the frame rate
     /// gives; and the entry the file has selected is selected and played. Animations the file
-    /// names that the model does not have are left out and reported. A file that is not one
-    /// of these, or that names none of the model's animations, changes nothing. Desktop only,
-    /// with a model loaded and nothing being exported.</remarks>
+    /// names that the model does not have are left out and reported. A file that is not one of
+    /// these, or that names none of the model's animations, changes nothing. Desktop only, with
+    /// a model loaded and nothing being exported.</remarks>
     /// <param name="Sender">LoadAnimationSettingsItem.</param>
     procedure LoadAnimationSettingsItemClick(Sender: TObject);
     //** @abstract(File, Save Project: edits the creator credits, keeps them for every export's
@@ -1187,7 +1210,7 @@ type
     //** every metadata file saved from then on, and a save dialog asks where to keep them, as
     //** a project file with the extension PROJECT_FILE_EXTENSION, opening at the project
     //** last saved or loaded, or beside the model. The project file holds the credits, the
-    //** model's full path, the directions of Model, Directions, the Animations list and the
+    //** model's full path, the directions of Animation, Directions, the Animations list and the
     //** export choices; see SaveProjectFile. Cancelling the save keeps the credits all the
     //** same. On Android and iOS, which have no save dialog, the credits are kept for the
     //** session only.
@@ -1196,14 +1219,14 @@ type
     /// <summary>File, Save Project: edits the creator credits, keeps them for every export's
     /// metadata, and saves them in a project file.</summary>
     /// <remarks>The dialog, TCreditsForm, takes the creator, modeller and artist, each with a
-    /// URL, and the day the project started. On OK the credits go into the <c>meta</c>
-    /// section of every metadata file saved from then on, and a save dialog asks where to
-    /// keep them, as a project file with the extension PROJECT_FILE_EXTENSION, opening at the
-    /// project last saved or loaded, or beside the model. The project file holds the credits,
-    /// the model's full path, the directions of Model, Directions, the Animations list and the
-    /// export choices; see SaveProjectFile. Cancelling the save keeps the credits all the
-    /// same. On Android and iOS, which have no save dialog, the credits are kept for the
-    /// session only.</remarks>
+    /// URL, and the day the project started. On OK the credits go into the <c>meta</c> section
+    /// of every metadata file saved from then on, and a save dialog asks where to keep them, as
+    /// a project file with the extension PROJECT_FILE_EXTENSION, opening at the project last
+    /// saved or loaded, or beside the model. The project file holds the credits, the model's
+    /// full path, the directions of Animation, Directions, the Animations list and the export
+    /// choices; see SaveProjectFile. Cancelling the save keeps the credits all the same. On
+    /// Android and iOS, which have no save dialog, the credits are kept for the session
+    /// only.</remarks>
     /// <param name="Sender">CreditsItem.</param>
     procedure CreditsItemClick(Sender: TObject);
     //** @abstract(File, Load Project: loads a project file and applies it; see
@@ -1600,7 +1623,7 @@ type
     // The orbit centre before a shifted overscan drawing slid it, while slid
     FShiftedCentre: TPoint3D;
     FViewShifted: Boolean;
-    // Whether Model, Animation Settings's Overscan is ticked; kept for this session
+    // Whether Animation, Animation Settings's Overscan is ticked; kept for this session
     // only, so overscan always starts off
     FOverscanOn: Boolean;
     // True while AnimationListBox is refilled, so its OnChange plays nothing
@@ -1622,9 +1645,10 @@ type
     // The animation list's pop-up menu: Save as sprite strip, Save as
     // Spritesheet, Save as AniGif
     FAnimationPopup: TPopupMenu;
-    // Model, Animation Settings...: the frame rate saved animations use
+    // Animation, Animation Settings...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
-    // Keeps the downloaded OpenH264 in step with openh264.json
+    // Keeps the downloaded OpenH264 in step with the list at
+    // OPENH264_LIST_URL; nil while debugging
     FOpenH264Update: TSprite3DLibraryUpdate;
     // View, Camera, Lock Camera, and the line above it
     FLockCameraItem: TMenuItem;
@@ -1751,12 +1775,14 @@ type
     // A batch's metadata, measured as each image was saved and written once
     // the batch ends, after every image
     FPendingMetadata: TArray<TSprite3DSheetMetadata>;
-    // File, Debug and its Frame Borders item, made only while debug_enabled
-    // is true in settings.json
+    // File, Debug, the separator above it, and its Frame Borders item, made
+    // only while debugging is on
     FDebugMenu: TMenuItem;
+    FDebugSeparator: TMenuItem;
     FFrameBordersItem: TMenuItem;
-    // The Results tab's player
+    // The Results tab's player, and whether its tab is the one showing
     FResults: TSprite3DResultsView;
+    FResultsShowing: Boolean;
     FBatchKindIndex: Integer;
     // The batch's progress dialog, while it is open, and whether the view's
     // own redraws were stopped for the batch
@@ -1880,12 +1906,15 @@ type
     procedure BuildAnimationMenu;
     procedure PrepareOpenH264;
     procedure StartOpenH264Update;
+    function VideoStatusNow: String;
     procedure BuildLockCameraItem;
     procedure LockCameraItemClick(Sender: TObject);
     function CameraLocked: Boolean;
     function IsCameraViewItem(const AItem: TMenuItem): Boolean;
     procedure UpdateCameraLockControls;
     procedure AnimationSettingsItemClick(Sender: TObject);
+    // Keeps the overscan warning's Do not show this again at once, OK or not
+    procedure AnimationDialogWarningChange(Sender: TObject);
     procedure ApplyAnimationFps(const AFps: Integer);
     procedure ApplyOverscan(const AOn: Boolean; const AFactor: Integer;
       const AFilter: TSprite3DResampleFilter);
@@ -2008,7 +2037,10 @@ type
     procedure BuildDebugMenu;
     procedure BuildResultsView;
     procedure TabControl1Change(Sender: TObject);
+    procedure ResultsShowGridChange(Sender: TObject);
+    procedure ResultsZoomChange(Sender: TObject);
     procedure FrameBordersItemClick(Sender: TObject);
+    procedure DisableDebugItemClick(Sender: TObject);
     function FrameBordersOn: Boolean;
     procedure ApplyAtlasSettings(const APageSize: Integer; const ANonPowerOf2: Boolean);
     procedure DeleteAtlasPages(const AFolder, AStem: String; var ANotes: TArray<String>);
@@ -2185,10 +2217,17 @@ begin
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
+  // --debug on the command line turns debugging on for this run only
+  for var Arg := 1 to ParamCount do
+    if SameText(ParamStr(Arg), '--debug') then
+      FSettings.DebugSwitch := True;
   // debug_enabled is only ever set by hand in settings.json; said only when on
   if FSettings.DebugEnabled then
     DebugMemo.Lines.Add('Debug enabled (debug_enabled is true in ' +
-      FSettings.FileName + ')');
+      FSettings.FileName + '); OpenH264 is not fetched or used')
+  else if FSettings.DebugSwitch then
+    DebugMemo.Lines.Add('Debug enabled for this run (--debug); OpenH264 is not fetched ' +
+      'or used');
   FFrameOverrides := TDictionary<String, Integer>.Create;
   // An animation chosen first shows held on its first frame
   FHoldNew := True;
@@ -2242,8 +2281,8 @@ begin
   // Frames per second, top left over the view, above the panel
   BuildFpsReadout;
 
-  // The OpenH264 already downloaded, if it is the one openh264.json asks
-  // for; before StartVideo first loads the video libraries
+  // The OpenH264 already downloaded, if any, before StartVideo first loads
+  // the video libraries; not while debugging
   PrepareOpenH264;
 
   // The animation list's right-click menu; on mobile, also the drawer's
@@ -2935,7 +2974,7 @@ begin
   {$ENDIF}
 end;
 
-// The Animations list as it stands, as the JSON File, Save Animation
+// The Animations list as it stands, as the JSON Animation, Save Animation
 // Settings writes and a project file holds: every entry in order, with its
 // tick and any frame count typed in, and the entry selected. The caller
 // owns the object.
@@ -3200,6 +3239,8 @@ function TMainForm.ExportMeta(const APage, APageCount: Integer): TSprite3DSheetM
 begin
   Result.Page := APage;
   Result.PageCount := APageCount;
+  // Set by the export, once it knows what it is making
+  Result.ExportType := String.Empty;
   Result.TotalFrames := 0;   // the image's own frames, unless set
   Result.Creator := FCredits.Creator;
   Result.CreatorUrl := FCredits.CreatorUrl;
@@ -3379,7 +3420,7 @@ begin
 end;
 
 // Reads a project file and applies what it holds: the credits; the export
-// choices; the directions, kept as Model, Directions keeps them; and, if
+// choices; the directions, kept as Animation, Directions keeps them; and, if
 // the model it names exists, that model, loaded if it is not the one shown,
 // with the Animations list applied once it is in. True if that model is
 // being loaded.
@@ -4498,8 +4539,20 @@ begin
     end;
     {$ENDIF}
   end;
-  DebugMemo.Lines.Add(VideoStatus);
+  DebugMemo.Lines.Add(VideoStatusNow);
   StartOpenH264Update;
+end;
+
+// VideoStatus for the Debug tab at startup. While there is no OpenH264 yet
+// but one is about to be fetched, its line says MPEG-4 Part 2 is only for
+// now, as StartOpenH264Update says what came of it
+function TMainForm.VideoStatusNow: String;
+begin
+  Result := VideoStatus;
+  if VideoAvailable and (FOpenH264Update <> nil) and
+    (FOpenH264Update.CurrentLibrary = String.Empty) and (OpenH264Status <> String.Empty) then
+    Result := Result.Replace(OpenH264Status, 'No OpenH264 has been downloaded yet, so MP4 ' +
+      'video is MPEG-4 Part 2 until it is; looking for one now');
 end;
 
 // Loads AModel in place of the model shown, with a dialog showing how far it
@@ -4739,7 +4792,7 @@ begin
   FModelFile := FLoadFile;
   FAnimationBounds := FLoadBounds;
   FAnimationBoundsMeasured := True;
-  // Every animation is used until Model, Animations Used says otherwise
+  // Every animation is used until Animation, Animations Used says otherwise
   FAnimationNames := FLoadAnims;
   FUsedAnimations := Copy(FLoadAnims);
   // Frame counts typed in were for the old model's animations
@@ -4912,30 +4965,49 @@ begin
     FFpsBack.BringToFront;   // the frame rate stays readable over the panel
 end;
 
-// Reads openh264.json and what has been downloaded, without the network,
-// and tells Sprite3DOpenH264 which copy to load, if any
+// Finds the OpenH264 downloaded before, without the network, and tells
+// Sprite3DOpenH264 to load it. Nothing at all is done while debugging is on,
+// so OpenH264 is neither fetched nor loaded and MP4 files are MPEG-4 Part 2,
+// nor on iOS, which cannot load downloaded code.
 procedure TMainForm.PrepareOpenH264;
 begin
-  FOpenH264Update := TSprite3DLibraryUpdate.Create(OpenH264ConfigFile, 'OpenH264',
+  {$IFDEF IOS}
+  Exit;
+  {$ENDIF}
+  if FSettings.DebugActive then
+    Exit;
+  FOpenH264Update := TSprite3DLibraryUpdate.Create(OPENH264_LIST_URL, 'OpenH264',
     OpenH264Folder);
   SetPreferredOpenH264(FOpenH264Update.CurrentLibrary);
-  DebugMemo.Lines.Add(FOpenH264Update.Message);
+  // With none downloaded, VideoStatusNow says so once the video libraries
+  // are found
+  if FOpenH264Update.CurrentLibrary <> String.Empty then
+    DebugMemo.Lines.Add(FOpenH264Update.Message);
 end;
 
-// Downloads OpenH264 if openh264.json gives an address this copy does not
-// come from. Only worth doing when FFmpeg can write MP4 files. When the new
-// copy arrives it is loaded straight away, so H.264 is offered without a
-// restart; a failure, 404s included, leaves MP4 files as MPEG-4 Part 2.
+// Fetches the list of OpenH264 downloads from OPENH264_LIST_URL in the
+// background and downloads the latest for this platform if it is not the
+// copy already there. Only worth doing when FFmpeg can write MP4 files, and
+// never while debugging. Whatever happens is said in the Debug tab: up to
+// date, downloaded, or why not, a 404 or no network included; nothing else
+// is shown, and a failure leaves the copy there before, or MPEG-4 Part 2.
+// A new copy is loaded straight away if none was, so H.264 is offered
+// without a restart.
 procedure TMainForm.StartOpenH264Update;
 begin
-  if not VideoAvailable then
+  if (FOpenH264Update = nil) or not VideoAvailable then
     Exit;
   FOpenH264Update.Start(
     procedure(const ALibrary, AMessage: String)
     begin
       DebugMemo.Lines.Add(AMessage);
       if ALibrary = String.Empty then
+      begin
+        // Nothing new: say where that leaves MP4 if no OpenH264 is loaded
+        if OpenH264LoadedLibrary = String.Empty then
+          DebugMemo.Lines.Add('No OpenH264 is loaded, so MP4 video stays MPEG-4 Part 2');
         Exit;
+      end;
       if OpenH264LoadedLibrary <> String.Empty then
       begin
         DebugMemo.Lines.Add('The new OpenH264 is used from the next start');
@@ -4977,15 +5049,17 @@ begin
   BuildBatchControls;
   BuildTransportControls;
 
-  // Model, Animation Settings..., just above Background Settings...
+  // Animation, Animation Settings..., just below the line under Animations
+  // Used..., above Load and Save Animation Settings...
   FAnimationSettingsItem := TMenuItem.Create(Self);
   FAnimationSettingsItem.Text := 'Animation Settings...';
   FAnimationSettingsItem.OnClick := AnimationSettingsItemClick;
-  ModelMenu.InsertObject(BackgroundSettingsMenuItem.Index, FAnimationSettingsItem);
+  ModelMenu.InsertObject(ModelSettingsSeparatorItem.Index + 1, FAnimationSettingsItem);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
-  FAnimationMenu := TMenuItem.Create(Self);
-  FAnimationMenu.Text := 'Animation';
-  MainMenu1.AddObject(FAnimationMenu);
+  // The Save as items at the foot of the Animation menu, after a line: a
+  // menu of their own would be a second "Animation"
+  FAnimationMenu := ModelMenu;
+  AddItem(FAnimationMenu, '-', nil);
   AddItem(FAnimationMenu, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationMenu, 'Save as Spritesheet', SaveSheetItemClick);
   AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
@@ -4993,7 +5067,7 @@ begin
   {$ENDIF}
 end;
 
-// Model, Animation Settings...: the frame rate saved animations use. OK keeps the
+// Animation, Animation Settings...: the frame rate saved animations use. OK keeps the
 // new rate and saves it; Cancel leaves the old one.
 procedure TMainForm.AnimationSettingsItemClick(Sender: TObject);
 var
@@ -5007,6 +5081,11 @@ begin
   Dialog.Overscan := FSettings.Overscan;
   Dialog.Filter := FSettings.ResampleFilter;
   Dialog.OverscanEnabled := FOverscanOn;
+  // For the warning shown when Overscan is ticked, unless turned off
+  Dialog.GrabWidth := FSettings.GrabWidth;
+  Dialog.GrabHeight := FSettings.GrabHeight;
+  Dialog.OverscanWarning := FSettings.ShowOverscanWarning;
+  Dialog.OnOverscanWarningChange := AnimationDialogWarningChange;
   Dialog.AtlasPageSize := FSettings.AtlasPageSize;
   Dialog.AtlasNonPowerOf2 := FSettings.AtlasNonPowerOf2;
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
@@ -5025,6 +5104,20 @@ begin
     Dialog.Free;
   end;
   {$ENDIF}
+end;
+
+procedure TMainForm.AnimationDialogWarningChange(Sender: TObject);
+begin
+  if not (Sender is TAnimationSettingsForm) then
+    Exit;
+  FSettings.ShowOverscanWarning := TAnimationSettingsForm(Sender).OverscanWarning;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
 end;
 
 {$IF DEFINED(ANDROID) or DEFINED(IOS)}
@@ -5284,7 +5377,7 @@ begin
   Result := False;
 end;
 
-// The frames saving entry AIndex makes at the Model, Animation Settings
+// The frames saving entry AIndex makes at the Animation, Animation Settings
 // rate, worked out as a capture does: 1 for (None), a still of the bind
 // pose, otherwise the animation's length times the rate, rounded. 0 if the
 // animation cannot be found.
@@ -5331,7 +5424,7 @@ begin
   Result.TextSettings.HorzAlign := TTextAlign.Trailing;
 end;
 
-// Every entry's frame count, for the Model, Animation Settings rate now
+// Every entry's frame count, for the Animation, Animation Settings rate now
 procedure TMainForm.UpdateFrameCounts;
 var
   I, Count: Integer;
@@ -5505,7 +5598,7 @@ begin
   FinishFrameEdit(True, False);
 end;
 
-// Model, Directions...: how many directions, where the first points, the
+// Animation, Directions...: how many directions, where the first points, the
 // order they are taken in, and whether the dial snaps. OK keeps and saves
 // them; Cancel leaves everything as it was.
 procedure TMainForm.DirectionsItemClick(Sender: TObject);
@@ -5552,7 +5645,7 @@ begin
 end;
 {$ENDIF}
 
-// Keeps the directions chosen in Model, Directions, and saves them. A plain
+// Keeps the directions chosen in Animation, Directions, and saves them. A plain
 // order is kept as DirectionClockwise alone, with DirectionOrder empty
 procedure TMainForm.ApplyDirections(const ACount: Integer; const AStart: Single;
   const AOrder: TArray<Integer>; const ASnap: Boolean);
@@ -5784,6 +5877,24 @@ begin
       [AName, Touching, Length(AFrames), Left, Top, Right, Bottom]);
 end;
 
+// The name settings.json keeps a kind of export by, which the metadata's
+// meta.export_type gives too
+function SheetKindKey(const AKind: TSheetKind): String;
+begin
+  case AKind of
+    skSheet:
+      Result := 'sheet';
+    skAtlas:
+      Result := 'atlas';
+    skGif:
+      Result := 'gif';
+    skMp4:
+      Result := 'mp4';
+  else
+    Result := 'strip';
+  end;
+end;
+
 // Grabs every frame of the list entry AIndex, then saves them as AKind in
 // AFolder. An animation is stepped through its own frames; (None), entry 0,
 // turns the model once instead. The camera is framed once for the whole
@@ -5873,7 +5984,7 @@ begin
       FrameOverride(AnimationListBox.Items[AIndex]));
   end;
 
-  // A direction of Model, Directions: the camera is turned to it before
+  // A direction of Animation, Directions: the camera is turned to it before
   // the source starts, so a still's turntable starts from it too
   HasDirection := (ADirection >= 0) and (ADirection < Length(FBatchBearings));
   Direction := Max(0, ADirection);
@@ -5887,13 +5998,35 @@ begin
   end
   else
     Bearings := nil;
+  // Strips and spritesheets are named after the model and the animation:
+  // <model>_<animation>.png for a spritesheet, holding every direction, and
+  // <model>_<animation>_dirNN_strip<frames>.png for a strip, one per
+  // direction, numbered from 1 whether or not directions are used. The
+  // still of the bind pose, (None), is called still.
+  if AKind in [skStrip, skSheet] then
+  begin
+    if AIndex = 0 then
+      Stem := 'still'
+    else
+      Stem := SafeFileStem(AnimationListBox.Items[AIndex]);
+    Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel)) + '_' +
+      Stem;
+    if AKind = skStrip then
+    begin
+      Stem := Stem + Format('_dir%.2d', [Direction + 1]);
+      // Its one direction alone
+      if HasDirection then
+        Bearings := [FBatchBearings[ADirection]];
+    end;
+  end;
 
   Count := Source.FrameCount;
   CycleSeconds := Source.Duration;
   // The frames, and the strip or spritesheet made from them
   Bytes := Int64(Count) * FOffscreen.Width * FOffscreen.Height * 4 * 2;
-  // A strip or spritesheet of directions keeps every direction's frames
-  if HasDirection and (AKind in [skStrip, skSheet]) then
+  // A spritesheet of directions keeps every direction's frames; a strip is
+  // one direction's
+  if HasDirection and (AKind = skSheet) then
     Bytes := Bytes * Length(FBatchBearings);
   if Bytes > MAX_CAPTURE_BYTES then
   begin
@@ -5948,6 +6081,7 @@ begin
   AnimationName := AnimationListBox.Items[AIndex];
   // Credits, dates and model for the metadata, as they are now
   Meta := ExportMeta(1, 1);
+  Meta.ExportType := SheetKindKey(AKind);
 
   // Locals, not parameters, for the procedures below to capture
   Kind := AKind;
@@ -6018,10 +6152,11 @@ begin
         Exit;
       end;
       Frames := AFrames;
-      if HasDirection and (Kind in [skStrip, skSheet]) then
+      if HasDirection and (Kind = skSheet) then
       begin
-        // One image for every direction of the animation: its frames are
-        // kept until the last direction is in, then saved together
+        // One spritesheet for every direction of the animation: its frames
+        // are kept until the last direction is in, then saved together; a
+        // strip is saved for each direction as it comes
         FDirFrames := FDirFrames + AFrames;
         if not LastDirection then
         begin
@@ -6567,23 +6702,6 @@ begin
   UpdateBatchControls;
 end;
 
-// The name settings.json keeps a kind of export by
-function SheetKindKey(const AKind: TSheetKind): String;
-begin
-  case AKind of
-    skSheet:
-      Result := 'sheet';
-    skAtlas:
-      Result := 'atlas';
-    skGif:
-      Result := 'gif';
-    skMp4:
-      Result := 'mp4';
-  else
-    Result := 'strip';
-  end;
-end;
-
 // What to save changed: Metadata is offered for strips and spritesheets only
 procedure TMainForm.BatchKindChange(Sender: TObject);
 begin
@@ -6655,7 +6773,7 @@ begin
 end;
 
 // Kept in settings.json; ticked, every animation is exported in each
-// direction of Model, Directions
+// direction of Animation, Directions
 procedure TMainForm.BatchDirectionsChange(Sender: TObject);
 begin
   FSettings.ExportDirections := FBatchDirections.IsChecked;
@@ -6837,7 +6955,7 @@ end;
 
 // Runs a batch: every entry of AItems, in order, saved as AKind in
 // AFolder, behind the progress dialog. With Directions ticked, each entry is
-// captured once per direction of Model, Directions, in their order, before
+// captured once per direction of Animation, Directions, in their order, before
 // the next entry. With ATwoPass, the whole batch is first run through once
 // with overscan off, saving nothing, only to measure how much empty border
 // its frames leave; the second pass is then the export itself, overscan as
@@ -7297,7 +7415,7 @@ begin
   begin
     FAtlasFailed[Index] := True;
     FBatchErrors := FBatchErrors + [Format('%s: frames of %d x %d do not fit on a %d x %d ' +
-      'atlas page; choose a larger page size in Model, Animation Settings, or a smaller ' +
+      'atlas page; choose a larger page size in Animation, Animation Settings, or a smaller ' +
       'grab size.', [APart.Name, AFrames[0].Width, AFrames[0].Height, PageSize, PageSize])];
     Exit;
   end;
@@ -7364,6 +7482,7 @@ begin
   // The camera these frames were drawn with: for a 2-pass export, the
   // second pass's
   Meta := ExportMeta(1, 1);
+  Meta.ExportType := SheetKindKey(skAtlas);
   if AFinal then
   begin
     FAtlasSaving := True;
@@ -8102,17 +8221,18 @@ begin
     Caption := ProjectionCaption;
 end;
 
-// File, Debug, Frame Borders, made only while debug_enabled is true in
-// settings.json, just above Exit, ticked as debug_frame_borders says
+// File, Debug, made only while debugging is on, just above Exit: Frame
+// Borders, ticked as debug_frame_borders says, and, while debug_enabled is
+// true in settings.json, Disable Debug
 procedure TMainForm.BuildDebugMenu;
 var
-  Separator: TMenuItem;
+  Item: TMenuItem;
 begin
-  if not FSettings.DebugEnabled then
+  if not FSettings.DebugActive then
     Exit;
-  Separator := TMenuItem.Create(Self);
-  Separator.Text := '-';
-  FileMenu.InsertObject(ExitMenuItem.Index, Separator);
+  FDebugSeparator := TMenuItem.Create(Self);
+  FDebugSeparator.Text := '-';
+  FileMenu.InsertObject(ExitMenuItem.Index, FDebugSeparator);
   FDebugMenu := TMenuItem.Create(Self);
   FDebugMenu.Text := 'Debug';
   FileMenu.InsertObject(ExitMenuItem.Index, FDebugMenu);
@@ -8121,6 +8241,49 @@ begin
   FFrameBordersItem.IsChecked := FSettings.DebugFrameBorders;
   FFrameBordersItem.OnClick := FrameBordersItemClick;
   FDebugMenu.AddObject(FFrameBordersItem);
+  // Only debug_enabled can be turned off: --debug lasts for the run
+  if FSettings.DebugEnabled then
+  begin
+    Item := TMenuItem.Create(Self);
+    Item.Text := '-';
+    FDebugMenu.AddObject(Item);
+    Item := TMenuItem.Create(Self);
+    Item.Text := 'Disable Debug';
+    Item.OnClick := DisableDebugItemClick;
+    FDebugMenu.AddObject(Item);
+  end;
+end;
+
+// Sets debug_enabled back to false in settings.json straight away. Debugging
+// stops now, frame borders and all, and File, Debug goes, unless --debug is
+// keeping it on for this run; OpenH264 is fetched the next time Sprite3D
+// starts, as it is only looked for at startup
+procedure TMainForm.DisableDebugItemClick(Sender: TObject);
+begin
+  FSettings.DebugEnabled := False;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+    begin
+      FSettings.DebugEnabled := True;
+      ShowMessage('Can''t save the settings to ' + FSettings.FileName + sLineBreak +
+        E.Message);
+      Exit;
+    end;
+  end;
+  DebugMemo.Lines.Add('Debug disabled (debug_enabled is now false in ' +
+    FSettings.FileName + '); OpenH264 is fetched the next time Sprite3D starts');
+  if Sender is TMenuItem then
+    TMenuItem(Sender).Visible := False;
+  if FSettings.DebugActive then
+    DebugMemo.Lines.Add('Debugging stays on for this run (--debug)')
+  else
+  begin
+    // Hidden, not freed: this is still the menu item's click
+    FDebugMenu.Visible := False;
+    FDebugSeparator.Visible := False;
+  end;
 end;
 
 // Ticks or unticks Frame Borders, kept in settings.json as
@@ -8159,32 +8322,74 @@ begin
         Result := DefaultGrabFolder;
       {$ENDIF}
     end;
+  // Show grid, as it was left, kept as soon as it changes
+  FResults.ShowGrid := FSettings.ResultsShowGrid;
+  FResults.OnShowGridChange := ResultsShowGridChange;
+  // The zoom last chosen, shown as far as the space then allows
+  FResults.Zoom := FSettings.ResultsZoom;
+  FResults.OnZoomChange := ResultsZoomChange;
   TabControl1.OnChange := TabControl1Change;
+end;
+
+// The Results tab's zoom, kept in memory as the slider moves, as that is
+// many changes a second; written to settings.json when the tab is left and
+// when the program closes
+procedure TMainForm.ResultsZoomChange(Sender: TObject);
+begin
+  if FResults <> nil then
+    FSettings.ResultsZoom := FResults.Zoom;
+end;
+
+// Show grid on the Results tab, kept in settings.json straight away
+procedure TMainForm.ResultsShowGridChange(Sender: TObject);
+begin
+  if FResults = nil then
+    Exit;
+  FSettings.ResultsShowGrid := FResults.ShowGrid;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
 end;
 
 procedure TMainForm.TabControl1Change(Sender: TObject);
 begin
-  if Assigned(FResults) then
-    FResults.SetActive(TabControl1.ActiveTab = ResultsTab);
+  if not Assigned(FResults) then
+    Exit;
+  // Leaving the Results tab: its zoom is written now, not only on closing
+  if FResultsShowing and (TabControl1.ActiveTab <> ResultsTab) then
+    try
+      FSettings.Save;
+    except
+      on E: Exception do
+        DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+          E.Message);
+    end;
+  FResultsShowing := TabControl1.ActiveTab = ResultsTab;
+  FResults.SetActive(FResultsShowing);
 end;
 
 // Whether exported frames get a black border: only while debugging is on
 function TMainForm.FrameBordersOn: Boolean;
 begin
-  Result := FSettings.DebugEnabled and FSettings.DebugFrameBorders;
+  Result := FSettings.DebugActive and FSettings.DebugFrameBorders;
 end;
 
 // Lays out and writes the captured frames in AFolder, creating it if need
 // be; names follow the pop-up menu's rules, and an existing file of the same
 // name is replaced. With ADirections, the frames are every direction's in
-// turn, as many for each: a strip has one row per direction, and a
-// spritesheet holds them all in its square grid. With AMetadata, a strip or
-// spritesheet also gets its metadata beside it, the same name with .json,
-// AOrigin giving the pixel the centre of rotation falls on in a frame, if
-// AOriginKnown, AAnimation the name of the animation saved, and ADirections
-// the directions' bearings. Returns the file written, with the codec in
-// brackets for an MP4, or with the metadata added, for the log; raises if
-// it cannot be written. Runs on a worker thread, so touches no controls.
+// turn, as many for each: a spritesheet holds them all in its square grid,
+// and a strip, which is given one direction's at a time, one row each. With
+// AMetadata, a strip or spritesheet also gets its metadata beside it, the
+// same name with .json, AOrigin giving the pixel the centre of rotation
+// falls on in a frame, if AOriginKnown, AAnimation the name of the animation
+// saved, and ADirections the directions' bearings. Returns the file written,
+// with the codec in brackets for an MP4, or with the metadata added, for the
+// log; raises if it cannot be written. Runs on a worker thread, so touches
+// no controls.
 function TMainForm.SaveSheet(const AKind: TSheetKind;
   const AFrames: TArray<TSprite3DImage>; const AFolder, AStem: String;
   const ACycleSeconds: Double; const AMetadata: Boolean; const AOrigin: TPoint;

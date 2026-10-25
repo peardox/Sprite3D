@@ -1,38 +1,48 @@
 //** @abstract(The Results tab: plays back the animations exported to a folder, from their
 //** metadata and images alone.)
 //**
-//** TSprite3DResultsView builds its controls inside a parent, normally the main form's
-//** Results tab. Select Folder, at the bottom, picks a folder, opening at the last place
-//** exports went. Every .json in it is read with ReadResultsFolder; only what the metadata
-//** says is used, and only files whose @code(animations) are objects, as Sprite3D now
-//** writes, each beside the .png it describes. The animations found are listed on the right,
-//** the first selected. The selected animation's frames for the current direction, the first
-//** to begin with, are cut from the .png files, each @code(sprite_size), and played in the
-//** middle of the drawing area at the animation's own rate, its @code(frame_count) frames
-//** over its @code(time) seconds, with a 1-pixel yellow border round it. Under it are the
-//** player buttons, as on the View tab, a pair to step through the directions, a Zoom slider
-//** that never lets the animation grow larger than the space it has, and a side, Left, Top,
-//** Right or Bottom, with buttons that jump, paused, to the previous or next frame, in any
-//** animation and direction read, whose empty border on that side is its image's
-//** @code(sprite_empty), and say which of how many such frames it is. AniGif and MP4 exports
-//** are not read yet.
+//** TSprite3DResultsView builds its controls inside a parent, normally the main form's Results
+//** tab. Select Folder, at the bottom, picks a folder, opening at the last place exports went.
+//** Every .json in it is read with ReadResultsFolder; only what the metadata says is used, and
+//** only files whose @code(animations) are objects, as Sprite3D now writes, each beside the
+//** .png it describes. Beside Select Folder is the folder, with the name of the model its
+//** exports were made from, from @code(meta.file) without its folder, cut short with an
+//** ellipsis if need be. The animations found are listed on the right, the first selected. The
+//** selected animation's frames for the current direction, the first to begin with, are cut
+//** from the .png files, each @code(sprite_size), and played in the middle of the drawing area
+//** at the animation's own rate, its @code(frame_count) frames over its @code(time) seconds,
+//** over a grey checker that shows where it is transparent, with a 1-pixel yellow border round
+//** it. Under it are the player buttons, as on the Model tab, and a pair to step through the
+//** directions; then a Zoom slider that never lets the animation grow larger than the space it
+//** has, and beside it a Grid Size slider for the checker's squares, in sprite pixels. The
+//** checker zooms with the animation; Show grid, at the right of the Select Folder row, hides
+//** or shows it. Directly under the list, level with that row, is a side, Left, Top, Right or
+//** Bottom, with buttons that jump, paused, to the previous or next frame, in any animation and
+//** direction read, whose empty border on that side is its image's @code(sprite_empty), and say
+//** which of how many such frames it is. AniGif and MP4 exports are not read yet.
 //**
 //** The layout:
 //**
 //** @preformatted(
 //** parent
-//** |-- FolderLayout @(bottom@)
-//** |   |-- Select Folder and the folder read
-//** |   `-- the empty finder @(right, under the list@): the side, the previous and next
-//** |       frame at its sprite_empty anywhere, and which match of how many is showing
-//** |-- ListLayout @(right@)          the animations found
-//** `-- ViewerLayout @(client@)
-//**     |-- AnimationControlsLayout @(bottom@)
-//**     |   |-- the player buttons, the frame readout, the directions
-//**     |   `-- Zoom
-//**     `-- DrawingLayout @(client@)
-//**         |-- the yellow border @(centred@), 2 pixels larger each way
-//**         `-- AnimationLayout @(centred@)   the frame showing, sprite_size x zoom
+//** |-- ListLayout @(right, the full height@)
+//** |   |-- the animations found
+//** |   `-- the empty finder @(bottom, level with the Select Folder row@): the side, the
+//** |       previous and next frame at its sprite_empty anywhere, and which match is showing
+//** `-- MainLayout @(client@)
+//**     |-- FolderLayout @(bottom@)
+//**     |   |-- Select Folder
+//**     |   |-- the folder read and its model, with an ellipsis if need be
+//**     |   `-- Show grid @(right, apart from the empty finder@)
+//**     `-- ViewerLayout @(client@)
+//**         |-- AnimationControlsLayout @(bottom@)
+//**         |   |-- the player buttons, the frame readout, the directions
+//**         |   `-- Zoom; Grid Size
+//**         `-- DrawingLayout @(client@)
+//**             |-- the yellow border @(centred@), 2 pixels larger each way
+//**             `-- AnimationLayout @(centred@)   sprite_size x zoom
+//**                 |-- the checker, squares of Grid Size sprite pixels
+//**                 `-- the frame showing, over it
 //** )
 unit Sprite3DResultsView;
 
@@ -45,34 +55,46 @@ unit Sprite3DResultsView;
   opening at the last place exports went. Every .json in it is read with
   ReadResultsFolder; only what the metadata says is used, and only files
   whose animations are objects, as Sprite3D now writes, each beside the .png
-  it describes. The animations found are listed on the right, the first
-  selected. The selected animation's frames for the current direction, the
-  first to begin with, are cut from the .png files, each sprite_size, and
-  played in the middle of the drawing area at the animation's own rate, its
-  frame_count frames over its time seconds, with a 1-pixel yellow border
-  round it. Under it are the player buttons, as on the View tab, a pair to
-  step through the directions, a Zoom slider that never lets the animation
-  grow larger than the space it has, and a side, Left, Top, Right or Bottom,
-  with buttons that jump, paused, to the previous or next frame, in any
-  animation and direction read, whose empty border on that side is its
-  image's sprite_empty, and say which of how many such frames it is. AniGif
-  and MP4 exports are not read yet.
+  it describes. Beside Select Folder is the folder, with the name of the
+  model its exports were made from, from meta.file without its folder, cut
+  short with an ellipsis if need be. The animations found are listed on the
+  right, the first selected. The selected animation's frames for the current
+  direction, the first to begin with, are cut from the .png files, each
+  sprite_size, and played in the middle of the drawing area at the
+  animation's own rate, its frame_count frames over its time seconds, over a
+  grey checker that shows where it is transparent, with a 1-pixel yellow
+  border round it. Under it are the player buttons, as on the Model tab, and
+  a pair to step through the directions; then a Zoom slider that never lets
+  the animation grow larger than the space it has, and beside it a Grid Size
+  slider for the checker's squares, in sprite pixels. The checker zooms with
+  the animation; Show grid, at the right of the Select Folder row, hides or
+  shows it. Directly under the list, level with that row, is a side, Left,
+  Top, Right or Bottom, with buttons that jump, paused, to the previous or
+  next frame, in any animation and direction read, whose empty border on
+  that side is its image's sprite_empty, and say which of how many such
+  frames it is. AniGif and MP4 exports are not read yet.
 
   The layout:
 
   parent
-  |-- FolderLayout (bottom)
-  |   |-- Select Folder and the folder read
-  |   `-- the empty finder (right, under the list): the side, the previous and next
-  |       frame at its sprite_empty anywhere, and which match of how many is showing
-  |-- ListLayout (right)          the animations found
-  `-- ViewerLayout (client)
-      |-- AnimationControlsLayout (bottom)
-      |   |-- the player buttons, the frame readout, the directions
-      |   `-- Zoom
-      `-- DrawingLayout (client)
-          |-- the yellow border (centred), 2 pixels larger each way
-          `-- AnimationLayout (centred)   the frame showing, sprite_size x zoom
+  |-- ListLayout (right, the full height)
+  |   |-- the animations found
+  |   `-- the empty finder (bottom, level with the Select Folder row): the side, the
+  |       previous and next frame at its sprite_empty anywhere, and which match is showing
+  `-- MainLayout (client)
+      |-- FolderLayout (bottom)
+      |   |-- Select Folder
+      |   |-- the folder read and its model, with an ellipsis if need be
+      |   `-- Show grid (right, apart from the empty finder)
+      `-- ViewerLayout (client)
+          |-- AnimationControlsLayout (bottom)
+          |   |-- the player buttons, the frame readout, the directions
+          |   `-- Zoom; Grid Size
+          `-- DrawingLayout (client)
+              |-- the yellow border (centred), 2 pixels larger each way
+              `-- AnimationLayout (centred)   sprite_size x zoom
+                  |-- the checker, squares of Grid Size sprite pixels
+                  `-- the frame showing, over it
 }
 
 interface
@@ -185,6 +207,10 @@ type
 //**
 //** @param(ASkipped Set to how many .json files could not be used.)
 //**
+//** @param(AModels Set to the names of the model files the metadata used was made from,
+//** from each file's @code(meta.file) with its folder taken off, each once, in the order
+//** found; empty if none gives one.)
+//**
 //** @returns(The animations found, each with at least one frame placed; empty if none. A
 //** dynamic array of records, owned by the caller.)
 /// <summary>The animations described by the metadata files in a folder.</summary>
@@ -202,10 +228,13 @@ type
 /// there.</param>
 /// <param name="AUsed">Set to how many metadata files were used.</param>
 /// <param name="ASkipped">Set to how many .json files could not be used.</param>
+/// <param name="AModels">Set to the names of the model files the metadata used was made
+/// from, from each file's <c>meta.file</c> with its folder taken off, each once, in the order
+/// found; empty if none gives one.</param>
 /// <returns>The animations found, each with at least one frame placed; empty if none. A
 /// dynamic array of records, owned by the caller.</returns>
-function ReadResultsFolder(const AFolder: String; out AUsed, ASkipped: Integer):
-  TArray<TResultsAnimation>;
+function ReadResultsFolder(const AFolder: String; out AUsed, ASkipped: Integer;
+  out AModels: TArray<String>): TArray<TResultsAnimation>;
 
 type
   //** @abstract(The Results tab's controls and player; see the unit description.)
@@ -222,6 +251,23 @@ type
     FDrawingLayout: TLayout;
     FAnimationLayout: TLayout;
     FImage: TImage;
+    // Behind FImage: the transparency checker, at the sprite's resolution,
+    // stretched the same way, so it zooms with the frame exactly
+    FGridImage: TImage;
+    FGridLayout: TLayout;
+    FZoomHalf: TLayout;
+    FGridCheck: TCheckBox;
+    FMainLayout: TLayout;
+    FOnShowGridChange: TNotifyEvent;
+    // The zoom chosen; what is shown is this or, if less, what fits
+    FZoomWanted: Single;
+    FOnZoomChange: TNotifyEvent;
+    FGridTrack: TTrackBar;
+    FGridLabel: TLabel;
+    FGridSize: Integer;
+    // The sprite size and grid size FGridImage was last drawn for
+    FGridDrawnFor: TPoint;
+    FGridDrawnSize: Integer;
     FMessageLabel: TLabel;
     FAnimationControlsLayout: TLayout;
     FTransportLayout: TLayout;
@@ -301,6 +347,14 @@ type
     procedure StepTo(const AFrame: Integer);
     procedure UpdateZoomRange;
     procedure ApplyZoom;
+    procedure GridTrackChange(Sender: TObject);
+    procedure GridCheckChange(Sender: TObject);
+    procedure SetZoom(const Value: Single);
+    function GetShowGrid: Boolean;
+    procedure SetShowGrid(const Value: Boolean);
+    procedure ZoomLayoutResized(Sender: TObject);
+    procedure UpdateGridRange;
+    procedure DrawGrid;
     procedure UpdateControls;
     procedure ShowMessageText(const AText: String);
     function HasFrames: Boolean;
@@ -394,6 +448,38 @@ type
     /// no folder has been read yet. It may return an empty string. Called on the main
     /// thread.</remarks>
     property OnDefaultFolder: TFunc<String> read FOnDefaultFolder write FOnDefaultFolder;
+    //** @abstract(Whether Show grid is ticked, so the checker is drawn behind the animation.)
+    //**
+    //** True until set. Setting it does not call OnShowGridChange. Main thread only.
+    /// <summary>Whether Show grid is ticked, so the checker is drawn behind the
+    /// animation.</summary>
+    /// <remarks>True until set. Setting it does not call OnShowGridChange. Main thread
+    /// only.</remarks>
+    property ShowGrid: Boolean read GetShowGrid write SetShowGrid;
+    //** @abstract(Called on the main thread when Show grid is ticked or cleared by hand, so
+    //** the owner can keep the choice.)
+    /// <summary>Called on the main thread when Show grid is ticked or cleared by hand, so the
+    /// owner can keep the choice.</summary>
+    property OnShowGridChange: TNotifyEvent read FOnShowGridChange write FOnShowGridChange;
+    //** @abstract(The zoom chosen, as a multiple of the sprite size; 1 until set.)
+    //**
+    //** What is shown is this, or less where the drawing area is too small for it: the Zoom
+    //** slider never goes past what fits, and comes back up towards this as the space grows.
+    //** Setting it, as from a kept setting, shows it at once as far as the space allows, and
+    //** does not call OnZoomChange; moving the slider by hand sets it and calls
+    //** OnZoomChange. A value of 0 or less counts as 1. Main thread only.
+    /// <summary>The zoom chosen, as a multiple of the sprite size; 1 until set.</summary>
+    /// <remarks>What is shown is this, or less where the drawing area is too small for it: the
+    /// Zoom slider never goes past what fits, and comes back up towards this as the space
+    /// grows. Setting it, as from a kept setting, shows it at once as far as the space allows,
+    /// and does not call OnZoomChange; moving the slider by hand sets it and calls
+    /// OnZoomChange. A value of 0 or less counts as 1. Main thread only.</remarks>
+    property Zoom: Single read FZoomWanted write SetZoom;
+    //** @abstract(Called on the main thread each time Zoom is moved by hand, so the owner can
+    //** keep the zoom chosen.)
+    /// <summary>Called on the main thread each time Zoom is moved by hand, so the owner can
+    /// keep the zoom chosen.</summary>
+    property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
     //** @abstract(The folder last read, or empty if none has been.)
     /// <summary>The folder last read, or empty if none has been.</summary>
     property Folder: String read FFolder;
@@ -445,6 +531,20 @@ const
   // The edge buttons' icons, plain triangles in a 24 by 24 box, pointing
   // left and right
   ICON_BACK = 'M16 6v12l-9-6z';
+  // Grid Size: its range in sprite pixels, never more than half the
+  // sprite's smaller side, and where it starts
+  GRID_MIN = 1;
+  GRID_MAX = 16;
+  GRID_DEFAULT = 8;
+  // The height of the Zoom and Grid Size rows
+  SLIDER_ROW_HEIGHT = 26;
+  // The checker's greys, as the Model tab's Transparent background has them
+  GRID_LIGHT = $FFCCCCCC;
+  GRID_DARK = $FF999999;
+  // What the empty finder says on any frame that is not a match
+  EDGE_FINDER = 'Edge Case Finder';
+  // The height of the Select Folder row and of the empty finder level with it
+  BOTTOM_ROW_HEIGHT = 36;
   // The animation list's width; the empty finder below it is as wide
   LIST_WIDTH = 300;
   ICON_FORWARD = 'M8 6v12l9-6z';
@@ -464,10 +564,26 @@ begin
       Exit(False);
 end;
 
-// Adds what one metadata file says to AAnimations; False if it is not
-// metadata this can use
+// The model file's name, without its folder, from meta.file; the folder
+// is cut at the last / or \ alike, as the file may have been written on
+// another platform. Empty if the metadata gives none.
+function ModelFileName(const ARoot: TJSONObject): String;
+var
+  Path: String;
+  At: Integer;
+begin
+  Result := String.Empty;
+  if not ARoot.TryGetValue<String>('meta.file', Path) then
+    Exit;
+  At := Max(Path.LastIndexOf('/'), Path.LastIndexOf('\'));
+  Result := Path.Substring(At + 1).Trim;
+end;
+
+// Adds what one metadata file says to AAnimations, and its model file's
+// name to AModels if it is not there yet; False if it is not metadata this
+// can use
 function ReadMetadataFile(const AFileName: String;
-  var AAnimations: TArray<TResultsAnimation>): Boolean;
+  var AAnimations: TArray<TResultsAnimation>; var AModels: TArray<String>): Boolean;
 var
   Value: TJSONValue;
   Root, Image, Item: TJSONObject;
@@ -476,6 +592,8 @@ var
   SpriteWidth, SpriteHeight, Cols, Count, AnimationIndex, DirectionIndex, Frame: Integer;
   SpriteEmpty, FrameEmpty: TResultsSides;
   HasSpriteEmpty: Boolean;
+  Model: String;
+  Known: Boolean;
   Time: Double;
   Bearings: TArray<Double>;
   // For each of this file's animations, its index in AAnimations, or -1 if
@@ -583,20 +701,31 @@ begin
           SpriteEmpty;
       end;
     end;
+    // The model the frames were made from, each named once
+    Model := ModelFileName(Root);
+    if Model <> String.Empty then
+    begin
+      Known := False;
+      for var Other in AModels do
+        Known := Known or SameText(Other, Model);
+      if not Known then
+        AModels := AModels + [Model];
+    end;
     Result := True;
   finally
     Value.Free;
   end;
 end;
 
-function ReadResultsFolder(const AFolder: String; out AUsed, ASkipped: Integer):
-  TArray<TResultsAnimation>;
+function ReadResultsFolder(const AFolder: String; out AUsed, ASkipped: Integer;
+  out AModels: TArray<String>): TArray<TResultsAnimation>;
 var
   Files: TArray<String>;
 begin
   Result := nil;
   AUsed := 0;
   ASkipped := 0;
+  AModels := nil;
   if (AFolder = String.Empty) or not TDirectory.Exists(AFolder) then
     Exit;
   Files := TDirectory.GetFiles(AFolder, '*.json');
@@ -606,7 +735,7 @@ begin
       Result := CompareText(A, B);
     end));
   for var FileName in Files do
-    if ReadMetadataFile(FileName, Result) then
+    if ReadMetadataFile(FileName, Result, AModels) then
       Inc(AUsed)
     else
       Inc(ASkipped);
@@ -625,6 +754,7 @@ begin
   FFrames := TObjectList<TBitmap>.Create(True);
   FAnimationIndex := -1;
   FDirectionIndex := 0;
+  FZoomWanted := 1;
   FTimer := TTimer.Create(Self);
   FTimer.Enabled := False;
   FTimer.Interval := TICK_MS;
@@ -649,6 +779,12 @@ begin
     FDrawingLayout.OnResized := nil;
   if Assigned(FZoomTrack) then
     FZoomTrack.OnChange := nil;
+  if Assigned(FGridTrack) then
+    FGridTrack.OnChange := nil;
+  if Assigned(FGridCheck) then
+    FGridCheck.OnChange := nil;
+  if Assigned(FZoomLayout) then
+    FZoomLayout.OnResized := nil;
   if Assigned(FEdgeBox) then
     FEdgeBox.OnChange := nil;
   FreeAndNil(FFrames);
@@ -711,6 +847,8 @@ begin
 end;
 
 procedure TSprite3DResultsView.BuildControls;
+var
+  Row: TLayout;
 
   function AddLabel(const AParent: TControl; const AAlign: TAlignLayout;
     const AWidth: Single): TLabel;
@@ -726,30 +864,21 @@ procedure TSprite3DResultsView.BuildControls;
   end;
 
 begin
-  // Bottom: Select Folder and the folder read
-  FFolderLayout := TLayout.Create(Self);
-  FFolderLayout.Parent := FParent;
-  FFolderLayout.Align := TAlignLayout.Bottom;
-  FFolderLayout.Height := 36;
-  FFolderLayout.Padding.Rect := TRectF.Create(4, 4, 4, 4);
-  FFolderButton := TButton.Create(Self);
-  FFolderButton.Parent := FFolderLayout;
-  FFolderButton.Align := TAlignLayout.Left;
-  FFolderButton.Width := 110;
-  FFolderButton.Text := 'Select Folder...';
-  FFolderButton.Hint := 'Choose a folder of exports to play back; it opens where the ' +
-    'last export went';
-  FFolderButton.ShowHint := True;
-  FFolderButton.OnClick := FolderButtonClick;
-  // At the right of the same row, below the animation list and as wide,
-  // left-aligned under it: a side, and back and forward to the frames
-  // whose empty border on that side is the image's sprite_empty
+  // Right: the animations found, with the empty finder directly under
+  // them; this column runs the full height
+  FListLayout := TLayout.Create(Self);
+  FListLayout.Parent := FParent;
+  FListLayout.Align := TAlignLayout.Right;
+  FListLayout.Width := LIST_WIDTH;
+  FListLayout.Padding.Rect := TRectF.Create(4, 4, 4, 0);
+  // At the foot of the column, level with the Select Folder row: a side,
+  // and back and forward to the frames whose empty border on that side is
+  // the image's sprite_empty
   FEdgeLayout := TLayout.Create(Self);
-  FEdgeLayout.Parent := FFolderLayout;
-  FEdgeLayout.Align := TAlignLayout.Right;
-  // The list sits 4 pixels inside its layout each side, and this row's right
-  // padding is 4: so this, the list's own width, starts under its left edge
-  FEdgeLayout.Width := LIST_WIDTH - 8;
+  FEdgeLayout.Parent := FListLayout;
+  FEdgeLayout.Align := TAlignLayout.Bottom;
+  FEdgeLayout.Height := BOTTOM_ROW_HEIGHT;
+  FEdgeLayout.Padding.Rect := TRectF.Create(0, 4, 0, 4);
   FEdgeBox := TComboBox.Create(Self);
   FEdgeBox.Parent := FEdgeLayout;
   FEdgeBox.Position.X := 0;
@@ -774,34 +903,67 @@ begin
   // The values themselves are in the hint, as the row is narrow
   FEdgeLabel.HitTest := True;
   FEdgeLabel.ShowHint := True;
-
-  FFolderLabel := TLabel.Create(Self);
-  FFolderLabel.Parent := FFolderLayout;
-  FFolderLabel.Align := TAlignLayout.Client;
-  FFolderLabel.Margins.Left := 8;
-  FFolderLabel.TextSettings.WordWrap := False;
-  FFolderLabel.Text := String.Empty;
-
-  // Right: the animations found
-  FListLayout := TLayout.Create(Self);
-  FListLayout.Parent := FParent;
-  FListLayout.Align := TAlignLayout.Right;
-  FListLayout.Width := LIST_WIDTH;
-  FListLayout.Padding.Rect := TRectF.Create(4, 4, 4, 0);
   FList := TListBox.Create(Self);
   FList.Parent := FListLayout;
   FList.Align := TAlignLayout.Client;
   FList.OnChange := ListChange;
 
+  // Left: everything else, the Select Folder row at its foot. Top- and
+  // bottom-aligned controls are always laid out before right-aligned ones,
+  // so the row is kept in here to keep it clear of the list's column.
+  FMainLayout := TLayout.Create(Self);
+  FMainLayout.Parent := FParent;
+  FMainLayout.Align := TAlignLayout.Client;
+  FFolderLayout := TLayout.Create(Self);
+  FFolderLayout.Parent := FMainLayout;
+  FFolderLayout.Align := TAlignLayout.Bottom;
+  FFolderLayout.Height := BOTTOM_ROW_HEIGHT;
+  FFolderLayout.Padding.Rect := TRectF.Create(4, 4, 4, 4);
+  FFolderButton := TButton.Create(Self);
+  FFolderButton.Parent := FFolderLayout;
+  FFolderButton.Align := TAlignLayout.Left;
+  FFolderButton.Width := 110;
+  FFolderButton.Text := 'Select Folder...';
+  FFolderButton.Hint := 'Choose a folder of exports to play back; it opens where the ' +
+    'last export went';
+  FFolderButton.ShowHint := True;
+  FFolderButton.OnClick := FolderButtonClick;
+  // Show grid, at the right of the row, kept apart from the empty finder
+  FGridCheck := TCheckBox.Create(Self);
+  FGridCheck.Parent := FFolderLayout;
+  FGridCheck.Align := TAlignLayout.Right;
+  FGridCheck.Width := 90;
+  FGridCheck.Margins.Left := 8;
+  FGridCheck.Margins.Right := 16;
+  FGridCheck.Text := 'Show grid';
+  FGridCheck.Hint := 'Draw the checker behind the animation, showing where it is ' +
+    'transparent';
+  FGridCheck.ShowHint := True;
+  FGridCheck.IsChecked := True;
+  FGridCheck.OnChange := GridCheckChange;
+  // The folder read and its model, between Select Folder and Show grid,
+  // cut short with an ellipsis where it would run into Show grid; the whole
+  // of it is its hint
+  FFolderLabel := TLabel.Create(Self);
+  FFolderLabel.Parent := FFolderLayout;
+  FFolderLabel.Align := TAlignLayout.Client;
+  FFolderLabel.Margins.Left := 8;
+  FFolderLabel.TextSettings.WordWrap := False;
+  FFolderLabel.TextSettings.Trimming := TTextTrimming.Character;
+  FFolderLabel.HitTest := True;
+  FFolderLabel.ShowHint := True;
+  FFolderLabel.Text := String.Empty;
+
   // The rest: the drawing area, and the controls under it
   FViewerLayout := TLayout.Create(Self);
-  FViewerLayout.Parent := FParent;
+  FViewerLayout.Parent := FMainLayout;
   FViewerLayout.Align := TAlignLayout.Client;
 
   FAnimationControlsLayout := TLayout.Create(Self);
   FAnimationControlsLayout.Parent := FViewerLayout;
   FAnimationControlsLayout.Align := TAlignLayout.Bottom;
-  FAnimationControlsLayout.Height := 68;
+  // The player's row, then the sliders' row
+  FAnimationControlsLayout.Height := 36 + SLIDER_ROW_HEIGHT + 8;
 
   // First row: the player, the frame readout, the directions
   FTransportLayout := TLayout.Create(Self);
@@ -831,14 +993,26 @@ begin
   FRateLabel := AddLabel(FTransportLayout, TAlignLayout.Client, 0);
   FRateLabel.Margins.Left := 6;
 
-  // Second row: Zoom
+  // Second row: Zoom on the left half, Grid Size on the right
   FZoomLayout := TLayout.Create(Self);
   FZoomLayout.Parent := FAnimationControlsLayout;
   FZoomLayout.Align := TAlignLayout.Client;
   FZoomLayout.Padding.Rect := TRectF.Create(4, 2, 8, 4);
-  FZoomLabel := AddLabel(FZoomLayout, TAlignLayout.Left, 90);
+  FZoomLayout.OnResized := ZoomLayoutResized;
+  // The left half: Zoom, at the top
+  FZoomHalf := TLayout.Create(Self);
+  FZoomHalf.Parent := FZoomLayout;
+  FZoomHalf.Position.X := 0;
+  FZoomHalf.Align := TAlignLayout.Left;
+  FZoomHalf.Width := 200;
+  FZoomHalf.Margins.Right := 8;
+  Row := TLayout.Create(Self);
+  Row.Parent := FZoomHalf;
+  Row.Align := TAlignLayout.Top;
+  Row.Height := SLIDER_ROW_HEIGHT;
+  FZoomLabel := AddLabel(Row, TAlignLayout.Left, 90);
   FZoomTrack := TTrackBar.Create(Self);
-  FZoomTrack.Parent := FZoomLayout;
+  FZoomTrack.Parent := Row;
   FZoomTrack.Align := TAlignLayout.Client;
   FZoomTrack.Min := ZOOM_MIN;
   FZoomTrack.Max := 1;
@@ -847,6 +1021,28 @@ begin
   FZoomTrack.Hint := 'Magnify the animation, as far as the space for it allows';
   FZoomTrack.ShowHint := True;
   FZoomTrack.OnChange := ZoomTrackChange;
+  // The right half: Grid Size, the checker's squares in sprite pixels
+  FGridLayout := TLayout.Create(Self);
+  FGridLayout.Parent := FZoomLayout;
+  FGridLayout.Align := TAlignLayout.Client;
+  Row := TLayout.Create(Self);
+  Row.Parent := FGridLayout;
+  Row.Align := TAlignLayout.Top;
+  Row.Height := SLIDER_ROW_HEIGHT;
+  FGridLabel := AddLabel(Row, TAlignLayout.Left, 90);
+  FGridTrack := TTrackBar.Create(Self);
+  FGridTrack.Parent := Row;
+  FGridTrack.Align := TAlignLayout.Client;
+  FGridTrack.Min := GRID_MIN;
+  FGridTrack.Max := GRID_MAX;
+  FGridTrack.Frequency := 1;
+  FGridSize := GRID_DEFAULT;
+  FGridTrack.Value := FGridSize;
+  FGridTrack.Hint := 'The size of the checker''s squares behind the animation, in the ' +
+    'sprite''s own pixels';
+  FGridTrack.ShowHint := True;
+  FGridTrack.OnChange := GridTrackChange;
+  FGridLabel.Text := Format('Grid %dpx', [FGridSize]);
 
   // The drawing area, the animation centred in it
   FDrawingLayout := TLayout.Create(Self);
@@ -871,6 +1067,14 @@ begin
   FAnimationLayout.Align := TAlignLayout.Center;
   FAnimationLayout.Width := 1;
   FAnimationLayout.Height := 1;
+  // The checker first, so the frame is drawn over it
+  FGridImage := TImage.Create(Self);
+  FGridImage.Parent := FAnimationLayout;
+  FGridImage.Align := TAlignLayout.Client;
+  FGridImage.WrapMode := TImageWrapMode.Stretch;
+  FGridImage.DisableInterpolation := True;
+  FGridImage.HitTest := False;
+  FGridImage.Visible := False;
   FImage := TImage.Create(Self);
   FImage.Parent := FAnimationLayout;
   FImage.Align := TAlignLayout.Client;
@@ -942,11 +1146,18 @@ end;
 procedure TSprite3DResultsView.LoadFolder(const AFolder: String);
 var
   Used, Skipped: Integer;
+  Models: TArray<String>;
 begin
   SetPlaying(False);
   FFolder := AFolder;
   FLoaded := True;
-  FAnimations := ReadResultsFolder(AFolder, Used, Skipped);
+  FAnimations := ReadResultsFolder(AFolder, Used, Skipped, Models);
+  // The folder, and the model the exports in it were made from, as the
+  // metadata names it; how much was read is in the hint
+  FFolderLabel.Text := AFolder;
+  if Length(Models) > 0 then
+    FFolderLabel.Text := FFolderLabel.Text + '  (' + String.Join(', ', Models) + ')';
+  FFolderLabel.Hint := FFolderLabel.Text;
   FEdgeMatches := nil;
   FAnimationIndex := -1;
   FFrames.Clear;
@@ -966,7 +1177,6 @@ begin
   end;
   if Length(FAnimations) = 0 then
   begin
-    FFolderLabel.Text := AFolder;
     if Skipped > 0 then
       ShowMessageText(Format('No animation metadata this can play was found in %s: ' +
         '%d .json files could not be used. Only metadata from this version of Sprite3D, ' +
@@ -976,10 +1186,10 @@ begin
     UpdateControls;
     Exit;
   end;
-  FFolderLabel.Text := Format('%s: %d animations from %d metadata files',
-    [AFolder, Length(FAnimations), Used]);
+  FFolderLabel.Hint := FFolderLabel.Hint + sLineBreak + Format('%d animations from %d ' +
+    'metadata files', [Length(FAnimations), Used]);
   if Skipped > 0 then
-    FFolderLabel.Text := FFolderLabel.Text + Format(' (%d not used)', [Skipped]);
+    FFolderLabel.Hint := FFolderLabel.Hint + Format('; %d .json files not used', [Skipped]);
   ShowMessageText(String.Empty);
   // The first is the default
   FList.ItemIndex := 0;
@@ -1077,6 +1287,8 @@ begin
   finally
     Sources.Free;
   end;
+  UpdateGridRange;
+  DrawGrid;
   if Length(Problems) > 0 then
     ShowMessageText('Some frames could not be read:' + sLineBreak +
       String.Join(sLineBreak, Problems))
@@ -1092,9 +1304,8 @@ begin
   FFrame := EnsureRange(AFrame, 0, FFrames.Count - 1);
   FImage.Bitmap := FFrames[FFrame];
   FFrameLabel.Text := Format('%d / %d', [FFrame + 1, FFrames.Count]);
-  // Only while held: playing, it would change too fast to read
-  if not FPlaying then
-    UpdateEdgeLabel;
+  // Every frame, playing or not, so it never shows a match that has gone
+  UpdateEdgeLabel;
 end;
 
 // Shows AFrame, wrapping round, held there; playing carries on from it
@@ -1321,8 +1532,9 @@ begin
   UpdateEdgeLabel;
 end;
 
-// The side's sprite_empty for the frame showing, and which of the matches
-// it is, as "match 3 of 7", or how many there are if it is not one
+// Which of the matches the frame showing is, and its empty border on the
+// side, as "3 of 7 (1px from edge)"; "Edge Case Finder" on any other frame. The
+// values, and how many matches there are, are in the hint either way.
 procedure TSprite3DResultsView.UpdateEdgeLabel;
 var
   Side, At: Integer;
@@ -1333,13 +1545,13 @@ begin
     Exit;
   if not HasFrames or (FAnimationIndex < 0) then
   begin
-    FEdgeLabel.Text := String.Empty;
+    FEdgeLabel.Text := EDGE_FINDER;
     FEdgeLabel.Hint := String.Empty;
     Exit;
   end;
   if Length(FEdgeMatches) = 0 then
   begin
-    FEdgeLabel.Text := 'No empty borders';
+    FEdgeLabel.Text := EDGE_FINDER;
     FEdgeLabel.Hint := 'The metadata read gives no empty borders';
     Exit;
   end;
@@ -1347,9 +1559,11 @@ begin
   Cell := CurrentAnimation.Directions[FDirectionIndex].Frames[FFrame];
   At := EdgeMatchIndex;
   if At >= 0 then
-    FEdgeLabel.Text := Format('Match %d of %d', [At + 1, Length(FEdgeMatches)])
+    // Which match, and the empty border on that side that makes it one
+    FEdgeLabel.Text := Format('%d of %d (%dpx from edge)', [At + 1, Length(FEdgeMatches),
+      Cell.Empty[Side]])
   else
-    FEdgeLabel.Text := Format('- of %d', [Length(FEdgeMatches)]);
+    FEdgeLabel.Text := EDGE_FINDER;
   // The values, in the hint
   if Cell.HasEmpty then
     Text := Format('sprite_empty %s is %d; this frame''s empty %s is %d', [SIDE_NAMES[Side],
@@ -1378,12 +1592,13 @@ begin
     (FDrawingLayout.Height - 2) / Max(1, Animation.SpriteHeight));
   if Fit <= 0 then
     Exit;   // not laid out yet
+  // The zoom chosen, as far as the space allows: a smaller space shows it
+  // smaller, and a larger one brings it back up to what was chosen
   FSyncing := True;
   try
     FZoomTrack.Min := Min(ZOOM_MIN, Fit);
     FZoomTrack.Max := Fit;
-    if FZoomTrack.Value > Fit then
-      FZoomTrack.Value := Fit;
+    FZoomTrack.Value := EnsureRange(FZoomWanted, FZoomTrack.Min, Fit);
   finally
     FSyncing := False;
   end;
@@ -1403,13 +1618,136 @@ begin
   FBorder.Width := FAnimationLayout.Width + 2;
   FBorder.Height := FAnimationLayout.Height + 2;
   FBorder.Visible := HasFrames;
+  // The checker is stretched with the frame, so it needs no redrawing here
+  FGridImage.Visible := HasFrames and FGridCheck.IsChecked;
   FZoomLabel.Text := Format('Zoom %.2fx', [Zoom]);
 end;
 
+// Grid Size's top: GRID_MAX, but never more than half the sprite's smaller
+// side; the size chosen comes down to it if need be
+procedure TSprite3DResultsView.UpdateGridRange;
+var
+  Top: Integer;
+begin
+  if FAnimationIndex < 0 then
+    Exit;
+  Top := Max(GRID_MIN, Min(GRID_MAX, Min(CurrentAnimation.SpriteWidth,
+    CurrentAnimation.SpriteHeight) div 2));
+  FSyncing := True;
+  try
+    FGridTrack.Max := Top;
+    FGridSize := EnsureRange(FGridSize, GRID_MIN, Top);
+    FGridTrack.Value := FGridSize;
+  finally
+    FSyncing := False;
+  end;
+  FGridLabel.Text := Format('Grid %dpx', [FGridSize]);
+end;
+
+// The checker, at the sprite's own size: squares of FGridSize sprite pixels,
+// light at the top left. FGridImage stretches it as FImage stretches the
+// frame, without smoothing, so at any zoom each square covers exactly
+// FGridSize of the frame's pixels. Drawn only when the sprite size or the
+// grid size has changed, not for every frame.
+procedure TSprite3DResultsView.DrawGrid;
+var
+  W, H: Integer;
+  Grid: TBitmap;
+  Data: TBitmapData;
+begin
+  if FAnimationIndex < 0 then
+    Exit;
+  W := CurrentAnimation.SpriteWidth;
+  H := CurrentAnimation.SpriteHeight;
+  if (W < 1) or (H < 1) then
+    Exit;
+  if (FGridDrawnFor.X = W) and (FGridDrawnFor.Y = H) and (FGridDrawnSize = FGridSize) then
+    Exit;
+  Grid := TBitmap.Create(W, H);
+  try
+    if Grid.Map(TMapAccess.Write, Data) then
+      try
+        for var Y := 0 to H - 1 do
+          for var X := 0 to W - 1 do
+            if ((X div FGridSize) + (Y div FGridSize)) mod 2 = 0 then
+              Data.SetPixel(X, Y, GRID_LIGHT)
+            else
+              Data.SetPixel(X, Y, GRID_DARK);
+      finally
+        Grid.Unmap(Data);
+      end;
+    // Assign copies it: the image keeps its own
+    FGridImage.Bitmap.Assign(Grid);
+  finally
+    Grid.Free;
+  end;
+  FGridDrawnFor := TPoint.Create(W, H);
+  FGridDrawnSize := FGridSize;
+end;
+
+procedure TSprite3DResultsView.GridTrackChange(Sender: TObject);
+begin
+  if FSyncing then
+    Exit;
+  FGridSize := EnsureRange(Round(FGridTrack.Value), GRID_MIN, Max(GRID_MIN,
+    Round(FGridTrack.Max)));
+  FGridLabel.Text := Format('Grid %dpx', [FGridSize]);
+  DrawGrid;
+end;
+
+// Show grid ticked or cleared by hand: the checker shown or hidden, Grid
+// Size usable only while it is shown, and the owner told so it can keep it
+procedure TSprite3DResultsView.GridCheckChange(Sender: TObject);
+begin
+  FGridImage.Visible := HasFrames and FGridCheck.IsChecked;
+  UpdateControls;
+  if not FSyncing and Assigned(FOnShowGridChange) then
+    FOnShowGridChange(Self);
+end;
+
+function TSprite3DResultsView.GetShowGrid: Boolean;
+begin
+  Result := FGridCheck.IsChecked;
+end;
+
+procedure TSprite3DResultsView.SetShowGrid(const Value: Boolean);
+begin
+  FSyncing := True;
+  try
+    FGridCheck.IsChecked := Value;
+  finally
+    FSyncing := False;
+  end;
+  FGridImage.Visible := HasFrames and Value;
+  UpdateControls;
+end;
+
+// Zoom takes the left half of the row, Grid Size the right
+procedure TSprite3DResultsView.ZoomLayoutResized(Sender: TObject);
+begin
+  FZoomHalf.Width := Max(0, (FZoomLayout.Width - FZoomLayout.Padding.Left -
+    FZoomLayout.Padding.Right) / 2 - FZoomHalf.Margins.Right);
+end;
+
+// Zoom moved by hand: that is the zoom chosen from now on, and the owner is
+// told so it can keep it
 procedure TSprite3DResultsView.ZoomTrackChange(Sender: TObject);
 begin
-  if not FSyncing then
-    ApplyZoom;
+  if FSyncing then
+    Exit;
+  FZoomWanted := FZoomTrack.Value;
+  ApplyZoom;
+  if Assigned(FOnZoomChange) then
+    FOnZoomChange(Self);
+end;
+
+procedure TSprite3DResultsView.SetZoom(const Value: Single);
+begin
+  if Value > 0 then
+    FZoomWanted := Value
+  else
+    FZoomWanted := 1;
+  UpdateZoomRange;
 end;
 
 procedure TSprite3DResultsView.DrawingLayoutResized(Sender: TObject);
@@ -1430,6 +1768,8 @@ begin
   FNextButton.Enabled := Usable;
   FLastButton.Enabled := Usable;
   FZoomTrack.Enabled := Usable;
+  FGridTrack.Enabled := Usable and FGridCheck.IsChecked and (FGridTrack.Max > FGridTrack.Min);
+  FGridCheck.Enabled := Usable;
   FEdgeBox.Enabled := Usable;
   FEdgePreviousButton.Enabled := Usable;
   FEdgeNextButton.Enabled := Usable;

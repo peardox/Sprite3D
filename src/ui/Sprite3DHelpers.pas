@@ -57,13 +57,22 @@ const
   //** @abstract(The name of the settings file in SupportFolder.)
   /// <summary>The name of the settings file in SupportFolder.</summary>
   SETTINGS_FILE_NAME = 'settings.json';
+  //** @abstract(Where the list of OpenH264 downloads is fetched from at run time.)
+  //**
+  //** A JSON file giving, for each platform key from Sprite3DNativeLibs, the OpenH264 library
+  //** to download; see Sprite3DLibraryUpdate. It is not fetched while debugging is on.
+  /// <summary>Where the list of OpenH264 downloads is fetched from at run time.</summary>
+  /// <remarks>A JSON file giving, for each platform key from Sprite3DNativeLibs, the OpenH264
+  /// library to download; see Sprite3DLibraryUpdate. It is not fetched while debugging is
+  /// on.</remarks>
+  OPENH264_LIST_URL = 'https://sprite3d.com/openh264/openh264.json';
   //** @abstract(The First frame button's icon, a bar and two left-pointing triangles.)
   //**
   //** Like the other ICON_ constants, an SVG path in a 24 by 24 box, for a TPath drawn in the
-  //** button's text colour; shared by the View tab's player and the Results tab's.
+  //** button's text colour; shared by the Model tab's player and the Results tab's.
   /// <summary>The First frame button's icon, a bar and two left-pointing triangles.</summary>
   /// <remarks>Like the other ICON_ constants, an SVG path in a 24 by 24 box, for a TPath drawn
-  /// in the button's text colour; shared by the View tab's player and the Results
+  /// in the button's text colour; shared by the Model tab's player and the Results
   /// tab's.</remarks>
   ICON_FIRST = 'M5 6h2v12H5z M8 12l6-6v12z M14 12l6-6v12z';
   //** @abstract(The Previous frame button's icon, a left-pointing triangle and a bar.)
@@ -105,36 +114,37 @@ const
   /// <remarks>The radius is half the diagonal of the model's bounding box, so a pan of 1
   /// moves the orbit centre out to where the model's farthest corner was.</remarks>
   PAN_LIMIT = 2.0;
-  //** @abstract(The lowest frame rate Model, Animation Settings offers for saved animations,
-  //** in frames per second.)
-  /// <summary>The lowest frame rate Model, Animation Settings offers for saved animations, in
-  /// frames per second.</summary>
+  //** @abstract(The lowest frame rate Animation, Animation Settings offers for saved
+  //** animations, in frames per second.)
+  /// <summary>The lowest frame rate Animation, Animation Settings offers for saved animations,
+  /// in frames per second.</summary>
   ANIMATION_FPS_MIN = 1;
-  //** @abstract(The highest frame rate Model, Animation Settings offers for saved animations,
-  //** in frames per second.)
+  //** @abstract(The highest frame rate Animation, Animation Settings offers for saved
+  //** animations, in frames per second.)
   //**
   //** Gorilla bakes animations at 60 frames a second on desktop, so a higher rate would only
   //** repeat frames.
-  /// <summary>The highest frame rate Model, Animation Settings offers for saved animations, in
-  /// frames per second.</summary>
+  /// <summary>The highest frame rate Animation, Animation Settings offers for saved animations,
+  /// in frames per second.</summary>
   /// <remarks>Gorilla bakes animations at 60 frames a second on desktop, so a higher rate
   /// would only repeat frames.</remarks>
   ANIMATION_FPS_MAX = 60;
-  //** @abstract(The frame rate saved animations use until Model, Animation Settings changes
+  //** @abstract(The frame rate saved animations use until Animation, Animation Settings changes
   //** it.)
-  /// <summary>The frame rate saved animations use until Model, Animation Settings changes
+  /// <summary>The frame rate saved animations use until Animation, Animation Settings changes
   /// it.</summary>
   ANIMATION_FPS_DEFAULT = 30;
-  //** @abstract(The smallest overscan factor Model, Animation Settings offers.)
-  /// <summary>The smallest overscan factor Model, Animation Settings offers.</summary>
+  //** @abstract(The smallest overscan factor Animation, Animation Settings offers.)
+  /// <summary>The smallest overscan factor Animation, Animation Settings offers.</summary>
   OVERSCAN_FACTOR_MIN = 2;
-  //** @abstract(The largest overscan factor Model, Animation Settings offers, before the GPU's
-  //** own limit for the grab size.)
-  /// <summary>The largest overscan factor Model, Animation Settings offers, before the GPU's
-  /// own limit for the grab size.</summary>
+  //** @abstract(The largest overscan factor Animation, Animation Settings offers, before the
+  //** GPU's own limit for the grab size.)
+  /// <summary>The largest overscan factor Animation, Animation Settings offers, before the
+  /// GPU's own limit for the grab size.</summary>
   OVERSCAN_FACTOR_MAX = 16;
-  //** @abstract(The overscan factor Model, Animation Settings shows until another is chosen.)
-  /// <summary>The overscan factor Model, Animation Settings shows until another is
+  //** @abstract(The overscan factor Animation, Animation Settings shows until another is
+  //** chosen.)
+  /// <summary>The overscan factor Animation, Animation Settings shows until another is
   /// chosen.</summary>
   OVERSCAN_FACTOR_DEFAULT = 4;
   //** @abstract(The lowest frame rate File, Settings lets the view be drawn at.)
@@ -150,22 +160,22 @@ const
   /// <summary>The frame rate the view is drawn at until File, Settings changes it, and the
   /// most it offers where the display's refresh rate is not known.</summary>
   VIEW_FPS_DEFAULT = 60;
-  //** @abstract(The numbers of directions Model, Directions offers: 1, 2, and every multiple of
-  //** 4 or 6 up to 64, smallest first.)
-  /// <summary>The numbers of directions Model, Directions offers: 1, 2, and every multiple of
-  /// 4 or 6 up to 64, smallest first.</summary>
+  //** @abstract(The numbers of directions Animation, Directions offers: 1, 2, and every
+  //** multiple of 4 or 6 up to 64, smallest first.)
+  /// <summary>The numbers of directions Animation, Directions offers: 1, 2, and every multiple
+  /// of 4 or 6 up to 64, smallest first.</summary>
   DIRECTION_COUNTS: array[0..22] of Integer =
     (1, 2, 4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 44, 48, 52, 54, 56, 60, 64);
-  //** @abstract(The number of directions until Model, Directions changes it.)
-  /// <summary>The number of directions until Model, Directions changes it.</summary>
+  //** @abstract(The number of directions until Animation, Directions changes it.)
+  /// <summary>The number of directions until Animation, Directions changes it.</summary>
   DIRECTION_COUNT_DEFAULT = 8;
-  //** @abstract(The largest a texture atlas page may be, each way, as Model, Animation Settings
-  //** offers it: 1k, 2k, 4k, 8k and 16k pixels.)
-  /// <summary>The largest a texture atlas page may be, each way, as Model, Animation Settings
-  /// offers it: 1k, 2k, 4k, 8k and 16k pixels.</summary>
+  //** @abstract(The largest a texture atlas page may be, each way, as Animation, Animation
+  //** Settings offers it: 1k, 2k, 4k, 8k and 16k pixels.)
+  /// <summary>The largest a texture atlas page may be, each way, as Animation, Animation
+  /// Settings offers it: 1k, 2k, 4k, 8k and 16k pixels.</summary>
   ATLAS_PAGE_SIZES: array[0..4] of Integer = (1024, 2048, 4096, 8192, 16384);
-  //** @abstract(The texture atlas page size until Model, Animation Settings changes it.)
-  /// <summary>The texture atlas page size until Model, Animation Settings changes
+  //** @abstract(The texture atlas page size until Animation, Animation Settings changes it.)
+  /// <summary>The texture atlas page size until Animation, Animation Settings changes
   /// it.</summary>
   ATLAS_PAGE_SIZE_DEFAULT = 4096;
   //** @abstract(The @code(format) a directions file names itself with, so another JSON file
@@ -176,8 +186,8 @@ const
   //** @abstract(The newest directions file layout this version writes and reads.)
   /// <summary>The newest directions file layout this version writes and reads.</summary>
   DIRECTIONS_FILE_VERSION = 1;
-  //** @abstract(The extension Model, Directions gives the directions files it exports.)
-  /// <summary>The extension Model, Directions gives the directions files it
+  //** @abstract(The extension Animation, Directions gives the directions files it exports.)
+  /// <summary>The extension Animation, Directions gives the directions files it
   /// exports.</summary>
   DIRECTIONS_FILE_EXTENSION = '.json';
   //** @abstract(The extension of Sprite3D project files: credits, the model, directions and
@@ -408,9 +418,13 @@ type
     FExportKind: String;
     FAtlasFolder: String;
     FDebugEnabled: Boolean;
+    FDebugSwitch: Boolean;
     FDebugFrameBorders: Boolean;
     FExportAutoClose: Boolean;
     FLastExportFolder: String;
+    FShowOverscanWarning: Boolean;
+    FResultsShowGrid: Boolean;
+    FResultsZoom: Single;
     FOverscan: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
@@ -502,6 +516,27 @@ type
     /// <remarks>A name in settings.json that is not one of the themes, such as one from an
     /// older version, reads as thDefault.</remarks>
     property ThemeKind: TSprite3DTheme read GetThemeKind write SetThemeKind;
+    //** @abstract(Whether --debug was given on the command line; False by default.)
+    //**
+    //** Turns debugging on for this run only, as DebugEnabled does: it is public, not
+    //** published, so it is never written to settings.json. Set once at start-up.
+    /// <summary>Whether --debug was given on the command line; False by default.</summary>
+    /// <remarks>Turns debugging on for this run only, as DebugEnabled does: it is public, not
+    /// published, so it is never written to settings.json. Set once at start-up.</remarks>
+    property DebugSwitch: Boolean read FDebugSwitch write FDebugSwitch;
+    //** @abstract(Whether debugging is on: DebugEnabled from settings.json, or DebugSwitch
+    //** from the command line.)
+    //**
+    //** While it is, File, Debug is offered, the Debug tab says so at start-up, and OpenH264
+    //** is neither fetched nor loaded.
+    //**
+    //** @returns(True if either is set.)
+    /// <summary>Whether debugging is on: DebugEnabled from settings.json, or DebugSwitch from
+    /// the command line.</summary>
+    /// <remarks>While it is, File, Debug is offered, the Debug tab says so at start-up, and
+    /// OpenH264 is neither fetched nor loaded.</remarks>
+    /// <returns>True if either is set.</returns>
+    function DebugActive: Boolean;
   published
     //** @abstract(The folder grabs are saved in; empty until one is chosen.)
     //**
@@ -518,11 +553,11 @@ type
     /// <remarks>Stored as <c>iconFolder</c> in settings.json.</remarks>
     property IconFolder: String read FIconFolder write FIconFolder;
     //** @abstract(The folder a directions file was last exported to or imported from, where
-    //** the next Export or Import in Model, Directions opens; empty until one is.)
+    //** the next Export or Import in Animation, Directions opens; empty until one is.)
     //**
     //** Stored as @code(directionsFolder) in settings.json.
     /// <summary>The folder a directions file was last exported to or imported from, where the
-    /// next Export or Import in Model, Directions opens; empty until one is.</summary>
+    /// next Export or Import in Animation, Directions opens; empty until one is.</summary>
     /// <remarks>Stored as <c>directionsFolder</c> in settings.json.</remarks>
     property DirectionsFolder: String read FDirectionsFolder write FDirectionsFolder;
     //** @abstract(What the background shows: None, Transparent, Solid or Gradient.)
@@ -774,11 +809,11 @@ type
     //** @abstract(The frame rate animations are saved at, in frames per second;
     //** ANIMATION_FPS_DEFAULT by default.)
     //**
-    //** Set in Model, Animation Settings. Stored as @code(animationFps). Written values are
+    //** Set in Animation, Animation Settings. Stored as @code(animationFps). Written values are
     //** limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.
     /// <summary>The frame rate animations are saved at, in frames per second;
     /// ANIMATION_FPS_DEFAULT by default.</summary>
-    /// <remarks>Set in Model, Animation Settings. Stored as <c>animationFps</c>. Written
+    /// <remarks>Set in Animation, Animation Settings. Stored as <c>animationFps</c>. Written
     /// values are limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
     property AnimationFps: Integer read FAnimationFps write SetAnimationFps;
     //** @abstract(The frame rate the view is drawn at, in frames per second;
@@ -804,22 +839,22 @@ type
     /// settings.json included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes
     /// follows, settings.json itself among them.</remarks>
     property MinifyJson: Boolean read FMinifyJson write SetMinifyJson;
-    //** @abstract(How many directions Model, Directions has around its compass;
+    //** @abstract(How many directions Animation, Directions has around its compass;
     //** DIRECTION_COUNT_DEFAULT by default.)
     //**
     //** Stored as @code(directionCount). A written value that is not one of DIRECTION_COUNTS
     //** becomes the nearest that is.
-    /// <summary>How many directions Model, Directions has around its compass;
+    /// <summary>How many directions Animation, Directions has around its compass;
     /// DIRECTION_COUNT_DEFAULT by default.</summary>
     /// <remarks>Stored as <c>directionCount</c>. A written value that is not one of
     /// DIRECTION_COUNTS becomes the nearest that is.</remarks>
     property DirectionCount: Integer read FDirectionCount write SetDirectionCount;
-    //** @abstract(The compass bearing of position 0, the red marker in Model, Directions, in
-    //** degrees clockwise from north; 0, north, by default.)
+    //** @abstract(The compass bearing of position 0, the red marker in Animation, Directions,
+    //** in degrees clockwise from north; 0, north, by default.)
     //**
     //** Stored as @code(directionStart). It is the first direction's bearing unless
     //** DirectionOrder puts another first. Written values are wrapped into 0 up to 360.
-    /// <summary>The compass bearing of position 0, the red marker in Model, Directions, in
+    /// <summary>The compass bearing of position 0, the red marker in Animation, Directions, in
     /// degrees clockwise from north; 0, north, by default.</summary>
     /// <remarks>Stored as <c>directionStart</c>. It is the first direction's bearing unless
     /// DirectionOrder puts another first. Written values are wrapped into 0 up to
@@ -836,7 +871,7 @@ type
     /// when DirectionOrder is empty or does not fit DirectionCount.</remarks>
     property DirectionClockwise: Boolean read FDirectionClockwise
       write FDirectionClockwise;
-    //** @abstract(The order the directions are taken in, as Model, Directions set it; empty
+    //** @abstract(The order the directions are taken in, as Animation, Directions set it; empty
     //** by default.)
     //**
     //** Stored as @code(directionOrder): the positions round the compass, counted clockwise
@@ -845,8 +880,8 @@ type
     //** first of eight is north. Empty, or text that is not every position from 1 to
     //** DirectionCount once each, means the plain order DirectionClockwise gives. Use
     //** DirectionOrderList and DirectionBearings rather than reading it directly.
-    /// <summary>The order the directions are taken in, as Model, Directions set it; empty by
-    /// default.</summary>
+    /// <summary>The order the directions are taken in, as Animation, Directions set it; empty
+    /// by default.</summary>
     /// <remarks>Stored as <c>directionOrder</c>: the positions round the compass, counted
     /// clockwise from 1 at DirectionStart, in the order the directions are numbered, separated
     /// by commas, such as <c>'3,5,7,1,4,6,8,2'</c> for E, S, W, N, SE, SW, NW and NE when the
@@ -854,13 +889,13 @@ type
     /// DirectionCount once each, means the plain order DirectionClockwise gives. Use
     /// DirectionOrderList and DirectionBearings rather than reading it directly.</remarks>
     property DirectionOrder: String read FDirectionOrder write FDirectionOrder;
-    //** @abstract(Whether the Model, Directions dial turns in steps of one direction; False
+    //** @abstract(Whether the Animation, Directions dial turns in steps of one direction; False
     //** by default.)
     //**
     //** Stored as @code(directionSnap). True locks DirectionStart to whole multiples of 360
     //** divided by DirectionCount, counted from north.
-    /// <summary>Whether the Model, Directions dial turns in steps of one direction; False by
-    /// default.</summary>
+    /// <summary>Whether the Animation, Directions dial turns in steps of one direction; False
+    /// by default.</summary>
     /// <remarks>Stored as <c>directionSnap</c>. True locks DirectionStart to whole multiples of
     /// 360 divided by DirectionCount, counted from north.</remarks>
     property DirectionSnap: Boolean read FDirectionSnap write FDirectionSnap;
@@ -881,15 +916,15 @@ type
     /// MP4 videos have none, and texture atlas pages always have it, whatever this
     /// says.</remarks>
     property ExportMetadata: Boolean read FExportMetadata write FExportMetadata;
-    //** @abstract(Whether exports are to be made for every direction of Model, Directions;
+    //** @abstract(Whether exports are to be made for every direction of Animation, Directions;
     //** False by default.)
     //**
     //** Stored as @code(exportDirections); set by the Directions box above Export. Ticked,
     //** each animation is exported once for each direction, in their order, and the
     //** metadata's @code(directions) lists their bearings; otherwise it is the single dummy
     //** entry 0.
-    /// <summary>Whether exports are to be made for every direction of Model, Directions; False
-    /// by default.</summary>
+    /// <summary>Whether exports are to be made for every direction of Animation, Directions;
+    /// False by default.</summary>
     /// <remarks>Stored as <c>exportDirections</c>; set by the Directions box above Export.
     /// Ticked, each animation is exported once for each direction, in their order, and the
     /// metadata's <c>directions</c> lists their bearings; otherwise it is the single dummy
@@ -898,22 +933,22 @@ type
     //** @abstract(The largest a texture atlas page may be, in pixels each way;
     //** ATLAS_PAGE_SIZE_DEFAULT by default.)
     //**
-    //** Stored as @code(atlasPageSize); set in Model, Animation Settings. A written value that
-    //** is not one of ATLAS_PAGE_SIZES becomes the nearest that is.
+    //** Stored as @code(atlasPageSize); set in Animation, Animation Settings. A written value
+    //** that is not one of ATLAS_PAGE_SIZES becomes the nearest that is.
     /// <summary>The largest a texture atlas page may be, in pixels each way;
     /// ATLAS_PAGE_SIZE_DEFAULT by default.</summary>
-    /// <remarks>Stored as <c>atlasPageSize</c>; set in Model, Animation Settings. A written
+    /// <remarks>Stored as <c>atlasPageSize</c>; set in Animation, Animation Settings. A written
     /// value that is not one of ATLAS_PAGE_SIZES becomes the nearest that is.</remarks>
     property AtlasPageSize: Integer read FAtlasPageSize write SetAtlasPageSize;
     //** @abstract(Whether a texture atlas page may be any size, rather than a power of 2 each
     //** way; False by default.)
     //**
-    //** Stored as @code(atlasNonPowerOf2); set in Model, Animation Settings. False makes each
-    //** page's width and height the smallest powers of 2 that hold its frames; True makes the
-    //** page exactly as large as its grid of frames.
+    //** Stored as @code(atlasNonPowerOf2); set in Animation, Animation Settings. False makes
+    //** each page's width and height the smallest powers of 2 that hold its frames; True makes
+    //** the page exactly as large as its grid of frames.
     /// <summary>Whether a texture atlas page may be any size, rather than a power of 2 each
     /// way; False by default.</summary>
-    /// <remarks>Stored as <c>atlasNonPowerOf2</c>; set in Model, Animation Settings. False
+    /// <remarks>Stored as <c>atlasNonPowerOf2</c>; set in Animation, Animation Settings. False
     /// makes each page's width and height the smallest powers of 2 that hold its frames; True
     /// makes the page exactly as large as its grid of frames.</remarks>
     property AtlasNonPowerOf2: Boolean read FAtlasNonPowerOf2 write FAtlasNonPowerOf2;
@@ -959,50 +994,80 @@ type
     /// does the Results tab's Select Folder, and the Results tab reads it when it first
     /// shows.</remarks>
     property LastExportFolder: String read FLastExportFolder write FLastExportFolder;
+    //** @abstract(Whether ticking Overscan in Animation, Animation Settings first warns how
+    //** much longer rendering takes; True by default.)
+    //**
+    //** Stored as @code(showOverscanWarning). Cleared by ticking Do not show this again in
+    //** that warning.
+    /// <summary>Whether ticking Overscan in Animation, Animation Settings first warns how much
+    /// longer rendering takes; True by default.</summary>
+    /// <remarks>Stored as <c>showOverscanWarning</c>. Cleared by ticking Do not show this
+    /// again in that warning.</remarks>
+    property ShowOverscanWarning: Boolean read FShowOverscanWarning
+      write FShowOverscanWarning;
+    //** @abstract(Whether the Results tab draws its checker behind the animation; True by
+    //** default.)
+    //**
+    //** Stored as @code(resultsShowGrid); set by Show grid on the Results tab.
+    /// <summary>Whether the Results tab draws its checker behind the animation; True by
+    /// default.</summary>
+    /// <remarks>Stored as <c>resultsShowGrid</c>; set by Show grid on the Results
+    /// tab.</remarks>
+    property ResultsShowGrid: Boolean read FResultsShowGrid write FResultsShowGrid;
+    //** @abstract(The zoom last chosen on the Results tab, as a multiple of the sprite size;
+    //** 1 by default.)
+    //**
+    //** Stored as @code(resultsZoom). When it is shown again it is limited to what fits the
+    //** drawing area then, the slider brought down to match.
+    /// <summary>The zoom last chosen on the Results tab, as a multiple of the sprite size; 1
+    /// by default.</summary>
+    /// <remarks>Stored as <c>resultsZoom</c>. When it is shown again it is limited to what
+    /// fits the drawing area then, the slider brought down to match.</remarks>
+    property ResultsZoom: Single read FResultsZoom write FResultsZoom;
     //** @abstract(Whether the debugging aids are offered; False by default.)
     //**
-    //** Stored as @code(debug_enabled), and only changed by editing settings.json by hand:
-    //** nothing in the application sets it. True adds File, Debug to the menu and says so in
-    //** the Debug tab at startup.
+    //** Stored as @code(debug_enabled). Only set to True by editing settings.json by hand;
+    //** File, Debug, Disable Debug sets it back to False. True adds File, Debug to the menu
+    //** and says so in the Debug tab at startup.
     /// <summary>Whether the debugging aids are offered; False by default.</summary>
-    /// <remarks>Stored as <c>debug_enabled</c>, and only changed by editing settings.json by
-    /// hand: nothing in the application sets it. True adds File, Debug to the menu and says so
-    /// in the Debug tab at startup.</remarks>
+    /// <remarks>Stored as <c>debug_enabled</c>. Only set to True by editing settings.json by
+    /// hand; File, Debug, Disable Debug sets it back to False. True adds File, Debug to the
+    /// menu and says so in the Debug tab at startup.</remarks>
     [NeonProperty('debug_enabled')]
     property DebugEnabled: Boolean read FDebugEnabled write FDebugEnabled;
     //** @abstract(Whether every exported frame gets a 1-pixel black border; False by default.)
     //**
     //** Stored as @code(debug_frame_borders); set by File, Debug, Frame Borders, which is
-    //** offered only while DebugEnabled. Has no effect while DebugEnabled is False. The border
+    //** offered only while DebugActive. Has no effect while DebugActive is False. The border
     //** is drawn on the saved images only: the metadata is measured from the frames as
     //** rendered.
     /// <summary>Whether every exported frame gets a 1-pixel black border; False by
     /// default.</summary>
     /// <remarks>Stored as <c>debug_frame_borders</c>; set by File, Debug, Frame Borders, which
-    /// is offered only while DebugEnabled. Has no effect while DebugEnabled is False. The
+    /// is offered only while DebugActive. Has no effect while DebugActive is False. The
     /// border is drawn on the saved images only: the metadata is measured from the frames as
     /// rendered.</remarks>
     [NeonProperty('debug_frame_borders')]
     property DebugFrameBorders: Boolean read FDebugFrameBorders write FDebugFrameBorders;
-    //** @abstract(The overscan factor Model, Animation Settings was last left at;
+    //** @abstract(The overscan factor Animation, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
-    //** Only the factor is kept: whether overscan is on is not, and it starts off each
-    //** session, until ticked in Model, Animation Settings. Stored as @code(overscan). Written
+    //** Only the factor is kept: whether overscan is on is not, and it starts off each session,
+    //** until ticked in Animation, Animation Settings. Stored as @code(overscan). Written
     //** values are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less,
     //** if the GPU cannot draw that much larger.
-    /// <summary>The overscan factor Model, Animation Settings was last left at;
+    /// <summary>The overscan factor Animation, Animation Settings was last left at;
     /// OVERSCAN_FACTOR_DEFAULT by default.</summary>
     /// <remarks>Only the factor is kept: whether overscan is on is not, and it starts off each
-    /// session, until ticked in Model, Animation Settings. Stored as <c>overscan</c>. Written
-    /// values are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less,
-    /// if the GPU cannot draw that much larger.</remarks>
+    /// session, until ticked in Animation, Animation Settings. Stored as <c>overscan</c>.
+    /// Written values are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use
+    /// less, if the GPU cannot draw that much larger.</remarks>
     property Overscan: Integer read FOverscan write SetOverscan;
     //** @abstract(The filter overscanned grabs are scaled down with; Box by default.)
     //**
-    //** Chosen in Model, Animation Settings. Stored as @code(resampleFilter).
+    //** Chosen in Animation, Animation Settings. Stored as @code(resampleFilter).
     /// <summary>The filter overscanned grabs are scaled down with; Box by default.</summary>
-    /// <remarks>Chosen in Model, Animation Settings. Stored as
+    /// <remarks>Chosen in Animation, Animation Settings. Stored as
     /// <c>resampleFilter</c>.</remarks>
     property ResampleFilter: TSprite3DResampleFilter read FResampleFilter
       write FResampleFilter;
@@ -1110,9 +1175,9 @@ function DirectionOrderToText(const AOrder: TArray<Integer>): String;
 /// IsDirectionOrder rejects.</returns>
 function DirectionOrderFromText(const AText: String): TArray<Integer>;
 
-//** @abstract(Writes a set of directions to a JSON file, for Model, Directions' Export.)
+//** @abstract(Writes a set of directions to a JSON file, for Animation, Directions' Export.)
 //**
-//** The file holds everything Model, Directions sets, so it can be read back with
+//** The file holds everything Animation, Directions sets, so it can be read back with
 //** LoadDirectionsFile, kept beside artwork whose directions come in a fixed order, and
 //** swapped between models:
 //**
@@ -1149,9 +1214,9 @@ function DirectionOrderFromText(const AText: String): TArray<Integer>;
 //** @param(ASnap Whether the dial is locked to steps of one direction.)
 //**
 //** @raises(EInOutError or another file exception if the file cannot be written.)
-/// <summary>Writes a set of directions to a JSON file, for Model, Directions'
+/// <summary>Writes a set of directions to a JSON file, for Animation, Directions'
 /// Export.</summary>
-/// <remarks>The file holds everything Model, Directions sets, so it can be read back with
+/// <remarks>The file holds everything Animation, Directions sets, so it can be read back with
 /// LoadDirectionsFile, kept beside artwork whose directions come in a fixed order, and
 /// swapped between models. Its members are <c>format</c> (DIRECTIONS_FILE_FORMAT),
 /// <c>version</c>, <c>count</c>, <c>start</c>, <c>snap</c>, <c>clockwise</c>,
@@ -1361,26 +1426,6 @@ function DefaultModelDir: String;
 /// <returns>The fixed grab folder on Android and iOS; an empty string on other
 /// platforms.</returns>
 function DefaultGrabFolder: String;
-
-//** @abstract(The @code(openh264.json) that gives OpenH264's download address for each
-//** platform, or empty if there is none.)
-//**
-//** Looked for where it is deployed, the folder GetAssetsPath gives (beside the executable on
-//** Windows and Linux, the bundle's Resources folder on macOS, the app's files folder on
-//** Android), then beside the executable and in each of the six folders above it, which finds
-//** the repository's copy when run from the source tree. iOS does not allow downloaded code
-//** to be loaded, so there it is always empty.
-//**
-//** @returns(The file's full path, or an empty string.)
-/// <summary>The <c>openh264.json</c> that gives OpenH264's download address for each
-/// platform, or empty if there is none.</summary>
-/// <remarks>Looked for where it is deployed, the folder GetAssetsPath gives (beside the
-/// executable on Windows and Linux, the bundle's Resources folder on macOS, the app's files
-/// folder on Android), then beside the executable and in each of the six folders above it,
-/// which finds the repository's copy when run from the source tree. iOS does not allow
-/// downloaded code to be loaded, so there it is always empty.</remarks>
-/// <returns>The file's full path, or an empty string.</returns>
-function OpenH264ConfigFile: String;
 
 //** @abstract(Where downloaded copies of OpenH264 are kept: an @code(openh264) folder in
 //** SupportFolder.)
@@ -1960,6 +2005,9 @@ begin
   FDebugFrameBorders := False;
   FExportAutoClose := False;
   FLastExportFolder := String.Empty;
+  FShowOverscanWarning := True;
+  FResultsShowGrid := True;
+  FResultsZoom := 1;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
   FResampleFilter := rfBox;
 end;
@@ -2403,37 +2451,9 @@ begin
   {$ENDIF}
 end;
 
-const
-  OPENH264_CONFIG_NAME = 'openh264.json';
-
-function OpenH264ConfigFile: String;
-{$IFNDEF IOS}
-var
-  Dir, Parent: String;
-  Level: Integer;
-{$ENDIF}
+function TSprite3DAppSettings.DebugActive: Boolean;
 begin
-  Result := String.Empty;
-  {$IFNDEF IOS}
-  Result := TPath.Combine(GetAssetsPath, OPENH264_CONFIG_NAME);
-  if TFile.Exists(Result) then
-    Exit;
-  {$IFNDEF ANDROID}
-  // Run from the source tree: the repository's copy, a few levels up
-  Dir := ExcludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
-  for Level := 0 to 6 do
-  begin
-    Result := TPath.Combine(Dir, OPENH264_CONFIG_NAME);
-    if TFile.Exists(Result) then
-      Exit;
-    Parent := ExtractFileDir(Dir);
-    if (Parent = String.Empty) or (Parent = Dir) then
-      Break;
-    Dir := Parent;
-  end;
-  {$ENDIF}
-  Result := String.Empty;
-  {$ENDIF}
+  Result := FDebugEnabled or FDebugSwitch;
 end;
 
 function OpenH264Folder: String;
@@ -2907,13 +2927,15 @@ begin
 end;
 
 function RegisterProjectFiles(out AMessage: String): Boolean;
-{$IF DEFINED(MSWINDOWS) or (DEFINED(LINUX) and not DEFINED(ANDROID))}
+{$IF DEFINED(MSWINDOWS)}
+var
+  Project: TSprite3DFileAssociations;
+{$ELSEIF DEFINED(LINUX) and not DEFINED(ANDROID)}
 var
   Project, Models: TSprite3DFileAssociations;
 {$ENDIF}
 begin
   AMessage := String.Empty;
-  Result := True;
   {$IF DEFINED(MSWINDOWS)}
   Project := TSprite3DFileAssociations.Create(APP_NAME, APP_NAME + '.Project',
     'Sprite3D project', [ProjectFileType]);
@@ -2943,6 +2965,9 @@ begin
     Models.Free;
     Project.Free;
   end;
+  {$ELSE}
+  // Nothing to register here
+  Result := True;
   {$ENDIF}
 end;
 
