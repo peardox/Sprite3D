@@ -1,5 +1,5 @@
 //** @abstract(The Animation, Animation Settings dialog: the frame rate animations are saved at,
-//** overscan, and texture atlas pages.)
+//** overscan, padding, and texture atlas pages.)
 //**
 //** One slider, marked FPS, sets the frames per second that the animation list's Save as
 //** sprite strip, Save as Spritesheet and Save as AniGif, and batch Export, use, from
@@ -17,6 +17,9 @@
 //** the tick, Cancel takes it back, and Do not show this again, between them, stops it
 //** appearing again.
 //**
+//** Padding sets the empty border, in pixels, every export aims to leave round the sprite on
+//** the axis with least room, from 0 to MaxPadding, a quarter of the grab size.
+//**
 //** Under Texture Atlas, Page size chooses the largest a texture atlas page may be each way,
 //** one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick box below lets pages be any
 //** size rather than powers of 2 each way.
@@ -31,7 +34,7 @@ unit Sprite3DAnimationForm;
 
 {
   The Animation, Animation Settings dialog: the frame rate animations are saved
-  at, overscan, and texture atlas pages.
+  at, overscan, padding, and texture atlas pages.
 
   One slider, marked FPS, sets the frames per second that the animation
   list's Save as sprite strip, Save as Spritesheet and Save as AniGif, and
@@ -49,6 +52,10 @@ unit Sprite3DAnimationForm;
   shows a modal warning of how much longer rendering takes, unless
   OverscanWarning is False: OK keeps the tick, Cancel takes it back, and Do
   not show this again, between them, stops it appearing again.
+
+  Padding sets the empty border, in pixels, every export aims to leave round
+  the sprite on the axis with least room, from 0 to MaxPadding, a quarter of
+  the grab size.
 
   Under Texture Atlas, Page size chooses the largest a texture atlas page
   may be each way, one of ATLAS_PAGE_SIZES, shown as 1k to 16k, and the tick
@@ -119,6 +126,21 @@ type
     /// <summary>Says how far overscan can go at the grab size, or why it cannot be
     /// used.</summary>
     OverscanNoteLabel: TLabel;
+    //** @abstract(The row with PaddingLabel, PaddingTrack and PaddingValueLabel.)
+    /// <summary>The row with PaddingLabel, PaddingTrack and PaddingValueLabel.</summary>
+    PaddingLayout: TLayout;
+    //** @abstract(The caption "Padding".)
+    /// <summary>The caption "Padding".</summary>
+    PaddingLabel: TLabel;
+    //** @abstract(The padding, in whole pixels, from 0 to MaxPadding.)
+    /// <summary>The padding, in whole pixels, from 0 to MaxPadding.</summary>
+    PaddingTrack: TTrackBar;
+    //** @abstract(The padding as a number of pixels, such as @code(2px).)
+    /// <summary>The padding as a number of pixels, such as <c>2px</c>.</summary>
+    PaddingValueLabel: TLabel;
+    //** @abstract(A line explaining what padding is.)
+    /// <summary>A line explaining what padding is.</summary>
+    PaddingNoteLabel: TLabel;
     //** @abstract(The heading "Texture Atlas".)
     /// <summary>The heading "Texture Atlas".</summary>
     AtlasHeaderLabel: TLabel;
@@ -174,6 +196,12 @@ type
     /// ticked.</summary>
     /// <param name="Sender">OverscanCheck.</param>
     procedure OverscanCheckChange(Sender: TObject);
+    //** @abstract(Shows the padding beside the slider.)
+    //**
+    //** @param(Sender PaddingTrack.)
+    /// <summary>Shows the padding beside the slider.</summary>
+    /// <param name="Sender">PaddingTrack.</param>
+    procedure PaddingTrackChange(Sender: TObject);
     //** @abstract(Closes the dialog with the button's ModalResult.)
     //**
     //** @param(Sender OkButton or CancelButton.)
@@ -195,6 +223,7 @@ type
     FOnCancel: TNotifyEvent;
     FFreeOnClose: Boolean;
     FMaxOverscan: Integer;
+    FMaxPadding: Integer;
     FGrabWidth: Integer;
     FGrabHeight: Integer;
     FOverscanWarning: Boolean;
@@ -217,6 +246,9 @@ type
     procedure SetAtlasPageSize(const Value: Integer);
     function GetAtlasNonPowerOf2: Boolean;
     procedure SetAtlasNonPowerOf2(const Value: Boolean);
+    function GetSpritePadding: Integer;
+    procedure SetSpritePadding(const Value: Integer);
+    procedure SetMaxPadding(const Value: Integer);
   public
     //** @abstract(Shows the dialog without blocking and frees it when it closes.)
     //**
@@ -305,6 +337,24 @@ type
     /// <summary>Whether texture atlas pages may be any size, rather than powers of
     /// 2.</summary>
     property AtlasNonPowerOf2: Boolean read GetAtlasNonPowerOf2 write SetAtlasNonPowerOf2;
+    //** @abstract(The most padding the slider allows, in pixels; a quarter of the default
+    //** grab size until set.)
+    //**
+    //** Set it before SpritePadding, to PaddingLimit of the grab size. Values below 0 count as
+    //** 0.
+    /// <summary>The most padding the slider allows, in pixels; a quarter of the default grab
+    /// size until set.</summary>
+    /// <remarks>Set it before SpritePadding, to PaddingLimit of the grab size. Values below 0
+    /// count as 0.</remarks>
+    property MaxPadding: Integer read FMaxPadding write SetMaxPadding;
+    //** @abstract(Padding: the empty border, in pixels, exports aim to leave round the sprite
+    //** on the axis with least room; limited to 0 to MaxPadding.)
+    //**
+    //** Not called Padding, which is the form's own.
+    /// <summary>Padding: the empty border, in pixels, exports aim to leave round the sprite on
+    /// the axis with least room; limited to 0 to MaxPadding.</summary>
+    /// <remarks>Not called Padding, which is the form's own.</remarks>
+    property SpritePadding: Integer read GetSpritePadding write SetSpritePadding;
     //** @abstract(Called on OK when shown with ShowAndFree.)
     /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
@@ -352,6 +402,40 @@ begin
     AtlasSizeCombo.Items.Add(Format('%dk (%d x %d)', [Size div 1024, Size, Size]));
   SetAtlasPageSize(ATLAS_PAGE_SIZE_DEFAULT);
   AtlasNonPowerOf2Check.IsChecked := False;
+
+  PaddingTrack.Frequency := 1;
+  PaddingTrack.Min := 0;
+  SetMaxPadding(PaddingLimit(GRAB_SIZE_DEFAULT, GRAB_SIZE_DEFAULT));
+  PaddingTrack.Value := 0;
+  PaddingTrackChange(PaddingTrack);
+end;
+
+procedure TAnimationSettingsForm.PaddingTrackChange(Sender: TObject);
+begin
+  PaddingValueLabel.Text := IntToStr(GetSpritePadding) + 'px';
+end;
+
+function TAnimationSettingsForm.GetSpritePadding: Integer;
+begin
+  Result := EnsureRange(Round(PaddingTrack.Value), 0, FMaxPadding);
+end;
+
+procedure TAnimationSettingsForm.SetSpritePadding(const Value: Integer);
+begin
+  PaddingTrack.Value := EnsureRange(Value, 0, FMaxPadding);
+  PaddingTrackChange(PaddingTrack);
+end;
+
+// A slider whose Min and Max are equal cannot be drawn, so with no room for
+// padding it still runs to 1, and is disabled at 0
+procedure TAnimationSettingsForm.SetMaxPadding(const Value: Integer);
+begin
+  FMaxPadding := Max(0, Value);
+  PaddingTrack.Max := Max(1, FMaxPadding);
+  PaddingTrack.Enabled := FMaxPadding > 0;
+  if PaddingTrack.Value > FMaxPadding then
+    PaddingTrack.Value := FMaxPadding;
+  PaddingTrackChange(PaddingTrack);
 end;
 
 function TAnimationSettingsForm.GetAtlasPageSize: Integer;

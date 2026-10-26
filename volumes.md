@@ -89,11 +89,11 @@ On screen, and for a grab or an icon, which match the screen, the volume framed 
 | Animations list | Volume framed |
 |---|---|
 | two or more animations ticked for export, playing or paused | the **combined** volume, so the view shows what a batch export will frame |
-| one animation ticked, or none | the volume of what is on screen alone: the selected animation's own, without the rest pose's, or the rest pose's for `(None)` and for a model without animations |
+| one animation ticked, or none | the volume of what is on screen alone: the selected animation's own, without the rest pose's, or the rest pose's for a static model, one without animations, or with nothing selected |
 
 The second fills as much of the view as that volume allows, so a single animation, or a static model, is shown as large as it will go. The view is refitted whenever the choice changes: another entry is chosen, a tick is set or cleared, or an animation is paused, stepped or played with the buttons under the list.
 
-A batch export, and `(None)`'s single still frame, always frame the combined volume. One animation saved on its own, from the Animations list's right-click menu (or the Animation menu on Android and iOS), is framed to that animation's own volume instead, without the rest pose's, so it fills the image as far as its own poses allow. Either way the fit takes two steps, in `TSprite3DCamera.FitPointsOnAxis`.
+A batch export, and a static model's single still frame, always frame the combined volume. One animation saved on its own, from the Animations list's right-click menu (or the Animation menu on Android and iOS), is framed to that animation's own volume instead, without the rest pose's, so it fills the image as far as its own poses allow. Either way the fit takes two steps, in `TSprite3DCamera.FitPointsOnAxis`.
 
 **1. Fill the view.** From any direction, a cylinder's outline is that of its two end circles. `SweepOutline` stands in for each circle with a regular 64-sided polygon drawn round it, its corners 1 / cos(π / 64), about 1.0012, times the radius from the axis, so the polygon holds the circle exactly. These 128 points are framed the way `FitToBounds` frames a box's corners: for the current angles, as large as they will go, centred, so the volume reaches both edges of the tighter axis, left and right or top and bottom. In perspective the camera also stays at least 1 unit, FMX's near plane, in front of the nearest point, which can stop a very close volume filling the view. The angles themselves are never changed.
 

@@ -4,7 +4,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Animation Settings'
-  ClientHeight = 440
+  ClientHeight = 524
   ClientWidth = 360
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -19,7 +19,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
     Padding.Top = 12.000000000000000000
     Padding.Right = 12.000000000000000000
     Size.Width = 360.000000000000000000
-    Size.Height = 396.000000000000000000
+    Size.Height = 480.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object FpsLayout: TLayout
@@ -109,7 +109,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
         Align = Client
         CanParentFocus = True
         Frequency = 1.000000000000000000
-        Max = 16.000000000000000000
+        Max = 8.000000000000000000
         Min = 2.000000000000000000
         Orientation = Horizontal
         Size.Width = 200.000000000000000000
@@ -158,12 +158,67 @@ object AnimationSettingsForm: TAnimationSettingsForm
       Text = ''
       TabOrder = 4
     end
+    object PaddingLayout: TLayout
+      Align = Top
+      Margins.Top = 12.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 224.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 9
+      object PaddingLabel: TLabel
+        Align = Left
+        Size.Width = 96.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Padding'
+        TabOrder = 0
+      end
+      object PaddingValueLabel: TLabel
+        Align = Right
+        Position.X = 286.000000000000000000
+        Size.Width = 50.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.HorzAlign = Trailing
+        Text = '0px'
+        TabOrder = 2
+      end
+      object PaddingTrack: TTrackBar
+        Align = Client
+        CanParentFocus = True
+        Frequency = 1.000000000000000000
+        Max = 64.000000000000000000
+        Orientation = Horizontal
+        Size.Width = 190.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        OnChange = PaddingTrackChange
+      end
+    end
+    object PaddingNoteLabel: TLabel
+      Align = Top
+      AutoSize = True
+      Margins.Top = 4.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 260.000000000000000000
+      Size.Width = 336.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.WordWrap = True
+      Text = 
+        'Empty pixels every export leaves round the sprite on the side wi' +
+        'th least room.'
+      TabOrder = 10
+    end
     object AtlasHeaderLabel: TLabel
       Align = Top
       StyledSettings = [Family, Size, FontColor]
       Margins.Top = 16.000000000000000000
       Position.X = 12.000000000000000000
-      Position.Y = 236.000000000000000000
+      Position.Y = 320.000000000000000000
       Size.Width = 336.000000000000000000
       Size.Height = 20.000000000000000000
       Size.PlatformDefault = False
@@ -175,7 +230,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
       Align = Top
       Margins.Top = 4.000000000000000000
       Position.X = 12.000000000000000000
-      Position.Y = 260.000000000000000000
+      Position.Y = 344.000000000000000000
       Size.Width = 336.000000000000000000
       Size.Height = 32.000000000000000000
       Size.PlatformDefault = False
@@ -200,7 +255,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
       Align = Top
       Margins.Top = 4.000000000000000000
       Position.X = 12.000000000000000000
-      Position.Y = 296.000000000000000000
+      Position.Y = 380.000000000000000000
       Size.Width = 336.000000000000000000
       Size.Height = 32.000000000000000000
       Size.PlatformDefault = False
@@ -212,7 +267,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
       AutoSize = True
       Margins.Top = 4.000000000000000000
       Position.X = 12.000000000000000000
-      Position.Y = 332.000000000000000000
+      Position.Y = 416.000000000000000000
       Size.Width = 336.000000000000000000
       Size.Height = 48.000000000000000000
       Size.PlatformDefault = False
@@ -225,7 +280,7 @@ object AnimationSettingsForm: TAnimationSettingsForm
   end
   object ButtonLayout: TLayout
     Align = Bottom
-    Position.Y = 396.000000000000000000
+    Position.Y = 480.000000000000000000
     Size.Width = 360.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False

@@ -301,6 +301,14 @@ type
     /// <c>strip</c>, <c>sheet</c> or <c>atlas</c>.</summary>
     /// <remarks>Written as <c>null</c> if empty.</remarks>
     ExportType: String;
+    //** @abstract(Whether the model has any animations, written as @code(is_animated).)
+    //**
+    //** A model with none is static: a 2-pass export of it measures more finely and, without
+    //** overscan, aims at an empty border of 0.
+    /// <summary>Whether the model has any animations, written as <c>is_animated</c>.</summary>
+    /// <remarks>A model with none is static: a 2-pass export of it measures more finely and,
+    /// without overscan, aims at an empty border of 0.</remarks>
+    IsAnimated: Boolean;
     //** @abstract(This image's page, from 1, as its file name numbers it; 1 for a strip or
     //** spritesheet.)
     /// <summary>This image's page, from 1, as its file name numbers it; 1 for a strip or
@@ -344,6 +352,15 @@ type
     //** @abstract(Whether the frames were made by a 2-pass export's second pass.)
     /// <summary>Whether the frames were made by a 2-pass export's second pass.</summary>
     TwoPass: Boolean;
+    //** @abstract(Whether a 2-pass export's first pass measured the frames exactly, at 4x
+    //** overscan, written as @code(exact).)
+    //**
+    //** True with Exact ticked, and always for a static model, which is always measured so.
+    /// <summary>Whether a 2-pass export's first pass measured the frames exactly, at 4x
+    /// overscan, written as <c>exact</c>.</summary>
+    /// <remarks>True with Exact ticked, and always for a static model, which is always
+    /// measured so.</remarks>
+    Exact: Boolean;
     //** @abstract(Whether Overscan was ticked in Animation, Animation Settings.)
     /// <summary>Whether Overscan was ticked in Animation, Animation Settings.</summary>
     OverscanEnabled: Boolean;
@@ -371,9 +388,15 @@ type
     //** @abstract(The rows of the image's grid of cells.)
     /// <summary>The rows of the image's grid of cells.</summary>
     Rows: Integer;
-    //** @abstract(The pixel the centre of rotation falls on in a frame.)
-    /// <summary>The pixel the centre of rotation falls on in a frame.</summary>
-    Origin: TPoint;
+    //** @abstract(Where the centre of rotation falls in a frame, to a fraction of a pixel.)
+    //**
+    //** In the frame's pixels, counted from 0, so a whole number is the centre of that pixel
+    //** and 127.5 the line between pixels 127 and 128.
+    /// <summary>Where the centre of rotation falls in a frame, to a fraction of a
+    /// pixel.</summary>
+    /// <remarks>In the frame's pixels, counted from 0, so a whole number is the centre of that
+    /// pixel and 127.5 the line between pixels 127 and 128.</remarks>
+    Origin: TPointF;
     //** @abstract(False writes @code(null) for the origin, Origin being unused.)
     /// <summary>False writes <c>null</c> for the origin, Origin being unused.</summary>
     OriginKnown: Boolean;
@@ -722,7 +745,7 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** @preformatted(
 //** {
 //**   "meta": {
-//**     "export_type": "strip",
+//**     "export_type": "strip", "is_animated": true,
 //**     "page": 1, "page_count": 1, "total_frames": 8,
 //**     "creator": "...", "creator_url": "...",
 //**     "modeller": "...", "modeller_url": "...",
@@ -734,14 +757,15 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //**     "size": { "width": 2048, "height": 256 },
 //**     "sprite_size": { "width": 256, "height": 256 },
 //**     "layout": { "cols": 8, "rows": 1, "frame_count": 8 },
-//**     "origin": { "x": 127, "y": 201 },
+//**     "origin": { "x": 127.5, "y": 201.25 },
 //**     "sprite_empty": { "left": 61, "top": 12, "right": 58, "bottom": 40 },
 //**     "directions": [0],
 //**     "animations": [
 //**       { "name": "walk", "frame_count": 8, "time": 1.0333 }
 //**     ],
 //**     "unused": 0,
-//**     "two_pass": false,
+//**     "two_pass": true,
+//**     "exact": false,
 //**     "overscan": { "enabled": true, "factor": 4 }
 //**   },
 //**   "camera": {
@@ -764,13 +788,15 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** )
 //**
 //** @code(meta) comes first, from AInfo.Meta: @code(export_type), the kind of export,
-//** @code(strip), @code(sheet) or @code(atlas); the page, from 1, the number of pages, the
+//** @code(strip), @code(sheet) or @code(atlas); @code(is_animated), whether the model has
+//** animations; the page, from 1, the number of pages, the
 //** number of frames the export made over every page in @code(total_frames), the credits,
 //** the day the project started, when this export was made, and the model file; empty
 //** text is @code(null). @code(size) is the whole image's, from AInfo, and
-//** @code(sprite_size) one frame's, the grab size. @code(origin) is the pixel the model's
-//** centre of rotation falls on in every frame, in the frame's own pixels, (0, 0) the top
-//** left pixel, as whole numbers; @code(null) for each if it is not known.
+//** @code(sprite_size) one frame's, the grab size. @code(origin) is where the model's
+//** centre of rotation falls in every frame, in the frame's own pixels to a thousandth of a
+//** pixel, a whole number being the centre of that pixel, (0, 0) the centre of the top left
+//** pixel; @code(null) for each if it is not known.
 //** @code(sprite_empty) holds, for each side, the smallest of the frames' empty borders, so
 //** cropping every frame by it loses nothing from any of them. @code(directions) lists the
 //** directions the image holds, as compass bearings in degrees in the order they are
@@ -781,7 +807,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** in seconds, its own length whatever number of frames it was saved at, so
 //** frame_count / time is its frame rate. @code(unused) is the number of the grid's cells
 //** after the last
-//** frame, which hold nothing. @code(two_pass) is whether a 2-pass export made them, and
+//** frame, which hold nothing. @code(two_pass) is whether a 2-pass export made them,
+//** @code(exact) whether its first pass measured them exactly, at 4x overscan, and
 //** @code(overscan) whether overscan was on and its factor. @code(camera) is the camera as
 //** the export started: the View, Camera view, the projection, the Azimuth, Inclination and
 //** Roll readouts in degrees, the distance from the orbit centre and, orthographic, the
@@ -810,7 +837,7 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// file.</summary>
 /// <remarks><para>Each frame is measured with MeasureFrameEmpty. The file holds first a
 /// <c>meta</c> object, from AInfo.Meta, with <c>export_type</c> (<c>strip</c>, <c>sheet</c>
-/// or <c>atlas</c>), <c>page</c>, <c>page_count</c>,
+/// or <c>atlas</c>), <c>is_animated</c>, <c>page</c>, <c>page_count</c>,
 /// <c>total_frames</c> (the frames the export made over every page), <c>creator</c>,
 /// <c>creator_url</c>, <c>modeller</c>, <c>modeller_url</c>, <c>artist</c>, <c>artist_url</c>,
 /// <c>created</c>, <c>modified</c> and <c>file</c>, empty text being <c>null</c>; then an
@@ -819,7 +846,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// (<c>x</c>, <c>y</c>), <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>,
 /// <c>bottom</c>), <c>directions</c>, <c>animations</c> (each <c>name</c>,
 /// <c>frame_count</c>, <c>time</c>),
-/// <c>unused</c>, <c>two_pass</c> and <c>overscan</c> (<c>enabled</c>, <c>factor</c>); then a
+/// <c>unused</c>, <c>two_pass</c>, <c>exact</c> and <c>overscan</c> (<c>enabled</c>,
+/// <c>factor</c>); then a
 /// <c>camera</c> object, with <c>view</c>, <c>projection</c>, <c>azimuth</c>,
 /// <c>inclination</c>, <c>roll</c>, <c>distance</c>, <c>ortho_height</c>, <c>pan</c>
 /// (<c>enabled</c>, <c>x</c>, <c>z</c>) and <c>locked</c>, the camera as the export started;
@@ -827,9 +855,10 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// <c>frame</c> and <c>empty</c>, an object of its <c>left</c>, <c>top</c>, <c>right</c>,
 /// <c>bottom</c>.</para>
 /// <para><c>size</c> is the whole image's, from AInfo, and <c>sprite_size</c> one frame's,
-/// the grab size. <c>origin</c> is the pixel the model's
-/// centre of rotation falls on in every frame, in the frame's own pixels, (0, 0) the top left
-/// pixel, as whole numbers; <c>null</c> for each if it is not known. <c>sprite_empty</c>
+/// the grab size. <c>origin</c> is where the model's centre of rotation falls in every frame,
+/// in the frame's own pixels to a thousandth of a pixel, a whole number being the centre of
+/// that pixel, (0, 0) the centre of the top left pixel; <c>null</c> for each if it is not
+/// known. <c>sprite_empty</c>
 /// holds, for each side, the smallest of the frames' empty borders, so cropping every frame
 /// by it loses nothing from any of them. <c>directions</c> lists the directions the image
 /// holds, as compass bearings in degrees in the order they are exported; one direction is
@@ -839,7 +868,8 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 /// to play once in seconds, its own length whatever number of frames it was saved at, so
 /// frame_count / time is its frame rate. <c>unused</c> is the
 /// number of the grid's cells after the last frame, which hold nothing. <c>two_pass</c> is
-/// whether a 2-pass export made them, and <c>overscan</c> whether overscan was on and its factor.
+/// whether a 2-pass export made them, <c>exact</c> whether its first pass measured them
+/// exactly, at 4x overscan, and <c>overscan</c> whether overscan was on and its factor.
 /// <c>camera</c> is the camera as the export started: the View, Camera view, the
 /// projection, the Azimuth, Inclination and Roll readouts in degrees, the distance from the
 /// orbit centre and, orthographic, the height of scene shown, both as captured, in scene
@@ -2010,11 +2040,11 @@ var
     Result := TJSONNumber.Create(RoundTo(AValue, -4));
   end;
 
-  // A whole number, written without a decimal point, or null if not known
-  function Coordinate(const AValue: Integer): TJSONValue;
+  // To a thousandth of a pixel, or null if not known
+  function Coordinate(const AValue: Single): TJSONValue;
   begin
     if AInfo.OriginKnown then
-      Result := TJSONNumber.Create(AValue)
+      Result := TJSONNumber.Create(RoundTo(AValue, -3))
     else
       Result := TJSONNull.Create;
   end;
@@ -2026,6 +2056,7 @@ begin
     Item := TJSONObject.Create;
     Root.AddPair('meta', Item);
     Item.AddPair('export_type', Text(AInfo.Meta.ExportType));
+    Item.AddPair('is_animated', TJSONBool.Create(AInfo.Meta.IsAnimated));
     Item.AddPair('page', TJSONNumber.Create(Max(1, AInfo.Meta.Page)));
     Item.AddPair('page_count', TJSONNumber.Create(Max(1, AInfo.Meta.PageCount)));
     // Over every page; a single image's own when not given
@@ -2085,6 +2116,7 @@ begin
     Image.AddPair('unused', TJSONNumber.Create(Int64(AInfo.Cols) * AInfo.Rows -
       Length(AEmpties)));
     Image.AddPair('two_pass', TJSONBool.Create(AInfo.Meta.TwoPass));
+    Image.AddPair('exact', TJSONBool.Create(AInfo.Meta.Exact));
     Item := TJSONObject.Create;
     Image.AddPair('overscan', Item);
     Item.AddPair('enabled', TJSONBool.Create(AInfo.Meta.OverscanEnabled));

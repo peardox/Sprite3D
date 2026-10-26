@@ -5,10 +5,11 @@
 //** with SetProgress, says how long is left with SetRemaining or SetRemainingNote, adds lines
 //** worth keeping with AddLine, and calls Finish when the export has ended, whether it worked,
 //** failed or was aborted. Until then Close is disabled. Abort, the Escape key, or the window's
-//** close box calls OnAbort once: the export is to stop once the animation being exported is
-//** saved, so the dialog says it is stopping and stays open until Finish. Finish shows the
-//** outcome in the list below the bar, disables Abort and enables Close, which is then the only
-//** way to close the dialog.
+//** close box calls OnAbort once: the export is to stop at once, saving nothing more, so the
+//** dialog says it is stopping and stays open until Finish. Finish shows the outcome in the
+//** list below the bar, disables Abort and enables Close, which is then the only way to close
+//** the dialog; after an abort, Finish closes it by itself. NoteAborted tells it of an abort
+//** asked for elsewhere.
 //**
 //** On the desktop, show it with ShowModal, which returns when Close is pressed; the export
 //** must be driven by something that runs while a modal dialog is up, such as queued calls
@@ -25,11 +26,12 @@ unit Sprite3DExportForm;
   SetRemaining or SetRemainingNote, adds lines worth keeping with AddLine,
   and calls Finish when the export has ended, whether it worked, failed or
   was aborted. Until then Close is disabled. Abort, the Escape key, or the
-  window's close box calls OnAbort once: the export is to stop once the
-  animation being exported is saved, so the dialog says it is stopping and
-  stays open until Finish. Finish shows the outcome in the list below the
-  bar, disables Abort and enables Close, which is then the only way to close
-  the dialog.
+  window's close box calls OnAbort once: the export is to stop at once,
+  saving nothing more, so the dialog says it is stopping and stays open until
+  Finish. Finish shows the outcome in the list below the bar, disables Abort
+  and enables Close, which is then the only way to close the dialog; after an
+  abort, Finish closes it by itself. NoteAborted tells it of an abort asked
+  for elsewhere.
 
   On the desktop, show it with ShowModal, which returns when Close is
   pressed; the export must be driven by something that runs while a modal
@@ -135,6 +137,7 @@ type
     FSettingAutoClose: Boolean;
     procedure RequestAbort;
     procedure AutoCloseNow;
+    procedure CloseAfterAbort;
     function GetAutoClose: Boolean;
     procedure SetAutoClose(const Value: Boolean);
     function RemainingCaption: String;
@@ -217,6 +220,14 @@ type
     /// <param name="AProblems">What went wrong, one entry each; empty if nothing
     /// did.</param>
     procedure Finish(const AReport: String; const AProblems: TArray<String>);
+    //** @abstract(Shows the export as stopping, as Abort does, for an abort asked for
+    //** elsewhere, without calling OnAbort.)
+    //**
+    //** Finish then closes the dialog by itself.
+    /// <summary>Shows the export as stopping, as Abort does, for an abort asked for elsewhere,
+    /// without calling OnAbort.</summary>
+    /// <remarks>Finish then closes the dialog by itself.</remarks>
+    procedure NoteAborted;
     //** @abstract(Shows the dialog without blocking and frees it when it is closed.)
     //**
     //** For Android and iOS, where ShowModal cannot block.
@@ -263,7 +274,7 @@ implementation
 {$R *.fmx}
 
 const
-  STOPPING = 'Stopping once the animation being exported is saved...';
+  STOPPING = 'Stopping...';
 
 procedure TExportProgressForm.SetProgress(const AFraction: Single; const AStatus: String);
 var
@@ -400,16 +411,35 @@ begin
   CloseButton.Enabled := True;
   CloseButton.Cancel := True;   // Escape now closes
   CloseButton.SetFocus;
-  // Closed by itself if asked, once this has returned, unless there is
-  // something to read: problems, or an export cut short
-  if AutoCloseCheck.IsChecked and not FAborted and (Length(AProblems) = 0) then
+  // Aborted: closed by itself, once this has returned, as nothing more is
+  // wanted. Otherwise closed by itself if asked, unless there is something
+  // to read: problems.
+  if FAborted then
+    TThread.ForceQueue(nil, CloseAfterAbort)
+  else if AutoCloseCheck.IsChecked and (Length(AProblems) = 0) then
     TThread.ForceQueue(nil, AutoCloseNow);
+end;
+
+procedure TExportProgressForm.NoteAborted;
+begin
+  if FAborted or FFinished then
+    Exit;
+  FAborted := True;
+  AbortButton.Enabled := False;
+  StatusLabel.Text := StatusLabel.Text + sLineBreak + STOPPING;
+end;
+
+procedure TExportProgressForm.CloseAfterAbort;
+begin
+  if FFinished then
+    CloseButtonClick(CloseButton);
 end;
 
 destructor TExportProgressForm.Destroy;
 begin
   // Closed some other way first: the queued close must not reach a freed form
   TThread.RemoveQueuedEvents(nil, AutoCloseNow);
+  TThread.RemoveQueuedEvents(nil, CloseAfterAbort);
   inherited;
 end;
 

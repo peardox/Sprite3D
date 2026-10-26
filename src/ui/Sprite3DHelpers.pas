@@ -141,7 +141,7 @@ const
   //** GPU's own limit for the grab size.)
   /// <summary>The largest overscan factor Animation, Animation Settings offers, before the
   /// GPU's own limit for the grab size.</summary>
-  OVERSCAN_FACTOR_MAX = 16;
+  OVERSCAN_FACTOR_MAX = 8;
   //** @abstract(The overscan factor Animation, Animation Settings shows until another is
   //** chosen.)
   /// <summary>The overscan factor Animation, Animation Settings shows until another is
@@ -337,6 +337,10 @@ type
     //** @abstract(Whether JSON files are written minified.)
     /// <summary>Whether JSON files are written minified.</summary>
     MinifyJson: Boolean;
+    //** @abstract(Whether the Results tab's empty border values have a hint explaining them.)
+    /// <summary>Whether the Results tab's empty border values have a hint explaining
+    /// them.</summary>
+    ResultsEdgeHint: Boolean;
     //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
     //** kept.)
     /// <summary>The most ViewFps may be: the display's refresh rate, set by the caller; not
@@ -420,12 +424,16 @@ type
     FDebugEnabled: Boolean;
     FDebugSwitch: Boolean;
     FDebugFrameBorders: Boolean;
+    FDebugSaveOversampled: Boolean;
     FExportAutoClose: Boolean;
     FLastExportFolder: String;
     FShowOverscanWarning: Boolean;
+    FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
+    FResultsEdgeHint: Boolean;
     FResultsZoom: Single;
     FOverscan: Integer;
+    FPadding: Integer;
     FResampleFilter: TSprite3DResampleFilter;
     procedure SetAnimationFps(const Value: Integer);
     procedure SetViewFps(const Value: Integer);
@@ -433,6 +441,7 @@ type
     procedure SetDirectionCount(const Value: Integer);
     procedure SetDirectionStart(const Value: Single);
     procedure SetOverscan(const Value: Integer);
+    procedure SetPadding(const Value: Integer);
     procedure SetAtlasPageSize(const Value: Integer);
     procedure SetGrabWidth(const Value: Integer);
     procedure SetGrabHeight(const Value: Integer);
@@ -1005,6 +1014,16 @@ type
     /// again in that warning.</remarks>
     property ShowOverscanWarning: Boolean read FShowOverscanWarning
       write FShowOverscanWarning;
+    //** @abstract(Whether ticking Exact, above Export, first says what it does and how much
+    //** longer the first pass takes; True by default.)
+    //**
+    //** Stored as @code(showExactWarning). Cleared by ticking Do not show this again in that
+    //** warning.
+    /// <summary>Whether ticking Exact, above Export, first says what it does and how much
+    /// longer the first pass takes; True by default.</summary>
+    /// <remarks>Stored as <c>showExactWarning</c>. Cleared by ticking Do not show this again
+    /// in that warning.</remarks>
+    property ShowExactWarning: Boolean read FShowExactWarning write FShowExactWarning;
     //** @abstract(Whether the Results tab draws its checker behind the animation; True by
     //** default.)
     //**
@@ -1014,6 +1033,14 @@ type
     /// <remarks>Stored as <c>resultsShowGrid</c>; set by Show grid on the Results
     /// tab.</remarks>
     property ResultsShowGrid: Boolean read FResultsShowGrid write FResultsShowGrid;
+    //** @abstract(Whether the Results tab's empty border values have a hint explaining them;
+    //** True by default.)
+    //**
+    //** Stored as @code(resultsEdgeHint); set in File, Settings.
+    /// <summary>Whether the Results tab's empty border values have a hint explaining them;
+    /// True by default.</summary>
+    /// <remarks>Stored as <c>resultsEdgeHint</c>; set in File, Settings.</remarks>
+    property ResultsEdgeHint: Boolean read FResultsEdgeHint write FResultsEdgeHint;
     //** @abstract(The zoom last chosen on the Results tab, as a multiple of the sprite size;
     //** 1 by default.)
     //**
@@ -1049,6 +1076,20 @@ type
     /// rendered.</remarks>
     [NeonProperty('debug_frame_borders')]
     property DebugFrameBorders: Boolean read FDebugFrameBorders write FDebugFrameBorders;
+    //** @abstract(Whether an export with overscan saves its first frame, as drawn before it
+    //** is scaled down, as Oversampled.png; False by default.)
+    //**
+    //** Stored as @code(debug_save_oversampled); set by File, Debug, Save Oversampled Frame,
+    //** which is offered only while DebugActive. Has no effect while DebugActive is False, or
+    //** while overscan is off. The file goes in the export's folder.
+    /// <summary>Whether an export with overscan saves its first frame, as drawn before it is
+    /// scaled down, as Oversampled.png; False by default.</summary>
+    /// <remarks>Stored as <c>debug_save_oversampled</c>; set by File, Debug, Save Oversampled
+    /// Frame, which is offered only while DebugActive. Has no effect while DebugActive is
+    /// False, or while overscan is off. The file goes in the export's folder.</remarks>
+    [NeonProperty('debug_save_oversampled')]
+    property DebugSaveOversampled: Boolean read FDebugSaveOversampled
+      write FDebugSaveOversampled;
     //** @abstract(The overscan factor Animation, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
@@ -1071,7 +1112,41 @@ type
     /// <c>resampleFilter</c>.</remarks>
     property ResampleFilter: TSprite3DResampleFilter read FResampleFilter
       write FResampleFilter;
+    //** @abstract(Padding: the empty border, in pixels, every export aims to leave round the
+    //** sprite on the axis with least room; 0 by default.)
+    //**
+    //** Set in Animation, Animation Settings. Stored as @code(padding). Written values below 0
+    //** count as 0; an export uses at most PaddingLimit of the grab size, so a value kept for
+    //** a larger grab size is cut down rather than lost.
+    /// <summary>Padding: the empty border, in pixels, every export aims to leave round the
+    /// sprite on the axis with least room; 0 by default.</summary>
+    /// <remarks>Set in Animation, Animation Settings. Stored as <c>padding</c>. Written values
+    /// below 0 count as 0; an export uses at most PaddingLimit of the grab size, so a value
+    /// kept for a larger grab size is cut down rather than lost.</remarks>
+    [NeonProperty('padding')]
+    property Padding: Integer read FPadding write SetPadding;
   end;
+
+//** @abstract(The most padding Animation, Animation Settings allows for a grab size: a
+//** quarter of its smaller side, in whole pixels.)
+//**
+//** Padding is the empty border, in pixels, an export aims to leave round the sprite on the
+//** axis with least room. A quarter each side leaves half the frame for the sprite.
+//**
+//** @param(AGrabWidth The grab's width in pixels.)
+//**
+//** @param(AGrabHeight The grab's height in pixels.)
+//**
+//** @returns(The largest padding allowed, 0 or more.)
+/// <summary>The most padding Animation, Animation Settings allows for a grab size: a quarter
+/// of its smaller side, in whole pixels.</summary>
+/// <remarks>Padding is the empty border, in pixels, an export aims to leave round the sprite
+/// on the axis with least room. A quarter each side leaves half the frame for the
+/// sprite.</remarks>
+/// <param name="AGrabWidth">The grab's width in pixels.</param>
+/// <param name="AGrabHeight">The grab's height in pixels.</param>
+/// <returns>The largest padding allowed, 0 or more.</returns>
+function PaddingLimit(const AGrabWidth, AGrabHeight: Integer): Integer;
 
 //** @abstract(Shifts an angle in degrees by whole turns into the range 0 to 360.)
 //**
@@ -2003,12 +2078,16 @@ begin
   FAtlasFolder := String.Empty;
   FDebugEnabled := False;
   FDebugFrameBorders := False;
+  FDebugSaveOversampled := False;
   FExportAutoClose := False;
   FLastExportFolder := String.Empty;
   FShowOverscanWarning := True;
+  FShowExactWarning := True;
   FResultsShowGrid := True;
+  FResultsEdgeHint := True;
   FResultsZoom := 1;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;
+  FPadding := 0;
   FResampleFilter := rfBox;
 end;
 
@@ -2058,6 +2137,11 @@ end;
 procedure TSprite3DAppSettings.SetOverscan(const Value: Integer);
 begin
   FOverscan := EnsureRange(Value, OVERSCAN_FACTOR_MIN, OVERSCAN_FACTOR_MAX);
+end;
+
+procedure TSprite3DAppSettings.SetPadding(const Value: Integer);
+begin
+  FPadding := EnsureRange(Value, 0, PaddingLimit(GRAB_SIZE_MAX, GRAB_SIZE_MAX));
 end;
 
 procedure TSprite3DAppSettings.SetAtlasPageSize(const Value: Integer);
@@ -2438,6 +2522,11 @@ begin
   {$ENDIF}
   Result := GetAssetsPath('../../../');
 
+end;
+
+function PaddingLimit(const AGrabWidth, AGrabHeight: Integer): Integer;
+begin
+  Result := Max(0, Min(AGrabWidth, AGrabHeight) div 4);
 end;
 
 function DefaultGrabFolder: String;
@@ -3128,6 +3217,7 @@ begin
   Result.SaveFolder := ASettings.SaveFolder;
   Result.ViewFps := ASettings.ViewFps;
   Result.MinifyJson := ASettings.MinifyJson;
+  Result.ResultsEdgeHint := ASettings.ResultsEdgeHint;
   // The caller knows the display; until it says, at least the rate in use
   Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then
