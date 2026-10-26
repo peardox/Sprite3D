@@ -556,6 +556,33 @@ function CombinedSweptVolume(const AModel: TGorillaModel; const ABox: TBoundingB
   const AAnimations: TArray<TAnimationBounds>; const ANames: TArray<String>;
   const AIncludeRest: Boolean = True; const AAxis: TSweepAxis = saY): TSweptVolume;
 
+//** @abstract(The swept volume of several models joined, as if each were one pose of a
+//** single model: the combined volume of a set of static models.)
+//**
+//** Each model's volume is worked out from its own bounds at rest about the line through its
+//** own centre of rotation parallel to AAxis, just as CombinedSweptVolume works out each
+//** animation's about the model's, and they are combined with UnionSweptVolume. Each model
+//** counts as one frame of an animation would: what matters is how far it reaches from its
+//** own turning axis, wherever it stands. The result is placed on APivot, the centre of
+//** rotation of the model it is to be shown or fitted with, so fitting the camera to it puts
+//** that model's centre of rotation where any other of the set would have it, at the same
+//** scale. Safe on any thread; it reads only its arguments.
+//**
+//** @param(ABoxes Each model's own bounds at rest, measured before any helper was added to
+//** it, in its own coordinates.)
+//**
+//** @param(APivots Each model's centre of rotation, @code(RotationCenter), in its own
+//** coordinates, in ABoxes' order; a missing entry is taken as the origin.)
+//**
+//** @param(APivot The centre of rotation of the model the result is used with.)
+//**
+//** @param(AAxis Which of the models' axes they turn about; Y, their up axis, by default.)
+//**
+//** @returns(The combined volume, on APivot; Valid is False if no box was usable.)
+function CombinedModelsSweptVolume(const ABoxes: TArray<TBoundingBox>;
+  const APivots: TArray<TPoint3D>; const APivot: TPoint3D;
+  const AAxis: TSweepAxis = saY): TSweptVolume;
+
 //** @abstract(Points whose convex hull holds the whole of a swept volume.)
 //**
 //** Two rings of ASegments points, one at each end of the volume, on a regular polygon drawn
@@ -1190,6 +1217,41 @@ begin
   finally
     Volumes.Free;
   end;
+end;
+
+function CombinedModelsSweptVolume(const ABoxes: TArray<TBoundingBox>;
+  const APivots: TArray<TPoint3D>; const APivot: TPoint3D;
+  const AAxis: TSweepAxis): TSweptVolume;
+var
+  Volumes: TArray<TSweptVolume>;
+  Pivot: TPoint3D;
+  Along, TargetAlong, Side1, Side2: Single;
+begin
+  // Where APivot is along the axis: every model's extent along it is moved
+  // so its own centre of rotation is there
+  SplitPoint(APivot, AAxis, TargetAlong, Side1, Side2);
+  SetLength(Volumes, Length(ABoxes));
+  for var I := 0 to High(ABoxes) do
+  begin
+    if I <= High(APivots) then
+      Pivot := APivots[I]
+    else
+      Pivot := TPoint3D.Zero;
+    // Each about its own turning axis, as an animation's poses are about
+    // their model's; the radii are measured from that axis already, and the
+    // extent along it is made relative to the model's own centre too
+    Volumes[I] := CalcSweptVolume(ABoxes[I], Pivot, AAxis);
+    if Volumes[I].Valid then
+    begin
+      SplitPoint(Pivot, AAxis, Along, Side1, Side2);
+      Volumes[I].AxialLow := Volumes[I].AxialLow - Along + TargetAlong;
+      Volumes[I].AxialHigh := Volumes[I].AxialHigh - Along + TargetAlong;
+    end;
+  end;
+  Result := UnionSweptVolume(Volumes);
+  // Shown and fitted about the model it is used with
+  Result.Axis := AAxis;
+  Result.Pivot := APivot;
 end;
 
 function SweepOutline(const AVolume: TSweptVolume;

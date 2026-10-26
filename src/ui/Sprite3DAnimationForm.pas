@@ -1,4 +1,4 @@
-//** @abstract(The Animation, Animation Settings dialog: the frame rate animations are saved at,
+//** @abstract(The Models, Animation Settings dialog: the frame rate animations are saved at,
 //** overscan, padding, and texture atlas pages.)
 //**
 //** One slider, marked FPS, sets the frames per second that the animation list's Save as
@@ -33,7 +33,7 @@
 unit Sprite3DAnimationForm;
 
 {
-  The Animation, Animation Settings dialog: the frame rate animations are saved
+  The Models, Animation Settings dialog: the frame rate animations are saved
   at, overscan, padding, and texture atlas pages.
 
   One slider, marked FPS, sets the frames per second that the animation
@@ -78,7 +78,7 @@ uses
   FMX.Controls.Presentation, FMX.Layouts, FMX.ListBox, Sprite3DResample;
 
 type
-  //** @abstract(The Animation, Animation Settings dialog; see the unit description.)
+  //** @abstract(The Models, Animation Settings dialog; see the unit description.)
   TAnimationSettingsForm = class(TForm)
     //** @abstract(Holds the FPS row and the explanation.)
     MainLayout: TLayout;

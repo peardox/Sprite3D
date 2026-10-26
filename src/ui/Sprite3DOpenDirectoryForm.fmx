@@ -1,0 +1,123 @@
+object OpenDirectoryForm: TOpenDirectoryForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Open Directory'
+  ClientHeight = 196
+  ClientWidth = 480
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnClose = FormClose
+  DesignerMasterStyle = 0
+  object FolderLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 19.000000000000000000
+    Size.Width = 72.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Folder'
+    TabOrder = 100
+  end
+  object FolderEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 0
+    Position.X = 96.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 272.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'The folder to search; its sub-folders are searched too'
+    ShowHint = True
+  end
+  object BrowseButton: TButton
+    Position.X = 376.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Text = 'Browse...'
+    Hint = 'Choose the folder in a folder dialog'
+    ShowHint = True
+    OnClick = BrowseButtonClick
+  end
+  object SpecLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 55.000000000000000000
+    Size.Width = 72.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Files'
+    TabOrder = 101
+  end
+  object SpecEdit: TComboEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 2
+    ItemHeight = 19.000000000000000000
+    Items.Strings = (
+      '*.glb'
+      '*.gltf'
+      '*.fbx'
+      '*.obj'
+      '*.usdc'
+      '*.dae'
+      '*.stl'
+      '*.ply'
+      '*.glb;*.gltf')
+    ItemIndex = 0
+    Text = '*.glb'
+    Position.X = 96.000000000000000000
+    Position.Y = 52.000000000000000000
+    Size.Width = 272.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    Hint =
+      'Which files to open: one or more patterns, such as *.glb or *.glb' +
+      ';*.gltf'
+    ShowHint = True
+  end
+  object NoteLabel: TLabel
+    Position.X = 96.000000000000000000
+    Position.Y = 84.000000000000000000
+    Size.Width = 368.000000000000000000
+    Size.Height = 60.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.VertAlign = Leading
+    TextSettings.WordWrap = True
+    Text =
+      'Every matching model in the folder and its sub-folders is opened.' +
+      ' Separate patterns with ; to open more than one kind. Only one mo' +
+      'del with animations can be open: others with animations are skipped.'
+    TabOrder = 102
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 152.000000000000000000
+    Size.Width = 480.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    object CancelButton: TButton
+      Anchors = [akLeft, akBottom]
+      Cancel = True
+      ModalResult = 2
+      Position.X = 16.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 1
+      Text = 'Cancel'
+      OnClick = CancelButtonClick
+    end
+    object OkButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      Position.X = 384.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'Open'
+      OnClick = OkButtonClick
+    end
+  end
+end

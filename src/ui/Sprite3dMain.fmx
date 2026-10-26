@@ -11,6 +11,8 @@ object MainForm: TMainForm
   OnCloseQuery = FormCloseQuery
   OnDestroy = FormDestroy
   OnShow = FormShow
+  OnKeyDown = AnimationListBoxKeyDown
+  OnKeyUp = AnimationListBoxKeyUp
   DesignerMasterStyle = 0
   object TabControl1: TTabControl
     Align = Client
@@ -25,7 +27,7 @@ object MainForm: TMainForm
       694s
       800s
       694s)
-    object GorillaTab: TTabItem
+    object StaticTab: TTabItem
       CustomIcon = <
         item
         end>
@@ -35,8 +37,22 @@ object MainForm: TMainForm
       Size.PlatformDefault = False
       StyleLookup = ''
       TabOrder = 0
-      Text = 'Model'
+      Text = 'Static'
       ExplicitSize.cx = 52.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+    end
+    object AnimatedTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 70.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Animated'
+      ExplicitSize.cx = 70.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
       object MainLayout: TLayout
         Align = Client
@@ -114,6 +130,26 @@ object MainForm: TMainForm
             TabOrder = 86
             OnClick = AnimationListBoxClick
             OnChange = AnimationListBoxChange
+            OnKeyDown = AnimationListBoxKeyDown
+            OnKeyUp = AnimationListBoxKeyUp
+            DisableFocusEffect = True
+            DefaultItemStyles.ItemStyle = ''
+            DefaultItemStyles.GroupHeaderStyle = ''
+            DefaultItemStyles.GroupFooterStyle = ''
+            Viewport.Width = 236.000000000000000000
+            Viewport.Height = 664.000000000000000000
+          end
+          object StaticListBox: TListBox
+            Align = Client
+            Size.Width = 240.000000000000000000
+            Size.Height = 668.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 87
+            Visible = False
+            OnClick = AnimationListBoxClick
+            OnChange = AnimationListBoxChange
+            OnKeyDown = AnimationListBoxKeyDown
+            OnKeyUp = AnimationListBoxKeyUp
             DisableFocusEffect = True
             DefaultItemStyles.ItemStyle = ''
             DefaultItemStyles.GroupHeaderStyle = ''
@@ -198,6 +234,11 @@ object MainForm: TMainForm
         Text = 'Open Model'
         OnClick = OpenModelMenuItemClick
       end
+      object OpenDirectoryMenuItem: TMenuItem
+        Locked = True
+        Text = 'Open Directory...'
+        OnClick = OpenDirectoryMenuItemClick
+      end
       object GrabMenuItem: TMenuItem
         Locked = True
         Text = 'Grab'
@@ -239,11 +280,16 @@ object MainForm: TMainForm
       end
     end
     object ModelMenu: TMenuItem
-      Text = 'Animation'
+      Text = 'Models'
       object AnimationsUsedItem: TMenuItem
         Locked = True
         Text = 'Animations Used...'
         OnClick = AnimationsUsedItemClick
+      end
+      object StaticsUsedItem: TMenuItem
+        Locked = True
+        Text = 'Statics Used...'
+        OnClick = StaticsUsedItemClick
       end
       object ModelSettingsSeparatorItem: TMenuItem
         Locked = True

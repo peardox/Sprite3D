@@ -1,16 +1,33 @@
 //** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
 //**
-//** The form has three tabs. The Model tab holds a TGorillaViewport, created at run time, and a
-//** panel of three dials for Azimuth, inclination and Roll. The Results tab plays back what has
-//** been exported; see Sprite3DResultsView. The Debug tab holds a memo for log output. Below
+//** The form has four tabs. The Static and Animated tabs share one TGorillaViewport, created at
+//** run time, and the side panel beside it, which are moved onto whichever of the two is
+//** chosen. The Static tab, first, is for models without animations: its side panel, headed
+//** Models, lists every static model opened this session, and shows the one selected. The
+//** Animated tab is for the one model with animations: its side panel, headed Animations,
+//** lists them with their frame counts, and has the play and step buttons. Both have Clear
+//** beside Export, which empties the tab's list and unloads its models. Opening a model, by
+//** File, Open Model, a file the system asks to open, a project or the start-up action,
+//** sends it to the tab that fits it, by whether it has animations, and shows that tab: a
+//** model with animations replaces the Animated tab's, and one without is added to the
+//** Static tab's list, or reloaded in its place if the same file is opened again, and
+//** selected. A static model whose name is listed already, from another file, is asked
+//** about: replace the one listed, ignore the new one, or list it under a new name. File,
+//** Open Directory... opens every model matching a file spec in a folder and its
+//** sub-folders in the same way, skipping any second model with animations. Every model
+//** stays loaded, hidden while another is shown. The Static tab offers no AniGif or MP4
+//** video, in the drop-down or the pop-up menu; the export rules are otherwise the same on
+//** both. The Results tab plays back what has been exported; see Sprite3DResultsView. The
+//** Debug tab holds a memo for log output. Below
 //** the Camera submenu, the View menu has six items that are ticked or not, each switched by
 //** choosing it: Show bounding box shows the model's bounding box, Show grid a grid on the
 //** model's floor, Show axes its own X, Y and Z axes through its centre of rotation, Show Model
 //** Volume the space it sweeps turning about its up axis in the animation playing, Show
 //** Animation Volume the one joined over the rest pose and every animation used, shown only
 //** while it is the volume the view frames, and Orthographic switches between perspective and
-//** orthographic projection. Animation, Animations Used chooses which of the model's animations
-//** are listed and count towards the combined swept volume.
+//** orthographic projection. Models, Animations Used chooses which of the model's animations
+//** are listed and count towards the combined swept volume, and Models, Statics Used which
+//** of the static models open the Static tab lists.
 //**
 //** The camera starts in the isometric view, and each readout always shows its dial's angle,
 //** from 0 to 359 degrees. Azimuth is sent to the camera reversed, 360 minus the readout, so
@@ -31,7 +48,8 @@
 //** bounds folder of the application's support folder from an earlier load of the same,
 //** unchanged file. The new model is built beside the one shown, which is left alone until the
 //** new one is ready, so Abort, or a failure, leaves the previous model, or none at start-up.
-//** While there is no model, a panel over the view says how to load one. The window is drawn
+//** While the tab showing has no model, a panel centred over the view says how to load one for
+//** it. The window is drawn
 //** before the first model loads, the video libraries are looked for only once that load has
 //** ended, and saved files are composed and encoded on a worker thread.
 //**
@@ -64,19 +82,21 @@
 //** off by default and kept in settings.json.
 //**
 //** The Animations list shows, to the right of each entry under the Frames title, how many
-//** frames saving it makes at the Animation, Animation Settings frame rate: the animation's
-//** length times the rate, rounded, or 1 for @code(@(None@)), a single still frame. Model,
+//** frames saving it makes at the Models, Animation Settings frame rate: the animation's
+//** length times the rate, rounded. The Static tab's Models list has no frame counts, each
+//** entry being a single still frame. Models,
 //** Animations Used opens a dialog that ticks which animations are used; the others are left
 //** out of the list, so they are not played, saved or exported, and out of the combined swept
 //** volume. A new model starts with every animation used.
 //**
 //** Under the list, five buttons with icons, named in their hints, act on the selected
 //** animation: first frame, previous frame, play or pause, next frame and last frame. The
-//** frames are those an export makes at the Animation, Animation Settings frame rate, held
+//** frames are those an export makes at the Models, Animation Settings frame rate, held
 //** exactly as the export shows them, by TSprite3DAnimationPlayer; any of the four frame
 //** buttons pauses the animation on its frame. After them, a readout always shows the frame
 //** showing, held or playing, and the frames in all, with the "/" in a fixed place; it reads "-
-//** / -" when there is no animation to count, as for @code(@(None@)). A readout over the top
+//** / -" when there is no animation to count. The buttons and readout are on the Animated tab
+//** only. A readout over the top
 //** left of the view, white on a dark backing, shows the frames per second the viewport draws,
 //** which File, Settings sets, kept within the refresh rate of the display the window is on,
 //** and checked again whenever the window moves to another display. Play and pause share a
@@ -90,7 +110,8 @@
 //**
 //** Right-clicking an entry in the Animations list selects and plays it, and opens a pop-up
 //** menu with Save as sprite strip, Save as Spritesheet, Save as AniGif and Save as MP4
-//** video. Each grabs every frame of that animation off screen, from the first to the last, at
+//** video; in the Models list, it selects and shows the model, and the menu has the first two
+//** only. Each grabs every frame of that animation off screen, from the first to the last, at
 //** the grab size and with one framing that fits every frame, and saves them in SaveFolder:
 //** side by side in one row as @code(<model>_<animation>_dir<NN>_strip<frames>.png), one per
 //** direction, in a square grid read left to right and top to bottom as
@@ -98,9 +119,10 @@
 //** or as a video-only @code(<animation>.mp4) through Sprite3DVideo, H.264 when Cisco's
 //** OpenH264 library is present and MPEG-4 Part 2 otherwise. MP4 is offered only when the
 //** FFmpeg libraries load; DebugMemo says at start-up whether they did and from where. The
-//** @code(@(None@)) entry, which has no animation, captures instead a single still frame of the
-//** model in its bind pose, named after the model. On Android and iOS, which have no
-//** right-click, the same items are in an Animation group of the menu drawer and act on the
+//** Static tab's entries, which have no animation, capture instead a single still frame of their
+//** model in its bind pose, named after the model; each is shown for its capture. On Android and
+//** iOS, which have no
+//** right-click, the same items are in an Models group of the menu drawer and act on the
 //** selected entry.
 //**
 //** At start-up the OpenH264 library, which makes MP4 files H.264, is the copy downloaded
@@ -111,7 +133,7 @@
 //** debugging is on, from @code(debug_enabled) in settings.json or @code(--debug) on the
 //** command line, none of this is done and OpenH264 is not used.
 //**
-//** Animation, Animation Settings... sets the frame rate every saved animation uses, 30 frames
+//** Models, Animation Settings... sets the frame rate every saved animation uses, 30 frames
 //** a second unless changed, from 1 to 60, kept in settings.json. Each animation is resampled
 //** to it: one cycle is cut into the whole number of equal steps nearest that rate, so the
 //** saved frames still loop exactly; see TSprite3DAnimationFrames. The same dialog turns
@@ -120,10 +142,10 @@
 //** resampling filter chosen there, by TSprite3DOffscreen. The factor and filter are kept in
 //** settings.json.
 //**
-//** Each entry also has a tick box. Below the list, All ticks every animation, leaving
-//** @code(@(None@)) as it is so the turn is exported only when ticked by hand, or clears every
-//** entry; a drop-down chooses Sprite strip, Spritesheet, Texture Atlas, AniGif or, when FFmpeg
-//** loaded, MP4 video, and Export saves every ticked entry that way, one after another, in a
+//** Each entry, in either list, also has a tick box. Below the list, All ticks or clears every
+//** entry; a drop-down chooses Sprite strip, Spritesheet, Texture Atlas and, on the Animated
+//** tab only, AniGif or, when FFmpeg loaded, MP4 video, and Export saves every ticked entry
+//** that way, one after another, in a
 //** folder chosen in a folder dialog that opens at SaveFolder, so a new sub-folder can be made
 //** there for the batch. SaveFolder itself is not changed. A failed entry is reported at the
 //** end and does not stop the others. Each entry is unticked as soon as it is saved, so a
@@ -133,7 +155,7 @@
 //**
 //** The drop-down's Texture Atlas asks for its folder as it is chosen. Its batch captures
 //** every ticked entry, then packs them, in list order, onto pages no larger than the page
-//** size in Animation, Animation Settings, saved as @code(<model>_atlas_01.png), @code(_02) and
+//** size in Models, Animation Settings, saved as @code(<model>_atlas_01.png), @code(_02) and
 //** so on; see SaveAtlas.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
@@ -151,7 +173,7 @@
 //** pose and every animation used, so everything a batch exports is framed alike, and Show
 //** Animation Volume draws it. Otherwise, with one ticked or none, as for a model without
 //** animations, it frames the volume of what is on screen alone: the selected animation's,
-//** paused or playing, or the rest pose's for @code(@(None@)). Either way the volume fills the
+//** paused or playing, or the rest pose's for a static model. Either way the volume fills the
 //** view on the tighter axis, and the orbit centre is on the turning axis, so turning the
 //** azimuth dial keeps the model in view.
 //**
@@ -168,11 +190,15 @@
 //**
 //** @preformatted(
 //** TabControl1
-//** |-- GorillaTab "Model"
-//** |   `-- MainLayout
+//** |-- StaticTab "Static"     models without animations; MainLayout is moved here when chosen
+//** |-- AnimatedTab "Animated" the model with animations; holds MainLayout in the designer
+//** |   `-- MainLayout         on whichever of the two tabs is chosen
 //** |       |-- ViewportLayout   the area left of the control panel
 //** |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
-//** |       `-- ControlsLayout   dials and their labels
+//** |       `-- ControlsLayout   the side panel
+//** |           |-- AnimationsHeader  "Animations" and "Frames", or "Models" alone
+//** |           |-- AnimationListBox  the Animated tab's list
+//** |           `-- StaticListBox     the Static tab's list
 //** |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
 //** `-- DebugTab "Debug"
 //**     `-- DebugMemo
@@ -180,13 +206,15 @@
 //** MainMenu1
 //** |-- FileMenu "File"
 //** |   |-- OpenModelMenuItem "Open Model"  shows OpenDialog1
+//** |   |-- OpenDirectoryMenuItem "Open Directory..."  opens a folder's models
 //** |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
 //** |   `-- ExitMenuItem "Exit"             closes the application
-//** |-- ModelMenu "Animation"
+//** |-- ModelMenu "Models"
 //** |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
+//** |   |-- StaticsUsedItem "Statics Used..."  which static models are listed
 //** |   |-- ModelSettingsSeparatorItem "-"
 //** |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
 //** |   |-- LoadAnimationSettingsItem "Load Animation Settings..."  reads the list
@@ -222,10 +250,18 @@ unit Sprite3dMain;
   Demo form for TSprite3DCamera: loads a model and drives the camera with
   dials.
 
-  The form has three tabs. The Model tab holds a TGorillaViewport, created at
-  run time, and a panel of three dials for Azimuth, inclination and Roll. The
-  Results tab plays back what has been exported; see Sprite3DResultsView. The
-  Debug tab holds a memo for log output. Below the Camera submenu, the View
+  The form has four tabs. The Static and Animated tabs share one
+  TGorillaViewport, created at run time, and the side panel beside it, moved
+  onto whichever is chosen. The Static tab lists every model without
+  animations opened this session; the Animated tab lists the animations of
+  the one model with them. Each has Clear beside Export to empty its list and
+  unload its models. A model opened goes to the tab that fits it, which is
+  shown; a static model whose name is listed already is asked about. File,
+  Open Directory... opens every model matching a file spec in a folder and
+  its sub-folders. The Static tab offers no AniGif or MP4 video. The Results tab plays back what has
+  been exported;
+  see Sprite3DResultsView. The Debug tab holds a memo for log output. Below
+  the Camera submenu, the View
   menu has six items that are ticked or not, each switched by choosing it:
   Show bounding box shows the model's bounding box, Show grid a grid on the
   model's floor, Show axes its own X, Y and Z axes through its centre of
@@ -234,8 +270,9 @@ unit Sprite3dMain;
   rest pose and every animation used, shown only while it is the volume the
   view frames, and Orthographic switches between
   perspective and orthographic projection.
-  Animation, Animations Used chooses which of the model's animations are listed
-  and count towards the combined swept volume.
+  Models, Animations Used chooses which of the model's animations are listed
+  and count towards the combined swept volume, and Models, Statics Used which
+  of the static models open the Static tab lists.
 
   The camera starts in the isometric view, and each readout always shows its
   dial's angle, from 0 to 359 degrees. Azimuth is sent to the camera reversed,
@@ -259,8 +296,9 @@ unit Sprite3dMain;
   folder of the application's support folder from an earlier load of the same,
   unchanged file. The new model is built beside the one shown, which is left
   alone until the new one is ready, so Abort, or a failure, leaves the
-  previous model, or none at start-up. While there is no model, a panel over
-  the view says how to load one. The window is drawn before the first model
+  previous model, or none at start-up. While the tab showing has no model, a
+  panel centred over the view says how to load one for it. The window is
+  drawn before the first model
   loads, the video libraries are looked for only once that load has ended, and
   saved files are composed and encoded on a worker thread.
 
@@ -299,9 +337,10 @@ unit Sprite3dMain;
   settings.json.
 
   The Animations list shows, to the right of each entry under the Frames
-  title, how many frames saving it makes at the Animation, Animation Settings
+  title, how many frames saving it makes at the Models, Animation Settings
   frame rate: the animation's length times the rate, rounded, or 1 for a
-  static model's entry, a single still frame. Animation, Animations Used opens a dialog that ticks which
+  static model's entry, a single still frame. Models, Animations Used opens a dialog that ticks
+  which
   animations are used; the others are left out of the list, so they are not
   played, saved or exported, and out of the combined swept volume. A new model
   starts with every animation used.
@@ -342,7 +381,7 @@ unit Sprite3dMain;
   named after its file, which captures a single still frame of the model as
   loaded. On
   Android and iOS, which have no right-click, the same items are in an
-  Animation group of the menu drawer and act on the selected entry.
+  Models group of the menu drawer and act on the selected entry.
 
   At start-up the OpenH264 library, which makes MP4 files H.264, is the copy
   downloaded before into OpenH264Folder, if any. Once the first model is
@@ -354,7 +393,7 @@ unit Sprite3dMain;
   --debug on the command line, none of this is done and OpenH264 is not
   used.
 
-  Animation, Animation Settings... sets the frame rate every saved animation uses, 30
+  Models, Animation Settings... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
   animation is resampled to it: one cycle is cut into the whole number of
   equal steps nearest that rate, so the saved frames still loop exactly; see
@@ -411,11 +450,15 @@ unit Sprite3dMain;
   showed only the first letter of each item.
 
     TabControl1
-    |-- GorillaTab "Model"
-    |   `-- MainLayout
+    |-- StaticTab "Static"     models without animations; MainLayout is moved here when chosen
+    |-- AnimatedTab "Animated" the model with animations; holds MainLayout in the designer
+    |   `-- MainLayout         on whichever of the two tabs is chosen
     |       |-- ViewportLayout   the area left of the control panel
     |       |   `-- AspectLayout   dark grey; the TGorillaViewport, centred, at the grab shape
-    |       `-- ControlsLayout   dials and their labels
+    |       `-- ControlsLayout   the side panel
+    |           |-- AnimationsHeader  "Animations" and "Frames", or "Models" alone
+    |           |-- AnimationListBox  the Animated tab's list
+    |           `-- StaticListBox     the Static tab's list
     |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
     `-- DebugTab "Debug"
         `-- DebugMemo
@@ -423,13 +466,15 @@ unit Sprite3dMain;
     MainMenu1
     |-- FileMenu "File"
     |   |-- OpenModelMenuItem "Open Model"  shows OpenDialog1
+    |   |-- OpenDirectoryMenuItem "Open Directory..."  opens a folder's models
     |   |-- GrabMenuItem "Grab"             saves the off-screen view as grabNNN.png
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
     |   `-- ExitMenuItem "Exit"             closes the application
-    |-- ModelMenu "Animation"
+    |-- ModelMenu "Models"
     |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
+    |   |-- StaticsUsedItem "Statics Used..."  which static models are listed
     |   |-- ModelSettingsSeparatorItem "-"
     |   |-- FAnimationSettingsItem "Animation Settings..."  frame rate, overscan, resampling
     |   |-- LoadAnimationSettingsItem "Load Animation Settings..."  reads the list
@@ -477,7 +522,7 @@ uses
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
-  Sprite3DResultsView,
+  Sprite3DResultsView, Sprite3DNameClashForm,
   System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -534,6 +579,13 @@ type
     //** @abstract(The direction it was captured in, as an index into the batch's directions;
     //** 0 when directions are not used.)
     Direction: Integer;
+    //** @abstract(True for a static model's still, which the metadata gives as a model
+    //** rather than an animation; False for an animation.)
+    IsStill: Boolean;
+    //** @abstract(The name the model is listed and exported by.)
+    ModelName: String;
+    //** @abstract(The model's file, as a full path.)
+    ModelFile: String;
   end;
 
   //** @abstract(A frame captured for a texture atlas, waiting for its page to fill.)
@@ -566,14 +618,26 @@ type
   //**
   //** @seealso(TSprite3DCamera)
   TMainForm = class(TForm)
-    //** @abstract(Fills the form and holds the Model, Results and Debug tabs.)
+    //** @abstract(Fills the form and holds the Static, Animated, Results and Debug tabs.)
     TabControl1: TTabControl;
-    //** @abstract(The tab captioned "Model", with the viewport and camera controls; active at
-    //** start-up.)
+    //** @abstract(The tab captioned "Static", first of all, for models without animations;
+    //** active at start-up.)
     //**
-    //** Named GorillaTab, after the Gorilla3D viewport it holds; it was once captioned "View".
-    GorillaTab: TTabItem;
-    //** @abstract(The tab captioned "Results", between Model and Debug, where exports are
+    //** Empty in the form designer: MainLayout, with the viewport and the side panel, is moved
+    //** onto whichever of this tab and AnimatedTab is chosen; see EnterModelTab. Here the side
+    //** panel is headed "Models" and lists, in StaticListBox, every static model opened this
+    //** session, the one selected shown. It has no frame counts, no play and step buttons, and
+    //** offers no AniGif or MP4 video, in the drop-down or the pop-up menu. Clear, beside
+    //** Export, empties the list and unloads every static model.
+    StaticTab: TTabItem;
+    //** @abstract(The tab captioned "Animated", after StaticTab, for the one model with
+    //** animations: its animations in AnimationListBox, with their frame counts, the play and
+    //** step buttons, and Clear beside Export, which empties the list and unloads the model.)
+    //**
+    //** Holds MainLayout in the form designer; it was once named GorillaTab and captioned
+    //** "Model".
+    AnimatedTab: TTabItem;
+    //** @abstract(The tab captioned "Results", between Animated and Debug, where exports are
     //** played back; its controls are TSprite3DResultsView's.)
     ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
@@ -581,7 +645,11 @@ type
     //** @abstract(Log output; SwitchModel writes separator lines here when a model has
     //** animations.)
     DebugMemo: TMemo;
-    //** @abstract(Fills the Model tab and holds ViewportLayout and ControlsLayout.)
+    //** @abstract(Fills the Static or Animated tab, whichever is chosen, and holds
+    //** ViewportLayout and ControlsLayout.)
+    //**
+    //** There is one viewport and one side panel for both tabs: EnterModelTab moves this
+    //** layout onto the tab chosen and shows that tab's list and controls.
     MainLayout: TLayout;
     //** @abstract(The area left of the control panel; holds AspectLayout, with the FPS
     //** readout and the no-model notice over it.)
@@ -617,10 +685,13 @@ type
     FileMenu: TMenuItem;
     //** @abstract(The "Open Model" item; see OpenModelMenuItemClick.)
     OpenModelMenuItem: TMenuItem;
-    //** @abstract(The Animation menu's "Load Animation Settings..." item; see
+    //** @abstract(The "Open Directory..." item, below Open Model; see
+    //** OpenDirectoryMenuItemClick. Disabled while a folder is being searched or opened.)
+    OpenDirectoryMenuItem: TMenuItem;
+    //** @abstract(The Models menu's "Load Animation Settings..." item; see
     //** LoadAnimationSettingsItemClick.)
     LoadAnimationSettingsItem: TMenuItem;
-    //** @abstract(The Animation menu's "Save Animation Settings..." item; see
+    //** @abstract(The Models menu's "Save Animation Settings..." item; see
     //** SaveAnimationSettingsItemClick.)
     SaveAnimationSettingsItem: TMenuItem;
     //** @abstract(The "Save Project..." item; see CreditsItemClick.)
@@ -640,17 +711,21 @@ type
     FileSeparatorItem: TMenuItem;
     //** @abstract(The "Exit" item; see ExitMenuItemClick.)
     ExitMenuItem: TMenuItem;
-    //** @abstract(The menu captioned "Animation": AnimationsUsedItem, Animation Settings...,
-    //** LoadAnimationSettingsItem, SaveAnimationSettingsItem and DirectionsItem.)
+    //** @abstract(The menu captioned "Models": AnimationsUsedItem, StaticsUsedItem, Animation
+    //** Settings..., LoadAnimationSettingsItem, SaveAnimationSettingsItem and DirectionsItem.)
     //**
-    //** Named ModelMenu as it was once captioned "Model". On Android and iOS the Save as items
-    //** go at its foot too.
+    //** Named ModelMenu as it was once captioned "Model"; it was then "Animation". On Android
+    //** and iOS the Save as items go at its foot too.
     ModelMenu: TMenuItem;
-    //** @abstract(The "Animations Used..." item; see AnimationsUsedItemClick.)
+    //** @abstract(The "Animations Used..." item; see AnimationsUsedItemClick. Enabled on the
+    //** Animated tab, with its model.)
     AnimationsUsedItem: TMenuItem;
-    //** @abstract(Separator line in the Animation menu, above the settings items.)
+    //** @abstract(The "Statics Used..." item, below Animations Used; see
+    //** StaticsUsedItemClick. Enabled on the Static tab, while any static model is open.)
+    StaticsUsedItem: TMenuItem;
+    //** @abstract(Separator line in the Models menu, above the settings items.)
     ModelSettingsSeparatorItem: TMenuItem;
-    //** @abstract(Separator line in the Animation menu, above DirectionsItem.)
+    //** @abstract(Separator line in the Models menu, above DirectionsItem.)
     ModelActionsSeparatorItem: TMenuItem;
     //** @abstract(The "Directions..." item; see DirectionsItemClick.)
     DirectionsItem: TMenuItem;
@@ -697,15 +772,15 @@ type
     //** @abstract(Shows or hides the Animation Volume, the combined swept volume; not ticked at
     //** start-up.)
     //**
-    //** Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept turning
-    //** about its up axis, joined over its rest pose and every animation ticked in Model,
-    //** Animations Used. It is drawn only while the view frames it: while two or more
-    //** animations in the Animations list are ticked for export, playing or paused. It is drawn
-    //** in fuchsia and hot pink whatever animation plays, so it can be shown alongside
-    //** ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
-    //** none used, as it would only repeat the rest pose's volume. It is redrawn for each new
-    //** model and whenever the animations used or the ticks change. See
-    //** ShowCombinedSweepItemClick.
+    //** Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: SweepFitVolume, the
+    //** volume swept turning about its up axis joined over the entries ticked for export,
+    //** the animations ticked, without the rest pose, or on the Static tab the static models
+    //** ticked, each as a pose about the model shown's centre of rotation. It is drawn only
+    //** while the view frames it: while two or more entries are ticked, playing or paused.
+    //** It is drawn in fuchsia and hot pink whatever animation plays, so it can be shown
+    //** alongside ShowSweepItem's aqua and yellow. It is never drawn for an animated model
+    //** with no animations used. It is redrawn for each new model and whenever the
+    //** animations or statics used or the ticks change. See ShowCombinedSweepItemClick.
     ShowCombinedSweepItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
     //**
@@ -726,25 +801,38 @@ type
     ViewTopDownItem: TMenuItem;
     //** @abstract(The "Side View" view; see ViewSideItemClick.)
     ViewSideItem: TMenuItem;
-    //** @abstract(A dark strip above AnimationListBox that holds AnimationsLabel and
-    //** FramesLabel, so the titles stand out whatever the theme.)
+    //** @abstract(A dark strip above the list that holds AnimationsLabel and FramesLabel, so
+    //** the titles stand out whatever the theme.)
     AnimationsHeader: TRectangle;
-    //** @abstract(The "Animations" title: bold yellow on AnimationsHeader, at its left, inside
-    //** the header's padding.)
+    //** @abstract(The list's title: bold yellow on AnimationsHeader, at its left, inside the
+    //** header's padding; "Animations" on the Animated tab and "Models" on the Static tab.)
     AnimationsLabel: TLabel;
     //** @abstract(The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
-    //** header's padding, over the frame counts in AnimationListBox.)
+    //** header's padding, over the frame counts in AnimationListBox; hidden on the Static
+    //** tab, which has no frame counts.)
     FramesLabel: TLabel;
-    //** @abstract(The model's animations, by name, or for a static model, one with no
-    //** animations, one entry named after its file; see AnimationListBoxClick.)
+    //** @abstract(The Animated tab's list: the animated model's animations, by name; see
+    //** AnimationListBoxClick.)
     //**
-    //** Only the animations ticked in Animation, Animations Used are listed. Each entry shows,
-    //** at its right, the number of frames saving it makes at the Animation, Animation Settings
+    //** Only the animations ticked in Models, Animations Used are listed. Each entry shows,
+    //** at its right, the number of frames saving it makes at the Models, Animation Settings
     //** frame rate. Choosing an entry plays it, whether by a click or by moving the selection
     //** with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
     //** selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
-    //** spritesheet or an animated GIF; see the unit description.
+    //** spritesheet, an animated GIF or an MP4 video; see the unit description. Clear empties
+    //** it and unloads the model.
     AnimationListBox: TListBox;
+    //** @abstract(The Static tab's list: one entry per static model opened this session, named
+    //** after its file, in the order opened.)
+    //**
+    //** Shown in place of AnimationListBox while the Static tab is chosen. Choosing an entry
+    //** shows its model, as it was loaded; opening a model without animations adds it here and
+    //** selects it, and opening the same file again loads it afresh in its place. Entries have
+    //** tick boxes for Export, as the animations do, but no frame counts. Right-clicking an
+    //** entry selects it and opens the pop-up menu, offering a sprite strip or a spritesheet
+    //** only. Shares AnimationListBoxClick and AnimationListBoxChange with AnimationListBox;
+    //** whichever list is showing is ActiveList.
+    StaticListBox: TListBox;
     //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
     ViewOneQuarterItem: TMenuItem;
     //** @abstract(The "Sqrt@(2@)" view; see ViewRoot2ItemClick.)
@@ -874,15 +962,39 @@ type
     //**
     //** @param(Sender ShowGridItem.)
     procedure ShowGridItemClick(Sender: TObject);
-    //** @abstract(Lets the user pick a model file and loads it in place of the current one.)
+    //** @abstract(Lets the user pick a model file and loads it.)
     //**
     //** Shows OpenDialog1 and passes the chosen file to SwitchModel, which loads it behind a
-    //** progress dialog with Abort and then puts it in place of the old model, with the current
-    //** camera angles and fit. Nothing changes if either dialog is cancelled or aborted, or if
-    //** the file fails to load, which SwitchModel reports.
+    //** progress dialog with Abort. A model with animations then replaces the Animated tab's
+    //** model, if any, and the Animated tab is shown; a model without is added to the Static
+    //** tab's Models list and selected, and the Static tab is shown. Either way it gets the
+    //** current camera angles and fit. Nothing changes if either dialog is cancelled or
+    //** aborted, or if the file fails to load, which SwitchModel reports.
     //**
     //** @param(Sender OpenModelMenuItem.)
     procedure OpenModelMenuItemClick(Sender: TObject);
+    //** @abstract(Opens every model in a folder and its sub-folders that matches a file spec.)
+    //**
+    //** TOpenDirectoryForm asks for the folder and the spec, such as @code(*.glb) or
+    //** @code(*.glb;*.gltf), starting with those used last, kept in settings.json. On Open
+    //** the folder is searched on a worker thread with FindFiles from Sprite3DFileSearch,
+    //** every match going into a TList; once the search is complete, the models found are
+    //** opened one after another behind one loading dialog, held open throughout, which says
+    //** which file of how many it is loading. Each goes to the tab that fits it, as with
+    //** File, Open Model, the tab itself being shown once the dialog has closed, but a
+    //** model with animations is skipped when there is an animated model open already,
+    //** whether from before or from earlier in the folder, as only one can be. Static models
+    //** are all added. A static model whose name is listed already, for whatever reason, is
+    //** asked about with TNameClashForm: replace the one listed, ignore the new one, or rename
+    //** it, which may be applied to every later clash of the folder. Abort in a loading
+    //** dialog stops the whole folder. At the end the dialog just closes; how many were
+    //** opened, skipped, ignored and failed, and why each failed, goes to the Debug tab. Nothing
+    //** happens if the dialog is cancelled, or while anything is being captured or exported.
+    //** On Android and iOS the dialog does not block, and the folder is searched once it
+    //** closes with Open.
+    //**
+    //** @param(Sender OpenDirectoryMenuItem.)
+    procedure OpenDirectoryMenuItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -911,7 +1023,7 @@ type
     //** Animations list.)
     //**
     //** The animations the file lists that the model has become the animations used, as
-    //** Animation, Animations Used would make them, in the model's order; their ticks and frame
+    //** Models, Animations Used would make them, in the model's order; their ticks and frame
     //** counts are set as the file says, every other count going back to the one the frame
     //** rate gives; and the entry the file has selected is selected and played. Animations
     //** the file names that the model does not have are left out and reported. A file that
@@ -928,7 +1040,7 @@ type
     //** every metadata file saved from then on, and a save dialog asks where to keep them, as
     //** a project file with the extension PROJECT_FILE_EXTENSION, opening at the project
     //** last saved or loaded, or beside the model. The project file holds the credits, the
-    //** model's full path, the directions of Animation, Directions, the Animations list and the
+    //** model's full path, the directions of Models, Directions, the Animations list and the
     //** export choices; see SaveProjectFile. Cancelling the save keeps the credits all the
     //** same. On Android and iOS, which have no save dialog, the credits are kept for the
     //** session only.
@@ -1062,23 +1174,79 @@ type
     //**
     //** @param(Sender ViewSideItem.)
     procedure ViewSideItemClick(Sender: TObject);
-    //** @abstract(Plays the chosen animation, or shows a static model as loaded.)
+    //** @abstract(Plays the chosen animation, or on the Static tab shows the chosen model as
+    //** loaded.)
     //**
     //** A click that moved the selection has already been played by AnimationListBoxChange,
     //** so it is not played twice; a click on the entry already selected plays it again.
     //** Ignored while an animation is being saved, which needs the animation it started.
+    //** A click also sets the entry a Shift-click's range of ticks starts from, and a
+    //** Shift-click, noted by AnimationItemMouseDown, ticks or clears that range with
+    //** TickRange. The OnClick of both AnimationListBox and StaticListBox.
     //**
-    //** @param(Sender AnimationListBox.)
+    //** @param(Sender AnimationListBox or StaticListBox.)
     procedure AnimationListBoxClick(Sender: TObject);
-    //** @abstract(Plays the newly selected animation, or shows a static model as loaded,
-    //** whatever moved the selection.)
+    //** @abstract(Up and Down step the list showing to the entry above or below the one
+    //** selected, which is then played, or on the Static tab its model shown, as a click on
+    //** it would.)
+    //**
+    //** The OnKeyDown of the form, AnimationListBox and StaticListBox alike. The form's sees a
+    //** key before the control with the focus, and the list's sees it before the list's own
+    //** handling, so whichever comes first takes the key, clearing it, and the other then
+    //** sees nothing, and the selection moves exactly once. The key is taken only without
+    //** Shift, Ctrl, Alt or Command, with an entry selected in the list showing, while that
+    //** list, one of its entries, or nothing has the focus, so it never takes the arrows from
+    //** an edit box, such as the one a frame count is edited in, or from another control.
+    //** Nothing moves past the first or last entry, or while an animation is being saved. The
+    //** entry stepped to is scrolled into view and becomes where a Shift-click's range of
+    //** ticks starts, as a click on it would make it.
+    //**
+    //** @param(Sender The form, AnimationListBox or StaticListBox.)
+    //**
+    //** @param(Key The key; set to 0 when it is taken.)
+    //**
+    //** @param(KeyChar The character typed, if any; left as it is.)
+    //**
+    //** @param(Shift The modifier keys held.)
+    procedure AnimationListBoxKeyDown(Sender: TObject; var Key: Word; var KeyChar: Char;
+      Shift: TShiftState);
+    //** @abstract(Once a key that moves the selection is let go, plays the entry selected in
+    //** the list showing if it is not the one last played or shown.)
+    //**
+    //** The list box can move its selection itself, on Up, Down, Home, End and the page
+    //** keys, without that reaching AnimationListBoxChange, which would leave the view on the
+    //** entry before. This catches every such case: whatever moved the selection, the view
+    //** ends on the entry selected. The OnKeyUp of the form, AnimationListBox and
+    //** StaticListBox alike; once the entry is played, the others find nothing to do. Ignored
+    //** while an animation is being saved, and while the focus is outside the list showing,
+    //** as AnimationListBoxKeyDown is.
+    //**
+    //** @param(Sender The form, AnimationListBox or StaticListBox.)
+    //**
+    //** @param(Key The key let go; left as it is.)
+    //**
+    //** @param(KeyChar The character, if any; left as it is.)
+    //**
+    //** @param(Shift The modifier keys held.)
+    procedure AnimationListBoxKeyUp(Sender: TObject; var Key: Word; var KeyChar: Char;
+      Shift: TShiftState);
+    //** @abstract(Whether the focus is on List, one of its entries, or nothing, and not on an
+    //** edit box: where the arrow keys are the list's to use.)
+    //**
+    //** @param(AList The list showing.)
+    //**
+    //** @returns(True if the list's keys may be taken.)
+    function ListKeysFocused(const AList: TListBox): Boolean;
+    //** @abstract(Plays the newly selected animation, or on the Static tab shows the newly
+    //** selected model as loaded, whatever moved the selection.)
     //**
     //** Runs whenever the selection moves: the Up and Down arrow keys, Home, End and the page
     //** keys, a click on another entry, or code setting ItemIndex. So stepping through the list
-    //** with the keys plays each animation as a click does. Ignored while an animation is
-    //** being saved, and when the list is emptied for another model.
+    //** with the keys plays each animation, or shows each model, as a click does. Ignored
+    //** while an animation is being saved, and when the list is emptied for another model.
+    //** The OnChange of both AnimationListBox and StaticListBox.
     //**
-    //** @param(Sender AnimationListBox.)
+    //** @param(Sender AnimationListBox or StaticListBox.)
     procedure AnimationListBoxChange(Sender: TObject);
     //** @abstract(Opens the Animations Used dialog, and on OK lists only the animations ticked
     //** there and refits to their swept volume.)
@@ -1094,6 +1262,23 @@ type
     //**
     //** @param(Sender AnimationsUsedItem.)
     procedure AnimationsUsedItemClick(Sender: TObject);
+    //** @abstract(Opens the Statics Used dialog, and on OK lists only the static models ticked
+    //** there.)
+    //**
+    //** As Animations Used, for the Static tab: the dialog, TAnimationsUsedForm filled with
+    //** SetStatics, lists every static model open, in the order opened, by the name it is
+    //** listed under, ticked if it is in the Models list now, with its swept volume as a
+    //** percentage of the ticked models' volumes joined; Cancel changes nothing. On OK the
+    //** Models list is rebuilt with only those ticked, in the order opened, with no export
+    //** ticks, keeping the selection if it is still listed and otherwise selecting the first.
+    //** A model left out stays loaded, hidden, and is listed again when ticked again, or when
+    //** its file is opened again; it is not exported, and Clear unloads it with the rest. Its
+    //** name still counts for clashes. Does nothing but on the Static tab, or while anything
+    //** is being exported or a folder opened. On Android and iOS the dialog does not block,
+    //** and the choice is applied when it closes.
+    //**
+    //** @param(Sender StaticsUsedItem.)
+    procedure StaticsUsedItemClick(Sender: TObject);
     //** @abstract(Opens the Directions dialog, and on OK keeps what is chosen there.)
     //**
     //** The dialog, TDirectionsForm, shows a compass with a marker for each direction, the
@@ -1177,6 +1362,93 @@ type
     FPendingModel: String;   // asked for during a load; loaded after it
     // Covers the view while no model is loaded, saying how to load one
     FNoModelPanel: TPanel;
+    //** The no-model panel's line saying how to load a model, which differs between the
+    //** Static and Animated tabs; see UpdateNoModelPanel.
+    FNoModelHint: TLabel;
+    //** The Animated tab's model, Model nil when there is none. Opening another model with
+    //** animations replaces it; Clear unloads it.
+    FAnimatedSlot: TSprite3DModelSlot;
+    //** The Static tab's models, in StaticListBox's order, one per entry.
+    FStaticSlots: TArray<TSprite3DModelSlot>;
+    //** The static models Models, Statics Used has left out of the list: still loaded,
+    //** hidden, ready to be listed again.
+    FStaticUnused: TArray<TSprite3DModelSlot>;
+    //** The last Order given to a static model as it was first listed.
+    FStaticOrder: Integer;
+    //** The name the model shown is listed and exported by: its slot's Name, which is its
+    //** file's name without the extension unless it was renamed for a clash.
+    FModelName: String;
+    //** The files File, Open Directory found and has still to open, in order.
+    FLoadQueue: TList<String>;
+    //** True from the end of an Open Directory search until the last of its models has been
+    //** opened, skipped or failed, or Abort has stopped it.
+    FQueueActive: Boolean;
+    //** True while the folder is being searched, on a worker thread.
+    FScanning: Boolean;
+    //** The folder and file spec being opened, for the messages.
+    FQueueFolder: String;
+    FQueueSpec: String;
+    //** How many files the search found, and how many have been started.
+    FQueueTotal: Integer;
+    FQueueDone: Integer;
+    //** What came of them: opened on the Static tab, opened on the Animated tab, skipped as
+    //** a second animated model, and ignored at a name clash.
+    FQueueStatic: Integer;
+    FQueueAnimated: Integer;
+    FQueueSkipped: Integer;
+    FQueueIgnored: Integer;
+    //** The files that failed to open, each with why.
+    FQueueFailed: TArray<String>;
+    //** Abort was pressed during one of the folder's loads: the rest are not tried.
+    FQueueAborted: Boolean;
+    //** True while one loading dialog is held open for a whole folder: each file's load
+    //** ends without closing it, and RunLoadQueue closes it once the folder is done.
+    FLoadDialogHeld: Boolean;
+    //** A model just loaded belongs to the tab not showing: that tab is shown once loading
+    //** has finished and its dialog has gone, see ApplyPendingTab, never under the dialog.
+    //** FPendingTabStatic says which tab.
+    FPendingTab: Boolean;
+    FPendingTabStatic: Boolean;
+    //** The Animated tab's model was replaced while the Static tab was showing: its
+    //** Animations list is made afresh when the Animated tab is next shown.
+    FAnimatedListStale: Boolean;
+    //** The load under way is one of the folder's: a second animated model is skipped, and a
+    //** clash of names is always asked about.
+    FLoadInFolder: Boolean;
+    //** A static model loaded whose name is listed already, waiting, hidden, for the user to
+    //** say what to do with it once the loading dialog has gone; see AskNameClash.
+    FClashPending: Boolean;
+    FClashSlot: TSprite3DModelSlot;
+    //** Set when "Do the same for every other clash in this folder" was ticked: later
+    //** clashes of the folder take FClashAll without asking.
+    FClashAllSet: Boolean;
+    FClashAll: TNameClashChoice;
+    //** True while the Static tab is the model tab in use: StaticListBox is ActiveList and
+    //** the model shown, if any, is one of FStaticSlots. False for the Animated tab.
+    FStaticMode: Boolean;
+    //** True while the code itself changes TabControl1's tab, so TabControl1Change leaves the
+    //** models alone.
+    FSelectingTab: Boolean;
+    //** Clear, at the right of Export, on both tabs; see ClearButtonClick.
+    FClearButton: TButton;
+    //** Each list's entry last clicked without Shift, where a Shift-click's range of ticks
+    //** starts, indexed by FStaticMode: False for AnimationListBox, True for StaticListBox;
+    //** -1 for none, and forgotten whenever the list is made afresh.
+    FTickAnchor: array[Boolean] of Integer;
+    //** Set by AnimationItemMouseDown when the left button goes down with Shift held on
+    //** either list or one of its entries; AnimationListBoxClick reads and clears it.
+    FShiftClick: Boolean;
+    //** The pop-up menu's Save as AniGif item, hidden on the Static tab, as is FMp4Item.
+    FGifItem: TMenuItem;
+    //** Set once StartVideo has found whether the video libraries load, after which the
+    //** drop-down offers MP4 video on the Animated tab if they do.
+    FVideoChecked: Boolean;
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    //** Mobile only: the Models menu's Save as AniGif and Save as MP4 video items, disabled
+    //** on the Static tab; FMobileMp4Item stays nil unless the video libraries load.
+    FMobileGifItem: TMenuItem;
+    FMobileMp4Item: TMenuItem;
+    {$ENDIF}
     // Saves under way on worker threads; the form waits for them as it closes
     FSaveTasks: TArray<ITask>;
     // The MP4 entry of the animation pop-up menu, enabled once the video
@@ -1186,7 +1458,12 @@ type
     // click that moved the selection there does not play it a second time
     FChangePlayed: Boolean;
     FChangePlayedIndex: Integer;
-    // Every animation of the loaded model, sorted, and those Model,
+    // The entry PlaySelectedAnimation last played or showed, and whether it
+    // was on the Static tab; -1 for none. A key that leaves another entry
+    // selected than this has it played; see AnimationListBoxKeyUp.
+    FPlayedEntry: Integer;
+    FPlayedStatic: Boolean;
+    // Every animation of the loaded model, sorted, and those Models,
     // Animations Used ticks: only these are listed and count towards the
     // swept volume the camera frames. All, for a new model.
     FAnimationNames: TArray<String>;
@@ -1194,7 +1471,7 @@ type
     // The orbit centre before a shifted overscan drawing slid it, while slid
     FShiftedCentre: TPoint3D;
     FViewShifted: Boolean;
-    // Whether Animation, Animation Settings's Overscan is ticked; kept for this session
+    // Whether Models, Animation Settings's Overscan is ticked; kept for this session
     // only, so overscan always starts off
     FOverscanOn: Boolean;
     // True while AnimationListBox is refilled, so its OnChange plays nothing
@@ -1216,7 +1493,7 @@ type
     // The animation list's pop-up menu: Save as sprite strip, Save as
     // Spritesheet, Save as AniGif
     FAnimationPopup: TPopupMenu;
-    // Animation, Animation Settings...: the frame rate saved animations use
+    // Models, Animation Settings...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
     // Keeps the downloaded OpenH264 in step with the list at
     // OPENH264_LIST_URL; nil while debugging
@@ -1259,7 +1536,7 @@ type
     // partly covered. FTwoPassReach is the same reach measured from each
     // capture's centre of rotation, which the second pass places.
     // FTwoPassPadding is the padding aimed at, the empty border on the axis
-    // with least room: Padding from Animation, Animation Settings, 0 by
+    // with least room: Padding from Models, Animation Settings, 0 by
     // default, within PaddingLimit of the grab size.
     FTwoPassRun: Boolean;
     FBatchPass: Integer;
@@ -1381,7 +1658,7 @@ type
     FPendingListModel: String;
     FHasPendingList: Boolean;
     // Directions: each batch step's direction, as an index into the
-    // bearings, or -1 without directions; the bearings, from Model,
+    // bearings, or -1 without directions; the bearings, from Models,
     // Directions, empty without; how many entries the batch has; and, for a
     // strip or spritesheet, the frames of the entry's directions so far and
     // whether one of them failed
@@ -1440,7 +1717,46 @@ type
     procedure SwitchModel(const AModel: String);
     function FitModel: Boolean;
     procedure PlaySelectedAnimation;
+    //** @abstract(The combined swept volume the view frames while two or more entries are
+    //** ticked, every export frames, and Show Animation Volume draws.)
+    //**
+    //** While a batch runs, that of the entries it exports, so a single entry saved from the
+    //** pop-up menu is framed to its own volume; otherwise that of the entries ticked for
+    //** export, see EntriesSweptVolume, so ticking fewer usually makes it smaller and the
+    //** camera is refitted closer. With nothing ticked, or nothing measurable, the rest pose's
+    //** joined with every animation used, or on the Static tab every static model listed.
+    //**
+    //** @returns(The volume; Valid is False with no model.)
     function SweepFitVolume: TSweptVolume;
+    //** @abstract(Which entries of the list in use SweepFitVolume joins: while a batch runs,
+    //** each entry it exports, once; otherwise those ticked for export.)
+    //**
+    //** @returns(Indices into ActiveList, in list order; empty if none.)
+    function FitEntries: TArray<Integer>;
+    //** @abstract(The swept volume of entries of the list in use joined.)
+    //**
+    //** On the Animated tab, their animations, each over all its poses, without the rest
+    //** pose, as the rest pose is not exported; on the Static tab, their models, through
+    //** StaticSweptVolume.
+    //**
+    //** @param(AEntries Indices into ActiveList.)
+    //**
+    //** @returns(The joined volume; Valid is False if none of them could be measured.)
+    function EntriesSweptVolume(const AEntries: TArray<Integer>): TSweptVolume;
+    //** @abstract(The static models' combined swept volume: the models listed at AEntries,
+    //** or every one listed, each as loaded, joined as if each were one pose of a single
+    //** model.)
+    //**
+    //** Each model's volume is about its own centre of rotation, as an animated model's
+    //** animations are about its own, and the whole is placed on the shown model's, through
+    //** CombinedModelsSweptVolume in Sprite3DSweep. So every static model of a batch is fitted
+    //** at the same scale, with its centre of rotation in the same place in the frame,
+    //** whichever is shown or captured.
+    //**
+    //** @param(AEntries Entries of the Models list; nil for every one.)
+    //**
+    //** @returns(The combined volume; Valid is False with no static model among them.)
+    function StaticSweptVolume(const AEntries: TArray<Integer>): TSweptVolume;
     function AnimationSweptVolume(const AName: String): TSweptVolume;
     function GrabFit(const AWidth, AHeight: Integer): Boolean;
     procedure ApplyAngles;
@@ -1483,6 +1799,208 @@ type
     procedure ReportLoadEnd;
     procedure BuildNoModelPanel;
     procedure UpdateNoModelPanel;
+    //** @abstract(The list in use: StaticListBox on the Static tab, AnimationListBox on the
+    //** Animated tab.)
+    //**
+    //** @returns(The list whose entries are played, ticked and exported now.)
+    function ActiveList: TListBox;
+    //** @abstract(Makes ASlot's model the one shown, or with its Model nil, shows none.)
+    //**
+    //** The model shown before is put in its bind pose, stopping any animation, and hidden
+    //** with its helpers; ASlot's is shown, its figures copied into the fields every other
+    //** method reads, such as FModelBox and FUsedAnimations, and its bounding box, axes, grid
+    //** and Model Volume made to match the View menu. Nothing is refitted: the caller does
+    //** that, with UpdateView or FitModel, unless a capture frames the camera itself. Nothing
+    //** changes if ASlot's model is already the one shown.
+    //**
+    //** @param(ASlot The model to show.)
+    procedure ActivateSlot(const ASlot: TSprite3DModelSlot);
+    //** @abstract(Shows the model of the Static tab's entry AIndex.)
+    //**
+    //** With no static models at all, shows none. An index out of range otherwise changes
+    //** nothing.
+    //**
+    //** @param(AIndex The entry of StaticListBox, counted from 0.)
+    procedure ActivateStaticEntry(const AIndex: Integer);
+    //** @abstract(Keeps what may have changed of the model shown in its slot: the animations
+    //** used, if it is the Animated tab's model.)
+    procedure SaveCurrentSlot;
+    //** @abstract(Frees ASlot's model, with its helpers, and empties the slot, through
+    //** FreeModelSlot.)
+    //**
+    //** If it is the model shown, nothing is shown afterwards, and the player goes with it.
+    //**
+    //** @param(ASlot The slot whose model goes.)
+    procedure FreeSlotModel(var ASlot: TSprite3DModelSlot);
+    //** @abstract(Shows the Static tab, if AStatic, or the Animated tab, with its model.)
+    //**
+    //** Changes TabControl1's tab, then sets up the tab as EnterModelTab does.
+    //**
+    //** @param(AStatic True for the Static tab, False for the Animated tab.)
+    procedure ShowModelTab(const AStatic: Boolean);
+    //** @abstract(Changes TabControl1's tab to the Static or Animated tab, and nothing more.)
+    //**
+    //** @param(AStatic True for the Static tab, False for the Animated tab.)
+    procedure SelectModelTabOnly(const AStatic: Boolean);
+    //** @abstract(Sets up the Static tab, if AStatic, or the Animated tab, once it is chosen.)
+    //**
+    //** MainLayout, with the viewport and the side panel, is moved onto the tab; the tab's
+    //** list, title, controls and drop-down choices are shown; its model is shown, on the
+    //** Static tab the entry selected, the first if none is; and the view is fitted to it,
+    //** with the selected animation played again on the Animated tab. A frame count being
+    //** typed is kept.
+    //**
+    //** @param(AStatic True for the Static tab, False for the Animated tab.)
+    procedure EnterModelTab(const AStatic: Boolean);
+    //** @abstract(Shows the controls of the model tab in use and hides the other's: the list,
+    //** its title and the Frames title, the play and step buttons, Clear's hint, the pop-up
+    //** menu's AniGif and MP4 items and the drop-down's.)
+    procedure UpdateModeControls;
+    //** @abstract(Fills the drop-down of what Export saves for the model tab in use.)
+    //**
+    //** The items are in TSheetKind's order, so the item index is the kind: Sprite strip,
+    //** Spritesheet and Texture Atlas always; then, on the Animated tab, AniGif, and MP4 video
+    //** once StartVideo has found the video libraries load. The choice made is kept, or
+    //** Sprite strip shown while it is not offered, without changing what settings.json keeps.
+    procedure UpdateBatchKindItems;
+    //** @abstract(Ticks All if every entry of ActiveList is ticked, and clears it otherwise,
+    //** without ticking or clearing any entry.)
+    procedure SyncBatchAll;
+    //** @abstract(Clear: empties the list of the tab showing and unloads its models.)
+    //**
+    //** On the Animated tab the model is freed with its helpers, the frame counts typed in
+    //** for its animations are forgotten, and the view shows the panel saying File, Open
+    //** Model loads a model with animations; static models are not touched. On the Static
+    //** tab every static model is freed and the Models list emptied, and the panel says how
+    //** to open static models; the animated model is not touched. The tab's last model is
+    //** forgotten, so File, Settings' Load last model does not bring it back at the next
+    //** start, and settings.json is saved at once. Ignored while a model is
+    //** loading, a folder is being opened, or anything is being grabbed, captured or
+    //** exported.
+    //**
+    //** @param(Sender FClearButton.)
+    procedure ClearButtonClick(Sender: TObject);
+    //** @abstract(Writes settings.json at once, after Clear has changed which models the
+    //** next start loads; a failure is noted in the Debug tab.)
+    procedure SaveLastModels;
+    //** @abstract(Shows a model already loaded from AFileName, if one is, on its own tab.)
+    //**
+    //** @param(AFileName A model file.)
+    //**
+    //** @returns(True if it is the Animated tab's model or one of the Static tab's, now shown;
+    //** False if it is not loaded.)
+    function ShowLoadedModel(const AFileName: String): Boolean;
+    //** @abstract(What the entries of ActiveList are, for messages: models on the Static tab,
+    //** animations on the Animated tab.)
+    //**
+    //** @param(APlural True for the plural, False for one.)
+    //**
+    //** @param(ACapital True to start with a capital letter.)
+    //**
+    //** @returns("model", "models", "animation" or "animations", capitalised if asked.)
+    function EntryNoun(const APlural, ACapital: Boolean): String;
+    //** @abstract(Hooks StaticListBox's entries for right-clicks, as HookAnimationItems does
+    //** AnimationListBox's.)
+    procedure HookStaticItems;
+    //** @abstract(Every static model open, listed or left out by Statics Used, in the order
+    //** they were first listed.)
+    //**
+    //** @returns(FStaticSlots and FStaticUnused together, by Order.)
+    function AllStaticSlots: TArray<TSprite3DModelSlot>;
+    //** @abstract(Lists only the static models named in AUsed, as Statics Used's OK does.)
+    //**
+    //** @param(AUsed The names of the models to list.)
+    procedure ApplyUsedStatics(const AUsed: TArray<String>);
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    //** @abstract(The Statics Used dialog's OK, when it is shown with ShowAndFree.)
+    //**
+    //** @param(Sender The TAnimationsUsedForm.)
+    procedure StaticsUsedAccept(Sender: TObject);
+    {$ENDIF}
+    //** @abstract(Puts the model shown aside before another takes its place: what changed of
+    //** it is kept in its slot, and it is put in its bind pose and hidden with its helpers.)
+    procedure StepAsideModel;
+    //** @abstract(Makes ASlot the Animated tab's model, in place of the one there, which is
+    //** freed, and shows the Animated tab with it, its Animations list made afresh.)
+    //**
+    //** @param(ASlot A model with animations, just loaded.)
+    procedure PlaceAnimatedSlot(const ASlot: TSprite3DModelSlot);
+    //** @abstract(Lists ASlot on the Static tab, selects it, and shows the Static tab with it.)
+    //**
+    //** @param(ASlot A model without animations, just loaded, listed under its Name.)
+    //**
+    //** @param(AReplace The entry it replaces, whose model is freed, or -1 to add it at the
+    //** end.)
+    procedure PlaceStaticSlot(const ASlot: TSprite3DModelSlot; const AReplace: Integer);
+    //** @abstract(Asks what to do with FClashSlot, whose name is listed already, unless every
+    //** clash of the folder is to be answered alike, then does it and goes on loading.)
+    procedure AskNameClash;
+    //** @abstract(TNameClashForm's answer when it is shown with ShowAndFree, on Android and
+    //** iOS.)
+    //**
+    //** @param(Sender The TNameClashForm.)
+    procedure NameClashChosen(Sender: TObject);
+    //** @abstract(Does with FClashSlot what AChoice says: replace the entry of the same name,
+    //** free it, or list it under a free name.)
+    //**
+    //** @param(AChoice The answer.)
+    procedure ApplyNameClash(const AChoice: TNameClashChoice);
+    //** @abstract(Searches AFolder for files matching ASpec on a worker thread, then opens
+    //** them with StartLoadQueue.)
+    //**
+    //** @param(AFolder The folder; its sub-folders are searched too.)
+    //**
+    //** @param(ASpec The file spec, such as @code(*.glb).)
+    procedure StartFolderScan(const AFolder, ASpec: String);
+    //** @abstract(Opens the model files among AFiles one after another, as File, Open
+    //** Directory says.)
+    //**
+    //** Files that are not models LoadModelFile can load are left out. With none left, a
+    //** message says so.
+    //**
+    //** @param(AFiles The files the search found, in order.)
+    procedure StartLoadQueue(const AFiles: TArray<String>);
+    //** @abstract(After a load has ended and been reported: the model asked for meanwhile,
+    //** if any, then the next of the folder's, from a fresh main-loop turn.)
+    procedure ContinueLoading;
+    //** @abstract(Starts loading AFile, with FLoadDialog, which must be there, showing how
+    //** it goes; FLoadTimer then moves the load on a tick at a time.)
+    //**
+    //** @param(AFile The model file, in this platform's form; it must exist.)
+    procedure BeginLoad(const AFile: String);
+    //** @abstract(Opens the folder's files behind one loading dialog, held open until the
+    //** last has been opened, skipped or failed, or Abort is pressed.)
+    //**
+    //** On the desktop the dialog is modal and this returns once it has closed, then
+    //** reports with FinishLoadQueue; on Android and iOS it returns at once and
+    //** CloseLoadQueue reports.
+    procedure RunLoadQueue;
+    //** @abstract(Loads the next of the folder's files in the dialog held open, or closes it
+    //** with CloseLoadQueue when none is left or Abort was pressed.)
+    procedure LoadNextQueued;
+    //** @abstract(Closes the dialog held open for the folder.)
+    procedure CloseLoadQueue;
+    //** @abstract(Ends opening a folder, once its dialog has gone: writes what came of it to
+    //** the Debug tab, with no message, selects the first entry of the Models list if any
+    //** static model was opened, shows the tab of the last model opened, and loads any model
+    //** asked for meanwhile.)
+    procedure FinishLoadQueue;
+    //** @abstract(Shows the tab a model just loaded belongs to, if it is not the one showing,
+    //** now that loading has finished.)
+    procedure ApplyPendingTab;
+    //** @abstract(Records a file of the folder that could not even start loading, and goes
+    //** on to the next.)
+    //**
+    //** @param(AReason Why, with the file's name.)
+    procedure QueuedLoadFailed(const AReason: String);
+    //** @abstract(Enables File, Open Directory unless a folder is being searched or opened.)
+    procedure UpdateOpenDirectoryItem;
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    //** @abstract(TOpenDirectoryForm's Open, when it is shown with ShowAndFree.)
+    //**
+    //** @param(Sender The TOpenDirectoryForm.)
+    procedure OpenDirectoryAccept(Sender: TObject);
+    {$ENDIF}
     procedure StartVideo;
     procedure RestoreCameraView;
     procedure SaveViewState;
@@ -1538,6 +2056,17 @@ type
       const AOrder: TArray<Integer>; const ASnap: Boolean);
     procedure AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
+    //** @abstract(Ticks for export every entry of ActiveList from AFrom to ATo, either way
+    //** round, or clears them all if every one of them is ticked already.)
+    //**
+    //** What a Shift-click does, from the entry last clicked without Shift. The entry
+    //** selected, and the animation playing or model shown, stay as they are; All and the
+    //** volume the view frames follow the ticks.
+    //**
+    //** @param(AFrom One end of the range, an index into ActiveList.)
+    //**
+    //** @param(ATo The other end, the entry Shift-clicked.)
+    procedure TickRange(const AFrom, ATo: Integer);
     procedure SaveStripItemClick(Sender: TObject);
     procedure SaveSheetItemClick(Sender: TObject);
     procedure SaveGifItemClick(Sender: TObject);
@@ -1590,6 +2119,20 @@ type
     procedure PauseViewForExport(const APause: Boolean);
     function FrameOverride(const AName: String): Integer;
     procedure SetFrameOverride(const AName: String; const ACount: Integer);
+    //** @abstract(Notes where on its entry the mouse went down, for a double-click on a frame
+    //** count, and whether it is a Shift-click, for AnimationListBoxClick.)
+    //**
+    //** The OnMouseDown of both lists and of every entry of each.
+    //**
+    //** @param(Sender A list or one of its entries.)
+    //**
+    //** @param(Button The button pressed.)
+    //**
+    //** @param(Shift The keys held, Shift among them for a Shift-click.)
+    //**
+    //** @param(X Where across the sender the mouse is.)
+    //**
+    //** @param(Y Where down the sender the mouse is.)
     procedure AnimationItemMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure AnimationItemDblClick(Sender: TObject);
@@ -1735,7 +2278,8 @@ uses
   Gorilla.DefTypes, System.Math,
   Sprite3DOpenFiles, Sprite3DBackgroundForm,
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
-  Sprite3DCreditsForm, System.DateUtils, JsonText;
+  Sprite3DCreditsForm, System.DateUtils, JsonText, Sprite3DOpenDirectoryForm,
+  Sprite3DFileSearch;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -1800,7 +2344,12 @@ const
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  TabControl1.ActiveTab := GorillaTab;
+  // The Static tab first, with the view and side panel on it from the start,
+  // so they are laid out in the tab showing; ShowModelTab, at the end, sets
+  // up the rest once everything it shows has been made
+  FStaticMode := True;
+  SelectModelTabOnly(True);
+  MainLayout.Parent := StaticTab;
 
   ModelDir := DefaultModelDir;
 
@@ -1854,6 +2403,12 @@ begin
     DebugMemo.Lines.Add('Debug enabled for this run (--debug); OpenH264 is not fetched ' +
       'or used');
   FFrameOverrides := TDictionary<String, Integer>.Create;
+  // The files File, Open Directory has found and still has to open
+  FLoadQueue := TList<String>.Create;
+  // No entry clicked yet for a Shift-click to range from
+  FTickAnchor[False] := -1;
+  FTickAnchor[True] := -1;
+  FPlayedEntry := -1;
   // An animation chosen first shows held on its first frame
   FHoldNew := True;
   // The frame rate the view is drawn at, as chosen in File, Settings, within
@@ -1911,7 +2466,7 @@ begin
   PrepareOpenH264;
 
   // The animation list's right-click menu; on mobile, also the drawer's
-  // Animation group, so it must come before BuildMobileMenu
+  // Models group, so it must come before BuildMobileMenu
   BuildAnimationMenu;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
@@ -1931,6 +2486,10 @@ begin
   {$ELSEIF DEFINED(LINUX)}
   UseFmxMenuBar;
   {$ENDIF}
+
+  // The view and side panel on the Static tab, with nothing loaded yet; the
+  // first model loaded chooses its own tab
+  ShowModelTab(True);
 end;
 
 {$IF DEFINED(LINUX) and not DEFINED(ANDROID)}
@@ -2078,10 +2637,27 @@ end;
 // past the edge until the next refit; the swept volume fit allows for any
 // azimuth.
 procedure TMainForm.AnimationListBoxClick(Sender: TObject);
+var
+  Clicked: Integer;
+  ShiftClick: Boolean;
 begin
   // A click on another entry moves the selection first, and
   // AnimationListBoxChange has played it already
-  if FChangePlayed and (AnimationListBox.ItemIndex = FChangePlayedIndex) then
+  if Sender <> ActiveList then
+    Exit;   // a list not showing
+  // Ticks: a Shift-click ticks or clears the range from the entry last
+  // clicked without Shift, which a plain click sets; see TickRange
+  ShiftClick := FShiftClick;
+  FShiftClick := False;
+  Clicked := ActiveList.ItemIndex;
+  if Clicked >= 0 then
+    if not ShiftClick then
+      FTickAnchor[FStaticMode] := Clicked
+    else if (FTickAnchor[FStaticMode] >= 0) and
+      (FTickAnchor[FStaticMode] < ActiveList.Count) and
+      (FTickAnchor[FStaticMode] <> Clicked) then
+      TickRange(FTickAnchor[FStaticMode], Clicked);
+  if FChangePlayed and (ActiveList.ItemIndex = FChangePlayedIndex) then
   begin
     FChangePlayed := False;
     Exit;
@@ -2097,16 +2673,112 @@ begin
   FChangePlayed := False;
   if FRebuildingList or FKeepingSelection then
     Exit;   // the selection is kept as it was; nothing new to play
-  if Capturing or (AnimationListBox.ItemIndex < 0) then
+  if Sender <> ActiveList then
+    Exit;   // a list not showing, as when its entries are added to
+  if Capturing or (ActiveList.ItemIndex < 0) then
     Exit;   // a capture drives the animation; or the list is being emptied
   PlaySelectedAnimation;
   FChangePlayed := True;
-  FChangePlayedIndex := AnimationListBox.ItemIndex;
+  FChangePlayedIndex := ActiveList.ItemIndex;
 end;
 
-// Plays the selected animation, or, for a static model's entry or no entry
+// Up and Down move the selection in the list showing, which plays the entry
+// moved to through AnimationListBoxChange. Both the form and the lists call
+// this; the first to see the key clears it, so it acts once.
+procedure TMainForm.AnimationListBoxKeyDown(Sender: TObject; var Key: Word;
+  var KeyChar: Char; Shift: TShiftState);
+var
+  List: TListBox;
+  Step, At: Integer;
+begin
+  if (Key <> vkUp) and (Key <> vkDown) then
+    Exit;
+  if Shift * [ssShift, ssCtrl, ssAlt, ssCommand] <> [] then
+    Exit;
+  List := ActiveList;
+  if not List.Visible or (List.ItemIndex < 0) or (List.Count = 0) then
+    Exit;
+  // A list not showing keeps its keys to itself
+  if (Sender is TListBox) and (Sender <> List) then
+    Exit;
+  if not ListKeysFocused(List) then
+    Exit;
+  // Taken, whether or not the selection can move: the list's own handling
+  // must not move it again
+  if Key = vkUp then
+    Step := -1
+  else
+    Step := 1;
+  Key := 0;
+  if Capturing then
+    Exit;   // a save needs the animation it started
+  At := List.ItemIndex + Step;
+  // Past any entry that cannot be chosen
+  while (At >= 0) and (At < List.Count) and
+    (not List.ListItems[At].Visible or not List.ListItems[At].Enabled) do
+    Inc(At, Step);
+  if (At < 0) or (At >= List.Count) then
+    Exit;   // at the first or last entry already
+  // As a click on it: where a Shift-click's range starts from
+  FTickAnchor[FStaticMode] := At;
+  // Played here, not left to AnimationListBoxChange, which a selection
+  // moved from code does not always reach
+  FKeepingSelection := True;
+  try
+    List.ItemIndex := At;
+  finally
+    FKeepingSelection := False;
+  end;
+  List.ScrollToItem(List.ListItems[At]);
+  if (Focused = nil) and List.CanFocus then
+    List.SetFocus;
+  FChangePlayed := False;
+  PlaySelectedAnimation;
+end;
+
+function TMainForm.ListKeysFocused(const AList: TListBox): Boolean;
+var
+  FocusObject: TFmxObject;
+begin
+  if Focused = nil then
+    Exit(True);
+  FocusObject := Focused.GetObject;
+  // Never an edit box, even one on an entry, as a frame count's
+  if FocusObject is TCustomEdit then
+    Exit(False);
+  while (FocusObject <> nil) and (FocusObject <> AList) do
+    FocusObject := FocusObject.Parent;
+  Result := FocusObject <> nil;
+end;
+
+// Whatever moved the selection by a key, the view ends on the entry
+// selected; the first of the form and the list to see the key let go plays
+// it, and the other then finds it played already
+procedure TMainForm.AnimationListBoxKeyUp(Sender: TObject; var Key: Word;
+  var KeyChar: Char; Shift: TShiftState);
+var
+  List: TListBox;
+begin
+  case Key of
+    vkUp, vkDown, vkHome, vkEnd, vkPrior, vkNext: ;
+  else
+    Exit;
+  end;
+  List := ActiveList;
+  if (Sender is TListBox) and (Sender <> List) then
+    Exit;
+  if not List.Visible or (List.ItemIndex < 0) or Capturing or not ListKeysFocused(List) then
+    Exit;
+  if (List.ItemIndex = FPlayedEntry) and (FStaticMode = FPlayedStatic) then
+    Exit;   // played already
+  FTickAnchor[FStaticMode] := List.ItemIndex;
+  FChangePlayed := False;
+  PlaySelectedAnimation;
+end;
+
+// Plays the selected animation, or, on the Static tab or with no entry
 // selected, shows the model as loaded; nothing while a capture is driving
-// the animation
+// the animation. On the Static tab the selected entry's model is shown first.
 procedure TMainForm.PlaySelectedAnimation;
 var
   ani: String;
@@ -2114,6 +2786,12 @@ var
 begin
   if Capturing then
     Exit;   // a capture is driving the animation
+  // What is now shown, for AnimationListBoxKeyUp
+  FPlayedEntry := ActiveList.ItemIndex;
+  FPlayedStatic := FStaticMode;
+  if FStaticMode then
+    // The entry's own model; nothing changes if it is shown already
+    ActivateStaticEntry(StaticListBox.ItemIndex);
   // Choosing an entry plays it from the start; but while the controls are
   // paused, the new animation starts paused too, on its first frame
   // An animation chosen starts held on its first frame at first, and after
@@ -2279,12 +2957,33 @@ begin
 end;
 
 // A model the system asked to open, such as one double-clicked in Explorer
-// or Finder, comes first; otherwise the start-up action decides. A last
-// model that has gone since falls back to the default one.
+// or Finder, comes first; otherwise the start-up action decides. Load last
+// model reopens the last model of each tab, the one used last last; if every
+// one remembered has gone since, the default one is loaded instead, and if
+// Clear has left none remembered, nothing is.
 procedure TMainForm.LoadStartupModel;
 var
-  FileName: String;
-  Requested: TArray<String>;
+  FileName, Other: String;
+  Requested, Files: TArray<String>;
+  Gone: Boolean;
+
+  // A remembered model, if its file is still there; Gone if it is not
+  procedure Remembered(const AFile: String);
+  begin
+    if AFile = String.Empty then
+      Exit;
+    for var Known in Files do
+      if SameFileName(Known, OSFriendlyPath(AFile)) then
+        Exit;
+    if FileExists(OSFriendlyPath(AFile)) then
+      Files := Files + [OSFriendlyPath(AFile)]
+    else
+    begin
+      DebugMemo.Lines.Add('Last model not found: ' + AFile);
+      Gone := True;
+    end;
+  end;
+
 begin
   Requested := FileOpenRequests.TakePending;
   // A project the system asked to open comes first, and loads its model
@@ -2301,14 +3000,26 @@ begin
       saNone:
         DebugMemo.Lines.Add('Start-up action is None: no model loaded');
       saLastModel:
-        if (FSettings.LastModel <> String.Empty) and
-          FileExists(OSFriendlyPath(FSettings.LastModel)) then
-          FileName := OSFriendlyPath(FSettings.LastModel)
-        else
         begin
-          if FSettings.LastModel <> String.Empty then
-            DebugMemo.Lines.Add('Last model not found: ' + FSettings.LastModel);
-          FileName := DefaultModelFile;
+          // The last model of the other kind first, then the one used last,
+          // so its tab is the one shown; a tab Clear emptied loads nothing
+          Files := nil;
+          Gone := False;
+          if SameFileName(FSettings.LastModel, FSettings.LastAnimatedModel) then
+            Other := FSettings.LastStaticModel
+          else
+            Other := FSettings.LastAnimatedModel;
+          Remembered(Other);
+          Remembered(FSettings.LastModel);
+          if Length(Files) = 0 then
+            if Gone then
+              Files := [DefaultModelFile]   // remembered, but gone since
+            else
+              DebugMemo.Lines.Add('Start-up action is Load last model, but no model ' +
+                'is remembered: no model loaded');
+          for var Name in Files do
+            SwitchModel(Name);
+          Exit;
         end;
     else
       FileName := DefaultModelFile;
@@ -2410,6 +3121,9 @@ begin
   FreeAndNil(FSettings);
   FreeAndNil(FSpentEditor);
   FreeAndNil(FFrameOverrides);
+  // A folder being opened goes no further; the models are the viewport's
+  FQueueActive := False;
+  FreeAndNil(FLoadQueue);
 end;
 
 // Ticks the View menu's on/off items as settings.json says, then applies
@@ -2577,8 +3291,9 @@ const
     'Sprite3D animation settings (*.json)|*.json|All files (*.*)|*.*';
   PROJECT_FILTER = 'Sprite3D project (*.sprite3d)|*.sprite3d|All files (*.*)|*.*';
 
-// File, Save and Load Animation Settings: with a model, while nothing is
-// being exported, and on the desktop, which has file dialogs
+// File, Save and Load Animation Settings: on the Animated tab, with its
+// model, while nothing is being exported, and on the desktop, which has file
+// dialogs. Models, Animations Used: on the Animated tab, with its model.
 procedure TMainForm.UpdateListFileItems;
 var
   Usable: Boolean;
@@ -2586,10 +3301,13 @@ begin
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   Usable := False;
   {$ELSE}
-  Usable := (GorillaModel <> nil) and not Capturing;
+  Usable := not FStaticMode and ModelIsAnimated and not Capturing;
   {$ENDIF}
   SaveAnimationSettingsItem.Enabled := Usable;
   LoadAnimationSettingsItem.Enabled := Usable;
+  AnimationsUsedItem.Enabled := not FStaticMode and ModelIsAnimated and not Capturing;
+  StaticsUsedItem.Enabled := FStaticMode and not Capturing and not FQueueActive and
+    not FClashPending and (Length(FStaticSlots) + Length(FStaticUnused) > 0);
   // The credits can be set on every platform; a project file needs the
   // desktop's file dialogs
   CreditsItem.Enabled := not Capturing;
@@ -2600,7 +3318,7 @@ begin
   {$ENDIF}
 end;
 
-// The Animations list as it stands, as the JSON Animation, Save Animation
+// The Animations list as it stands, as the JSON Models, Save Animation
 // Settings writes and a project file holds: every entry in order, with its
 // tick and any frame count typed in, and the entry selected. The caller
 // owns the object.
@@ -2699,7 +3417,8 @@ var
   Listed: Boolean;
   Index: Integer;
 begin
-  if (GorillaModel = nil) or Capturing then
+  // The Animations list is the Animated tab's, for its model
+  if FStaticMode or not ModelIsAnimated or Capturing then
     Exit;
   // The model's animations it lists, in the model's order, and those it
   // lists that the model does not have
@@ -2774,8 +3493,8 @@ var
   FileName: String;
   Root: TJSONObject;
 begin
-  if (GorillaModel = nil) or Capturing then
-    Exit;
+  if FStaticMode or not ModelIsAnimated or Capturing then
+    Exit;   // the Animated tab's list only
   FinishFrameEdit(True, False);   // a count being typed counts
   Dialog := TSaveDialog.Create(nil);
   try
@@ -2817,8 +3536,8 @@ var
   State: TAnimationListState;
   Readable: Boolean;
 begin
-  if (GorillaModel = nil) or Capturing then
-    Exit;
+  if FStaticMode or not ModelIsAnimated or Capturing then
+    Exit;   // the Animated tab's list only
   FinishFrameEdit(False, False);
   Dialog := TOpenDialog.Create(nil);
   try
@@ -2879,12 +3598,13 @@ begin
   // Local time, with its offset from UTC
   Result.Modified := DateToISO8601(Now, False);
   Result.ModelFile := FModelFile;
+  Result.ModelName := FModelName;
   // Whether these frames were made by a 2-pass export's second pass
   Result.TwoPass := FBatchActive and FTwoPassRun;
   // Whether its first pass measured exactly: Exact ticked, or a static model
   Result.Exact := FBatchActive and FTwoPassRun and FTwoPassFine;
   // The overscan the frames are drawn at: during an export, the export's
-  // own, a benchmark run's included, rather than the choice in Animation,
+  // own, a benchmark run's included, rather than the choice in Models,
   // Animation Settings, which a benchmark leaves alone
   if FBatchActive then
   begin
@@ -3009,7 +3729,8 @@ begin
       Root.AddPair('file', TJSONNull.Create);
     Root.AddPair('directions', DirectionsToJson(FSettings.DirectionCount,
       FSettings.DirectionStart, FSettings.DirectionOrderList, FSettings.DirectionSnap));
-    if GorillaModel <> nil then
+    // The Animations list goes with the Animated tab's model only
+    if not FStaticMode and ModelIsAnimated then
       Root.AddPair('animations', AnimationListToJson);
     Item := TJSONObject.Create;
     Root.AddPair('export', Item);
@@ -3063,7 +3784,7 @@ begin
 end;
 
 // Reads a project file and applies what it holds: the credits; the export
-// choices; the directions, kept as Animation, Directions keeps them; and, if
+// choices; the directions, kept as Models, Directions keeps them; and, if
 // the model it names exists, that model, loaded if it is not the one shown,
 // with the Animations list applied once it is in. True if that model is
 // being loaded.
@@ -3181,10 +3902,11 @@ begin
   FProjectFile := AFileName;
   DebugMemo.Lines.Add('Loaded the project ' + AFileName);
 
-  // Its model, if it is there; the list goes with it
+  // Its model, if it is there; the list goes with it. A model loaded already,
+  // on either tab, is shown rather than loaded again.
   ModelFile := OSFriendlyPath(ModelFile);
   if (ModelFile <> String.Empty) and FileExists(ModelFile) and
-    not SameFileName(ExpandFileName(ModelFile), ExpandFileName(FModelFile)) then
+    not ShowLoadedModel(ModelFile) then
   begin
     FPendingListModel := ExpandFileName(ModelFile);
     FPendingList := State;
@@ -3196,6 +3918,7 @@ begin
   begin
     if (ModelFile <> String.Empty) and not FileExists(ModelFile) then
       Notes := Notes + ['Its model is not there: ' + ModelFile];
+    // Applied to the Animated tab's model only; ApplyAnimationList checks
     if HasList and (GorillaModel <> nil) then
       ApplyAnimationList(State, ExtractFileName(AFileName));
   end;
@@ -3994,13 +4717,99 @@ begin
   ApplyDistance;
 end;
 
-// The combined volume: the rest pose's and that of each animation used, all
-// measured as the model loaded; framed while animations are ticked, and by
-// batch exports
+// The combined volume the view and the exports frame: that of the entries
+// a batch exports while one runs, and otherwise that of the entries ticked
+// for export; with none, or none that could be measured, the rest pose's
+// and every animation used, or on the Static tab every static model listed
 function TMainForm.SweepFitVolume: TSweptVolume;
+var
+  Entries: TArray<Integer>;
 begin
+  Entries := FitEntries;
+  if Length(Entries) > 0 then
+  begin
+    Result := EntriesSweptVolume(Entries);
+    if Result.Valid then
+      Exit;
+  end;
+  if FStaticMode then
+    Exit(StaticSweptVolume(nil));
   Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds,
     FUsedAnimations, True, saY);
+end;
+
+// The entries SweepFitVolume joins: while a batch runs, each entry it
+// exports once; otherwise every entry of the list in use ticked for export
+function TMainForm.FitEntries: TArray<Integer>;
+var
+  List: TListBox;
+  Known: Boolean;
+begin
+  Result := nil;
+  if FBatchActive then
+  begin
+    for var Entry in FBatchItems do
+    begin
+      Known := False;
+      for var Other in Result do
+        Known := Known or (Other = Entry);
+      if not Known then
+        Result := Result + [Entry];
+    end;
+    Exit;
+  end;
+  List := ActiveList;
+  for var I := 0 to List.Count - 1 do
+    if List.ListItems[I].IsChecked then
+      Result := Result + [I];
+end;
+
+// The entries AEntries of the list in use joined: on the Animated tab their
+// animations, each over all its poses, without the rest pose, as that is not
+// exported; on the Static tab their models, as StaticSweptVolume joins them
+function TMainForm.EntriesSweptVolume(const AEntries: TArray<Integer>): TSweptVolume;
+var
+  Names: TArray<String>;
+begin
+  if FStaticMode then
+    Exit(StaticSweptVolume(AEntries));
+  Names := nil;
+  for var Entry in AEntries do
+    if IsAnimationEntry(Entry) then
+      Names := Names + [AnimationListBox.Items[Entry]];
+  Result := CombinedSweptVolume(GorillaModel, FModelBox, FAnimationBounds, Names, False, saY);
+end;
+
+// The static models AEntries, entries of the Models list, or every one
+// listed for nil, each as loaded, joined as if each were one pose of a
+// single model, as an animated model's animations are: each about its own
+// centre of rotation, and the whole placed on the model shown's. So
+// whichever static model is shown, or captured in a batch, the camera is
+// fitted at the same scale with its centre of rotation in the same place.
+// Models Statics Used leaves out do not count, as animations Animations Used
+// leaves out do not.
+function TMainForm.StaticSweptVolume(const AEntries: TArray<Integer>): TSweptVolume;
+var
+  Boxes: TArray<TBoundingBox>;
+  Pivots: TArray<TPoint3D>;
+  Chosen: TArray<Integer>;
+begin
+  Chosen := AEntries;
+  if Chosen = nil then
+    for var I := 0 to High(FStaticSlots) do
+      Chosen := Chosen + [I];
+  Boxes := nil;
+  Pivots := nil;
+  for var Entry in Chosen do
+    if (Entry >= 0) and (Entry <= High(FStaticSlots)) and (FStaticSlots[Entry].Model <> nil) then
+    begin
+      Boxes := Boxes + [FStaticSlots[Entry].Box];
+      Pivots := Pivots + [FStaticSlots[Entry].Model.RotationCenter.Point];
+    end;
+  if GorillaModel <> nil then
+    Result := CombinedModelsSweptVolume(Boxes, Pivots, GorillaModel.RotationCenter.Point, saY)
+  else
+    Result := CombinedModelsSweptVolume(Boxes, Pivots, TPoint3D.Zero, saY);
 end;
 
 // One animation's own swept volume, without the rest pose's, for saving
@@ -4018,14 +4827,16 @@ begin
   Result := FitCameraToSweep(GorillaCamera, GorillaModel, ViewVolume, AWidth, AHeight);
 end;
 
-// How many entries are ticked for export
+// How many entries of the list in use are ticked for export
 function TMainForm.TickedAnimationCount: Integer;
 var
   I: Integer;
+  List: TListBox;
 begin
   Result := 0;
-  for I := 0 to AnimationListBox.Count - 1 do
-    if AnimationListBox.ListItems[I].IsChecked then
+  List := ActiveList;
+  for I := 0 to List.Count - 1 do
+    if List.ListItems[I].IsChecked then
       Inc(Result);
 end;
 
@@ -4100,7 +4911,8 @@ end;
 
 // The combined swept volume, to match ShowCombinedSweepItem, and only while
 // the view frames it (UsesCombinedView): the volume joined over the rest
-// pose and the animations used. Nothing without a model.
+// pose and the animations used, or on the Static tab over the static models
+// listed. Nothing without a model.
 procedure TMainForm.ApplyShowCombinedSweep;
 begin
   if not ShowCombinedSweepItem.IsChecked then
@@ -4109,9 +4921,11 @@ begin
     Exit;
   end;
   // A model without animations, or with none used, has no animation volume
-  // to show: it would only repeat the rest pose's. Nor is it shown unless
-  // the view is of the combined volume: two or more animations ticked.
-  if (GorillaModel = nil) or (Length(FUsedAnimations) = 0) or not UsesCombinedView then
+  // to show: it would only repeat the rest pose's; but on the Static tab the
+  // static models' joined volume is shown. Nor is it shown unless the view is
+  // of the combined volume: two or more entries ticked.
+  if (GorillaModel = nil) or (not FStaticMode and (Length(FUsedAnimations) = 0)) or
+    not UsesCombinedView then
   begin
     HideCombinedSweep(GorillaModel);
     Exit;
@@ -4167,17 +4981,17 @@ end;
 // and fetches OpenH264 in the background if it is missing or out of date
 procedure TMainForm.StartVideo;
 begin
+  FVideoChecked := True;
   if VideoAvailable then
   begin
     if Assigned(FMp4Item) then
       FMp4Item.Enabled := True;
-    // In TSheetKind's order: the item index is the kind
-    if Assigned(FBatchKindBox) and (FBatchKindBox.Items.Count = Ord(skMp4)) then
+    // MP4 video at the end of the drop-down, on the Animated tab; MP4 chosen
+    // last session, now it can be
+    if not Capturing then
     begin
-      FBatchKindBox.Items.Add('MP4 video');
-      // MP4 chosen last session, now it can be
-      if not Capturing then
-        RestoreBatchKind;
+      UpdateBatchKindItems;
+      RestoreBatchKind;
     end;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     if Assigned(FAnimationMenu) then
@@ -4186,8 +5000,10 @@ begin
       Item.Text := 'Save as MP4 video';
       Item.OnClick := SaveMp4ItemClick;
       FAnimationMenu.AddObject(Item);
+      FMobileMp4Item := Item;
     end;
     {$ENDIF}
+    UpdateModeControls;
   end;
   DebugMemo.Lines.Add(VideoStatusNow);
   StartOpenH264Update;
@@ -4231,7 +5047,8 @@ begin
       ShowMessage('Model Not Found ' + Model);
       Exit;
     end;
-  if FLoadStage <> lsNone then
+  // A load under way, or a folder being opened, comes first
+  if (FLoadStage <> lsNone) or FQueueActive then
   begin
     FPendingModel := Model;
     Exit;
@@ -4242,18 +5059,11 @@ begin
       Exit;
     end;
 
-  FLoadFile := ExpandFileName(Model);
-  FLoadAborted := False;
-  FLoadError := String.Empty;
-  FLoadRead := StartModelFileRead(FLoadFile);
-  FLoadStage := lsRead;
+  FLoadInFolder := False;
   Dialog := TModelLoadForm.Create(nil);
   FLoadDialog := Dialog;
-  Dialog.SetModelName(ExtractFileName(FLoadFile));
-  Dialog.SetProgress(0, 'Reading the file...');
   Dialog.OnAbort := LoadDialogAbort;
-  Caption := 'Loading ' + ExtractFileName(FLoadFile) + '...';
-  FLoadTimer.Enabled := True;
+  BeginLoad(Model);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // ShowModal cannot block here: the dialog frees itself when the load ends,
   // and EndLoad reports
@@ -4273,12 +5083,35 @@ begin
   {$ENDIF}
 end;
 
+procedure TMainForm.BeginLoad(const AFile: String);
+begin
+  FLoadFile := ExpandFileName(AFile);
+  FLoadAborted := False;
+  FLoadError := String.Empty;
+  FLoadRead := StartModelFileRead(FLoadFile);
+  FLoadStage := lsRead;
+  if FLoadDialog <> nil then
+  begin
+    if FLoadInFolder then
+      FLoadDialog.SetModelName(Format('%s (%d of %d)', [ExtractFileName(FLoadFile),
+        FQueueDone, FQueueTotal]))
+    else
+      FLoadDialog.SetModelName(ExtractFileName(FLoadFile));
+    FLoadDialog.SetProgress(0, 'Reading the file...');
+  end;
+  Caption := 'Loading ' + ExtractFileName(FLoadFile) + '...';
+  FLoadTimer.Enabled := True;
+end;
+
 // Abort, from the dialog: the read stops at once, and the next tick drops
 // the load. During the build, which cannot be interrupted, the click is
-// seen as soon as Gorilla3D returns.
+// seen as soon as Gorilla3D returns. In a folder's dialog it stops the
+// whole folder, even between two files.
 procedure TMainForm.LoadDialogAbort(Sender: TObject);
 begin
   FLoadAborted := True;
+  if FLoadDialogHeld then
+    FQueueAborted := True;
   if FLoadRead <> nil then
     FLoadRead.Cancel;
 end;
@@ -4299,6 +5132,9 @@ begin
   if FLoadAborted then
   begin
     DebugMemo.Lines.Add('Load aborted: ' + FLoadFile);
+    // Abort during a folder's loads stops the whole folder
+    if FLoadInFolder then
+      FQueueAborted := True;
     EndLoad(String.Empty);
     Exit;
   end;
@@ -4351,6 +5187,16 @@ begin
   FLoadModel.Visible := False;
   FLoadModel.Parent := GorillaViewport;
   FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadBox);
+  // Only one model with animations can be open: while a folder is opened,
+  // another one is skipped, and the next file tried
+  if FLoadInFolder and (Length(FLoadAnims) > 0) and (FAnimatedSlot.Model <> nil) then
+  begin
+    Inc(FQueueSkipped);
+    DebugMemo.Lines.Add('Skipped ' + FLoadFile + ': it has animations, and a model with ' +
+      'animations is open already');
+    EndLoad(String.Empty);
+    Exit;
+  end;
   // The model's own bounds, before any helper is added: the grid's floor
   PlaceModel(FLoadModel, FLoadBox);
   if (Length(FLoadAnims) = 0) or
@@ -4374,25 +5220,13 @@ begin
   end;
 end;
 
-// Shows the model being loaded and hides the one on screen, with the
-// wireframes beside it (its grid and axes are its children, so go with it),
-// or with AShowNew False the other way round
+// Shows the model being loaded and hides the one on screen, with what is
+// drawn beside it, or with AShowNew False the other way round
 procedure TMainForm.ShowLoadModel(const AShowNew: Boolean);
-var
-  Sweep: TModelSweep;
-  Combined: TCombinedSweep;
 begin
   if FLoadModel <> nil then
     FLoadModel.Visible := AShowNew;
-  if GorillaModel = nil then
-    Exit;
-  GorillaModel.Visible := not AShowNew;
-  Sweep := FindModelSweep(GorillaModel);
-  if Sweep <> nil then
-    Sweep.Visible := not AShowNew;
-  Combined := FindCombinedSweep(GorillaModel);
-  if Combined <> nil then
-    Combined.Visible := not AShowNew;
+  ShowModelWithHelpers(GorillaModel, not AShowNew);
 end;
 
 // A slice of measuring the new model's animations; when they are all done,
@@ -4414,66 +5248,96 @@ begin
         [Length(FLoadAnims), Trunc(FMeasurer.Progress * 100)]));
 end;
 
-// The new model replaces the old, which is freed with its helpers, and gets
-// the list, helpers and fit the View menu asks for
+// The new model takes its place: a model with animations replaces the
+// Animated tab's, which is freed with its helpers, and the Animated tab is
+// shown; a model without is added to the Static tab's Models list, or, opened
+// again on its own, put in place of the entry for the same file, selected,
+// and the Static tab shown. It gets the list, helpers and fit the View menu
+// asks for. A static model whose name is listed already, by another file or
+// while a folder is opened, waits, hidden, until the loading dialog has gone,
+// when AskNameClash asks what to do with it; the model shown stays as it was.
 procedure TMainForm.CommitLoad;
 var
-  Old: TGorillaModel;
+  Slot: TSprite3DModelSlot;
+  Index, NameIndex, UnusedIndex: Integer;
 begin
-  FreeAndNil(FPlayer);   // its animation goes with the old model
-  AnimationListBox.Items.Clear;
-  Old := GorillaModel;
-  GorillaModel := FLoadModel;
+  // Every animation is used until Models, Animations Used says otherwise
+  Slot := NewModelSlot(FLoadModel, FLoadFile, FLoadBox, FLoadBounds, FLoadAnims);
   FLoadModel := nil;
-  if Old <> nil then
-  begin
-    Old.Parent := nil;
-    Old.Free;
-  end;
-  GorillaModel.Visible := True;
   // Measuring stepped the animations through their poses and left the
   // model however the last of them did; put it in its bind pose, exactly as
   // showing a static model does, so it shows, and its bounding box measures, the
-  // same either way
-  GorillaModel.ResetToBindPose();
+  // same either way. Shown once it is the model shown.
+  Slot.Model.Visible := False;
+  Slot.Model.ResetToBindPose();
+  // Gorilla draws the bounding box on screen only; this draws it into grabs too
+  ShowModelBoundsOutline(Slot.Model);
+  // For the "Load last model" start-up action, of either kind and of this
+  // kind; saved with the view state. A model opened as part of Open
+  // Directory is not remembered: only one opened on its own is
+  if not FLoadInFolder then
+  begin
+    FSettings.LastModel := FLoadFile;
+    if Slot.IsAnimated then
+      FSettings.LastAnimatedModel := FLoadFile
+    else
+      FSettings.LastStaticModel := FLoadFile;
+  end;
 
-  FModelBox := FLoadBox;
-  FModelFile := FLoadFile;
-  FAnimationBounds := FLoadBounds;
-  FAnimationBoundsMeasured := True;
-  // Every animation is used until Animation, Animations Used says otherwise
-  FAnimationNames := FLoadAnims;
-  FUsedAnimations := Copy(FLoadAnims);
-  // Frame counts typed in were for the old model's animations
-  FFrameOverrides.Clear;
-  RebuildAnimationList;
+  Index := -1;
+  if not Slot.IsAnimated then
+  begin
+    Index := ModelSlotIndex(FStaticSlots, FLoadFile);
+    UnusedIndex := ModelSlotIndex(FStaticUnused, FLoadFile);
+    // A clash with a model listed, or with one Statics Used left out
+    NameIndex := ModelSlotNameIndex(FStaticSlots, Slot.Name);
+    if NameIndex < 0 then
+      NameIndex := ModelSlotNameIndex(FStaticUnused, Slot.Name);
+    if (Index >= 0) and not FLoadInFolder then
+      // The same file opened again on its own: loaded afresh in its own
+      // place, under the name it is listed by, renamed or not
+      Slot.Name := FStaticSlots[Index].Name
+    else if (UnusedIndex >= 0) and not FLoadInFolder then
+    begin
+      // The same file, left out by Statics Used: loaded afresh and listed
+      // again, under its own name and in its own order
+      Slot.Name := FStaticUnused[UnusedIndex].Name;
+      Slot.Order := FStaticUnused[UnusedIndex].Order;
+      FreeModelSlot(FStaticUnused[UnusedIndex]);
+      Delete(FStaticUnused, UnusedIndex, 1);
+    end
+    else if NameIndex >= 0 then
+    begin
+      FClashSlot := Slot;
+      FClashPending := True;
+      // Hidden only while the new model was measured, if it was
+      ShowModelWithHelpers(GorillaModel, True);
+      DebugMemo.Lines.Add(Format('Loaded %s, but "%s" is listed already', [FLoadFile,
+        Slot.Name]));
+      EndLoad(String.Empty);
+      Exit;
+    end;
+    // From a folder, a name that clashes with nothing is always added
+    if FLoadInFolder then
+      Index := -1;
+  end;
 
-  // The angles as the dials have them, unless the camera is locked
-  ApplyAngles;
-
-  // Draw the model's box, if wanted: the bounds of the current pose, in
-  // Gorilla's default orange
-  GorillaModel.ShowBoundingBox := ShowBoundsItem.IsChecked;
-  // Gorilla draws that box on screen only; this draws it into grabs too
-  ShowModelBoundsOutline(GorillaModel);
-  // Axes through the centre of rotation, sized for the newly loaded model
-  if ShowAxesItem.IsChecked then
-    ShowModelAxes(GorillaModel);
-
-  // Floor grid, after the model is placed and turned, because the floor
-  // depends on which way up it is
-  if ShowGridItem.IsChecked then
-    ShowModelGrid(GorillaModel, FModelBox);
-
-  // The volume swept turning about the up axis, for the new bounds
-  if ShowSweepItem.IsChecked then
-    ApplyShowSweep;
-  if ShowCombinedSweepItem.IsChecked then
-    ApplyShowCombinedSweep;
-
-  // For the "Load last model" start-up action; saved with the view state
-  FSettings.LastModel := FLoadFile;
-  DebugMemo.Lines.Add('Loaded ' + FLoadFile);
+  if Slot.IsAnimated then
+  begin
+    PlaceAnimatedSlot(Slot);
+    if FLoadInFolder then
+      Inc(FQueueAnimated);
+    DebugMemo.Lines.Add(Format('Loaded %s, with %d animations, on the Animated tab',
+      [FLoadFile, Length(Slot.Names)]));
+  end
+  else
+  begin
+    // Opened again on its own: loaded afresh in its own place
+    PlaceStaticSlot(Slot, Index);
+    if FLoadInFolder then
+      Inc(FQueueStatic);
+    DebugMemo.Lines.Add('Loaded ' + FLoadFile + ', a static model, on the Static tab');
+  end;
 
   EndLoad(String.Empty);
 
@@ -4481,11 +5345,10 @@ begin
   if not CameraLocked and not FitModel then
     Caption := 'Problem fitting Camera';
 
-  // A project's Animations list, for this model, once the load has ended
-  if FHasPendingList and SameFileName(ExpandFileName(FModelFile), FPendingListModel) then
-    TThread.ForceQueue(nil, ApplyPendingList)
-  else
-    FHasPendingList := False;
+  // A project's Animations list, for this model, applied by ReportLoadEnd
+  // once the dialog has gone and the Animated tab shows it
+  FHasPendingList := FHasPendingList and Slot.IsAnimated and
+    SameFileName(ExpandFileName(Slot.FileName), FPendingListModel);
 end;
 
 // The Animations list of the project that asked for the model just loaded
@@ -4526,6 +5389,14 @@ begin
     FHasPendingList := False;
   Caption := ProjectionCaption;
   UpdateNoModelPanel;
+  if FLoadDialogHeld then
+  begin
+    // One of a folder's: its dialog stays open for the next file, and this
+    // file's outcome is dealt with from a fresh main-loop turn, which the
+    // dialog's own loop carries out
+    TThread.ForceQueue(nil, ReportLoadEnd);
+    Exit;
+  end;
   Dialog := FLoadDialog;
   FLoadDialog := nil;
   if Dialog <> nil then
@@ -4535,32 +5406,51 @@ begin
   {$ENDIF}
 end;
 
-// After the dialog has gone: what went wrong, if anything, and any model
-// asked for meanwhile, loaded next
+// After the dialog has gone: what went wrong, if anything, said at once, or
+// for one of a folder's files, kept for the folder's report; then the
+// question of a name listed already, if there is one; then any model asked
+// for meanwhile, or the folder's next, loaded next
 procedure TMainForm.ReportLoadEnd;
 var
-  Pending: String;
+  Lines: TArray<String>;
 begin
+  if MainFormGone then
+    Exit;
   if FLoadError <> String.Empty then
   begin
     DebugMemo.Lines.Add(FLoadError);
-    ShowMessage(FLoadError);
+    // The error's last line is the exception's own message
+    Lines := FLoadError.Split([sLineBreak]);
+    if FLoadInFolder then
+      FQueueFailed := FQueueFailed + [ExtractFileName(FLoadFile) + ': ' + Lines[High(Lines)]]
+    else
+      ShowMessage(FLoadError);
     FLoadError := String.Empty;
   end;
-  Pending := FPendingModel;
-  FPendingModel := String.Empty;
-  if Pending <> String.Empty then
-    TThread.ForceQueue(nil,
-      procedure
-      begin
-        if not MainFormGone then
-          SwitchModel(Pending);
-      end);
+  if FClashPending then
+  begin
+    // ContinueLoading follows once it is answered
+    AskNameClash;
+    Exit;
+  end;
+  // A single load's dialog has gone: the model's own tab, if it is not the
+  // one showing, then a project's Animations list for it
+  if not FLoadInFolder then
+  begin
+    ApplyPendingTab;
+    if FHasPendingList then
+      ApplyPendingList;
+  end;
+  ContinueLoading;
 end;
 
-// The panel that covers the view while no model is loaded, as at start-up
-// with the start-up action None, or after the first load is aborted. It
-// takes the theme's panel colours, and lets clicks through.
+// The panel that covers the view while no model is shown: at start-up with
+// the start-up action None, after the first load is aborted, on the Static
+// tab before a static model is opened, and on the Animated tab before a
+// model with animations is opened or once Clear has unloaded it. Its text,
+// centred in the view, says how to load one for the tab showing; see
+// UpdateNoModelPanel. It takes the theme's panel colours, and lets clicks
+// through.
 procedure TMainForm.BuildNoModelPanel;
 var
   Content: TLayout;
@@ -4574,8 +5464,8 @@ begin
   Content := TLayout.Create(Self);
   Content.Parent := FNoModelPanel;
   Content.Align := TAlignLayout.Center;
-  Content.Width := 360;
-  Content.Height := 80;
+  Content.Width := 380;
+  Content.Height := 100;
   Content.HitTest := False;
 
   Title := TLabel.Create(Self);
@@ -4596,17 +5486,26 @@ begin
   Hint.TextSettings.HorzAlign := TTextAlign.Center;
   Hint.TextSettings.VertAlign := TTextAlign.Leading;
   Hint.TextSettings.WordWrap := True;
-  Hint.Text := 'Choose File, Open Model to load one.';
   Hint.HitTest := False;
+  // Set for the tab showing by UpdateNoModelPanel
+  FNoModelHint := Hint;
 
   UpdateNoModelPanel;
 end;
 
-// Shows the no-model panel only while there is no model
+// Shows the no-model panel only while there is no model, saying how to load
+// one for the tab showing
 procedure TMainForm.UpdateNoModelPanel;
 begin
   if FNoModelPanel = nil then
     Exit;
+  if FNoModelHint <> nil then
+    if FStaticMode then
+      FNoModelHint.Text := 'Use File > Open Model to open a model without animations. ' +
+        'Each one opened is added to the Models list.'
+    else
+      FNoModelHint.Text := 'Use File > Open Model to open a model with animations for ' +
+        'anything to show here.';
   FNoModelPanel.Visible := GorillaModel = nil;
   if FNoModelPanel.Visible then
     FNoModelPanel.BringToFront;
@@ -4670,7 +5569,7 @@ end;
 
 // The animation list's pop-up menu, made here rather than in the form
 // designer. On Android and iOS, which have no right-click, the same items
-// are also put in an Animation menu, which BuildMobileMenu shows as a group
+// are also put in an Models menu, which BuildMobileMenu shows as a group
 // of the drawer; they act on the selected entry.
 procedure TMainForm.BuildAnimationMenu;
 
@@ -4687,36 +5586,41 @@ begin
   FAnimationPopup := TPopupMenu.Create(Self);
   FAnimationPopup.Parent := Self;
   // Clicks on an entry usually reach the list, not the entry; see
-  // HookAnimationItems
+  // HookAnimationItems and HookStaticItems
   AnimationListBox.OnMouseUp := AnimationItemMouseUp;
+  StaticListBox.OnMouseUp := AnimationItemMouseUp;
+  // Shift-clicks are seen as the button goes down; see AnimationListBoxClick
+  AnimationListBox.OnMouseDown := AnimationItemMouseDown;
+  StaticListBox.OnMouseDown := AnimationItemMouseDown;
   AddItem(FAnimationPopup, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationPopup, 'Save as Spritesheet', SaveSheetItemClick);
-  AddItem(FAnimationPopup, 'Save as AniGif', SaveGifItemClick);
+  // AniGif and MP4 video are for animations: hidden on the Static tab
+  FGifItem := AddItem(FAnimationPopup, 'Save as AniGif', SaveGifItemClick);
   // MP4 needs the FFmpeg libraries: offered once StartVideo finds they load
   FMp4Item := AddItem(FAnimationPopup, 'Save as MP4 video', SaveMp4ItemClick);
   FMp4Item.Enabled := False;
   BuildBatchControls;
   BuildTransportControls;
 
-  // Animation, Animation Settings..., just below the line under Animations
+  // Models, Animation Settings..., just below the line under Animations
   // Used..., above Load and Save Animation Settings...
   FAnimationSettingsItem := TMenuItem.Create(Self);
   FAnimationSettingsItem.Text := 'Animation Settings...';
   FAnimationSettingsItem.OnClick := AnimationSettingsItemClick;
   ModelMenu.InsertObject(ModelSettingsSeparatorItem.Index + 1, FAnimationSettingsItem);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
-  // The Save as items at the foot of the Animation menu, after a line: a
-  // menu of their own would be a second "Animation"
+  // The Save as items at the foot of the Models menu, after a line: a
+  // menu of their own would be a second "Models"
   FAnimationMenu := ModelMenu;
   AddItem(FAnimationMenu, '-', nil);
   AddItem(FAnimationMenu, 'Save as sprite strip', SaveStripItemClick);
   AddItem(FAnimationMenu, 'Save as Spritesheet', SaveSheetItemClick);
-  AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
+  FMobileGifItem := AddItem(FAnimationMenu, 'Save as AniGif', SaveGifItemClick);
   // MP4 is added by StartVideo if the video libraries load
   {$ENDIF}
 end;
 
-// Animation, Animation Settings...: the frame rate saved animations use. OK keeps the
+// Models, Animation Settings...: the frame rate saved animations use. OK keeps the
 // new rate and saves it; Cancel leaves the old one.
 procedure TMainForm.AnimationSettingsItemClick(Sender: TObject);
 var
@@ -4949,12 +5853,13 @@ begin
   end;
 end;
 
-// Fills AnimationListBox with the animations used, in the model's order,
-// or, for a static model, one with no animations, its one entry, named after
-// its file; with their frame counts and no batch ticks. The selected entry
-// stays selected if it is still listed, without being played again. If the
-// animation playing is no longer listed, nothing is selected and the model
-// is shown at rest.
+// Fills AnimationListBox with the Animated tab's model's animations used, in
+// the model's order, with their frame counts and no batch ticks; with no
+// model, empties it. Static models are listed in StaticListBox instead. The
+// selected entry stays selected if it is still listed, without being played
+// again. If the animation playing is no longer listed, nothing is selected
+// and the model is shown at rest. Called with the Animated tab's model the
+// one shown, or with none.
 procedure TMainForm.RebuildAnimationList;
 var
   Previous, Name: String;
@@ -4975,19 +5880,16 @@ begin
     try
       AnimationListBox.Items.Clear;
       if ModelIsAnimated then
-      begin
         for Name in FAnimationNames do
           if IsUsedAnimation(Name) then
             AnimationListBox.Items.Add(Name);
-      end
-      else if GorillaModel <> nil then
-        AnimationListBox.Items.Add(StillEntryName);
     finally
       AnimationListBox.EndUpdate;
     end;
     HookAnimationItems;
+    FTickAnchor[False] := -1;   // a new list: no range started
     // A new list starts with nothing ticked
-    if Assigned(FBatchAll) then
+    if Assigned(FBatchAll) and not FStaticMode then
     begin
       FSyncingChecks := True;
       try
@@ -5005,7 +5907,8 @@ begin
   UpdateTransportControls;
   UpdateListFileItems;
 
-  if Assigned(GorillaModel) and Assigned(GorillaModel.AnimationManager) then
+  if not FStaticMode and Assigned(GorillaModel) and
+    Assigned(GorillaModel.AnimationManager) then
   begin
     Current := GorillaModel.AnimationManager.Current;
     if Assigned(Current) and Current.IsRunning and not IsUsedAnimation(Current.Id) then
@@ -5032,7 +5935,7 @@ begin
   Result := False;
 end;
 
-// The frames saving entry AIndex makes at the Animation, Animation Settings
+// The frames saving entry AIndex makes at the Models, Animation Settings
 // rate, worked out as a capture does: 1 for a static model's entry, a still
 // of the model as loaded, otherwise the animation's length times the rate,
 // rounded. 0 if the animation cannot be found.
@@ -5079,12 +5982,17 @@ begin
   Result.TextSettings.HorzAlign := TTextAlign.Trailing;
 end;
 
-// Every entry's frame count, for the Animation, Animation Settings rate now
+// Every entry's frame count, for the Models, Animation Settings rate now;
+// the Animated tab's list only, and only while its model is the one shown,
+// as the counts are worked out from it. EnterModelTab refreshes them when
+// the Animated tab is shown.
 procedure TMainForm.UpdateFrameCounts;
 var
   I, Count: Integer;
   Lbl: TLabel;
 begin
+  if FStaticMode then
+    Exit;
   for I := 0 to AnimationListBox.Count - 1 do
   begin
     Count := AnimationFrameCount(I);
@@ -5139,7 +6047,11 @@ end;
 procedure TMainForm.AnimationItemMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
-  FItemDownX := X;
+  // In the entry's own coordinates, for AnimationItemDblClick
+  if Sender is TListBoxItem then
+    FItemDownX := X;
+  // Whether the click this begins is a Shift-click, for AnimationListBoxClick
+  FShiftClick := (Button = TMouseButton.mbLeft) and (ssShift in Shift);
 end;
 
 // A double-click on an entry's frame count opens it for editing; one on the
@@ -5253,7 +6165,7 @@ begin
   FinishFrameEdit(True, False);
 end;
 
-// Animation, Directions...: how many directions, where the first points, the
+// Models, Directions...: how many directions, where the first points, the
 // order they are taken in, and whether the dial snaps. OK keeps and saves
 // them; Cancel leaves everything as it was.
 procedure TMainForm.DirectionsItemClick(Sender: TObject);
@@ -5300,7 +6212,7 @@ begin
 end;
 {$ENDIF}
 
-// Keeps the directions chosen in Animation, Directions, and saves them. A plain
+// Keeps the directions chosen in Models, Directions, and saves them. A plain
 // order is kept as DirectionClockwise alone, with DirectionOrder empty
 procedure TMainForm.ApplyDirections(const ACount: Integer; const AStart: Single;
   const AOrder: TArray<Integer>; const ASnap: Boolean);
@@ -5343,8 +6255,8 @@ var
   Volumes: TArray<TSweptVolume>;
   I: Integer;
 begin
-  if GorillaModel = nil then
-    Exit;
+  if FStaticMode or not ModelIsAnimated then
+    Exit;   // the Animated tab's model only
   if Capturing then
   begin
     ShowMessage('An animation is being saved; choose the animations used when it is done.');
@@ -5383,9 +6295,10 @@ end;
 // over them and the rest pose
 procedure TMainForm.ApplyUsedAnimations(const AUsed: TArray<String>);
 begin
-  if Capturing then
+  if Capturing or FStaticMode then
     Exit;   // the dialog does not block on Android and iOS
   FUsedAnimations := AUsed;
+  SaveCurrentSlot;   // kept with the Animated tab's model
   RebuildAnimationList;
   DebugMemo.Lines.Add(Format('Animations used: %d of %d',
     [Length(FUsedAnimations), Length(FAnimationNames)]));
@@ -5397,7 +6310,9 @@ end;
 // A right-click selects and plays the entry under the mouse, as a left
 // click would, then opens the pop-up menu there. Sender is either the list,
 // whose coordinates find the entry, or an entry itself. On macOS a
-// Control-click counts as a right-click.
+// Control-click counts as a right-click. Shift-clicks are seen by
+// AnimationItemMouseDown and acted on by AnimationListBoxClick, as the list
+// keeps a left button's release to itself.
 procedure TMainForm.AnimationItemMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 var
@@ -5405,32 +6320,72 @@ var
   At: TPointF;
   I: Integer;
   RightClick: Boolean;
+  List: TListBox;
 begin
   RightClick := Button = TMouseButton.mbRight;
   {$IFDEF MACOS}
   RightClick := RightClick or ((Button = TMouseButton.mbLeft) and (ssCtrl in Shift));
   {$ENDIF}
+  // Where a left button's release does arrive, it comes before the click:
+  // a Shift-click is noted here as well as when the button went down
+  if not RightClick and (Button = TMouseButton.mbLeft) and (ssShift in Shift) then
+    FShiftClick := True;
   if not RightClick or not (Sender is TControl) then
     Exit;
   if Capturing then
     Exit;   // one capture at a time
 
+  // The list showing: StaticListBox's entries and AnimationListBox's share
+  // this handler
+  List := ActiveList;
   if Sender is TListBoxItem then
     Item := TListBoxItem(Sender)
+  else if Sender = List then
+    Item := List.ItemByPoint(X, Y)
   else
-    Item := AnimationListBox.ItemByPoint(X, Y);
+    Item := nil;
   if Item = nil then
-    Exit;   // below the last entry
+    Exit;   // below the last entry, or a list not showing
 
-  for I := 0 to AnimationListBox.Count - 1 do
-    if (AnimationListBox.ListItems[I] = Item) and (AnimationListBox.ItemIndex <> I) then
+  for I := 0 to List.Count - 1 do
+    if (List.ListItems[I] = Item) and (List.ItemIndex <> I) then
     begin
-      AnimationListBox.ItemIndex := I;
-      AnimationListBoxClick(AnimationListBox);
+      List.ItemIndex := I;
+      AnimationListBoxClick(List);
       Break;
     end;
   At := TControl(Sender).LocalToScreen(TPointF.Create(X, Y));
   FAnimationPopup.Popup(At.X, At.Y);
+end;
+
+procedure TMainForm.TickRange(const AFrom, ATo: Integer);
+var
+  Entries: TArray<Integer>;
+  Every: Boolean;
+  List: TListBox;
+begin
+  if Capturing then
+    Exit;
+  List := ActiveList;
+  Entries := nil;
+  Every := True;
+  for var I := Min(AFrom, ATo) to Max(AFrom, ATo) do
+    if (I >= 0) and (I < List.Count) then
+    begin
+      Entries := Entries + [I];
+      Every := Every and List.ListItems[I].IsChecked;
+    end;
+  if Length(Entries) = 0 then
+    Exit;
+  FSyncingChecks := True;
+  try
+    // The selection, and what plays, stay as they are
+    SetEntryChecks(Entries, not Every);
+  finally
+    FSyncingChecks := False;
+  end;
+  SyncBatchAll;
+  UpdateView;   // ticked or not decides the volume shown
 end;
 
 procedure TMainForm.SaveStripItemClick(Sender: TObject);
@@ -5472,17 +6427,20 @@ begin
     ShowMessage('Open a model first.');
     Exit;
   end;
-  if AnimationListBox.ItemIndex < 0 then
+  if ActiveList.ItemIndex < 0 then
   begin
-    ShowMessage('Choose an entry in the Animations list first.');
+    ShowMessage(Format('Choose an entry in the %s list first.', [EntryNoun(True, True)]));
     Exit;
   end;
+  // Not offered on the Static tab, where the menu hides them
+  if FStaticMode and (AKind in [skGif, skMp4]) then
+    Exit;
   // Asked every time, opening where the last export went
   if not ChooseExportFolder(String.Empty, Folder) then
     Exit;   // cancelled: nothing is saved
   // Run as a batch of this one entry, with its progress dialog, as every
   // export is 2-pass, and in each direction if Directions is ticked
-  StartBatch([AnimationListBox.ItemIndex], AKind, Folder);
+  StartBatch([ActiveList.ItemIndex], AKind, Folder);
 end;
 
 // What to say in the Debug tab when frames are drawn right up to their edge,
@@ -5543,7 +6501,9 @@ end;
 
 // Grabs every frame of the list entry AIndex, then saves them as AKind in
 // AFolder. An animation is stepped through its own frames; a static model's
-// entry is one still frame instead. The camera is framed once for the whole
+// entry is one still frame instead, of that entry's model, which is shown
+// for it, as each entry of the Static tab's list is a model of its own. The camera is framed once
+// for the whole
 // run, so every frame is drawn at the same scale and the frames line up,
 // and the on-screen framing is put back when the capture ends.
 // AOnFinished is called once the capture has ended, with an empty string if
@@ -5583,14 +6543,25 @@ begin
     AError := 'A capture or a grab is already under way.';
     Exit;
   end;
+  if (AIndex < 0) or (AIndex >= ActiveList.Count) then
+  begin
+    AError := Format('There is no such entry in the %s list.', [EntryNoun(True, False)]);
+    Exit;
+  end;
+  if FStaticMode then
+  begin
+    if AKind in [skGif, skMp4] then
+    begin
+      AError := 'AniGif and MP4 video are not offered for static models.';
+      Exit;
+    end;
+    // The entry's own model, shown for its capture; the capture frames the
+    // camera to it itself
+    ActivateStaticEntry(AIndex);
+  end;
   if GorillaModel = nil then
   begin
     AError := 'Open a model first.';
-    Exit;
-  end;
-  if (AIndex < 0) or (AIndex >= AnimationListBox.Count) then
-  begin
-    AError := 'There is no such entry in the animation list.';
     Exit;
   end;
   if (AKind = skAtlas) and not FBatchActive then
@@ -5614,7 +6585,7 @@ begin
     // A static model: one still frame of the model as loaded, named after
     // the model. A turntable source of one frame shows the view as it is,
     // without turning it.
-    Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
+    Stem := SafeFileStem(FModelName);
     Source := TSprite3DTurntableFrames.Create(GorillaCamera, 1, STILL_SECONDS);
   end
   else
@@ -5632,7 +6603,7 @@ begin
       FrameOverride(AnimationListBox.Items[AIndex]));
   end;
 
-  // A direction of Animation, Directions: the camera is turned to it before
+  // A direction of Models, Directions: the camera is turned to it before
   // the source starts, so a still's turntable starts from it too
   HasDirection := (ADirection >= 0) and (ADirection < Length(FBatchBearings));
   Direction := Max(0, ADirection);
@@ -5658,14 +6629,15 @@ begin
   // strip, holding every direction, is <model>_static_strip<frames>.png.
   if AKind in [skStrip, skSheet] then
   begin
+    // Named after the model shown, which may not be the last one loaded:
+    // the Static and Animated tabs each have their own. FModelName is the
+    // name it is listed under, so two models renamed apart stay apart.
     if (AKind = skStrip) and not ModelIsAnimated then
-      Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel)) +
-        '_static'
+      Stem := SafeFileStem(FModelName) + '_static'
     else
     begin
-      Stem := SafeFileStem(AnimationListBox.Items[AIndex]);
-      Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel)) + '_' +
-        Stem;
+      Stem := SafeFileStem(ActiveList.Items[AIndex]);
+      Stem := SafeFileStem(FModelName) + '_' + Stem;
       if AKind = skStrip then
       begin
         Stem := Stem + Format('_dir%.2d', [Direction + 1]);
@@ -5749,7 +6721,7 @@ begin
   // Frames reaching the edge are reported, unless the export aims for that
   CheckEdges := not EdgeTouchExpected;
   // The entry's name, as listed: the animation's, or a static model's file's
-  AnimationName := AnimationListBox.Items[AIndex];
+  AnimationName := ActiveList.Items[AIndex];
   // Credits, dates and model for the metadata, as they are now
   Meta := ExportMeta(1, 1);
   Meta.ExportType := SheetKindKey(AKind);
@@ -5806,6 +6778,10 @@ begin
         Part.Origin := Origin;
         Part.OriginKnown := OriginKnown;
         Part.Direction := Direction;
+        // Which model: a static model's still is given as its model
+        Part.IsStill := not Meta.IsAnimated;   // as the capture started
+        Part.ModelName := Meta.ModelName;
+        Part.ModelFile := Meta.ModelFile;
         AddAtlasPart(Part, AFrames);
         if FExportDialog <> nil then
           if HasDirection then
@@ -6262,15 +7238,19 @@ begin
   TransportChanged;
 end;
 
-// The batch controls under the animation list, made here rather than in the
-// form designer, and tick boxes on the list's entries. FMX's list box draws
-// each entry's tick box to the left of its text.
+// The batch controls under the list, made here rather than in the form
+// designer, and tick boxes on the entries of both lists. FMX's list box
+// draws each entry's tick box to the left of its text. The controls are
+// shared by the Static and Animated tabs, Clear included, which acts on the
+// tab showing.
 procedure TMainForm.BuildBatchControls;
 var
   Row: TLayout;
 begin
   AnimationListBox.ShowCheckboxes := True;
   AnimationListBox.OnChangeCheck := AnimationListBoxChangeCheck;
+  StaticListBox.ShowCheckboxes := True;
+  StaticListBox.OnChangeCheck := AnimationListBoxChangeCheck;
 
   FBatchLayout := TLayout.Create(Self);
   FBatchLayout.Parent := ControlsLayout;
@@ -6289,7 +7269,7 @@ begin
   FBatchAll.Align := TAlignLayout.Left;
   FBatchAll.Width := 44;
   FBatchAll.Text := 'All';
-  FBatchAll.Hint := 'Tick or clear every animation';
+  FBatchAll.Hint := 'Tick or clear every entry';
   FBatchAll.ShowHint := True;
   FBatchAll.OnChange := BatchAllChange;
 
@@ -6332,7 +7312,7 @@ begin
   FBatchDirections.Align := TAlignLayout.Left;
   FBatchDirections.Width := 88;
   FBatchDirections.Text := 'Directions';
-  FBatchDirections.Hint := 'Export every animation in each direction set in Model, ' +
+  FBatchDirections.Hint := 'Export every animation in each direction set in Models, ' +
     'Directions, in their order';
   FBatchDirections.ShowHint := True;
   FBatchDirections.IsChecked := FSettings.ExportDirections;
@@ -6349,7 +7329,8 @@ begin
   FBatchExact.IsChecked := False;   // not kept between sessions
   FBatchExact.OnChange := BatchExactChange;
 
-  // Third row: Export; Abort is in the progress dialog
+  // Third row: Export, and Clear at its right; Abort is in the progress
+  // dialog
   Row := TLayout.Create(Self);
   Row.Parent := FBatchLayout;
   Row.Align := TAlignLayout.Top;
@@ -6357,11 +7338,21 @@ begin
   Row.Height := 26;
   Row.Position.Y := 200;   // below the second row
 
+  FClearButton := TButton.Create(Self);
+  FClearButton.Parent := Row;
+  FClearButton.Align := TAlignLayout.Right;
+  FClearButton.Width := 64;
+  FClearButton.Margins.Left := 4;
+  FClearButton.Text := 'Clear';
+  FClearButton.Hint := 'Empty the Animations list and unload the model';
+  FClearButton.ShowHint := True;
+  FClearButton.OnClick := ClearButtonClick;
+
   FExportButton := TButton.Create(Self);
   FExportButton.Parent := Row;
   FExportButton.Align := TAlignLayout.Client;
   FExportButton.Text := 'Export';
-  FExportButton.Hint := 'Save every ticked animation as chosen above';
+  FExportButton.Hint := 'Save every ticked entry as chosen above';
   FExportButton.ShowHint := True;
   FExportButton.OnClick := ExportButtonClick;
 
@@ -6457,7 +7448,7 @@ begin
 end;
 
 // Kept in settings.json; ticked, every animation is exported in each
-// direction of Animation, Directions
+// direction of Models, Directions
 procedure TMainForm.BatchDirectionsChange(Sender: TObject);
 begin
   FSettings.ExportDirections := FBatchDirections.IsChecked;
@@ -6488,7 +7479,7 @@ begin
 end;
 
 // The Exact warning, a modal sub-dialog made here, as the overscan one in
-// Animation, Animation Settings is: OK, on the right, ticks Exact, Cancel,
+// Models, Animation Settings is: OK, on the right, ticks Exact, Cancel,
 // on the left, leaves it clear; Do not show this again, between them, stops
 // it appearing again either way, kept in settings.json straight away.
 // ShowModal with a result procedure works on every platform: on the desktop
@@ -6591,15 +7582,17 @@ end;
 procedure TMainForm.SetEntryChecks(const AEntries: TArray<Integer>; const AChecked: Boolean);
 var
   Selected: Integer;
+  List: TListBox;
 begin
-  Selected := AnimationListBox.ItemIndex;
+  List := ActiveList;
+  Selected := List.ItemIndex;
   FKeepingSelection := True;
   try
     for var Entry in AEntries do
-      if (Entry >= 0) and (Entry < AnimationListBox.Count) then
-        AnimationListBox.ListItems[Entry].IsChecked := AChecked;
-    if AnimationListBox.ItemIndex <> Selected then
-      AnimationListBox.ItemIndex := Selected;
+      if (Entry >= 0) and (Entry < List.Count) then
+        List.ListItems[Entry].IsChecked := AChecked;
+    if List.ItemIndex <> Selected then
+      List.ItemIndex := Selected;
   finally
     FKeepingSelection := False;
   end;
@@ -6614,7 +7607,7 @@ begin
   if FSyncingChecks then
     Exit;
   Entries := nil;
-  for I := 0 to AnimationListBox.Count - 1 do
+  for I := 0 to ActiveList.Count - 1 do
     Entries := Entries + [I];
   FSyncingChecks := True;
   try
@@ -6628,35 +7621,55 @@ end;
 
 // A tick changed by hand: All shows whether every entry is ticked
 procedure TMainForm.AnimationListBoxChangeCheck(Sender: TObject);
-var
-  I: Integer;
-  Every: Boolean;
 begin
   if FSyncingChecks or (FBatchAll = nil) then
     Exit;
-  Every := AnimationListBox.Count > 0;
-  for I := 0 to AnimationListBox.Count - 1 do
-    if not AnimationListBox.ListItems[I].IsChecked then
+  SyncBatchAll;
+  UpdateView;   // ticked or not decides the volume shown
+end;
+
+// All ticked exactly when every entry of the list in use is, which differs
+// between the tabs' lists
+procedure TMainForm.SyncBatchAll;
+var
+  I: Integer;
+  Every, WasSyncing: Boolean;
+  List: TListBox;
+begin
+  if FBatchAll = nil then
+    Exit;
+  List := ActiveList;
+  Every := List.Count > 0;
+  for I := 0 to List.Count - 1 do
+    if not List.ListItems[I].IsChecked then
     begin
       Every := False;
       Break;
     end;
+  WasSyncing := FSyncingChecks;
   FSyncingChecks := True;
   try
     FBatchAll.IsChecked := Every;
   finally
-    FSyncingChecks := False;
+    FSyncingChecks := WasSyncing;
   end;
-  UpdateView;   // ticked or not decides the volume shown
 end;
 
-// Export is offered only when there is a model and nothing is being saved
+// Export is offered only when there is a model and nothing is being saved;
+// Clear only when the tab showing has a model to unload, and no folder is
+// being opened
 procedure TMainForm.UpdateBatchControls;
 begin
   UpdateTransportControls;
   if FExportButton = nil then
     Exit;
   FExportButton.Enabled := not Capturing;
+  if FStaticMode then
+    FClearButton.Enabled := not Capturing and not FQueueActive and
+      (Length(FStaticSlots) + Length(FStaticUnused) > 0)
+  else
+    FClearButton.Enabled := not Capturing and not FQueueActive and
+      (FAnimatedSlot.Model <> nil);
   FBatchKindBox.Enabled := not Capturing;
   FBatchAll.Enabled := not Capturing;
   // Only strips, spritesheets and atlases have metadata. An atlas always
@@ -6726,12 +7739,12 @@ begin
     Exit;
   end;
   Items := nil;
-  for I := 0 to AnimationListBox.Count - 1 do
-    if AnimationListBox.ListItems[I].IsChecked then
+  for I := 0 to ActiveList.Count - 1 do
+    if ActiveList.ListItems[I].IsChecked then
       Items := Items + [I];
   if Length(Items) = 0 then
   begin
-    ShowMessage('Tick the animations to export first.');
+    ShowMessage(Format('Tick the %s to export first.', [EntryNoun(True, False)]));
     Exit;
   end;
   FBatchKind := TSheetKind(EnsureRange(FBatchKindBox.ItemIndex, Ord(Low(TSheetKind)),
@@ -6755,12 +7768,12 @@ end;
 
 // Runs a batch: every entry of AItems, in order, saved as AKind in
 // AFolder, behind the progress dialog. With Directions ticked, each entry is
-// captured once per direction of Animation, Directions, in their order, before
+// captured once per direction of Models, Directions, in their order, before
 // the next entry. Every batch runs in two passes: the whole batch is first
 // run through once, saving nothing, only to measure how much empty border
 // its frames leave; the second pass is then the export itself, overscan as
 // chosen, with every capture's framing slid and scaled so the sprite fills
-// the frame to within the padding chosen in Animation, Animation Settings.
+// the frame to within the padding chosen in Models, Animation Settings.
 procedure TMainForm.StartBatch(const AItems: TArray<Integer>; const AKind: TSheetKind;
   const AFolder: String);
 var
@@ -6799,8 +7812,9 @@ begin
   FBatchItems := Items;
   FBatchPos := 0;
   FAtlasParts := nil;
-  // The entry selected now is selected again, and played, once it is done
-  FBatchSelected := AnimationListBox.ItemIndex;
+  // The entry selected now is selected again, and played, once it is done;
+  // on the Static tab its model is shown again too
+  FBatchSelected := ActiveList.ItemIndex;
   FBatchFolder := Folder;
   // Where the Results tab looks first
   FSettings.LastExportFolder := Folder;
@@ -6834,11 +7848,12 @@ begin
   // The progress, Abort, and at the end the outcome, in a dialog of its own
   FExportDialog := TExportProgressForm.Create(nil);
   if Length(FBatchBearings) > 0 then
-    FExportDialog.Caption := Format('Exporting %d animations in %d directions as %s',
-      [FBatchEntryCount, Length(FBatchBearings), FBatchKindBox.Items[Ord(FBatchKind)]])
+    FExportDialog.Caption := Format('Exporting %d %s in %d directions as %s',
+      [FBatchEntryCount, EntryNoun(True, False), Length(FBatchBearings),
+      FBatchKindBox.Items[Ord(FBatchKind)]])
   else
-    FExportDialog.Caption := Format('Exporting %d animations as %s',
-      [FBatchEntryCount, FBatchKindBox.Items[Ord(FBatchKind)]]);
+    FExportDialog.Caption := Format('Exporting %d %s as %s',
+      [FBatchEntryCount, EntryNoun(True, False), FBatchKindBox.Items[Ord(FBatchKind)]]);
   FExportDialog.OnAbort := ExportDialogAbort;
   FExportDialog.OnClosed := ExportDialogClosed;
   // Autoclose when done, as it was left
@@ -6956,8 +7971,8 @@ begin
   if (FBatchPos < 0) or (FBatchPos > High(FBatchItems)) then
     Exit;
   Entry := FBatchItems[FBatchPos];
-  Result := Format('Animation %d of %d: %s', [BatchEntryOrdinal(FBatchPos),
-    FBatchEntryCount, AnimationListBox.Items[Entry]]);
+  Result := Format('%s %d of %d: %s', [EntryNoun(False, True), BatchEntryOrdinal(FBatchPos),
+    FBatchEntryCount, ActiveList.Items[Entry]]);
   if FBatchPass = 1 then
     Result := 'Pass 1 of 2, measuring. ' + Result
   else if FBatchPass = 2 then
@@ -7247,7 +8262,7 @@ begin
   begin
     FAtlasFailed[Index] := True;
     FBatchErrors := FBatchErrors + [Format('%s: frames of %d x %d do not fit on a %d x %d ' +
-      'atlas page; choose a larger page size in Animation, Animation Settings, or a smaller ' +
+      'atlas page; choose a larger page size in Models, Animation Settings, or a smaller ' +
       'grab size.', [APart.Name, AFrames[0].Width, AFrames[0].Height, PageSize, PageSize])];
     Exit;
   end;
@@ -7311,7 +8326,12 @@ begin
   Inc(FAtlasPageCount, Length(Pages));
   Parts := System.Copy(FAtlasParts);
   Folder := FBatchFolder;
-  Stem := SafeFileStem(TPath.GetFileNameWithoutExtension(FSettings.LastModel));
+  // Named after the model exported, which may not be the last one loaded;
+  // an atlas of several of the Static tab's models is named "static"
+  if FStaticMode and (FBatchEntryCount > 1) then
+    Stem := 'static'
+  else
+    Stem := SafeFileStem(FModelName);
   Bearings := Copy(FBatchBearings);
   // The camera these frames were drawn with: for a 2-pass export, the
   // second pass's
@@ -7455,7 +8475,8 @@ var
   Frames: TArray<TSprite3DImage>;
   Info: TSprite3DSheetInfo;
   Ref: TSprite3DFrameRef;
-  Listed, PartIndex: Integer;
+  Model: TSprite3DModelRef;
+  Listed, PartIndex, ModelIndex: Integer;
 begin
   Pages := PlanAtlasPages([Length(ACells)], ACells[0].Image.Width, ACells[0].Image.Height,
     APageSize, ANonPowerOf2);
@@ -7472,27 +8493,53 @@ begin
   Info.Animations := nil;
   Info.AnimationFrames := nil;
   Info.AnimationTimes := nil;
+  Info.Models := nil;
   Info.Frames := nil;
   for var Cell in ACells do
   begin
     PartIndex := Cell.Part;
-    // Each animation listed once per page, with its whole length
-    Listed := -1;
-    for var K := 0 to High(Info.Animations) do
-      if Info.Animations[K] = AParts[PartIndex].Name then
-        Listed := K;
-    if Listed < 0 then
+    // Each model listed once per page, by file and name: a static model's
+    // still indexes it, an animation's frames do not
+    ModelIndex := -1;
+    for var K := 0 to High(Info.Models) do
+      if SameFileName(Info.Models[K].FileName, AParts[PartIndex].ModelFile) and
+        (Info.Models[K].Name = AParts[PartIndex].ModelName) then
+        ModelIndex := K;
+    if ModelIndex < 0 then
     begin
-      Info.Animations := Info.Animations + [AParts[PartIndex].Name];
-      // Its frames in each direction: every direction has as many
-      Info.AnimationFrames := Info.AnimationFrames + [AParts[PartIndex].Count];
-      Info.AnimationTimes := Info.AnimationTimes + [AParts[PartIndex].Time];
-      Listed := High(Info.Animations);
+      Model.Name := AParts[PartIndex].ModelName;
+      Model.FileName := AParts[PartIndex].ModelFile;
+      Info.Models := Info.Models + [Model];
+      ModelIndex := High(Info.Models);
     end;
     Frames := Frames + [Cell.Image];
-    Ref.Animation := Listed;
     Ref.Direction := AParts[PartIndex].Direction;
-    Ref.Frame := Cell.Frame;
+    if AParts[PartIndex].IsStill then
+    begin
+      // A still: no animation, the model's only frame
+      Ref.Animation := -1;
+      Ref.Model := ModelIndex;
+      Ref.Frame := 0;
+    end
+    else
+    begin
+      // Each animation listed once per page, with its whole length
+      Listed := -1;
+      for var K := 0 to High(Info.Animations) do
+        if Info.Animations[K] = AParts[PartIndex].Name then
+          Listed := K;
+      if Listed < 0 then
+      begin
+        Info.Animations := Info.Animations + [AParts[PartIndex].Name];
+        // Its frames in each direction: every direction has as many
+        Info.AnimationFrames := Info.AnimationFrames + [AParts[PartIndex].Count];
+        Info.AnimationTimes := Info.AnimationTimes + [AParts[PartIndex].Time];
+        Listed := High(Info.Animations);
+      end;
+      Ref.Animation := Listed;
+      Ref.Model := -1;
+      Ref.Frame := Cell.Frame;
+    end;
     Info.Frames := Info.Frames + [Ref];
   end;
   // With ABorders each frame has a black border in the page, but not in what
@@ -7508,6 +8555,11 @@ begin
   // Page APage; the page count and total frames are known once the last
   // page is saved
   Info.Meta := AMeta;
+  // Stills of several models have no one file: meta.model lists them all
+  if Length(Info.Models) > 1 then
+    Info.Meta.ModelFile := String.Empty
+  else if Length(Info.Models) = 1 then
+    Info.Meta.ModelFile := Info.Models[0].FileName;
   Info.Meta.Page := APage;
   Info.Meta.PageCount := 1;
   Info.Meta.TotalFrames := 0;
@@ -7528,8 +8580,12 @@ begin
         Break;
       end;
   AMetadata := MeasureSheetMetadata(TPath.ChangeExtension(AFileName, '.json'), Frames, Info);
-  Result := Format('%s (%d animations, %d frames, %d x %d)', [AFileName,
-    Length(Info.Animations), Length(Frames), Page.Width, Page.Height]);
+  if Length(Info.Animations) > 0 then
+    Result := Format('%s (%d animations, %d frames, %d x %d)', [AFileName,
+      Length(Info.Animations), Length(Frames), Page.Width, Page.Height])
+  else
+    Result := Format('%s (%d models, %d frames, %d x %d)', [AFileName,
+      Length(Info.Models), Length(Frames), Page.Width, Page.Height]);
 end;
 
 // Deletes AStem_atlas_<number>.png in AFolder, any number of digits, and the
@@ -7596,20 +8652,22 @@ begin
   UpdateBatchControls;
   // The batch left its last animation playing: the entry selected before
   // it, which it does not change, is selected and played again
-  if (FBatchSelected >= 0) and (FBatchSelected < AnimationListBox.Count) and
-    (AnimationListBox.ItemIndex <> FBatchSelected) then
+  if (FBatchSelected >= 0) and (FBatchSelected < ActiveList.Count) and
+    (ActiveList.ItemIndex <> FBatchSelected) then
   begin
     FKeepingSelection := True;
     try
-      AnimationListBox.ItemIndex := FBatchSelected;
+      ActiveList.ItemIndex := FBatchSelected;
     finally
       FKeepingSelection := False;
     end;
   end;
   FChangePlayed := False;
+  // On the Static tab this shows the selected entry's model again, as the
+  // batch showed each entry's in turn
   PlaySelectedAnimation;
-  Report := Format('Exported %d of %d animations to %s',
-    [FBatchSaved, FBatchEntryCount, FBatchFolder]);
+  Report := Format('Exported %d of %d %s to %s',
+    [FBatchSaved, FBatchEntryCount, EntryNoun(True, False), FBatchFolder]);
   if Length(FBatchBearings) > 0 then
     Report := Report + Format(', each in %d directions', [Length(FBatchBearings)]);
   if FTwoPassRun then
@@ -7688,7 +8746,7 @@ end;
 
 // Frames the camera once for every frame of ASource, for a target of
 // AWidth x AHeight, with the pan on top as for every fit. A single
-// animation saved from the list's pop-up menu, or the Animation menu on
+// animation saved from the list's pop-up menu, or the Models menu on
 // Android and iOS, is framed to its own swept volume, so it fills the
 // target as far as its own poses allow. A batch, and a static model's still, are
 // framed to the combined swept volume, which holds every pose of every
@@ -7790,32 +8848,34 @@ begin
 end;
 
 // Whether the model shown has any animations at all, whether or not
-// Animation, Animations Used lists them. A model with none is static.
+// Models, Animations Used lists them. A model with none is static.
 function TMainForm.ModelIsAnimated: Boolean;
 begin
   Result := (GorillaModel <> nil) and (Length(FAnimationNames) > 0);
 end;
 
-// Whether entry AIndex of the Animations list is an animation: every entry
-// is, for an animated model
+// Whether entry AIndex of the list in use is an animation: every entry of
+// the Animated tab's list is, while its model is the one shown
 function TMainForm.IsAnimationEntry(const AIndex: Integer): Boolean;
 begin
-  Result := ModelIsAnimated and (AIndex >= 0) and (AIndex < AnimationListBox.Count);
-end;
-
-// Whether entry AIndex of the Animations list is a static model's one
-// entry, named after its file: a still of the model as loaded
-function TMainForm.IsStillEntry(const AIndex: Integer): Boolean;
-begin
-  Result := (GorillaModel <> nil) and not ModelIsAnimated and (AIndex >= 0) and
+  Result := not FStaticMode and ModelIsAnimated and (AIndex >= 0) and
     (AIndex < AnimationListBox.Count);
 end;
 
-// What a static model's one entry is called: its file's name, without the
-// extension
+// Whether entry AIndex of the list in use is a static model, named after its
+// file: a still of the model as loaded. Every entry of the Static tab's list
+// is.
+function TMainForm.IsStillEntry(const AIndex: Integer): Boolean;
+begin
+  Result := FStaticMode and (GorillaModel <> nil) and (AIndex >= 0) and
+    (AIndex < StaticListBox.Count);
+end;
+
+// What a static model's entry is called: its slot's Name, its file's name
+// without the extension unless it was renamed for a clash
 function TMainForm.StillEntryName: String;
 begin
-  Result := TPath.GetFileNameWithoutExtension(FModelFile);
+  Result := FModelName;
   if Result = String.Empty then
     Result := 'Model';
 end;
@@ -8255,9 +9315,10 @@ begin
     ShowMessage('Open a model first.');
     Exit;
   end;
-  if AnimationListBox.Count < 1 then
+  if ActiveList.Count < 1 then
   begin
-    ShowMessage('The Animations list is empty: there is nothing to benchmark.');
+    ShowMessage(Format('The %s list is empty: there is nothing to benchmark.',
+      [EntryNoun(True, True)]));
     Exit;
   end;
   if not ChooseExportFolder(String.Empty, Root) then
@@ -8271,7 +9332,7 @@ begin
   if TickedAnimationCount < 2 then
   begin
     Entries := nil;
-    for var I := 0 to AnimationListBox.Count - 1 do
+    for var I := 0 to ActiveList.Count - 1 do
       Entries := Entries + [I];
     FSyncingChecks := True;
     try
@@ -8283,8 +9344,8 @@ begin
   end;
   // The entries every run exports, as ticked now
   FBenchmarkItems := nil;
-  for var I := 0 to AnimationListBox.Count - 1 do
-    if AnimationListBox.ListItems[I].IsChecked then
+  for var I := 0 to ActiveList.Count - 1 do
+    if ActiveList.ListItems[I].IsChecked then
       FBenchmarkItems := FBenchmarkItems + [I];
   UpdateView;
   UpdateBatchControls;
@@ -8672,8 +9733,35 @@ begin
   end;
 end;
 
+// Another tab chosen. Choosing the Static or Animated tab moves the view and
+// side panel onto it and shows its model, unless the code itself chose it;
+// while a model or a folder is loading or anything is being captured or exported, the
+// model tab in use is chosen again instead, as the model shown must not
+// change under it.
 procedure TMainForm.TabControl1Change(Sender: TObject);
+var
+  WantStatic: Boolean;
 begin
+  if not FSelectingTab and ((TabControl1.ActiveTab = StaticTab) or
+    (TabControl1.ActiveTab = AnimatedTab)) then
+  begin
+    WantStatic := TabControl1.ActiveTab = StaticTab;
+    if Capturing or (FLoadStage <> lsNone) or FQueueActive then
+    begin
+      if WantStatic <> FStaticMode then
+        // From a fresh main-loop turn, once this change has ended
+        TThread.ForceQueue(nil,
+          procedure
+          begin
+            if not MainFormGone then
+              SelectModelTabOnly(FStaticMode);
+          end);
+    end
+    else if WantStatic <> FStaticMode then
+      // MainLayout is on the tab of FStaticMode; coming back to that tab from
+      // Results or Debug leaves everything as it was
+      EnterModelTab(WantStatic);
+  end;
   if not Assigned(FResults) then
     Exit;
   // Leaving the Results tab: its zoom is written now, not only on closing
@@ -8687,6 +9775,1046 @@ begin
     end;
   FResultsShowing := TabControl1.ActiveTab = ResultsTab;
   FResults.SetActive(FResultsShowing);
+end;
+
+// The list whose entries are played, ticked and exported: the Static tab's
+// or the Animated tab's, whichever is in use
+function TMainForm.ActiveList: TListBox;
+begin
+  if FStaticMode then
+    Result := StaticListBox
+  else
+    Result := AnimationListBox;
+end;
+
+function TMainForm.EntryNoun(const APlural, ACapital: Boolean): String;
+begin
+  if FStaticMode then
+    Result := 'model'
+  else
+    Result := 'animation';
+  if APlural then
+    Result := Result + 's';
+  if ACapital then
+    Result := UpperCase(Result.Substring(0, 1)) + Result.Substring(1);
+end;
+
+// The fields for the model shown are ASlot's from here on. A model that
+// goes out of view is put in its bind pose, which stops any animation, and
+// hidden with everything drawn beside it; the one shown gets the helpers the
+// View menu asks for, made afresh for it.
+procedure TMainForm.ActivateSlot(const ASlot: TSprite3DModelSlot);
+begin
+  if (GorillaModel = ASlot.Model) and (ASlot.Model <> nil) then
+  begin
+    UpdateNoModelPanel;
+    Exit;   // shown already
+  end;
+  FreeAndNil(FPlayer);   // it plays the model going out of view
+  if GorillaModel <> nil then
+  begin
+    GorillaModel.ResetToBindPose();
+    ShowModelWithHelpers(GorillaModel, False);
+  end;
+  GorillaModel := ASlot.Model;
+  FModelBox := ASlot.Box;
+  FModelFile := ASlot.FileName;
+  FModelName := ASlot.Name;
+  FAnimationBounds := ASlot.Bounds;
+  FAnimationBoundsMeasured := ASlot.Model <> nil;
+  FAnimationNames := ASlot.Names;
+  FUsedAnimations := Copy(ASlot.Used);
+  if GorillaModel <> nil then
+  begin
+    ShowModelWithHelpers(GorillaModel, True);
+    // Its own bounds, axes, grid and Model Volume, as the View menu says;
+    // the Animation Volume follows with the next UpdateView
+    ApplyShowBounds;
+    ApplyShowAxes;
+    ApplyShowGrid;
+    ApplyShowSweep;
+  end;
+  UpdateNoModelPanel;
+end;
+
+procedure TMainForm.ActivateStaticEntry(const AIndex: Integer);
+begin
+  if Length(FStaticSlots) = 0 then
+    ActivateSlot(EmptyModelSlot)
+  else if (AIndex >= 0) and (AIndex <= High(FStaticSlots)) then
+    ActivateSlot(FStaticSlots[AIndex]);
+end;
+
+// Only the animations used can change while a model is shown, and only the
+// Animated tab's model has any
+procedure TMainForm.SaveCurrentSlot;
+begin
+  if (GorillaModel <> nil) and (GorillaModel = FAnimatedSlot.Model) then
+    FAnimatedSlot.Used := Copy(FUsedAnimations);
+end;
+
+// The form lets go of the model first if it is the one shown; the freeing is
+// FreeModelSlot's
+procedure TMainForm.FreeSlotModel(var ASlot: TSprite3DModelSlot);
+begin
+  if (ASlot.Model <> nil) and (ASlot.Model = GorillaModel) then
+  begin
+    // Nothing shown from here on
+    FreeAndNil(FPlayer);
+    ShowHelpersAfterGrab;   // nothing of it left to show again
+    ActivateSlot(EmptyModelSlot);
+  end;
+  FreeModelSlot(ASlot);
+end;
+
+procedure TMainForm.HookStaticItems;
+var
+  I: Integer;
+begin
+  for I := 0 to StaticListBox.Count - 1 do
+  begin
+    StaticListBox.ListItems[I].OnMouseUp := AnimationItemMouseUp;
+    StaticListBox.ListItems[I].OnMouseDown := AnimationItemMouseDown;
+  end;
+end;
+
+function TMainForm.AllStaticSlots: TArray<TSprite3DModelSlot>;
+var
+  Slot: TSprite3DModelSlot;
+  J: Integer;
+begin
+  Result := FStaticSlots + FStaticUnused;
+  // By Order: few enough that an insertion sort is plenty
+  for var I := 1 to High(Result) do
+  begin
+    Slot := Result[I];
+    J := I - 1;
+    while (J >= 0) and (Result[J].Order > Slot.Order) do
+    begin
+      Result[J + 1] := Result[J];
+      Dec(J);
+    end;
+    Result[J + 1] := Slot;
+  end;
+end;
+
+procedure TMainForm.StaticsUsedItemClick(Sender: TObject);
+var
+  Dialog: TAnimationsUsedForm;
+  All: TArray<TSprite3DModelSlot>;
+  Names, Used: TArray<String>;
+  Volumes: TArray<TSweptVolume>;
+begin
+  if not FStaticMode or Capturing or FQueueActive or FClashPending then
+    Exit;
+  All := AllStaticSlots;
+  if Length(All) = 0 then
+    Exit;
+  // Every static model by name, ticked if listed, with its swept volume as
+  // loaded, about its own centre of rotation
+  Names := nil;
+  Volumes := nil;
+  for var Slot in All do
+  begin
+    Names := Names + [Slot.Name];
+    Volumes := Volumes + [CalcSweptVolume(Slot.Box, Slot.Model.RotationCenter.Point, saY)];
+  end;
+  Used := nil;
+  for var Slot in FStaticSlots do
+    Used := Used + [Slot.Name];
+  Dialog := TAnimationsUsedForm.Create(nil);
+  Dialog.SetStatics(Names, Used, Volumes);
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports OK and frees itself
+  Dialog.OnAccept := StaticsUsedAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal = mrOk then
+      ApplyUsedStatics(Dialog.UsedAnimations);
+  finally
+    Dialog.Free;
+  end;
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.StaticsUsedAccept(Sender: TObject);
+begin
+  if not MainFormGone and (Sender is TAnimationsUsedForm) then
+    ApplyUsedStatics(TAnimationsUsedForm(Sender).UsedAnimations);
+end;
+{$ENDIF}
+
+// The models named in AUsed listed, in the order opened, and the rest kept,
+// hidden, out of the list. The model shown stays shown if it is still
+// listed; otherwise the first listed is shown, or none.
+procedure TMainForm.ApplyUsedStatics(const AUsed: TArray<String>);
+var
+  Selected: String;
+  Listed, Left: TArray<TSprite3DModelSlot>;
+  Keep: Boolean;
+  Index: Integer;
+begin
+  // The dialog does not block on Android and iOS: things may have moved on
+  if not FStaticMode or Capturing or FQueueActive or FClashPending then
+    Exit;
+  if (StaticListBox.ItemIndex >= 0) and (StaticListBox.ItemIndex <= High(FStaticSlots)) then
+    Selected := FStaticSlots[StaticListBox.ItemIndex].Name
+  else
+    Selected := String.Empty;
+  Listed := nil;
+  Left := nil;
+  for var Slot in AllStaticSlots do
+  begin
+    Keep := False;
+    for var Name in AUsed do
+      Keep := Keep or (Name = Slot.Name);
+    if Keep then
+      Listed := Listed + [Slot]
+    else
+    begin
+      // Left out: if it is the model shown, it makes way first
+      if Slot.Model = GorillaModel then
+        StepAsideModel;
+      Left := Left + [Slot];
+    end;
+  end;
+  FStaticSlots := Listed;
+  FStaticUnused := Left;
+  // The list afresh, with no export ticks, the selection kept if it can be
+  Index := ModelSlotNameIndex(FStaticSlots, Selected);
+  if (Index < 0) and (Length(FStaticSlots) > 0) then
+    Index := 0;
+  FRebuildingList := True;
+  try
+    StaticListBox.BeginUpdate;
+    try
+      StaticListBox.Items.Clear;
+      for var Slot in FStaticSlots do
+        StaticListBox.Items.Add(Slot.Name);
+    finally
+      StaticListBox.EndUpdate;
+    end;
+    StaticListBox.ItemIndex := Index;
+  finally
+    FRebuildingList := False;
+  end;
+  HookStaticItems;
+  FTickAnchor[True] := -1;   // a new list: no range started
+  SyncBatchAll;
+  // The model of the entry selected, or none, refitted
+  FChangePlayed := False;
+  PlaySelectedAnimation;
+  UpdateBatchControls;
+  UpdateNoModelPanel;
+  DebugMemo.Lines.Add(Format('Statics used: %d of %d', [Length(FStaticSlots),
+    Length(FStaticSlots) + Length(FStaticUnused)]));
+end;
+
+procedure TMainForm.SelectModelTabOnly(const AStatic: Boolean);
+begin
+  FSelectingTab := True;
+  try
+    if AStatic then
+      TabControl1.ActiveTab := StaticTab
+    else
+      TabControl1.ActiveTab := AnimatedTab;
+  finally
+    FSelectingTab := False;
+  end;
+end;
+
+procedure TMainForm.ShowModelTab(const AStatic: Boolean);
+begin
+  SelectModelTabOnly(AStatic);
+  EnterModelTab(AStatic);
+end;
+
+procedure TMainForm.EnterModelTab(const AStatic: Boolean);
+begin
+  // A frame count being typed on the Animated tab is kept as it leaves
+  if FStaticMode <> AStatic then
+    FinishFrameEdit(True, False);
+  SaveCurrentSlot;
+  FStaticMode := AStatic;
+  if AStatic then
+    MainLayout.Parent := StaticTab
+  else
+    MainLayout.Parent := AnimatedTab;
+  UpdateModeControls;
+  if AStatic then
+  begin
+    // The entry selected, or the first if none is
+    if (StaticListBox.ItemIndex < 0) and (StaticListBox.Count > 0) then
+    begin
+      FRebuildingList := True;
+      try
+        StaticListBox.ItemIndex := 0;
+      finally
+        FRebuildingList := False;
+      end;
+    end;
+    ActivateStaticEntry(StaticListBox.ItemIndex);
+  end
+  else
+  begin
+    ActivateSlot(FAnimatedSlot);
+    // A model loaded while the Static tab was showing is listed now
+    if FAnimatedListStale then
+    begin
+      FAnimatedListStale := False;
+      RebuildAnimationList;
+    end;
+    UpdateFrameCounts;
+  end;
+  SyncBatchAll;
+  UpdateBatchControls;
+  UpdateNoModelPanel;
+  // The selected animation played again, held if it was, or the model shown
+  // as loaded; then the volumes and the fit
+  FChangePlayed := False;
+  PlaySelectedAnimation;
+end;
+
+procedure TMainForm.UpdateModeControls;
+begin
+  AnimationListBox.Visible := not FStaticMode;
+  StaticListBox.Visible := FStaticMode;
+  if FStaticMode then
+    AnimationsLabel.Text := 'Models'
+  else
+    AnimationsLabel.Text := 'Animations';
+  FramesLabel.Visible := not FStaticMode;
+  if FTransportLayout <> nil then
+    FTransportLayout.Visible := not FStaticMode;
+  if FClearButton <> nil then
+    if FStaticMode then
+      FClearButton.Hint := 'Empty the Models list and unload every static model'
+    else
+      FClearButton.Hint := 'Empty the Animations list and unload the model';
+  if FBatchAll <> nil then
+    if FStaticMode then
+      FBatchAll.Hint := 'Tick or clear every model'
+    else
+      FBatchAll.Hint := 'Tick or clear every animation';
+  if FExportButton <> nil then
+    if FStaticMode then
+      FExportButton.Hint := 'Save every ticked model as chosen above'
+    else
+      FExportButton.Hint := 'Save every ticked animation as chosen above';
+  // AniGif and MP4 video are for animations
+  if FGifItem <> nil then
+    FGifItem.Visible := not FStaticMode;
+  if FMp4Item <> nil then
+    FMp4Item.Visible := not FStaticMode;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  if FMobileGifItem <> nil then
+    FMobileGifItem.Enabled := not FStaticMode;
+  if FMobileMp4Item <> nil then
+    FMobileMp4Item.Enabled := not FStaticMode;
+  {$ENDIF}
+  UpdateBatchKindItems;
+  UpdateListFileItems;
+end;
+
+// The drop-down's items, in TSheetKind's order so the item index is the
+// kind: AniGif and MP4 video come last, so leaving them off keeps the rest
+// where they are
+procedure TMainForm.UpdateBatchKindItems;
+const
+  CAPTIONS: array[TSheetKind] of String = ('Sprite strip', 'Spritesheet', 'Texture Atlas',
+    'AniGif', 'MP4 video');
+var
+  Wanted: Integer;
+  WasSyncing: Boolean;
+begin
+  if FBatchKindBox = nil then
+    Exit;
+  if FStaticMode then
+    Wanted := Ord(skAtlas) + 1
+  else if FVideoChecked and VideoAvailable then
+    Wanted := Ord(skMp4) + 1
+  else
+    Wanted := Ord(skGif) + 1;
+  WasSyncing := FSyncingChecks;
+  FSyncingChecks := True;   // BatchKindChange keeps nothing meanwhile
+  try
+    while FBatchKindBox.Items.Count > Wanted do
+      FBatchKindBox.Items.Delete(FBatchKindBox.Items.Count - 1);
+    while FBatchKindBox.Items.Count < Wanted do
+      FBatchKindBox.Items.Add(CAPTIONS[TSheetKind(FBatchKindBox.Items.Count)]);
+    // The choice made, while it is offered
+    if FBatchKindIndex < FBatchKindBox.Items.Count then
+      FBatchKindBox.ItemIndex := FBatchKindIndex
+    else
+      FBatchKindBox.ItemIndex := Ord(skStrip);
+  finally
+    FSyncingChecks := WasSyncing;
+  end;
+  UpdateBatchControls;
+end;
+
+procedure TMainForm.ClearButtonClick(Sender: TObject);
+var
+  Name: String;
+begin
+  if Capturing or (FLoadStage <> lsNone) or FOffscreen.Busy or FQueueActive or
+    FClashPending then
+    Exit;
+  if FStaticMode then
+  begin
+    if Length(FStaticSlots) + Length(FStaticUnused) = 0 then
+      Exit;
+    // Every static model goes, with its entry
+    FreeAndNil(FPlayer);
+    for var I := 0 to High(FStaticSlots) do
+      FreeSlotModel(FStaticSlots[I]);
+    FStaticSlots := nil;
+    FTickAnchor[True] := -1;
+    // Those Statics Used left out go too
+    for var I := 0 to High(FStaticUnused) do
+      FreeModelSlot(FStaticUnused[I]);
+    FStaticUnused := nil;
+    FRebuildingList := True;
+    try
+      StaticListBox.Items.Clear;
+    finally
+      FRebuildingList := False;
+    end;
+    ActivateStaticEntry(-1);   // none: the fields are emptied
+    SyncBatchAll;
+    FChangePlayed := False;
+    PlaySelectedAnimation;
+    UpdateBatchControls;
+    UpdateNoModelPanel;
+    Caption := ProjectionCaption;
+    // Not loaded at the next start: the last of either kind becomes the
+    // model with animations, if there is one remembered
+    FSettings.LastStaticModel := String.Empty;
+    if not SameFileName(FSettings.LastModel, FSettings.LastAnimatedModel) then
+      FSettings.LastModel := FSettings.LastAnimatedModel;
+    SaveLastModels;
+    DebugMemo.Lines.Add('Cleared the Models list');
+    Exit;
+  end;
+  if FAnimatedSlot.Model = nil then
+    Exit;
+  Name := FAnimatedSlot.FileName;
+  FinishFrameEdit(False, True);
+  FreeAndNil(FPlayer);
+  FreeSlotModel(FAnimatedSlot);
+  FAnimatedSlot := EmptyModelSlot;
+  // Its frame counts typed in go with it
+  FFrameOverrides.Clear;
+  ActivateSlot(FAnimatedSlot);   // none: the fields are emptied
+  FRebuildingList := True;
+  try
+    AnimationListBox.Items.Clear;
+  finally
+    FRebuildingList := False;
+  end;
+  RebuildAnimationList;
+  SyncBatchAll;
+  FChangePlayed := False;
+  PlaySelectedAnimation;
+  UpdateBatchControls;
+  UpdateNoModelPanel;
+  Caption := ProjectionCaption;
+  // Not loaded at the next start: the last of either kind becomes the last
+  // static model, if there is one remembered
+  FSettings.LastAnimatedModel := String.Empty;
+  if not SameFileName(FSettings.LastModel, FSettings.LastStaticModel) then
+    FSettings.LastModel := FSettings.LastStaticModel;
+  SaveLastModels;
+  DebugMemo.Lines.Add('Cleared ' + Name);
+end;
+
+// The models remembered for the next start, written at once rather than
+// with the view state as the form closes, so a crash cannot bring back a
+// tab that was cleared
+procedure TMainForm.SaveLastModels;
+begin
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+end;
+
+function TMainForm.ShowLoadedModel(const AFileName: String): Boolean;
+var
+  Index: Integer;
+begin
+  Result := False;
+  if (FAnimatedSlot.Model <> nil) and SameFileName(ExpandFileName(FAnimatedSlot.FileName),
+    ExpandFileName(OSFriendlyPath(AFileName))) then
+  begin
+    ShowModelTab(False);
+    Exit(True);
+  end;
+  Index := ModelSlotIndex(FStaticSlots, AFileName);
+  if Index < 0 then
+    Exit;
+  FRebuildingList := True;
+  try
+    StaticListBox.ItemIndex := Index;
+  finally
+    FRebuildingList := False;
+  end;
+  ShowModelTab(True);
+  Result := True;
+end;
+
+// The model shown makes way: the animations used are kept in its slot, and
+// it is put in its bind pose, stopping any animation, and hidden with what
+// is drawn beside it. Nothing is shown until another slot is activated.
+procedure TMainForm.StepAsideModel;
+begin
+  FreeAndNil(FPlayer);   // its animation goes with the model it played
+  SaveCurrentSlot;
+  if GorillaModel <> nil then
+  begin
+    GorillaModel.ResetToBindPose();
+    ShowModelWithHelpers(GorillaModel, False);
+  end;
+  GorillaModel := nil;
+end;
+
+// On the Animated tab the new model is shown at once; on the Static tab it
+// waits, hidden, for ApplyPendingTab once loading has finished, so the tab
+// never changes under a loading dialog
+procedure TMainForm.PlaceAnimatedSlot(const ASlot: TSprite3DModelSlot);
+begin
+  if not FStaticMode then
+    StepAsideModel;
+  // Replaces the Animated tab's model; frame counts typed in were for the
+  // old model's animations
+  FreeSlotModel(FAnimatedSlot);
+  FAnimatedSlot := ASlot;
+  FFrameOverrides.Clear;
+  FinishFrameEdit(False, True);
+  FRebuildingList := True;
+  try
+    AnimationListBox.Items.Clear;
+  finally
+    FRebuildingList := False;
+  end;
+  if FStaticMode then
+  begin
+    // Listed when the Animated tab is shown, as the list is made from the
+    // model shown
+    FAnimatedListStale := True;
+    FPendingTab := True;
+    FPendingTabStatic := False;
+  end
+  else
+  begin
+    FPendingTab := False;
+    EnterModelTab(False);
+    RebuildAnimationList;
+    FAnimatedListStale := False;
+  end;
+  // The angles as the dials have them, unless the camera is locked
+  ApplyAngles;
+end;
+
+// On the Static tab the new model is shown at once; on the Animated tab it
+// waits, hidden and selected, for ApplyPendingTab once loading has
+// finished, so the tab never changes under a loading dialog
+procedure TMainForm.PlaceStaticSlot(const ASlot: TSprite3DModelSlot; const AReplace: Integer);
+var
+  Index: Integer;
+  Slot: TSprite3DModelSlot;
+begin
+  if FStaticMode then
+    StepAsideModel;
+  Slot := ASlot;
+  FRebuildingList := True;
+  try
+    if (AReplace >= 0) and (AReplace <= High(FStaticSlots)) then
+    begin
+      Index := AReplace;
+      // In the place, and the order, of the one it replaces
+      Slot.Order := FStaticSlots[Index].Order;
+      FreeSlotModel(FStaticSlots[Index]);
+      FStaticSlots[Index] := Slot;
+      StaticListBox.ListItems[Index].Text := Slot.Name;
+    end
+    else
+    begin
+      // Opened now, unless it had an order already, from before Statics Used
+      // left it out
+      if Slot.Order <= 0 then
+      begin
+        Inc(FStaticOrder);
+        Slot.Order := FStaticOrder;
+      end;
+      FStaticSlots := FStaticSlots + [Slot];
+      Index := High(FStaticSlots);
+      StaticListBox.Items.Add(Slot.Name);
+    end;
+    StaticListBox.ItemIndex := Index;
+  finally
+    FRebuildingList := False;
+  end;
+  HookStaticItems;
+  if FStaticMode then
+  begin
+    FPendingTab := False;
+    EnterModelTab(True);
+  end
+  else
+  begin
+    FPendingTab := True;
+    FPendingTabStatic := True;
+  end;
+  // The angles as the dials have them, unless the camera is locked
+  ApplyAngles;
+end;
+
+// The question, unless the folder's clashes are all answered alike already.
+// On the desktop the dialog blocks; on Android and iOS NameClashChosen takes
+// the answer. Either way loading goes on once it is applied.
+procedure TMainForm.AskNameClash;
+var
+  Dialog: TNameClashForm;
+  All: TArray<TSprite3DModelSlot>;
+  Listed: Integer;
+  Choice: TNameClashChoice;
+begin
+  // The model of that name, listed or left out by Statics Used
+  All := AllStaticSlots;
+  Listed := ModelSlotNameIndex(All, FClashSlot.Name);
+  if Listed < 0 then
+    // Cleared meanwhile: nothing clashes now, and it is added as it is
+    Choice := ncRename
+  else if FClashAllSet and FQueueActive then
+    Choice := FClashAll
+  else
+  begin
+    Dialog := TNameClashForm.Create(nil);
+    Dialog.Prepare(All[Listed].Name, All[Listed].FileName, FClashSlot.FileName,
+      UniqueModelName(FClashSlot.Name, All), FQueueActive);
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    Dialog.OnChosen := NameClashChosen;
+    Dialog.ShowAndFree;
+    Exit;
+    {$ELSE}
+    try
+      Dialog.ShowModal;
+      Choice := Dialog.Choice;
+      if Dialog.ApplyToAll then
+      begin
+        FClashAllSet := True;
+        FClashAll := Choice;
+      end;
+    finally
+      Dialog.Free;
+    end;
+    {$ENDIF}
+  end;
+  ApplyNameClash(Choice);
+  ContinueLoading;
+end;
+
+procedure TMainForm.NameClashChosen(Sender: TObject);
+var
+  Dialog: TNameClashForm;
+begin
+  if MainFormGone or not (Sender is TNameClashForm) then
+    Exit;
+  Dialog := TNameClashForm(Sender);
+  if Dialog.ApplyToAll then
+  begin
+    FClashAllSet := True;
+    FClashAll := Dialog.Choice;
+  end;
+  ApplyNameClash(Dialog.Choice);
+  ContinueLoading;
+end;
+
+procedure TMainForm.ApplyNameClash(const AChoice: TNameClashChoice);
+var
+  Slot: TSprite3DModelSlot;
+  Listed, Unused: Integer;
+begin
+  if not FClashPending then
+    Exit;
+  Slot := FClashSlot;
+  FClashPending := False;
+  FClashSlot := EmptyModelSlot;
+  Listed := ModelSlotNameIndex(FStaticSlots, Slot.Name);
+  Unused := ModelSlotNameIndex(FStaticUnused, Slot.Name);
+  case AChoice of
+    ncReplace:
+      begin
+        // Listed under the name already there, whatever its case; one that
+        // Statics Used left out is freed, and the new one listed in its order
+        if Listed >= 0 then
+          Slot.Name := FStaticSlots[Listed].Name
+        else if Unused >= 0 then
+        begin
+          Slot.Name := FStaticUnused[Unused].Name;
+          Slot.Order := FStaticUnused[Unused].Order;
+          FreeModelSlot(FStaticUnused[Unused]);
+          Delete(FStaticUnused, Unused, 1);
+        end;
+        PlaceStaticSlot(Slot, Listed);
+        Inc(FQueueStatic);
+        DebugMemo.Lines.Add(Format('"%s" replaced with %s', [Slot.Name, Slot.FileName]));
+      end;
+    ncRename:
+      begin
+        Slot.Name := UniqueModelName(Slot.Name, AllStaticSlots);
+        PlaceStaticSlot(Slot, -1);
+        Inc(FQueueStatic);
+        DebugMemo.Lines.Add(Format('Added %s as "%s"', [Slot.FileName, Slot.Name]));
+      end;
+  else
+    begin
+      Inc(FQueueIgnored);
+      DebugMemo.Lines.Add(Format('Ignored %s: "%s" is listed already', [Slot.FileName,
+        Slot.Name]));
+      FreeModelSlot(Slot);
+      Exit;
+    end;
+  end;
+  // A locked camera stays where it is, whatever the new model's size
+  if not CameraLocked then
+    FitModel;
+  // Asked after a single load's dialog has gone: its tab now, if need be;
+  // a folder's waits for the folder
+  if not FLoadDialogHeld then
+    ApplyPendingTab;
+end;
+
+procedure TMainForm.UpdateOpenDirectoryItem;
+begin
+  OpenDirectoryMenuItem.Enabled := not FScanning and not FQueueActive;
+end;
+
+procedure TMainForm.OpenDirectoryMenuItemClick(Sender: TObject);
+var
+  Dialog: TOpenDirectoryForm;
+begin
+  if FScanning or FQueueActive or Capturing or (FLoadStage <> lsNone) then
+    Exit;
+  Dialog := TOpenDirectoryForm.Create(nil);
+  // The folder searched last, or the model shown's
+  if FSettings.OpenDirectoryFolder <> String.Empty then
+    Dialog.Folder := FSettings.OpenDirectoryFolder
+  else if FModelFile <> String.Empty then
+    Dialog.Folder := ExtractFileDir(FModelFile);
+  Dialog.AllSpec := AllModelsFileSpec;
+  Dialog.Spec := FSettings.OpenDirectorySpec;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog reports Open and frees itself
+  Dialog.OnAccept := OpenDirectoryAccept;
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    FSettings.OpenDirectoryFolder := Dialog.Folder;
+    FSettings.OpenDirectorySpec := Dialog.Spec;
+  finally
+    Dialog.Free;
+  end;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  StartFolderScan(FSettings.OpenDirectoryFolder, FSettings.OpenDirectorySpec);
+  {$ENDIF}
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+procedure TMainForm.OpenDirectoryAccept(Sender: TObject);
+var
+  Dialog: TOpenDirectoryForm;
+begin
+  if MainFormGone or not (Sender is TOpenDirectoryForm) then
+    Exit;
+  Dialog := TOpenDirectoryForm(Sender);
+  FSettings.OpenDirectoryFolder := Dialog.Folder;
+  FSettings.OpenDirectorySpec := Dialog.Spec;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  StartFolderScan(FSettings.OpenDirectoryFolder, FSettings.OpenDirectorySpec);
+end;
+{$ENDIF}
+
+// The search runs on a worker thread, into a list of its own; the result is
+// handed back to the main thread, which then opens the files. The window
+// stays responsive meanwhile, and File, Open Directory is disabled.
+procedure TMainForm.StartFolderScan(const AFolder, ASpec: String);
+var
+  Folder, Spec: String;
+begin
+  if FScanning or FQueueActive then
+    Exit;
+  Folder := AFolder;
+  Spec := ASpec;
+  FScanning := True;
+  FQueueFolder := Folder;
+  FQueueSpec := Spec;
+  UpdateOpenDirectoryItem;
+  Caption := Format('Searching %s for %s...', [Folder, Spec]);
+  DebugMemo.Lines.Add(Format('Open Directory: searching %s and its sub-folders for %s',
+    [Folder, Spec]));
+  TTask.Run(
+    procedure
+    var
+      Found: TList<String>;
+      Files: TArray<String>;
+      Error: String;
+    begin
+      Files := nil;
+      Error := String.Empty;
+      Found := TList<String>.Create;
+      try
+        try
+          FindFiles(Folder, Spec, Found);
+          Files := Found.ToArray;
+        except
+          on E: Exception do
+            Error := E.Message;
+        end;
+      finally
+        Found.Free;
+      end;
+      TThread.Queue(nil,
+        procedure
+        begin
+          if MainFormGone then
+            Exit;
+          FScanning := False;
+          Caption := ProjectionCaption;
+          if Error <> String.Empty then
+          begin
+            UpdateOpenDirectoryItem;
+            DebugMemo.Lines.Add('Open Directory: ' + Error);
+            ShowMessage('Can''t search ' + Folder + sLineBreak + Error);
+            Exit;
+          end;
+          StartLoadQueue(Files);
+        end);
+    end);
+end;
+
+procedure TMainForm.StartLoadQueue(const AFiles: TArray<String>);
+begin
+  FLoadQueue.Clear;
+  for var FileName in AFiles do
+    if IsModelFile(FileName) then
+      FLoadQueue.Add(FileName);
+  DebugMemo.Lines.Add(Format('Open Directory: found %d model files matching %s in %s',
+    [FLoadQueue.Count, FQueueSpec, FQueueFolder]));
+  if FLoadQueue.Count = 0 then
+  begin
+    UpdateOpenDirectoryItem;
+    ShowMessage(Format('No model files matching %s were found in %s or its sub-folders.',
+      [FQueueSpec, FQueueFolder]));
+    Exit;
+  end;
+  FQueueTotal := FLoadQueue.Count;
+  FQueueDone := 0;
+  FQueueStatic := 0;
+  FQueueAnimated := 0;
+  FQueueSkipped := 0;
+  FQueueIgnored := 0;
+  FQueueFailed := nil;
+  FQueueAborted := False;
+  FClashAllSet := False;
+  FQueueActive := True;
+  UpdateOpenDirectoryItem;
+  UpdateBatchControls;
+  TThread.ForceQueue(nil, RunLoadQueue);
+end;
+
+procedure TMainForm.RunLoadQueue;
+var
+  Dialog: TModelLoadForm;
+begin
+  if MainFormGone or not FQueueActive then
+    Exit;
+  Dialog := TModelLoadForm.Create(nil);
+  FLoadDialog := Dialog;
+  FLoadDialogHeld := True;
+  Dialog.OnAbort := LoadDialogAbort;
+  Dialog.SetModelName(Format('%d models from %s', [FQueueTotal,
+    ExtractFileName(ExcludeTrailingPathDelimiter(FQueueFolder))]));
+  Dialog.SetProgress(0, 'Starting...');
+  // The first file from the dialog's own loop
+  TThread.ForceQueue(nil, LoadNextQueued);
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // ShowModal cannot block here: the dialog frees itself as it closes, and
+  // CloseLoadQueue reports
+  Dialog.ShowAndFree;
+  {$ELSE}
+  try
+    Dialog.ShowModal;
+  finally
+    // ShowModal returns once CloseLoadQueue has closed the dialog; if it
+    // ever returned sooner, the load under way is dropped here
+    FLoadDialogHeld := False;
+    FLoadDialog := nil;
+    if FLoadStage <> lsNone then
+      EndLoad(String.Empty);
+    Dialog.Free;
+  end;
+  FinishLoadQueue;
+  {$ENDIF}
+end;
+
+procedure TMainForm.CloseLoadQueue;
+var
+  Dialog: TModelLoadForm;
+begin
+  Dialog := FLoadDialog;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // It frees itself as it closes; nothing else follows it to report
+  FLoadDialogHeld := False;
+  FLoadDialog := nil;
+  if Dialog <> nil then
+    Dialog.Finish;
+  FinishLoadQueue;
+  {$ELSE}
+  // ShowModal returns in RunLoadQueue, which reports
+  if Dialog <> nil then
+    Dialog.Finish;
+  {$ENDIF}
+end;
+
+procedure TMainForm.ContinueLoading;
+var
+  Pending: String;
+begin
+  // A folder's next file first; a model asked for meanwhile waits for the
+  // folder to be done
+  if FQueueActive then
+  begin
+    TThread.ForceQueue(nil, LoadNextQueued);
+    Exit;
+  end;
+  Pending := FPendingModel;
+  FPendingModel := String.Empty;
+  if Pending <> String.Empty then
+    TThread.ForceQueue(nil,
+      procedure
+      begin
+        if not MainFormGone then
+          SwitchModel(Pending);
+      end);
+end;
+
+procedure TMainForm.LoadNextQueued;
+var
+  FileName: String;
+begin
+  if MainFormGone or not FQueueActive then
+    Exit;
+  if (FLoadStage <> lsNone) or FClashPending then
+    Exit;   // a load or a question under way goes on to the next itself
+  if FQueueAborted or (FLoadQueue.Count = 0) or not FLoadDialogHeld then
+  begin
+    CloseLoadQueue;
+    Exit;
+  end;
+  FileName := FLoadQueue[0];
+  FLoadQueue.Delete(0);
+  Inc(FQueueDone);
+  FLoadInFolder := True;
+  if not FileExists(FileName) then
+  begin
+    QueuedLoadFailed('Not found: ' + FileName);
+    Exit;
+  end;
+  if Capturing then
+  begin
+    QueuedLoadFailed('Not opened, as an animation was being saved: ' + FileName);
+    Exit;
+  end;
+  // In the dialog held open for the folder
+  BeginLoad(FileName);
+end;
+
+procedure TMainForm.QueuedLoadFailed(const AReason: String);
+begin
+  FQueueFailed := FQueueFailed + [AReason];
+  DebugMemo.Lines.Add(AReason);
+  ContinueLoading;
+end;
+
+procedure TMainForm.FinishLoadQueue;
+var
+  Report: String;
+  NotTried: Integer;
+begin
+  NotTried := FLoadQueue.Count;
+  FLoadQueue.Clear;
+  FQueueActive := False;
+  FClashAllSet := False;
+  UpdateOpenDirectoryItem;
+  UpdateBatchControls;
+  Report := Format('Opened %d of the %d model files matching %s in %s: %d on the Static ' +
+    'tab and %d on the Animated tab.', [FQueueStatic + FQueueAnimated, FQueueTotal, FQueueSpec,
+    FQueueFolder, FQueueStatic, FQueueAnimated]);
+  if FQueueSkipped > 0 then
+    Report := Report + sLineBreak + Format('Skipped %d with animations, as only one model ' +
+      'with animations can be open.', [FQueueSkipped]);
+  if FQueueIgnored > 0 then
+    Report := Report + sLineBreak + Format('Ignored %d whose names were listed already.',
+      [FQueueIgnored]);
+  if Length(FQueueFailed) > 0 then
+    Report := Report + sLineBreak + Format('%d could not be opened:', [Length(FQueueFailed)]) +
+      sLineBreak + String.Join(sLineBreak, FQueueFailed);
+  if FQueueAborted then
+    Report := Report + sLineBreak + Format('Stopped by Abort: %d not tried.', [NotTried]);
+  DebugMemo.Lines.Add('Open Directory: ' + Report);
+  // Static models were opened: the first in the Models list is selected, and
+  // shown if the Static tab is, or is about to be
+  if (FQueueStatic > 0) and (StaticListBox.Count > 0) and (StaticListBox.ItemIndex <> 0) then
+  begin
+    FRebuildingList := True;
+    try
+      StaticListBox.ItemIndex := 0;
+    finally
+      FRebuildingList := False;
+    end;
+    if FStaticMode and not FPendingTab then
+    begin
+      FChangePlayed := False;
+      PlaySelectedAnimation;
+    end;
+  end;
+  // The tab of the last model opened, now the dialog has gone; the outcome
+  // is in the Debug tab only, so nothing more pops up
+  ApplyPendingTab;
+  // A model asked for while the folder was opened
+  ContinueLoading;
+end;
+
+procedure TMainForm.ApplyPendingTab;
+begin
+  if not FPendingTab or MainFormGone then
+    Exit;
+  FPendingTab := False;
+  ShowModelTab(FPendingTabStatic);
+  // A locked camera stays where it is, whatever the model's size
+  if not CameraLocked then
+    FitModel;
 end;
 
 // Whether exported frames get a black border: only while debugging is on
@@ -8736,18 +10864,43 @@ var
     Result.Rows := ARows;
     Result.Origin := AOrigin;
     Result.OriginKnown := AOriginKnown;
-    Result.Animations := [AAnimation];
-    Result.AnimationFrames := [PerDirection];
-    // Its own length, whatever number of frames it was saved at
-    Result.AnimationTimes := [ACycleSeconds];
     Result.Meta := AMeta;   // one image: page 1 of 1
-    // Frame I is frame I mod PerDirection of direction I div PerDirection
+    // The one model it was made from
+    SetLength(Result.Models, 1);
+    Result.Models[0].Name := AMeta.ModelName;
+    Result.Models[0].FileName := AMeta.ModelFile;
+    if AMeta.IsAnimated then
+    begin
+      Result.Animations := [AAnimation];
+      Result.AnimationFrames := [PerDirection];
+      // Its own length, whatever number of frames it was saved at
+      Result.AnimationTimes := [ACycleSeconds];
+    end
+    else
+    begin
+      // A static model has no animations: its stills index the model
+      Result.Animations := nil;
+      Result.AnimationFrames := nil;
+      Result.AnimationTimes := nil;
+    end;
+    // Frame I is frame I mod PerDirection of direction I div PerDirection;
+    // a static model's still is frame 0 of its direction
     SetLength(Result.Frames, Length(AFrames));
     for var I := 0 to High(AFrames) do
     begin
-      Result.Frames[I].Animation := 0;
+      if AMeta.IsAnimated then
+      begin
+        Result.Frames[I].Animation := 0;
+        Result.Frames[I].Model := -1;
+        Result.Frames[I].Frame := I mod PerDirection;
+      end
+      else
+      begin
+        Result.Frames[I].Animation := -1;
+        Result.Frames[I].Model := 0;
+        Result.Frames[I].Frame := 0;
+      end;
       Result.Frames[I].Direction := I div PerDirection;
-      Result.Frames[I].Frame := I mod PerDirection;
     end;
   end;
 

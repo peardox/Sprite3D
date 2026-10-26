@@ -12,7 +12,10 @@
 //** through LoadAnimationBoundsCache and SaveAnimationBoundsCache.
 //**
 //** Loading a model through LoadModelFile also registers Gorilla3D's loaders for glTF, FBX,
-//** OBJ, USD, Collada, STL and PLY files, as this unit uses them.
+//** OBJ, USD, Collada, STL and PLY files, as this unit uses them. Each model the application
+//** keeps loaded, on its Static or Animated tab, is held in a TSprite3DModelSlot, made with
+//** NewModelSlot, found with ModelSlotIndex and freed with FreeModelSlot; ShowModelWithHelpers
+//** shows or hides one with everything drawn beside it.
 //**
 //** All routines are for the main thread, except the members of IModelFileRead.
 unit Sprite3DHelpers;
@@ -36,7 +39,10 @@ unit Sprite3DHelpers;
 
   Loading a model through LoadModelFile also registers Gorilla3D's loaders
   for glTF, FBX, OBJ, USD, Collada, STL and PLY files, as this unit uses
-  them.
+  them. Each model the application keeps loaded, on its Static or Animated
+  tab, is held in a TSprite3DModelSlot, made with NewModelSlot, found with
+  ModelSlotIndex and freed with FreeModelSlot; ShowModelWithHelpers shows
+  or hides one with everything drawn beside it.
 
   All routines are for the main thread, except the members of
   IModelFileRead.
@@ -90,24 +96,24 @@ const
   //** The radius is half the diagonal of the model's bounding box, so a pan of 1 moves the
   //** orbit centre out to where the model's farthest corner was.
   PAN_LIMIT = 2.0;
-  //** @abstract(The lowest frame rate Animation, Animation Settings offers for saved
+  //** @abstract(The lowest frame rate Models, Animation Settings offers for saved
   //** animations, in frames per second.)
   ANIMATION_FPS_MIN = 1;
-  //** @abstract(The highest frame rate Animation, Animation Settings offers for saved
+  //** @abstract(The highest frame rate Models, Animation Settings offers for saved
   //** animations, in frames per second.)
   //**
   //** Gorilla bakes animations at 60 frames a second on desktop, so a higher rate would only
   //** repeat frames.
   ANIMATION_FPS_MAX = 60;
-  //** @abstract(The frame rate saved animations use until Animation, Animation Settings changes
+  //** @abstract(The frame rate saved animations use until Models, Animation Settings changes
   //** it.)
   ANIMATION_FPS_DEFAULT = 30;
-  //** @abstract(The smallest overscan factor Animation, Animation Settings offers.)
+  //** @abstract(The smallest overscan factor Models, Animation Settings offers.)
   OVERSCAN_FACTOR_MIN = 2;
-  //** @abstract(The largest overscan factor Animation, Animation Settings offers, before the
+  //** @abstract(The largest overscan factor Models, Animation Settings offers, before the
   //** GPU's own limit for the grab size.)
   OVERSCAN_FACTOR_MAX = 8;
-  //** @abstract(The overscan factor Animation, Animation Settings shows until another is
+  //** @abstract(The overscan factor Models, Animation Settings shows until another is
   //** chosen.)
   OVERSCAN_FACTOR_DEFAULT = 4;
   //** @abstract(The lowest frame rate File, Settings lets the view be drawn at.)
@@ -118,23 +124,23 @@ const
   //** @abstract(The frame rate the view is drawn at until File, Settings changes it, and the
   //** most it offers where the display's refresh rate is not known.)
   VIEW_FPS_DEFAULT = 60;
-  //** @abstract(The numbers of directions Animation, Directions offers: 1, 2, and every
+  //** @abstract(The numbers of directions Models, Directions offers: 1, 2, and every
   //** multiple of 4 or 6 up to 64, smallest first.)
   DIRECTION_COUNTS: array[0..22] of Integer =
     (1, 2, 4, 6, 8, 12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 44, 48, 52, 54, 56, 60, 64);
-  //** @abstract(The number of directions until Animation, Directions changes it.)
+  //** @abstract(The number of directions until Models, Directions changes it.)
   DIRECTION_COUNT_DEFAULT = 8;
   //** @abstract(The largest a texture atlas page may be, each way, as Animation, Animation
   //** Settings offers it: 1k, 2k, 4k, 8k and 16k pixels.)
   ATLAS_PAGE_SIZES: array[0..4] of Integer = (1024, 2048, 4096, 8192, 16384);
-  //** @abstract(The texture atlas page size until Animation, Animation Settings changes it.)
+  //** @abstract(The texture atlas page size until Models, Animation Settings changes it.)
   ATLAS_PAGE_SIZE_DEFAULT = 4096;
   //** @abstract(The @code(format) a directions file names itself with, so another JSON file
   //** is not taken for one.)
   DIRECTIONS_FILE_FORMAT = 'Sprite3D directions';
   //** @abstract(The newest directions file layout this version writes and reads.)
   DIRECTIONS_FILE_VERSION = 1;
-  //** @abstract(The extension Animation, Directions gives the directions files it exports.)
+  //** @abstract(The extension Models, Directions gives the directions files it exports.)
   DIRECTIONS_FILE_EXTENSION = '.json';
   //** @abstract(The extension of Sprite3D project files: credits, the model, directions and
   //** the Animations list, which File, Save Project saves and the system opens with
@@ -186,8 +192,10 @@ type
   //** @abstract(What the application loads when it starts and no file was asked for.)
   //**
   //** @code(saNone) loads nothing; @code(saDefaultModel) loads the sample model;
-  //** @code(saLastModel) loads the model last opened, or the sample model if that file has
-  //** gone. A file the operating system asks the application to open always comes first.
+  //** @code(saLastModel) loads the models last opened on the Static and Animated tabs, the one
+  //** used last last, or the sample model if they have gone; after Clear has emptied both
+  //** tabs it loads nothing. A file the operating system asks the application to open always
+  //** comes first.
   TSprite3DStartupAction = (saNone, saDefaultModel, saLastModel);
 
   //** @abstract(The application's look: FMX's own default style, or one of the FMX styles
@@ -240,6 +248,38 @@ type
   //** declares the cast. Because it is in the interface section, other units can use it too.
   TControl3DAccess = class(TControl3D);
 
+  //** @abstract(One loaded model and what was measured of it as it loaded: the animated
+  //** model of the Animated tab, or one entry of the Static tab's Models list.)
+  //**
+  //** The application keeps every model it has loaded in the viewport, hidden while another
+  //** is shown, each with one of these. Make one with NewModelSlot, find one by file with
+  //** ModelSlotIndex, and free its model with FreeModelSlot. A record with Model nil stands
+  //** for no model; EmptyModelSlot returns one.
+  TSprite3DModelSlot = record
+    //** @abstract(The model, parented to the viewport; nil for none.)
+    Model: TGorillaModel;
+    //** @abstract(The file it was loaded from, expanded.)
+    FileName: String;
+    //** @abstract(The name it is listed and exported by: its file's name without the
+    //** extension, unless that was taken and it was renamed with UniqueModelName.)
+    Name: String;
+    //** @abstract(Its own bounds, measured as it loaded, before any helper was added.)
+    Box: TBoundingBox;
+    //** @abstract(Each animation's bounds over all its poses; empty for a static model.)
+    Bounds: TArray<TAnimationBounds>;
+    //** @abstract(Every animation the model has, in its order; empty for a static model.)
+    Names: TArray<String>;
+    //** @abstract(The animations Models, Animations Used ticks; every one, as loaded.)
+    Used: TArray<String>;
+    //** @abstract(Whether the model has animations: True for the Animated tab's model, False
+    //** for the Static tab's.)
+    IsAnimated: Boolean;
+    //** @abstract(When it was first listed, counting up from 1, so the static models can be
+    //** shown in the order they were opened whether or not Models, Statics Used lists them;
+    //** 0 until it is listed.)
+    Order: Integer;
+  end;
+
   //** @abstract(The application's settings, kept between sessions in settings.json.)
   //**
   //** Create it, call Load once at start-up, and call Save after changing a setting. The file
@@ -275,6 +315,8 @@ type
     FPanZ: Single;
     FStartupAction: TSprite3DStartupAction;
     FLastModel: String;
+    FLastAnimatedModel: String;
+    FLastStaticModel: String;
     FTheme: String;
     FGpuMode: TSprite3DGpuMode;
     FOpenWith: Boolean;
@@ -302,6 +344,8 @@ type
     FDebugSaveOversampled: Boolean;
     FExportAutoClose: Boolean;
     FLastExportFolder: String;
+    FOpenDirectoryFolder: String;
+    FOpenDirectorySpec: String;
     FShowOverscanWarning: Boolean;
     FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
@@ -393,7 +437,7 @@ type
     //** Stored as @code(iconFolder) in settings.json.
     property IconFolder: String read FIconFolder write FIconFolder;
     //** @abstract(The folder a directions file was last exported to or imported from, where
-    //** the next Export or Import in Animation, Directions opens; empty until one is.)
+    //** the next Export or Import in Models, Directions opens; empty until one is.)
     //**
     //** Stored as @code(directionsFolder) in settings.json.
     property DirectionsFolder: String read FDirectionsFolder write FDirectionsFolder;
@@ -506,10 +550,22 @@ type
     //**
     //** Stored as @code(startupAction), by name.
     property StartupAction: TSprite3DStartupAction read FStartupAction write FStartupAction;
-    //** @abstract(The full path of the model last loaded; empty until one is.)
+    //** @abstract(The full path of the model last loaded, of either kind; empty until one is,
+    //** or once Clear has emptied both tabs.)
     //**
-    //** Stored as @code(lastModel). Used when StartupAction is saLastModel.
+    //** Stored as @code(lastModel). Used when StartupAction is saLastModel, which loads it
+    //** last, so its tab is the one shown.
     property LastModel: String read FLastModel write FLastModel;
+    //** @abstract(The full path of the model with animations last loaded; empty until one is,
+    //** or once Clear has emptied the Animated tab.)
+    //**
+    //** Stored as @code(lastAnimatedModel). Used when StartupAction is saLastModel.
+    property LastAnimatedModel: String read FLastAnimatedModel write FLastAnimatedModel;
+    //** @abstract(The full path of the static model last loaded; empty until one is, or once
+    //** Clear has emptied the Static tab.)
+    //**
+    //** Stored as @code(lastStaticModel). Used when StartupAction is saLastModel.
+    property LastStaticModel: String read FLastStaticModel write FLastStaticModel;
     //** @abstract(The application's look, by name; Default by default.)
     //**
     //** Stored as @code(theme): one of Default, Dark, AquaGraphite, RubyGraphite and
@@ -549,7 +605,7 @@ type
     //** @abstract(The frame rate animations are saved at, in frames per second;
     //** ANIMATION_FPS_DEFAULT by default.)
     //**
-    //** Set in Animation, Animation Settings. Stored as @code(animationFps). Written values are
+    //** Set in Models, Animation Settings. Stored as @code(animationFps). Written values are
     //** limited to ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.
     property AnimationFps: Integer read FAnimationFps write SetAnimationFps;
     //** @abstract(The frame rate the view is drawn at, in frames per second;
@@ -565,13 +621,13 @@ type
     //** included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes follows,
     //** settings.json itself among them.
     property MinifyJson: Boolean read FMinifyJson write SetMinifyJson;
-    //** @abstract(How many directions Animation, Directions has around its compass;
+    //** @abstract(How many directions Models, Directions has around its compass;
     //** DIRECTION_COUNT_DEFAULT by default.)
     //**
     //** Stored as @code(directionCount). A written value that is not one of DIRECTION_COUNTS
     //** becomes the nearest that is.
     property DirectionCount: Integer read FDirectionCount write SetDirectionCount;
-    //** @abstract(The compass bearing of position 0, the red marker in Animation, Directions,
+    //** @abstract(The compass bearing of position 0, the red marker in Models, Directions,
     //** in degrees clockwise from north; 0, north, by default.)
     //**
     //** Stored as @code(directionStart). It is the first direction's bearing unless
@@ -584,7 +640,7 @@ type
     //** DirectionOrder is empty or does not fit DirectionCount.
     property DirectionClockwise: Boolean read FDirectionClockwise
       write FDirectionClockwise;
-    //** @abstract(The order the directions are taken in, as Animation, Directions set it; empty
+    //** @abstract(The order the directions are taken in, as Models, Directions set it; empty
     //** by default.)
     //**
     //** Stored as @code(directionOrder): the positions round the compass, counted clockwise
@@ -594,7 +650,7 @@ type
     //** DirectionCount once each, means the plain order DirectionClockwise gives. Use
     //** DirectionOrderList and DirectionBearings rather than reading it directly.
     property DirectionOrder: String read FDirectionOrder write FDirectionOrder;
-    //** @abstract(Whether the Animation, Directions dial turns in steps of one direction; False
+    //** @abstract(Whether the Models, Directions dial turns in steps of one direction; False
     //** by default.)
     //**
     //** Stored as @code(directionSnap). True locks DirectionStart to whole multiples of 360
@@ -609,7 +665,7 @@ type
     //** rotation falls in a frame, and each frame's transparent border. AniGifs and MP4 videos
     //** have none, and texture atlas pages always have it, whatever this says.
     property ExportMetadata: Boolean read FExportMetadata write FExportMetadata;
-    //** @abstract(Whether exports are to be made for every direction of Animation, Directions;
+    //** @abstract(Whether exports are to be made for every direction of Models, Directions;
     //** False by default.)
     //**
     //** Stored as @code(exportDirections); set by the Directions box above Export. Ticked,
@@ -620,13 +676,13 @@ type
     //** @abstract(The largest a texture atlas page may be, in pixels each way;
     //** ATLAS_PAGE_SIZE_DEFAULT by default.)
     //**
-    //** Stored as @code(atlasPageSize); set in Animation, Animation Settings. A written value
+    //** Stored as @code(atlasPageSize); set in Models, Animation Settings. A written value
     //** that is not one of ATLAS_PAGE_SIZES becomes the nearest that is.
     property AtlasPageSize: Integer read FAtlasPageSize write SetAtlasPageSize;
     //** @abstract(Whether a texture atlas page may be any size, rather than a power of 2 each
     //** way; False by default.)
     //**
-    //** Stored as @code(atlasNonPowerOf2); set in Animation, Animation Settings. False makes
+    //** Stored as @code(atlasNonPowerOf2); set in Models, Animation Settings. False makes
     //** each page's width and height the smallest powers of 2 that hold its frames; True makes
     //** the page exactly as large as its grid of frames.
     property AtlasNonPowerOf2: Boolean read FAtlasNonPowerOf2 write FAtlasNonPowerOf2;
@@ -654,7 +710,18 @@ type
     //** Stored as @code(lastExportFolder). Every export's folder dialog opens here, as does
     //** the Results tab's Select Folder, and the Results tab reads it when it first shows.
     property LastExportFolder: String read FLastExportFolder write FLastExportFolder;
-    //** @abstract(Whether ticking Overscan in Animation, Animation Settings first warns how
+    //** @abstract(The folder File, Open Directory last searched; empty until it has been
+    //** used.)
+    //**
+    //** Stored as @code(openDirectoryFolder). Its dialog opens showing this folder.
+    property OpenDirectoryFolder: String read FOpenDirectoryFolder write FOpenDirectoryFolder;
+    //** @abstract(The file spec File, Open Directory last searched for; @code(*.glb) by
+    //** default.)
+    //**
+    //** Stored as @code(openDirectorySpec). One or more patterns, such as @code(*.glb) or
+    //** @code(*.glb;*.gltf); see SplitFileSpec in Sprite3DFileSearch.
+    property OpenDirectorySpec: String read FOpenDirectorySpec write FOpenDirectorySpec;
+    //** @abstract(Whether ticking Overscan in Models, Animation Settings first warns how
     //** much longer rendering takes; True by default.)
     //**
     //** Stored as @code(showOverscanWarning). Cleared by ticking Do not show this again in
@@ -707,30 +774,30 @@ type
     [NeonProperty('debug_save_oversampled')]
     property DebugSaveOversampled: Boolean read FDebugSaveOversampled
       write FDebugSaveOversampled;
-    //** @abstract(The overscan factor Animation, Animation Settings was last left at;
+    //** @abstract(The overscan factor Models, Animation Settings was last left at;
     //** OVERSCAN_FACTOR_DEFAULT by default.)
     //**
     //** Only the factor is kept: whether overscan is on is not, and it starts off each session,
-    //** until ticked in Animation, Animation Settings. Stored as @code(overscan). Written
+    //** until ticked in Models, Animation Settings. Stored as @code(overscan). Written
     //** values are limited to OVERSCAN_FACTOR_MIN to OVERSCAN_FACTOR_MAX; a grab may use less,
     //** if the GPU cannot draw that much larger.
     property Overscan: Integer read FOverscan write SetOverscan;
     //** @abstract(The filter overscanned grabs are scaled down with; Box by default.)
     //**
-    //** Chosen in Animation, Animation Settings. Stored as @code(resampleFilter).
+    //** Chosen in Models, Animation Settings. Stored as @code(resampleFilter).
     property ResampleFilter: TSprite3DResampleFilter read FResampleFilter
       write FResampleFilter;
     //** @abstract(Padding: the empty border, in pixels, every export aims to leave round the
     //** sprite on the axis with least room; 0 by default.)
     //**
-    //** Set in Animation, Animation Settings. Stored as @code(padding). Written values below 0
+    //** Set in Models, Animation Settings. Stored as @code(padding). Written values below 0
     //** count as 0; an export uses at most PaddingLimit of the grab size, so a value kept for
     //** a larger grab size is cut down rather than lost.
     [NeonProperty('padding')]
     property Padding: Integer read FPadding write SetPadding;
   end;
 
-//** @abstract(The most padding Animation, Animation Settings allows for a grab size: a
+//** @abstract(The most padding Models, Animation Settings allows for a grab size: a
 //** quarter of its smaller side, in whole pixels.)
 //**
 //** Padding is the empty border, in pixels, an export aims to leave round the sprite on the
@@ -808,9 +875,9 @@ function DirectionOrderToText(const AOrder: TArray<Integer>): String;
 //** IsDirectionOrder rejects.)
 function DirectionOrderFromText(const AText: String): TArray<Integer>;
 
-//** @abstract(Writes a set of directions to a JSON file, for Animation, Directions' Export.)
+//** @abstract(Writes a set of directions to a JSON file, for Models, Directions' Export.)
 //**
-//** The file holds everything Animation, Directions sets, so it can be read back with
+//** The file holds everything Models, Directions sets, so it can be read back with
 //** LoadDirectionsFile, kept beside artwork whose directions come in a fixed order, and
 //** swapped between models:
 //**
@@ -1043,6 +1110,95 @@ function LoadModelFile(const AModel: TGorillaModel; const AFileName: String;
 //**
 //** @param(ABox The box LoadModelFile returned for it.)
 procedure PlaceModel(const AModel: TGorillaModel; const ABox: TBoundingBox);
+
+//** @abstract(A slot holding no model: Model nil, every other field empty or zero.)
+//**
+//** Use this rather than @code(Default(TSprite3DModelSlot)): where Gorilla.DefTypes is in
+//** scope, @code(Default) names its TGorillaOAuthMode value instead of the intrinsic.
+//**
+//** @returns(The empty slot.)
+function EmptyModelSlot: TSprite3DModelSlot;
+
+//** @abstract(A slot for a model just loaded, with every animation used.)
+//**
+//** IsAnimated is set from ANames: True if the model has any animation. Name is the file's
+//** name without its extension.
+//**
+//** @param(AModel The model, loaded with LoadModelFile and placed with PlaceModel.)
+//**
+//** @param(AFileName The file it was loaded from, expanded.)
+//**
+//** @param(ABox The box LoadModelFile returned for it.)
+//**
+//** @param(ABounds Each animation's bounds, measured or from the bounds cache; empty for a
+//** model without animations.)
+//**
+//** @param(ANames The names LoadModelFile returned: its animations, empty if it has none.)
+//**
+//** @returns(The slot; it does not own the model until FreeModelSlot is called on it.)
+function NewModelSlot(const AModel: TGorillaModel; const AFileName: String;
+  const ABox: TBoundingBox; const ABounds: TArray<TAnimationBounds>;
+  const ANames: TArray<String>): TSprite3DModelSlot;
+
+//** @abstract(Which of ASlots was loaded from AFileName.)
+//**
+//** Names are compared expanded, in this platform's form, as the platform compares them.
+//**
+//** @param(ASlots The slots to look in.)
+//**
+//** @param(AFileName A model file.)
+//**
+//** @returns(The index of the first slot loaded from that file, or -1 if there is none.)
+function ModelSlotIndex(const ASlots: TArray<TSprite3DModelSlot>;
+  const AFileName: String): Integer;
+
+//** @abstract(Which of ASlots is listed as AName.)
+//**
+//** @param(ASlots The slots to look in.)
+//**
+//** @param(AName A name as a slot's Name gives it; compared ignoring case, as files that
+//** differ only in case would clash on Windows and macOS when exported.)
+//**
+//** @returns(The index of the first slot with that name, or -1 if there is none.)
+function ModelSlotNameIndex(const ASlots: TArray<TSprite3DModelSlot>;
+  const AName: String): Integer;
+
+//** @abstract(A name based on AName that no slot of ASlots has: AName itself if it is free,
+//** otherwise @code(AName (2)), @code(AName (3)) and so on, the first that is free.)
+//**
+//** @param(AName The name wanted.)
+//**
+//** @param(ASlots The slots whose names are taken.)
+//**
+//** @returns(The free name.)
+function UniqueModelName(const AName: String; const ASlots: TArray<TSprite3DModelSlot>): String;
+
+//** @abstract(The file spec of every model format LoadModelFile loads.)
+//**
+//** @returns(@code(*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.dae;*.stl;*.ply), from the same list
+//** IsModelFile uses.)
+function AllModelsFileSpec: String;
+
+//** @abstract(Frees a slot's model, with its helpers, and empties the slot.)
+//**
+//** The model's axes, grid, swept volumes and bounds outline are its own components, so go
+//** with it. Afterwards ASlot is EmptyModelSlot. The caller must first
+//** stop using the model, if it is the one shown.
+//**
+//** @param(ASlot The slot whose model goes; nothing is freed if its Model is nil.)
+procedure FreeModelSlot(var ASlot: TSprite3DModelSlot);
+
+//** @abstract(Shows or hides a model together with what is drawn beside it.)
+//**
+//** Its axes and grid, from Sprite3DAxes and Sprite3DGrid, and its swept volumes, from
+//** Sprite3DSweep, are drawn in the model's parent rather than as its children, so they do
+//** not follow the model's Visible: each is shown or hidden here with it. The bounds outline
+//** checks the model's Visible itself.
+//**
+//** @param(AModel The model; nothing happens if it is nil.)
+//**
+//** @param(AShown True to show it, False to hide it.)
+procedure ShowModelWithHelpers(const AModel: TGorillaModel; const AShown: Boolean);
 
 //** @abstract(Whether a file is a model LoadModelFile can load, judged by its extension.)
 //**
@@ -1286,7 +1442,7 @@ implementation
 uses
   System.Classes, System.Math, System.IOUtils, System.Hash, System.StrUtils,
   System.Threading, System.SyncObjs, System.Generics.Collections,
-  OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar,
+  OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar, Sprite3DAxes, Sprite3DGrid,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
   {$ENDIF}
@@ -1334,6 +1490,8 @@ begin
   // File, Settings: as the application behaved before it had them
   FStartupAction := saDefaultModel;
   FLastModel := String.Empty;
+  FLastAnimatedModel := String.Empty;
+  FLastStaticModel := String.Empty;
   SetThemeKind(thDefault);
   FGpuMode := gmSystem;
   FOpenWith := False;
@@ -1360,6 +1518,8 @@ begin
   FDebugSaveOversampled := False;
   FExportAutoClose := False;
   FLastExportFolder := String.Empty;
+  FOpenDirectoryFolder := String.Empty;
+  FOpenDirectorySpec := '*.glb';
   FShowOverscanWarning := True;
   FShowExactWarning := True;
   FResultsShowGrid := True;
@@ -1861,6 +2021,17 @@ const
   MODEL_EXTENSIONS: array[0..7] of String =
     ('.glb', '.gltf', '.fbx', '.obj', '.usdc', '.dae', '.stl', '.ply');
 
+function AllModelsFileSpec: String;
+begin
+  Result := String.Empty;
+  for var Known in MODEL_EXTENSIONS do
+  begin
+    if Result <> String.Empty then
+      Result := Result + ';';
+    Result := Result + '*' + Known;
+  end;
+end;
+
 function IsModelFile(const AFileName: String): Boolean;
 var
   Ext: String;
@@ -2180,6 +2351,110 @@ begin
   AModel.RotationAngle.X := MODEL_ROTATION.X;
   AModel.RotationAngle.Y := MODEL_ROTATION.Y;
   AModel.RotationAngle.Z := MODEL_ROTATION.Z;
+end;
+
+function EmptyModelSlot: TSprite3DModelSlot;
+begin
+  // Every field set; Default() would mean Gorilla's TGorillaOAuthMode.Default
+  Result.Model := nil;
+  Result.FileName := String.Empty;
+  Result.Name := String.Empty;
+  Result.Box.TopLeftNear := TPoint3D.Zero;
+  Result.Box.BottomRightFar := TPoint3D.Zero;
+  Result.Bounds := nil;
+  Result.Names := nil;
+  Result.Used := nil;
+  Result.IsAnimated := False;
+  Result.Order := 0;
+end;
+
+function NewModelSlot(const AModel: TGorillaModel; const AFileName: String;
+  const ABox: TBoundingBox; const ABounds: TArray<TAnimationBounds>;
+  const ANames: TArray<String>): TSprite3DModelSlot;
+begin
+  Result := EmptyModelSlot;
+  Result.Model := AModel;
+  Result.FileName := AFileName;
+  Result.Name := TPath.GetFileNameWithoutExtension(AFileName);
+  Result.Box := ABox;
+  Result.Bounds := ABounds;
+  Result.Names := ANames;
+  Result.Used := Copy(ANames);
+  Result.IsAnimated := Length(ANames) > 0;
+end;
+
+function ModelSlotIndex(const ASlots: TArray<TSprite3DModelSlot>;
+  const AFileName: String): Integer;
+var
+  Wanted: String;
+  I: Integer;
+begin
+  Result := -1;
+  Wanted := ExpandFileName(OSFriendlyPath(AFileName));
+  for I := 0 to High(ASlots) do
+    if SameFileName(ExpandFileName(OSFriendlyPath(ASlots[I].FileName)), Wanted) then
+      Exit(I);
+end;
+
+function ModelSlotNameIndex(const ASlots: TArray<TSprite3DModelSlot>;
+  const AName: String): Integer;
+var
+  I: Integer;
+begin
+  Result := -1;
+  for I := 0 to High(ASlots) do
+    if SameText(ASlots[I].Name, AName) then
+      Exit(I);
+end;
+
+function UniqueModelName(const AName: String; const ASlots: TArray<TSprite3DModelSlot>): String;
+var
+  Number: Integer;
+begin
+  Result := AName;
+  Number := 1;
+  while ModelSlotNameIndex(ASlots, Result) >= 0 do
+  begin
+    Inc(Number);
+    Result := Format('%s (%d)', [AName, Number]);
+  end;
+end;
+
+procedure FreeModelSlot(var ASlot: TSprite3DModelSlot);
+var
+  Model: TGorillaModel;
+begin
+  Model := ASlot.Model;
+  ASlot := EmptyModelSlot;
+  if Model = nil then
+    Exit;
+  Model.Parent := nil;
+  Model.Free;
+end;
+
+procedure ShowModelWithHelpers(const AModel: TGorillaModel; const AShown: Boolean);
+var
+  Sweep: TModelSweep;
+  Combined: TCombinedSweep;
+  Axes: TModelAxes;
+  Grid: TModelGrid;
+begin
+  if AModel = nil then
+    Exit;
+  AModel.Visible := AShown;
+  Sweep := FindModelSweep(AModel);
+  if Sweep <> nil then
+    Sweep.Visible := AShown;
+  Combined := FindCombinedSweep(AModel);
+  if Combined <> nil then
+    Combined.Visible := AShown;
+  // Hidden with Shown, as their lines are not their children either
+  Axes := FindModelAxes(AModel);
+  if Axes <> nil then
+    Axes.Shown := AShown;
+  Grid := FindModelGrid(AModel);
+  if Grid <> nil then
+    Grid.Shown := AShown;
 end;
 
 function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;

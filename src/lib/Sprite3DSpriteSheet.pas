@@ -171,15 +171,32 @@ type
     Height: Integer;
   end;
 
-  //** @abstract(Which frame of which animation and direction an image's frame is.)
+  //** @abstract(Which frame of which animation, or which model's still, and which direction
+  //** an image's frame is.)
+  //**
+  //** A frame is either a frame of an animation, with Animation set and Model -1, or the
+  //** single still of a model without animations, with Model set, Animation -1 and Frame 0.
   TSprite3DFrameRef = record
-    //** @abstract(The animation, as an index into TSprite3DSheetInfo.Animations.)
+    //** @abstract(The animation, as an index into TSprite3DSheetInfo.Animations; -1, written
+    //** as @code(null), for a model's still.)
     Animation: Integer;
+    //** @abstract(The model whose still it is, as an index into TSprite3DSheetInfo.Models;
+    //** -1, written as @code(null), for a frame of an animation.)
+    Model: Integer;
     //** @abstract(The direction, as an index into TSprite3DSheetInfo.Directions; 0 for the
     //** single dummy direction.)
     Direction: Integer;
     //** @abstract(The frame within that animation and direction, counted from 0.)
     Frame: Integer;
+  end;
+
+  //** @abstract(A model an image's frames were made from, as the @code(model) list of the
+  //** @code(meta) section gives it.)
+  TSprite3DModelRef = record
+    //** @abstract(The name it is listed and exported by, written as @code(name).)
+    Name: String;
+    //** @abstract(Its file, as a full path, written as @code(file).)
+    FileName: String;
   end;
 
   //** @abstract(The @code(camera) section SaveSheetMetadata writes: the camera as the export
@@ -258,8 +275,12 @@ type
     Created: String;
     //** @abstract(When this export was made, as ISO 8601 text.)
     Modified: String;
-    //** @abstract(The model file exported, as a full path.)
+    //** @abstract(The model file exported, as a full path, written as @code(file); empty,
+    //** written as @code(null), when the image holds the stills of more than one model.)
     ModelFile: String;
+    //** @abstract(The name the model exported is listed and exported by; not written itself,
+    //** but there for the caller to fill TSprite3DSheetInfo.Models from.)
+    ModelName: String;
     //** @abstract(Whether the frames were made by a 2-pass export's second pass.)
     TwoPass: Boolean;
     //** @abstract(Whether a 2-pass export's first pass measured the frames exactly, at 4x
@@ -267,9 +288,9 @@ type
     //**
     //** True with Exact ticked, and always for a static model, which is always measured so.
     Exact: Boolean;
-    //** @abstract(Whether Overscan was ticked in Animation, Animation Settings.)
+    //** @abstract(Whether Overscan was ticked in Models, Animation Settings.)
     OverscanEnabled: Boolean;
-    //** @abstract(The overscan factor set in Animation, Animation Settings, used or not.)
+    //** @abstract(The overscan factor set in Models, Animation Settings, used or not.)
     Overscan: Integer;
     //** @abstract(The camera as the export started.)
     Camera: TSprite3DSheetCamera;
@@ -302,8 +323,13 @@ type
     //** @abstract(How long each of Animations takes to play once, in seconds: the animation's
     //** own length, whatever number of frames it was saved at.)
     AnimationTimes: TArray<Double>;
-    //** @abstract(For each of the image's frames, in order, which animation, direction and
-    //** frame it is.)
+    //** @abstract(The models the image's frames were made from, in the order they first
+    //** appear, written as @code(meta.model): for an animated model, the one model, which its
+    //** frames do not index; for static models, each one whose still the image holds, which
+    //** each still's frame indexes.)
+    Models: TArray<TSprite3DModelRef>;
+    //** @abstract(For each of the image's frames, in order, which animation or model,
+    //** direction and frame it is.)
     Frames: TArray<TSprite3DFrameRef>;
     //** @abstract(The @code(meta) section: page, credits, dates and model.)
     Meta: TSprite3DSheetMeta;
@@ -516,7 +542,10 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //**     "modeller": "...", "modeller_url": "...",
 //**     "artist": "...", "artist_url": "...",
 //**     "created": "2026-10-01", "modified": "2026-10-23T16:40:00.000+01:00",
-//**     "file": "C:\\Models\\hero.glb"
+//**     "file": "C:\\Models\\hero.glb",
+//**     "model": [
+//**       { "name": "hero", "file": "C:\\Models\\hero.glb" }
+//**     ]
 //**   },
 //**   "image": {
 //**     "size": { "width": 2048, "height": 256 },
@@ -543,6 +572,7 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //**   "frames": [
 //**     {
 //**       "animation": 0,
+//**       "model": null,
 //**       "direction": 0,
 //**       "frame": 0,
 //**       "empty": { "left": 64, "top": 12, "right": 60, "bottom": 40 }
@@ -556,7 +586,9 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** @code(strip), @code(sheet) or @code(atlas); @code(is_animated), whether the model has
 //** animations; the page, from 1, the number of pages, the
 //** number of frames the export made over every page in @code(total_frames), the credits,
-//** the day the project started, when this export was made, and the model file; empty
+//** the day the project started, when this export was made, and the model file, @code(null)
+//** when the image holds the stills of several models; and @code(model), AInfo.Models,
+//** each model the frames were made from as its @code(name) and full @code(file); empty
 //** text is @code(null). @code(size) is the whole image's, from AInfo, and
 //** @code(sprite_size) one frame's, the grab size. @code(origin) is where the model's
 //** centre of rotation falls in every frame, in the frame's own pixels to a thousandth of a
@@ -581,7 +613,10 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** camera was locked. @code(frames) has one entry per frame, in the order of the
 //** cells, saying which animation and direction it is, as indices into @code(animations)
 //** and @code(directions), which frame of that animation and direction, counted from 0, and
-//** its empty sections in @code(empty). The file is replaced if it exists; the folder must
+//** its empty sections in @code(empty). A model without animations has no entries in
+//** @code(animations): its still's entry has @code(animation) @code(null), @code(model) its
+//** index into @code(meta.model), and @code(frame) 0; an animation's frame has
+//** @code(model) @code(null). The file is replaced if it exists; the folder must
 //** exist.
 //**
 //** @param(AFileName The file to write, normally the image's name with the extension
@@ -1576,11 +1611,14 @@ begin
     raise EArgumentException.Create('Each frame needs its animation, direction and number.');
   // The single dummy direction, if none is listed
   Directions := Max(1, Length(AInfo.Directions));
+  // Each frame is an animation's, or else a model's still, never both
   for var Ref in AInfo.Frames do
-    if (Ref.Animation < 0) or (Ref.Animation >= Length(AInfo.Animations)) or
+    if not (((Ref.Animation >= 0) and (Ref.Animation < Length(AInfo.Animations)) and
+      (Ref.Model = -1)) or ((Ref.Animation = -1) and (Ref.Model >= 0) and
+      (Ref.Model < Length(AInfo.Models)))) or
       (Ref.Direction < 0) or (Ref.Direction >= Directions) or (Ref.Frame < 0) then
-      raise EArgumentException.Create('A frame names an animation or direction that is ' +
-        'not listed.');
+      raise EArgumentException.Create('A frame names an animation, model or direction that ' +
+        'is not listed, or both an animation and a model.');
   Result.FileName := AFileName;
   Result.FrameWidth := W;
   Result.FrameHeight := H;
@@ -1718,6 +1756,16 @@ begin
     Item.AddPair('created', Text(AInfo.Meta.Created));
     Item.AddPair('modified', Text(AInfo.Meta.Modified));
     Item.AddPair('file', Text(AInfo.Meta.ModelFile));
+    // The models the frames were made from, by name and full path
+    List := TJSONArray.Create;
+    Item.AddPair('model', List);
+    for var Model in AInfo.Models do
+    begin
+      var Entry := TJSONObject.Create;
+      List.AddElement(Entry);
+      Entry.AddPair('name', Text(Model.Name));
+      Entry.AddPair('file', Text(Model.FileName));
+    end;
     Image := TJSONObject.Create;
     Root.AddPair('image', Image);
     Item := TJSONObject.Create;
@@ -1797,9 +1845,21 @@ begin
     begin
       Item := TJSONObject.Create;
       Frames.AddElement(Item);
-      Item.AddPair('animation', TJSONNumber.Create(AInfo.Frames[I].Animation));
+      // An animation's frame, or else a model's still: the other is null
+      if AInfo.Frames[I].Animation >= 0 then
+        Item.AddPair('animation', TJSONNumber.Create(AInfo.Frames[I].Animation))
+      else
+        Item.AddPair('animation', TJSONNull.Create);
+      if AInfo.Frames[I].Model >= 0 then
+        Item.AddPair('model', TJSONNumber.Create(AInfo.Frames[I].Model))
+      else
+        Item.AddPair('model', TJSONNull.Create);
       Item.AddPair('direction', TJSONNumber.Create(AInfo.Frames[I].Direction));
-      Item.AddPair('frame', TJSONNumber.Create(AInfo.Frames[I].Frame));
+      // A model's still is its only frame
+      if AInfo.Frames[I].Model >= 0 then
+        Item.AddPair('frame', TJSONNumber.Create(0))
+      else
+        Item.AddPair('frame', TJSONNumber.Create(AInfo.Frames[I].Frame));
       // One set of empty sections per frame
       Item.AddPair('empty', Sides(AEmpties[I]));
     end;

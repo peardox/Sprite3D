@@ -415,6 +415,15 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DNativeLibs.pas"/>
         <DCCReference Include="lib\Sprite3DBzip2.pas"/>
         <DCCReference Include="lib\Sprite3DLibraryUpdate.pas"/>
+        <DCCReference Include="lib\Sprite3DFileSearch.pas"/>
+        <DCCReference Include="ui\Sprite3DOpenDirectoryForm.pas">
+            <Form>OpenDirectoryForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DNameClashForm.pas">
+            <Form>NameClashForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>
