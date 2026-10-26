@@ -1,10 +1,37 @@
-# Sprite3D
+﻿# Sprite3D
 
 Sprite3D is a Delphi FireMonkey application for viewing 3D models from fixed and free camera angles, and for rendering them to images and icons. It is built on [Gorilla3D](https://www.gorilla3d.de/) and is meant as a tool for making sprites from 3D models: load a model, choose a view such as isometric, and grab it as a transparent PNG or a Windows icon, or export its animations as sprite strips, spritesheetes, animated GIFs or MP4 videos.
 
 The code is split so that the 3D parts can be reused: everything in `src/lib` is independent of the application, and `src/ui` holds the forms and the application's own rules.
 
-![Sprite3D showing the sample cube in the isometric view, over the checker that stands for a transparent background](img/ScreenShot.png)
+![Sprite3D showing a sample animation in the isometric view, over a dark background with all guidelines enables](img/ScreenShot01.png)
+
+## Requirements
+
+- RAD Studio (Delphi) with FireMonkey.
+- [Gorilla3D](https://www.gorilla3d.de/) 1.5, installed in the IDE.
+- [Neon](https://github.com/paolo-rossi/delphi-neon), the JSON serialisation library, included as a Git submodule.
+- Optional, for MP4 export only: the FFmpeg 8.1 shared libraries, from the DLL pack described under *Getting started*. Without them everything else works, and MP4 is simply not offered.
+
+Target platforms: Windows (32-bit, 64-bit and ARM64EC), macOS (Intel and Apple silicon), Linux 64-bit, Android (32 and 64-bit) and iOS.
+
+## Getting started
+
+Clone with the submodule:
+
+```
+git clone --recurse-submodules https://github.com/peardox/Sprite3D.git
+```
+
+or, in an existing clone:
+
+```
+git submodule update --init
+```
+
+Open `Sprite3DGroup.groupproj` (or `src/Sprite3d.dproj`) in RAD Studio, choose a platform and run. Neon's source folder is already on the project's search path.
+
+![Sprite3D showing a sample final frame, over the checker that stands for a transparent background](img/ScreenShot02.png)
 
 ## Features
 
@@ -49,31 +76,6 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 - **Quick start-up, responsive window.** The window appears before the first model loads. The FFmpeg libraries are looked for only once that load has ended, so MP4 is offered a moment later. Overscanned grabs are matted and scaled down, and strips, spritesheets, GIFs and MP4s are composed and encoded, on a worker thread, so the window keeps responding while that is done; closing the window waits for a file being written.
 
 Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
-
-## Requirements
-
-- RAD Studio (Delphi) with FireMonkey.
-- [Gorilla3D](https://www.gorilla3d.de/) 1.5, installed in the IDE.
-- [Neon](https://github.com/paolo-rossi/delphi-neon), the JSON serialisation library, included as a Git submodule.
-- Optional, for MP4 export only: the FFmpeg 8.1 shared libraries, from the DLL pack described under *Getting started*. Without them everything else works, and MP4 is simply not offered.
-
-Target platforms: Windows (32-bit, 64-bit and ARM64EC), macOS (Intel and Apple silicon), Linux 64-bit, Android (32 and 64-bit) and iOS.
-
-## Getting started
-
-Clone with the submodule:
-
-```
-git clone --recurse-submodules https://github.com/peardox/Sprite3D.git
-```
-
-or, in an existing clone:
-
-```
-git submodule update --init
-```
-
-Open `Sprite3DGroup.groupproj` (or `src/Sprite3d.dproj`) in RAD Studio, choose a platform and run. Neon's source folder is already on the project's search path.
 
 ### FFmpeg libraries (optional, for MP4 export)
 
