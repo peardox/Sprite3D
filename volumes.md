@@ -74,7 +74,7 @@ Two wireframes can be shown from the View menu:
 | **Show Model Volume** | the swept volume of the animation playing, or of the rest pose when none is playing. It changes as soon as another animation plays, whether chosen with the mouse or the arrow keys | swept box aqua; tube walls and axis yellow |
 | **Show Animation Volume** | the **combined** volume: the rest pose and every animation used, joined into one. It is shown only while the view is fitted to it, that is while two or more animations in the Animations list are ticked for export, and never for a model without animations, or with none used, as it would only repeat the rest pose's volume | swept box fuchsia; tube walls and axis hot pink |
 
-**Animation, Animations Used...** chooses which animations count. Unticked animations leave the Animations list, so they are not played or exported, and leave the combined volume. A model starts with every animation used.
+**Models, Animations Used...** chooses which animations count. Unticked animations leave the Animations list, so they are not played or exported, and leave the combined volume. A model starts with every animation used.
 
 The dialog's right-hand column gives each animation's own swept volume, π(*R*² − *r*²)*h*, as a percentage of the combined volume of the rest pose and every animation ticked at the time, and works it out again whenever a tick changes. It is there to catch an animation that does not belong. One that reaches much further than the others, a death that throws the model across the floor, or a jump far higher than any other move, makes the combined volume, and so the framing of every export, much larger: the others then show small percentages beside it. Unticking it shows at once how far the combined volume shrinks without it, and an unticked animation can show more than 100%, as it is no longer part of the combined volume.
 
@@ -88,12 +88,14 @@ On screen, and for a grab or an icon, which match the screen, the volume framed 
 
 | Animations list | Volume framed |
 |---|---|
-| two or more animations ticked for export, playing or paused | the **combined** volume, so the view shows what a batch export will frame |
+| two or more animations ticked for export, playing or paused | the **combined** volume of the animations ticked, without the rest pose, so the view shows what a batch export of them will frame; ticking more or fewer changes it, and the camera is refitted at once |
 | one animation ticked, or none | the volume of what is on screen alone: the selected animation's own, without the rest pose's, or the rest pose's for a static model, one without animations, or with nothing selected |
+
+On the Static tab the same rules apply to the Models list, with each static model standing in for an animation: two or more models ticked frame the **combined** volume of the static models ticked, and one or none the model shown alone. The static models' combined volume is worked out as an animated model's is, each model counting as one pose: each model's own volume as loaded, about its own centre of rotation, and all of them joined with `UnionSweptVolume`, the extent along the turning axis measured from each model's centre, so they line up. The whole is placed on the centre of rotation of the model shown, by `CombinedModelsSweptVolume`. Models left out by Models, Statics Used don't count.
 
 The second fills as much of the view as that volume allows, so a single animation, or a static model, is shown as large as it will go. The view is refitted whenever the choice changes: another entry is chosen, a tick is set or cleared, or an animation is paused, stepped or played with the buttons under the list.
 
-A batch export, and a static model's single still frame, always frame the combined volume. One animation saved on its own, from the Animations list's right-click menu (or the Animation menu on Android and iOS), is framed to that animation's own volume instead, without the rest pose's, so it fills the image as far as its own poses allow. Either way the fit takes two steps, in `TSprite3DCamera.FitPointsOnAxis`.
+A batch export frames the combined volume of the entries it exports, and only those: the animations ticked, without the rest pose, or on the Static tab the static models ticked, so every one of them is exported at the same scale, a static model with its centre of rotation in the same place in the frame. One animation or static model saved on its own, from the list's right-click menu (or the Models menu on Android and iOS), is a batch of one, so it is framed to its own volume and fills the image as far as it allows. Either way the fit takes two steps, in `TSprite3DCamera.FitPointsOnAxis`.
 
 **1. Fill the view.** From any direction, a cylinder's outline is that of its two end circles. `SweepOutline` stands in for each circle with a regular 64-sided polygon drawn round it, its corners 1 / cos(π / 64), about 1.0012, times the radius from the axis, so the polygon holds the circle exactly. These 128 points are framed the way `FitToBounds` frames a box's corners: for the current angles, as large as they will go, centred, so the volume reaches both edges of the tighter axis, left and right or top and bottom. In perspective the camera also stays at least 1 unit, FMX's near plane, in front of the nearest point, which can stop a very close volume filling the view. The angles themselves are never changed.
 
@@ -119,7 +121,7 @@ In orthographic projection the same steps set the orthographic size in place of 
 | `src/lib/Sprite3DSweep.pas` | `TSweptVolume`, `CalcSweptVolume`, `UnionSweptVolume`, `CombinedSweptVolume`, `MeasureAnimationBounds`, `SweepOutline`, `FitCameraToSweep`, and the wireframes: `TModelSweep` with `ShowModelSweep`, `TCombinedSweep` with `ShowCombinedSweep` |
 | `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.FitPointsOnAxis` |
 | `src/ui/Sprite3dMain.pas` | `FitModel`, `GrabFit` and `FrameCaptureFraming` use `FitCameraToSweep`; `SweepFitVolume` joins the volumes of the animations used; `ApplyShowSweep` and `ApplyShowCombinedSweep` draw the two wireframes |
-| `src/ui/Sprite3DAnimationsUsedForm.pas` | the Animation, Animations Used dialog |
+| `src/ui/Sprite3DAnimationsUsedForm.pas` | the Models, Animations Used dialog |
 
 Each routine's own documentation comments, in the source, give the details.
 

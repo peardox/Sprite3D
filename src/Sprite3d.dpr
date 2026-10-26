@@ -76,7 +76,10 @@ uses
   Sprite3DOpenH264 in 'lib\Sprite3DOpenH264.pas',
   Sprite3DNativeLibs in 'lib\Sprite3DNativeLibs.pas',
   Sprite3DBzip2 in 'lib\Sprite3DBzip2.pas',
-  Sprite3DLibraryUpdate in 'lib\Sprite3DLibraryUpdate.pas';
+  Sprite3DLibraryUpdate in 'lib\Sprite3DLibraryUpdate.pas',
+  Sprite3DFileSearch in 'lib\Sprite3DFileSearch.pas',
+  Sprite3DOpenDirectoryForm in 'ui\Sprite3DOpenDirectoryForm.pas' {OpenDirectoryForm},
+  Sprite3DNameClashForm in 'ui\Sprite3DNameClashForm.pas' {NameClashForm};
 
 {$R *.res}
 // The themes' FMX styles, inside the program on every platform. The .res

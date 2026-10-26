@@ -1,0 +1,80 @@
+object NameClashForm: TNameClashForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Model Name Already Listed'
+  ClientHeight = 214
+  ClientWidth = 480
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnClose = FormClose
+  DesignerMasterStyle = 0
+  object MessageLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 112.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.VertAlign = Leading
+    TextSettings.WordWrap = True
+    Text = 'A model of this name is already in the Models list.'
+    TabOrder = 100
+  end
+  object ApplyAllCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 136.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Do the same for every other clash in this folder'
+    Hint = 'Answer every later clash of this Open Directory the same way, without asking'
+    ShowHint = True
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 170.000000000000000000
+    Size.Width = 480.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    object IgnoreButton: TButton
+      Anchors = [akLeft, akBottom]
+      Cancel = True
+      Position.X = 16.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 2
+      Text = 'Ignore'
+      Hint = 'Leave the model listed as it is and do not open this one'
+      ShowHint = True
+      OnClick = ChoiceButtonClick
+    end
+    object RenameButton: TButton
+      Anchors = [akRight, akBottom]
+      Position.X = 208.000000000000000000
+      Position.Y = 9.000000000000000000
+      Size.Width = 168.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Rename'
+      Hint = 'Open this one too, listed under a new name'
+      ShowHint = True
+      OnClick = ChoiceButtonClick
+    end
+    object ReplaceButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      Position.X = 384.000000000000000000
+      Position.Y = 9.000000000000000000
+      TabOrder = 0
+      Text = 'Replace'
+      Hint = 'Unload the model listed and open this one in its place, under the same name'
+      ShowHint = True
+      OnClick = ChoiceButtonClick
+    end
+  end
+end

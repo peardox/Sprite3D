@@ -27,7 +27,8 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
     "artist_url": null,
     "created": "2026-10-01",
     "modified": "2026-10-23T16:40:12.345+01:00",
-    "file": "C:\\Models\\hero.glb"
+    "file": "C:\\Models\\hero.glb",
+    "model": [{ "name": "hero", "file": "C:\\Models\\hero.glb" }]
   },
   "image": {
     "size": { "width": 6144, "height": 256 },
@@ -56,12 +57,14 @@ A strip, spritesheet or atlas page on its own is just pixels. To use it in a gam
   "frames": [
     {
       "animation": 0,
+      "model": null,
       "direction": 0,
       "frame": 0,
       "empty": { "left": 71, "top": 12, "right": 66, "bottom": 30 }
     },
     {
       "animation": 0,
+      "model": null,
       "direction": 0,
       "frame": 1,
       "empty": { "left": 64, "top": 10, "right": 63, "bottom": 30 }
@@ -83,11 +86,37 @@ On an atlas page, the frames of several animations follow one another, and an an
     ...
   },
   "frames": [
-    { "animation": 0, "direction": 0, "frame": 16, "empty": { ... } },
+    { "animation": 0, "model": null, "direction": 0, "frame": 16, "empty": { ... } },
     ...
-    { "animation": 0, "direction": 0, "frame": 23, "empty": { ... } },
-    { "animation": 1, "direction": 0, "frame": 0, "empty": { ... } },
+    { "animation": 0, "model": null, "direction": 0, "frame": 23, "empty": { ... } },
+    { "animation": 1, "model": null, "direction": 0, "frame": 0, "empty": { ... } },
     ...
+  ]
+```
+
+A **static** model, one without animations, has no animations to list, so its `animations` is empty, `[]`. Its frames are stills, one per direction, and each says instead which model it is, as an index into `meta.model`, with `animation` `null` and `frame` always 0; `empty` is measured as for any frame. An atlas page of the Static tab's models can hold several of them, each listed once in `meta.model`; `meta.file` is then `null`, as no one file holds them all. Here a page holds two models, each in two directions:
+
+```json
+  "meta": {
+    ...
+    "is_animated": false,
+    "file": null,
+    "model": [
+      { "name": "crate", "file": "C:\\Models\\props\\crate.glb" },
+      { "name": "barrel", "file": "C:\\Models\\props\\barrel.glb" }
+    ]
+  },
+  "image": {
+    ...
+    "directions": [0, 180],
+    "animations": [],
+    ...
+  },
+  "frames": [
+    { "animation": null, "model": 0, "direction": 0, "frame": 0, "empty": { ... } },
+    { "animation": null, "model": 0, "direction": 1, "frame": 0, "empty": { ... } },
+    { "animation": null, "model": 1, "direction": 0, "frame": 0, "empty": { ... } },
+    { "animation": null, "model": 1, "direction": 1, "frame": 0, "empty": { ... } }
   ]
 ```
 
@@ -103,7 +132,10 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `meta.artist`, `meta.artist_url` | who made the textures, and where their work is |
 | `meta.created` | the day the project started, as `yyyy-mm-dd` |
 | `meta.modified` | when this export was made: local date and time with its offset from UTC, ISO 8601 |
-| `meta.file` | the model exported, as a full path; a project file uses the same to load it again |
+| `meta.file` | the model exported, as a full path; a project file uses the same to load it again; `null` on an atlas page holding the stills of more than one static model |
+| `meta.model` | the models the frames were made from, in the order they first appear: for an animated model, that one model, which its frames don't index; for static models, every one whose still the image holds, which each still's `frames[i].model` indexes |
+| `meta.model[i].name` | the name the model is listed and exported by: its file's name without the extension, or the new name it was given when its name clashed with one listed already |
+| `meta.model[i].file` | the model's file, as a full path |
 | `image.size.width`, `image.size.height` | the whole image, in pixels: `cols` × the grab width by `rows` × the grab height, or for a power-of-2 atlas page, the page, which can be a little more |
 | `image.sprite_size.width`, `image.sprite_size.height` | one frame, in pixels: the grab size from File, Settings, the same for every frame |
 | `image.layout.cols`, `image.layout.rows` | the grid of cells the frames are laid out in |
@@ -111,14 +143,14 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `image.origin.x`, `image.origin.y` | where the model's centre of rotation falls in every frame, to a thousandth of a pixel; a whole number is the centre of that pixel, so `127.5` is the line between pixels 127 and 128 |
 | `image.sprite_empty` | the smallest empty section on each side over all the frames |
 | `image.directions` | the directions the image holds, as bearings in degrees in export order; `[0]` without directions (see below) |
-| `image.animations` | the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas |
+| `image.animations` | the animations the image holds, in the order they first appear; one for a strip or spritesheet, every one with frames on the page for an atlas; empty, `[]`, for a static model, which has none |
 | `image.animations[i].name` | the animation's name, as the Animations list shows it |
 | `image.animations[i].frame_count` | how many frames it has in each direction, including any on other atlas pages |
 | `image.animations[i].time` | how long it takes to play once, in seconds: the animation's own length, whatever number of frames it was saved at |
 | `image.unused` | the number of empty cells after the last frame: `cols` × `rows` − `frame_count`; 0 on every atlas page but the last |
 | `image.two_pass` | whether the frames were made by a 2-pass export's second pass; every export is 2-pass, so it is always `true` |
 | `image.exact` | whether the export's first pass measured the frames exactly, at 4x overscan: `true` with **Exact** ticked, and always for a static model, which is always measured so |
-| `image.overscan.enabled` | whether **Overscan** was ticked in Animation, Animation Settings |
+| `image.overscan.enabled` | whether **Overscan** was ticked in Models, Animation Settings |
 | `image.overscan.factor` | the overscan factor set there, from its slider; given even when overscan is off |
 | `camera.view` | the View, Camera view checked: `Variable`, `Isometric`, `Pixel2To1`, `ThreeQuarter`, `HeadOn`, `TopDown` or `Side`, as `settings.json` names them |
 | `camera.projection` | `orthographic` or `perspective`, from View, Orthographic |
@@ -128,16 +160,17 @@ On an atlas page, the frames of several animations follow one another, and an an
 | `camera.pan.enabled`, `camera.pan.x`, `camera.pan.z` | whether the pan is applied, and the pan along the model's X and Z axes as multiples of its radius; kept even when not applied |
 | `camera.locked` | whether View, Camera, Lock Camera was ticked |
 | `frames[i]` | the frame in cell *i*, in cell order: one entry per frame |
-| `frames[i].animation` | which animation it is, as an index into `animations` |
+| `frames[i].animation` | which animation it is, as an index into `animations`; `null` for a static model's still |
+| `frames[i].model` | for a static model's still, which model it is, as an index into `meta.model`; `null` for a frame of an animation |
 | `frames[i].direction` | which direction it is, as an index into `directions`; 0 without directions |
-| `frames[i].frame` | which frame of that animation and direction it is, counted from 0 |
+| `frames[i].frame` | which frame of that animation and direction it is, counted from 0; always 0 for a static model's still, its only frame |
 | `frames[i].empty` | its empty sections: an object with `left`, `top`, `right` and `bottom` |
 
 The file is UTF-8 without a byte order mark, indented two spaces, or minified, with no indents or line breaks, when File, Settings, Minify JSON is ticked.
 
 ## Meta
 
-`meta` comes first, so a tool can see what a file is and who made it before reading the rest. `page` and `page_count` say which page of how many the file describes: always 1 of 1 for a strip or spritesheet, and for a texture atlas the number in the file name, `hero_atlas_02.json` being page 2. `total_frames` counts every frame of the export, so a tool reading one atlas page knows how many to expect over them all; for a strip or spritesheet it equals the image's `frame_count`. The credits and `created` come from **File, Save Project...**, as they stand when the export starts; any not set are `null`. `modified` is the moment the export started, in local time with its offset from UTC, and `file` the full path of the model, as loaded. Credits are saved, with the model, the directions, the Animations list and the export choices, in a `.sprite3d` project file; see the README's *File, Save Project*.
+`meta` comes first, so a tool can see what a file is and who made it before reading the rest. `page` and `page_count` say which page of how many the file describes: always 1 of 1 for a strip or spritesheet, and for a texture atlas the number in the file name, `hero_atlas_02.json` being page 2. `total_frames` counts every frame of the export, so a tool reading one atlas page knows how many to expect over them all; for a strip or spritesheet it equals the image's `frame_count`. The credits and `created` come from **File, Save Project...**, as they stand when the export starts; any not set are `null`. `modified` is the moment the export started, in local time with its offset from UTC, and `file` the full path of the model, as loaded. `model` lists the models the frames were made from, each with its `name`, as the Models or Animations list shows it, and full `file`; static models' stills index it, so an atlas page of several static models says which still is which. Credits are saved, with the model, the directions, the Animations list and the export choices, in a `.sprite3d` project file; see the README's *File, Save Project*.
 
 ## Export choices and camera
 
@@ -174,7 +207,7 @@ Each frame is measured on its own, as if it were a separate image of the grab si
 
 ## Texture atlas pages
 
-A batch exported as **Texture Atlas** is packed onto pages no larger than the **Page size** from Animation, Animation Settings each way (1k to 16k pixels):
+A batch exported as **Texture Atlas** is packed onto pages no larger than the **Page size** from Models, Animation Settings each way (1k to 16k pixels):
 
 1. **Capacity.** A full page holds ⌊page size ÷ grab width⌋ × ⌊page size ÷ grab height⌋ frames: 16 × 16 = 256 frames of 256 × 256 at 4k.
 2. **Packing.** Every frame of every animation is taken in turn, in list order, and goes in the next cell. When a page is full the next frame starts a new page, even in the middle of an animation, so every page but the last is completely full, `unused` 0, and an animation of any length fits.
@@ -234,11 +267,11 @@ The origin can lie outside the frame, or inside a frame's empty sections, if the
 
 `animations` lists the animations the image holds, in the order they first appear in it, one object each:
 
-- `name`, as the Animations list shows it, such as `"walk"`, or, for a static model, its file's name without the extension, such as `"uvcube"`, for its single still frame.
+- `name`, as the Animations list shows it, such as `"walk"`.
 - `frame_count`, its whole frame count in each direction, wherever its frames are.
-- `time`, how long it takes to play once, in seconds. This is the animation's own length, and stays the same when its number of frames is changed in the Animations list: fewer frames over the same time is a lower frame rate for that animation alone. `frame_count / time` is the rate to play it back at. A static model's still, one frame, is given 1 second.
+- `time`, how long it takes to play once, in seconds. This is the animation's own length, and stays the same when its number of frames is changed in the Animations list: fewer frames over the same time is a lower frame rate for that animation alone. `frame_count / time` is the rate to play it back at.
 
-A strip or spritesheet holds one animation, so it has a single entry; an atlas page lists every animation with frames on it. Each `frames[i]` names its animation by its index in `animations`, so an animation's frames are found by their `animation`, and put in order by their `frame`, across as many pages as they span.
+A strip or spritesheet holds one animation, so it has a single entry; an atlas page lists every animation with frames on it. A static model has no animations, so `animations` is empty for it: its stills are found through `meta.model` and each frame's `model` instead. Each `frames[i]` names its animation by its index in `animations`, so an animation's frames are found by their `animation`, and put in order by their `frame`, across as many pages as they span.
 
 ## Unused
 
@@ -246,13 +279,13 @@ A strip or spritesheet holds one animation, so it has a single entry; an atlas p
 
 ## Directions
 
-`directions` lists the directions the image holds, as compass bearings in degrees, in the order they were exported: with **Directions** ticked under the Animations list, every direction of Animation, Directions, in the order set there, such as `[90, 180, 270, 0, 135, 225, 315, 45]`. Each frame's `direction` is an index into it. Without directions, `directions` is `[0]`, a single dummy entry, and every frame's `direction` is 0.
+`directions` lists the directions the image holds, as compass bearings in degrees, in the order they were exported: with **Directions** ticked under the Animations list, every direction of Models, Directions, in the order set there, such as `[90, 180, 270, 0, 135, 225, 315, 45]`. Each frame's `direction` is an index into it. Without directions, `directions` is `[0]`, a single dummy entry, and every frame's `direction` is 0.
 
 With directions, each animation is captured once per direction, in their order, before the next animation:
 
-- **Sprite strip.** One strip per direction, each a single row of that direction's frames, `<model>_<animation>_dir01_strip<frames>.png`, `_dir02` and so on, numbered in direction order. Its `directions` lists that one direction's bearing, so every frame's `direction` is 0. A static model's strip is the exception: one strip, `<model>_static_strip<frames>.png`, a single row of one frame per direction, in direction order, whose `directions` lists every bearing, so frame *n* has `direction` *n*.
+- **Sprite strip.** One strip per direction, each a single row of that direction's frames, `<model>_<animation>_dir01_strip<frames>.png`, `_dir02` and so on, numbered in direction order. Its `directions` lists that one direction's bearing, so every frame's `direction` is 0. A static model's strip is the exception: one strip, `<model>_static_strip<frames>.png`, a single row of one still per direction, in direction order, whose `directions` lists every bearing, so the still in cell *n* has `direction` *n*, `model` 0 and `frame` 0.
 - **Spritesheet.** Every direction's frames, the first direction's then the next's, in the square grid.
-- **Texture atlas.** The same order, each animation's directions in turn, filling the pages as before; a page's `animations` lists each animation once, whatever directions of it the page holds.
+- **Texture atlas.** The same order, each animation's directions in turn, filling the pages as before; a page's `animations` lists each animation once, whatever directions of it the page holds. Static models' stills go in the same way, each model's directions in turn, and a page's `meta.model` lists each model once.
 - **AniGif and MP4.** One file per direction, `<animation>_dir01.gif`, `_dir02` and so on, numbered in direction order; they have no metadata.
 
 Each animation's `frame_count` is the frames of one direction of it, which is how many each direction has, and the range of each frame's `frame`; its `time` is likewise one direction's.
@@ -265,7 +298,7 @@ Each animation's `frame_count` is the frames of one direction of it, which is ho
 | `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.ProjectToView`, where a point falls in a view of a given size, and `ShiftView`, which slides the view by pixels |
 | `src/ui/Sprite3dMain.pas` | `StartCapture` decides whether metadata is written; `MeasureCaptureOrigin` finds the origin; `SaveSheet` writes a strip or spritesheet and then its `.json`; `SaveAtlasBatch` and `SaveAtlas` make and write the atlas pages at the end of a batch; `EndCapture` puts the view back |
 | `src/ui/Sprite3DHelpers.pas` | the `ExportMetadata`, `ExportDirections`, `AtlasPageSize` and `AtlasNonPowerOf2` settings |
-| `src/ui/Sprite3DAnimationForm.pas` | Animation, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
+| `src/ui/Sprite3DAnimationForm.pas` | Models, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
 
 Each routine's own documentation comments, in the source, give the details.
 

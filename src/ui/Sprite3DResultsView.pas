@@ -12,14 +12,16 @@
 //** from the .png files, each @code(sprite_size), and played in the middle of the drawing area
 //** at the animation's own rate, its @code(frame_count) frames over its @code(time) seconds,
 //** over a grey checker that shows where it is transparent, with a 1-pixel yellow border round
-//** it. Under it are the player buttons, as on the Model tab, and a pair to step through the
-//** directions; then a Zoom slider that never lets the animation grow larger than the space it
+//** it. Under it are a pair to step through the directions, with the direction showing, then
+//** the player buttons, as on the Animated tab, with the frame showing, and the frame count
+//** and rate; a static model's stills have nothing to play, so show the directions alone; then a Zoom slider that never lets the animation grow larger than the space it
 //** has, and beside it a Grid Size slider for the checker's squares, in sprite pixels. The
 //** checker zooms with the animation; Show grid, at the right of the Select Folder row, hides
 //** or shows it. Directly under the list, level with that row, is a side, Left, Top, Right or
 //** Bottom, with buttons that jump, paused, to the previous or next edge case: a frame, in any
 //** animation and direction read, whose empty border on a side is its image's
-//** @code(sprite_empty). They go through every side's in turn, left, top, right then bottom,
+//** @code(sprite_empty); hidden for a static model's stills, which are never edge cases. They
+//** go through every side's in turn, left, top, right then bottom,
 //** the side showing following, and say which of them all and which of its side's it is.
 //** AniGif and MP4 exports are not read yet.
 //**
@@ -39,7 +41,7 @@
 //**     |       grid, apart from the empty finder
 //**     `-- ViewerLayout @(client@)
 //**         |-- AnimationControlsLayout @(bottom@)
-//**         |   |-- the player buttons, the frame readout, the directions
+//**         |   |-- the directions, the player buttons, the frame readout, the rate
 //**         |   `-- Zoom; Grid Size
 //**         `-- DrawingLayout @(client@)
 //**             |-- the yellow border @(centred@), 2 pixels larger each way
@@ -66,15 +68,18 @@ unit Sprite3DResultsView;
   sprite_size, and played in the middle of the drawing area at the
   animation's own rate, its frame_count frames over its time seconds, over a
   grey checker that shows where it is transparent, with a 1-pixel yellow
-  border round it. Under it are the player buttons, as on the Model tab, and
-  a pair to step through the directions; then a Zoom slider that never lets
+  border round it. Under it are a pair to step through the directions, with
+  the direction showing, then the player buttons, as on the Animated tab,
+  with the frame showing, and the frame count and rate; a static model's
+  stills show the directions alone; then a Zoom slider that never lets
   the animation grow larger than the space it has, and beside it a Grid Size
   slider for the checker's squares, in sprite pixels. The checker zooms with
   the animation; Show grid, at the right of the Select Folder row, hides or
   shows it. Directly under the list, level with that row, is a side, Left,
   Top, Right or Bottom, with buttons that jump, paused, to the previous or
   next edge case: a frame, in any animation and direction read, whose empty
-  border on a side is its image's sprite_empty. They go through every side's
+  border on a side is its image's sprite_empty; hidden for a static model's
+  stills, which are never edge cases. They go through every side's
   in turn, left, top, right then bottom, the side showing following, and say
   which of them all and which of its side's it is. AniGif and MP4 exports are
   not read yet.
@@ -94,7 +99,7 @@ unit Sprite3DResultsView;
       |       from the empty finder
       `-- ViewerLayout (client)
           |-- AnimationControlsLayout (bottom)
-          |   |-- the player buttons, the frame readout, the directions
+          |   |-- the directions, the player buttons, the frame readout, the rate
           |   `-- Zoom; Grid Size
           `-- DrawingLayout (client)
               |-- the yellow border (centred), 2 pixels larger each way
@@ -164,6 +169,13 @@ type
     SpriteHeight: Integer;
     //** @abstract(Its directions, in the order they were first found.)
     Directions: TArray<TResultsDirection>;
+    //** @abstract(True if it is a static model's stills, one frame in each direction,
+    //** rather than an animation.)
+    //**
+    //** A still has nothing to play, so the player, its frame readout and the frame count
+    //** and rate are hidden while it is selected, and so is the edge case finder; stills are
+    //** never edge cases.)
+    IsStill: Boolean;
   end;
 
 //** @abstract(The animations described by the metadata files in a folder.)
@@ -175,8 +187,11 @@ type
 //** its directions, by bearing, in the order first found; where two files hold the same
 //** frame, the first one read is used. A file whose @code(sprite_size) or
 //** @code(frame_count) for an animation differs from what was already found for it adds
-//** nothing to that animation. Each frame's @code(empty) and its image's
-//** @code(sprite_empty) are kept with it. Only the .json files are read, not the images.
+//** nothing to that animation. A static model's stills, frames with @code(animation)
+//** @code(null) and a @code(model) index into @code(meta.model), are listed as an entry of
+//** one frame named after the model, each direction's still shown for a second. Each
+//** frame's @code(empty) and its image's @code(sprite_empty) are kept with it. Only the
+//** .json files are read, not the images.
 //** Blocks while reading; touches no controls, so may be called on any thread.
 //**
 //** @param(AFolder The folder to read; nothing is found if it is empty or not there.)
@@ -257,7 +272,7 @@ type
     FEdgeLabel: TLabel;
     // Every edge case read: each frame, of every animation and direction,
     // whose empty border on a side is its image's sprite_empty on that side,
-    // side by side, left, top, right then bottom, and within a side in list
+    // a static model's stills left out; side by side, left, top, right then bottom, and within a side in list
     // order, then direction, then frame; FEdgeSides says which side each
     // is, and FEdgeSideStart and FEdgeSideCount where each side's run is.
     // Rebuilt when the folder changes. FEdgeAt is the edge case last gone
@@ -304,6 +319,7 @@ type
     procedure EdgePreviousButtonClick(Sender: TObject);
     procedure EdgeNextButtonClick(Sender: TObject);
     procedure SeekEdge(const AStep: Integer);
+    function StillShowing: Boolean;
     procedure FindEdgeMatches;
     function EdgeMatchIndex: Integer;
     function IsShowing(const ARef: TResultsFrameRef): Boolean;
@@ -456,6 +472,9 @@ end;
 
 const
   SIDE_NAMES: array[0..3] of String = ('left', 'top', 'right', 'bottom');
+  // How long a static model's still is played for, as the export shows it in
+  // a GIF; one frame per direction
+  STILL_SECONDS = 1.0;
   // The edge buttons' icons, plain triangles in a 24 by 24 box, pointing
   // left and right
   ICON_BACK = 'M16 6v12l-9-6z';
@@ -466,7 +485,7 @@ const
   GRID_DEFAULT = 8;
   // The height of the Zoom and Grid Size rows
   SLIDER_ROW_HEIGHT = 26;
-  // The checker's greys, as the Model tab's Transparent background has them
+  // The checker's greys, as the view's Transparent background has them
   GRID_LIGHT = $FFCCCCCC;
   GRID_DARK = $FF999999;
   // What the empty finder says on any frame that is not a match
@@ -528,13 +547,44 @@ var
   SpriteEmpty, FrameEmpty: TResultsSides;
   HasSpriteEmpty: Boolean;
   Model: String;
+  Names: TArray<String>;
   Known: Boolean;
   Time: Double;
   Bearings: TArray<Double>;
   // For each of this file's animations, its index in AAnimations, or -1 if
-  // this file's frames of it are not used
+  // this file's frames of it are not used; and the same for each of its
+  // models, whose stills are listed as one-frame entries named after them
   Targets: TArray<Integer>;
+  ModelTargets: TArray<Integer>;
+  ModelIndex: Integer;
   Animation: TResultsAnimation;
+
+  // The entry for AName, of ACount frames lasting ATime, in AAnimations:
+  // found, or added; -1 if another export of it, at another size or length,
+  // is listed already, as the two are not mixed
+  function Target(const AName: String; const ACount: Integer; const ATime: Double;
+    const AIsStill: Boolean): Integer;
+  begin
+    Result := FindAnimation(AAnimations, AName);
+    if Result < 0 then
+    begin
+      Animation.Name := AName;
+      Animation.IsStill := AIsStill;
+      Animation.FrameCount := ACount;
+      Animation.Time := ATime;
+      Animation.SpriteWidth := SpriteWidth;
+      Animation.SpriteHeight := SpriteHeight;
+      Animation.Directions := nil;
+      AAnimations := AAnimations + [Animation];
+      Result := High(AAnimations);
+    end
+    else if (AAnimations[Result].SpriteWidth <> SpriteWidth) or
+      (AAnimations[Result].SpriteHeight <> SpriteHeight) or
+      (AAnimations[Result].FrameCount <> ACount) or
+      (AAnimations[Result].IsStill <> AIsStill) then
+      Result := -1;
+  end;
+
 begin
   Result := False;
   Png := TPath.ChangeExtension(AFileName, '.png');
@@ -583,39 +633,46 @@ begin
         not Item.TryGetValue<Integer>('frame_count', Count) or
         not Item.TryGetValue<Double>('time', Time) or (Count < 1) then
         Exit;
-      AnimationIndex := FindAnimation(AAnimations, Name);
-      if AnimationIndex < 0 then
-      begin
-        Animation.Name := Name;
-        Animation.FrameCount := Count;
-        Animation.Time := Time;
-        Animation.SpriteWidth := SpriteWidth;
-        Animation.SpriteHeight := SpriteHeight;
-        Animation.Directions := nil;
-        AAnimations := AAnimations + [Animation];
-        AnimationIndex := High(AAnimations);
-      end
-      else if (AAnimations[AnimationIndex].SpriteWidth <> SpriteWidth) or
-        (AAnimations[AnimationIndex].SpriteHeight <> SpriteHeight) or
-        (AAnimations[AnimationIndex].FrameCount <> Count) then
-        // Another export of it, at another size or length: not mixed in
-        AnimationIndex := -1;
-      Targets := Targets + [AnimationIndex];
+      Targets := Targets + [Target(Name, Count, Time, False)];
     end;
+    // The models, meta.model: a static model's stills, one frame each,
+    // shown for STILL_SECONDS, are listed under its name; an animated
+    // model's are listed but none of its frames indexes it
+    ModelTargets := nil;
+    if (Root.Values['meta'] is TJSONObject) and
+      (TJSONObject(Root.Values['meta']).Values['model'] is TJSONArray) then
+      for var Entry in TJSONArray(TJSONObject(Root.Values['meta']).Values['model']) do
+        if (Entry is TJSONObject) and TJSONObject(Entry).TryGetValue<String>('name', Name) and
+          (Name <> String.Empty) then
+          ModelTargets := ModelTargets + [Target(Name, 1, STILL_SECONDS, True)]
+        else
+          ModelTargets := ModelTargets + [-1];
     // Where each frame is: cell I of this image
     for var I := 0 to Frames.Count - 1 do
     begin
       if not (Frames.Items[I] is TJSONObject) then
         Continue;
       Item := TJSONObject(Frames.Items[I]);
-      if not Item.TryGetValue<Integer>('animation', AnimationIndex) or
-        not Item.TryGetValue<Integer>('direction', DirectionIndex) or
-        not Item.TryGetValue<Integer>('frame', Frame) then
-        Continue;
-      if (AnimationIndex < 0) or (AnimationIndex > High(Targets)) or
+      if not Item.TryGetValue<Integer>('direction', DirectionIndex) or
+        not Item.TryGetValue<Integer>('frame', Frame) or
         (DirectionIndex < 0) or (DirectionIndex > High(Bearings)) then
         Continue;
-      AnimationIndex := Targets[AnimationIndex];
+      // An animation's frame, or else a model's still, its model's only frame
+      if Item.TryGetValue<Integer>('animation', AnimationIndex) then
+      begin
+        if (AnimationIndex < 0) or (AnimationIndex > High(Targets)) then
+          Continue;
+        AnimationIndex := Targets[AnimationIndex];
+      end
+      else if Item.TryGetValue<Integer>('model', ModelIndex) then
+      begin
+        if (ModelIndex < 0) or (ModelIndex > High(ModelTargets)) then
+          Continue;
+        AnimationIndex := ModelTargets[ModelIndex];
+        Frame := 0;
+      end
+      else
+        Continue;
       if AnimationIndex < 0 then
         Continue;
       if (Frame < 0) or (Frame >= AAnimations[AnimationIndex].FrameCount) then
@@ -636,9 +693,23 @@ begin
           SpriteEmpty;
       end;
     end;
-    // The model the frames were made from, each named once
+    // The models the frames were made from, each named once: meta.file, or
+    // where that is null, as for an atlas page of several static models,
+    // each file meta.model lists
+    Names := nil;
     Model := ModelFileName(Root);
     if Model <> String.Empty then
+      Names := [Model]
+    else if (Root.Values['meta'] is TJSONObject) and
+      (TJSONObject(Root.Values['meta']).Values['model'] is TJSONArray) then
+      for var Entry in TJSONArray(TJSONObject(Root.Values['meta']).Values['model']) do
+        if (Entry is TJSONObject) and TJSONObject(Entry).TryGetValue<String>('file', Model) then
+        begin
+          Model := Model.Substring(Max(Model.LastIndexOf('/'), Model.LastIndexOf('\')) + 1).Trim;
+          if Model <> String.Empty then
+            Names := Names + [Model];
+        end;
+    for Model in Names do
     begin
       Known := False;
       for var Other in AModels do
@@ -922,14 +993,25 @@ begin
   // The player's row, then the sliders' row
   FAnimationControlsLayout.Height := 36 + SLIDER_ROW_HEIGHT + 8;
 
-  // First row: the player, the frame readout, the directions
+  // First row: the directions and their readout, then the player and the
+  // frame readout, then the frame count and rate; the player, its readout
+  // and the rate are hidden for a static model's stills
   FTransportLayout := TLayout.Create(Self);
   FTransportLayout.Parent := FAnimationControlsLayout;
   FTransportLayout.Align := TAlignLayout.Top;
   FTransportLayout.Height := 36;
   FTransportLayout.Padding.Rect := TRectF.Create(4, 4, 4, 2);
+  FDirPreviousButton := AddTextButton(FTransportLayout, '<', 'Previous direction',
+    DirPreviousButtonClick);
+  FDirNextButton := AddTextButton(FTransportLayout, '>', 'Next direction',
+    DirNextButtonClick);
+  // Wide enough for "Direction 16 of 16 (337.5°)", and no wider, so the
+  // rate has the room it needs
+  FDirLabel := AddLabel(FTransportLayout, TAlignLayout.Left, 150);
+  FDirLabel.Margins.Left := 4;
   FFirstButton := AddIconButton(FTransportLayout, ICON_FIRST, 'First frame',
     FirstButtonClick);
+  FFirstButton.Margins.Left := 8;
   FPreviousButton := AddIconButton(FTransportLayout, ICON_PREVIOUS, 'Previous frame',
     PreviousButtonClick);
   FPlayButton := AddIconButton(FTransportLayout, ICON_PLAY, 'Play', PlayButtonClick);
@@ -937,18 +1019,11 @@ begin
     NextButtonClick);
   FLastButton := AddIconButton(FTransportLayout, ICON_LAST, 'Last frame',
     LastButtonClick);
-  FFrameLabel := AddLabel(FTransportLayout, TAlignLayout.Left, 70);
-  FFrameLabel.Margins.Left := 6;
+  FFrameLabel := AddLabel(FTransportLayout, TAlignLayout.Left, 64);
+  FFrameLabel.Margins.Left := 4;
   FFrameLabel.Hint := 'The frame showing';
-  FDirPreviousButton := AddTextButton(FTransportLayout, '<', 'Previous direction',
-    DirPreviousButtonClick);
-  FDirPreviousButton.Margins.Left := 8;
-  FDirNextButton := AddTextButton(FTransportLayout, '>', 'Next direction',
-    DirNextButtonClick);
-  FDirLabel := AddLabel(FTransportLayout, TAlignLayout.Left, 170);
-  FDirLabel.Margins.Left := 6;
   FRateLabel := AddLabel(FTransportLayout, TAlignLayout.Client, 0);
-  FRateLabel.Margins.Left := 6;
+  FRateLabel.Margins.Left := 2;
 
   // Second row: Zoom on the left half, Grid Size on the right
   FZoomLayout := TLayout.Create(Self);
@@ -1064,6 +1139,13 @@ begin
   Result := FAnimations[FAnimationIndex];
 end;
 
+// Whether the entry selected is a static model's stills
+function TSprite3DResultsView.StillShowing: Boolean;
+begin
+  Result := (FAnimationIndex >= 0) and (FAnimationIndex <= High(FAnimations)) and
+    FAnimations[FAnimationIndex].IsStill;
+end;
+
 // How long each frame shows: the animation's time over its frames
 function TSprite3DResultsView.FrameSeconds: Double;
 var
@@ -1174,8 +1256,9 @@ begin
   BuildFrames;
   UpdateZoomRange;
   StepTo(0);
-  // The default is to play, at the rate it was saved at
-  SetPlaying(HasFrames);
+  // The default is to play, at the rate it was saved at; a still has
+  // nothing to play, so stays paused, its empty border showing
+  SetPlaying(HasFrames and not StillShowing);
 end;
 
 // Another direction: the same frame of it, playing on if it was
@@ -1286,7 +1369,7 @@ end;
 
 procedure TSprite3DResultsView.SetPlaying(const APlaying: Boolean);
 begin
-  FPlaying := APlaying and HasFrames;
+  FPlaying := APlaying and HasFrames and not StillShowing;
   if FPlaying then
   begin
     FStartFrame := FFrame;
@@ -1364,12 +1447,14 @@ begin
     SelectDirection((FDirectionIndex + 1) mod Count);
 end;
 
-// Every edge case read: each frame, of every animation and direction, whose
-// empty border on a side equals its own image's sprite_empty on that side,
-// the frames that come closest to that edge. Every image has at least one on
-// each side. Side by side, left, top, right then bottom; within a side, in
-// the list's order, then each animation's directions in order, then frame
-// order. A frame can be an edge case on more than one side.
+// Every edge case read, side by side, left, top, right then bottom; within a
+// side, in the list's order, then each animation's directions in order, then
+// frame order. An edge case is a frame whose empty border on a side equals
+// its own image's sprite_empty on that side: the frames that come closest to
+// that edge. Every image has at least one on each side. A frame can be an
+// edge case on more than one side. A static model's stills are never edge
+// cases: the finder is hidden while one is showing, so none could be shown
+// as one.
 procedure TSprite3DResultsView.FindEdgeMatches;
 var
   Cell: TResultsCell;
@@ -1382,6 +1467,9 @@ begin
   begin
     FEdgeSideStart[Side] := Length(FEdgeMatches);
     for var A := 0 to High(FAnimations) do
+    begin
+      if FAnimations[A].IsStill then
+        Continue;
       for var D := 0 to High(FAnimations[A].Directions) do
         for var F := 0 to High(FAnimations[A].Directions[D].Frames) do
         begin
@@ -1395,6 +1483,7 @@ begin
             FEdgeSides := FEdgeSides + [Side];
           end;
         end;
+    end;
     FEdgeSideCount[Side] := Length(FEdgeMatches) - FEdgeSideStart[Side];
   end;
 end;
@@ -1555,7 +1644,10 @@ begin
         Cell.Empty[2], Cell.Empty[3]]);
   end;
   FEmptyLabel.ShowHint := FShowEdgeHint and (FEmptyLabel.Text <> String.Empty);
-  if FEmptyLabel.ShowHint then
+  if FEmptyLabel.ShowHint and StillShowing then
+    FEmptyLabel.Hint := 'The still''s empty border, in pixels: (left, top, right, ' +
+      'bottom), the columns or rows wholly transparent at that edge of the frame.'
+  else if FEmptyLabel.ShowHint then
     FEmptyLabel.Hint := 'The frame''s empty border, in pixels: (left, top, right, ' +
       'bottom), the columns or rows wholly transparent at that edge of the frame. A value ' +
       'equal to the image''s sprite_empty on that side makes the frame an edge case.'
@@ -1802,11 +1894,26 @@ end;
 
 procedure TSprite3DResultsView.UpdateControls;
 var
-  Usable: Boolean;
+  Usable, Still: Boolean;
   Animation: TResultsAnimation;
   Bearing: String;
 begin
   Usable := HasFrames;
+  // A still has nothing to play: no player, frame readout or rate
+  Still := StillShowing;
+  FFirstButton.Visible := not Still;
+  FPreviousButton.Visible := not Still;
+  FPlayButton.Visible := not Still;
+  FNextButton.Visible := not Still;
+  FLastButton.Visible := not Still;
+  FFrameLabel.Visible := not Still;
+  FRateLabel.Visible := not Still;
+  // Nor an edge case finder: its controls are hidden, its row kept, so the
+  // list keeps its height
+  FEdgeBox.Visible := not Still;
+  FEdgePreviousButton.Visible := not Still;
+  FEdgeNextButton.Visible := not Still;
+  FEdgeLabel.Visible := not Still;
   FFirstButton.Enabled := Usable;
   FPreviousButton.Enabled := Usable;
   FPlayButton.Enabled := Usable;

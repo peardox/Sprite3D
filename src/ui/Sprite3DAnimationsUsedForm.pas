@@ -1,4 +1,4 @@
-//** @abstract(The Animation, Animations Used dialog: which of the model's animations are used.)
+//** @abstract(The Models, Animations Used dialog: which of the model's animations are used.)
 //**
 //** A list of the model's animations, each with a tick box, and an All tick box above it that
 //** ticks or clears every one; it shows ticked only while every animation is ticked. The
@@ -13,13 +13,18 @@
 //** closing the dialog any other way, leaves the caller's set as it was, as the dialog only
 //** changes its own copy. Keeping the set, and what it is used for, is the caller's job.
 //**
+//** The same dialog is Models, Statics Used: filled with SetStatics instead, it lists the
+//** static models open, by the names they are listed under, each with its swept volume as a
+//** percentage of the ticked models' volumes joined, and its title says so; UsedAnimations then
+//** gives the ticked models' names.
+//**
 //** On the desktop, show it with ShowModal and read UsedAnimations afterwards; on Android and
 //** iOS, which cannot block, show it with ShowAndFree, which calls OnAccept on OK, OnCancel
 //** otherwise, and frees the form when it closes. For the main thread only.
 unit Sprite3DAnimationsUsedForm;
 
 {
-  The Animation, Animations Used dialog: which of the model's animations are
+  The Models, Animations Used dialog: which of the model's animations are
   used.
 
   A list of the model's animations, each with a tick box, and an All tick box
@@ -38,6 +43,10 @@ unit Sprite3DAnimationsUsedForm;
   changes its own copy. Keeping the set, and what it is used for, is the
   caller's job.
 
+  Filled with SetStatics instead, it is Models, Statics Used: the static
+  models open, by name, each with its share of the ticked models' joined
+  volume.
+
   On the desktop, show it with ShowModal and read UsedAnimations afterwards;
   on Android and iOS, which cannot block, show it with ShowAndFree, which
   calls OnAccept on OK, OnCancel otherwise, and frees the form when it
@@ -52,7 +61,7 @@ uses
   FMX.Controls.Presentation, FMX.Layouts, FMX.ListBox, Sprite3DSweep;
 
 type
-  //** @abstract(The Animation, Animations Used dialog; see the unit description.)
+  //** @abstract(The Models, Animations Used dialog; see the unit description.)
   TAnimationsUsedForm = class(TForm)
     //** @abstract(Holds the All tick box and the list.)
     MainLayout: TLayout;
@@ -120,6 +129,24 @@ type
     //** @param(ARest The rest pose's swept volume, always part of the combined volume.)
     procedure SetAnimations(const AAll, AUsed: TArray<String>;
       const AVolumes: TArray<TSweptVolume>; const ARest: TSweptVolume);
+
+    //** @abstract(Fills the list with the static models AAll, ticking those in AUsed, for
+    //** Models, Statics Used.)
+    //**
+    //** As SetAnimations, but there is no rest pose: each model's share is of the volumes of
+    //** the models ticked, joined, each measured about its own centre of rotation, so a model
+    //** far larger than the rest stands out. The dialog's caption is "Statics Used", the list says
+    //** so when no static model is open, and AllCheckBox's hint speaks of models. Call it
+    //** before showing the dialog.
+    //**
+    //** @param(AAll Every static model open, by the name it is listed under, in the order
+    //** opened.)
+    //**
+    //** @param(AUsed The models listed now, by name.)
+    //**
+    //** @param(AVolumes Each model's swept volume as loaded, in AAll's order.)
+    procedure SetStatics(const AAll, AUsed: TArray<String>;
+      const AVolumes: TArray<TSweptVolume>);
 
     //** @abstract(The ticked animations, in the list's order.)
     //**
@@ -226,6 +253,16 @@ begin
       ShareLabel(I).Text := Format('%.0f%%', [100 * FVolumes[I].Volume / Combined.Volume])
     else
       ShareLabel(I).Text := '-';
+end;
+
+procedure TAnimationsUsedForm.SetStatics(const AAll, AUsed: TArray<String>;
+  const AVolumes: TArray<TSweptVolume>);
+begin
+  Caption := 'Statics Used';
+  EmptyLabel.Text := 'No static models are open.';
+  AllCheckBox.Hint := 'Tick or clear every static model';
+  // No rest pose: an invalid volume counts for nothing in the union
+  SetAnimations(AAll, AUsed, AVolumes, Default(TSweptVolume));
 end;
 
 function TAnimationsUsedForm.UsedAnimations: TArray<String>;
