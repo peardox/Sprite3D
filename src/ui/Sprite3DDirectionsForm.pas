@@ -113,75 +113,48 @@ uses
 
 type
   //** @abstract(The Animation, Directions dialog; see the unit description.)
-  /// <summary>The Animation, Directions dialog; see the unit description.</summary>
   TDirectionsForm = class(TForm)
     //** @abstract(Where the compass is drawn, and clicked while the order is being changed.)
-    /// <summary>Where the compass is drawn, and clicked while the order is being
-    /// changed.</summary>
     FacePaintBox: TPaintBox;
     //** @abstract(Holds the controls to the right of the compass.)
-    /// <summary>Holds the controls to the right of the compass.</summary>
     ControlsLayout: TLayout;
     //** @abstract(Names CountCombo.)
-    /// <summary>Names CountCombo.</summary>
     CountLabel: TLabel;
     //** @abstract(The number of directions: one of DIRECTION_COUNTS.)
-    /// <summary>The number of directions: one of DIRECTION_COUNTS.</summary>
     CountCombo: TComboBox;
     //** @abstract(Names the order radio buttons.)
-    /// <summary>Names the order radio buttons.</summary>
     OrderLabel: TLabel;
     //** @abstract(Numbers the directions clockwise from the red marker.)
-    /// <summary>Numbers the directions clockwise from the red marker.</summary>
     ClockwiseRadio: TRadioButton;
     //** @abstract(Numbers the directions anticlockwise from the red marker.)
-    /// <summary>Numbers the directions anticlockwise from the red marker.</summary>
     AnticlockwiseRadio: TRadioButton;
     //** @abstract(Shows that the order was set with Change Order; it cannot be chosen
     //** itself.)
-    /// <summary>Shows that the order was set with Change Order; it cannot be chosen
-    /// itself.</summary>
     CustomRadio: TRadioButton;
     //** @abstract(Names StartDial.)
-    /// <summary>Names StartDial.</summary>
     StartLabel: TLabel;
     //** @abstract(Turns the red marker to any bearing; turned so that 0 is at the top.)
-    /// <summary>Turns the red marker to any bearing; turned so that 0 is at the
-    /// top.</summary>
     StartDial: TArcDial;
     //** @abstract(The red marker's bearing, in degrees, with its point of the 32-point
     //** compass if it is on one.)
-    /// <summary>The red marker's bearing, in degrees, with its point of the 32-point compass
-    /// if it is on one.</summary>
     StartText: TLabel;
     //** @abstract(Locks StartDial to steps of one direction, counted from north.)
-    /// <summary>Locks StartDial to steps of one direction, counted from north.</summary>
     SnapCheck: TCheckBox;
     //** @abstract(The strip holding the Cancel, Import, Change Order, Export and OK buttons.)
-    /// <summary>The strip holding the Cancel, Import, Change Order, Export and OK
-    /// buttons.</summary>
     ButtonLayout: TLayout;
     //** @abstract(Closes the dialog with mrOk.)
-    /// <summary>Closes the dialog with mrOk.</summary>
     OkButton: TButton;
     //** @abstract(Starts choosing the order by clicking the markers, or abandons it.)
-    /// <summary>Starts choosing the order by clicking the markers, or abandons
-    /// it.</summary>
     OrderButton: TButton;
     //** @abstract(Reads a directions file into the dialog; desktop only.)
-    /// <summary>Reads a directions file into the dialog; desktop only.</summary>
     ImportButton: TButton;
     //** @abstract(Writes what the dialog holds to a directions file; desktop only.)
-    /// <summary>Writes what the dialog holds to a directions file; desktop only.</summary>
     ExportButton: TButton;
     //** @abstract(Closes the dialog with mrCancel, keeping none of the changes.)
-    /// <summary>Closes the dialog with mrCancel, keeping none of the changes.</summary>
     CancelButton: TButton;
     //** @abstract(Fills CountCombo with DIRECTION_COUNTS and shows the defaults.)
     //**
     //** @param(Sender The form.)
-    /// <summary>Fills CountCombo with DIRECTION_COUNTS and shows the defaults.</summary>
-    /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Draws the compass: the face, N, E, S and W, the markers and their numbers,
     //** and the arrow.)
@@ -189,10 +162,6 @@ type
     //** @param(Sender FacePaintBox.)
     //**
     //** @param(Canvas The canvas to draw on.)
-    /// <summary>Draws the compass: the face, N, E, S and W, the markers and their numbers, and
-    /// the arrow.</summary>
-    /// <param name="Sender">FacePaintBox.</param>
-    /// <param name="Canvas">The canvas to draw on.</param>
     procedure FacePaintBoxPaint(Sender: TObject; Canvas: TCanvas);
     //** @abstract(While the order is being changed, gives the clicked marker the next
     //** number.)
@@ -210,53 +179,28 @@ type
     //** @param(X Where, across the paint box.)
     //**
     //** @param(Y Where, down the paint box.)
-    /// <summary>While the order is being changed, gives the clicked marker the next
-    /// number.</summary>
-    /// <remarks>A click near the ring of markers picks the nearest one; one already numbered,
-    /// or a click near the centre, is ignored. The first one picked becomes the red marker,
-    /// the dial turning onto it. When every marker is numbered, that becomes the
-    /// order.</remarks>
-    /// <param name="Sender">FacePaintBox.</param>
-    /// <param name="Button">The mouse button.</param>
-    /// <param name="Shift">The keys held.</param>
-    /// <param name="X">Where, across the paint box.</param>
-    /// <param name="Y">Where, down the paint box.</param>
     procedure FacePaintBoxMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     //** @abstract(Takes the new number of directions, with the plain order, and redraws.)
     //**
     //** @param(Sender CountCombo.)
-    /// <summary>Takes the new number of directions, with the plain order, and
-    /// redraws.</summary>
-    /// <param name="Sender">CountCombo.</param>
     procedure CountComboChange(Sender: TObject);
     //** @abstract(Takes the plain order Clockwise or Anticlockwise gives, and redraws.)
     //**
     //** @param(Sender ClockwiseRadio or AnticlockwiseRadio.)
-    /// <summary>Takes the plain order Clockwise or Anticlockwise gives, and redraws.</summary>
-    /// <param name="Sender">ClockwiseRadio or AnticlockwiseRadio.</param>
     procedure OrderRadioChange(Sender: TObject);
     //** @abstract(Takes the dial's bearing, to the nearest degree or step, and redraws.)
     //**
     //** @param(Sender StartDial.)
-    /// <summary>Takes the dial's bearing, to the nearest degree or step, and
-    /// redraws.</summary>
-    /// <param name="Sender">StartDial.</param>
     procedure StartDialChange(Sender: TObject);
     //** @abstract(Locks or frees the dial; locking moves the bearing to the nearest step.)
     //**
     //** @param(Sender SnapCheck.)
-    /// <summary>Locks or frees the dial; locking moves the bearing to the nearest
-    /// step.</summary>
-    /// <param name="Sender">SnapCheck.</param>
     procedure SnapCheckChange(Sender: TObject);
     //** @abstract(Starts choosing the order by clicking, or abandons it, keeping the order
     //** there was.)
     //**
     //** @param(Sender OrderButton.)
-    /// <summary>Starts choosing the order by clicking, or abandons it, keeping the order
-    /// there was.</summary>
-    /// <param name="Sender">OrderButton.</param>
     procedure OrderButtonClick(Sender: TObject);
     //** @abstract(Asks for a directions file and shows what it holds.)
     //**
@@ -264,11 +208,6 @@ type
     //** not a directions file, is reported and changes nothing. Nothing is kept until OK.
     //**
     //** @param(Sender ImportButton.)
-    /// <summary>Asks for a directions file and shows what it holds.</summary>
-    /// <remarks>An order only partly chosen is abandoned first. A file that cannot be read, or
-    /// is not a directions file, is reported and changes nothing. Nothing is kept until
-    /// OK.</remarks>
-    /// <param name="Sender">ImportButton.</param>
     procedure ImportButtonClick(Sender: TObject);
     //** @abstract(Asks where to write a directions file and writes what the dialog holds.)
     //**
@@ -276,30 +215,18 @@ type
     //** there was. A file that cannot be written is reported.
     //**
     //** @param(Sender ExportButton.)
-    /// <summary>Asks where to write a directions file and writes what the dialog
-    /// holds.</summary>
-    /// <remarks>An order only partly chosen is abandoned first, so the order written is the
-    /// one there was. A file that cannot be written is reported.</remarks>
-    /// <param name="Sender">ExportButton.</param>
     procedure ExportButtonClick(Sender: TObject);
     //** @abstract(Closes the dialog with the button's ModalResult.)
     //**
     //** An order only partly chosen is abandoned first, so OK keeps the order there was.
     //**
     //** @param(Sender OkButton or CancelButton.)
-    /// <summary>Closes the dialog with the button's ModalResult.</summary>
-    /// <remarks>An order only partly chosen is abandoned first, so OK keeps the order there
-    /// was.</remarks>
-    /// <param name="Sender">OkButton or CancelButton.</param>
     procedure ButtonClick(Sender: TObject);
     //** @abstract(Reports OK when shown with ShowAndFree, and frees the form then.)
     //**
     //** @param(Sender The form.)
     //**
     //** @param(Action Set to caFree when shown with ShowAndFree.)
-    /// <summary>Reports OK when shown with ShowAndFree, and frees the form then.</summary>
-    /// <param name="Sender">The form.</param>
-    /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     FCount: Integer;
@@ -330,63 +257,38 @@ type
     //**
     //** For Android and iOS, where ShowModal cannot block. OnAccept is called if it closes
     //** with OK.
-    /// <summary>Shows the dialog without blocking and frees it when it closes.</summary>
-    /// <remarks>For Android and iOS, where ShowModal cannot block. OnAccept is called if it
-    /// closes with OK.</remarks>
     procedure ShowAndFree;
     //** @abstract(The number of directions; one of DIRECTION_COUNTS.)
     //**
     //** A value that is not one of them becomes the nearest that is. Setting it gives the
     //** plain order, clockwise unless the order was plainly anticlockwise; set Order after
     //** it.
-    /// <summary>The number of directions; one of DIRECTION_COUNTS.</summary>
-    /// <remarks>A value that is not one of them becomes the nearest that is. Setting it gives
-    /// the plain order, clockwise unless the order was plainly anticlockwise; set Order after
-    /// it.</remarks>
     property Count: Integer read FCount write SetCount;
     //** @abstract(The red marker's bearing, in degrees clockwise from north.)
     //**
     //** Written values are rounded to the nearest degree, or to the nearest step if Snap is
     //** True, and wrapped into 0 up to 360. Change Order may leave it on another marker's
     //** bearing, which need not be a whole degree.
-    /// <summary>The red marker's bearing, in degrees clockwise from north.</summary>
-    /// <remarks>Written values are rounded to the nearest degree, or to the nearest step if
-    /// Snap is True, and wrapped into 0 up to 360. Change Order may leave it on another
-    /// marker's bearing, which need not be a whole degree.</remarks>
     property Start: Single read FStart write SetStart;
     //** @abstract(The order the directions are taken in: for each, from the first, its
     //** position, counted clockwise from 0 at the red marker.)
     //**
     //** A value that is not every position from 0 to Count - 1 once each is ignored, leaving
     //** the order as it was. Reading gives a copy.
-    /// <summary>The order the directions are taken in: for each, from the first, its
-    /// position, counted clockwise from 0 at the red marker.</summary>
-    /// <remarks>A value that is not every position from 0 to Count - 1 once each is ignored,
-    /// leaving the order as it was. Reading gives a copy.</remarks>
     property Order: TArray<Integer> read FOrder write SetOrder;
     //** @abstract(False only when the order is plainly anticlockwise from the red marker.)
-    /// <summary>False only when the order is plainly anticlockwise from the red
-    /// marker.</summary>
     property Clockwise: Boolean read GetClockwise;
     //** @abstract(Whether the dial is locked to steps of one direction, counted from north.)
     //**
     //** Setting it True moves Start to the nearest step.
-    /// <summary>Whether the dial is locked to steps of one direction, counted from
-    /// north.</summary>
-    /// <remarks>Setting it True moves Start to the nearest step.</remarks>
     property Snap: Boolean read FSnap write SetSnap;
     //** @abstract(The folder Import and Export open in; left at the folder of the last file
     //** they used.)
     //**
     //** Empty opens wherever the system chooses. Read it back after the dialog closes,
     //** whether with OK or Cancel, to remember it.
-    /// <summary>The folder Import and Export open in; left at the folder of the last file
-    /// they used.</summary>
-    /// <remarks>Empty opens wherever the system chooses. Read it back after the dialog
-    /// closes, whether with OK or Cancel, to remember it.</remarks>
     property Folder: String read FFolder write FFolder;
     //** @abstract(Called on OK when shown with ShowAndFree.)
-    /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
   end;
 

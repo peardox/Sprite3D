@@ -110,26 +110,15 @@ type
   //**
   //** @param(AMessage What happened, for a log: what was saved and where, that the copy is
   //** up to date, or why none is available.)
-  /// <summary>Reports the end of a check or download, on the main thread.</summary>
-  /// <param name="ALibrary">The new library's full path if one was downloaded; empty if the
-  /// copy already there is the latest, or if none could be had.</param>
-  /// <param name="AMessage">What happened, for a log: what was saved and where, that the copy
-  /// is up to date, or why none is available.</param>
   TSprite3DLibraryUpdateDone = reference to procedure(const ALibrary, AMessage: String);
 
   //** @abstract(The library chosen from a list of downloads for one platform.)
-  /// <summary>The library chosen from a list of downloads for one platform.</summary>
   TSprite3DLibraryChoice = record
     //** @abstract(The full address to download; empty if the list has none for the platform.)
-    /// <summary>The full address to download; empty if the list has none for the
-    /// platform.</summary>
     Url: String;
     //** @abstract(Its version, as given or as read from its file name; empty if neither says.)
-    /// <summary>Its version, as given or as read from its file name; empty if neither
-    /// says.</summary>
     Version: String;
     //** @abstract(The entries for the platform that were left out, and why.)
-    /// <summary>The entries for the platform that were left out, and why.</summary>
     Rejected: TArray<String>;
   end;
 
@@ -153,24 +142,10 @@ type
 //** @raises(EJSONException Or another exception, if AJson is not JSON.)
 //**
 //** @raises(EArgumentException If AJson is JSON but not an object.)
-/// <summary>Chooses, from a list of downloads, the latest library for a platform.</summary>
-/// <remarks>The list's format is given in the unit description. Relative addresses are
-/// resolved against AListUrl's folder, and only <c>http</c> and <c>https</c> addresses with a
-/// host are kept. Of those, the one with the highest version is chosen; entries without a
-/// version rank below any with one, and among equals the first listed wins. Touches nothing
-/// but its arguments, so it may be called on any thread.</remarks>
-/// <param name="AJson">The list, as text.</param>
-/// <param name="AListUrl">The address the list was fetched from.</param>
-/// <param name="APlatform">The platform key to look up, such as <c>'win64'</c>.</param>
-/// <returns>The choice; its Url is empty if the platform has no usable entry, with Rejected
-/// saying why any entry was left out.</returns>
-/// <exception cref="EJSONException">Or another exception, if AJson is not JSON.</exception>
-/// <exception cref="EArgumentException">If AJson is JSON but not an object.</exception>
 function ChooseLibrary(const AJson, AListUrl, APlatform: String): TSprite3DLibraryChoice;
 
 type
   //** @abstract(One library's download, for this platform; see the unit description.)
-  /// <summary>One library's download, for this platform; see the unit description.</summary>
   TSprite3DLibraryUpdate = class
   private
     FName: String;
@@ -193,18 +168,8 @@ type
     //**
     //** @param(AFolder Where downloads are kept; created when the first is saved. Every file
     //** in it other than the current library and @code(installed.json) may be deleted.)
-    /// <summary>Reads what has been downloaded before; uses no network.</summary>
-    /// <param name="AListUrl">The address of the JSON list of downloads, fetched by Start;
-    /// empty means there is none, and Start does nothing.</param>
-    /// <param name="AName">The library's name for messages, such as
-    /// <c>'OpenH264'</c>.</param>
-    /// <param name="AFolder">Where downloads are kept; created when the first is saved. Every
-    /// file in it other than the current library and <c>installed.json</c> may be
-    /// deleted.</param>
     constructor Create(const AListUrl, AName, AFolder: String);
     //** @abstract(Cancels a download under way, waits for it to stop, and frees the object.)
-    /// <summary>Cancels a download under way, waits for it to stop, and frees the
-    /// object.</summary>
     destructor Destroy; override;
     //** @abstract(Fetches the list in the background, and downloads the latest library for
     //** this platform if it is not the copy already there.)
@@ -217,35 +182,18 @@ type
     //** happened.)
     //**
     //** @returns(True if the check was started.)
-    /// <summary>Fetches the list in the background, and downloads the latest library for this
-    /// platform if it is not the copy already there.</summary>
-    /// <remarks>AOnDone is called once, on the main thread, when that ends, unless it is
-    /// cancelled. Nothing happens, and AOnDone is not called, if there is no list address, or
-    /// if this object has already started once.</remarks>
-    /// <param name="AOnDone">Called with the new library's path, or with an empty path and
-    /// what happened.</param>
-    /// <returns>True if the check was started.</returns>
     function Start(const AOnDone: TSprite3DLibraryUpdateDone): Boolean;
     //** @abstract(Stops a check or download under way without calling its procedure, and
     //** waits for it.)
-    /// <summary>Stops a check or download under way without calling its procedure, and waits
-    /// for it.</summary>
     procedure Cancel;
     //** @abstract(The address of the list of downloads.)
-    /// <summary>The address of the list of downloads.</summary>
     property ListUrl: String read FListUrl;
     //** @abstract(The address CurrentLibrary was downloaded from; empty if there is none.)
-    /// <summary>The address CurrentLibrary was downloaded from; empty if there is
-    /// none.</summary>
     property InstalledUrl: String read FInstalledUrl;
     //** @abstract(The library downloaded before, or by Start, ready to load; empty if there
     //** is none yet.)
-    /// <summary>The library downloaded before, or by Start, ready to load; empty if there is
-    /// none yet.</summary>
     property CurrentLibrary: String read FCurrent;
     //** @abstract(The state, for a log: which copy is there, or what the last check found.)
-    /// <summary>The state, for a log: which copy is there, or what the last check
-    /// found.</summary>
     property Message: String read FMessage;
   end;
 

@@ -68,32 +68,21 @@ uses
 
 type
   //** @abstract(The filter ResamplePixels scales with.)
-  /// <summary>The filter ResamplePixels scales with.</summary>
   TSprite3DResampleFilter = (
     //** @abstract(Area average: each result is the mean of the source pixels it covers.)
     //**
     //** Exact for a whole-number scale, such as overscan, with no ringing.
-    /// <summary>Area average: each result is the mean of the source pixels it
-    /// covers.</summary>
-    /// <remarks>Exact for a whole-number scale, such as overscan, with no ringing.</remarks>
     rfBox,
     //** @abstract(Tent filter, reaching one output pixel each way: soft.)
-    /// <summary>Tent filter, reaching one output pixel each way: soft.</summary>
     rfBilinear,
     //** @abstract(Catmull-Rom cubic, reaching two output pixels each way: sharp, with slight
     //** ringing.)
-    /// <summary>Catmull-Rom cubic, reaching two output pixels each way: sharp, with slight
-    /// ringing.</summary>
     rfCatmullRom,
     //** @abstract(Mitchell-Netravali cubic, B = C = 1/3, reaching two output pixels each way:
     //** a balance of sharpness and ringing.)
-    /// <summary>Mitchell-Netravali cubic, B = C = 1/3, reaching two output pixels each way: a
-    /// balance of sharpness and ringing.</summary>
     rfMitchell,
     //** @abstract(Lanczos windowed sinc, reaching three output pixels each way: the sharpest,
     //** with the most ringing.)
-    /// <summary>Lanczos windowed sinc, reaching three output pixels each way: the sharpest,
-    /// with the most ringing.</summary>
     rfLanczos3);
 
 //** @abstract(The name a filter is shown by, such as @code('Box @(area average@)').)
@@ -101,9 +90,6 @@ type
 //** @param(AFilter The filter.)
 //**
 //** @returns(Its name for a drop-down list.)
-/// <summary>The name a filter is shown by, such as <c>'Box (area average)'</c>.</summary>
-/// <param name="AFilter">The filter.</param>
-/// <returns>Its name for a drop-down list.</returns>
 function ResampleFilterName(const AFilter: TSprite3DResampleFilter): String;
 
 //** @abstract(Scales premultiplied RGBA pixels to a new size with AFilter.)
@@ -131,22 +117,6 @@ function ResampleFilterName(const AFilter: TSprite3DResampleFilter): String;
 //**
 //** @raises(EArgumentException If a size is less than 1 or ASource is not ASourceWidth by
 //** ASourceHeight pixels long.)
-/// <summary>Scales premultiplied RGBA pixels to a new size with AFilter.</summary>
-/// <remarks>ASource holds ASourceWidth by ASourceHeight pixels, four bytes each in the order
-/// R, G, B, A, rows one after another, with colour already multiplied by alpha. Which way up
-/// the rows run does not matter, as the result keeps the same order. Every result is clamped
-/// to 0 to 255 and each colour to its alpha. Source pixels past an edge count as the edge
-/// pixel. Blocks while it works; any thread, as it touches nothing shared.</remarks>
-/// <param name="ASource">The pixels to scale.</param>
-/// <param name="ASourceWidth">The source's width in pixels; at least 1.</param>
-/// <param name="ASourceHeight">The source's height in pixels; at least 1.</param>
-/// <param name="AWidth">The result's width in pixels; at least 1.</param>
-/// <param name="AHeight">The result's height in pixels; at least 1.</param>
-/// <param name="AFilter">The filter to scale with.</param>
-/// <returns>AWidth by AHeight pixels in the same layout; a copy of ASource if the sizes are the
-/// same.</returns>
-/// <exception cref="EArgumentException">If a size is less than 1 or ASource is not ASourceWidth
-/// by ASourceHeight pixels long.</exception>
 function ResamplePixels(const ASource: TBytes; const ASourceWidth, ASourceHeight, AWidth,
   AHeight: Integer; const AFilter: TSprite3DResampleFilter): TBytes;
 

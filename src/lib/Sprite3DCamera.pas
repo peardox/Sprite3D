@@ -271,19 +271,11 @@ type
   //** apply B first, then A. The rotation helpers expect a unit quaternion; Create does not
   //** normalise. TQuat is a plain value type with nothing to free, and may be used on any
   //** thread.
-  /// <summary>A quaternion of Doubles, used for the camera's orientation arithmetic.</summary>
-  /// <remarks>Hamilton convention, with the right-hand rule on raw coordinates. <c>A * B</c>
-  /// means apply B first, then A. The rotation helpers expect a unit quaternion;
-  /// <see cref="TQuat.Create"/> does not normalise. TQuat is a plain value type with nothing to
-  /// free, and may be used on any thread.</remarks>
   TQuat = record
     //** @abstract(The scalar part W and the vector part X, Y, Z.)
     //**
     //** For a rotation by angle t about unit axis n, W = cos@(t/2@) and
     //** @(X, Y, Z@) = n sin@(t/2@).
-    /// <summary>The scalar part W and the vector part X, Y, Z.</summary>
-    /// <remarks>For a rotation by angle t about unit axis n, W = cos(t/2) and
-    /// (X, Y, Z) = n sin(t/2).</remarks>
     W, X, Y, Z: Double;
     //** @abstract(Builds a quaternion from its four components, without normalising.)
     //**
@@ -296,18 +288,10 @@ type
     //** @param(AZ The Z component of the vector part.)
     //**
     //** @returns(The quaternion @(AW, AX, AY, AZ@), exactly as given.)
-    /// <summary>Builds a quaternion from its four components, without normalising.</summary>
-    /// <param name="AW">The scalar part.</param>
-    /// <param name="AX">The X component of the vector part.</param>
-    /// <param name="AY">The Y component of the vector part.</param>
-    /// <param name="AZ">The Z component of the vector part.</param>
-    /// <returns>The quaternion (AW, AX, AY, AZ), exactly as given.</returns>
     class function Create(const AW, AX, AY, AZ: Double): TQuat; static;
     //** @abstract(Returns the identity rotation, which leaves every vector unchanged.)
     //**
     //** @returns(The quaternion @(1, 0, 0, 0@).)
-    /// <summary>Returns the identity rotation, which leaves every vector unchanged.</summary>
-    /// <returns>The quaternion (1, 0, 0, 0).</returns>
     class function Identity: TQuat; static;
     //** @abstract(Builds the rotation of Radians about Axis.)
     //**
@@ -319,12 +303,6 @@ type
     //** @param(Radians The angle to turn, in radians.)
     //**
     //** @returns(A unit quaternion for the rotation.)
-    /// <summary>Builds the rotation of Radians about Axis.</summary>
-    /// <remarks>Axis is normalised first, so it need not be unit length, but it must not be zero.
-    /// Positive angles follow the right-hand rule about Axis.</remarks>
-    /// <param name="Axis">The axis to turn about; any non-zero length.</param>
-    /// <param name="Radians">The angle to turn, in radians.</param>
-    /// <returns>A unit quaternion for the rotation.</returns>
     class function AxisAngle(const Axis: TPoint3D; const Radians: Double): TQuat; static;
     { Shortest rotation taking unit vector AFrom onto unit vector ATo.
       For opposite vectors, rotates 180 degrees about AFallbackAxis, which
@@ -345,17 +323,6 @@ type
     //** @returns(A unit quaternion that rotates AFrom onto ATo.)
     //**
     //** @seealso(TSprite3DCamera.LookAt)
-    /// <summary>Builds the smallest rotation that turns AFrom onto ATo.</summary>
-    /// <remarks>Both vectors must be unit length. When they point in opposite directions, with a
-    /// dot product below -1 + 1E-6, every axis gives an equally short turn, so the result is a
-    /// 180-degree turn about AFallbackAxis. <see cref="TSprite3DCamera.LookAt"/> passes the
-    /// camera's own up direction there.</remarks>
-    /// <param name="AFrom">The starting direction, unit length.</param>
-    /// <param name="ATo">The target direction, unit length.</param>
-    /// <param name="AFallbackAxis">The axis used only for opposite vectors; must be perpendicular
-    /// to AFrom, any non-zero length.</param>
-    /// <returns>A unit quaternion that rotates AFrom onto ATo.</returns>
-    /// <seealso cref="TSprite3DCamera.LookAt"/>
     class function ShortestArc(const AFrom, ATo, AFallbackAxis: TPoint3D): TQuat; static;
     //** @abstract(Interpolates spherically between two rotations.)
     //**
@@ -370,14 +337,6 @@ type
     //** @param(T The interpolation factor, normally from 0 to 1.)
     //**
     //** @returns(The interpolated rotation, as a unit quaternion.)
-    /// <summary>Interpolates spherically between two rotations.</summary>
-    /// <remarks>Always takes the shorter way round, using -B in place of B where that is nearer
-    /// to A. When A and B are almost equal it falls back to linear interpolation to avoid
-    /// dividing by a tiny sine. The result is normalised.</remarks>
-    /// <param name="A">The rotation at T = 0; unit length.</param>
-    /// <param name="B">The rotation at T = 1; unit length.</param>
-    /// <param name="T">The interpolation factor, normally from 0 to 1.</param>
-    /// <returns>The interpolated rotation, as a unit quaternion.</returns>
     class function Slerp(const A, B: TQuat; const T: Double): TQuat; static;
     //** @abstract(Composes two rotations; the result applies B first, then A.)
     //**
@@ -386,17 +345,10 @@ type
     //** @param(B The rotation applied first.)
     //**
     //** @returns(The Hamilton product @code(A * B), not normalised.)
-    /// <summary>Composes two rotations; the result applies B first, then A.</summary>
-    /// <param name="A">The rotation applied second.</param>
-    /// <param name="B">The rotation applied first.</param>
-    /// <returns>The Hamilton product <c>A * B</c>, not normalised.</returns>
     class operator Multiply(const A, B: TQuat): TQuat;
     //** @abstract(Returns the conjugate, which for a unit quaternion is the inverse rotation.)
     //**
     //** @returns(The quaternion @(W, -X, -Y, -Z@).)
-    /// <summary>Returns the conjugate, which for a unit quaternion is the inverse
-    /// rotation.</summary>
-    /// <returns>The quaternion (W, -X, -Y, -Z).</returns>
     function Conjugate: TQuat;
     //** @abstract(Returns this quaternion scaled to unit length.)
     //**
@@ -404,10 +356,6 @@ type
     //** returned instead.
     //**
     //** @returns(A unit quaternion.)
-    /// <summary>Returns this quaternion scaled to unit length.</summary>
-    /// <remarks>If the length is below 1E-6 there is no meaningful direction, and the identity is
-    /// returned instead.</remarks>
-    /// <returns>A unit quaternion.</returns>
     function Normalized: TQuat;
     //** @abstract(Rotates a vector by this quaternion.)
     //**
@@ -416,10 +364,6 @@ type
     //** @param(V The vector to rotate.)
     //**
     //** @returns(The rotated vector.)
-    /// <summary>Rotates a vector by this quaternion.</summary>
-    /// <remarks>The result is only a pure rotation if this is a unit quaternion.</remarks>
-    /// <param name="V">The vector to rotate.</param>
-    /// <returns>The rotated vector.</returns>
     function Rotate(const V: TPoint3D): TPoint3D;
   end;
 
@@ -432,14 +376,6 @@ type
   //** horizon stays as it was. Still safe at the poles, where Azimuth is held.)
   //**
   //** @seealso(TSprite3DCamera.LookAt)
-  /// <summary>How LookAt treats Roll when it turns the camera.</summary>
-  /// <remarks><para><c>lmMinimalTwist</c>: the default. A pure shortest-arc turn: the camera
-  /// keeps as much of its current up direction as it can. Repeated LookAt calls can build up
-  /// some roll.</para>
-  /// <para><c>lmKeepRoll</c>: the same view direction, but Roll keeps its current value, so
-  /// the horizon stays as it was. Still safe at the poles, where Azimuth is
-  /// held.</para></remarks>
-  /// <seealso cref="TSprite3DCamera.LookAt"/>
   TLookAtMode = (lmMinimalTwist, lmKeepRoll);
 
 
@@ -449,23 +385,14 @@ type
   //** not included; a fit never changes them.
   //**
   //** @seealso(TSprite3DCamera.SaveFraming)
-  /// <summary>A camera's framing: where it orbits and how far out it is.</summary>
-  /// <remarks>Holds what FitToBounds and FitToBoundsMax change, so a fit can be undone. Angles
-  /// are not included; a fit never changes them.</remarks>
-  /// <seealso cref="TSprite3DCamera.SaveFraming"/>
   TSprite3DFraming = record
     //** @abstract(The point the camera orbits, OrbitCenter, in the rig parent's space.)
-    /// <summary>The point the camera orbits, OrbitCenter, in the rig parent's space.</summary>
     OrbitCenter: TPoint3D;
     //** @abstract(The camera's Distance from OrbitCenter.)
-    /// <summary>The camera's Distance from OrbitCenter.</summary>
     Distance: Single;
     //** @abstract(The orthographic view height, OrthoHeight.)
-    /// <summary>The orthographic view height, OrthoHeight.</summary>
     OrthoHeight: Single;
     //** @abstract(The orthographic view width, OrthoWidth; 0 when it follows the height.)
-    /// <summary>The orthographic view width, OrthoWidth; 0 when it follows the
-    /// height.</summary>
     OrthoWidth: Single;
   end;
 
@@ -484,18 +411,6 @@ type
   //** @seealso(LookAt)
   //**
   //** @seealso(FitToBounds)
-  /// <summary>A TGorillaCamera that orbits a centre point through a chain of three
-  /// pivots.</summary>
-  /// <remarks><para>The constructor builds the pivot chain and makes the camera a child of
-  /// <see cref="RollPivot"/>. Place the camera in a scene by setting <c>Rig.Parent</c>, never
-  /// the camera's own Parent. Leave TCamera.Target nil: the pivots aim the camera at
-  /// <see cref="OrbitCenter"/>.</para>
-  /// <para>The pivots have no owner and are not stored in .fmx files. Freeing the camera frees
-  /// the pivots; freeing Rig frees the pivots and the camera. Like any FMX object, use it from
-  /// the main thread only. The class is registered with RegisterFmxClasses.</para></remarks>
-  /// <seealso cref="Rig"/>
-  /// <seealso cref="LookAt"/>
-  /// <seealso cref="FitToBounds"/>
   TSprite3DCamera = class(TGorillaCamera)
   private
     class var FFmxSign: Integer;
@@ -538,23 +453,12 @@ type
     //**
     //** @param(AOwner The owner of the camera itself, not of the pivots. If it is a
     //** TGorillaViewport it also becomes the parent of Rig.)
-    /// <summary>Creates the camera and its pivot chain.</summary>
-    /// <remarks>Distance starts at 10 and all three angles at 0. If AOwner is a TGorillaViewport,
-    /// Rig is parented to it straight away; otherwise set <c>Rig.Parent</c> before the camera can
-    /// render anything.</remarks>
-    /// <param name="AOwner">The owner of the camera itself, not of the pivots. If it is a
-    /// TGorillaViewport it also becomes the parent of Rig.</param>
     constructor Create(AOwner: TComponent); override;
     //** @abstract(Frees the camera and, if it was freed directly, its pivot chain.)
     //**
     //** When the camera is freed directly, for example by its owner, it detaches from RollPivot
     //** and frees Rig, which frees PolarPivot and RollPivot with it. When Rig is being freed by
     //** its own parent, the pivots are already on their way out and are left alone.
-    /// <summary>Frees the camera and, if it was freed directly, its pivot chain.</summary>
-    /// <remarks>When the camera is freed directly, for example by its owner, it detaches from
-    /// RollPivot and frees Rig, which frees PolarPivot and RollPivot with it. When Rig is being
-    /// freed by its own parent, the pivots are already on their way out and are left
-    /// alone.</remarks>
     destructor Destroy; override;
 
     { Turn the camera, from where it stands, to face APoint (given in the
@@ -576,18 +480,6 @@ type
     //** @seealso(TLookAtMode)
     //**
     //** @seealso(SetOrientation)
-    /// <summary>Turns the camera, from where it stands, to face APoint.</summary>
-    /// <remarks><para>The turn is the shortest-arc rotation from the current view direction to
-    /// the new one. No world-up vector is involved, so it works looking straight up or down and
-    /// never flips; a 180-degree turn pivots about the camera's own up axis.</para>
-    /// <para>The camera's position does not change. APoint becomes the new
-    /// <see cref="OrbitCenter"/> and <see cref="Distance"/> becomes the camera's distance from
-    /// it, so later orbiting circles that point. If the camera already stands on APoint, within
-    /// 1E-6, nothing happens.</para></remarks>
-    /// <param name="APoint">The point to face, in the rig parent's space.</param>
-    /// <param name="AMode">Whether Roll may change; see <see cref="TLookAtMode"/>.</param>
-    /// <seealso cref="TLookAtMode"/>
-    /// <seealso cref="SetOrientation"/>
     procedure LookAt(const APoint: TPoint3D;
       const AMode: TLookAtMode = lmMinimalTwist);
 
@@ -607,17 +499,6 @@ type
     //** identity.)
     //**
     //** @seealso(Orientation)
-    /// <summary>Sets the orientation directly, in the rig parent's space.</summary>
-    /// <remarks><para>Q is normalised, then split into Azimuth, PolarAngle and Roll. Of the two
-    /// angle sets that give the same rotation, the one nearest the current angles is chosen, so
-    /// the values change continuously and PolarAngle can run past +/-90. At an exact pole
-    /// Azimuth is held and the rest of the twist goes into Roll. Azimuth is wrapped into 0 to
-    /// 360; PolarAngle and Roll are not wrapped.</para>
-    /// <para>OrbitCenter and Distance do not change, so the camera swings round the
-    /// centre.</para></remarks>
-    /// <param name="Q">The new orientation. A quaternion of near-zero length is treated as the
-    /// identity.</param>
-    /// <seealso cref="Orientation"/>
     procedure SetOrientation(const Q: TQuat);
 
     { Incremental helpers, e.g. from mouse drag / wheel }
@@ -629,11 +510,6 @@ type
     //** @param(DeltaAzimuth Degrees to add to Azimuth.)
     //**
     //** @param(DeltaPolar Degrees to add to PolarAngle; positive raises the camera.)
-    /// <summary>Adds to Azimuth and PolarAngle, for example from a mouse drag.</summary>
-    /// <remarks>Azimuth is wrapped into 0 to 360. PolarAngle is not limited, so the camera can
-    /// carry on over a pole. Roll, Distance and OrbitCenter do not change.</remarks>
-    /// <param name="DeltaAzimuth">Degrees to add to Azimuth.</param>
-    /// <param name="DeltaPolar">Degrees to add to PolarAngle; positive raises the camera.</param>
     procedure Orbit(const DeltaAzimuth, DeltaPolar: Single);
     //** @abstract(Multiplies Distance by Factor, for example from the mouse wheel.)
     //**
@@ -642,11 +518,6 @@ type
     //** OrthoHeight, not on Distance, so zooming this way has no visible effect there.
     //**
     //** @param(Factor The multiplier; must be greater than zero to have any effect.)
-    /// <summary>Multiplies Distance by Factor, for example from the mouse wheel.</summary>
-    /// <remarks>A Factor below 1 moves the camera closer. A Factor of zero or less is ignored,
-    /// and Distance never goes below 0.001. In orthographic mode the apparent size depends on
-    /// OrthoHeight, not on Distance, so zooming this way has no visible effect there.</remarks>
-    /// <param name="Factor">The multiplier; must be greater than zero to have any effect.</param>
     procedure Zoom(const Factor: Single);
     { Move the orbit centre without changing the angles (pans the view) }
     //** @abstract(Moves the orbit centre to APoint without changing the angles or Distance.)
@@ -654,10 +525,6 @@ type
     //** The camera moves with the centre, so the view pans.
     //**
     //** @param(APoint The new orbit centre, in the rig parent's space.)
-    /// <summary>Moves the orbit centre to APoint without changing the angles or
-    /// Distance.</summary>
-    /// <remarks>The camera moves with the centre, so the view pans.</remarks>
-    /// <param name="APoint">The new orbit centre, in the rig parent's space.</param>
     procedure MoveCenterTo(const APoint: TPoint3D);
 
     { Camera position in the rig parent's space }
@@ -667,10 +534,6 @@ type
     //** matrices, so it is correct before the first frame is drawn.
     //**
     //** @returns(The camera's position.)
-    /// <summary>Returns the camera's position in the rig parent's space.</summary>
-    /// <remarks>Computed from OrbitCenter, the three angles and Distance rather than read back
-    /// from FMX matrices, so it is correct before the first frame is drawn.</remarks>
-    /// <returns>The camera's position.</returns>
     function CameraPosition: TPoint3D;
     //** @abstract(Returns the current framing, for RestoreFraming to put back later.)
     //**
@@ -680,11 +543,6 @@ type
     //** @returns(OrbitCenter, Distance, OrthoHeight and OrthoWidth as they are now.)
     //**
     //** @seealso(RestoreFraming)
-    /// <summary>Returns the current framing, for RestoreFraming to put back later.</summary>
-    /// <remarks>Use it around a temporary fit, such as fitting the model to an off-screen
-    /// target of a different shape.</remarks>
-    /// <returns>OrbitCenter, Distance, OrthoHeight and OrthoWidth as they are now.</returns>
-    /// <seealso cref="RestoreFraming"/>
     function SaveFraming: TSprite3DFraming;
     //** @abstract(Puts back a framing returned by SaveFraming.)
     //**
@@ -694,11 +552,6 @@ type
     //** @param(AFraming The framing to restore.)
     //**
     //** @seealso(SaveFraming)
-    /// <summary>Puts back a framing returned by SaveFraming.</summary>
-    /// <remarks>Sets OrbitCenter, Distance, OrthoHeight and OrthoWidth; the angles are left as
-    /// they are.</remarks>
-    /// <param name="AFraming">The framing to restore.</param>
-    /// <seealso cref="SaveFraming"/>
     procedure RestoreFraming(const AFraming: TSprite3DFraming);
 
     { The TViewport3D (e.g. TGorillaViewport) the rig lives in, or nil }
@@ -709,12 +562,6 @@ type
     //**
     //** @returns(The viewport, typed as TViewport3D, or nil if Rig has no TGorillaViewport
     //** above it.)
-    /// <summary>Returns the TGorillaViewport the rig is placed in, or nil.</summary>
-    /// <remarks>Walks up the parent chain from Rig's parent and stops at the first
-    /// TGorillaViewport. A plain TViewport3D is not recognised. The caller does not own the
-    /// result.</remarks>
-    /// <returns>The viewport, typed as TViewport3D, or nil if Rig has no TGorillaViewport above
-    /// it.</returns>
     function FindViewport: TViewport3D;
 
     { Make ABox (rig parent space) as large as possible in the viewport
@@ -749,26 +596,6 @@ type
     //** @seealso(FitToBoundsMax)
     //**
     //** @seealso(FindViewport)
-    /// <summary>Makes ABox as large as possible in the viewport for the current
-    /// angles.</summary>
-    /// <remarks><para>The fit is for the camera's current Azimuth, PolarAngle and Roll, which are
-    /// never changed. OrbitCenter moves and Distance changes; in orthographic or isometric mode
-    /// OrthoHeight, and OrthoWidth if it is non-zero, are scaled as well. The view is centred on
-    /// the box's eight corners, and they touch both edges of the tighter axis. The frustum,
-    /// including the aspect ratio, comes from GetProjectionMatrix for the viewport's
-    /// size.</para>
-    /// <para>Changing an angle afterwards can push the box out of view, so call FitToBounds
-    /// again after every change, or use <see cref="FitToBoundsMax"/>. In perspective mode every
-    /// corner is also kept at least 1 unit in front of the camera, FMX's near plane, which can
-    /// make a very deep box smaller than the view.</para></remarks>
-    /// <param name="ABox">The box to frame, in the rig parent's space. For a box in an object's
-    /// own local space, use the overload that takes ASpace.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
-    /// view on the tighter axis. Negative values count as 0.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty,
-    /// there is no viewport, or it has zero width or height.</returns>
-    /// <seealso cref="FitToBoundsMax"/>
-    /// <seealso cref="FindViewport"/>
     function FitToBounds(const ABox: TBoundingBox;
       const AMargin: Single = 0): Boolean; overload;
     { Same, for a Gorilla model: fits the box ShowBoundingBox draws }
@@ -790,20 +617,6 @@ type
     //** it has no vertices, there is no viewport, or the viewport has zero width or height.)
     //**
     //** @seealso(FitToBoundsMax)
-    /// <summary>Makes a Gorilla model's bounding box as large as possible for the current
-    /// angles.</summary>
-    /// <remarks>Takes <c>AModel.GetAnimatedBoundingBox</c>, which Gorilla v1.5 documents as the
-    /// box of the current pose in the model's local space and which ShowBoundingBox draws. It is
-    /// passed, with AModel as the space, to the overload that takes ASpace, so the model's
-    /// position, rotation and scale are applied once. The box follows the animation, so the fit
-    /// is for the pose at the time of the call.</remarks>
-    /// <param name="AModel">The model to frame; nil makes the call return False.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
-    /// view on the tighter axis.</param>
-    /// <returns>True if the model was framed; False, with nothing changed, if AModel is nil, it
-    /// has no vertices, there is no viewport, or the viewport has zero width or
-    /// height.</returns>
-    /// <seealso cref="FitToBoundsMax"/>
     function FitToBounds(const AModel: TGorillaModel;
       const AMargin: Single = 0): Boolean; overload;
     { Same, for an explicit view size (e.g. before the viewport is shown) }
@@ -824,19 +637,6 @@ type
     //**
     //** @returns(True if the box was framed; False, with nothing changed, if the box is empty
     //** or either size is zero or less.)
-    /// <summary>Fits ABox for the current angles and an explicit view size.</summary>
-    /// <remarks>Works like the overload without a view size, but uses AViewWidth and AViewHeight
-    /// instead of the viewport's size, so no viewport is needed, for example before it is shown.
-    /// Only their ratio matters.</remarks>
-    /// <param name="ABox">The box to frame, in the rig parent's space.</param>
-    /// <param name="AViewWidth">The width of the view, in the same units as
-    /// AViewHeight.</param>
-    /// <param name="AViewHeight">The height of the view, in the same units as
-    /// AViewWidth.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
-    /// view on the tighter axis.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty or
-    /// either size is zero or less.</returns>
     function FitToBounds(const ABox: TBoundingBox; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
     { Same, for a Gorilla model and an explicit view size (e.g. an
@@ -863,23 +663,6 @@ type
     //** it has no vertices, or either size is zero or less.)
     //**
     //** @seealso(FitToBoundsMax)
-    /// <summary>Makes a Gorilla model's bounding box as large as possible in a view of the
-    /// given size, for the current angles.</summary>
-    /// <remarks>Works like the overload that takes only a model, but frames it for AViewWidth
-    /// by AViewHeight instead of the viewport's size; only their ratio matters. Use it to fit
-    /// the model to an off-screen target, such as a TSprite3DOffscreen, whose shape differs from
-    /// the viewport's. The camera is changed as by every fit, so the on-screen view changes too
-    /// until it is refitted or restored.</remarks>
-    /// <param name="AModel">The model to frame; nil makes the call return False.</param>
-    /// <param name="AViewWidth">The width of the view, in the same units as
-    /// AViewHeight.</param>
-    /// <param name="AViewHeight">The height of the view, in the same units as
-    /// AViewWidth.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
-    /// view on the tighter axis.</param>
-    /// <returns>True if the model was framed; False, with nothing changed, if AModel is nil, it
-    /// has no vertices, or either size is zero or less.</returns>
-    /// <seealso cref="FitToBoundsMax"/>
     function FitToBounds(const AModel: TGorillaModel; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
     { ABox is in ASpace's LOCAL coordinates (e.g. a model's mesh bounds).
@@ -904,19 +687,6 @@ type
     //**
     //** @returns(True if the box was framed; False, with nothing changed, if the box is empty,
     //** there is no viewport, or it has zero width or height.)
-    /// <summary>Fits a box given in ASpace's local coordinates for the current angles.</summary>
-    /// <remarks>All eight corners are carried through ASpace's position, rotation and scale into
-    /// the rig parent's space, then fitted as in the other overloads, using the viewport's size.
-    /// A rotated box is fitted as the rotated box, not as a larger axis-aligned one, and
-    /// non-uniform scale is handled.</remarks>
-    /// <param name="ABox">The box to frame, in ASpace's local coordinates, such as a model's
-    /// mesh bounds.</param>
-    /// <param name="ASpace">The object whose local space ABox is in. If nil, ABox is taken to be
-    /// in absolute viewport space.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
-    /// view on the tighter axis.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty,
-    /// there is no viewport, or it has zero width or height.</returns>
     function FitToBounds(const ABox: TBoundingBox; const ASpace: TControl3D;
       const AMargin: Single = 0): Boolean; overload;
     { Same, for an explicit view size (e.g. an off-screen target), so a box
@@ -945,25 +715,6 @@ type
     //**
     //** @returns(True if the box was framed; False, with nothing changed, if the box is empty
     //** or either size is zero or less.)
-    /// <summary>Fits a box given in ASpace's local coordinates for the current angles and an
-    /// explicit view size.</summary>
-    /// <remarks>Works like the overload that takes a box and a space, but frames it for
-    /// AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use
-    /// it to frame a box the caller has gathered, such as the union of every pose of an
-    /// animation, for an off-screen target whose shape differs from the viewport's. The camera
-    /// is changed as by every fit, so the on-screen view changes too until it is refitted or
-    /// restored.</remarks>
-    /// <param name="ABox">The box to frame, in ASpace's local coordinates.</param>
-    /// <param name="ASpace">The object whose local space ABox is in. If nil, ABox is taken to be
-    /// in absolute viewport space.</param>
-    /// <param name="AViewWidth">The width of the view, in the same units as
-    /// AViewHeight.</param>
-    /// <param name="AViewHeight">The height of the view, in the same units as
-    /// AViewWidth.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the box 1/1.1 of the
-    /// view on the tighter axis.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty or
-    /// either size is zero or less.</returns>
     function FitToBounds(const ABox: TBoundingBox; const ASpace: TControl3D;
       const AViewWidth, AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
 
@@ -996,24 +747,6 @@ type
     //** there is no viewport, or it has zero width or height.)
     //**
     //** @seealso(FitToBounds)
-    /// <summary>Makes ABox as large as possible while it stays visible at every angle.</summary>
-    /// <remarks><para>Azimuth, PolarAngle and Roll together reach every orientation, so the box
-    /// can end up in any rotation about the orbit centre. All those rotations together fill the
-    /// sphere around the box's centre that reaches its farthest corner, so that sphere is what
-    /// is fitted: it is the smallest shape that is safe for every angle. OrbitCenter moves to
-    /// the box's centre and Distance, or the orthographic size, is set; the angles are not
-    /// changed and can then be changed freely without refitting. The overloads that take a
-    /// model or ASpace centre the sphere on that object's centre of rotation instead.</para>
-    /// <para>The box looks smaller than with <see cref="FitToBounds"/>, by up to the ratio of
-    /// the box's half diagonal to its smaller visible half-size. In perspective mode the sphere
-    /// is kept at least 1 unit in front of the camera, FMX's near plane.</para></remarks>
-    /// <param name="ABox">The box to frame, in the rig parent's space. For a box in an object's
-    /// own local space, use the overload that takes ASpace.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
-    /// the view on the tighter axis. Negative values count as 0.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty,
-    /// there is no viewport, or it has zero width or height.</returns>
-    /// <seealso cref="FitToBounds"/>
     function FitToBoundsMax(const ABox: TBoundingBox;
       const AMargin: Single = 0): Boolean; overload;
     { Same, for a Gorilla model: the box ShowBoundingBox draws }
@@ -1037,22 +770,6 @@ type
     //** it has no vertices, there is no viewport, or the viewport has zero width or height.)
     //**
     //** @seealso(FitToBounds)
-    /// <summary>Makes a Gorilla model's bounding box as large as possible while it stays visible
-    /// at every angle.</summary>
-    /// <remarks>Takes <c>AModel.GetAnimatedBoundingBox</c>, the current pose's box in the
-    /// model's local space, and passes it with AModel as the space to the overload that takes
-    /// ASpace, so the model's transform is applied once. The sphere is centred on the model's
-    /// centre of rotation, its RotationCenter, which can lie outside the box: the camera then
-    /// circles the point the model turns about, which stays put however an animation moves
-    /// the box. The pose is taken at the time of the call; an animation that later reaches
-    /// farther from that point can still overflow.</remarks>
-    /// <param name="AModel">The model to frame; nil makes the call return False.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
-    /// the view on the tighter axis.</param>
-    /// <returns>True if the model was framed; False, with nothing changed, if AModel is nil, it
-    /// has no vertices, there is no viewport, or the viewport has zero width or
-    /// height.</returns>
-    /// <seealso cref="FitToBounds"/>
     function FitToBoundsMax(const AModel: TGorillaModel;
       const AMargin: Single = 0): Boolean; overload;
     { Same, for an explicit view size (e.g. before the viewport is shown) }
@@ -1073,19 +790,6 @@ type
     //**
     //** @returns(True if the box was framed; False, with nothing changed, if the box is empty
     //** or either size is zero or less.)
-    /// <summary>Fits ABox for every angle and an explicit view size.</summary>
-    /// <remarks>Works like the overload without a view size, but uses AViewWidth and AViewHeight
-    /// instead of the viewport's size, so no viewport is needed, for example before it is shown.
-    /// Only their ratio matters.</remarks>
-    /// <param name="ABox">The box to frame, in the rig parent's space.</param>
-    /// <param name="AViewWidth">The width of the view, in the same units as
-    /// AViewHeight.</param>
-    /// <param name="AViewHeight">The height of the view, in the same units as
-    /// AViewWidth.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
-    /// the view on the tighter axis.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty or
-    /// either size is zero or less.</returns>
     function FitToBoundsMax(const ABox: TBoundingBox; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
     { Same, for a Gorilla model and an explicit view size }
@@ -1110,23 +814,6 @@ type
     //** it has no vertices, or either size is zero or less.)
     //**
     //** @seealso(FitToBounds)
-    /// <summary>Makes a Gorilla model's bounding box as large as possible in a view of the
-    /// given size while it stays visible at every angle.</summary>
-    /// <remarks>Works like the overload that takes only a model, centring the sphere on the
-    /// model's centre of rotation, but frames it for AViewWidth by AViewHeight instead of the
-    /// viewport's size; only their ratio matters. Use it to fit the model to an off-screen
-    /// target whose shape differs from the viewport's. The camera is changed as by every
-    /// fit.</remarks>
-    /// <param name="AModel">The model to frame; nil makes the call return False.</param>
-    /// <param name="AViewWidth">The width of the view, in the same units as
-    /// AViewHeight.</param>
-    /// <param name="AViewHeight">The height of the view, in the same units as
-    /// AViewWidth.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
-    /// the view on the tighter axis.</param>
-    /// <returns>True if the model was framed; False, with nothing changed, if AModel is nil, it
-    /// has no vertices, or either size is zero or less.</returns>
-    /// <seealso cref="FitToBounds"/>
     function FitToBoundsMax(const AModel: TGorillaModel; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
     { ABox is in ASpace's LOCAL coordinates, as for FitToBounds }
@@ -1151,22 +838,6 @@ type
     //**
     //** @returns(True if the box was framed; False, with nothing changed, if the box is empty,
     //** there is no viewport, or it has zero width or height.)
-    /// <summary>Fits a box given in ASpace's local coordinates for every angle.</summary>
-    /// <remarks>All eight corners are carried through ASpace's position, rotation and scale into
-    /// the rig parent's space. The sphere is centred on ASpace's centre of rotation, its
-    /// RotationCenter carried into the same space, and reaches the farthest transformed corner
-    /// from it, so non-uniform scale is handled. The centre of rotation can lie outside the
-    /// box; the camera then circles it, which keeps it steady while an animation moves the box.
-    /// With ASpace nil the sphere is centred on the box. It is then fitted as in the other
-    /// overloads, using the viewport's size.</remarks>
-    /// <param name="ABox">The box to frame, in ASpace's local coordinates, such as a model's
-    /// mesh bounds.</param>
-    /// <param name="ASpace">The object whose local space ABox is in. If nil, ABox is taken to be
-    /// in absolute viewport space.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the sphere 1/1.1 of
-    /// the view on the tighter axis.</param>
-    /// <returns>True if the box was framed; False, with nothing changed, if the box is empty,
-    /// there is no viewport, or it has zero width or height.</returns>
     function FitToBoundsMax(const ABox: TBoundingBox; const ASpace: TControl3D;
       const AMargin: Single = 0): Boolean; overload;
 
@@ -1208,37 +879,6 @@ type
     //** none, the camera is locked, there is no viewport, or it has zero width or height.)
     //**
     //** @seealso(FitToBounds)
-    /// <summary>Frames a set of points as large as possible for the current angles, with the
-    /// orbit centre on a given line.</summary>
-    /// <remarks><para>The points are framed as <see cref="FitToBounds"/> frames a box's
-    /// corners: as large as they can be in the view, centred, so they reach both edges of the
-    /// tighter axis, left and right or top and bottom, and in perspective mode at least 1 unit
-    /// in front of the camera, FMX's near plane. The view only holds their convex hull, so the
-    /// points need only enclose the shape to be framed. Azimuth, PolarAngle and Roll are not
-    /// changed.</para>
-    /// <para>OrbitCenter is then moved along the view axis to the point nearest the line
-    /// through ALinePoint along ALineDirection, and Distance changed by the same amount, so the
-    /// camera, and the view, stay exactly where the fit put them. For a shape that is round
-    /// about that line, such as a model's swept volume about its turning axis, the view axis
-    /// meets the line while Roll is 0, so the orbit centre is on it and turning the azimuth,
-    /// with the line upright, keeps the shape centred and in view. When the view axis runs
-    /// along the line, as seen from straight above, or the move would put the camera less than
-    /// 1 unit from the new centre, the orbit centre is left where the fit put it.</para>
-    /// <para>The points and the line are carried through ASpace's position, rotation and scale
-    /// into the rig parent's space first.</para></remarks>
-    /// <param name="APoints">The points to keep in view, in ASpace's local
-    /// coordinates.</param>
-    /// <param name="ALinePoint">A point on the line the orbit centre is put on, in the same
-    /// coordinates.</param>
-    /// <param name="ALineDirection">The line's direction, in the same coordinates; any length
-    /// but 0.</param>
-    /// <param name="ASpace">The object whose local space the points and line are in. If nil,
-    /// they are taken to be in absolute viewport space.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the points' extent
-    /// 1/1.1 of the view on the tighter axis. Negative values count as 0.</param>
-    /// <returns>True if the points were framed; False, with nothing changed, if there are none,
-    /// the camera is locked, there is no viewport, or it has zero width or height.</returns>
-    /// <seealso cref="FitToBounds"/>
     function FitPointsOnAxis(const APoints: array of TPoint3D; const ALinePoint,
       ALineDirection: TPoint3D; const ASpace: TControl3D;
       const AMargin: Single = 0): Boolean; overload;
@@ -1269,27 +909,6 @@ type
     //**
     //** @returns(True if the points were framed; False, with nothing changed, if there are
     //** none, the camera is locked, or either size is zero or less.)
-    /// <summary>Frames a set of points with the orbit centre on a given line, for an explicit
-    /// view size.</summary>
-    /// <remarks>Works like the overload without a view size, but frames the points for
-    /// AViewWidth by AViewHeight instead of the viewport's size; only their ratio matters. Use
-    /// it for an off-screen target whose shape differs from the viewport's.</remarks>
-    /// <param name="APoints">The points to keep in view, in ASpace's local
-    /// coordinates.</param>
-    /// <param name="ALinePoint">A point on the line the orbit centre is put on, in the same
-    /// coordinates.</param>
-    /// <param name="ALineDirection">The line's direction, in the same coordinates; any length
-    /// but 0.</param>
-    /// <param name="ASpace">The object whose local space the points and line are in. If nil,
-    /// they are taken to be in absolute viewport space.</param>
-    /// <param name="AViewWidth">The width of the view, in the same units as
-    /// AViewHeight.</param>
-    /// <param name="AViewHeight">The height of the view, in the same units as
-    /// AViewWidth.</param>
-    /// <param name="AMargin">Padding as a fraction of the view: 0.1 makes the points' extent
-    /// 1/1.1 of the view on the tighter axis.</param>
-    /// <returns>True if the points were framed; False, with nothing changed, if there are none,
-    /// the camera is locked, or either size is zero or less.</returns>
     function FitPointsOnAxis(const APoints: array of TPoint3D; const ALinePoint,
       ALineDirection: TPoint3D; const ASpace: TControl3D; const AViewWidth,
       AViewHeight: Single; const AMargin: Single = 0): Boolean; overload;
@@ -1312,21 +931,6 @@ type
     //** @param(AViewWidth The width of the view the pixels are measured in.)
     //**
     //** @param(AViewHeight The height of the view the pixels are measured in.)
-    /// <summary>Slides the view by a number of pixels across and up, without turning
-    /// it.</summary>
-    /// <remarks>OrbitCenter, and so the camera, moves along the camera's own right and up
-    /// directions by as much as ARight and AUp pixels measure, in a view of AViewWidth by
-    /// AViewHeight, at the orbit centre's depth: so the picture moves the other way by that
-    /// many pixels there. In orthographic mode a pixel is the same size at every depth and the
-    /// slide is exact; in perspective, parts nearer or further than the orbit centre move a
-    /// little more or less, which for the fractions of a pixel it is meant for is negligible.
-    /// The angles, Distance and the orthographic size are not changed, and it works whether
-    /// or not the camera is Locked, as the caller is expected to put OrbitCenter
-    /// back.</remarks>
-    /// <param name="ARight">Pixels to slide the view right; negative slides it left.</param>
-    /// <param name="AUp">Pixels to slide the view up; negative slides it down.</param>
-    /// <param name="AViewWidth">The width of the view the pixels are measured in.</param>
-    /// <param name="AViewHeight">The height of the view the pixels are measured in.</param>
     procedure ShiftView(const ARight, AUp, AViewWidth, AViewHeight: Single);
     //** @abstract(Where a point falls in a view of a given size, as the camera stands.)
     //**
@@ -1352,23 +956,6 @@ type
     //**
     //** @returns(False, leaving AX and AY at 0, if the view has no size or, in perspective,
     //** the point is not in front of the camera.)
-    /// <summary>Where a point falls in a view of a given size, as the camera stands.</summary>
-    /// <remarks>The point is carried into the rig's space as the fits carry a box's corners,
-    /// then seen through the camera's own GetProjectionMatrix for AViewWidth by AViewHeight, in
-    /// perspective or orthographic projection as the camera is set. The result is measured in
-    /// the view's pixels from its top-left corner, so the centre of the view is
-    /// <c>(AViewWidth / 2, AViewHeight / 2)</c> and the centre of the top-left pixel is
-    /// <c>(0.5, 0.5)</c>. It may lie outside the view.</remarks>
-    /// <param name="APoint">The point, in ASpace's own coordinates, such as a model's
-    /// RotationCenter.</param>
-    /// <param name="ASpace">The object whose coordinates APoint is in; nil for the rig
-    /// parent's.</param>
-    /// <param name="AViewWidth">The width of the view, in pixels, such as a grab's.</param>
-    /// <param name="AViewHeight">The height of the view, in pixels.</param>
-    /// <param name="AX">Set to the distance from the view's left edge, in pixels.</param>
-    /// <param name="AY">Set to the distance from the view's top edge, in pixels.</param>
-    /// <returns>False, leaving AX and AY at 0, if the view has no size or, in perspective, the
-    /// point is not in front of the camera.</returns>
     function ProjectToView(const APoint: TPoint3D; const ASpace: TControl3D;
       const AViewWidth, AViewHeight: Single; out AX, AY: Single): Boolean;
 
@@ -1378,35 +965,19 @@ type
     //**
     //** The same object as AzimuthPivot. Its Position is OrbitCenter. Freeing Rig frees the
     //** whole chain, the camera included.
-    /// <summary>The root of the pivot chain; set <c>Rig.Parent</c> to place the camera in a
-    /// scene.</summary>
-    /// <remarks>The same object as <see cref="AzimuthPivot"/>. Its Position is
-    /// <see cref="OrbitCenter"/>. Freeing Rig frees the whole chain, the camera
-    /// included.</remarks>
     property Rig: TDummy read FAzimuthPivot;
     //** @abstract(The pivot that turns about Y for Azimuth; the root of the chain, same as Rig.)
     //**
     //** Its rotation is overwritten whenever an angle changes, so do not set it directly.
-    /// <summary>The pivot that turns about Y for Azimuth; the root of the chain, same as
-    /// Rig.</summary>
-    /// <remarks>Its rotation is overwritten whenever an angle changes, so do not set it
-    /// directly.</remarks>
     property AzimuthPivot: TDummy read FAzimuthPivot;
     //** @abstract(The pivot that turns about X for PolarAngle; a child of AzimuthPivot.)
     //**
     //** Its rotation is overwritten whenever an angle changes, so do not set it directly.
-    /// <summary>The pivot that turns about X for PolarAngle; a child of AzimuthPivot.</summary>
-    /// <remarks>Its rotation is overwritten whenever an angle changes, so do not set it
-    /// directly.</remarks>
     property PolarPivot: TDummy read FPolarPivot;
     //** @abstract(The pivot that turns about Z for Roll; a child of PolarPivot and the camera's
     //** parent.)
     //**
     //** Its rotation is overwritten whenever an angle changes, so do not set it directly.
-    /// <summary>The pivot that turns about Z for Roll; a child of PolarPivot and the camera's
-    /// parent.</summary>
-    /// <remarks>Its rotation is overwritten whenever an angle changes, so do not set it
-    /// directly.</remarks>
     property RollPivot: TDummy read FRollPivot;
 
     { Orbit centre = root pivot position, in the rig parent's space.
@@ -1417,10 +988,6 @@ type
     //** This is Rig's Position object, so writing to it, for example
     //** @code(OrbitCenter.Point := P), moves the centre and the camera with it. It is named so
     //** as not to clash with TCamera.Target, which should be left nil on this camera.
-    /// <summary>The point the camera orbits and looks at, in the rig parent's space.</summary>
-    /// <remarks>This is Rig's Position object, so writing to it, for example
-    /// <c>OrbitCenter.Point := P</c>, moves the centre and the camera with it. It is named so as
-    /// not to clash with TCamera.Target, which should be left nil on this camera.</remarks>
     property OrbitCenter: TPosition3D read GetOrbitCenter;
     //** @abstract(The camera's orientation as a quaternion in the rig parent's space.)
     //**
@@ -1428,45 +995,27 @@ type
     //** SetOrientation, which splits the quaternion back into the three angles.
     //**
     //** @seealso(SetOrientation)
-    /// <summary>The camera's orientation as a quaternion in the rig parent's space.</summary>
-    /// <remarks>Reading builds <c>Qy(Azimuth) * Qx(-PolarAngle) * Qz(Roll)</c>. Writing calls
-    /// <see cref="SetOrientation"/>, which splits the quaternion back into the three
-    /// angles.</remarks>
-    /// <seealso cref="SetOrientation"/>
     property Orientation: TQuat read GetOrientation write SetOrientation;
   published
     //** @abstract(Rotation about the vertical Y axis through the orbit centre, in degrees.)
     //**
     //** Written values are wrapped into 0 to 360. The pivots update at once.
-    /// <summary>Rotation about the vertical Y axis through the orbit centre, in
-    /// degrees.</summary>
-    /// <remarks>Written values are wrapped into 0 to 360. The pivots update at once.</remarks>
     property Azimuth: Single read FAzimuth write SetAzimuth;
     //** @abstract(Elevation of the camera above the orbit centre, in degrees.)
     //**
     //** 0 is level with the centre, +90 is directly above looking down and -90 directly below
     //** looking up. Not limited: values past +/-90 carry the camera over the pole and down the
     //** far side, upside down.
-    /// <summary>Elevation of the camera above the orbit centre, in degrees.</summary>
-    /// <remarks>0 is level with the centre, +90 is directly above looking down and -90 directly
-    /// below looking up. Not limited: values past +/-90 carry the camera over the pole and down
-    /// the far side, upside down.</remarks>
     property PolarAngle: Single read FPolarAngle write SetPolarAngle;
     //** @abstract(Rotation of the camera about its own view direction, in degrees.)
     //**
     //** Neither wrapped nor limited. It never changes where the camera points.
-    /// <summary>Rotation of the camera about its own view direction, in degrees.</summary>
-    /// <remarks>Neither wrapped nor limited. It never changes where the camera points.</remarks>
     property Roll: Single read FRoll write SetRoll;
     //** @abstract(Distance from the orbit centre to the camera, in scene units.)
     //**
     //** Defaults to 10 and is clamped to at least 0.001. In orthographic mode it does not change
     //** the apparent size; FitToBounds still sets it to keep the near plane clear of the framed
     //** object.
-    /// <summary>Distance from the orbit centre to the camera, in scene units.</summary>
-    /// <remarks>Defaults to 10 and is clamped to at least 0.001. In orthographic mode it does not
-    /// change the apparent size; <see cref="FitToBounds"/> still sets it to keep the near plane
-    /// clear of the framed object.</remarks>
     property Distance: Single read FDistance write SetDistance;
     //** @abstract(While True, nothing done through this class moves or turns the camera.)
     //**
@@ -1476,14 +1025,6 @@ type
     //** SaveFraming still works. It does not stop code writing straight to the inherited
     //** properties, such as ProjectionMode and OrthoHeight, or to OrbitCenter's position;
     //** callers that honour the lock must check it before they do. False by default.
-    /// <summary>While True, nothing done through this class moves or turns the
-    /// camera.</summary>
-    /// <remarks>Setting Azimuth, PolarAngle, Roll, Distance or Orientation, and calling LookAt,
-    /// Orbit, Zoom, MoveCenterTo or RestoreFraming, then do nothing, and every FitToBounds and
-    /// FitToBoundsMax returns False without changing anything. Reading is unaffected, so
-    /// SaveFraming still works. It does not stop code writing straight to the inherited
-    /// properties, such as ProjectionMode and OrthoHeight, or to OrbitCenter's position;
-    /// callers that honour the lock must check it before they do. False by default.</remarks>
     property Locked: Boolean read FLocked write FLocked;
   end;
 

@@ -53,63 +53,42 @@ uses
 
 type
   //** @abstract(The Animation, Animations Used dialog; see the unit description.)
-  /// <summary>The Animation, Animations Used dialog; see the unit description.</summary>
   TAnimationsUsedForm = class(TForm)
     //** @abstract(Holds the All tick box and the list.)
-    /// <summary>Holds the All tick box and the list.</summary>
     MainLayout: TLayout;
     //** @abstract(The row above the list with AllCheckBox and ShareHeaderLabel.)
-    /// <summary>The row above the list with AllCheckBox and ShareHeaderLabel.</summary>
     HeaderLayout: TLayout;
     //** @abstract(The title over the percentage column, "% of combined".)
-    /// <summary>The title over the percentage column, "% of combined".</summary>
     ShareHeaderLabel: TLabel;
     //** @abstract(Ticks or clears every animation; ticked only while every one is ticked.)
-    /// <summary>Ticks or clears every animation; ticked only while every one is
-    /// ticked.</summary>
     AllCheckBox: TCheckBox;
     //** @abstract(The model's animations, each with a tick box; ticked means used.)
-    /// <summary>The model's animations, each with a tick box; ticked means used.</summary>
     AnimationList: TListBox;
     //** @abstract(Says the model has no animations, when it has none.)
-    /// <summary>Says the model has no animations, when it has none.</summary>
     EmptyLabel: TLabel;
     //** @abstract(The strip holding the Cancel and OK buttons.)
-    /// <summary>The strip holding the Cancel and OK buttons.</summary>
     ButtonLayout: TLayout;
     //** @abstract(Closes the dialog with mrOk.)
-    /// <summary>Closes the dialog with mrOk.</summary>
     OkButton: TButton;
     //** @abstract(Closes the dialog with mrCancel, keeping none of the changes.)
-    /// <summary>Closes the dialog with mrCancel, keeping none of the changes.</summary>
     CancelButton: TButton;
     //** @abstract(Ticks or clears every animation to match AllCheckBox.)
     //**
     //** @param(Sender AllCheckBox.)
-    /// <summary>Ticks or clears every animation to match AllCheckBox.</summary>
-    /// <param name="Sender">AllCheckBox.</param>
     procedure AllCheckBoxChange(Sender: TObject);
     //** @abstract(Shows AllCheckBox ticked only while every animation is ticked.)
     //**
     //** @param(Sender AnimationList.)
-    /// <summary>Shows AllCheckBox ticked only while every animation is ticked.</summary>
-    /// <param name="Sender">AnimationList.</param>
     procedure AnimationListChangeCheck(Sender: TObject);
     //** @abstract(Closes the dialog with the button's ModalResult.)
     //**
     //** @param(Sender OkButton or CancelButton.)
-    /// <summary>Closes the dialog with the button's ModalResult.</summary>
-    /// <param name="Sender">OkButton or CancelButton.</param>
     procedure ButtonClick(Sender: TObject);
     //** @abstract(Reports OK or Cancel when shown with ShowAndFree, and frees the form then.)
     //**
     //** @param(Sender The form.)
     //**
     //** @param(Action Set to caFree when shown with ShowAndFree.)
-    /// <summary>Reports OK or Cancel when shown with ShowAndFree, and frees the form
-    /// then.</summary>
-    /// <param name="Sender">The form.</param>
-    /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     FOnAccept: TNotifyEvent;
@@ -139,19 +118,6 @@ type
     //** CombinedSweptVolume gives it for that animation alone.)
     //**
     //** @param(ARest The rest pose's swept volume, always part of the combined volume.)
-    /// <summary>Fills the list with AAll, ticking those in AUsed, with each animation's share
-    /// of the combined swept volume.</summary>
-    /// <remarks>The animations are listed in AAll's order. A name in AUsed that is not in AAll
-    /// is ignored; names are compared exactly. AVolumes gives each animation's own swept
-    /// volume, in AAll's order; an entry that is not Valid, or missing, shows a dash in the
-    /// percentage column and counts for nothing in the combined volume. Call it before showing
-    /// the dialog.</remarks>
-    /// <param name="AAll">Every animation of the model, by Id.</param>
-    /// <param name="AUsed">The animations used now, by Id.</param>
-    /// <param name="AVolumes">Each animation's own swept volume, in AAll's order, as
-    /// CombinedSweptVolume gives it for that animation alone.</param>
-    /// <param name="ARest">The rest pose's swept volume, always part of the combined
-    /// volume.</param>
     procedure SetAnimations(const AAll, AUsed: TArray<String>;
       const AVolumes: TArray<TSweptVolume>; const ARest: TSweptVolume);
 
@@ -160,25 +126,17 @@ type
     //** Read it after OK.
     //**
     //** @returns(The Ids of the ticked animations; empty if none is ticked.)
-    /// <summary>The ticked animations, in the list's order.</summary>
-    /// <remarks>Read it after OK.</remarks>
-    /// <returns>The Ids of the ticked animations; empty if none is ticked.</returns>
     function UsedAnimations: TArray<String>;
 
     //** @abstract(Shows the dialog without blocking and frees it when it closes.)
     //**
     //** For Android and iOS, where ShowModal cannot block. OnAccept is called if it closes
     //** with OK, OnCancel otherwise.
-    /// <summary>Shows the dialog without blocking and frees it when it closes.</summary>
-    /// <remarks>For Android and iOS, where ShowModal cannot block. OnAccept is called if it
-    /// closes with OK, OnCancel otherwise.</remarks>
     procedure ShowAndFree;
 
     //** @abstract(Called on OK when shown with ShowAndFree.)
-    /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
     //** @abstract(Called on Cancel, or any close but OK, when shown with ShowAndFree.)
-    /// <summary>Called on Cancel, or any close but OK, when shown with ShowAndFree.</summary>
     property OnCancel: TNotifyEvent read FOnCancel write FOnCancel;
   end;
 

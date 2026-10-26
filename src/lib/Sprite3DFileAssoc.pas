@@ -80,16 +80,12 @@ uses
 
 type
   //** @abstract(One file type an application opens.)
-  /// <summary>One file type an application opens.</summary>
   TSprite3DFileType = record
     //** @abstract(The file name extension, with its leading dot, such as @code(.glb).)
-    /// <summary>The file name extension, with its leading dot, such as <c>.glb</c>.</summary>
     Extension: String;
     //** @abstract(The MIME type used on Linux, such as @code(model/gltf-binary).)
-    /// <summary>The MIME type used on Linux, such as <c>model/gltf-binary</c>.</summary>
     MimeType: String;
     //** @abstract(A short description of the type, shown by Linux file managers.)
-    /// <summary>A short description of the type, shown by Linux file managers.</summary>
     Description: String;
     //** @abstract(Makes a file type from its three parts.)
     //**
@@ -100,12 +96,6 @@ type
     //** @param(ADescription A short description.)
     //**
     //** @returns(The file type, with the extension in lower case and starting with a dot.)
-    /// <summary>Makes a file type from its three parts.</summary>
-    /// <param name="AExtension">The extension, with or without its leading dot.</param>
-    /// <param name="AMimeType">The MIME type for Linux.</param>
-    /// <param name="ADescription">A short description.</param>
-    /// <returns>The file type, with the extension in lower case and starting with a
-    /// dot.</returns>
     class function Create(const AExtension, AMimeType,
       ADescription: String): TSprite3DFileType; static;
   end;
@@ -115,11 +105,6 @@ type
   //** @code(asNone): nothing, as on Android and iOS. @code(asDefaultOnly): only which
   //** application is the default; Open With is fixed when the app is built, as on macOS.
   //** @code(asFull): both, as on Windows and Linux.
-  /// <summary>How much of the file associations this platform lets a program
-  /// change.</summary>
-  /// <remarks><c>asNone</c>: nothing, as on Android and iOS. <c>asDefaultOnly</c>: only which
-  /// application is the default; Open With is fixed when the app is built, as on macOS.
-  /// <c>asFull</c>: both, as on Windows and Linux.</remarks>
   TSprite3DAssocSupport = (asNone, asDefaultOnly, asFull);
 
   //** @abstract(Registers the running program for a set of file types, for the current user.)
@@ -128,12 +113,6 @@ type
   //** that changes something returns False on failure and leaves the reason in LastError.
   //**
   //** @seealso(TSprite3DFileType)
-  /// <summary>Registers the running program for a set of file types, for the current
-  /// user.</summary>
-  /// <remarks>Create it, use it and free it; it holds no system resources between calls. Each
-  /// method that changes something returns False on failure and leaves the reason in
-  /// LastError.</remarks>
-  /// <seealso cref="TSprite3DFileType"/>
   TSprite3DFileAssociations = class
   private
     FAppName: String;
@@ -172,24 +151,12 @@ type
     //** @param(ADescription A short description of what the application opens.)
     //**
     //** @param(AFileTypes The types to register.)
-    /// <summary>Prepares to register the running program for AFileTypes.</summary>
-    /// <remarks>Nothing is changed until a method is called.</remarks>
-    /// <param name="AAppName">The application's name, as people see it; also used for its
-    /// keys and files, so it should not change between versions.</param>
-    /// <param name="AProgId">A programmatic identifier, such as <c>Sprite3D.Model</c>, used
-    /// on Windows for the registry and in the backup string.</param>
-    /// <param name="ADescription">A short description of what the application
-    /// opens.</param>
-    /// <param name="AFileTypes">The types to register.</param>
     constructor Create(const AAppName, AProgId, ADescription: String;
       const AFileTypes: TArray<TSprite3DFileType>);
 
     //** @abstract(How much this platform lets a program change.)
     //**
     //** @returns(asFull on Windows and Linux, asDefaultOnly on macOS, asNone elsewhere.)
-    /// <summary>How much this platform lets a program change.</summary>
-    /// <returns>asFull on Windows and Linux, asDefaultOnly on macOS, asNone
-    /// elsewhere.</returns>
     class function Support: TSprite3DAssocSupport; static;
 
     //** @abstract(Whether the application is offered under Open With for the types.)
@@ -199,18 +166,11 @@ type
     //** bundle declares document types.
     //**
     //** @returns(True if registered.)
-    /// <summary>Whether the application is offered under Open With for the types.</summary>
-    /// <remarks>On Windows and Linux, true when this unit's registration is present,
-    /// whichever copy of the program it points to; Register points it at this one. On macOS,
-    /// true when the bundle declares document types.</remarks>
-    /// <returns>True if registered.</returns>
     function IsRegistered: Boolean;
 
     //** @abstract(Whether this program opens every one of the types by default.)
     //**
     //** @returns(True only if it is the default for all of them.)
-    /// <summary>Whether this program opens every one of the types by default.</summary>
-    /// <returns>True only if it is the default for all of them.</returns>
     function IsDefault: Boolean;
 
     //** @abstract(Offers this program under Open With for the types.)
@@ -220,11 +180,6 @@ type
     //**
     //** @returns(True on success; False, with LastError set, on failure or where the platform
     //** does not allow it.)
-    /// <summary>Offers this program under Open With for the types.</summary>
-    /// <remarks>Registers again over an older registration, so the entries point at this copy
-    /// of the program. On macOS it asks Launch Services to read the bundle again.</remarks>
-    /// <returns>True on success; False, with LastError set, on failure or where the platform
-    /// does not allow it.</returns>
     function Register: Boolean;
 
     //** @abstract(Removes what Register added.)
@@ -233,10 +188,6 @@ type
     //** where the bundle declares the types.
     //**
     //** @returns(True on success; False, with LastError set, otherwise.)
-    /// <summary>Removes what Register added.</summary>
-    /// <remarks>Call RestoreDefaults first if the program was made the default. Not possible
-    /// on macOS, where the bundle declares the types.</remarks>
-    /// <returns>True on success; False, with LastError set, otherwise.</returns>
     function Unregister: Boolean;
 
     //** @abstract(Makes this program the default for the types without asking, for types
@@ -251,17 +202,6 @@ type
     //**
     //** @returns(True on success; False, with LastError set, on failure or where the platform
     //** does not allow it.)
-    /// <summary>Makes this program the default for the types without asking, for types that
-    /// are the application's own.</summary>
-    /// <remarks>Only for file types no other program has a claim to, such as the
-    /// application's own documents: it does not keep the previous defaults, as MakeDefault
-    /// does. On Windows it sets each extension's own default ProgID in
-    /// <c>HKCU\Software\Classes</c>, which a choice made in Windows' own How do you want to
-    /// open dialog with Always still overrides; on Linux it sets each MIME type's default in
-    /// <c>mimeapps.list</c>. Call Register first. On macOS the bundle's document types do
-    /// this, so it does nothing.</remarks>
-    /// <returns>True on success; False, with LastError set, on failure or where the platform
-    /// does not allow it.</returns>
     function Claim: Boolean;
 
     //** @abstract(Makes this program the default for every type, recording the old defaults.)
@@ -276,15 +216,6 @@ type
     //** @returns(True on success; False, with LastError set, otherwise.)
     //**
     //** @seealso(RestoreDefaults)
-    /// <summary>Makes this program the default for every type, recording the old
-    /// defaults.</summary>
-    /// <remarks>For each type not yet in ABackup, the current per-user default is added to it
-    /// first, so calling this again never loses the original. On Windows a choice the user
-    /// made in Windows' own dialog still wins; NeedsUserConfirmation is then set.</remarks>
-    /// <param name="ABackup">The caller's backup string, which this adds to; keep it for
-    /// RestoreDefaults.</param>
-    /// <returns>True on success; False, with LastError set, otherwise.</returns>
-    /// <seealso cref="RestoreDefaults"/>
     function MakeDefault(var ABackup: String): Boolean;
 
     //** @abstract(Puts back the defaults recorded by MakeDefault.)
@@ -299,38 +230,20 @@ type
     //** normally empty.)
     //**
     //** @returns(True if every type was dealt with; False, with LastError set, otherwise.)
-    /// <summary>Puts back the defaults recorded by MakeDefault.</summary>
-    /// <remarks>Only types still defaulting to this program are changed, so a choice the user
-    /// has made since is kept. A recorded default is put back only if it is still valid;
-    /// otherwise the per-user default is removed. On macOS, where a default cannot be removed,
-    /// a type with no valid old default keeps this program and the reason is put in LastError.
-    /// The entries dealt with are taken out of ABackup.</remarks>
-    /// <param name="ABackup">The backup string from MakeDefault; on return, what is left of
-    /// it, normally empty.</param>
-    /// <returns>True if every type was dealt with; False, with LastError set,
-    /// otherwise.</returns>
     function RestoreDefaults(var ABackup: String): Boolean;
 
     //** @abstract(Opens the system's own page for choosing default applications.)
     //**
     //** Windows only, where it opens Settings, Default apps, at this application if Windows
     //** supports that. Does nothing elsewhere.
-    /// <summary>Opens the system's own page for choosing default applications.</summary>
-    /// <remarks>Windows only, where it opens Settings, Default apps, at this application if
-    /// Windows supports that. Does nothing elsewhere.</remarks>
     procedure OpenSystemDefaults;
 
     //** @abstract(The reason the last failing method failed; empty after success.)
-    /// <summary>The reason the last failing method failed; empty after success.</summary>
     property LastError: String read FLastError;
     //** @abstract(True when a default could not be changed by a program and the user has to
     //** choose it in the system's settings.)
-    /// <summary>True when a default could not be changed by a program and the user has to
-    /// choose it in the system's settings.</summary>
     property NeedsUserConfirmation: Boolean read FNeedsUserConfirmation;
     //** @abstract(The full path of the running program, which the registration points at.)
-    /// <summary>The full path of the running program, which the registration points
-    /// at.</summary>
     property ExePath: String read FExePath;
   end;
 

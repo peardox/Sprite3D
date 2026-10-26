@@ -51,17 +51,6 @@ interface
 //** @returns(The folder, ending with a path delimiter.)
 //**
 //** @raises(EOSError If Windows or Linux cannot report the executable's path.)
-/// <summary>The folder a program's own files are deployed to.</summary>
-/// <remarks>Windows and Linux: the executable's folder. macOS: the application bundle's
-/// Resources folder. Android: the app's private files folder. On Windows, when started from
-/// the IDE, whether under the debugger or not, DevelopmentPath is taken relative to the
-/// executable's folder instead, for example <c>'../../../'</c> for the repository root from
-/// <c>src/Win64/Debug</c>. iOS: not handled yet; the result is undefined.</remarks>
-/// <param name="DevelopmentPath">A folder relative to the executable's, used on Windows when
-/// started from the IDE; empty to always use the executable's folder.</param>
-/// <returns>The folder, ending with a path delimiter.</returns>
-/// <exception cref="EOSError">If Windows or Linux cannot report the executable's
-/// path.</exception>
 function GetAssetsPath(const DevelopmentPath: string = ''): string;
 
 //** @abstract(The folder the program's executable is in, for libraries shipped with it.)
@@ -75,15 +64,6 @@ function GetAssetsPath(const DevelopmentPath: string = ''): string;
 //** @returns(The folder, ending with a path delimiter.)
 //**
 //** @raises(EOSError If Windows or Linux cannot report the executable's path.)
-/// <summary>The folder the program's executable is in, for libraries shipped with
-/// it.</summary>
-/// <remarks>As GetAssetsPath, except that on macOS it is the bundle's executable folder,
-/// <c>Contents/MacOS</c>, and on Android nothing is returned yet.</remarks>
-/// <param name="DevelopmentPath">A folder relative to the executable's, used on Windows when
-/// started from the IDE; empty to always use the executable's folder.</param>
-/// <returns>The folder, ending with a path delimiter.</returns>
-/// <exception cref="EOSError">If Windows or Linux cannot report the executable's
-/// path.</exception>
 function GetBinaryPath(const DevelopmentPath: string = ''): string;
 
 //** @abstract(A path in the platform's own form: @code(\) between its parts on Windows,
@@ -100,18 +80,6 @@ function GetBinaryPath(const DevelopmentPath: string = ''): string;
 //** @param(APath The path, absolute or relative; empty gives empty.)
 //**
 //** @returns(The path with the platform's delimiters.)
-/// <summary>A path in the platform's own form: <c>\</c> between its parts on Windows,
-/// <c>/</c> elsewhere.</summary>
-/// <remarks>Every <c>/</c> and <c>\</c> becomes PathDelim, and a run of them after the start
-/// becomes one, so a folder ending in a delimiter joined to a name starting with one still
-/// gives a valid path. Delimiters at the very start are kept as they are, so Windows network
-/// paths such as <c>\\server\share</c> and <c>\\?\</c> paths survive. Nothing else
-/// changes: the path is not expanded, and is not checked to exist. Outside Windows,
-/// <c>\</c> is a legal character in a file name, but a path given with Windows delimiters,
-/// as one kept in a settings file written on Windows may be, is the far likelier
-/// meaning.</remarks>
-/// <param name="APath">The path, absolute or relative; empty gives empty.</param>
-/// <returns>The path with the platform's delimiters.</returns>
 function OSFriendlyPath(const APath: string): string;
 
 implementation

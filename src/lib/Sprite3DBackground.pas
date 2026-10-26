@@ -84,47 +84,30 @@ uses
 type
   {$SCOPEDENUMS ON}
   //** @abstract(What a background shows.)
-  /// <summary>What a background shows.</summary>
   TSprite3DBackgroundKind = (
     //** @abstract(No background is drawn: the viewport's own opaque colour shows, and grabs
     //** are transparent. The default.)
-    /// <summary>No background is drawn: the viewport's own opaque colour shows, and grabs
-    /// are transparent. The default.</summary>
     None,
     //** @abstract(A checker on screen, standing for transparency; transparency in grabs.)
-    /// <summary>A checker on screen, standing for transparency; transparency in
-    /// grabs.</summary>
     Transparent,
     //** @abstract(One colour, Colour.)
-    /// <summary>One colour, Colour.</summary>
     Solid,
     //** @abstract(A blend from GradientFrom to GradientTo, in the direction
     //** GradientDirection.)
-    /// <summary>A blend from GradientFrom to GradientTo, in the direction
-    /// GradientDirection.</summary>
     Gradient);
 
   //** @abstract(Which way a Gradient background runs, from GradientFrom to GradientTo.)
   //**
   //** The diagonals run corner to corner whatever the view's shape: the colour is constant
   //** along lines parallel to the other diagonal, as in CSS's @code(to bottom right).
-  /// <summary>Which way a Gradient background runs, from GradientFrom to
-  /// GradientTo.</summary>
-  /// <remarks>The diagonals run corner to corner whatever the view's shape: the colour is
-  /// constant along lines parallel to the other diagonal, as in CSS's <c>to bottom
-  /// right</c>.</remarks>
   TSprite3DGradientDirection = (
     //** @abstract(From the top edge to the bottom edge. The default.)
-    /// <summary>From the top edge to the bottom edge. The default.</summary>
     TopToBottom,
     //** @abstract(From the left edge to the right edge.)
-    /// <summary>From the left edge to the right edge.</summary>
     LeftToRight,
     //** @abstract(From the top-left corner to the bottom-right corner.)
-    /// <summary>From the top-left corner to the bottom-right corner.</summary>
     TopLeftToBottomRight,
     //** @abstract(From the top-right corner to the bottom-left corner.)
-    /// <summary>From the top-right corner to the bottom-left corner.</summary>
     TopRightToBottomLeft);
   {$SCOPEDENUMS OFF}
 
@@ -133,34 +116,22 @@ type
   //** A plain record, copied by value. Default gives the application's starting background:
   //** None, with a checker of 64-pixel squares in two greys ready for Transparent. Colours
   //** are used opaque; their alpha is ignored.
-  /// <summary>Describes a background: its kind, colours and checker size.</summary>
-  /// <remarks>A plain record, copied by value. Default gives the application's starting
-  /// background: None, with a checker of 64-pixel squares in two greys ready for Transparent.
-  /// Colours are used opaque; their alpha is ignored.</remarks>
   TSprite3DBackgroundSpec = record
     //** @abstract(What the background shows.)
-    /// <summary>What the background shows.</summary>
     Kind: TSprite3DBackgroundKind;
     //** @abstract(The colour of a Solid background.)
-    /// <summary>The colour of a Solid background.</summary>
     Colour: TAlphaColor;
     //** @abstract(The colour at the start of a Gradient background.)
-    /// <summary>The colour at the start of a Gradient background.</summary>
     GradientFrom: TAlphaColor;
     //** @abstract(The colour at the end of a Gradient background.)
-    /// <summary>The colour at the end of a Gradient background.</summary>
     GradientTo: TAlphaColor;
     //** @abstract(Which way a Gradient background runs.)
-    /// <summary>Which way a Gradient background runs.</summary>
     GradientDirection: TSprite3DGradientDirection;
     //** @abstract(The side of each checker square, in pixels on screen; at least 1.)
-    /// <summary>The side of each checker square, in pixels on screen; at least 1.</summary>
     CheckerSize: Integer;
     //** @abstract(The lighter checker colour.)
-    /// <summary>The lighter checker colour.</summary>
     CheckerLight: TAlphaColor;
     //** @abstract(The darker checker colour.)
-    /// <summary>The darker checker colour.</summary>
     CheckerDark: TAlphaColor;
     //** @abstract(The starting background: None.)
     //**
@@ -169,11 +140,6 @@ type
     //** another kind is chosen.
     //**
     //** @returns(The default spec.)
-    /// <summary>The starting background: None.</summary>
-    /// <remarks>The checker has 64-pixel squares of light and mid grey, Colour is mid grey and
-    /// the gradient runs from light grey at the top to dark grey at the bottom, ready for
-    /// when another kind is chosen.</remarks>
-    /// <returns>The default spec.</returns>
     class function Default: TSprite3DBackgroundSpec; static;
     //** @abstract(The gradient's colour a fraction of the way along it.)
     //**
@@ -181,10 +147,6 @@ type
     //** outside are clamped.)
     //**
     //** @returns(The blended colour, opaque.)
-    /// <summary>The gradient's colour a fraction of the way along it.</summary>
-    /// <param name="AFraction">0 for the start, GradientFrom, to 1 for the end, GradientTo;
-    /// values outside are clamped.</param>
-    /// <returns>The blended colour, opaque.</returns>
     function GradientAt(const AFraction: Single): TAlphaColor;
     //** @abstract(The direction the gradient runs in an area of the given size, and its
     //** length.)
@@ -201,17 +163,6 @@ type
     //** @param(ADY The direction's Y component; never negative.)
     //**
     //** @param(ALength The gradient's length, in the unit of AWidth and AHeight.)
-    /// <summary>The direction the gradient runs in an area of the given size, and its
-    /// length.</summary>
-    /// <remarks>The direction is a unit vector with X to the right and Y down; the length is
-    /// the area's extent along it, from the starting edge or corner to the opposite
-    /// one.</remarks>
-    /// <param name="AWidth">The area's width, in any unit.</param>
-    /// <param name="AHeight">The area's height, in the same unit.</param>
-    /// <param name="ADX">The direction's X component.</param>
-    /// <param name="ADY">The direction's Y component; never negative.</param>
-    /// <param name="ALength">The gradient's length, in the unit of AWidth and
-    /// AHeight.</param>
     procedure GradientAxis(const AWidth, AHeight: Single; out ADX, ADY, ALength: Single);
     //** @abstract(The gradient's colour at a point of an area.)
     //**
@@ -224,12 +175,6 @@ type
     //** @param(AHeight The area's height, in the unit of AY.)
     //**
     //** @returns(The blended colour, opaque.)
-    /// <summary>The gradient's colour at a point of an area.</summary>
-    /// <param name="AX">The point's distance from the area's left edge.</param>
-    /// <param name="AY">The point's distance from the area's top edge.</param>
-    /// <param name="AWidth">The area's width, in the unit of AX.</param>
-    /// <param name="AHeight">The area's height, in the unit of AY.</param>
-    /// <returns>The blended colour, opaque.</returns>
     function GradientAtPoint(const AX, AY, AWidth, AHeight: Single): TAlphaColor;
     //** @abstract(Paints the background into a new bitmap of the given size.)
     //**
@@ -252,23 +197,6 @@ type
     //** @returns(The bitmap, owned by the caller, who must free it.)
     //**
     //** @raises(Exception if the bitmap cannot be made or mapped for writing.)
-    /// <summary>Paints the background into a new bitmap of the given size.</summary>
-    /// <remarks>Every pixel is painted, top row first: Solid in Colour, Gradient as
-    /// GradientAtPoint gives at each pixel's centre, Transparent as the checker, with squares
-    /// of CheckerSize times APixelsPerUnit pixels from a light one at the top-left, and None
-    /// fully transparent. Every colour but None's is opaque. Rows that repeat an earlier row
-    /// are copied rather than painted again, so a checker or a left-to-right gradient is cheap
-    /// at any size; a top-to-bottom or diagonal gradient is painted pixel by pixel. May be
-    /// called from any thread that may use TBitmap, which on most platforms is the main
-    /// thread only.</remarks>
-    /// <param name="AWidth">The bitmap's width in pixels; at least 1 is used.</param>
-    /// <param name="AHeight">The bitmap's height in pixels; at least 1 is used.</param>
-    /// <param name="APixelsPerUnit">Bitmap pixels per logical pixel, such as the display
-    /// scale, for the checker's square size; 1 for a grab. Values below 0.01 count as
-    /// 0.01.</param>
-    /// <returns>The bitmap, owned by the caller, who must free it.</returns>
-    /// <exception cref="System.SysUtils|Exception">The bitmap cannot be made or mapped for
-    /// writing.</exception>
     function NewBitmap(const AWidth, AHeight: Integer;
       const APixelsPerUnit: Single): TBitmap;
   end;
@@ -281,13 +209,6 @@ type
   //** follow later moves. It makes the viewport's Color fully transparent while it has
   //** something to show. It takes no mouse or touch input and is never stored. Set Spec to
   //** change what it shows. For the main thread only.
-  /// <summary>Shows a background behind a viewport, as a 2D control.</summary>
-  /// <remarks>Create it and call AttachTo with the viewport. It becomes the viewport's
-  /// sibling, directly behind it, with the same alignment and margins, so it covers the same
-  /// area; if the viewport is not aligned, it copies the viewport's bounds once, and does not
-  /// follow later moves. It makes the viewport's Color fully transparent while it has
-  /// something to show. It takes no mouse or touch input and is never stored. Set Spec to
-  /// change what it shows. For the main thread only.</remarks>
   TSprite3DBackground = class(TControl)
   private
     FViewport: TGorillaViewport;
@@ -302,42 +223,28 @@ type
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
   protected
     //** @abstract(Paints the background over the control's whole area.)
-    /// <summary>Paints the background over the control's whole area.</summary>
     procedure Paint; override;
     //** @abstract(Forgets the viewport when it is freed.)
     //**
     //** @param(AComponent The component being inserted or removed.)
     //**
     //** @param(Operation Whether it is being inserted or removed.)
-    /// <summary>Forgets the viewport when it is freed.</summary>
-    /// <param name="AComponent">The component being inserted or removed.</param>
-    /// <param name="Operation">Whether it is being inserted or removed.</param>
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     //** @abstract(The most pixels a gradient's bitmap has along its longer side.)
     //**
     //** A larger view stretches the bitmap smoothly to fit; a smooth blend loses nothing by
     //** it, and the bitmap is quick to remake while the window is resized.
-    /// <summary>The most pixels a gradient's bitmap has along its longer side.</summary>
-    /// <remarks>A larger view stretches the bitmap smoothly to fit; a smooth blend loses
-    /// nothing by it, and the bitmap is quick to remake while the window is
-    /// resized.</remarks>
     const MaxGradientPixels = 512;
   public
     //** @abstract(Creates the background with the default spec, not yet attached.)
     //**
     //** @param(AOwner The owner, which frees it; nil is usual, as its parent frees it once
     //** attached.)
-    /// <summary>Creates the background with the default spec, not yet attached.</summary>
-    /// <param name="AOwner">The owner, which frees it; nil is usual, as its parent frees it
-    /// once attached.</param>
     constructor Create(AOwner: TComponent); override;
     //** @abstract(Frees the background and its bitmap.)
     //**
     //** The viewport, if it still exists, keeps whatever Color it has at the time.
-    /// <summary>Frees the background and its bitmap.</summary>
-    /// <remarks>The viewport, if it still exists, keeps whatever Color it has at the
-    /// time.</remarks>
     destructor Destroy; override;
     //** @abstract(Puts the background behind AViewport.)
     //**
@@ -351,24 +258,11 @@ type
     //** @param(AViewport The viewport to sit behind.)
     //**
     //** @raises(EArgumentNilException if AViewport is nil.)
-    /// <summary>Puts the background behind AViewport.</summary>
-    /// <remarks>Makes it a child of the viewport's parent, or of its owner if it has no parent
-    /// yet, placed just before the viewport so it is painted first. It takes the viewport's
-    /// Align and Margins, or its bounds if it is not aligned, so set the viewport's alignment
-    /// first. The viewport's Color at this moment is kept as the colour shown for None; if it
-    /// is already fully transparent, black is kept instead. Then the viewport's Color is set
-    /// for the present spec. Call it once.</remarks>
-    /// <param name="AViewport">The viewport to sit behind.</param>
-    /// <exception cref="System.SysUtils|EArgumentNilException">AViewport is nil.</exception>
     procedure AttachTo(const AViewport: TGorillaViewport);
     //** @abstract(What the background shows; setting it repaints it.)
     //**
     //** Setting it also sets the viewport's Color: fully transparent for every kind but None,
     //** which hides this control and puts back the viewport's opaque Color.
-    /// <summary>What the background shows; setting it repaints it.</summary>
-    /// <remarks>Setting it also sets the viewport's Color: fully transparent for every kind
-    /// but None, which hides this control and puts back the viewport's opaque
-    /// Color.</remarks>
     property Spec: TSprite3DBackgroundSpec read FSpec write SetSpec;
   end;
 

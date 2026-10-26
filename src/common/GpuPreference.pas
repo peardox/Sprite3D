@@ -32,16 +32,12 @@ interface
 
 type
   //** @abstract(Which graphics processor Windows starts the program on.)
-  /// <summary>Which graphics processor Windows starts the program on.</summary>
   TGpuPreference = (
     //** @abstract(Let Windows decide; no entry is kept.)
-    /// <summary>Let Windows decide; no entry is kept.</summary>
     gpAutomatic,
     //** @abstract(The power-saving GPU, usually the integrated one; stored as 1.)
-    /// <summary>The power-saving GPU, usually the integrated one; stored as 1.</summary>
     gpPowerSaving,
     //** @abstract(The high-performance GPU, usually the discrete one; stored as 2.)
-    /// <summary>The high-performance GPU, usually the discrete one; stored as 2.</summary>
     gpHighPerformance);
 
 //** @abstract(Sets the Windows GPU preference for the running program.)
@@ -52,12 +48,6 @@ type
 //** @param(APreference The preference to keep.)
 //**
 //** @returns(True if the registry key could be opened and the entry written or removed.)
-/// <summary>Sets the Windows GPU preference for the running program.</summary>
-/// <remarks>gpAutomatic removes the program's entry, handing the choice back to Windows; the
-/// others write it. It takes effect the next time the program starts.</remarks>
-/// <param name="APreference">The preference to keep.</param>
-/// <returns>True if the registry key could be opened and the entry written or
-/// removed.</returns>
 function SetGpuPreference(const APreference: TGpuPreference): Boolean;
 
 //** @abstract(Reads the Windows GPU preference for the running program.)
@@ -71,13 +61,6 @@ function SetGpuPreference(const APreference: TGpuPreference): Boolean;
 //** @param(ADefault The preference to give when there is no entry.)
 //**
 //** @returns(True if an entry was found and read.)
-/// <summary>Reads the Windows GPU preference for the running program.</summary>
-/// <remarks>Nothing is written: if the program has no entry, or it cannot be read,
-/// APreference is ADefault and the result is False. A number other than 1 or 2 in the entry
-/// reads as gpAutomatic.</remarks>
-/// <param name="APreference">On return, the preference read, or ADefault.</param>
-/// <param name="ADefault">The preference to give when there is no entry.</param>
-/// <returns>True if an entry was found and read.</returns>
 function GetGpuPreference(out APreference: TGpuPreference;
   const ADefault: TGpuPreference = gpHighPerformance): Boolean;
 {$ifend}

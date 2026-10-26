@@ -126,18 +126,6 @@ type
   //** Its Width, Height and Depth are set to the lines' extent and its Position to their
   //** middle, so anything that culls by an object's size sees the whole set. The object is not
   //** stored in .fmx files and ignores the mouse. Use it from the main thread only.
-  /// <summary>Shows three coloured lines through a point, drawn on top or by
-  /// shaders.</summary>
-  /// <remarks><para>A TDummy. With OnTop it draws the lines in its own Render, in the main pass
-  /// only, with the context's DrawLine helper. Without OnTop it draws nothing itself: it owns a
-  /// frame beside its parent holding six shader-drawn TGorillaPlane strips, and in each Render
-  /// copies the parent's position, rotation, scale and centre of rotation to the frame if any
-  /// of them changed. The strips are built when SetExtent is called and rebuilt only when a
-  /// property changes. Freeing the TModelAxes frees the frame, strips and materials.</para>
-  /// <para>Its Width, Height and Depth are set to the lines' extent and its Position to their
-  /// middle, so anything that culls by an object's size sees the whole set. The object is not
-  /// stored in .fmx files and ignores the mouse. Use it from the main thread only.</para>
-  /// </remarks>
   TModelAxes = class(TDummy)
   private
     FLo: TPoint3D;
@@ -178,12 +166,6 @@ type
     //** restoring the previous matrix, line state and depth test afterwards, even if drawing
     //** fails. Without OnTop, copies the parent's transform to the frame if it changed, and
     //** draws nothing.
-    /// <summary>Draws the lines on top, or keeps the strips' frame on the parent.</summary>
-    /// <remarks>Does nothing before <see cref="SetExtent"/> is called. With OnTop, draws the
-    /// three lines in the main pass and grabs, setting the context matrix to this object's
-    /// AbsoluteMatrix and restoring the previous matrix, line state and depth test afterwards,
-    /// even if drawing fails. Without OnTop, copies the parent's transform to the frame if it
-    /// changed, and draws nothing.</remarks>
     procedure Render; override;
 
     //** @abstract(Forgets the frame if something else frees it first.)
@@ -191,9 +173,6 @@ type
     //** @param(AComponent The component being freed or removed.)
     //**
     //** @param(Operation What is happening to it.)
-    /// <summary>Forgets the frame if something else frees it first.</summary>
-    /// <param name="AComponent">The component being freed or removed.</param>
-    /// <param name="Operation">What is happening to it.</param>
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     //** @abstract(Creates axes with no extent: red, green and blue, 1 pixel wide, on top.)
@@ -201,19 +180,12 @@ type
     //** Nothing is drawn until SetExtent is called.
     //**
     //** @param(AOwner The owner, or nil to leave freeing to the parent.)
-    /// <summary>Creates axes with no extent: red, green and blue, 1 pixel wide, on
-    /// top.</summary>
-    /// <remarks>Nothing is drawn until <see cref="SetExtent"/> is called.</remarks>
-    /// <param name="AOwner">The owner, or nil to leave freeing to the parent.</param>
     constructor Create(AOwner: TComponent); override;
 
     //** @abstract(Frees the axes, with any frame, strips and materials.)
     //**
     //** If the frame's parent is already being freed, as when the whole scene closes, the
     //** frame is left for it to free.
-    /// <summary>Frees the axes, with any frame, strips and materials.</summary>
-    /// <remarks>If the frame's parent is already being freed, as when the whole scene closes,
-    /// the frame is left for it to free.</remarks>
     destructor Destroy; override;
 
     //** @abstract(Sets where the three lines cross and how far each reaches.)
@@ -230,47 +202,25 @@ type
     //** BottomRightFar.)
     //**
     //** @param(ACentre The point the three lines cross.)
-    /// <summary>Sets where the three lines cross and how far each reaches.</summary>
-    /// <remarks>Each line passes through ACentre parallel to one axis and runs from the low
-    /// corner's value to the high corner's value on that axis, widened if need be to reach
-    /// ACentre. All points are in the parent's coordinates. Without OnTop the strips are built
-    /// here, so set the parent first; they are not built without one. Redraws the
-    /// axes.</remarks>
-    /// <param name="ALow">The corner with the smallest X, Y and Z, such as a bounding box's
-    /// TopLeftNear.</param>
-    /// <param name="AHigh">The corner with the largest X, Y and Z, such as a bounding box's
-    /// BottomRightFar.</param>
-    /// <param name="ACentre">The point the three lines cross.</param>
     procedure SetExtent(const ALow, AHigh, ACentre: TPoint3D);
 
     //** @abstract(Colour of the X line; red by default.)
-    /// <summary>Colour of the X line; red by default.</summary>
     property XColor: TAlphaColor read FXColor write SetXColor;
     //** @abstract(Colour of the Y line; green by default.)
-    /// <summary>Colour of the Y line; green by default.</summary>
     property YColor: TAlphaColor read FYColor write SetYColor;
     //** @abstract(Colour of the Z line; blue by default.)
-    /// <summary>Colour of the Z line; blue by default.</summary>
     property ZColor: TAlphaColor read FZColor write SetZColor;
     //** @abstract(Line width in screen pixels, whatever the distance; 1 by default.)
     //**
     //** Without OnTop the shader draws any width on every backend. With OnTop, values above 1
     //** work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel. Values
     //** below 1 count as 1.
-    /// <summary>Line width in screen pixels, whatever the distance; 1 by default.</summary>
-    /// <remarks>Without OnTop the shader draws any width on every backend. With OnTop, values
-    /// above 1 work on desktop OpenGL only; Vulkan, Metal and OpenGL ES always draw 1 pixel.
-    /// Values below 1 count as 1.</remarks>
     property LineWidth: Single read FLineWidth write SetLineWidth;
     //** @abstract(Whether the helper is drawn at all; True by default.)
     //**
     //** False hides it, its lines and planes included, which are drawn beside the model rather
     //** than as children of this object, so Visible alone does not hide them. Nothing is freed,
     //** and True shows it again as it was. Kept when the drawing is rebuilt.
-    /// <summary>Whether the helper is drawn at all; True by default.</summary>
-    /// <remarks>False hides it, its lines and planes included, which are drawn beside the model
-    /// rather than as children of this object, so Visible alone does not hide them. Nothing is
-    /// freed, and True shows it again as it was. Kept when the drawing is rebuilt.</remarks>
     property Shown: Boolean read FShown write SetShown;
     //** @abstract(Whether the lines are drawn over everything; True by default.)
     //**
@@ -278,11 +228,6 @@ type
     //** front cannot hide them. False draws them with shaders as ordinary geometry, so they
     //** disappear where they pass inside a solid model or behind something. Changing it
     //** switches between the two at once.
-    /// <summary>Whether the lines are drawn over everything; True by default.</summary>
-    /// <remarks>True draws them with the context and depth testing off, so the model and
-    /// anything in front cannot hide them. False draws them with shaders as ordinary geometry,
-    /// so they disappear where they pass inside a solid model or behind something. Changing it
-    /// switches between the two at once.</remarks>
     property OnTop: Boolean read FOnTop write SetOnTop;
   end;
 
@@ -312,24 +257,6 @@ type
 //** @seealso(HideModelAxes)
 //**
 //** @seealso(FindModelAxes)
-/// <summary>Draws AModel's X, Y and Z axes through its centre of rotation.</summary>
-/// <remarks><para>Any axes already on AModel are removed first, so calling it again, for
-/// example after loading a different model, redraws them for the new bounds. The lines cross
-/// at <c>AModel.RotationCenter</c> and each runs across AModel's current bounding box, from
-/// <c>GetAnimatedBoundingBox</c>, widened if need be to reach the centre of rotation. X is
-/// red, Y green and Z blue.</para>
-/// <para>The axes are added as a child of AModel, so they follow its position, rotation and
-/// scale, and are freed with it. They are sized for the box at the time of the call. Without
-/// AOnTop, AModel must already have a parent. Call from the main thread only.</para></remarks>
-/// <param name="AModel">The model to draw axes on. Nothing happens if it is nil.</param>
-/// <param name="ALineWidth">Line width in screen pixels. With AOnTop, values above 1 work on
-/// desktop OpenGL only; without it, on every backend.</param>
-/// <param name="AOnTop">True to draw the lines over everything, so the model cannot hide them;
-/// False to draw them with shaders, letting the model hide the parts inside it.</param>
-/// <returns>The new axes, owned by AModel; or nil, with nothing added, if AModel is nil or its
-/// bounding box is empty.</returns>
-/// <seealso cref="HideModelAxes"/>
-/// <seealso cref="FindModelAxes"/>
 function ShowModelAxes(const AModel: TGorillaModel; const ALineWidth: Single = 1;
   const AOnTop: Boolean = True): TModelAxes;
 
@@ -341,11 +268,6 @@ function ShowModelAxes(const AModel: TGorillaModel; const ALineWidth: Single = 1
 //** @param(AModel The model to remove the axes from.)
 //**
 //** @seealso(ShowModelAxes)
-/// <summary>Removes the axes ShowModelAxes added to AModel.</summary>
-/// <remarks>Frees the TModelAxes, with any strips. Does nothing if AModel is nil or has no
-/// axes. Call from the main thread only.</remarks>
-/// <param name="AModel">The model to remove the axes from.</param>
-/// <seealso cref="ShowModelAxes"/>
 procedure HideModelAxes(const AModel: TGorillaModel);
 
 //** @abstract(Returns the axes ShowModelAxes added to AModel, or nil.)
@@ -356,11 +278,6 @@ procedure HideModelAxes(const AModel: TGorillaModel);
 //** @param(AModel The model to look on; nil gives nil.)
 //**
 //** @returns(The axes, or nil if AModel is nil or has none.)
-/// <summary>Returns the axes ShowModelAxes added to AModel, or nil.</summary>
-/// <remarks>Looks only at AModel's direct children. The caller does not own the result; it is
-/// freed with AModel or by <see cref="HideModelAxes"/>.</remarks>
-/// <param name="AModel">The model to look on; nil gives nil.</param>
-/// <returns>The axes, or nil if AModel is nil or has none.</returns>
 function FindModelAxes(const AModel: TGorillaModel): TModelAxes;
 
 implementation

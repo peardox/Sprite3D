@@ -64,16 +64,11 @@ interface
 //** @abstract(The platform's name, as used for @code(dlls) folders and @code(openh264.json).)
 //**
 //** @returns(One of the keys in the unit description, such as @code('win64').)
-/// <summary>The platform's name, as used for <c>dlls</c> folders and
-/// <c>openh264.json</c>.</summary>
-/// <returns>One of the keys in the unit description, such as <c>'win64'</c>.</returns>
 function NativePlatformKey: String;
 
 //** @abstract(The platform's usual folder for an application's own libraries.)
 //**
 //** @returns(The folder, with no trailing delimiter, whether or not it exists.)
-/// <summary>The platform's usual folder for an application's own libraries.</summary>
-/// <returns>The folder, with no trailing delimiter, whether or not it exists.</returns>
 function DeployedLibraryFolder: String;
 
 //** @abstract(The folders to look for the program's own libraries in, best first.)
@@ -84,12 +79,6 @@ function DeployedLibraryFolder: String;
 //** executable's path means nothing there.
 //**
 //** @returns(The folders, without trailing delimiters.)
-/// <summary>The folders to look for the program's own libraries in, best first.</summary>
-/// <remarks>DeployedLibraryFolder; the executable's own folder; a <c>dlls/&lt;key&gt;</c>
-/// folder beside the executable; and <c>dlls/&lt;key&gt;</c> in each of the six folders above
-/// it. Folders may not exist, and none is repeated. On Android only DeployedLibraryFolder is
-/// given, as the executable's path means nothing there.</remarks>
-/// <returns>The folders, without trailing delimiters.</returns>
 function NativeLibraryFolders: TArray<String>;
 
 implementation

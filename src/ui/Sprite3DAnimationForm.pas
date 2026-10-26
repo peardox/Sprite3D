@@ -79,144 +79,95 @@ uses
 
 type
   //** @abstract(The Animation, Animation Settings dialog; see the unit description.)
-  /// <summary>The Animation, Animation Settings dialog; see the unit description.</summary>
   TAnimationSettingsForm = class(TForm)
     //** @abstract(Holds the FPS row and the explanation.)
-    /// <summary>Holds the FPS row and the explanation.</summary>
     MainLayout: TLayout;
     //** @abstract(The row with FpsLabel, FpsTrack and FpsValueLabel.)
-    /// <summary>The row with FpsLabel, FpsTrack and FpsValueLabel.</summary>
     FpsLayout: TLayout;
     //** @abstract(The caption "FPS".)
-    /// <summary>The caption "FPS".</summary>
     FpsLabel: TLabel;
     //** @abstract(The frame rate, in whole frames per second.)
-    /// <summary>The frame rate, in whole frames per second.</summary>
     FpsTrack: TTrackBar;
     //** @abstract(The slider's value as a number.)
-    /// <summary>The slider's value as a number.</summary>
     FpsValueLabel: TLabel;
     //** @abstract(A line explaining what the rate is used for.)
-    /// <summary>A line explaining what the rate is used for.</summary>
     NoteLabel: TLabel;
     //** @abstract(The row with OverscanCheck, OverscanTrack and OverscanValueLabel.)
-    /// <summary>The row with OverscanCheck, OverscanTrack and OverscanValueLabel.</summary>
     OverscanLayout: TLayout;
     //** @abstract(Turns overscan on for grabs and exports.)
-    /// <summary>Turns overscan on for grabs and exports.</summary>
     OverscanCheck: TCheckBox;
     //** @abstract(The overscan factor, in whole steps.)
-    /// <summary>The overscan factor, in whole steps.</summary>
     OverscanTrack: TTrackBar;
     //** @abstract(The overscan factor as a number, such as @code(4x).)
-    /// <summary>The overscan factor as a number, such as <c>4x</c>.</summary>
     OverscanValueLabel: TLabel;
     //** @abstract(The row with FilterLabel and FilterCombo.)
-    /// <summary>The row with FilterLabel and FilterCombo.</summary>
     FilterLayout: TLayout;
     //** @abstract(The caption "Resampling".)
-    /// <summary>The caption "Resampling".</summary>
     FilterLabel: TLabel;
     //** @abstract(The filter overscanned images are scaled down with, one entry per
     //** TSprite3DResampleFilter in its order.)
-    /// <summary>The filter overscanned images are scaled down with, one entry per
-    /// TSprite3DResampleFilter in its order.</summary>
     FilterCombo: TComboBox;
     //** @abstract(Says how far overscan can go at the grab size, or why it cannot be used.)
-    /// <summary>Says how far overscan can go at the grab size, or why it cannot be
-    /// used.</summary>
     OverscanNoteLabel: TLabel;
     //** @abstract(The row with PaddingLabel, PaddingTrack and PaddingValueLabel.)
-    /// <summary>The row with PaddingLabel, PaddingTrack and PaddingValueLabel.</summary>
     PaddingLayout: TLayout;
     //** @abstract(The caption "Padding".)
-    /// <summary>The caption "Padding".</summary>
     PaddingLabel: TLabel;
     //** @abstract(The padding, in whole pixels, from 0 to MaxPadding.)
-    /// <summary>The padding, in whole pixels, from 0 to MaxPadding.</summary>
     PaddingTrack: TTrackBar;
     //** @abstract(The padding as a number of pixels, such as @code(2px).)
-    /// <summary>The padding as a number of pixels, such as <c>2px</c>.</summary>
     PaddingValueLabel: TLabel;
     //** @abstract(A line explaining what padding is.)
-    /// <summary>A line explaining what padding is.</summary>
     PaddingNoteLabel: TLabel;
     //** @abstract(The heading "Texture Atlas".)
-    /// <summary>The heading "Texture Atlas".</summary>
     AtlasHeaderLabel: TLabel;
     //** @abstract(The row with AtlasSizeLabel and AtlasSizeCombo.)
-    /// <summary>The row with AtlasSizeLabel and AtlasSizeCombo.</summary>
     AtlasSizeLayout: TLayout;
     //** @abstract(The caption "Page size".)
-    /// <summary>The caption "Page size".</summary>
     AtlasSizeLabel: TLabel;
     //** @abstract(The largest an atlas page may be each way, one entry per ATLAS_PAGE_SIZES in
     //** its order.)
-    /// <summary>The largest an atlas page may be each way, one entry per ATLAS_PAGE_SIZES in
-    /// its order.</summary>
     AtlasSizeCombo: TComboBox;
     //** @abstract(Lets atlas pages be any size, rather than powers of 2 each way.)
-    /// <summary>Lets atlas pages be any size, rather than powers of 2 each way.</summary>
     AtlasNonPowerOf2Check: TCheckBox;
     //** @abstract(A line explaining what the page size is for.)
-    /// <summary>A line explaining what the page size is for.</summary>
     AtlasNoteLabel: TLabel;
     //** @abstract(The strip holding the Cancel and OK buttons.)
-    /// <summary>The strip holding the Cancel and OK buttons.</summary>
     ButtonLayout: TLayout;
     //** @abstract(Closes the dialog with mrOk.)
-    /// <summary>Closes the dialog with mrOk.</summary>
     OkButton: TButton;
     //** @abstract(Closes the dialog with mrCancel.)
-    /// <summary>Closes the dialog with mrCancel.</summary>
     CancelButton: TButton;
     //** @abstract(Sets the slider's range and shows the starting value.)
     //**
     //** @param(Sender The form.)
-    /// <summary>Sets the slider's range and shows the starting value.</summary>
-    /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Shows the slider's value beside it.)
     //**
     //** @param(Sender FpsTrack.)
-    /// <summary>Shows the slider's value beside it.</summary>
-    /// <param name="Sender">FpsTrack.</param>
     procedure FpsTrackChange(Sender: TObject);
     //** @abstract(Shows the overscan factor beside the slider.)
     //**
     //** @param(Sender OverscanTrack.)
-    /// <summary>Shows the overscan factor beside the slider.</summary>
-    /// <param name="Sender">OverscanTrack.</param>
     procedure OverscanTrackChange(Sender: TObject);
     //** @abstract(Enables the overscan slider and the filter drop-down while the box is
     //** ticked.)
     //**
     //** @param(Sender OverscanCheck.)
-    /// <summary>Enables the overscan slider and the filter drop-down while the box is
-    /// ticked.</summary>
-    /// <param name="Sender">OverscanCheck.</param>
     procedure OverscanCheckChange(Sender: TObject);
     //** @abstract(Shows the padding beside the slider.)
     //**
     //** @param(Sender PaddingTrack.)
-    /// <summary>Shows the padding beside the slider.</summary>
-    /// <param name="Sender">PaddingTrack.</param>
     procedure PaddingTrackChange(Sender: TObject);
     //** @abstract(Closes the dialog with the button's ModalResult.)
     //**
     //** @param(Sender OkButton or CancelButton.)
-    /// <summary>Closes the dialog with the button's ModalResult.</summary>
-    /// <param name="Sender">OkButton or CancelButton.</param>
     procedure ButtonClick(Sender: TObject);
     //** @abstract(Reports OK or Cancel when shown with ShowAndFree, and frees the form then.)
     //**
     //** @param(Sender The form.)
     //**
     //** @param(Action Set to caFree when shown with ShowAndFree.)
-    /// <summary>Reports OK or Cancel when shown with ShowAndFree, and frees the form
-    /// then.</summary>
-    /// <param name="Sender">The form.</param>
-    /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     FOnAccept: TNotifyEvent;
@@ -254,17 +205,11 @@ type
     //**
     //** For Android and iOS, where ShowModal cannot block. OnAccept is called if it closes
     //** with OK, OnCancel otherwise.
-    /// <summary>Shows the dialog without blocking and frees it when it closes.</summary>
-    /// <remarks>For Android and iOS, where ShowModal cannot block. OnAccept is called if it
-    /// closes with OK, OnCancel otherwise.</remarks>
     procedure ShowAndFree;
     //** @abstract(The frame rate shown, in frames per second.)
     //**
     //** Set it before showing the dialog; read it after OK. Values are limited to
     //** ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.
-    /// <summary>The frame rate shown, in frames per second.</summary>
-    /// <remarks>Set it before showing the dialog; read it after OK. Values are limited to
-    /// ANIMATION_FPS_MIN to ANIMATION_FPS_MAX.</remarks>
     property Fps: Integer read GetFps write SetFps;
     //** @abstract(The largest overscan factor allowed; OVERSCAN_FACTOR_MAX until set.)
     //**
@@ -272,27 +217,14 @@ type
     //** @code(TSprite3DOffscreen.MaxOverscan). The slider stops there. Below
     //** OVERSCAN_FACTOR_MIN, overscan cannot be used: the tick box is cleared and disabled,
     //** and the note says so. Values above OVERSCAN_FACTOR_MAX count as OVERSCAN_FACTOR_MAX.
-    /// <summary>The largest overscan factor allowed; OVERSCAN_FACTOR_MAX until set.</summary>
-    /// <remarks>Set it before Overscan, to what the off-screen renderer can do, such as
-    /// <c>TSprite3DOffscreen.MaxOverscan</c>. The slider stops there. Below
-    /// OVERSCAN_FACTOR_MIN, overscan cannot be used: the tick box is cleared and disabled, and
-    /// the note says so. Values above OVERSCAN_FACTOR_MAX count as
-    /// OVERSCAN_FACTOR_MAX.</remarks>
     property MaxOverscan: Integer read FMaxOverscan write SetMaxOverscan;
     //** @abstract(Whether the Overscan box is ticked.)
     //**
     //** Setting it True has no effect while MaxOverscan is below OVERSCAN_FACTOR_MIN.
-    /// <summary>Whether the Overscan box is ticked.</summary>
-    /// <remarks>Setting it True has no effect while MaxOverscan is below
-    /// OVERSCAN_FACTOR_MIN.</remarks>
     property OverscanEnabled: Boolean read GetOverscanEnabled write SetOverscanEnabled;
     //** @abstract(The width of a grab, in pixels, for the overscan warning; 256 until set.)
-    /// <summary>The width of a grab, in pixels, for the overscan warning; 256 until
-    /// set.</summary>
     property GrabWidth: Integer read FGrabWidth write FGrabWidth;
     //** @abstract(The height of a grab, in pixels, for the overscan warning; 256 until set.)
-    /// <summary>The height of a grab, in pixels, for the overscan warning; 256 until
-    /// set.</summary>
     property GrabHeight: Integer read FGrabHeight write FGrabHeight;
     //** @abstract(Whether ticking Overscan first shows the warning; True until set.)
     //**
@@ -301,65 +233,38 @@ type
     //** far longer. OK keeps the tick and Cancel takes it back. Ticking Do not show this
     //** again in it sets this False, whether OK or Cancel is pressed, and calls
     //** OnOverscanWarningChange. Setting OverscanEnabled never shows it.
-    /// <summary>Whether ticking Overscan first shows the warning; True until set.</summary>
-    /// <remarks>Ticking Overscan by hand while this is True opens a modal warning that each
-    /// frame is drawn GrabWidth x GrabHeight times the factor and resampled back down, which
-    /// takes far longer. OK keeps the tick and Cancel takes it back. Ticking Do not show this
-    /// again in it sets this False, whether OK or Cancel is pressed, and calls
-    /// OnOverscanWarningChange. Setting OverscanEnabled never shows it.</remarks>
     property OverscanWarning: Boolean read FOverscanWarning write FOverscanWarning;
     //** @abstract(Called on the main thread when Do not show this again changes
     //** OverscanWarning, so the caller can keep it at once.)
-    /// <summary>Called on the main thread when Do not show this again changes
-    /// OverscanWarning, so the caller can keep it at once.</summary>
     property OnOverscanWarningChange: TNotifyEvent read FOnOverscanWarningChange
       write FOnOverscanWarningChange;
     //** @abstract(The overscan factor shown; limited to OVERSCAN_FACTOR_MIN to MaxOverscan.)
     //**
     //** It keeps its value while the box is not ticked, so it can be kept as a setting.
-    /// <summary>The overscan factor shown; limited to OVERSCAN_FACTOR_MIN to
-    /// MaxOverscan.</summary>
-    /// <remarks>It keeps its value while the box is not ticked, so it can be kept as a
-    /// setting.</remarks>
     property Overscan: Integer read GetOverscan write SetOverscan;
     //** @abstract(The resampling filter chosen.)
-    /// <summary>The resampling filter chosen.</summary>
     property Filter: TSprite3DResampleFilter read GetFilter write SetFilter;
     //** @abstract(The largest a texture atlas page may be each way, in pixels; one of
     //** ATLAS_PAGE_SIZES.)
     //**
     //** A value that is not one of them shows as the nearest that is.
-    /// <summary>The largest a texture atlas page may be each way, in pixels; one of
-    /// ATLAS_PAGE_SIZES.</summary>
-    /// <remarks>A value that is not one of them shows as the nearest that is.</remarks>
     property AtlasPageSize: Integer read GetAtlasPageSize write SetAtlasPageSize;
     //** @abstract(Whether texture atlas pages may be any size, rather than powers of 2.)
-    /// <summary>Whether texture atlas pages may be any size, rather than powers of
-    /// 2.</summary>
     property AtlasNonPowerOf2: Boolean read GetAtlasNonPowerOf2 write SetAtlasNonPowerOf2;
     //** @abstract(The most padding the slider allows, in pixels; a quarter of the default
     //** grab size until set.)
     //**
     //** Set it before SpritePadding, to PaddingLimit of the grab size. Values below 0 count as
     //** 0.
-    /// <summary>The most padding the slider allows, in pixels; a quarter of the default grab
-    /// size until set.</summary>
-    /// <remarks>Set it before SpritePadding, to PaddingLimit of the grab size. Values below 0
-    /// count as 0.</remarks>
     property MaxPadding: Integer read FMaxPadding write SetMaxPadding;
     //** @abstract(Padding: the empty border, in pixels, exports aim to leave round the sprite
     //** on the axis with least room; limited to 0 to MaxPadding.)
     //**
     //** Not called Padding, which is the form's own.
-    /// <summary>Padding: the empty border, in pixels, exports aim to leave round the sprite on
-    /// the axis with least room; limited to 0 to MaxPadding.</summary>
-    /// <remarks>Not called Padding, which is the form's own.</remarks>
     property SpritePadding: Integer read GetSpritePadding write SetSpritePadding;
     //** @abstract(Called on OK when shown with ShowAndFree.)
-    /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
     //** @abstract(Called on Cancel, or any close but OK, when shown with ShowAndFree.)
-    /// <summary>Called on Cancel, or any close but OK, when shown with ShowAndFree.</summary>
     property OnCancel: TNotifyEvent read FOnCancel write FOnCancel;
   end;
 

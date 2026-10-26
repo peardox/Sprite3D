@@ -55,86 +55,60 @@ uses
 
 type
   //** @abstract(One display mode: resolution, colour depth and refresh rate.)
-  /// <summary>One display mode: resolution, colour depth and refresh rate.</summary>
   TDisplayMode = record
     //** @abstract(The width in pixels.)
-    /// <summary>The width in pixels.</summary>
     Width: Integer;
     //** @abstract(The height in pixels.)
-    /// <summary>The height in pixels.</summary>
     Height: Integer;
     //** @abstract(Bits per pixel; 0 if unknown.)
-    /// <summary>Bits per pixel; 0 if unknown.</summary>
     BitsPerPixel: Integer;
     //** @abstract(The refresh rate in hertz; 0 if unknown.)
-    /// <summary>The refresh rate in hertz; 0 if unknown.</summary>
     RefreshRate: Integer; // Hz
     //** @abstract(The mode as text, such as @code(2560 x 1440, 32-bit, 144 Hz).)
     //**
     //** A colour depth or refresh rate of 0, unknown, is left out.
     //**
     //** @returns(The text.)
-    /// <summary>The mode as text, such as <c>2560 x 1440, 32-bit, 144 Hz</c>.</summary>
-    /// <remarks>A colour depth or refresh rate of 0, unknown, is left out.</remarks>
-    /// <returns>The text.</returns>
     function ToString: string;
   end;
 
   //** @abstract(A list of display modes.)
-  /// <summary>A list of display modes.</summary>
   TDisplayModeList = TList<TDisplayMode>;
 
   //** @abstract(One display, as the system describes it; on Windows, with its EDID.)
   //**
   //** AvailableModes belongs to the TPeardoxDisplays that made the record; a copy shares it.
   //** See the unit description for what is known outside Windows.
-  /// <summary>One display, as the system describes it; on Windows, with its EDID.</summary>
-  /// <remarks>AvailableModes belongs to the TPeardoxDisplays that made the record; a copy
-  /// shares it. See the unit description for what is known outside Windows.</remarks>
   TDisplayInfo = record
       //** @abstract(Windows' device name, such as @code(\\.\DISPLAY1); elsewhere
       //** @code(Display) and its number.)
-      /// <summary>Windows' device name, such as <c>\\.\DISPLAY1</c>; elsewhere
-      /// <c>Display</c> and its number.</summary>
       DeviceName: string;
       //** @abstract(The monitor's own name from its EDID, else the adapter's description;
       //** elsewhere @code(Main display) or DeviceName.)
-      /// <summary>The monitor's own name from its EDID, else the adapter's description;
-      /// elsewhere <c>Main display</c> or DeviceName.</summary>
       FriendlyName: string;
       //** @abstract(The monitor's area of the desktop, in desktop pixels.)
-      /// <summary>The monitor's area of the desktop, in desktop pixels.</summary>
       MonitorRect: TRect;
       //** @abstract(The monitor's area less the taskbar and docked toolbars.)
-      /// <summary>The monitor's area less the taskbar and docked toolbars.</summary>
       WorkRect: TRect;
       //** @abstract(Whether this is the primary monitor.)
-      /// <summary>Whether this is the primary monitor.</summary>
       IsPrimary: Boolean;
       //** @abstract(The mode the monitor is in.)
-      /// <summary>The mode the monitor is in.</summary>
       CurrentMode: TDisplayMode;
       //** @abstract(Every mode the monitor offers, without duplicates.)
-      /// <summary>Every mode the monitor offers, without duplicates.</summary>
       AvailableModes: TDisplayModeList;
       // Physical size from EDID
       //** @abstract(The image's width in millimetres from the EDID; 0 if unknown.)
-      /// <summary>The image's width in millimetres from the EDID; 0 if unknown.</summary>
       WidthMm: Integer;      // horizontal image size, millimetres
       //** @abstract(The image's height in millimetres from the EDID; 0 if unknown.)
-      /// <summary>The image's height in millimetres from the EDID; 0 if unknown.</summary>
       HeightMm: Integer;     // vertical image size, millimetres
       //** @abstract(The diagonal in inches, from WidthMm and HeightMm; 0 if unknown.)
-      /// <summary>The diagonal in inches, from WidthMm and HeightMm; 0 if unknown.</summary>
       DiagonalInches: Double; // computed diagonal, 0 if unknown
     end;
 
   //** @abstract(A list of monitors.)
-  /// <summary>A list of monitors.</summary>
   TDisplayInfoList = TList<TDisplayInfo>;
 
   //** @abstract(Every display attached, read when the object is created.)
-  /// <summary>Every display attached, read when the object is created.</summary>
   TPeardoxDisplays = class
   private
     FDisplays: TDisplayInfoList;
@@ -144,21 +118,16 @@ type
     procedure ClearDisplays;
   public
     //** @abstract(Reads every display from the system.)
-    /// <summary>Reads every display from the system.</summary>
     constructor Create;
     //** @abstract(Frees the list and every monitor's mode list.)
-    /// <summary>Frees the list and every monitor's mode list.</summary>
     destructor Destroy; override;
 
     //** @abstract(The number of monitors.)
-    /// <summary>The number of monitors.</summary>
     property Count: Integer read GetCount;
     //** @abstract(A monitor by position, from 0 to Count - 1.)
-    /// <summary>A monitor by position, from 0 to Count - 1.</summary>
     property Displays[AIndex: Integer]: TDisplayInfo
       read GetDisplay; default;
     //** @abstract(The list itself, owned by this object.)
-    /// <summary>The list itself, owned by this object.</summary>
     property List: TDisplayInfoList read FDisplays;
     //** @abstract(Which display a form is on.)
     //**
@@ -168,11 +137,6 @@ type
     //** @param(AForm The form; nil, or one without a window yet, gives -1.)
     //**
     //** @returns(The display's position in the list, or -1 if it cannot be told.)
-    /// <summary>Which display a form is on.</summary>
-    /// <remarks>On Windows, the monitor Windows puts most of the form's window on; elsewhere,
-    /// the one FMX reports for it.</remarks>
-    /// <param name="AForm">The form; nil, or one without a window yet, gives -1.</param>
-    /// <returns>The display's position in the list, or -1 if it cannot be told.</returns>
     function IndexOfForm(const AForm: TCommonCustomForm): Integer;
     //** @abstract(The refresh rate of the display a form is on, in hertz.)
     //**
@@ -181,10 +145,6 @@ type
     //** @param(AForm The form; nil asks about the primary display.)
     //**
     //** @returns(The refresh rate; 0 if the system does not say.)
-    /// <summary>The refresh rate of the display a form is on, in hertz.</summary>
-    /// <remarks>The primary display's if the form's cannot be told.</remarks>
-    /// <param name="AForm">The form; nil asks about the primary display.</param>
-    /// <returns>The refresh rate; 0 if the system does not say.</returns>
     function RefreshRateFor(const AForm: TCommonCustomForm): Integer;
   end;
 

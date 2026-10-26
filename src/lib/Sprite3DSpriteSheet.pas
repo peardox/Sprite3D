@@ -103,20 +103,12 @@ type
   //** green, blue, alpha. The colour is not premultiplied by alpha, as PNG and GIF expect.
   //** A record of value type apart from Pixels, which is a reference-counted dynamic array,
   //** so copies share the pixels until one is changed through SetLength or a new array.
-  /// <summary>An image as plain RGBA bytes with straight alpha, top row first.</summary>
-  /// <remarks>Pixel (X, Y) starts at byte <c>(Y * Width + X) * 4</c> of Pixels, in the order
-  /// red, green, blue, alpha. The colour is not premultiplied by alpha, as PNG and GIF expect.
-  /// A record of value type apart from Pixels, which is a reference-counted dynamic array, so
-  /// copies share the pixels until one is changed through SetLength or a new array.</remarks>
   TSprite3DImage = record
     //** @abstract(The width in pixels.)
-    /// <summary>The width in pixels.</summary>
     Width: Integer;
     //** @abstract(The height in pixels.)
-    /// <summary>The height in pixels.</summary>
     Height: Integer;
     //** @abstract(Width * Height * 4 bytes of RGBA, top row first.)
-    /// <summary>Width * Height * 4 bytes of RGBA, top row first.</summary>
     Pixels: TBytes;
     //** @abstract(A new image of the given size with every pixel fully transparent.)
     //**
@@ -129,12 +121,6 @@ type
     //** @raises(EArgumentException If either size is less than 1.)
     //**
     //** @raises(EOutOfMemory If the pixels cannot be allocated.)
-    /// <summary>A new image of the given size with every pixel fully transparent.</summary>
-    /// <param name="AWidth">The width in pixels; at least 1.</param>
-    /// <param name="AHeight">The height in pixels; at least 1.</param>
-    /// <returns>The image.</returns>
-    /// <exception cref="EArgumentException">If either size is less than 1.</exception>
-    /// <exception cref="EOutOfMemory">If the pixels cannot be allocated.</exception>
     class function Create(const AWidth, AHeight: Integer): TSprite3DImage; static;
   end;
 
@@ -147,83 +133,52 @@ type
   //** column, and Top and Bottom the same for rows; so what is drawn lies in columns Left to
   //** width - 1 - Right and rows Top to height - 1 - Bottom. A frame with nothing in it at all
   //** is empty from every side: Left and Right are its width, Top and Bottom its height.
-  /// <summary>The fully transparent border round a frame: how many whole columns or rows at
-  /// each edge have nothing in them.</summary>
-  /// <remarks>The frame's pixels run from (0, 0) at the top left to (width - 1, height - 1)
-  /// at the bottom right. Left is the number of columns from the left edge before the first
-  /// one with any pixel that is not fully transparent, Right the number after the last such
-  /// column, and Top and Bottom the same for rows; so what is drawn lies in columns Left to
-  /// width - 1 - Right and rows Top to height - 1 - Bottom. A frame with nothing in it at all
-  /// is empty from every side: Left and Right are its width, Top and Bottom its
-  /// height.</remarks>
   TSprite3DFrameEmpty = record
     //** @abstract(Empty columns at the left edge.)
-    /// <summary>Empty columns at the left edge.</summary>
     Left: Integer;
     //** @abstract(Empty rows at the top edge.)
-    /// <summary>Empty rows at the top edge.</summary>
     Top: Integer;
     //** @abstract(Empty columns at the right edge.)
-    /// <summary>Empty columns at the right edge.</summary>
     Right: Integer;
     //** @abstract(Empty rows at the bottom edge.)
-    /// <summary>Empty rows at the bottom edge.</summary>
     Bottom: Integer;
   end;
 
   //** @abstract(A run of one animation's frames on a texture atlas page.)
-  /// <summary>A run of one animation's frames on a texture atlas page.</summary>
   TSprite3DAtlasSlice = record
     //** @abstract(The animation, as an index into the frame counts given to PlanAtlasPages.)
-    /// <summary>The animation, as an index into the frame counts given to
-    /// PlanAtlasPages.</summary>
     Animation: Integer;
     //** @abstract(Its first frame on the page, counted from 0 within the animation.)
-    /// <summary>Its first frame on the page, counted from 0 within the animation.</summary>
     First: Integer;
     //** @abstract(How many of its frames, from First on, are on the page.)
-    /// <summary>How many of its frames, from First on, are on the page.</summary>
     Count: Integer;
   end;
 
   //** @abstract(One page of a texture atlas, as PlanAtlasPages lays it out.)
-  /// <summary>One page of a texture atlas, as PlanAtlasPages lays it out.</summary>
   TSprite3DAtlasPage = record
     //** @abstract(The runs of frames on the page, in order: which animation, and which of its
     //** frames.)
-    /// <summary>The runs of frames on the page, in order: which animation, and which of its
-    /// frames.</summary>
     Slices: TArray<TSprite3DAtlasSlice>;
     //** @abstract(The number of frames on the page, the Count of all its slices.)
-    /// <summary>The number of frames on the page, the Count of all its slices.</summary>
     FrameCount: Integer;
     //** @abstract(The columns of the page's grid of cells.)
-    /// <summary>The columns of the page's grid of cells.</summary>
     Cols: Integer;
     //** @abstract(The rows of the page's grid of cells.)
-    /// <summary>The rows of the page's grid of cells.</summary>
     Rows: Integer;
     //** @abstract(The page's width in pixels: a power of 2, or Cols cells wide.)
-    /// <summary>The page's width in pixels: a power of 2, or Cols cells wide.</summary>
     Width: Integer;
     //** @abstract(The page's height in pixels: a power of 2, or Rows cells high.)
-    /// <summary>The page's height in pixels: a power of 2, or Rows cells high.</summary>
     Height: Integer;
   end;
 
   //** @abstract(Which frame of which animation and direction an image's frame is.)
-  /// <summary>Which frame of which animation and direction an image's frame is.</summary>
   TSprite3DFrameRef = record
     //** @abstract(The animation, as an index into TSprite3DSheetInfo.Animations.)
-    /// <summary>The animation, as an index into TSprite3DSheetInfo.Animations.</summary>
     Animation: Integer;
     //** @abstract(The direction, as an index into TSprite3DSheetInfo.Directions; 0 for the
     //** single dummy direction.)
-    /// <summary>The direction, as an index into TSprite3DSheetInfo.Directions; 0 for the
-    /// single dummy direction.</summary>
     Direction: Integer;
     //** @abstract(The frame within that animation and direction, counted from 0.)
-    /// <summary>The frame within that animation and direction, counted from 0.</summary>
     Frame: Integer;
   end;
 
@@ -232,25 +187,16 @@ type
   //**
   //** The angles are the readouts' own, as the dials show them; with directions, each
   //** direction's bearing turns the view on from Azimuth.
-  /// <summary>The <c>camera</c> section SaveSheetMetadata writes: the camera as the export
-  /// started.</summary>
-  /// <remarks>The angles are the readouts' own, as the dials show them; with directions,
-  /// each direction's bearing turns the view on from Azimuth.</remarks>
   TSprite3DSheetCamera = record
     //** @abstract(The View, Camera view checked, such as Isometric or Variable.)
-    /// <summary>The View, Camera view checked, such as Isometric or Variable.</summary>
     View: String;
     //** @abstract(True for orthographic projection, False for perspective.)
-    /// <summary>True for orthographic projection, False for perspective.</summary>
     Orthographic: Boolean;
     //** @abstract(The Azimuth readout, in degrees.)
-    /// <summary>The Azimuth readout, in degrees.</summary>
     Azimuth: Single;
     //** @abstract(The Inclination readout, in degrees.)
-    /// <summary>The Inclination readout, in degrees.</summary>
     Inclination: Single;
     //** @abstract(The Roll readout, in degrees.)
-    /// <summary>The Roll readout, in degrees.</summary>
     Roll: Single;
     //** @abstract(The camera's distance from its orbit centre as the frames were captured,
     //** in scene units.)
@@ -258,28 +204,17 @@ type
     //** The export fits the camera to what it saves, so this is the capture's distance, not
     //** the on-screen view's: for a batch, fitted to the combined swept volume of every
     //** animation used.
-    /// <summary>The camera's distance from its orbit centre as the frames were captured, in
-    /// scene units.</summary>
-    /// <remarks>The export fits the camera to what it saves, so this is the capture's
-    /// distance, not the on-screen view's: for a batch, fitted to the combined swept volume
-    /// of every animation used.</remarks>
     Distance: Single;
     //** @abstract(The height of scene the frames show, in scene units, as captured; used
     //** only with Orthographic.)
-    /// <summary>The height of scene the frames show, in scene units, as captured; used only
-    /// with Orthographic.</summary>
     OrthoHeight: Single;
     //** @abstract(Whether the pan is applied.)
-    /// <summary>Whether the pan is applied.</summary>
     PanEnabled: Boolean;
     //** @abstract(The pan along the model's X axis, as a multiple of its radius.)
-    /// <summary>The pan along the model's X axis, as a multiple of its radius.</summary>
     PanX: Single;
     //** @abstract(The pan along the model's Z axis, as a multiple of its radius.)
-    /// <summary>The pan along the model's Z axis, as a multiple of its radius.</summary>
     PanZ: Single;
     //** @abstract(Whether View, Camera, Lock Camera is ticked.)
-    /// <summary>Whether View, Camera, Lock Camera is ticked.</summary>
     Locked: Boolean;
   end;
 
@@ -288,142 +223,89 @@ type
   //**
   //** Empty text is written as @code(null). TwoPass and the overscan go in the @code(image)
   //** section, and Camera is the @code(camera) section.
-  /// <summary>The <c>meta</c> section SaveSheetMetadata writes first: which page, who made
-  /// it, and when; and the export's choices and camera, for the other sections.</summary>
-  /// <remarks>Empty text is written as <c>null</c>. TwoPass and the overscan go in the
-  /// <c>image</c> section, and Camera is the <c>camera</c> section.</remarks>
   TSprite3DSheetMeta = record
     //** @abstract(What kind of export made the image, written as @code(export_type):
     //** @code(strip), @code(sheet) or @code(atlas).)
     //**
     //** Written as @code(null) if empty.
-    /// <summary>What kind of export made the image, written as <c>export_type</c>:
-    /// <c>strip</c>, <c>sheet</c> or <c>atlas</c>.</summary>
-    /// <remarks>Written as <c>null</c> if empty.</remarks>
     ExportType: String;
     //** @abstract(Whether the model has any animations, written as @code(is_animated).)
     //**
     //** A model with none is static: a 2-pass export of it measures more finely and, without
     //** overscan, aims at an empty border of 0.
-    /// <summary>Whether the model has any animations, written as <c>is_animated</c>.</summary>
-    /// <remarks>A model with none is static: a 2-pass export of it measures more finely and,
-    /// without overscan, aims at an empty border of 0.</remarks>
     IsAnimated: Boolean;
     //** @abstract(This image's page, from 1, as its file name numbers it; 1 for a strip or
     //** spritesheet.)
-    /// <summary>This image's page, from 1, as its file name numbers it; 1 for a strip or
-    /// spritesheet.</summary>
     Page: Integer;
     //** @abstract(How many pages the export made; 1 for a strip or spritesheet.)
-    /// <summary>How many pages the export made; 1 for a strip or spritesheet.</summary>
     PageCount: Integer;
     //** @abstract(How many frames the export made in all, over every page; 0 or less means
     //** this image's frames, as for a strip or spritesheet.)
-    /// <summary>How many frames the export made in all, over every page; 0 or less means this
-    /// image's frames, as for a strip or spritesheet.</summary>
     TotalFrames: Integer;
     //** @abstract(Who created the sprite set.)
-    /// <summary>Who created the sprite set.</summary>
     Creator: String;
     //** @abstract(Where the creator's work is.)
-    /// <summary>Where the creator's work is.</summary>
     CreatorUrl: String;
     //** @abstract(Who made the models.)
-    /// <summary>Who made the models.</summary>
     Modeller: String;
     //** @abstract(Where the modeller's work is.)
-    /// <summary>Where the modeller's work is.</summary>
     ModellerUrl: String;
     //** @abstract(Who made the textures.)
-    /// <summary>Who made the textures.</summary>
     Artist: String;
     //** @abstract(Where the artist's work is.)
-    /// <summary>Where the artist's work is.</summary>
     ArtistUrl: String;
     //** @abstract(The day the project started, as ISO 8601 text.)
-    /// <summary>The day the project started, as ISO 8601 text.</summary>
     Created: String;
     //** @abstract(When this export was made, as ISO 8601 text.)
-    /// <summary>When this export was made, as ISO 8601 text.</summary>
     Modified: String;
     //** @abstract(The model file exported, as a full path.)
-    /// <summary>The model file exported, as a full path.</summary>
     ModelFile: String;
     //** @abstract(Whether the frames were made by a 2-pass export's second pass.)
-    /// <summary>Whether the frames were made by a 2-pass export's second pass.</summary>
     TwoPass: Boolean;
     //** @abstract(Whether a 2-pass export's first pass measured the frames exactly, at 4x
     //** overscan, written as @code(exact).)
     //**
     //** True with Exact ticked, and always for a static model, which is always measured so.
-    /// <summary>Whether a 2-pass export's first pass measured the frames exactly, at 4x
-    /// overscan, written as <c>exact</c>.</summary>
-    /// <remarks>True with Exact ticked, and always for a static model, which is always
-    /// measured so.</remarks>
     Exact: Boolean;
     //** @abstract(Whether Overscan was ticked in Animation, Animation Settings.)
-    /// <summary>Whether Overscan was ticked in Animation, Animation Settings.</summary>
     OverscanEnabled: Boolean;
     //** @abstract(The overscan factor set in Animation, Animation Settings, used or not.)
-    /// <summary>The overscan factor set in Animation, Animation Settings, used or
-    /// not.</summary>
     Overscan: Integer;
     //** @abstract(The camera as the export started.)
-    /// <summary>The camera as the export started.</summary>
     Camera: TSprite3DSheetCamera;
   end;
 
   //** @abstract(What SaveSheetMetadata writes about an image besides its frames.)
-  /// <summary>What SaveSheetMetadata writes about an image besides its frames.</summary>
   TSprite3DSheetInfo = record
     //** @abstract(The whole image's width, in pixels.)
-    /// <summary>The whole image's width, in pixels.</summary>
     Width: Integer;
     //** @abstract(The whole image's height, in pixels.)
-    /// <summary>The whole image's height, in pixels.</summary>
     Height: Integer;
     //** @abstract(The columns of the image's grid of cells.)
-    /// <summary>The columns of the image's grid of cells.</summary>
     Cols: Integer;
     //** @abstract(The rows of the image's grid of cells.)
-    /// <summary>The rows of the image's grid of cells.</summary>
     Rows: Integer;
     //** @abstract(Where the centre of rotation falls in a frame, to a fraction of a pixel.)
     //**
     //** In the frame's pixels, counted from 0, so a whole number is the centre of that pixel
     //** and 127.5 the line between pixels 127 and 128.
-    /// <summary>Where the centre of rotation falls in a frame, to a fraction of a
-    /// pixel.</summary>
-    /// <remarks>In the frame's pixels, counted from 0, so a whole number is the centre of that
-    /// pixel and 127.5 the line between pixels 127 and 128.</remarks>
     Origin: TPointF;
     //** @abstract(False writes @code(null) for the origin, Origin being unused.)
-    /// <summary>False writes <c>null</c> for the origin, Origin being unused.</summary>
     OriginKnown: Boolean;
     //** @abstract(The directions the image holds, as compass bearings in degrees, in the order
     //** they are exported; empty for the single dummy 0.)
-    /// <summary>The directions the image holds, as compass bearings in degrees, in the order
-    /// they are exported; empty for the single dummy 0.</summary>
     Directions: TArray<Double>;
     //** @abstract(The names of the animations the image holds, in order.)
-    /// <summary>The names of the animations the image holds, in order.</summary>
     Animations: TArray<String>;
     //** @abstract(How many frames each of Animations has in all, on this image or not.)
-    /// <summary>How many frames each of Animations has in all, on this image or
-    /// not.</summary>
     AnimationFrames: TArray<Integer>;
     //** @abstract(How long each of Animations takes to play once, in seconds: the animation's
     //** own length, whatever number of frames it was saved at.)
-    /// <summary>How long each of Animations takes to play once, in seconds: the animation's
-    /// own length, whatever number of frames it was saved at.</summary>
     AnimationTimes: TArray<Double>;
     //** @abstract(For each of the image's frames, in order, which animation, direction and
     //** frame it is.)
-    /// <summary>For each of the image's frames, in order, which animation, direction and
-    /// frame it is.</summary>
     Frames: TArray<TSprite3DFrameRef>;
     //** @abstract(The @code(meta) section: page, credits, dates and model.)
-    /// <summary>The <c>meta</c> section: page, credits, dates and model.</summary>
     Meta: TSprite3DSheetMeta;
   end;
 
@@ -432,26 +314,16 @@ type
   //** Made by MeasureSheetMetadata while the frames are at hand and written by
   //** WriteSheetMetadata, so the frames can be let go as soon as the image is saved. It holds
   //** each frame's empty border, not the frames.
-  /// <summary>An image's metadata, measured from its frames and kept to be written
-  /// later.</summary>
-  /// <remarks>Made by MeasureSheetMetadata while the frames are at hand and written by
-  /// WriteSheetMetadata, so the frames can be let go as soon as the image is saved. It holds
-  /// each frame's empty border, not the frames.</remarks>
   TSprite3DSheetMetadata = record
     //** @abstract(The file to write.)
-    /// <summary>The file to write.</summary>
     FileName: String;
     //** @abstract(One frame's width in pixels.)
-    /// <summary>One frame's width in pixels.</summary>
     FrameWidth: Integer;
     //** @abstract(One frame's height in pixels.)
-    /// <summary>One frame's height in pixels.</summary>
     FrameHeight: Integer;
     //** @abstract(Each frame's empty border, in the order of the cells.)
-    /// <summary>Each frame's empty border, in the order of the cells.</summary>
     Empties: TArray<TSprite3DFrameEmpty>;
     //** @abstract(The rest of what is written; Meta may be changed before writing.)
-    /// <summary>The rest of what is written; Meta may be changed before writing.</summary>
     Info: TSprite3DSheetInfo;
   end;
 
@@ -468,15 +340,6 @@ type
 //** @raises(EArgumentException If ABitmap is nil or empty.)
 //**
 //** @raises(EInvalidOperation If the bitmap cannot be mapped for reading.)
-/// <summary>Copies an FMX bitmap into a TSprite3DImage, removing premultiplied alpha.</summary>
-/// <remarks>FMX bitmaps hold their colour premultiplied by alpha; the copy divides it back
-/// out, so a half-transparent edge keeps its true colour. Works with whichever byte order the
-/// platform's bitmaps use. For the main thread only. The bitmap is not changed or
-/// freed.</remarks>
-/// <param name="ABitmap">The bitmap to copy; not nil and not empty.</param>
-/// <returns>The copy.</returns>
-/// <exception cref="EArgumentException">If ABitmap is nil or empty.</exception>
-/// <exception cref="EInvalidOperation">If the bitmap cannot be mapped for reading.</exception>
 function ImageFromBitmap(const ABitmap: TBitmap): TSprite3DImage;
 
 //** @abstract(Puts the frames side by side in one row: a sprite strip.)
@@ -491,14 +354,6 @@ function ImageFromBitmap(const ABitmap: TBitmap): TSprite3DImage;
 //** @raises(EArgumentException If there are no frames or they differ in size.)
 //**
 //** @raises(EOutOfMemory If the strip is too large to allocate.)
-/// <summary>Puts the frames side by side in one row: a sprite strip.</summary>
-/// <remarks>Frame I is at X = I * frame width. The result is one frame high and
-/// Length(AFrames) frames long.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
-/// <returns>The strip.</returns>
-/// <exception cref="EArgumentException">If there are no frames or they differ in
-/// size.</exception>
-/// <exception cref="EOutOfMemory">If the strip is too large to allocate.</exception>
 function ComposeStrip(const AFrames: TArray<TSprite3DImage>): TSprite3DImage;
 
 //** @abstract(Puts the frames in rows of ACols: a strip of several rows, such as one row per
@@ -517,17 +372,6 @@ function ComposeStrip(const AFrames: TArray<TSprite3DImage>): TSprite3DImage;
 //** below 1.)
 //**
 //** @raises(EOutOfMemory If the image is too large to allocate.)
-/// <summary>Puts the frames in rows of ACols: a strip of several rows, such as one row per
-/// direction.</summary>
-/// <remarks>Frame I is in column <c>I mod ACols</c> and row <c>I div ACols</c>; there are as
-/// many rows as the frames need, and cells after the last frame are fully
-/// transparent.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
-/// <param name="ACols">The number of columns; at least 1.</param>
-/// <returns>The image, ACols frames wide.</returns>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
-/// ACols is below 1.</exception>
-/// <exception cref="EOutOfMemory">If the image is too large to allocate.</exception>
 function ComposeRows(const AFrames: TArray<TSprite3DImage>;
   const ACols: Integer): TSprite3DImage;
 
@@ -548,19 +392,6 @@ function ComposeRows(const AFrames: TArray<TSprite3DImage>;
 //** @raises(EArgumentException If there are no frames or they differ in size.)
 //**
 //** @raises(EOutOfMemory If the spritesheet is too large to allocate.)
-/// <summary>Puts the frames in a square grid: a spritesheet.</summary>
-/// <remarks>The grid has ACells columns and ACells rows, where ACells is the smallest number
-/// whose square holds every frame, so 30 frames make a 6 by 6 grid. Frame I is in column
-/// <c>I mod ACells</c> and row <c>I div ACells</c>: the frames run left to right along a row,
-/// then carry on at the start of the next row down. Cells after the last frame are left fully
-/// transparent.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
-/// <param name="ACells">On return, the number of columns, which is also the number of
-/// rows.</param>
-/// <returns>The spritesheet.</returns>
-/// <exception cref="EArgumentException">If there are no frames or they differ in
-/// size.</exception>
-/// <exception cref="EOutOfMemory">If the spritesheet is too large to allocate.</exception>
 function ComposeSheet(const AFrames: TArray<TSprite3DImage>;
   out ACells: Integer): TSprite3DImage;
 
@@ -578,15 +409,6 @@ function ComposeSheet(const AFrames: TArray<TSprite3DImage>;
 //** @raises(EFCreateError If the file cannot be created.)
 //**
 //** @raises(EWriteError If writing fails part way.)
-/// <summary>Writes an image as a 32-bit RGBA PNG file.</summary>
-/// <remarks>The file is written in full, replacing any file of that name, with 8-bit RGBA, no
-/// interlacing and zlib compression. The folder must exist. Blocks while it
-/// writes.</remarks>
-/// <param name="AImage">The image to write.</param>
-/// <param name="AFileName">The file to write.</param>
-/// <exception cref="EArgumentException">If the image is empty.</exception>
-/// <exception cref="EFCreateError">If the file cannot be created.</exception>
-/// <exception cref="EWriteError">If writing fails part way.</exception>
 procedure SavePng(const AImage: TSprite3DImage; const AFileName: String);
 
 //** @abstract(Writes the frames as an animated GIF that loops for ever.)
@@ -611,22 +433,6 @@ procedure SavePng(const AImage: TSprite3DImage; const AFileName: String);
 //** @raises(EFCreateError If the file cannot be created.)
 //**
 //** @raises(EWriteError If writing fails part way.)
-/// <summary>Writes the frames as an animated GIF that loops for ever.</summary>
-/// <remarks>Each frame gets its own palette of up to 255 colours, chosen by median cut, and
-/// one transparent entry; a pixel less than half opaque is written as transparent. Every
-/// frame is shown for ADelay hundredths of a second and then cleared, so transparent frames do
-/// not build up on each other. The file replaces any of that name; the folder must exist.
-/// Blocks while it writes.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size and each at
-/// most 65535 pixels wide and high.</param>
-/// <param name="AFileName">The file to write.</param>
-/// <param name="ADelay">How long each frame shows, in hundredths of a second. Values below 2
-/// are written as 2, since browsers slow down shorter delays to a tenth of a
-/// second.</param>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size or they
-/// are too large for GIF.</exception>
-/// <exception cref="EFCreateError">If the file cannot be created.</exception>
-/// <exception cref="EWriteError">If writing fails part way.</exception>
 procedure SaveAnimatedGif(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ADelay: Integer);
 
@@ -638,11 +444,6 @@ procedure SaveAnimatedGif(const AFrames: TArray<TSprite3DImage>; const AFileName
 //** @param(AFrame The frame.)
 //**
 //** @returns(The border; see TSprite3DFrameEmpty.)
-/// <summary>Measures the fully transparent border round a frame.</summary>
-/// <remarks>A pixel counts as empty only when its alpha is 0; anything at all drawn there,
-/// however faint, counts as part of the sprite.</remarks>
-/// <param name="AFrame">The frame.</param>
-/// <returns>The border; see TSprite3DFrameEmpty.</returns>
 function MeasureFrameEmpty(const AFrame: TSprite3DImage): TSprite3DFrameEmpty;
 
 //** @abstract(Plans the pages of a texture atlas: which frames of which animations go on each
@@ -677,31 +478,6 @@ function MeasureFrameEmpty(const AFrame: TSprite3DImage): TSprite3DFrameEmpty;
 //**
 //** @returns(The pages, in order; empty if there are no frames, or a frame is larger than
 //** AMaxSize.)
-/// <summary>Plans the pages of a texture atlas: which frames of which animations go on each
-/// page, and each page's grid and size.</summary>
-/// <remarks><para>A texture atlas is the frames of several animations on shared pages. Every
-/// frame is a cell of AFrameWidth by AFrameHeight; a page is a grid of such cells no larger
-/// than AMaxSize each way, so it holds at most <c>(AMaxSize div AFrameWidth) * (AMaxSize div
-/// AFrameHeight)</c> frames. The animations' frames are taken in order, every frame of the
-/// first, then every frame of the next, and so on, and fill each page in turn: an animation
-/// that does not fit in what is left of a page carries on at the start of the next. So every
-/// page but the last is full, a full grid with no cell to spare.</para>
-/// <para>Each page is then made as small as its frames allow; for a full page that is the
-/// largest page. With ANonPowerOf2 False, its width and height are the smallest powers of 2
-/// whose grid of whole cells holds them, the smaller area first and then the squarer; its
-/// grid is every whole cell that fits. With ANonPowerOf2 True, it is exactly as large as a
-/// grid of whole cells that holds them, chosen the same way. The frames fill the grid left
-/// to right and then top to bottom. Animations with no frames are skipped.</para></remarks>
-/// <param name="AFrameCounts">The number of frames of each animation, in the order they are
-/// to be laid out.</param>
-/// <param name="AFrameWidth">The width of every frame, in pixels; at least 1.</param>
-/// <param name="AFrameHeight">The height of every frame, in pixels; at least 1.</param>
-/// <param name="AMaxSize">The most a page may be each way, in pixels, such as one of 1024 to
-/// 16384.</param>
-/// <param name="ANonPowerOf2">True lets a page be any size; False keeps both sides powers of
-/// 2.</param>
-/// <returns>The pages, in order; empty if there are no frames, or a frame is larger than
-/// AMaxSize.</returns>
 function PlanAtlasPages(const AFrameCounts: TArray<Integer>; const AFrameWidth,
   AFrameHeight, AMaxSize: Integer;
   const ANonPowerOf2: Boolean): TArray<TSprite3DAtlasPage>;
@@ -723,17 +499,6 @@ function PlanAtlasPages(const AFrameCounts: TArray<Integer>; const AFrameWidth,
 //** more than the page's grid holds.)
 //**
 //** @raises(EOutOfMemory If the page is too large to allocate.)
-/// <summary>Lays out one texture atlas page from PlanAtlasPages.</summary>
-/// <remarks>Frame I goes in column <c>I mod APage.Cols</c> and row <c>I div APage.Cols</c>;
-/// the rest of the page, spare cells and any strip too narrow for a whole cell, is fully
-/// transparent.</remarks>
-/// <param name="AFrames">The page's frames, in order: the frames of each of APage.Slices in
-/// turn; all the same size.</param>
-/// <param name="APage">The page.</param>
-/// <returns>The page, APage.Width by APage.Height.</returns>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
-/// there are more than the page's grid holds.</exception>
-/// <exception cref="EOutOfMemory">If the page is too large to allocate.</exception>
 function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
   const APage: TSprite3DAtlasPage): TSprite3DImage;
 
@@ -833,62 +598,6 @@ function ComposeAtlasPage(const AFrames: TArray<TSprite3DImage>;
 //** direction it does not list.)
 //**
 //** @raises(EInOutError or another file exception if the file cannot be written.)
-/// <summary>Writes the metadata of a sprite strip, spritesheet or texture atlas page as a JSON
-/// file.</summary>
-/// <remarks><para>Each frame is measured with MeasureFrameEmpty. The file holds first a
-/// <c>meta</c> object, from AInfo.Meta, with <c>export_type</c> (<c>strip</c>, <c>sheet</c>
-/// or <c>atlas</c>), <c>is_animated</c>, <c>page</c>, <c>page_count</c>,
-/// <c>total_frames</c> (the frames the export made over every page), <c>creator</c>,
-/// <c>creator_url</c>, <c>modeller</c>, <c>modeller_url</c>, <c>artist</c>, <c>artist_url</c>,
-/// <c>created</c>, <c>modified</c> and <c>file</c>, empty text being <c>null</c>; then an
-/// <c>image</c> object, with <c>size</c> and <c>sprite_size</c> (each <c>width</c>,
-/// <c>height</c>), <c>layout</c> (<c>cols</c>, <c>rows</c>, <c>frame_count</c>), <c>origin</c>
-/// (<c>x</c>, <c>y</c>), <c>sprite_empty</c> (<c>left</c>, <c>top</c>, <c>right</c>,
-/// <c>bottom</c>), <c>directions</c>, <c>animations</c> (each <c>name</c>,
-/// <c>frame_count</c>, <c>time</c>),
-/// <c>unused</c>, <c>two_pass</c>, <c>exact</c> and <c>overscan</c> (<c>enabled</c>,
-/// <c>factor</c>); then a
-/// <c>camera</c> object, with <c>view</c>, <c>projection</c>, <c>azimuth</c>,
-/// <c>inclination</c>, <c>roll</c>, <c>distance</c>, <c>ortho_height</c>, <c>pan</c>
-/// (<c>enabled</c>, <c>x</c>, <c>z</c>) and <c>locked</c>, the camera as the export started;
-/// and a <c>frames</c> array of one object per frame, with <c>animation</c>, <c>direction</c>,
-/// <c>frame</c> and <c>empty</c>, an object of its <c>left</c>, <c>top</c>, <c>right</c>,
-/// <c>bottom</c>.</para>
-/// <para><c>size</c> is the whole image's, from AInfo, and <c>sprite_size</c> one frame's,
-/// the grab size. <c>origin</c> is where the model's centre of rotation falls in every frame,
-/// in the frame's own pixels to a thousandth of a pixel, a whole number being the centre of
-/// that pixel, (0, 0) the centre of the top left pixel; <c>null</c> for each if it is not
-/// known. <c>sprite_empty</c>
-/// holds, for each side, the smallest of the frames' empty borders, so cropping every frame
-/// by it loses nothing from any of them. <c>directions</c> lists the directions the image
-/// holds, as compass bearings in degrees in the order they are exported; one direction is
-/// the single dummy entry 0. <c>animations</c> lists the animations the image holds, each as
-/// its <c>name</c>, its <c>frame_count</c>, how many frames it has in all, so one that carries
-/// on onto another atlas page shows its whole length, and its <c>time</c>, how long it takes
-/// to play once in seconds, its own length whatever number of frames it was saved at, so
-/// frame_count / time is its frame rate. <c>unused</c> is the
-/// number of the grid's cells after the last frame, which hold nothing. <c>two_pass</c> is
-/// whether a 2-pass export made them, <c>exact</c> whether its first pass measured them
-/// exactly, at 4x overscan, and <c>overscan</c> whether overscan was on and its factor.
-/// <c>camera</c> is the camera as the export started: the View, Camera view, the
-/// projection, the Azimuth, Inclination and Roll readouts in degrees, the distance from the
-/// orbit centre and, orthographic, the height of scene shown, both as captured, in scene
-/// units, the pan, and whether the camera was locked. <c>frames</c> has one
-/// entry per frame, in the order of the cells, saying which animation and direction it is,
-/// as indices into <c>animations</c> and <c>directions</c>, which frame of that animation
-/// and direction, counted from 0, and its empty sections in <c>empty</c>. The file is
-/// replaced if it exists; the folder must exist.</para></remarks>
-/// <param name="AFileName">The file to write, normally the image's name with the extension
-/// .json.</param>
-/// <param name="AFrames">The frames, in order, as laid out in the image; at least one, all
-/// the same size.</param>
-/// <param name="AInfo">The image's size, grid, origin, directions, animations, and which
-/// each frame is.</param>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size, AInfo's
-/// grid cannot hold them, or AInfo.Frames does not match them or names an animation or
-/// direction it does not list.</exception>
-/// <exception cref="EInOutError">Or another file exception, if the file cannot be
-/// written.</exception>
 procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
   const AInfo: TSprite3DSheetInfo);
 
@@ -903,15 +612,6 @@ procedure SaveSheetMetadata(const AFileName: String; const AFrames: TArray<TSpri
 //**
 //** @returns(One new image per frame, in the same order; the caller owns them, as records
 //** that free themselves.)
-/// <summary>Copies of the frames, each with a 1-pixel border of opaque black round its
-/// edge.</summary>
-/// <remarks>A debugging aid, to show where each frame's cell ends in a strip, spritesheet or
-/// atlas page. Each copy has its own pixels; the frames given are not changed, so they can
-/// still be measured. A frame with no pixels, or fewer than its size needs, is copied without
-/// a border. Safe on any thread; it touches nothing but its arguments.</remarks>
-/// <param name="AFrames">The frames, in RGBA, as captured.</param>
-/// <returns>One new image per frame, in the same order; the caller owns them, as records that
-/// free themselves.</returns>
 function FramesWithBorder(const AFrames: TArray<TSprite3DImage>): TArray<TSprite3DImage>;
 
 //** @abstract(Checks and measures what SaveSheetMetadata would write, without writing it.)
@@ -939,25 +639,6 @@ function FramesWithBorder(const AFrames: TArray<TSprite3DImage>): TArray<TSprite
 //** does not list.)
 //**
 //** @seealso(WriteSheetMetadata)
-/// <summary>Checks and measures what SaveSheetMetadata would write, without writing
-/// it.</summary>
-/// <remarks>The frames are checked against AInfo as <see cref="SaveSheetMetadata"/> checks
-/// them, and each is measured with <see cref="MeasureFrameEmpty"/>. The result holds each
-/// frame's empty border, not the frames, so they can be let go as soon as this returns; pass
-/// it to <see cref="WriteSheetMetadata"/> later, after changing its <c>Info.Meta</c> if need
-/// be. Nothing is written. Safe on any thread.</remarks>
-/// <param name="AFileName">The metadata file to write later, normally the image's name with
-/// the extension .json.</param>
-/// <param name="AFrames">The frames, in order, as laid out in the image; at least one, all
-/// the same size.</param>
-/// <param name="AInfo">The image's size, grid, origin, directions, animations, and which each
-/// frame is.</param>
-/// <returns>What WriteSheetMetadata needs; a record, owned by the caller.</returns>
-/// <exception cref="EArgumentException">In the same cases as SaveSheetMetadata: there are no
-/// frames, they differ in size, AInfo's grid cannot hold them, an animation has no frame
-/// count or time, or AInfo.Frames does not match the frames or names an animation or
-/// direction it does not list.</exception>
-/// <seealso cref="WriteSheetMetadata"/>
 function MeasureSheetMetadata(const AFileName: String; const AFrames: TArray<TSprite3DImage>;
   const AInfo: TSprite3DSheetInfo): TSprite3DSheetMetadata;
 
@@ -971,14 +652,6 @@ function MeasureSheetMetadata(const AFileName: String; const AFrames: TArray<TSp
 //** several images.)
 //**
 //** @returns(The least left, top, right and bottom; all 0 if AEmpties is empty.)
-/// <summary>The smallest of each side over the given empty borders, as sprite_empty
-/// is.</summary>
-/// <remarks>Cropping every frame by the result loses nothing from any of them. Frames with
-/// nothing drawn count as empty right across, so they never lower it unless every frame is
-/// empty. Safe on any thread.</remarks>
-/// <param name="AEmpties">Empty borders, as <see cref="MeasureFrameEmpty"/> gives them; may
-/// be from several images.</param>
-/// <returns>The least left, top, right and bottom; all 0 if AEmpties is empty.</returns>
 function LeastFrameEmpty(const AEmpties: TArray<TSprite3DFrameEmpty>): TSprite3DFrameEmpty;
 
 //** @abstract(Writes metadata measured by MeasureSheetMetadata, as SaveSheetMetadata does.)
@@ -992,16 +665,6 @@ function LeastFrameEmpty(const AEmpties: TArray<TSprite3DFrameEmpty>): TSprite3D
 //** be.)
 //**
 //** @raises(EInOutError Or another file exception, if the file cannot be written.)
-/// <summary>Writes metadata measured by MeasureSheetMetadata, as SaveSheetMetadata
-/// does.</summary>
-/// <remarks>The file is written exactly as <see cref="SaveSheetMetadata"/> would have written
-/// it from the frames, <c>sprite_empty</c> being the least of the image's own frames' empty
-/// borders. It is replaced if it exists; its folder must exist. Blocks until written; may be
-/// called on any thread.</remarks>
-/// <param name="AMetadata">What <see cref="MeasureSheetMetadata"/> returned, its Info.Meta
-/// changed if need be.</param>
-/// <exception cref="EInOutError">Or another file exception, if the file cannot be
-/// written.</exception>
 procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata); overload;
 //** @abstract(Writes metadata measured by MeasureSheetMetadata with a given sprite_empty.)
 //**
@@ -1016,17 +679,6 @@ procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata); overload;
 //** @param(ASpriteEmpty The values written as @code(sprite_empty).)
 //**
 //** @raises(EInOutError Or another file exception, if the file cannot be written.)
-/// <summary>Writes metadata measured by MeasureSheetMetadata with a given
-/// sprite_empty.</summary>
-/// <remarks>As the overload without ASpriteEmpty, but <c>sprite_empty</c> is ASpriteEmpty
-/// rather than the least of the image's own frames, as a 2-pass export writes the least over
-/// every frame it made into every one of its files. Each frame's own <c>empty</c> is
-/// unchanged. Blocks until written; may be called on any thread.</remarks>
-/// <param name="AMetadata">What <see cref="MeasureSheetMetadata"/> returned, its Info.Meta
-/// changed if need be.</param>
-/// <param name="ASpriteEmpty">The values written as <c>sprite_empty</c>.</param>
-/// <exception cref="EInOutError">Or another file exception, if the file cannot be
-/// written.</exception>
 procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata;
   const ASpriteEmpty: TSprite3DFrameEmpty); overload;
 
@@ -1040,13 +692,6 @@ procedure WriteSheetMetadata(const AMetadata: TSprite3DSheetMetadata;
 //** @param(AName The name, such as an animation's name.)
 //**
 //** @returns(The safe name, without a folder or extension.)
-/// <summary>A name made safe to use as a file name on every platform.</summary>
-/// <remarks>Characters that Windows, macOS, Linux, Android or iOS reject or treat specially in
-/// file names, such as <c>/ \ : * ? " &lt; &gt; |</c> and control characters, become
-/// underscores, and leading and trailing spaces and dots are removed. An empty result becomes
-/// <c>'animation'</c>.</remarks>
-/// <param name="AName">The name, such as an animation's name.</param>
-/// <returns>The safe name, without a folder or extension.</returns>
 function SafeFileStem(const AName: String): String;
 
 implementation

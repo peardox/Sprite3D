@@ -152,13 +152,10 @@ uses
 
 const
   //** @abstract(The width, in pixels, of a new TSprite3DOffscreen's target.)
-  /// <summary>The width, in pixels, of a new TSprite3DOffscreen's target.</summary>
   DEFAULT_OFFSCREEN_WIDTH = 256;
   //** @abstract(The height, in pixels, of a new TSprite3DOffscreen's target.)
-  /// <summary>The height, in pixels, of a new TSprite3DOffscreen's target.</summary>
   DEFAULT_OFFSCREEN_HEIGHT = 256;
   //** @abstract(The largest Overscan factor TSprite3DOffscreen accepts.)
-  /// <summary>The largest Overscan factor TSprite3DOffscreen accepts.</summary>
   OVERSCAN_MAX = 8;
   //** @abstract(The most pixels across or down an overscanned target may have, whatever the
   //** GPU allows.)
@@ -166,12 +163,6 @@ const
   //** Each drawing of a grab is held in memory at the target's size, four bytes a pixel, and
   //** a transparent grab needs up to three of them at once and the matte made from them, so
   //** this keeps a grab under about 1 GB: 8192 by 8192 pixels is 256 MB each.
-  /// <summary>The most pixels across or down an overscanned target may have, whatever the GPU
-  /// allows.</summary>
-  /// <remarks>Each drawing of a grab is held in memory at the target's size, four bytes a
-  /// pixel, and a transparent grab needs up to three of them at once and the matte made from
-  /// them, so this keeps a grab under about 1 GB: 8192 by 8192 pixels is 256 MB
-  /// each.</remarks>
   OVERSCAN_TARGET_LIMIT = 8192;
 
 type
@@ -184,13 +175,6 @@ type
   //** @param(ABitmap The rendered image, Width by Height pixels, or nil if the grab failed.)
   //**
   //** @param(AError Why the grab failed; empty when ABitmap is assigned.)
-  /// <summary>Receives the result of TSprite3DOffscreen.Grab.</summary>
-  /// <remarks>Runs on the main thread, outside the render loop. The bitmap belongs to the
-  /// TSprite3DOffscreen and is freed when the procedure returns; to keep the image, copy it
-  /// with <c>TBitmap.Assign</c> or save it.</remarks>
-  /// <param name="ABitmap">The rendered image, Width by Height pixels, or nil if the grab
-  /// failed.</param>
-  /// <param name="AError">Why the grab failed; empty when ABitmap is assigned.</param>
   TSprite3DGrabProc = reference to procedure(const ABitmap: TBitmap; const AError: String);
 
   //** @abstract(Signature of TSprite3DOffscreen.OnBeforeGrab.)
@@ -200,10 +184,6 @@ type
   //** @param(AWidth The target's width in pixels.)
   //**
   //** @param(AHeight The target's height in pixels.)
-  /// <summary>Signature of TSprite3DOffscreen.OnBeforeGrab.</summary>
-  /// <param name="Sender">The TSprite3DOffscreen.</param>
-  /// <param name="AWidth">The target's width in pixels.</param>
-  /// <param name="AHeight">The target's height in pixels.</param>
   TSprite3DGrabSizeEvent = procedure(Sender: TObject; const AWidth,
     AHeight: Integer) of object;
 
@@ -215,12 +195,6 @@ type
   //**
   //** @param(AMaxOverscan The factor the grab's size can now be drawn at in one go; the rest
   //** of Overscan is made up with shifted drawings.)
-  /// <summary>Signature of TSprite3DOffscreen.OnOverscanReduced.</summary>
-  /// <param name="Sender">The TSprite3DOffscreen.</param>
-  /// <param name="AFailedSize">The target's larger side, in pixels, that could not be
-  /// drawn.</param>
-  /// <param name="AMaxOverscan">The factor the grab's size can now be drawn at in one go; the
-  /// rest of Overscan is made up with shifted drawings.</param>
   TSprite3DOverscanEvent = procedure(Sender: TObject; const AFailedSize,
     AMaxOverscan: Integer) of object;
 
@@ -235,13 +209,6 @@ type
   //** @param(AHeight The drawing's height in pixels, before it was scaled down.)
   //**
   //** @param(AError Empty if it was saved, otherwise why not.)
-  /// <summary>Signature of TSprite3DOffscreen.OnOverscanKept.</summary>
-  /// <param name="Sender">The TSprite3DOffscreen.</param>
-  /// <param name="AFileName">The file the drawing was saved in, or was to be.</param>
-  /// <param name="AWidth">The drawing's width in pixels, before it was scaled down.</param>
-  /// <param name="AHeight">The drawing's height in pixels, before it was scaled
-  /// down.</param>
-  /// <param name="AError">Empty if it was saved, otherwise why not.</param>
   TSprite3DOverscanKeptEvent = procedure(Sender: TObject; const AFileName: String;
     const AWidth, AHeight: Integer; const AError: String) of object;
 
@@ -253,11 +220,6 @@ type
   //** Width by Height; a fraction of a pixel, or 0.)
   //**
   //** @param(AUp How far to slide the view up, likewise.)
-  /// <summary>Signature of TSprite3DOffscreen.OnShiftView.</summary>
-  /// <param name="Sender">The TSprite3DOffscreen.</param>
-  /// <param name="ARight">How far to slide the view right, in pixels of the grab's own size,
-  /// Width by Height; a fraction of a pixel, or 0.</param>
-  /// <param name="AUp">How far to slide the view up, likewise.</param>
   TSprite3DShiftViewEvent = procedure(Sender: TObject; const ARight,
     AUp: Single) of object;
 
@@ -271,13 +233,6 @@ type
   //** empty if the grabs failed.)
   //**
   //** @param(AError Why the grabs failed; empty when AImages holds every size.)
-  /// <summary>Receives the result of TSprite3DOffscreen.GrabSizes.</summary>
-  /// <remarks>Runs on the main thread, outside the render loop. The bitmaps belong to the
-  /// TSprite3DOffscreen and are freed when the procedure returns; to keep them, copy them with
-  /// <c>TBitmap.Assign</c> or save them.</remarks>
-  /// <param name="AImages">One bitmap for each size asked for, in the same order and of that
-  /// size; empty if the grabs failed.</param>
-  /// <param name="AError">Why the grabs failed; empty when AImages holds every size.</param>
   TSprite3DGrabSizesProc = reference to procedure(const AImages: TArray<TBitmap>;
     const AError: String);
 
@@ -304,26 +259,6 @@ type
   //** matting is done in linear light, so soft edges keep their true alpha either way.
   //**
   //** @seealso(TSprite3DGrabProc)
-  /// <summary>A render pass that draws the viewport's scene off screen, one frame on
-  /// request.</summary>
-  /// <remarks>Create it, set Viewport to the TGorillaViewport to capture, then call Grab
-  /// whenever an image is wanted. The pass uses the viewport's camera, lights and models as
-  /// they are at the time of the frame. It takes over the inherited OnBeginRender,
-  /// OnEndRender, BackgroundColor and Iterations, which must not be changed. All members are
-  /// for the main thread only.
-  /// <para>With TransparentBackground, the default, the background comes out transparent,
-  /// with soft edges and see-through materials partly transparent, by difference matting: the
-  /// frame is drawn twice, over black and over white. Where the two differ, the background
-  /// showed through, by as much as they differ; the over-black image is then the colour
-  /// already multiplied by that alpha, which is how FMX bitmaps hold it. This needs nothing
-  /// from the renderer's own alpha, which Gorilla's passes do not keep. Both drawings are made
-  /// in the same frame, as two iterations of the pass, so an animated model is caught in the
-  /// same pose in both; if the renderer does not take the new clear colour between iterations,
-  /// the pass finds the drawings identical and, from then on, draws them in frames one after
-  /// the other instead. The first grab also draws over 50% grey, which shows whether the
-  /// renderer gamma-encodes its output after blending; if it does, the matting is done in
-  /// linear light, so soft edges keep their true alpha either way.</para></remarks>
-  /// <seealso cref="TSprite3DGrabProc"/>
   TSprite3DOffscreen = class(TGorillaRenderPassController)
   private
     FWidth: Integer;
@@ -407,12 +342,6 @@ type
     //** materials and textures, so it has none.
     //**
     //** @returns(Always nil.)
-    /// <summary>Returns nil: this pass draws every object with its own materials.</summary>
-    /// <remarks>Abstract in TGorillaRenderPassController, so it must be overridden. A pass's
-    /// material source provides the shader for the RectToFBO method, or one material that every
-    /// object is drawn with; this pass uses RenderListToFBO and must keep each model's own
-    /// materials and textures, so it has none.</remarks>
-    /// <returns>Always nil.</returns>
     function CreateMaterialSource(): TGorillaRenderPassMaterialSource; override;
   public
     //** @abstract(Creates the pass, switched off, with a 256 by 256 target.)
@@ -424,19 +353,9 @@ type
     //** @param(AOwner The owner, which frees the pass; the viewport is a good choice.)
     //**
     //** @param(AId Gorilla's identifier for the pass; each pass on one viewport needs its own.)
-    /// <summary>Creates the pass, switched off, with a 256 by 256 target.</summary>
-    /// <remarks>The pass renders before the main pass, into its own frame buffer, with
-    /// Gorilla's default rendering (order-independent transparency), and makes the background
-    /// transparent. Nothing is drawn until Viewport is set and Grab is called.</remarks>
-    /// <param name="AOwner">The owner, which frees the pass; the viewport is a good
-    /// choice.</param>
-    /// <param name="AId">Gorilla's identifier for the pass; each pass on one viewport needs its
-    /// own.</param>
     constructor Create(AOwner: TComponent;
       const AId: String = 'Sprite3DOffscreen'); override;
     //** @abstract(Frees the pass; a grab still waiting is dropped without calling back.)
-    /// <summary>Frees the pass; a grab still waiting is dropped without calling
-    /// back.</summary>
     destructor Destroy; override;
     //** @abstract(Asks for the next frame to be rendered off screen and passed to
     //** AOnGrabbed.)
@@ -448,23 +367,11 @@ type
     //**
     //** @returns(True if the grab was started; False, with nothing started, if one is already
     //** under way @(see Busy@), Viewport is not set or AOnGrabbed is nil.)
-    /// <summary>Asks for the next frame to be rendered off screen and passed to
-    /// AOnGrabbed.</summary>
-    /// <remarks>Returns at once and does not block. AOnGrabbed runs later on the main thread,
-    /// once, with the image or with the reason it failed. Width and Height are fixed until
-    /// then.</remarks>
-    /// <param name="AOnGrabbed">The procedure to call with the result; must not be
-    /// nil.</param>
-    /// <returns>True if the grab was started; False, with nothing started, if one is already
-    /// under way (see Busy), Viewport is not set or AOnGrabbed is nil.</returns>
     function Grab(const AOnGrabbed: TSprite3DGrabProc): Boolean;
     //** @abstract(Abandons a grab that is under way, without calling its procedure.)
     //**
     //** Does nothing if no grab is under way. Use it if the viewport may not render again
     //** soon, for example while it is hidden.
-    /// <summary>Abandons a grab that is under way, without calling its procedure.</summary>
-    /// <remarks>Does nothing if no grab is under way. Use it if the viewport may not render
-    /// again soon, for example while it is hidden.</remarks>
     procedure Cancel;
     //** @abstract(Grabs one square image of each size in turn, then passes them all to
     //** AOnGrabbed.)
@@ -483,22 +390,6 @@ type
     //**
     //** @returns(True if the grabs were started; False, with nothing started, if a grab is
     //** already under way, Viewport is not set, ASizes is empty or AOnGrabbed is nil.)
-    /// <summary>Grabs one square image of each size in turn, then passes them all to
-    /// AOnGrabbed.</summary>
-    /// <remarks>Does what Grab does once for each size, one frame after another: Width and
-    /// Height are set to the size, OnBeforeGrab and OnAfterGrab run around each grab, so the
-    /// camera can be fitted to each, and the images are collected. Afterwards Width and Height
-    /// are put back as they were. Returns at once and does not block; AOnGrabbed runs once on
-    /// the main thread when every size is done, or as soon as one fails. Busy is True
-    /// throughout, as each grab starts the next; do not call Grab or Cancel until AOnGrabbed
-    /// has run.</remarks>
-    /// <param name="ASizes">The widths, which are also the heights, in pixels; each at least
-    /// 1.</param>
-    /// <param name="AOnGrabbed">The procedure to call with the images; must not be
-    /// nil.</param>
-    /// <returns>True if the grabs were started; False, with nothing started, if a grab is
-    /// already under way, Viewport is not set, ASizes is empty or AOnGrabbed is
-    /// nil.</returns>
     function GrabSizes(const ASizes: array of Integer;
       const AOnGrabbed: TSprite3DGrabSizesProc): Boolean;
     //** @abstract(What grabs show behind the model when TransparentBackground is True.)
@@ -508,13 +399,6 @@ type
     //** GradientFrom to GradientTo in GradientDirection; soft edges blend into it as they
     //** would on screen. The checker settings are not used: the checker only stands for
     //** transparency on screen. Changes made while Busy apply from the next grab.
-    /// <summary>What grabs show behind the model when TransparentBackground is
-    /// True.</summary>
-    /// <remarks>None, the default, and Transparent leave the background transparent. Solid
-    /// and Gradient fill it, after the matting, with the colour or with the gradient from
-    /// GradientFrom to GradientTo in GradientDirection; soft edges blend into it as they
-    /// would on screen. The checker settings are not used: the checker only stands for
-    /// transparency on screen. Changes made while Busy apply from the next grab.</remarks>
     property Backdrop: TSprite3DBackgroundSpec read FBackdrop write FBackdrop;
     //** @abstract(The largest overscan factor a grab of AWidth by AHeight can use here.)
     //**
@@ -527,13 +411,6 @@ type
     //** @param(AHeight The grab's height in pixels.)
     //**
     //** @returns(1 to OVERSCAN_MAX; 1 means no overscan is possible.)
-    /// <summary>The largest overscan factor a grab of AWidth by AHeight can use here.</summary>
-    /// <remarks>OVERSCAN_MAX wherever grabs are drawn off screen, as whatever the GPU cannot
-    /// draw in one go is made up with shifted drawings; always 1 on macOS and iOS, where grabs
-    /// are screenshots. The sizes are not otherwise used.</remarks>
-    /// <param name="AWidth">The grab's width in pixels.</param>
-    /// <param name="AHeight">The grab's height in pixels.</param>
-    /// <returns>1 to OVERSCAN_MAX; 1 means no overscan is possible.</returns>
     function MaxOverscan(const AWidth, AHeight: Integer): Integer;
     //** @abstract(How much of an overscan factor a grab of AWidth by AHeight can draw in one
     //** go here.)
@@ -549,35 +426,17 @@ type
     //** @param(AHeight The grab's height in pixels.)
     //**
     //** @returns(1 to OVERSCAN_MAX.)
-    /// <summary>How much of an overscan factor a grab of AWidth by AHeight can draw in one go
-    /// here.</summary>
-    /// <remarks>The enlarged target must fit what the GPU can draw, its largest texture, render
-    /// buffer and viewport, OVERSCAN_TARGET_LIMIT, and any smaller size found not to draw this
-    /// session, allowing for any display scaling the pass has met. The GPU's own limits are
-    /// read during the first grab; before that the context class's largest texture is used, or
-    /// 4096 if it gives none. Always 1 on macOS and iOS.</remarks>
-    /// <param name="AWidth">The grab's width in pixels.</param>
-    /// <param name="AHeight">The grab's height in pixels.</param>
-    /// <returns>1 to OVERSCAN_MAX.</returns>
     function SinglePassOverscan(const AWidth, AHeight: Integer): Integer;
     //** @abstract(True from a successful Grab until its procedure has run or Cancel.)
-    /// <summary>True from a successful Grab until its procedure has run or
-    /// Cancel.</summary>
     property Busy: Boolean read FBusy;
   published
     //** @abstract(The target's width in pixels; 256 by default.)
     //**
     //** Values below 1 count as 1. Changes made while Busy wait for the next grab.
-    /// <summary>The target's width in pixels; 256 by default.</summary>
-    /// <remarks>Values below 1 count as 1. Changes made while Busy wait for the next
-    /// grab.</remarks>
     property Width: Integer read FWidth write SetWidth default DEFAULT_OFFSCREEN_WIDTH;
     //** @abstract(The target's height in pixels; 256 by default.)
     //**
     //** Values below 1 count as 1. Changes made while Busy wait for the next grab.
-    /// <summary>The target's height in pixels; 256 by default.</summary>
-    /// <remarks>Values below 1 count as 1. Changes made while Busy wait for the next
-    /// grab.</remarks>
     property Height: Integer read FHeight write SetHeight default DEFAULT_OFFSCREEN_HEIGHT;
     //** @abstract(Whether grabs have a transparent background; True by default.)
     //**
@@ -585,20 +444,12 @@ type
     //** alpha from the difference, as described for the class, so the background is fully
     //** transparent and soft edges are partly so. False draws it once over OpaqueBackground,
     //** with every pixel opaque.
-    /// <summary>Whether grabs have a transparent background; True by default.</summary>
-    /// <remarks>True draws each grab twice, over black and over white, and works out each
-    /// pixel's alpha from the difference, as described for the class, so the background is
-    /// fully transparent and soft edges are partly so. False draws it once over
-    /// OpaqueBackground, with every pixel opaque.</remarks>
     property TransparentBackground: Boolean read FTransparentBackground
       write FTransparentBackground default True;
     //** @abstract(The background colour when TransparentBackground is False; black by
     //** default.)
     //**
     //** Its alpha is ignored: the background is always drawn opaque.
-    /// <summary>The background colour when TransparentBackground is False; black by
-    /// default.</summary>
-    /// <remarks>Its alpha is ignored: the background is always drawn opaque.</remarks>
     property OpaqueBackground: TAlphaColor read FOpaqueBackground write FOpaqueBackground
       default TAlphaColors.Black;
     //** @abstract(How many times larger each way grabs are drawn before being scaled down; 1,
@@ -610,20 +461,10 @@ type
     //** with Resample, and freed before the next, and the backdrop is filled in and the
     //** bitmap made only at the end, so OnBeforeGrab and the delivered image see only Width by
     //** Height. Changes made while Busy apply from the next grab.
-    /// <summary>How many times larger each way grabs are drawn before being scaled down; 1, the
-    /// default, is off.</summary>
-    /// <remarks>Values are limited to 1 to OVERSCAN_MAX. A grab draws as much of it as
-    /// SinglePassOverscan allows in one go, and makes up the rest with shifted drawings, each
-    /// slid through OnShiftView. Every drawing is matted, scaled down to Width by Height with
-    /// Resample, and freed before the next, and the backdrop is filled in and the bitmap made
-    /// only at the end, so OnBeforeGrab and the delivered image see only Width by Height.
-    /// Changes made while Busy apply from the next grab.</remarks>
     property Overscan: Integer read FOverscan write SetOverscan default 1;
     //** @abstract(The filter overscanned grabs are scaled down with; Box by default.)
     //**
     //** Changes made while Busy apply from the next grab.
-    /// <summary>The filter overscanned grabs are scaled down with; Box by default.</summary>
-    /// <remarks>Changes made while Busy apply from the next grab.</remarks>
     property Resample: TSprite3DResampleFilter read FResample write FResample default rfBox;
     //** @abstract(Runs when an overscanned target turns out too large to draw, before the grab
     //** is made again smaller.)
@@ -631,11 +472,6 @@ type
     //** The size is remembered for the rest of the session, so MaxOverscan allows less from
     //** then on and later grabs do not try it again. Use it to tell the user. Runs on the main
     //** thread, outside the render loop; it must not call Grab or Cancel.
-    /// <summary>Runs when an overscanned target turns out too large to draw, before the grab is
-    /// made again smaller.</summary>
-    /// <remarks>The size is remembered for the rest of the session, so MaxOverscan allows less
-    /// from then on and later grabs do not try it again. Use it to tell the user. Runs on the
-    /// main thread, outside the render loop; it must not call Grab or Cancel.</remarks>
     property OnOverscanReduced: TSprite3DOverscanEvent read FOnOverscanReduced
       write FOnOverscanReduced;
     //** @abstract(A PNG file to save the next overscanned drawing in, as drawn, before it is
@@ -646,18 +482,9 @@ type
     //** the property is emptied, so only one is saved; drawings at the grab's own size leave it
     //** set. With shifted drawings it is the first of them. Saving happens on the main thread
     //** once the drawing is read; OnOverscanKept then says how it went.
-    /// <summary>A PNG file to save the next overscanned drawing in, as drawn, before it is
-    /// scaled down; empty, as it starts, for none.</summary>
-    /// <remarks>For checking overscan. The next drawing made larger than the grab, whose size
-    /// it does not match, is saved there, as a matte with its transparency where the grab has
-    /// one, and the property is emptied, so only one is saved; drawings at the grab's own size
-    /// leave it set. With shifted drawings it is the first of them. Saving happens on the main
-    /// thread once the drawing is read; OnOverscanKept then says how it went.</remarks>
     property KeepOverscanFile: String read FKeepOverscanFile write FKeepOverscanFile;
     //** @abstract(Runs on the main thread once KeepOverscanFile has been saved, or could not
     //** be.)
-    /// <summary>Runs on the main thread once KeepOverscanFile has been saved, or could not
-    /// be.</summary>
     property OnOverscanKept: TSprite3DOverscanKeptEvent read FOnOverscanKept
       write FOnOverscanKept;
     //** @abstract(Slides the view by a fraction of a pixel for one of a grab's shifted
@@ -671,16 +498,6 @@ type
     //** result. Without a handler the drawings are not slid and overscan beyond what can be
     //** drawn in one go only repeats work. Runs on the main thread, from inside the render
     //** for the putting back, and must only change scene state.
-    /// <summary>Slides the view by a fraction of a pixel for one of a grab's shifted drawings,
-    /// or puts it back.</summary>
-    /// <remarks>Called only when Overscan needs more than one drawing. Before each drawing,
-    /// after OnBeforeGrab, it is called with the slide that drawing needs, a fraction of a
-    /// pixel of the grab's own size in each direction, or 0 for none; after the drawing has
-    /// been read, before OnAfterGrab, it is called with 0 and 0 to put the view back. The
-    /// slides are spread evenly over a drawn pixel, so which way is right or up does not change
-    /// the result. Without a handler the drawings are not slid and overscan beyond what can be
-    /// drawn in one go only repeats work. Runs on the main thread, from inside the render for
-    /// the putting back, and must only change scene state.</remarks>
     property OnShiftView: TSprite3DShiftViewEvent read FOnShiftView write FOnShiftView;
     //** @abstract(Runs in Grab, just before the frame is requested, to set the scene up for
     //** the target.)
@@ -691,14 +508,6 @@ type
     //** OnAfterGrab, which follows it: after the pass has drawn, before the main pass draws the
     //** same frame, or from Cancel if the frame never comes. It is not called if the pass is
     //** freed first. Runs on the main thread.
-    /// <summary>Runs in Grab, just before the frame is requested, to set the scene up for the
-    /// target.</summary>
-    /// <remarks>Use it to fit the camera to the target's shape, for example with
-    /// <c>TSprite3DCamera.FitToBounds(Model, AWidth, AHeight)</c>, so the model fills the grab.
-    /// Whatever it changes is drawn into the target and must be put back in OnAfterGrab, which
-    /// follows it: after the pass has drawn, before the main pass draws the same frame, or from
-    /// Cancel if the frame never comes. It is not called if the pass is freed first. Runs on
-    /// the main thread.</remarks>
     property OnBeforeGrab: TSprite3DGrabSizeEvent read FOnBeforeGrab write FOnBeforeGrab;
     //** @abstract(Runs once after an OnBeforeGrab, to put back what it changed.)
     //**
@@ -706,11 +515,6 @@ type
     //** main pass in the same frame shows the scene as before; or from Cancel if the frame never
     //** came. Not called if the pass is freed while a grab is waiting. Runs on the main
     //** thread, and must only change scene state, not show dialogs or call Grab.
-    /// <summary>Runs once after an OnBeforeGrab, to put back what it changed.</summary>
-    /// <remarks>Called from inside the render, just after the target has been drawn and read,
-    /// so the main pass in the same frame shows the scene as before; or from Cancel if the frame
-    /// never came. Not called if the pass is freed while a grab is waiting. Runs on the main
-    /// thread, and must only change scene state, not show dialogs or call Grab.</remarks>
     property OnAfterGrab: TNotifyEvent read FOnAfterGrab write FOnAfterGrab;
   end;
 
@@ -723,12 +527,6 @@ type
 //** @param(APass The pass being rendered; nil gives False.)
 //**
 //** @returns(True if APass is a TSprite3DOffscreen.)
-/// <summary>Whether a render pass is a TSprite3DOffscreen grab.</summary>
-/// <remarks>For helpers that draw in the main pass only and skip Gorilla's other passes, such
-/// as shadows and reflections, but should also be drawn into grabs, so a grab shows what the
-/// view shows. Pass the Gorilla context's CurrentPass.</remarks>
-/// <param name="APass">The pass being rendered; nil gives False.</param>
-/// <returns>True if APass is a TSprite3DOffscreen.</returns>
 function IsOffscreenPass(const APass: TObject): Boolean;
 
 implementation

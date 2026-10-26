@@ -27,8 +27,6 @@ uses
 var
   //** @abstract(True writes JSON with no indents or line breaks; False, the default, indents
   //** it two spaces.)
-  /// <summary>True writes JSON with no indents or line breaks; False, the default, indents it
-  /// two spaces.</summary>
   MinifyJson: Boolean = False;
 
 //** @abstract(A JSON value as the text of a file, minified or indented as MinifyJson says.)
@@ -36,11 +34,6 @@ var
 //** @param(AValue The value, such as a file's root object; nil gives @code(null).)
 //**
 //** @returns(The text, with no byte order mark or trailing line break.)
-/// <summary>A JSON value as the text of a file, minified or indented as MinifyJson
-/// says.</summary>
-/// <param name="AValue">The value, such as a file's root object; nil gives
-/// <c>null</c>.</param>
-/// <returns>The text, with no byte order mark or trailing line break.</returns>
 function JsonToText(const AValue: TJSONValue): String;
 
 //** @abstract(A JSON value as UTF-8 bytes for a file, without a byte order mark, which some
@@ -49,10 +42,6 @@ function JsonToText(const AValue: TJSONValue): String;
 //** @param(AValue The value, such as a file's root object.)
 //**
 //** @returns(The bytes of JsonToText.)
-/// <summary>A JSON value as UTF-8 bytes for a file, without a byte order mark, which some
-/// JSON readers reject.</summary>
-/// <param name="AValue">The value, such as a file's root object.</param>
-/// <returns>The bytes of JsonToText.</returns>
 function JsonToBytes(const AValue: TJSONValue): TBytes;
 
 implementation

@@ -99,9 +99,6 @@ type
   //** @abstract(Raised when a video cannot be written.)
   //**
   //** The message says which step failed and, where FFmpeg gave one, its reason.
-  /// <summary>Raised when a video cannot be written.</summary>
-  /// <remarks>The message says which step failed and, where FFmpeg gave one, its
-  /// reason.</remarks>
   ESprite3DVideoError = class(Exception);
 
 //** @abstract(Whether MP4 video can be written: the FFmpeg libraries loaded and have the
@@ -111,12 +108,6 @@ type
 //** return the same answer at once. The libraries stay loaded until the program ends.
 //**
 //** @returns(True if SaveMpeg4Video can be used.)
-/// <summary>Whether MP4 video can be written: the FFmpeg libraries loaded and have the
-/// encoder.</summary>
-/// <remarks>The first call looks for and loads the libraries, which takes a moment; later
-/// calls return the same answer at once. The libraries stay loaded until the program
-/// ends.</remarks>
-/// <returns>True if SaveMpeg4Video can be used.</returns>
 function VideoAvailable: Boolean;
 
 //** @abstract(Why video is or is not available, for a log or a hint.)
@@ -125,10 +116,6 @@ function VideoAvailable: Boolean;
 //**
 //** @returns(Where the libraries were loaded from and their versions, or what was missing,
 //** with a second line saying whether OpenH264 was found.)
-/// <summary>Why video is or is not available, for a log or a hint.</summary>
-/// <remarks>Loads the libraries if VideoAvailable has not yet been called.</remarks>
-/// <returns>Where the libraries were loaded from and their versions, or what was missing,
-/// with a second line saying whether OpenH264 was found.</returns>
 function VideoStatus: String;
 
 //** @abstract(Writes the frames as a video-only MPEG-4 Part 2 MP4 file.)
@@ -153,23 +140,6 @@ function VideoStatus: String;
 //**
 //** @raises(EArgumentException If there are no frames, they differ in size, or
 //** ACycleSeconds is not more than 0.)
-/// <summary>Writes the frames as a video-only MPEG-4 Part 2 MP4 file.</summary>
-/// <remarks>One cycle of ACycleSeconds is shown as Length(AFrames) equal frames, so the video
-/// lasts exactly one cycle; the frame rate is carried as an exact fraction where it can be.
-/// MP4 has no transparency, so each frame is laid over black, which a Solid or Gradient
-/// background will already have covered. The width and height are rounded up to even numbers,
-/// as the encoder's colour format needs, with black in the extra row or column. Quality is
-/// fixed and high (quantiser 3), every twelfth frame is a key frame and there are no
-/// B-frames. The file replaces any of that name; the folder must exist. Blocks while it
-/// encodes.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
-/// <param name="AFileName">The file to write, normally ending in <c>.mp4</c>.</param>
-/// <param name="ACycleSeconds">How long all the frames last together, in seconds; more than
-/// 0.</param>
-/// <exception cref="ESprite3DVideoError">If the libraries are not available, or FFmpeg fails
-/// at any step; a part-written file may be left behind.</exception>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
-/// ACycleSeconds is not more than 0.</exception>
 procedure SaveMpeg4Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ACycleSeconds: Double);
 
@@ -178,10 +148,6 @@ procedure SaveMpeg4Video(const AFrames: TArray<TSprite3DImage>; const AFileName:
 //** Loads the libraries if VideoAvailable has not yet been called.
 //**
 //** @returns(True if SaveMp4Video writes H.264; False if it writes MPEG-4 Part 2, or nothing.)
-/// <summary>Whether MP4 video will be H.264: FFmpeg and OpenH264 both loaded.</summary>
-/// <remarks>Loads the libraries if VideoAvailable has not yet been called.</remarks>
-/// <returns>True if SaveMp4Video writes H.264; False if it writes MPEG-4 Part 2, or
-/// nothing.</returns>
 function H264Available: Boolean;
 
 //** @abstract(Looks for OpenH264 again, after a copy may have been added, unless one is
@@ -192,12 +158,6 @@ function H264Available: Boolean;
 //** program ends, as a loaded library cannot be swapped safely.
 //**
 //** @returns(True if H.264 is available now.)
-/// <summary>Looks for OpenH264 again, after a copy may have been added, unless one is
-/// loaded.</summary>
-/// <remarks>For when OpenH264 has been downloaded while the program runs; tell
-/// Sprite3DOpenH264 where with SetPreferredOpenH264 first. A copy already loaded stays in use
-/// until the program ends, as a loaded library cannot be swapped safely.</remarks>
-/// <returns>True if H.264 is available now.</returns>
 function RecheckH264: Boolean;
 
 //** @abstract(Writes the frames as a video-only H.264 MP4 file with OpenH264.)
@@ -220,20 +180,6 @@ function RecheckH264: Boolean;
 //**
 //** @raises(EArgumentException If there are no frames, they differ in size, or
 //** ACycleSeconds is not more than 0.)
-/// <summary>Writes the frames as a video-only H.264 MP4 file with OpenH264.</summary>
-/// <remarks>As SaveMpeg4Video in every way but the codec: H.264 Constrained Baseline from
-/// OpenH264, aiming at a constant quality with about a quarter of a bit per pixel per frame
-/// and never dropping a frame, a key frame every twelfth frame, no B-frames. The width and
-/// height must reach 16 pixels after rounding up to even numbers.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
-/// <param name="AFileName">The file to write, normally ending in <c>.mp4</c>.</param>
-/// <param name="ACycleSeconds">How long all the frames last together, in seconds; more than
-/// 0.</param>
-/// <exception cref="ESprite3DVideoError">If FFmpeg is not available, or FFmpeg fails at any
-/// step; a part-written file may be left behind.</exception>
-/// <exception cref="ESprite3DH264Error">If OpenH264 is not available or fails.</exception>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
-/// ACycleSeconds is not more than 0.</exception>
 procedure SaveH264Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ACycleSeconds: Double);
 
@@ -257,21 +203,6 @@ procedure SaveH264Video(const AFrames: TArray<TSprite3DImage>; const AFileName: 
 //**
 //** @raises(EArgumentException If there are no frames, they differ in size, or
 //** ACycleSeconds is not more than 0.)
-/// <summary>Writes the frames as a video-only MP4 file, H.264 if it can, else MPEG-4 Part
-/// 2.</summary>
-/// <remarks>Uses SaveH264Video when H264Available, and SaveMpeg4Video otherwise; see those for
-/// the details. Frames that would be smaller than 16 pixels across or down are always MPEG-4
-/// Part 2, as OpenH264 cannot take them. If OpenH264 itself fails, the file is written again
-/// as MPEG-4 Part 2, and the result says why.</remarks>
-/// <param name="AFrames">The frames, in order; at least one, all the same size.</param>
-/// <param name="AFileName">The file to write, normally ending in <c>.mp4</c>.</param>
-/// <param name="ACycleSeconds">How long all the frames last together, in seconds; more than
-/// 0.</param>
-/// <returns>The codec written, <c>'H.264'</c> or <c>'MPEG-4 Part 2'</c>, with the reason after
-/// it if H.264 was tried and failed, for a log.</returns>
-/// <exception cref="ESprite3DVideoError">If FFmpeg is not available or fails.</exception>
-/// <exception cref="EArgumentException">If there are no frames, they differ in size, or
-/// ACycleSeconds is not more than 0.</exception>
 function SaveMp4Video(const AFrames: TArray<TSprite3DImage>; const AFileName: String;
   const ACycleSeconds: Double): String;
 

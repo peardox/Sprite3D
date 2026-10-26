@@ -56,7 +56,6 @@ uses
 
 type
   //** @abstract(Raised when OpenH264 cannot set up or encode.)
-  /// <summary>Raised when OpenH264 cannot set up or encode.</summary>
   ESprite3DH264Error = class(Exception);
 
   //** @abstract(One OpenH264 encoder, for pictures of one size.)
@@ -66,12 +65,6 @@ type
   //** Encode returns that picture's access unit straight away; there are no B-frames, so the
   //** decoding order is the display order. Rate control aims at a constant quality, and the
   //** encoder never drops a frame.
-  /// <summary>One OpenH264 encoder, for pictures of one size.</summary>
-  /// <remarks>Create it with the size and frame rate, feed it every picture in order with
-  /// Encode, then free it. Every picture is encoded on its own, without frames held back, so
-  /// each Encode returns that picture's access unit straight away; there are no B-frames, so
-  /// the decoding order is the display order. Rate control aims at a constant quality, and the
-  /// encoder never drops a frame.</remarks>
   TSprite3DH264Encoder = class
   private
     FEncoder: Pointer;
@@ -93,18 +86,9 @@ type
     //** @param(AKeyInterval Frames between key frames; 0 for only the first.)
     //**
     //** @raises(ESprite3DH264Error If OpenH264 is not available or refuses the settings.)
-    /// <summary>Sets up an encoder for AWidth x AHeight pictures at AFrameRate.</summary>
-    /// <param name="AWidth">The picture width in pixels; even, at least 16.</param>
-    /// <param name="AHeight">The picture height in pixels; even, at least 16.</param>
-    /// <param name="AFrameRate">Frames per second, which sets the bit budget; more than
-    /// 0.</param>
-    /// <param name="AKeyInterval">Frames between key frames; 0 for only the first.</param>
-    /// <exception cref="ESprite3DH264Error">If OpenH264 is not available or refuses the
-    /// settings.</exception>
     constructor Create(const AWidth, AHeight: Integer; const AFrameRate: Single;
       const AKeyInterval: Integer);
     //** @abstract(Releases the encoder.)
-    /// <summary>Releases the encoder.</summary>
     destructor Destroy; override;
     //** @abstract(The sequence and picture parameter sets, as an Annex B byte stream.)
     //**
@@ -114,11 +98,6 @@ type
     //** @returns(The SPS and PPS NAL units, each after a start code.)
     //**
     //** @raises(ESprite3DH264Error If OpenH264 fails.)
-    /// <summary>The sequence and picture parameter sets, as an Annex B byte stream.</summary>
-    /// <remarks>This is what an MP4 muxer needs, as the stream's extra data, to write the
-    /// stream's <c>avcC</c> description before any frame.</remarks>
-    /// <returns>The SPS and PPS NAL units, each after a start code.</returns>
-    /// <exception cref="ESprite3DH264Error">If OpenH264 fails.</exception>
     function ParameterSets: TBytes;
     //** @abstract(Encodes one YUV 4:2:0 picture.)
     //**
@@ -133,15 +112,6 @@ type
     //** @param(AKey On return, True if it is a key frame, which a player can start from.)
     //**
     //** @raises(ESprite3DH264Error If OpenH264 fails.)
-    /// <summary>Encodes one YUV 4:2:0 picture.</summary>
-    /// <param name="APlanes">The Y, U and V planes, in that order; U and V are half the width
-    /// and height.</param>
-    /// <param name="AStrides">The bytes from one row to the next in each plane.</param>
-    /// <param name="AData">On return, the picture as an Annex B access unit; empty if the
-    /// encoder skipped it.</param>
-    /// <param name="AKey">On return, True if it is a key frame, which a player can start
-    /// from.</param>
-    /// <exception cref="ESprite3DH264Error">If OpenH264 fails.</exception>
     procedure Encode(const APlanes: array of PByte; const AStrides: array of Integer;
       out AData: TBytes; out AKey: Boolean);
   end;
@@ -153,11 +123,6 @@ type
 //** answer is False. The library stays loaded until the program ends.
 //**
 //** @returns(True if TSprite3DH264Encoder can be used.)
-/// <summary>Whether OpenH264 is loaded, loading it the first time.</summary>
-/// <remarks>The first call loads the copy SetPreferredOpenH264 named, if it is version 2.0 or
-/// later and has the encoder; later calls return the same answer at once. With no copy named,
-/// the answer is False. The library stays loaded until the program ends.</remarks>
-/// <returns>True if TSprite3DH264Encoder can be used.</returns>
 function OpenH264Available: Boolean;
 
 //** @abstract(Names the copy of OpenH264 to load: the one downloaded for this platform.)
@@ -166,11 +131,6 @@ function OpenH264Available: Boolean;
 //** downloaded. An empty string means there is none, and H.264 is not offered.
 //**
 //** @param(APath The library's full path.)
-/// <summary>Names the copy of OpenH264 to load: the one downloaded for this
-/// platform.</summary>
-/// <remarks>Call it before OpenH264Available, or before OpenH264Retry once a copy has been
-/// downloaded. An empty string means there is none, and H.264 is not offered.</remarks>
-/// <param name="APath">The library's full path.</param>
 procedure SetPreferredOpenH264(const APath: String);
 
 //** @abstract(Loads the named OpenH264 again unless a copy is already loaded.)
@@ -179,17 +139,11 @@ procedure SetPreferredOpenH264(const APath: String);
 //** stays in use until the program ends.
 //**
 //** @returns(True if TSprite3DH264Encoder can be used.)
-/// <summary>Loads the named OpenH264 again unless a copy is already loaded.</summary>
-/// <remarks>As OpenH264Available, but a failed earlier attempt does not stop a new one. A
-/// loaded copy stays in use until the program ends.</remarks>
-/// <returns>True if TSprite3DH264Encoder can be used.</returns>
 function OpenH264Retry: Boolean;
 
 //** @abstract(The full path of the OpenH264 loaded, or empty if none is.)
 //**
 //** @returns(The path, as it was loaded.)
-/// <summary>The full path of the OpenH264 loaded, or empty if none is.</summary>
-/// <returns>The path, as it was loaded.</returns>
 function OpenH264LoadedLibrary: String;
 
 //** @abstract(Which OpenH264 was loaded and from where, or why none was.)
@@ -197,9 +151,6 @@ function OpenH264LoadedLibrary: String;
 //** Empty until OpenH264Available has been called.
 //**
 //** @returns(A line for a log or a hint.)
-/// <summary>Which OpenH264 was loaded and from where, or why none was.</summary>
-/// <remarks>Empty until OpenH264Available has been called.</remarks>
-/// <returns>A line for a log or a hint.</returns>
 function OpenH264Status: String;
 
 implementation

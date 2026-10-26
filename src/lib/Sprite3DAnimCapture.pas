@@ -98,10 +98,6 @@ type
   //** They belong to the procedure.)
   //**
   //** @param(AError Empty on success; otherwise why the capture stopped.)
-  /// <summary>Reports a finished capture: every frame, in order, or an error.</summary>
-  /// <param name="AFrames">The frames, first to last, all the grab's size; empty if AError is
-  /// set. They belong to the procedure.</param>
-  /// <param name="AError">Empty on success; otherwise why the capture stopped.</param>
   TSprite3DFramesProc = reference to procedure(const AFrames: TArray<TSprite3DImage>;
     const AError: String);
 
@@ -110,9 +106,6 @@ type
   //** @param(ADone How many frames have been grabbed so far.)
   //**
   //** @param(ATotal How many frames there are in all.)
-  /// <summary>Reports progress after each frame is grabbed.</summary>
-  /// <param name="ADone">How many frames have been grabbed so far.</param>
-  /// <param name="ATotal">How many frames there are in all.</param>
   TSprite3DCaptureProgress = reference to procedure(const ADone, ATotal: Integer);
 
 const
@@ -121,10 +114,6 @@ const
   //**
   //** Each is one drawn frame, enough for Gorilla to have switched to the animation and
   //** shown its first pose.
-  /// <summary>How many grabs of the first frame TSprite3DFrameCapture throws away before
-  /// keeping one, by default.</summary>
-  /// <remarks>Each is one drawn frame, enough for Gorilla to have switched to the animation
-  /// and shown its first pose.</remarks>
   DEFAULT_WARM_UP_FRAMES = 3;
 
 type
@@ -132,49 +121,31 @@ type
   //**
   //** Call Start once, then ShowFrame for any frame from 0 to FrameCount - 1 in any order,
   //** then Finish once. Between Start and Finish the scene is the source's to change.
-  /// <summary>Something that can be shown one frame at a time for capture.</summary>
-  /// <remarks>Call Start once, then ShowFrame for any frame from 0 to FrameCount - 1 in any
-  /// order, then Finish once. Between Start and Finish the scene is the source's to
-  /// change.</remarks>
   TSprite3DFrameSource = class abstract
   public
     //** @abstract(How many frames there are; at least 1.)
     //**
     //** @returns(The frame count.)
-    /// <summary>How many frames there are; at least 1.</summary>
-    /// <returns>The frame count.</returns>
     function FrameCount: Integer; virtual; abstract;
     //** @abstract(How long all the frames last together, in seconds, when played.)
     //**
     //** @returns(The length of one pass through every frame; more than 0.)
-    /// <summary>How long all the frames last together, in seconds, when played.</summary>
-    /// <returns>The length of one pass through every frame; more than 0.</returns>
     function Duration: Single; virtual; abstract;
     //** @abstract(Takes over the scene for capture; called once, before any ShowFrame.)
-    /// <summary>Takes over the scene for capture; called once, before any
-    /// ShowFrame.</summary>
     procedure Start; virtual;
     //** @abstract(Puts the scene in the state of one frame.)
     //**
     //** @param(AIndex The frame, from 0 to FrameCount - 1.)
-    /// <summary>Puts the scene in the state of one frame.</summary>
-    /// <param name="AIndex">The frame, from 0 to FrameCount - 1.</param>
     procedure ShowFrame(const AIndex: Integer); virtual; abstract;
     //** @abstract(Hands the scene back; called once, after the last ShowFrame.)
     //**
     //** An animation is left playing as it was chosen; the camera is left at the angle it
     //** had before Start.
-    /// <summary>Hands the scene back; called once, after the last ShowFrame.</summary>
-    /// <remarks>An animation is left playing as it was chosen; the camera is left at the angle
-    /// it had before Start.</remarks>
     procedure Finish; virtual;
     //** @abstract(How long each frame shows when played, in hundredths of a second, as GIF
     //** counts it.)
     //**
     //** @returns(Duration / FrameCount, rounded, at least 1.)
-    /// <summary>How long each frame shows when played, in hundredths of a second, as GIF counts
-    /// it.</summary>
-    /// <returns>Duration / FrameCount, rounded, at least 1.</returns>
     function FrameDelay: Integer;
   end;
 
@@ -207,32 +178,6 @@ type
   //** out, as for a cycle.
   //**
   //** Start makes the animation the model's current one, without blending, and starts it.
-  /// <summary>One cycle of a Gorilla model's animation, resampled at a chosen frame
-  /// rate.</summary>
-  /// <remarks><para>The animation's length D seconds is split into N equal steps, where N is D
-  /// times the chosen rate, rounded, and at least 1. Frame I shows the pose at time I * D / N,
-  /// so frame 0 is the first pose and frame N - 1 is one step before the end. Played at N
-  /// frames per D seconds the frames take exactly as long as the animation, and since the time
-  /// after the last frame is D, which is where a cyclical animation is back at its first pose,
-  /// the frames loop without a jump or a repeated frame. The rate actually played, N / D, is
-  /// the chosen rate adjusted by at most half a frame per cycle so the cycle stays whole; 8
-  /// frames a second on a 1.3-second walk gives 10 frames of 0.13 seconds.</para>
-  /// <para>Sprite3D loads models with vertex caching, so Gorilla has already baked the
-  /// animation into <c>FrameCount</c> poses at its own rate (60 a second on desktop, 24 on
-  /// some mobile platforms). Each output time is mapped onto that grid and the nearest baked
-  /// pose is shown with <c>SetFixedCacheFrame</c>, whatever the animation clock is doing; on
-  /// desktop that is within 1/120 of a second of the exact time. The poses themselves are
-  /// interpolated between the file's keyframes when Gorilla bakes them; the images are never
-  /// blended, which would leave ghosts in a sprite. At a rate above the baked rate some poses
-  /// repeat.</para>
-  /// <para>An animation without baked poses is instead posed by seeking its skeleton to each
-  /// exact time, which interpolates the keyframes there. On Delphi 13 and later, where
-  /// Gorilla's render clock holds the skeleton, the pose is evaluated on the next drawn frame,
-  /// so it can lag the requested time by one display frame.</para>
-  /// <para>Animations that do not cycle are not treated differently yet: their last pose is
-  /// left out, as for a cycle.</para>
-  /// <para>Start makes the animation the model's current one, without blending, and starts
-  /// it.</para></remarks>
   TSprite3DAnimationFrames = class(TSprite3DFrameSource)
   private
     FModel: TGorillaModel;
@@ -257,50 +202,27 @@ type
     //**
     //** @raises(EArgumentException If AModel or AAnimation is nil, or AFrameRate is less
     //** than 1.)
-    /// <summary>Prepares to capture one cycle of AAnimation of AModel at AFrameRate, or in
-    /// AFrameCount frames.</summary>
-    /// <param name="AModel">The model the animation belongs to; it must outlive this
-    /// object.</param>
-    /// <param name="AAnimation">One of AModel's animations; it must outlive this
-    /// object.</param>
-    /// <param name="AFrameRate">The frames per second wanted; at least 1.</param>
-    /// <param name="AFrameCount">The number of frames wanted, in place of what AFrameRate
-    /// gives, such as one chosen by hand; 0, the default, for what AFrameRate gives.</param>
-    /// <exception cref="EArgumentException">If AModel or AAnimation is nil, or AFrameRate is
-    /// less than 1.</exception>
     constructor Create(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation;
       const AFrameRate: Integer; const AFrameCount: Integer = 0);
     //** @abstract(The number of frames: the count chosen, or the length times the chosen
     //** rate, rounded.)
     //**
     //** @returns(The frame count; at least 1.)
-    /// <summary>The number of frames: the count chosen, or the length times the chosen rate,
-    /// rounded.</summary>
-    /// <returns>The frame count; at least 1.</returns>
     function FrameCount: Integer; override;
     //** @abstract(The animation's length in seconds.)
     //**
     //** @returns(The skeleton's Duration, or the baked pose count over the baked rate if that
     //** is not set.)
-    /// <summary>The animation's length in seconds.</summary>
-    /// <returns>The skeleton's Duration, or the baked pose count over the baked rate if that
-    /// is not set.</returns>
     function Duration: Single; override;
     //** @abstract(Makes the animation the current one, without blending, and starts it.)
-    /// <summary>Makes the animation the current one, without blending, and starts
-    /// it.</summary>
     procedure Start; override;
     //** @abstract(Shows the pose at frame AIndex's time, I * Duration / FrameCount.)
     //**
     //** @param(AIndex The frame, from 0 to FrameCount - 1.)
-    /// <summary>Shows the pose at frame AIndex's time, I * Duration / FrameCount.</summary>
-    /// <param name="AIndex">The frame, from 0 to FrameCount - 1.</param>
     procedure ShowFrame(const AIndex: Integer); override;
     //** @abstract(Releases the fixed frame and leaves the animation playing.)
-    /// <summary>Releases the fixed frame and leaves the animation playing.</summary>
     procedure Finish; override;
     //** @abstract(The animation being captured.)
-    /// <summary>The animation being captured.</summary>
     property Animation: TGorillaAnimation read FAnimation;
   end;
 
@@ -313,14 +235,6 @@ type
   //** camera. Only the azimuth changes; the inclination, roll and framing are left as they
   //** are. A camera whose Locked is True does not turn, so every frame comes out the same;
   //** check it before capturing.
-  /// <summary>One turn of the camera round the model, in equal steps.</summary>
-  /// <remarks>Frame I is the camera's azimuth at Start plus I * 360 / FrameCount degrees, so
-  /// the model appears to turn once round its vertical axis, and the frame after the last is
-  /// the first again. The light rides on Sprite3D's camera, so the model is lit from the
-  /// viewer's side in every frame, exactly as if the model itself had been turned in front of
-  /// a still camera. Only the azimuth changes; the inclination, roll and framing are left as
-  /// they are. A camera whose Locked is True does not turn, so every frame comes out the same;
-  /// check it before capturing.</remarks>
   TSprite3DTurntableFrames = class(TSprite3DFrameSource)
   private
     FCamera: TSprite3DCamera;
@@ -338,39 +252,23 @@ type
     //**
     //** @raises(EArgumentException If ACamera is nil, AFrames is less than 1 or ADuration is
     //** not more than 0.)
-    /// <summary>Prepares one turn of ACamera in AFrames steps lasting ADuration
-    /// seconds.</summary>
-    /// <param name="ACamera">The camera to turn; it must outlive this object.</param>
-    /// <param name="AFrames">The number of frames; at least 1.</param>
-    /// <param name="ADuration">How long the turn takes when played, in seconds; more than
-    /// 0.</param>
-    /// <exception cref="EArgumentException">If ACamera is nil, AFrames is less than 1 or
-    /// ADuration is not more than 0.</exception>
     constructor Create(const ACamera: TSprite3DCamera; const AFrames: Integer;
       const ADuration: Single);
     //** @abstract(The number of frames given to Create.)
     //**
     //** @returns(The frame count.)
-    /// <summary>The number of frames given to Create.</summary>
-    /// <returns>The frame count.</returns>
     function FrameCount: Integer; override;
     //** @abstract(The length given to Create.)
     //**
     //** @returns(The length of the turn in seconds.)
-    /// <summary>The length given to Create.</summary>
-    /// <returns>The length of the turn in seconds.</returns>
     function Duration: Single; override;
     //** @abstract(Notes the camera's azimuth, which frame 0 uses.)
-    /// <summary>Notes the camera's azimuth, which frame 0 uses.</summary>
     procedure Start; override;
     //** @abstract(Turns the camera to frame AIndex's azimuth.)
     //**
     //** @param(AIndex The frame, from 0 to FrameCount - 1.)
-    /// <summary>Turns the camera to frame AIndex's azimuth.</summary>
-    /// <param name="AIndex">The frame, from 0 to FrameCount - 1.</param>
     procedure ShowFrame(const AIndex: Integer); override;
     //** @abstract(Puts the camera back at the azimuth it had at Start.)
-    /// <summary>Puts the camera back at the azimuth it had at Start.</summary>
     procedure Finish; override;
   end;
 
@@ -389,19 +287,6 @@ type
   //** whole run first and restores it in its procedure. Where TSprite3DOffscreen grabs by
   //** screenshot (macOS and iOS), each frame is left on screen for SettleTime milliseconds
   //** before it is grabbed, so the screenshot shows it.
-  /// <summary>One capture run: every frame of a source, grabbed in turn.</summary>
-  /// <remarks><para>Create it, then call Run. Run starts the source, shows frame 0 and asks the
-  /// off-screen renderer for a grab; the first WarmUpFrames grabs are thrown away, frame 0
-  /// being shown again before each, then each grab is copied, the next frame shown and
-  /// grabbed, and so on. When the last frame is in, or a grab fails, the source is finished, the
-  /// procedure given to Create is called once with every frame or the error, and the capture
-  /// frees itself and its source. While it runs, the off-screen renderer is busy for most of
-  /// the time but not all of it, so the owner should refuse other grabs on its own
-  /// account.</para>
-  /// <para>The capture changes nothing about the framing: the owner frames the camera for the
-  /// whole run first and restores it in its procedure. Where TSprite3DOffscreen grabs by
-  /// screenshot (macOS and iOS), each frame is left on screen for SettleTime milliseconds
-  /// before it is grabbed, so the screenshot shows it.</para></remarks>
   TSprite3DFrameCapture = class
   private
     FOffscreen: TSprite3DOffscreen;
@@ -430,19 +315,10 @@ type
     //** @param(AOnDone Called once when the capture ends, unless it is cancelled.)
     //**
     //** @param(AOnProgress Called after each frame is grabbed; may be nil.)
-    /// <summary>Prepares a capture of ASource with AOffscreen.</summary>
-    /// <param name="AOffscreen">The off-screen renderer; it must outlive the capture. Its Width
-    /// and Height are the frame size.</param>
-    /// <param name="ASource">The frames; the capture owns it from here on and frees
-    /// it.</param>
-    /// <param name="AOnDone">Called once when the capture ends, unless it is
-    /// cancelled.</param>
-    /// <param name="AOnProgress">Called after each frame is grabbed; may be nil.</param>
     constructor Create(const AOffscreen: TSprite3DOffscreen;
       const ASource: TSprite3DFrameSource; const AOnDone: TSprite3DFramesProc;
       const AOnProgress: TSprite3DCaptureProgress = nil);
     //** @abstract(Frees the source and any frames not handed over.)
-    /// <summary>Frees the source and any frames not handed over.</summary>
     destructor Destroy; override;
     //** @abstract(Starts the capture; returns at once.)
     //**
@@ -452,38 +328,21 @@ type
     //** @returns(True if it started; False if the off-screen renderer is busy or has no
     //** viewport, in which case the capture has finished its source, called nothing and
     //** freed itself.)
-    /// <summary>Starts the capture; returns at once.</summary>
-    /// <remarks>The source has already been started if the owner called its Start itself, for
-    /// example to measure every frame before framing; Run then does not start it
-    /// again.</remarks>
-    /// <returns>True if it started; False if the off-screen renderer is busy or has no
-    /// viewport, in which case the capture has finished its source, called nothing and freed
-    /// itself.</returns>
     function Run: Boolean;
     //** @abstract(Stops the capture without calling its procedure.)
     //**
     //** Use it when the owner is going away. The source is finished, and the capture frees
     //** itself the next time it would have gone on, or at once if nothing is pending.
-    /// <summary>Stops the capture without calling its procedure.</summary>
-    /// <remarks>Use it when the owner is going away. The source is finished, and the capture
-    /// frees itself the next time it would have gone on, or at once if nothing is
-    /// pending.</remarks>
     procedure Cancel;
     //** @abstract(Marks the source as already started by the owner, so Run does not start it
     //** again.)
-    /// <summary>Marks the source as already started by the owner, so Run does not start it
-    /// again.</summary>
     procedure SourceStarted;
     //** @abstract(The frames being captured.)
-    /// <summary>The frames being captured.</summary>
     property Source: TSprite3DFrameSource read FSource;
     //** @abstract(Milliseconds each frame is left on screen before it is grabbed.)
     //**
     //** 0 where grabs render off screen, which draws the frame as it is set; about four
     //** display frames where grabs are screenshots.
-    /// <summary>Milliseconds each frame is left on screen before it is grabbed.</summary>
-    /// <remarks>0 where grabs render off screen, which draws the frame as it is set; about
-    /// four display frames where grabs are screenshots.</remarks>
     property SettleTime: Integer read FSettleTime write FSettleTime;
     //** @abstract(How many grabs of the first frame are thrown away before the one that is
     //** kept; DEFAULT_WARM_UP_FRAMES by default.)
@@ -492,12 +351,6 @@ type
     //** by the time it is kept. Set it before Run; negative values count as 0. They are
     //** grabbed without overscan, which is put back for the frames that are kept, so they cost
     //** little whatever the overscan.
-    /// <summary>How many grabs of the first frame are thrown away before the one that is
-    /// kept; DEFAULT_WARM_UP_FRAMES by default.</summary>
-    /// <remarks>Each waits for a frame to be drawn, so the animation has caught up with its
-    /// first pose by the time it is kept. Set it before Run; negative values count as 0. They
-    /// are grabbed without overscan, which is put back for the frames that are kept, so they
-    /// cost little whatever the overscan.</remarks>
     property WarmUpFrames: Integer read FWarmUpFrames write FWarmUpFrames;
   end;
 
@@ -512,16 +365,6 @@ type
 //** @param(AAnimation The animation; nil, or one without a skeleton, is ignored.)
 //**
 //** @param(APaused True to hold the pose, False to carry on.)
-/// <summary>Holds an animation on its current pose, or lets it carry on from
-/// there.</summary>
-/// <remarks>Pauses or unpauses the animation's skeleton clock, the same way on every Delphi
-/// version: <c>Skeleton.Paused</c> on Delphi 13 and later, where Gorilla's render clock owns
-/// <c>Pause</c>, and <c>Skeleton.Pause</c> before. A paused animation stays current and
-/// running, with its pose held, baked or not, so whatever follows the playing animation still
-/// sees it; unpaused, it carries on from the same moment. Main thread only.</remarks>
-/// <param name="AAnimation">The animation; nil, or one without a skeleton, is
-/// ignored.</param>
-/// <param name="APaused">True to hold the pose, False to carry on.</param>
 procedure SetAnimationPaused(const AAnimation: TGorillaAnimation; const APaused: Boolean);
 
 type
@@ -537,16 +380,6 @@ type
   //**
   //** For the main thread only. The model and animation must outlive the player, and nothing
   //** else, such as a capture, may drive the animation while it is held.
-  /// <summary>Plays, pauses and steps one animation of a model on screen, an export frame at a
-  /// time.</summary>
-  /// <remarks>Made when the animation starts playing from its beginning. While it plays, the
-  /// player keeps its own clock, so Pause can tell which frame is showing. Pause, Step and
-  /// ShowFrame hold the animation on one frame: the frames are those an export at FrameRate
-  /// makes, by TSprite3DAnimationFrames, so frame N is held exactly as frame N of an export
-  /// shows it, from the baked pose where Gorilla has baked the animation. Play carries on from
-  /// the frame held. Freeing the player lets a held animation play on.
-  /// For the main thread only. The model and animation must outlive the player, and nothing
-  /// else, such as a capture, may drive the animation while it is held.</remarks>
   TSprite3DAnimationPlayer = class
   private
     FModel: TGorillaModel;
@@ -577,71 +410,39 @@ type
     //** when FrameRate changes.)
     //**
     //** @raises(EArgumentException If AModel or AAnimation is nil, or AFrameRate is below 1.)
-    /// <summary>Starts following an animation that has just started from its
-    /// beginning.</summary>
-    /// <param name="AModel">The model the animation belongs to.</param>
-    /// <param name="AAnimation">The animation, current and running from its first
-    /// pose.</param>
-    /// <param name="AFrameRate">The export frame rate, which sets the frames held and stepped
-    /// through.</param>
-    /// <param name="AFrameCount">The number of export frames, in place of what AFrameRate
-    /// gives, such as one chosen by hand; 0, the default, for what AFrameRate gives. It is
-    /// kept when FrameRate changes.</param>
-    /// <exception cref="EArgumentException">If AModel or AAnimation is nil, or AFrameRate is
-    /// below 1.</exception>
     constructor Create(const AModel: TGorillaModel; const AAnimation: TGorillaAnimation;
       const AFrameRate: Integer; const AFrameCount: Integer = 0);
     //** @abstract(Lets a held animation play on from its frame, then frees the player.)
-    /// <summary>Lets a held animation play on from its frame, then frees the player.</summary>
     destructor Destroy; override;
     //** @abstract(Carries on playing from the frame held; nothing if it is not held.)
-    /// <summary>Carries on playing from the frame held; nothing if it is not held.</summary>
     procedure Play;
     //** @abstract(Holds the animation on the frame showing now; nothing if already held.)
-    /// <summary>Holds the animation on the frame showing now; nothing if already
-    /// held.</summary>
     procedure Pause;
     //** @abstract(Holds the animation on frame AFrame.)
     //**
     //** @param(AFrame The frame, from 0 to FrameCount - 1; others wrap round, as the
     //** animation loops, so -1 is the last frame.)
-    /// <summary>Holds the animation on frame AFrame.</summary>
-    /// <param name="AFrame">The frame, from 0 to FrameCount - 1; others wrap round, as the
-    /// animation loops, so -1 is the last frame.</param>
     procedure ShowFrame(const AFrame: Integer);
     //** @abstract(Holds the animation ADelta frames on from the one held, or from the one
     //** showing if it is playing.)
     //**
     //** @param(ADelta Frames to move: 1 for the next, -1 for the previous; it wraps round.)
-    /// <summary>Holds the animation ADelta frames on from the one held, or from the one
-    /// showing if it is playing.</summary>
-    /// <param name="ADelta">Frames to move: 1 for the next, -1 for the previous; it wraps
-    /// round.</param>
     procedure Step(const ADelta: Integer);
     //** @abstract(The animation played.)
-    /// <summary>The animation played.</summary>
     property Animation: TGorillaAnimation read FAnimation;
     //** @abstract(True while the animation is held on one frame.)
-    /// <summary>True while the animation is held on one frame.</summary>
     property Held: Boolean read FHeld;
     //** @abstract(The frame held, from 0; meaningful only while Held.)
-    /// <summary>The frame held, from 0; meaningful only while Held.</summary>
     property Frame: Integer read FFrame;
     //** @abstract(The frame showing, from 0: the one held, or while playing the one nearest the
     //** moment showing, by the player's own clock.)
-    /// <summary>The frame showing, from 0: the one held, or while playing the one nearest the
-    /// moment showing, by the player's own clock.</summary>
     property CurrentFrame: Integer read GetCurrentFrame;
     //** @abstract(How many frames one cycle has at FrameRate, as an export makes.)
-    /// <summary>How many frames one cycle has at FrameRate, as an export makes.</summary>
     property FrameCount: Integer read GetFrameCount;
     //** @abstract(The export frame rate the frames are counted at.)
     //**
     //** Changing it while held keeps the same point of the cycle, to the nearest new frame.
     //** Values below 1 count as 1.
-    /// <summary>The export frame rate the frames are counted at.</summary>
-    /// <remarks>Changing it while held keeps the same point of the cycle, to the nearest new
-    /// frame. Values below 1 count as 1.</remarks>
     property FrameRate: Integer read FFrameRate write SetFrameRate;
   end;
 

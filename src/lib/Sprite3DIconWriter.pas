@@ -49,39 +49,25 @@ type
   //** A descendant overrides the class functions that describe its format and SaveToStream,
   //** which writes it. Create one writer per save; writers hold no state between saves
   //** unless a descendant adds options. For the main thread only, as FMX bitmaps are.
-  /// <summary>Base class for an icon file format.</summary>
-  /// <remarks>A descendant overrides the class functions that describe its format and
-  /// SaveToStream, which writes it. Create one writer per save; writers hold no state between
-  /// saves unless a descendant adds options. For the main thread only, as FMX bitmaps
-  /// are.</remarks>
   TSprite3DIconWriter = class abstract
   public
     //** @abstract(Creates a writer with the format's default options.)
-    /// <summary>Creates a writer with the format's default options.</summary>
     constructor Create; virtual;
     //** @abstract(The format's name for people, such as @code('Windows icon').)
     //**
     //** @returns(A short name, used in dialog filters.)
-    /// <summary>The format's name for people, such as <c>'Windows icon'</c>.</summary>
-    /// <returns>A short name, used in dialog filters.</returns>
     class function FormatName: String; virtual; abstract;
     //** @abstract(The format's file extension, with its dot, such as @code('.ico').)
     //**
     //** @returns(The extension, in lower case.)
-    /// <summary>The format's file extension, with its dot, such as <c>'.ico'</c>.</summary>
-    /// <returns>The extension, in lower case.</returns>
     class function FileExtension: String; virtual; abstract;
     //** @abstract(The image sizes, in pixels, a file of this format normally holds.)
     //**
     //** @returns(The widths, which are also the heights, smallest first.)
-    /// <summary>The image sizes, in pixels, a file of this format normally holds.</summary>
-    /// <returns>The widths, which are also the heights, smallest first.</returns>
     class function DefaultSizes: TArray<Integer>; virtual; abstract;
     //** @abstract(The format as one file type for a file dialog's Filter.)
     //**
     //** @returns(Such as @code('Windows icon @(*.ico@)|*.ico').)
-    /// <summary>The format as one file type for a file dialog's Filter.</summary>
-    /// <returns>Such as <c>'Windows icon (*.ico)|*.ico'</c>.</returns>
     class function DialogFilter: String;
     //** @abstract(AFileName with this format's extension, added or replacing another.)
     //**
@@ -90,11 +76,6 @@ type
     //** @param(AFileName A file name, with or without an extension.)
     //**
     //** @returns(The file name ending in FileExtension.)
-    /// <summary>AFileName with this format's extension, added or replacing another.</summary>
-    /// <remarks>A name already ending in the extension, in any case, is returned
-    /// unchanged.</remarks>
-    /// <param name="AFileName">A file name, with or without an extension.</param>
-    /// <returns>The file name ending in FileExtension.</returns>
     class function FixFileName(const AFileName: String): String;
     //** @abstract(Writes the images to AStream in this format.)
     //**
@@ -107,13 +88,6 @@ type
     //**
     //** @raises(EArgumentException If there are no images, or one is not square or is a size
     //** the format cannot hold.)
-    /// <summary>Writes the images to AStream in this format.</summary>
-    /// <remarks>Blocks while writing. The images are not changed or freed.</remarks>
-    /// <param name="AImages">The images, each square; which sizes are allowed depends on the
-    /// format.</param>
-    /// <param name="AStream">The stream to write to, from its current position.</param>
-    /// <exception cref="EArgumentException">If there are no images, or one is not square or is
-    /// a size the format cannot hold.</exception>
     procedure SaveToStream(const AImages: array of TBitmap; const AStream: TStream);
       virtual; abstract;
     //** @abstract(Writes the images to a file in this format.)
@@ -128,19 +102,10 @@ type
     //**
     //** @raises(Exception If the images are unsuitable, as for SaveToStream, or the file
     //** cannot be written.)
-    /// <summary>Writes the images to a file in this format.</summary>
-    /// <remarks>Creates the file's folder if needed and replaces any existing file. Blocks
-    /// while writing. If writing fails, the part-written file is deleted.</remarks>
-    /// <param name="AImages">The images, as for SaveToStream.</param>
-    /// <param name="AFileName">The full path to write; it is used as given, so pass it through
-    /// FixFileName first to be sure of the extension.</param>
-    /// <exception cref="Exception">If the images are unsuitable, as for SaveToStream, or the
-    /// file cannot be written.</exception>
     procedure SaveToFile(const AImages: array of TBitmap; const AFileName: String);
   end;
 
   //** @abstract(A TSprite3DIconWriter descendant, for choosing a format at run time.)
-  /// <summary>A TSprite3DIconWriter descendant, for choosing a format at run time.</summary>
   TSprite3DIconWriterClass = class of TSprite3DIconWriter;
 
   //** @abstract(Writes Windows .ico files.)
@@ -150,12 +115,6 @@ type
   //** need, and larger ones as PNG, which keeps the file small; this is how Windows 10 and 11
   //** store their own icons, with PNG only for 256. Images may be 1 to 256 pixels square.
   //** The default sizes are Windows 10 and 11's: 16, 20, 24, 32, 40, 48, 64 and 256.
-  /// <summary>Writes Windows .ico files.</summary>
-  /// <remarks>Each image is stored with 32 bits per pixel: 8-bit blue, green, red and alpha.
-  /// Images smaller than PngMinSize are stored as bitmaps, with the AND mask older readers
-  /// need, and larger ones as PNG, which keeps the file small; this is how Windows 10 and 11
-  /// store their own icons, with PNG only for 256. Images may be 1 to 256 pixels square. The
-  /// default sizes are Windows 10 and 11's: 16, 20, 24, 32, 40, 48, 64 and 256.</remarks>
   TSprite3DIcoWriter = class(TSprite3DIconWriter)
   private
     FPngMinSize: Integer;
@@ -163,26 +122,18 @@ type
     function PngEntry(const AImage: TBitmap): TBytes;
   public
     //** @abstract(Creates a writer that stores 256-pixel images as PNG.)
-    /// <summary>Creates a writer that stores 256-pixel images as PNG.</summary>
     constructor Create; override;
     //** @abstract(Returns @code('Windows icon').)
     //**
     //** @returns(@code('Windows icon').)
-    /// <summary>Returns <c>'Windows icon'</c>.</summary>
-    /// <returns><c>'Windows icon'</c>.</returns>
     class function FormatName: String; override;
     //** @abstract(Returns @code('.ico').)
     //**
     //** @returns(@code('.ico').)
-    /// <summary>Returns <c>'.ico'</c>.</summary>
-    /// <returns><c>'.ico'</c>.</returns>
     class function FileExtension: String; override;
     //** @abstract(Returns Windows 10 and 11's sizes: 16, 20, 24, 32, 40, 48, 64 and 256.)
     //**
     //** @returns(The eight sizes, smallest first.)
-    /// <summary>Returns Windows 10 and 11's sizes: 16, 20, 24, 32, 40, 48, 64 and
-    /// 256.</summary>
-    /// <returns>The eight sizes, smallest first.</returns>
     class function DefaultSizes: TArray<Integer>; override;
     //** @abstract(Writes the images as one .ico file, in the order given.)
     //**
@@ -192,21 +143,12 @@ type
     //**
     //** @raises(EArgumentException If there are no images, too many, or one is not square or
     //** is larger than 256 pixels.)
-    /// <summary>Writes the images as one .ico file, in the order given.</summary>
-    /// <param name="AImages">One to 65535 images, each square and 1 to 256 pixels.</param>
-    /// <param name="AStream">The stream to write to, from its current position.</param>
-    /// <exception cref="EArgumentException">If there are no images, too many, or one is not
-    /// square or is larger than 256 pixels.</exception>
     procedure SaveToStream(const AImages: array of TBitmap; const AStream: TStream); override;
     //** @abstract(The smallest image size stored as PNG; 256 by default.)
     //**
     //** Images this size or larger are stored as PNG, smaller ones as bitmaps. Set it above
     //** 256 to store every image as a bitmap, for the oldest readers, or lower to make the
     //** file smaller; Windows Vista and later read either.
-    /// <summary>The smallest image size stored as PNG; 256 by default.</summary>
-    /// <remarks>Images this size or larger are stored as PNG, smaller ones as bitmaps. Set it
-    /// above 256 to store every image as a bitmap, for the oldest readers, or lower to make the
-    /// file smaller; Windows Vista and later read either.</remarks>
     property PngMinSize: Integer read FPngMinSize write FPngMinSize;
   end;
 
@@ -216,17 +158,11 @@ type
 //** further effect.
 //**
 //** @param(AWriter The writer class to add.)
-/// <summary>Adds an icon format to those IconWriters lists.</summary>
-/// <remarks>Call it from a writer unit's initialization section. Registering a class twice has
-/// no further effect.</remarks>
-/// <param name="AWriter">The writer class to add.</param>
 procedure RegisterIconWriter(const AWriter: TSprite3DIconWriterClass);
 
 //** @abstract(Every registered icon format, in the order registered.)
 //**
 //** @returns(The writer classes; TSprite3DIcoWriter is always first.)
-/// <summary>Every registered icon format, in the order registered.</summary>
-/// <returns>The writer classes; TSprite3DIcoWriter is always first.</returns>
 function IconWriters: TArray<TSprite3DIconWriterClass>;
 
 //** @abstract(A file dialog Filter offering every registered icon format.)
@@ -235,10 +171,6 @@ function IconWriters: TArray<TSprite3DIconWriterClass>;
 //** from 1, picks @code(IconWriters[FilterIndex - 1]).
 //**
 //** @returns(Such as @code('Windows icon @(*.ico@)|*.ico').)
-/// <summary>A file dialog Filter offering every registered icon format.</summary>
-/// <remarks>The formats are in the order of IconWriters, so a dialog's FilterIndex, which
-/// counts from 1, picks <c>IconWriters[FilterIndex - 1]</c>.</remarks>
-/// <returns>Such as <c>'Windows icon (*.ico)|*.ico'</c>.</returns>
 function IconDialogFilter: String;
 
 implementation

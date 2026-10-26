@@ -73,203 +73,136 @@ uses
 
 type
   //** @abstract(Everything the Variable camera dialog edits.)
-  /// <summary>Everything the Variable camera dialog edits.</summary>
   TCameraSettings = record
     //** @abstract(The Azimuth readout, in degrees, 0 to 360.)
-    /// <summary>The Azimuth readout, in degrees, 0 to 360.</summary>
     Azimuth: Single;
     //** @abstract(The Roll readout, in degrees, 0 to 360.)
-    /// <summary>The Roll readout, in degrees, 0 to 360.</summary>
     Roll: Single;
     //** @abstract(The Inclination readout, in degrees, 0 to 360.)
-    /// <summary>The Inclination readout, in degrees, 0 to 360.</summary>
     PolarAngle: Single;
     //** @abstract(How far the camera is moved out from the fitted distance, 1 to 20.)
-    /// <summary>How far the camera is moved out from the fitted distance, 1 to 20.</summary>
     Distance: Single;
     //** @abstract(Whether the pan is applied.)
-    /// <summary>Whether the pan is applied.</summary>
     PanEnabled: Boolean;
     //** @abstract(The pan along the model's X axis, as a multiple of its radius.)
-    /// <summary>The pan along the model's X axis, as a multiple of its radius.</summary>
     PanX: Single;
     //** @abstract(The pan along the model's Z axis, as a multiple of its radius.)
-    /// <summary>The pan along the model's Z axis, as a multiple of its radius.</summary>
     PanZ: Single;
   end;
 
   //** @abstract(The Variable camera dialog.)
   //**
   //** Set CameraSpec and OnPreview before showing it, and read CameraSpec back after OK.
-  /// <summary>The Variable camera dialog.</summary>
-  /// <remarks>Set CameraSpec and OnPreview before showing it, and read CameraSpec back after
-  /// OK.</remarks>
   TOrbitalSettingsForm = class(TForm)
     //** @abstract(Holds everything above the buttons.)
-    /// <summary>Holds everything above the buttons.</summary>
     ControlLayout: TLayout;
     //** @abstract(Holds the OK and Cancel buttons.)
-    /// <summary>Holds the OK and Cancel buttons.</summary>
     ButtonLayout: TLayout;
     //** @abstract(Holds the dials, the pan and the distance slider.)
-    /// <summary>Holds the dials, the pan and the distance slider.</summary>
     OrbitalLayout: TLayout;
     //** @abstract(Sets the inclination.)
-    /// <summary>Sets the inclination.</summary>
     AngleDial: TArcDial;
     //** @abstract(Names the inclination dial.)
-    /// <summary>Names the inclination dial.</summary>
     AngleLabel: TLabel;
     //** @abstract(Shows the inclination in degrees.)
-    /// <summary>Shows the inclination in degrees.</summary>
     AngleText: TLabel;
     //** @abstract(Sets the azimuth.)
-    /// <summary>Sets the azimuth.</summary>
     AzimuthDial: TArcDial;
     //** @abstract(Names the azimuth dial.)
-    /// <summary>Names the azimuth dial.</summary>
     AzimuthLabel: TLabel;
     //** @abstract(Shows the azimuth in degrees.)
-    /// <summary>Shows the azimuth in degrees.</summary>
     AzimuthText: TLabel;
     //** @abstract(Sets the roll.)
-    /// <summary>Sets the roll.</summary>
     RollDial: TArcDial;
     //** @abstract(Names the roll dial.)
-    /// <summary>Names the roll dial.</summary>
     RollLabel: TLabel;
     //** @abstract(Shows the roll in degrees.)
-    /// <summary>Shows the roll in degrees.</summary>
     RollText: TLabel;
     //** @abstract(Holds the exact angles, right of the Roll dial.)
-    /// <summary>Holds the exact angles, right of the Roll dial.</summary>
     ExactLayout: TLayout;
     //** @abstract(Names AzimuthExactText.)
-    /// <summary>Names AzimuthExactText.</summary>
     AzimuthExactLabel: TLabel;
     //** @abstract(The azimuth in degrees to six decimal places.)
-    /// <summary>The azimuth in degrees to six decimal places.</summary>
     AzimuthExactText: TLabel;
     //** @abstract(Names AngleExactText.)
-    /// <summary>Names AngleExactText.</summary>
     AngleExactLabel: TLabel;
     //** @abstract(The inclination in degrees to six decimal places.)
-    /// <summary>The inclination in degrees to six decimal places.</summary>
     AngleExactText: TLabel;
     //** @abstract(Names RollExactText.)
-    /// <summary>Names RollExactText.</summary>
     RollExactLabel: TLabel;
     //** @abstract(The roll in degrees to six decimal places.)
-    /// <summary>The roll in degrees to six decimal places.</summary>
     RollExactText: TLabel;
     //** @abstract(Holds the pan's controls.)
-    /// <summary>Holds the pan's controls.</summary>
     PanLayout: TLayout;
     //** @abstract(Holds PanCheck and PanResetButton.)
-    /// <summary>Holds PanCheck and PanResetButton.</summary>
     PanTopLayout: TLayout;
     //** @abstract(Switches the pan on or off; off by default.)
-    /// <summary>Switches the pan on or off; off by default.</summary>
     PanCheck: TCheckBox;
     //** @abstract(Puts both pan sliders back to 0.)
-    /// <summary>Puts both pan sliders back to 0.</summary>
     PanResetButton: TButton;
     //** @abstract(Holds the X pan slider and its label.)
-    /// <summary>Holds the X pan slider and its label.</summary>
     PanXLayout: TLayout;
     //** @abstract(Shows the X pan.)
-    /// <summary>Shows the X pan.</summary>
     PanXLabel: TLabel;
     //** @abstract(Sets the pan along the model's X axis.)
-    /// <summary>Sets the pan along the model's X axis.</summary>
     PanXTrack: TTrackBar;
     //** @abstract(Holds the Z pan slider and its label.)
-    /// <summary>Holds the Z pan slider and its label.</summary>
     PanZLayout: TLayout;
     //** @abstract(Shows the Z pan.)
-    /// <summary>Shows the Z pan.</summary>
     PanZLabel: TLabel;
     //** @abstract(Sets the pan along the model's Z axis.)
-    /// <summary>Sets the pan along the model's Z axis.</summary>
     PanZTrack: TTrackBar;
     //** @abstract(Holds the distance slider and its label.)
-    /// <summary>Holds the distance slider and its label.</summary>
     DistanceLayout: TLayout;
     //** @abstract(Shows the distance factor.)
-    /// <summary>Shows the distance factor.</summary>
     DistanceLabel: TLabel;
     //** @abstract(Sets the distance factor, 1 to 20.)
-    /// <summary>Sets the distance factor, 1 to 20.</summary>
     DistanceTrack: TTrackBar;
     //** @abstract(Closes the dialog and drops the changes.)
-    /// <summary>Closes the dialog and drops the changes.</summary>
     CancelButton: TButton;
     //** @abstract(Closes the dialog and keeps the changes.)
-    /// <summary>Closes the dialog and keeps the changes.</summary>
     OkButton: TButton;
     //** @abstract(Reports OK or Cancel when shown with ShowAndFree, and frees the form then.)
     //**
     //** @param(Sender The form.)
     //**
     //** @param(Action Set to caFree when shown with ShowAndFree.)
-    /// <summary>Reports OK or Cancel when shown with ShowAndFree, and frees the form
-    /// then.</summary>
-    /// <param name="Sender">The form.</param>
-    /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     //** @abstract(Closes the dialog with the button's result.)
     //**
     //** @param(Sender The button clicked.)
-    /// <summary>Closes the dialog with the button's result.</summary>
-    /// <param name="Sender">The button clicked.</param>
     procedure ButtonClick(Sender: TObject);
     //** @abstract(Takes the azimuth from its dial.)
     //**
     //** @param(Sender The dial.)
-    /// <summary>Takes the azimuth from its dial.</summary>
-    /// <param name="Sender">The dial.</param>
     procedure AzimuthDialChange(Sender: TObject);
     //** @abstract(Takes the inclination from its dial.)
     //**
     //** @param(Sender The dial.)
-    /// <summary>Takes the inclination from its dial.</summary>
-    /// <param name="Sender">The dial.</param>
     procedure AngleDialChange(Sender: TObject);
     //** @abstract(Takes the roll from its dial.)
     //**
     //** @param(Sender The dial.)
-    /// <summary>Takes the roll from its dial.</summary>
-    /// <param name="Sender">The dial.</param>
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Sets every control from CameraSpec.)
     //**
     //** @param(Sender The form.)
-    /// <summary>Sets every control from CameraSpec.</summary>
-    /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
     //** @abstract(Takes the distance factor from its slider.)
     //**
     //** @param(Sender The slider.)
-    /// <summary>Takes the distance factor from its slider.</summary>
-    /// <param name="Sender">The slider.</param>
     procedure DistanceTrackChange(Sender: TObject);
     //** @abstract(Switches the pan on or off.)
     //**
     //** @param(Sender The check box.)
-    /// <summary>Switches the pan on or off.</summary>
-    /// <param name="Sender">The check box.</param>
     procedure PanCheckChange(Sender: TObject);
     //** @abstract(Takes the pan from both sliders.)
     //**
     //** @param(Sender The slider moved.)
-    /// <summary>Takes the pan from both sliders.</summary>
-    /// <param name="Sender">The slider moved.</param>
     procedure PanTrackChange(Sender: TObject);
     //** @abstract(Puts both pan sliders back to 0.)
     //**
     //** @param(Sender The button.)
-    /// <summary>Puts both pan sliders back to 0.</summary>
-    /// <param name="Sender">The button.</param>
     procedure PanResetButtonClick(Sender: TObject);
   strict private
     FFreeOnClose: Boolean;
@@ -287,32 +220,22 @@ type
     //** closes.)
     //**
     //** OnAccept is called if it closes with OK, OnCancel otherwise.
-    /// <summary>Shows the dialog without blocking, for Android and iOS, and frees it when it
-    /// closes.</summary>
-    /// <remarks>OnAccept is called if it closes with OK, OnCancel otherwise.</remarks>
     procedure ShowAndFree;
     //** @abstract(Called on OK when shown with ShowAndFree.)
-    /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
     //** @abstract(Called on Cancel, or any close but OK, when shown with ShowAndFree.)
-    /// <summary>Called on Cancel, or any close but OK, when shown with ShowAndFree.</summary>
     property OnCancel: TNotifyEvent read FOnCancel write FOnCancel;
     //** @abstract(Called after every change, with the dialog as Sender, so the owner can show
     //** CameraSpec at once.)
-    /// <summary>Called after every change, with the dialog as Sender, so the owner can show
-    /// CameraSpec at once.</summary>
     property OnPreview: TNotifyEvent read FOnPreview write FOnPreview;
     //** @abstract(The settings being edited.)
     //**
     //** Set it before the dialog is shown; read it after OK.
-    /// <summary>The settings being edited.</summary>
-    /// <remarks>Set it before the dialog is shown; read it after OK.</remarks>
     property CameraSpec: TCameraSettings read FCameraSettings write SetSpec;
   end;
 
 var
   //** @abstract(The instance the project file creates; the main form makes its own.)
-  /// <summary>The instance the project file creates; the main form makes its own.</summary>
   OrbitalSettingsForm: TOrbitalSettingsForm;
 
 implementation

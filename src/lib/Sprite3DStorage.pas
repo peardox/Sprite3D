@@ -56,14 +56,6 @@ uses
 //** should be a valid file name on every platform.)
 //**
 //** @returns(The folder's full path, without a trailing path delimiter.)
-/// <summary>The per-user folder an application should keep its own files in.</summary>
-/// <remarks>The folder is chosen by platform, as in the unit description, and is not created;
-/// the caller creates it when it first writes there, as TSprite3DJsonSettings.Save does. On
-/// Android and iOS the folder already belongs to the app, so AAppName is only added on the
-/// desktop platforms, where the folder is shared with other applications.</remarks>
-/// <param name="AAppName">The application's name, used as the folder name on the desktop; it
-/// should be a valid file name on every platform.</param>
-/// <returns>The folder's full path, without a trailing path delimiter.</returns>
 function AppDataFolder(const AAppName: String): String;
 
 type
@@ -77,14 +69,6 @@ type
   //** property matches are ignored, so a newer or older file still loads.
   //**
   //** Not thread-safe; use one object from one thread, normally the main thread.
-  /// <summary>Base class for settings kept as a JSON file.</summary>
-  /// <remarks>Declare each setting as a published property of a descendant, with its default
-  /// set in the constructor; Load fills them from the file and Save writes them all back. The
-  /// JSON member names are the property names in camel case, such as <c>saveFolder</c> for
-  /// SaveFolder. Only published properties are stored, so public ones, such as FileName, are
-  /// not. Settings missing from the file keep their defaults and members in the file that no
-  /// property matches are ignored, so a newer or older file still loads.
-  /// Not thread-safe; use one object from one thread, normally the main thread.</remarks>
   TSprite3DJsonSettings = class(TPersistent)
   private
     FFileName: String;
@@ -95,10 +79,6 @@ type
     //** until Save.
     //**
     //** @param(AFileName The full path of the JSON file.)
-    /// <summary>Creates the settings with their defaults, for the given file.</summary>
-    /// <remarks>Nothing is read until Load is called, and the file and its folder are not
-    /// created until Save.</remarks>
-    /// <param name="AFileName">The full path of the JSON file.</param>
     constructor Create(const AFileName: String); virtual;
     //** @abstract(Reads the settings from FileName.)
     //**
@@ -107,11 +87,6 @@ type
     //** nothing is raised; a damaged file is replaced at the next Save.
     //**
     //** @returns(True if the file was read; False if it was missing or unusable.)
-    /// <summary>Reads the settings from FileName.</summary>
-    /// <remarks>Blocks while the file is read. If the file does not exist, which is normal on
-    /// the first run, or cannot be read or parsed, the settings are left as they were and
-    /// nothing is raised; a damaged file is replaced at the next Save.</remarks>
-    /// <returns>True if the file was read; False if it was missing or unusable.</returns>
     function Load: Boolean;
     //** @abstract(Writes all the settings to FileName, creating its folder if needed.)
     //**
@@ -120,15 +95,8 @@ type
     //**
     //** @raises(Exception If the folder cannot be created or the file cannot be written; the
     //** class depends on the cause.)
-    /// <summary>Writes all the settings to FileName, creating its folder if needed.</summary>
-    /// <remarks>Blocks while the file is written. The JSON goes to a temporary file beside
-    /// FileName, which then replaces it, so a failure part-way leaves the previous file
-    /// whole.</remarks>
-    /// <exception cref="Exception">If the folder cannot be created or the file cannot be
-    /// written; the class depends on the cause.</exception>
     procedure Save;
     //** @abstract(The full path of the JSON file, as given to Create.)
-    /// <summary>The full path of the JSON file, as given to Create.</summary>
     property FileName: String read FFileName;
   end;
 

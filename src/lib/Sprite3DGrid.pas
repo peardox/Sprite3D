@@ -125,11 +125,6 @@ type
   //** @value(gaY Across Y, the default: the grid lies in X and Z.)
   //**
   //** @value(gaZ Across Z: the grid lies in X and Y.)
-  /// <summary>The axis a TModelGrid is drawn across.</summary>
-  /// <remarks><para>The grid lies in the plane of the other two axes.</para>
-  /// <para><c>gaX</c>: across X; the grid lies in Y and Z.</para>
-  /// <para><c>gaY</c>: across Y, the default; the grid lies in X and Z.</para>
-  /// <para><c>gaZ</c>: across Z; the grid lies in X and Y.</para></remarks>
   TGridAxis = (gaX, gaY, gaZ);
 
   //** @abstract(Shows a shader-drawn grid for its parent model.)
@@ -142,14 +137,6 @@ type
   //**
   //** The object is not stored in .fmx files and ignores the mouse. Use it from the main
   //** thread only.
-  /// <summary>Shows a shader-drawn grid for its parent model.</summary>
-  /// <remarks><para>A TDummy that draws nothing itself. It owns a frame beside its parent,
-  /// holding the TGorillaPlane the grid is drawn on, and in each Render copies the parent's
-  /// position, rotation, scale and centre of rotation to the frame if any of them changed. The
-  /// plane and its material are built when SetExtent is called and rebuilt only when a grid
-  /// property changes. Freeing the TModelGrid frees the frame, plane and material.</para>
-  /// <para>The object is not stored in .fmx files and ignores the mouse. Use it from the main
-  /// thread only.</para></remarks>
   TModelGrid = class(TDummy)
   private
     FBoxLo: TPoint3D;
@@ -188,10 +175,6 @@ type
     //**
     //** Copies the parent's position, rotation, scale and centre of rotation to the frame if
     //** any of them changed; otherwise does nothing. Draws nothing: the plane draws the grid.
-    /// <summary>Keeps the grid frame on the parent's transform.</summary>
-    /// <remarks>Copies the parent's position, rotation, scale and centre of rotation to the
-    /// frame if any of them changed; otherwise does nothing. Draws nothing: the plane draws the
-    /// grid.</remarks>
     procedure Render; override;
 
     //** @abstract(Forgets the frame if something else frees it first.)
@@ -199,9 +182,6 @@ type
     //** @param(AComponent The component being freed or removed.)
     //**
     //** @param(Operation What is happening to it.)
-    /// <summary>Forgets the frame if something else frees it first.</summary>
-    /// <param name="AComponent">The component being freed or removed.</param>
-    /// <param name="Operation">What is happening to it.</param>
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     //** @abstract(Creates a grid with no extent: across Y, on the floor, lines 1.0 apart.)
@@ -210,20 +190,12 @@ type
     //** until SetExtent is called.
     //**
     //** @param(AOwner The owner, or nil to leave freeing to the parent.)
-    /// <summary>Creates a grid with no extent: across Y, on the floor, lines 1.0
-    /// apart.</summary>
-    /// <remarks>The colour is dark grey and the grid reaches 1000 cells each side. Nothing is
-    /// built until <see cref="SetExtent"/> is called.</remarks>
-    /// <param name="AOwner">The owner, or nil to leave freeing to the parent.</param>
     constructor Create(AOwner: TComponent); override;
 
     //** @abstract(Frees the grid, with its frame, plane and material.)
     //**
     //** If the frame's parent is already being freed, as when the whole scene closes, the
     //** frame is left for it to free.
-    /// <summary>Frees the grid, with its frame, plane and material.</summary>
-    /// <remarks>If the frame's parent is already being freed, as when the whole scene closes,
-    /// the frame is left for it to free.</remarks>
     destructor Destroy; override;
 
     //** @abstract(Gives the model's bounds and centre of rotation, and builds the grid.)
@@ -238,15 +210,6 @@ type
     //** @param(AHigh The bounding box's corner with the largest X, Y and Z.)
     //**
     //** @param(ACentre The centre of rotation; one line passes through it each way.)
-    /// <summary>Gives the model's bounds and centre of rotation, and builds the grid.</summary>
-    /// <remarks>All points are in the parent's coordinates. The grid is centred on ACentre in
-    /// its plane, and with GridOnFloor its level is the face of ALow and AHigh across GridAxis
-    /// that is lower in the scene; ACentre does not affect the level. Set the parent first:
-    /// the grid needs it, and is not built without one.</remarks>
-    /// <param name="ALow">The bounding box's corner with the smallest X, Y and Z.</param>
-    /// <param name="AHigh">The bounding box's corner with the largest X, Y and Z.</param>
-    /// <param name="ACentre">The centre of rotation; one line passes through it each
-    /// way.</param>
     procedure SetExtent(const ALow, AHigh, ACentre: TPoint3D);
 
     //** @abstract(Picks the floor again, if GridOnFloor, and rebuilds the grid.)
@@ -254,33 +217,20 @@ type
     //** The floor depends on how the parent is turned, and is only picked when the grid is
     //** built or a grid property changes. Call this after turning the parent. Moving or
     //** scaling the parent needs no call.
-    /// <summary>Picks the floor again, if GridOnFloor, and rebuilds the grid.</summary>
-    /// <remarks>The floor depends on how the parent is turned, and is only picked when the grid
-    /// is built or a grid property changes. Call this after turning the parent. Moving or
-    /// scaling the parent needs no call.</remarks>
     procedure UpdateGrid;
 
     //** @abstract(The axis the grid is drawn across; gaY by default, so it lies in X and Z.)
     //**
     //** With GridOnFloor the floor is picked again for the new axis.
-    /// <summary>The axis the grid is drawn across; gaY by default, so it lies in X and
-    /// Z.</summary>
-    /// <remarks>With GridOnFloor the floor is picked again for the new axis.</remarks>
     property GridAxis: TGridAxis read FGridAxis write SetGridAxis;
     //** @abstract(Distance between grid lines in the parent's units; 1.0 by default.)
     //**
     //** One line passes through the centre of rotation and the rest are whole multiples of
     //** GridSize from it. The grid scales with the parent. Zero or less hides the grid.
-    /// <summary>Distance between grid lines in the parent's units; 1.0 by default.</summary>
-    /// <remarks>One line passes through the centre of rotation and the rest are whole multiples
-    /// of GridSize from it. The grid scales with the parent. Zero or less hides the
-    /// grid.</remarks>
     property GridSize: Single read FGridSize write SetGridSize;
     //** @abstract(Colour of the grid lines; dark grey, $FF404040, by default.)
     //**
     //** Its alpha scales the lines' opacity.
-    /// <summary>Colour of the grid lines; dark grey, $FF404040, by default.</summary>
-    /// <remarks>Its alpha scales the lines' opacity.</remarks>
     property GridColor: TAlphaColor read FGridColor write SetGridColor;
     //** @abstract(Where the grid crosses its axis, in the parent's units; 0 with no other
     //** information.)
@@ -288,11 +238,6 @@ type
     //** Every point on the grid has this value on GridAxis. While GridOnFloor is True it is
     //** set to the floor whenever the grid is built. Setting it yourself turns GridOnFloor off,
     //** so your value is kept.
-    /// <summary>Where the grid crosses its axis, in the parent's units; 0 with no other
-    /// information.</summary>
-    /// <remarks>Every point on the grid has this value on GridAxis. While GridOnFloor is True it
-    /// is set to the floor whenever the grid is built. Setting it yourself turns GridOnFloor
-    /// off, so your value is kept.</remarks>
     property GridLevel: Single read FGridLevel write SetGridLevel;
     //** @abstract(Whether GridLevel follows the model's floor; True by default.)
     //**
@@ -301,12 +246,6 @@ type
     //** with the larger scene Y. If neither is lower, because GridAxis is level in the scene,
     //** the face with the smaller value is used. This assumes the model stands on its lowest
     //** bound, which is true of the test animation but not of every model.
-    /// <summary>Whether GridLevel follows the model's floor; True by default.</summary>
-    /// <remarks>The floor is the face of the bounding box, across GridAxis, that is lower in
-    /// the scene once the parent's transform is applied; FMX's Y points down, so that is the
-    /// one with the larger scene Y. If neither is lower, because GridAxis is level in the
-    /// scene, the face with the smaller value is used. This assumes the model stands on its
-    /// lowest bound, which is true of the test animation but not of every model.</remarks>
     property GridOnFloor: Boolean read FGridOnFloor write SetGridOnFloor;
     //** @abstract(How many grid cells reach out each side of the centre; 1000 by default.)
     //**
@@ -314,23 +253,12 @@ type
     //** fade out as their cells shrink to a few pixels on screen, so the grid normally
     //** dissolves into the distance before its edge is seen; the last tenth also fades, with a
     //** straight edge. The cost does not depend on this value. Values below 1 count as 1.
-    /// <summary>How many grid cells reach out each side of the centre; 1000 by
-    /// default.</summary>
-    /// <remarks>The plane is 2 * GridCells * GridSize across, so 2000 units square by default.
-    /// Lines fade out as their cells shrink to a few pixels on screen, so the grid normally
-    /// dissolves into the distance before its edge is seen; the last tenth also fades, with a
-    /// straight edge. The cost does not depend on this value. Values below 1 count as
-    /// 1.</remarks>
     property GridCells: Integer read FGridCells write SetGridCells;
     //** @abstract(Whether the helper is drawn at all; True by default.)
     //**
     //** False hides it, its lines and planes included, which are drawn beside the model rather
     //** than as children of this object, so Visible alone does not hide them. Nothing is freed,
     //** and True shows it again as it was. Kept when the drawing is rebuilt.
-    /// <summary>Whether the helper is drawn at all; True by default.</summary>
-    /// <remarks>False hides it, its lines and planes included, which are drawn beside the model
-    /// rather than as children of this object, so Visible alone does not hide them. Nothing is
-    /// freed, and True shows it again as it was. Kept when the drawing is rebuilt.</remarks>
     property Shown: Boolean read FShown write SetShown;
   end;
 
@@ -349,16 +277,6 @@ type
 //** @seealso(HideModelGrid)
 //**
 //** @seealso(FindModelGrid)
-/// <summary>Shows a shader-drawn grid on AModel's floor, from its current bounds.</summary>
-/// <remarks>As the other ShowModelGrid, with AModel's current bounding box from
-/// <c>GetAnimatedBoundingBox</c>. Gorilla counts the model's children in that box, so any
-/// helper already added, such as the axes, can lower the floor; where the box measured as the
-/// model was loaded is to hand, pass it to the other ShowModelGrid instead.</remarks>
-/// <param name="AModel">The model to show a grid for. Nothing happens if it is nil.</param>
-/// <returns>The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or its
-/// bounding box is empty.</returns>
-/// <seealso cref="HideModelGrid"/>
-/// <seealso cref="FindModelGrid"/>
 function ShowModelGrid(const AModel: TGorillaModel): TModelGrid; overload;
 
 //** @abstract(Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.)
@@ -381,20 +299,6 @@ function ShowModelGrid(const AModel: TGorillaModel): TModelGrid; overload;
 //** @seealso(HideModelGrid)
 //**
 //** @seealso(FindModelGrid)
-/// <summary>Shows a shader-drawn grid on AModel's floor, the lowest face of ABox.</summary>
-/// <remarks>Any grid already on AModel is removed first, so calling it again, for example
-/// after loading a different model, rebuilds it for the new bounds. The floor is the face of
-/// ABox across the grid's axis that is lower in the scene, and one line each way passes
-/// through <c>AModel.RotationCenter</c>. Call it once the model is placed and turned, since
-/// the floor depends on the turn. The grid is added as a child of AModel and is freed with it.
-/// Call from the main thread only.</remarks>
-/// <param name="AModel">The model to show a grid for. Nothing happens if it is nil.</param>
-/// <param name="ABox">The model's own bounds, in its own coordinates, best measured as it was
-/// loaded, before any helper was added to it.</param>
-/// <returns>The new grid, owned by AModel; or nil, with nothing added, if AModel is nil or
-/// ABox is empty.</returns>
-/// <seealso cref="HideModelGrid"/>
-/// <seealso cref="FindModelGrid"/>
 function ShowModelGrid(const AModel: TGorillaModel; const ABox: TBoundingBox): TModelGrid;
   overload;
 
@@ -405,11 +309,6 @@ function ShowModelGrid(const AModel: TGorillaModel; const ABox: TBoundingBox): T
 //** @param(AModel The model to remove the grid from.)
 //**
 //** @seealso(ShowModelGrid)
-/// <summary>Removes the grid ShowModelGrid added to AModel.</summary>
-/// <remarks>Does nothing if AModel is nil or has no grid. Call from the main thread
-/// only.</remarks>
-/// <param name="AModel">The model to remove the grid from.</param>
-/// <seealso cref="ShowModelGrid"/>
 procedure HideModelGrid(const AModel: TGorillaModel);
 
 //** @abstract(Returns the grid ShowModelGrid added to AModel, or nil.)
@@ -419,11 +318,6 @@ procedure HideModelGrid(const AModel: TGorillaModel);
 //** @param(AModel The model to look on; nil gives nil.)
 //**
 //** @returns(The grid, or nil if AModel is nil or has none.)
-/// <summary>Returns the grid ShowModelGrid added to AModel, or nil.</summary>
-/// <remarks>Looks only at AModel's direct children. The caller does not own the
-/// result.</remarks>
-/// <param name="AModel">The model to look on; nil gives nil.</param>
-/// <returns>The grid, or nil if AModel is nil or has none.</returns>
 function FindModelGrid(const AModel: TGorillaModel): TModelGrid;
 
 implementation

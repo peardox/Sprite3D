@@ -41,7 +41,6 @@ uses
 
 type
   //** @abstract(Raised when data is not bzip2, or is damaged or cut short.)
-  /// <summary>Raised when data is not bzip2, or is damaged or cut short.</summary>
   EBzip2Error = class(Exception);
 
 //** @abstract(Whether data starts as a bzip2 stream does.)
@@ -51,11 +50,6 @@ type
 //** @param(AData The data to look at.)
 //**
 //** @returns(True if it looks like bzip2.)
-/// <summary>Whether data starts as a bzip2 stream does.</summary>
-/// <remarks>Only the four-byte header is checked: <c>BZh</c> and a block size from 1 to
-/// 9.</remarks>
-/// <param name="AData">The data to look at.</param>
-/// <returns>True if it looks like bzip2.</returns>
 function IsBzip2(const AData: TBytes): Boolean;
 
 //** @abstract(Decompresses a whole bzip2 file held in memory.)
@@ -68,13 +62,6 @@ function IsBzip2(const AData: TBytes): Boolean;
 //** soon.)
 //**
 //** @raises(EOutOfMemory If the output cannot be held in memory.)
-/// <summary>Decompresses a whole bzip2 file held in memory.</summary>
-/// <param name="AData">The compressed data: one or more bzip2 streams, one after
-/// another.</param>
-/// <returns>The original data.</returns>
-/// <exception cref="EBzip2Error">If the data is not bzip2, is damaged, fails a checksum or
-/// ends too soon.</exception>
-/// <exception cref="EOutOfMemory">If the output cannot be held in memory.</exception>
 function Bzip2Decompress(const AData: TBytes): TBytes;
 
 //** @abstract(Decompresses bzip2 from one stream into another, a block at a time.)
@@ -98,22 +85,6 @@ function Bzip2Decompress(const AData: TBytes): TBytes;
 //**
 //** @raises(EBzip2Error If the data is not bzip2, is damaged or cut short, uses randomised
 //** blocks, or comes to more than AMaxSize.)
-/// <summary>Decompresses bzip2 from one stream into another, a block at a time.</summary>
-/// <remarks>ASource is read from its current position through a 64 KB buffer, and each block
-/// is written to ATarget as soon as it is decoded, so neither the compressed data nor the
-/// original is ever held whole in memory: only one block, at most 900 KB, and the tables for
-/// it. Concatenated streams are joined as Bzip2Decompress joins them, and every checksum is
-/// checked in the same way; ATarget may already hold some blocks when an error is raised, so
-/// write to a temporary file and keep it only if this returns. Blocks while decoding; it
-/// keeps no state, so it may be called on any thread.</remarks>
-/// <param name="ASource">The compressed data, read from its current position to the end of
-/// the bzip2 data; anything after that is left unread or ignored.</param>
-/// <param name="ATarget">Where the original is written, from its current position.</param>
-/// <param name="AMaxSize">The most the original may come to, in bytes; 0 or less for no
-/// limit.</param>
-/// <returns>How many bytes were written to ATarget.</returns>
-/// <exception cref="EBzip2Error">If the data is not bzip2, is damaged or cut short, uses
-/// randomised blocks, or comes to more than AMaxSize.</exception>
 function Bzip2DecompressStream(const ASource, ATarget: TStream;
   const AMaxSize: Int64 = 0): Int64;
 

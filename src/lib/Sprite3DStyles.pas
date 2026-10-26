@@ -56,19 +56,6 @@ uses
 //** @param(AError On failure, why; empty on success.)
 //**
 //** @returns(True if the style, or the default, is now in use.)
-/// <summary>Applies a named FMX style to the whole application, or puts back the
-/// default.</summary>
-/// <remarks>For a non-empty AName, AResourceName is tried first, if given, then
-/// <c>&lt;AName&gt;.style</c> in each of AFolders in turn; the first that loads is used. When
-/// none is found or none loads, the style in use is left as it was.</remarks>
-/// <param name="AName">The style's file name without <c>.style</c>, such as <c>Dark</c>;
-/// empty for the platform's default style.</param>
-/// <param name="AResourceName">The name of an RCDATA resource holding the style, or empty to
-/// look for files only.</param>
-/// <param name="AFolders">The folders to look in for the style file, in order; empty entries
-/// are skipped.</param>
-/// <param name="AError">On failure, why; empty on success.</param>
-/// <returns>True if the style, or the default, is now in use.</returns>
 function ApplyFmxStyle(const AName, AResourceName: String;
   const AFolders: array of String; out AError: String): Boolean;
 

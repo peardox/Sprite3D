@@ -486,116 +486,77 @@ uses
 
 type
   //** @abstract(What the animation list's pop-up menu saves a capture as.)
-  /// <summary>What the animation list's pop-up menu saves a capture as.</summary>
   TSheetKind = (
     //** @abstract(One row of one direction's frames, saved as
     //** @code(<model>_<animation>_dir<NN>_strip<count>.png).)
-    /// <summary>One row of one direction's frames, saved as
-    /// <c>&lt;model&gt;_&lt;animation&gt;_dir&lt;NN&gt;_strip&lt;count&gt;.png</c>.</summary>
     skStrip,
     //** @abstract(A square grid of every direction's frames, saved as
     //** @code(<model>_<animation>.png).)
-    /// <summary>A square grid of every direction's frames, saved as
-    /// <c>&lt;model&gt;_&lt;animation&gt;.png</c>.</summary>
     skSheet,
     //** @abstract(Texture atlas pages: every animation of a batch packed onto shared pages,
     //** saved as @code(<model>_atlas_01.png) and so on; batch Export only.)
-    /// <summary>Texture atlas pages: every animation of a batch packed onto shared pages,
-    /// saved as <c>&lt;model&gt;_atlas_01.png</c> and so on; batch Export only.</summary>
     skAtlas,
     //** @abstract(A looping animated GIF, saved as @code(<name>.gif).)
-    /// <summary>A looping animated GIF, saved as <c>&lt;name&gt;.gif</c>.</summary>
     skGif,
     //** @abstract(A video-only MPEG-4 MP4, saved as @code(<name>.mp4); only offered when the
     //** FFmpeg libraries load.)
-    /// <summary>A video-only MPEG-4 MP4, saved as <c>&lt;name&gt;.mp4</c>; only offered when
-    /// the FFmpeg libraries load.</summary>
     skMp4);
 
   //** @abstract(An Animations list read from a file, ready to apply to a model.)
-  /// <summary>An Animations list read from a file, ready to apply to a model.</summary>
   TAnimationListState = record
     //** @abstract(The entry to select, by name; empty for none.)
-    /// <summary>The entry to select, by name; empty for none.</summary>
     Selected: String;
     //** @abstract(The entries, by name, in the order listed.)
-    /// <summary>The entries, by name, in the order listed.</summary>
     Names: TArray<String>;
     //** @abstract(Each entry's tick.)
-    /// <summary>Each entry's tick.</summary>
     Checked: TArray<Boolean>;
     //** @abstract(Each entry's frame count typed in; 0 for the one the frame rate gives.)
-    /// <summary>Each entry's frame count typed in; 0 for the one the frame rate
-    /// gives.</summary>
     Frames: TArray<Integer>;
   end;
 
   //** @abstract(One animation captured for a texture atlas, kept until the batch ends and the
   //** pages are made.)
-  /// <summary>One animation captured for a texture atlas: what its pages' metadata says of
-  /// it. Its frames go into the pages as they fill.</summary>
   TAtlasPart = record
     //** @abstract(The entry's name as the Animations list shows it.)
-    /// <summary>The entry's name as the Animations list shows it.</summary>
     Name: String;
     //** @abstract(The entry's index in the Animations list, to untick once saved.)
-    /// <summary>The entry's index in the Animations list, to untick once saved.</summary>
     Entry: Integer;
     //** @abstract(How many frames it has.)
-    /// <summary>How many frames it has.</summary>
     Count: Integer;
     //** @abstract(How long it takes to play once, in seconds: its own length, whatever
     //** number of frames it was saved at.)
-    /// <summary>How long it takes to play once, in seconds: its own length, whatever number
-    /// of frames it was saved at.</summary>
     Time: Double;
     //** @abstract(Where the centre of rotation falls in its frames, to a fraction of a
     //** pixel.)
-    /// <summary>Where the centre of rotation falls in its frames, to a fraction of a
-    /// pixel.</summary>
     Origin: TPointF;
     //** @abstract(Whether Origin is known.)
-    /// <summary>Whether Origin is known.</summary>
     OriginKnown: Boolean;
     //** @abstract(The direction it was captured in, as an index into the batch's directions;
     //** 0 when directions are not used.)
-    /// <summary>The direction it was captured in, as an index into the batch's directions; 0
-    /// when directions are not used.</summary>
     Direction: Integer;
   end;
 
   //** @abstract(A frame captured for a texture atlas, waiting for its page to fill.)
-  /// <summary>A frame captured for a texture atlas, waiting for its page to fill.</summary>
   TAtlasCell = record
     //** @abstract(Which animation it is, as an index into the batch's parts.)
-    /// <summary>Which animation it is, as an index into the batch's parts.</summary>
     Part: Integer;
     //** @abstract(Which frame of that animation it is, counted from 0.)
-    /// <summary>Which frame of that animation it is, counted from 0.</summary>
     Frame: Integer;
     //** @abstract(The frame.)
-    /// <summary>The frame.</summary>
     Image: TSprite3DImage;
   end;
 
   //** @abstract(Where a model load has got to; see TMainForm.SwitchModel.)
-  /// <summary>Where a model load has got to; see TMainForm.SwitchModel.</summary>
   TModelLoadStage = (
     //** @abstract(No load is under way.)
-    /// <summary>No load is under way.</summary>
     lsNone,
     //** @abstract(The file is being read on a worker thread; Abort stops it at once.)
-    /// <summary>The file is being read on a worker thread; Abort stops it at once.</summary>
     lsRead,
     //** @abstract(Gorilla3D builds the model on the next tick, in one step.)
-    /// <summary>Gorilla3D builds the model on the next tick, in one step.</summary>
     lsBuild,
     //** @abstract(The new model's animations are being measured, a slice at a time.)
-    /// <summary>The new model's animations are being measured, a slice at a
-    /// time.</summary>
     lsMeasure,
     //** @abstract(The new model replaces the old one on the next tick.)
-    /// <summary>The new model replaces the old one on the next tick.</summary>
     lsCommit);
 
   //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
@@ -604,45 +565,26 @@ type
   //** time; the form owns none of them directly. All event handlers run on the main thread.
   //**
   //** @seealso(TSprite3DCamera)
-  /// <summary>The main form: a Gorilla3D view of one model, with dials for the
-  /// camera.</summary>
-  /// <remarks>The viewport, light, model and TSprite3DCamera are created at run time, not at
-  /// design time; the form owns none of them directly. All event handlers run on the main
-  /// thread.</remarks>
-  /// <seealso cref="Sprite3DCamera.TSprite3DCamera"/>
   TMainForm = class(TForm)
     //** @abstract(Fills the form and holds the Model, Results and Debug tabs.)
-    /// <summary>Fills the form and holds the Model, Results and Debug tabs.</summary>
     TabControl1: TTabControl;
     //** @abstract(The tab captioned "Model", with the viewport and camera controls; active at
     //** start-up.)
     //**
     //** Named GorillaTab, after the Gorilla3D viewport it holds; it was once captioned "View".
-    /// <summary>The tab captioned "Model", with the viewport and camera controls; active at
-    /// start-up.</summary>
-    /// <remarks>Named GorillaTab, after the Gorilla3D viewport it holds; it was once captioned
-    /// "View".</remarks>
     GorillaTab: TTabItem;
     //** @abstract(The tab captioned "Results", between Model and Debug, where exports are
     //** played back; its controls are TSprite3DResultsView's.)
-    /// <summary>The tab captioned "Results", between Model and Debug, where exports are played
-    /// back; its controls are TSprite3DResultsView's.</summary>
     ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
-    /// <summary>The tab captioned "Debug", holding DebugMemo.</summary>
     DebugTab: TTabItem;
     //** @abstract(Log output; SwitchModel writes separator lines here when a model has
     //** animations.)
-    /// <summary>Log output; SwitchModel writes separator lines here when a model has
-    /// animations.</summary>
     DebugMemo: TMemo;
     //** @abstract(Fills the Model tab and holds ViewportLayout and ControlsLayout.)
-    /// <summary>Fills the Model tab and holds ViewportLayout and ControlsLayout.</summary>
     MainLayout: TLayout;
     //** @abstract(The area left of the control panel; holds AspectLayout, with the FPS
     //** readout and the no-model notice over it.)
-    /// <summary>The area left of the control panel; holds AspectLayout, with the FPS readout
-    /// and the no-model notice over it.</summary>
     ViewportLayout: TLayout;
     //** @abstract(Fills ViewportLayout in dark grey, and holds the TGorillaViewport made in
     //** FormCreate, with its background, centred at the shape of the grabs.)
@@ -651,116 +593,68 @@ type
     //** grab size set in File, Settings, usually square, so what is on screen is framed as the
     //** grabs are; the grey shows round it. FitViewportToAspect places it whenever
     //** AspectLayout changes size or the grab size changes. Clicks pass through it.
-    /// <summary>Fills ViewportLayout in dark grey, and holds the TGorillaViewport made in
-    /// FormCreate, with its background, centred at the shape of the grabs.</summary>
-    /// <remarks>The viewport is as large as fits in AspectLayout while keeping the aspect ratio
-    /// of the grab size set in File, Settings, usually square, so what is on screen is framed
-    /// as the grabs are; the grey shows round it. FitViewportToAspect places it whenever
-    /// AspectLayout changes size or the grab size changes. Clicks pass through it.</remarks>
     AspectLayout: TRectangle;
     //** @abstract(The right-hand control panel holding the dials and their labels.)
-    /// <summary>The right-hand control panel holding the dials and their labels.</summary>
     ControlsLayout: TLayout;
     //** @abstract(An FMX TModel3D placed at design time; the code does not use it.)
     //**
     //** The model on screen is a TGorillaModel created at run time by SwitchModel.
-    /// <summary>An FMX TModel3D placed at design time; the code does not use it.</summary>
-    /// <remarks>The model on screen is a TGorillaModel created at run time by
-    /// SwitchModel.</remarks>
     Model3D1: TModel3D;
     //** @abstract(Asks for the model file that File, Open Model loads.)
     //**
     //** Its filter, set in the form designer, offers only the formats the unit has loaders
     //** for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and then
     //** one at a time.
-    /// <summary>Asks for the model file that File, Open Model loads.</summary>
-    /// <remarks>Its filter, set in the form designer, offers only the formats the unit has
-    /// loaders for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and
-    /// then one at a time.</remarks>
     OpenDialog1: TOpenDialog;
     //** @abstract(Asks where File, Save As Icon saves; see SaveAsIconMenuItemClick.)
     //**
     //** Its filter is set from IconDialogFilter each time, so it offers every registered icon
     //** format; for now only Windows .ico. It prompts before overwriting a file.
-    /// <summary>Asks where File, Save As Icon saves; see
-    /// <see cref="SaveAsIconMenuItemClick"/>.</summary>
-    /// <remarks>Its filter is set from IconDialogFilter each time, so it offers every
-    /// registered icon format; for now only Windows .ico. It prompts before overwriting a
-    /// file.</remarks>
     SaveIconDialog: TSaveDialog;
     //** @abstract(The form's menu bar, holding FileMenu.)
-    /// <summary>The form's menu bar, holding FileMenu.</summary>
     MainMenu1: TMainMenu;
     //** @abstract(The "File" menu, holding OpenModelMenuItem, GrabMenuItem and ExitMenuItem.)
-    /// <summary>The "File" menu, holding OpenModelMenuItem, GrabMenuItem and
-    /// ExitMenuItem.</summary>
     FileMenu: TMenuItem;
     //** @abstract(The "Open Model" item; see OpenModelMenuItemClick.)
-    /// <summary>The "Open Model" item; see <see cref="OpenModelMenuItemClick"/>.</summary>
     OpenModelMenuItem: TMenuItem;
     //** @abstract(The Animation menu's "Load Animation Settings..." item; see
     //** LoadAnimationSettingsItemClick.)
-    /// <summary>The Animation menu's "Load Animation Settings..." item; see
-    /// <see cref="LoadAnimationSettingsItemClick"/>.</summary>
     LoadAnimationSettingsItem: TMenuItem;
     //** @abstract(The Animation menu's "Save Animation Settings..." item; see
     //** SaveAnimationSettingsItemClick.)
-    /// <summary>The Animation menu's "Save Animation Settings..." item; see
-    /// <see cref="SaveAnimationSettingsItemClick"/>.</summary>
     SaveAnimationSettingsItem: TMenuItem;
     //** @abstract(The "Save Project..." item; see CreditsItemClick.)
-    /// <summary>The "Save Project..." item; see <see cref="CreditsItemClick"/>.</summary>
     CreditsItem: TMenuItem;
     //** @abstract(The "Load Project..." item; see LoadCreditsItemClick.)
-    /// <summary>The "Load Project..." item; see <see cref="LoadCreditsItemClick"/>.</summary>
     LoadCreditsItem: TMenuItem;
     //** @abstract(The "Grab" item; see GrabMenuItemClick.)
-    /// <summary>The "Grab" item; see <see cref="GrabMenuItemClick"/>.</summary>
     GrabMenuItem: TMenuItem;
     //** @abstract(The "Save As Icon" item; see SaveAsIconMenuItemClick.)
-    /// <summary>The "Save As Icon" item; see <see cref="SaveAsIconMenuItemClick"/>.</summary>
     SaveAsIconMenuItem: TMenuItem;
     //** @abstract(The File menu's "Background Settings..." item; see
     //** BackgroundSettingsMenuItemClick.)
-    /// <summary>The File menu's "Background Settings..." item; see
-    /// <see cref="BackgroundSettingsMenuItemClick"/>.</summary>
     BackgroundSettingsMenuItem: TMenuItem;
     //** @abstract(The "Settings..." item; see SettingsMenuItemClick.)
-    /// <summary>The "Settings..." item; see <see cref="SettingsMenuItemClick"/>.</summary>
     SettingsMenuItem: TMenuItem;
     //** @abstract(Separator line in the File menu, above Exit.)
-    /// <summary>Separator line in the File menu, above Exit.</summary>
     FileSeparatorItem: TMenuItem;
     //** @abstract(The "Exit" item; see ExitMenuItemClick.)
-    /// <summary>The "Exit" item; see <see cref="ExitMenuItemClick"/>.</summary>
     ExitMenuItem: TMenuItem;
     //** @abstract(The menu captioned "Animation": AnimationsUsedItem, Animation Settings...,
     //** LoadAnimationSettingsItem, SaveAnimationSettingsItem and DirectionsItem.)
     //**
     //** Named ModelMenu as it was once captioned "Model". On Android and iOS the Save as items
     //** go at its foot too.
-    /// <summary>The menu captioned "Animation": <see cref="AnimationsUsedItem"/>, Animation
-    /// Settings..., <see cref="LoadAnimationSettingsItem"/>,
-    /// <see cref="SaveAnimationSettingsItem"/> and <see cref="DirectionsItem"/>.</summary>
-    /// <remarks>Named ModelMenu as it was once captioned "Model". On Android and iOS the Save
-    /// as items go at its foot too.</remarks>
     ModelMenu: TMenuItem;
     //** @abstract(The "Animations Used..." item; see AnimationsUsedItemClick.)
-    /// <summary>The "Animations Used..." item; see
-    /// <see cref="AnimationsUsedItemClick"/>.</summary>
     AnimationsUsedItem: TMenuItem;
     //** @abstract(Separator line in the Animation menu, above the settings items.)
-    /// <summary>Separator line in the Animation menu, above the settings items.</summary>
     ModelSettingsSeparatorItem: TMenuItem;
     //** @abstract(Separator line in the Animation menu, above DirectionsItem.)
-    /// <summary>Separator line in the Animation menu, above
-    /// <see cref="DirectionsItem"/>.</summary>
     ModelActionsSeparatorItem: TMenuItem;
     //** @abstract(The "Directions..." item; see DirectionsItemClick.)
-    /// <summary>The "Directions..." item; see <see cref="DirectionsItemClick"/>.</summary>
     DirectionsItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
-    /// <summary>The "View" menu; holds <see cref="CameraMenu"/>.</summary>
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
     //**
@@ -769,43 +663,24 @@ type
     //** an item clears every check in the submenu, sets the view, then checks that item. The
     //** checked item, and the dials' angles while Variable is checked, are kept in
     //** settings.json and restored at start-up.
-    /// <summary>The "Camera" submenu of View, choosing how the camera angles are
-    /// set.</summary>
-    /// <remarks>Its items form one radio group: Variable, where the dials set the angles, and
-    /// the fixed views Isometric, Pixel 2:1, 3/4 View, Head On, Top Down and Side View.
-    /// Choosing an item clears every check in the submenu, sets the view, then checks that
-    /// item. The checked item, and the dials' angles while Variable is checked, are kept in
-    /// settings.json and restored at start-up.</remarks>
     CameraMenu: TMenuItem;
     //** @abstract(The line between CameraMenu and the View menu's on/off items.)
-    /// <summary>The line between CameraMenu and the View menu's on/off items.</summary>
     ViewSeparatorItem: TMenuItem;
     //** @abstract(Shows or hides the model's bounding box; ticked at start-up.)
     //**
     //** Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the
     //** bounds of its current pose. See ShowBoundsItemClick.
-    /// <summary>Shows or hides the model's bounding box; ticked at start-up.</summary>
-    /// <remarks>Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box
-    /// round the bounds of its current pose. See <see cref="ShowBoundsItemClick"/>.</remarks>
     ShowBoundsItem: TMenuItem;
     //** @abstract(Shows or hides the floor grid; ticked at start-up.)
     //**
     //** Ticked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws a
     //** shader grid of grey lines 1.0 apart on the model's floor, the lowest point of its own
     //** geometry. See ShowGridItemClick.
-    /// <summary>Shows or hides the floor grid; ticked at start-up.</summary>
-    /// <remarks>Ticked, every model is loaded with ShowModelGrid from Sprite3DGrid, which
-    /// draws a shader grid of grey lines 1.0 apart on the model's floor, the lowest point of
-    /// its own geometry. See <see cref="ShowGridItemClick"/>.</remarks>
     ShowGridItem: TMenuItem;
     //** @abstract(Shows or hides the model's X, Y and Z axes; ticked at start-up.)
     //**
     //** Ticked, every model is loaded with ShowModelAxes from Sprite3DAxes, which draws red,
     //** green and blue lines through its centre of rotation. See ShowAxesItemClick.
-    /// <summary>Shows or hides the model's X, Y and Z axes; ticked at start-up.</summary>
-    /// <remarks>Ticked, every model is loaded with ShowModelAxes from Sprite3DAxes, which
-    /// draws red, green and blue lines through its centre of rotation. See
-    /// <see cref="ShowAxesItemClick"/>.</remarks>
     ShowAxesItem: TMenuItem;
     //** @abstract(Shows or hides the Model Volume, the volume the model sweeps turning about
     //** its up axis; ticked at start-up.)
@@ -818,16 +693,6 @@ type
     //** read from the bounds cache or measured with TAnimationBoundsMeasurer as the model
     //** loads. Whichever animation the model plays, its volume is drawn; with none playing,
     //** the rest pose's. See ShowSweepItemClick.
-    /// <summary>Shows or hides the Model Volume, the volume the model sweeps turning about its
-    /// up axis; ticked at start-up.</summary>
-    /// <remarks>Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which
-    /// works out the space the model's bounds pass through in a full turn about the line
-    /// through its centre of rotation parallel to its Y axis, and draws it: the swept box in
-    /// aqua, and the tube it holds, with the axis, in yellow. There is one volume for the rest
-    /// pose, from the bounds as loaded, and one per animation, from the bounds of all its
-    /// poses, read from the bounds cache or measured with TAnimationBoundsMeasurer as the
-    /// model loads. Whichever animation the model plays, its volume is drawn; with none
-    /// playing, the rest pose's. See <see cref="ShowSweepItemClick"/>.</remarks>
     ShowSweepItem: TMenuItem;
     //** @abstract(Shows or hides the Animation Volume, the combined swept volume; not ticked at
     //** start-up.)
@@ -841,62 +706,34 @@ type
     //** none used, as it would only repeat the rest pose's volume. It is redrawn for each new
     //** model and whenever the animations used or the ticks change. See
     //** ShowCombinedSweepItemClick.
-    /// <summary>Shows or hides the Animation Volume, the combined swept volume; not ticked at
-    /// start-up.</summary>
-    /// <remarks>Ticked, the model gets ShowCombinedSweep from Sprite3DSweep: the volume swept
-    /// turning about its up axis, joined over its rest pose and every animation ticked in
-    /// Animation, Animations Used. It is drawn only while the view frames it: while two or more
-    /// animations in the Animations list are ticked for export, playing or paused. It is drawn
-    /// in fuchsia and hot pink whatever animation plays, so it can be shown alongside
-    /// ShowSweepItem's aqua and yellow. It is never drawn for a model with no animations, or
-    /// none used, as it would only repeat the rest pose's volume. It is redrawn for each new
-    /// model and whenever the animations used or the ticks change. See
-    /// <see cref="ShowCombinedSweepItemClick"/>.</remarks>
     ShowCombinedSweepItem: TMenuItem;
     //** @abstract(Switches the camera between orthographic and perspective projection.)
     //**
     //** Ticked, the camera is orthographic; see OrthographicItemClick.
-    /// <summary>Switches the camera between orthographic and perspective projection.</summary>
-    /// <remarks>Ticked, the camera is orthographic; see
-    /// <see cref="OrthographicItemClick"/>.</remarks>
     OrthographicItem: TMenuItem;
     //** @abstract(The "Variable" view; see ViewVariableItemClick.)
-    /// <summary>The "Variable" view; see <see cref="ViewVariableItemClick"/>.</summary>
     ViewVariableItem: TMenuItem;
     //** @abstract(The "Isometric" view, chosen at start-up when no other is saved; see
     //** ViewIsometricItemClick.)
-    /// <summary>The "Isometric" view, chosen at start-up when no other is saved; see
-    /// <see cref="ViewIsometricItemClick"/>.</summary>
     ViewIsometricItem: TMenuItem;
     //** @abstract(The "Pixel 2:1" view; see ViewPixel2To1ItemClick.)
-    /// <summary>The "Pixel 2:1" view; see <see cref="ViewPixel2To1ItemClick"/>.</summary>
     ViewPixel2To1Item: TMenuItem;
     //** @abstract(The "3/4 View" view; see ViewThreeQuarterItemClick.)
-    /// <summary>The "3/4 View" view; see <see cref="ViewThreeQuarterItemClick"/>.</summary>
     ViewThreeQuarterItem: TMenuItem;
     //** @abstract(The "Head On" view; see ViewHeadOnItemClick.)
-    /// <summary>The "Head On" view; see <see cref="ViewHeadOnItemClick"/>.</summary>
     ViewHeadOnItem: TMenuItem;
     //** @abstract(The "Top Down" view; see ViewTopDownItemClick.)
-    /// <summary>The "Top Down" view; see <see cref="ViewTopDownItemClick"/>.</summary>
     ViewTopDownItem: TMenuItem;
     //** @abstract(The "Side View" view; see ViewSideItemClick.)
-    /// <summary>The "Side View" view; see <see cref="ViewSideItemClick"/>.</summary>
     ViewSideItem: TMenuItem;
     //** @abstract(A dark strip above AnimationListBox that holds AnimationsLabel and
     //** FramesLabel, so the titles stand out whatever the theme.)
-    /// <summary>A dark strip above AnimationListBox that holds AnimationsLabel and FramesLabel,
-    /// so the titles stand out whatever the theme.</summary>
     AnimationsHeader: TRectangle;
     //** @abstract(The "Animations" title: bold yellow on AnimationsHeader, at its left, inside
     //** the header's padding.)
-    /// <summary>The "Animations" title: bold yellow on AnimationsHeader, at its left, inside
-    /// the header's padding.</summary>
     AnimationsLabel: TLabel;
     //** @abstract(The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
     //** header's padding, over the frame counts in AnimationListBox.)
-    /// <summary>The "Frames" title: bold yellow on AnimationsHeader, at its right, inside the
-    /// header's padding, over the frame counts in AnimationListBox.</summary>
     FramesLabel: TLabel;
     //** @abstract(The model's animations, by name, or for a static model, one with no
     //** animations, one entry named after its file; see AnimationListBoxClick.)
@@ -907,29 +744,16 @@ type
     //** with the Up and Down arrow keys; see AnimationListBoxChange. Right-clicking an entry
     //** selects and plays it and opens a pop-up menu that saves it as a sprite strip, a
     //** spritesheet or an animated GIF; see the unit description.
-    /// <summary>The model's animations, by name, or for a static model, one with no animations,
-    /// one entry named after its file; see <see cref="AnimationListBoxClick"/>.</summary>
-    /// <remarks>Only the animations ticked in Animation, Animations Used are listed. Each entry
-    /// shows, at its right, the number of frames saving it makes at the Model, Animation
-    /// Settings frame rate. Choosing an entry plays it, whether by a click or by moving the
-    /// selection with the Up and Down arrow keys; see <see cref="AnimationListBoxChange"/>.
-    /// Right-clicking an entry selects and plays it and opens a pop-up menu that saves it as a
-    /// sprite strip, a spritesheet or an animated GIF; see the unit description.</remarks>
     AnimationListBox: TListBox;
     //** @abstract(The "1/4 View" view; see ViewOneQuarterItemClick.)
-    /// <summary>The "1/4 View" view; see <see cref="ViewOneQuarterItemClick"/>.</summary>
     ViewOneQuarterItem: TMenuItem;
     //** @abstract(The "Sqrt@(2@)" view; see ViewRoot2ItemClick.)
-    /// <summary>The "Sqrt(2)" view; see <see cref="ViewRoot2ItemClick"/>.</summary>
     ViewRoot2Item: TMenuItem;
     //** @abstract(The "Golden Ratio" view; see ViewGoldenRatioItemClick.)
-    /// <summary>The "Golden Ratio" view; see <see cref="ViewGoldenRatioItemClick"/>.</summary>
     ViewGoldenRatioItem: TMenuItem;
     //** @abstract(A separator line in the View, Camera menu, between groups of views.)
-    /// <summary>A separator line in the View, Camera menu, between groups of views.</summary>
     CameraSeparatorItem1: TMenuItem;
     //** @abstract(A separator line in the View, Camera menu, between groups of views.)
-    /// <summary>A separator line in the View, Camera menu, between groups of views.</summary>
     CameraSeparatorItem2: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
@@ -951,23 +775,6 @@ type
     //** projection.
     //**
     //** @param(Sender The form.)
-    /// <summary>Sets up the viewport, light and camera, and picks the models folder.</summary>
-    /// <remarks><para>The models folder comes from DefaultModelDir in Sprite3DHelpers: it is
-    /// the library path on macOS, the home folder on Linux and <c>'../../../'</c> elsewhere; on
-    /// Windows it is the current folder instead if that has a models subfolder. The handler
-    /// creates a TGorillaViewport in AspectLayout, which FitViewportToAspect makes as large as
-    /// fits there at the aspect ratio of the grab size, centred; a TSprite3DCamera with a
-    /// 45-degree FOV, which becomes the viewport's camera; and a point light parented to the
-    /// camera at its origin, so it sits where the camera is and points where it looks. The
-    /// viewport runs at a fixed 60 frames per second without VSync. A TSprite3DBackground is
-    /// put behind the viewport, showing the background kept in settings.json.</para> <para>The
-    /// dials start at 0, then the camera view kept in settings.json is chosen, as its View,
-    /// Camera item would choose it: a fixed view turns the dials to its angles and switches
-    /// them off, and Variable turns them to the angles kept with it and leaves them on.
-    /// Isometric is chosen when none is kept. Last, the View menu's five on/off items are
-    /// ticked as settings.json says they were left, and applied, which also sets the
-    /// projection.</para></remarks>
-    /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Loads the first model, the one the system asked to open or the default, and
     //** starts taking open requests.)
@@ -982,17 +789,6 @@ type
     //** missing or cannot be read.
     //**
     //** @param(Sender The form.)
-    /// <summary>Loads the first model, the one the system asked to open or the default, and
-    /// starts taking open requests.</summary>
-    /// <remarks>If the application was started to open a model, for example by double-clicking
-    /// a .glb or .gltf file in Explorer or Finder, that model is loaded; the files come from
-    /// FileOpenRequests in Sprite3DOpenFiles, and the first one that is a model is used.
-    /// Otherwise the default model, named in this handler, is loaded; change it there to start
-    /// with a different one. From then on, files the system asks to open while the application
-    /// runs, as macOS, iOS and Android can, replace the current model. Runs once, the first
-    /// time the form is shown. Shows a message and loads nothing if the file is missing or
-    /// cannot be read.</remarks>
-    /// <param name="Sender">The form.</param>
     procedure FormShow(Sender: TObject);
     //** @abstract(Stops taking open requests, saves the view state and frees the settings.)
     //**
@@ -1002,13 +798,6 @@ type
     //** soon as they change.
     //**
     //** @param(Sender The form.)
-    /// <summary>Stops taking open requests, saves the view state and frees the
-    /// settings.</summary>
-    /// <remarks>The checked View, Camera item, the dials' angles if that is Variable, and the
-    /// ticks of the View menu's five on/off items are written to settings.json for the next
-    /// session; a failed save is ignored, as no message can be shown here. Other settings are
-    /// saved as soon as they change.</remarks>
-    /// <param name="Sender">The form.</param>
     procedure FormDestroy(Sender: TObject);
     //** @abstract(Asks before quitting while an export is under way.)
     //**
@@ -1021,15 +810,6 @@ type
     //** @param(Sender The form.)
     //**
     //** @param(CanClose Set to False while the question is open or was answered No.)
-    /// <summary>Asks before quitting while an export is under way.</summary>
-    /// <remarks>While animations are being captured or exported, or files are still being
-    /// written, the close is held and a dialog asks "Still exporting. Do you really want to
-    /// quit?". No carries on with the export. Yes stops it, drops what is not yet saved, and
-    /// closes the window; files already being written are finished first, so none is left half
-    /// written. With nothing being exported the window closes at once.</remarks>
-    /// <param name="Sender">The form.</param>
-    /// <param name="CanClose">Set to False while the question is open or was answered
-    /// No.</param>
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     //** @abstract(Copies RollDial to the camera's Roll.)
     //**
@@ -1037,11 +817,6 @@ type
     //** written to the camera. The model is not refitted; see FitModel.
     //**
     //** @param(Sender RollDial.)
-    /// <summary>Copies RollDial to the camera's Roll.</summary>
-    /// <remarks>The dial value is wrapped into 0 to 360, without negating, shown in RollText
-    /// and written to the camera. The model is not refitted; see
-    /// <see cref="FitModel"/>.</remarks>
-    /// <param name="Sender">RollDial.</param>
     procedure RollDialChange(Sender: TObject);
     //** @abstract(Refits the camera to the model when the viewport changes size.)
     //**
@@ -1049,18 +824,11 @@ type
     //** loaded, or while View, Camera, Lock Camera is ticked.
     //**
     //** @param(Sender The TGorillaViewport.)
-    /// <summary>Refits the camera to the model when the viewport changes size.</summary>
-    /// <remarks>Assigned to the viewport's OnResize in FormCreate. Does nothing until a model
-    /// is loaded, or while View, Camera, Lock Camera is ticked.</remarks>
-    /// <param name="Sender">The TGorillaViewport.</param>
     procedure GorillaViewportResize(Sender: TObject);
     //** @abstract(Places the viewport again when AspectLayout changes size; see
     //** FitViewportToAspect.)
     //**
     //** @param(Sender AspectLayout.)
-    /// <summary>Places the viewport again when AspectLayout changes size; see
-    /// FitViewportToAspect.</summary>
-    /// <param name="Sender">AspectLayout.</param>
     procedure AspectLayoutResize(Sender: TObject);
     //** @abstract(Ticks or unticks OrthographicItem, then switches the projection to match
     //** and refits the model.)
@@ -1070,12 +838,6 @@ type
     //** while View, Camera, Lock Camera is ticked, when the item is disabled.
     //**
     //** @param(Sender OrthographicItem.)
-    /// <summary>Ticks or unticks OrthographicItem, then switches the projection to match and
-    /// refits the model.</summary>
-    /// <remarks>Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in
-    /// the form caption, and refits, since the two modes size the view differently. Does
-    /// nothing while View, Camera, Lock Camera is ticked, when the item is disabled.</remarks>
-    /// <param name="Sender">OrthographicItem.</param>
     procedure OrthographicItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
     //** match.)
@@ -1083,10 +845,6 @@ type
     //** Only the tick changes until a model is loaded.
     //**
     //** @param(Sender ShowAxesItem.)
-    /// <summary>Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
-    /// match.</summary>
-    /// <remarks>Only the tick changes until a model is loaded.</remarks>
-    /// <param name="Sender">ShowAxesItem.</param>
     procedure ShowAxesItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowBoundsItem, then shows or hides the model's bounding
     //** box to match.)
@@ -1094,10 +852,6 @@ type
     //** Only the tick changes until a model is loaded.
     //**
     //** @param(Sender ShowBoundsItem.)
-    /// <summary>Ticks or unticks ShowBoundsItem, then shows or hides the model's bounding box
-    /// to match.</summary>
-    /// <remarks>Only the tick changes until a model is loaded.</remarks>
-    /// <param name="Sender">ShowBoundsItem.</param>
     procedure ShowBoundsItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowSweepItem, then adds or removes the model's swept
     //** volume to match.)
@@ -1105,10 +859,6 @@ type
     //** Only the tick changes until a model is loaded.
     //**
     //** @param(Sender ShowSweepItem.)
-    /// <summary>Ticks or unticks ShowSweepItem, then adds or removes the model's swept volume
-    /// to match.</summary>
-    /// <remarks>Only the tick changes until a model is loaded.</remarks>
-    /// <param name="Sender">ShowSweepItem.</param>
     procedure ShowSweepItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowCombinedSweepItem, then adds or removes the combined
     //** swept volume to match.)
@@ -1116,10 +866,6 @@ type
     //** Only the tick changes until a model is loaded.
     //**
     //** @param(Sender ShowCombinedSweepItem.)
-    /// <summary>Ticks or unticks ShowCombinedSweepItem, then adds or removes the combined swept
-    /// volume to match.</summary>
-    /// <remarks>Only the tick changes until a model is loaded.</remarks>
-    /// <param name="Sender">ShowCombinedSweepItem.</param>
     procedure ShowCombinedSweepItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowGridItem, then adds or removes the floor grid to
     //** match.)
@@ -1127,10 +873,6 @@ type
     //** Only the tick changes until a model is loaded.
     //**
     //** @param(Sender ShowGridItem.)
-    /// <summary>Ticks or unticks ShowGridItem, then adds or removes the floor grid to
-    /// match.</summary>
-    /// <remarks>Only the tick changes until a model is loaded.</remarks>
-    /// <param name="Sender">ShowGridItem.</param>
     procedure ShowGridItemClick(Sender: TObject);
     //** @abstract(Lets the user pick a model file and loads it in place of the current one.)
     //**
@@ -1140,13 +882,6 @@ type
     //** the file fails to load, which SwitchModel reports.
     //**
     //** @param(Sender OpenModelMenuItem.)
-    /// <summary>Lets the user pick a model file and loads it in place of the current
-    /// one.</summary>
-    /// <remarks>Shows OpenDialog1 and passes the chosen file to SwitchModel, which loads it
-    /// behind a progress dialog with Abort and then puts it in place of the old model, with the
-    /// current camera angles and fit. Nothing changes if either dialog is cancelled or aborted,
-    /// or if the file fails to load, which SwitchModel reports.</remarks>
-    /// <param name="Sender">OpenModelMenuItem.</param>
     procedure OpenModelMenuItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
@@ -1171,14 +906,6 @@ type
     //** and nothing being exported.
     //**
     //** @param(Sender SaveAnimationSettingsItem.)
-    /// <summary>Saves the Animations list as it stands to a JSON file.</summary>
-    /// <remarks>Asks where, in a save dialog opening in the model's folder, with the name
-    /// <c>&lt;model&gt;_animations.json</c>. The file holds <c>format</c> ("Sprite3D animation
-    /// settings"), <c>version</c>, <c>model</c>, <c>selected</c>, the entry selected, and
-    /// <c>animations</c>, every entry of the list, in order, each with its <c>name</c>, its
-    /// tick as <c>checked</c>, and <c>frames</c>, only for a count typed in. Desktop only,
-    /// with a model loaded and nothing being exported.</remarks>
-    /// <param name="Sender">SaveAnimationSettingsItem.</param>
     procedure SaveAnimationSettingsItemClick(Sender: TObject);
     //** @abstract(Loads a file saved by SaveAnimationSettingsItemClick and applies it to the
     //** Animations list.)
@@ -1192,16 +919,6 @@ type
     //** Desktop only, with a model loaded and nothing being exported.
     //**
     //** @param(Sender LoadAnimationSettingsItem.)
-    /// <summary>Loads a file saved by SaveAnimationSettingsItemClick and applies it to the
-    /// Animations list.</summary>
-    /// <remarks>The animations the file lists that the model has become the animations used, as
-    /// Animation, Animations Used would make them, in the model's order; their ticks and frame
-    /// counts are set as the file says, every other count going back to the one the frame rate
-    /// gives; and the entry the file has selected is selected and played. Animations the file
-    /// names that the model does not have are left out and reported. A file that is not one of
-    /// these, or that names none of the model's animations, changes nothing. Desktop only, with
-    /// a model loaded and nothing being exported.</remarks>
-    /// <param name="Sender">LoadAnimationSettingsItem.</param>
     procedure LoadAnimationSettingsItemClick(Sender: TObject);
     //** @abstract(File, Save Project: edits the creator credits, keeps them for every export's
     //** metadata, and saves them in a project file.)
@@ -1217,26 +934,11 @@ type
     //** session only.
     //**
     //** @param(Sender CreditsItem.)
-    /// <summary>File, Save Project: edits the creator credits, keeps them for every export's
-    /// metadata, and saves them in a project file.</summary>
-    /// <remarks>The dialog, TCreditsForm, takes the creator, modeller and artist, each with a
-    /// URL, and the day the project started. On OK the credits go into the <c>meta</c> section
-    /// of every metadata file saved from then on, and a save dialog asks where to keep them, as
-    /// a project file with the extension PROJECT_FILE_EXTENSION, opening at the project last
-    /// saved or loaded, or beside the model. The project file holds the credits, the model's
-    /// full path, the directions of Animation, Directions, the Animations list and the export
-    /// choices; see SaveProjectFile. Cancelling the save keeps the credits all the same. On
-    /// Android and iOS, which have no save dialog, the credits are kept for the session
-    /// only.</remarks>
-    /// <param name="Sender">CreditsItem.</param>
     procedure CreditsItemClick(Sender: TObject);
     //** @abstract(File, Load Project: loads a project file and applies it; see
     //** LoadProjectFile.)
     //**
     //** @param(Sender LoadCreditsItem.)
-    /// <summary>File, Load Project: loads a project file and applies it; see
-    /// LoadProjectFile.</summary>
-    /// <param name="Sender">LoadCreditsItem.</param>
     procedure LoadCreditsItemClick(Sender: TObject);
     //** @abstract(Renders the view off screen and saves it as the next grabNNN.png.)
     //**
@@ -1253,19 +955,6 @@ type
     //** grab is still under way is ignored.
     //**
     //** @param(Sender GrabMenuItem.)
-    /// <summary>Renders the view off screen and saves it as the next grabNNN.png.</summary>
-    /// <remarks>If no usable SaveFolder is known, because none has been chosen yet or the
-    /// stored one no longer exists, a "Save Location" folder dialog asks for it first, and
-    /// SaveFolder is set to the choice and saved; if the dialog is cancelled nothing is
-    /// grabbed. The image comes from Offscreen at its Width and Height, the grab size set in
-    /// File, Settings, with the camera refitted by FitToBounds for that size so the model fills
-    /// it, unless View, Camera, Lock Camera is ticked, when the view is grabbed as it stands,
-    /// and is saved a frame later as grab001.png, grab002.png and so on: the number starts
-    /// at 1 when the folder is chosen and goes up by one for every file saved, skipping any
-    /// name already in the folder, so earlier grabs are never overwritten. Each saved file is
-    /// logged in DebugMemo; a failed grab or save is reported with a message. A click while the
-    /// previous grab is still under way is ignored.</remarks>
-    /// <param name="Sender">GrabMenuItem.</param>
     procedure GrabMenuItemClick(Sender: TObject);
     //** @abstract(Renders the view at every icon size and saves it as one icon file.)
     //**
@@ -1279,16 +968,6 @@ type
     //** a grab is under way is ignored.
     //**
     //** @param(Sender SaveAsIconMenuItem.)
-    /// <summary>Renders the view at every icon size and saves it as one icon file.</summary>
-    /// <remarks>First asks for the file with SaveIconDialog, which opens in the folder the last
-    /// icon was saved in, kept in settings.json, and offers only the .ico type; nothing happens
-    /// if it is cancelled. Android and iOS have no save dialog, so there the icon goes to the
-    /// next free iconNNN.ico in the Grabs folder. Then Offscreen renders the view once for each
-    /// of the format's sizes, 16, 20, 24, 32, 40, 48, 64 and 256 for .ico, each with the camera
-    /// fitted to it as for File, Grab, and the images are written together. The saved file is
-    /// logged in DebugMemo; a failure is reported with a message. A click while a grab is under
-    /// way is ignored.</remarks>
-    /// <param name="Sender">SaveAsIconMenuItem.</param>
     procedure SaveAsIconMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Background Settings dialog and applies what is chosen.)
     //**
@@ -1300,14 +979,6 @@ type
     //** closes.
     //**
     //** @param(Sender BackgroundSettingsMenuItem.)
-    /// <summary>Opens the Background Settings dialog and applies what is chosen.</summary>
-    /// <remarks>The dialog, TBackgroundSettingsForm, opens modally, centred on this form,
-    /// showing the background in use. Every change is shown in the viewport at once. If it is
-    /// closed with OK, the chosen background is kept, used for grabs and icons but not
-    /// animation exports, and saved to settings.json; Cancel puts back the background in use.
-    /// On Android and iOS, where a dialog cannot block, it opens as an ordinary form and OK is
-    /// applied when it closes.</remarks>
-    /// <param name="Sender">BackgroundSettingsMenuItem.</param>
     procedure BackgroundSettingsMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Settings dialog and applies what is chosen.)
     //**
@@ -1320,16 +991,6 @@ type
     //** dialog cannot block, it opens as an ordinary form and OK is applied when it closes.
     //**
     //** @param(Sender SettingsMenuItem.)
-    /// <summary>Opens the Settings dialog and applies what is chosen.</summary>
-    /// <remarks>The dialog, TGeneralSettingsForm, opens modally, centred on this form, showing
-    /// the settings as they stand, with Open With, the default application and the GPU read
-    /// from the system. On OK the file associations are changed as chosen, the theme is applied
-    /// at once, the GPU preference is stored for the next start, and everything is saved to
-    /// settings.json; anything the user needs to know, such as a failure or the need to
-    /// restart, is reported in a message. Cancel changes nothing. On Android and iOS, where a
-    /// dialog cannot block, it opens as an ordinary form and OK is applied when it
-    /// closes.</remarks>
-    /// <param name="Sender">SettingsMenuItem.</param>
     procedure SettingsMenuItemClick(Sender: TObject);
     //** @abstract(Closes the application.)
     //**
@@ -1337,10 +998,6 @@ type
     //** everything it owns are freed as usual.
     //**
     //** @param(Sender ExitMenuItem.)
-    /// <summary>Closes the application.</summary>
-    /// <remarks>Closes the main form, which ends the application in the normal way, so the form
-    /// and everything it owns are freed as usual.</remarks>
-    /// <param name="Sender">ExitMenuItem.</param>
     procedure ExitMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Variable camera dialog, where dials set the angles.)
     //**
@@ -1351,13 +1008,6 @@ type
     //** start-up, no dialog is shown and only the check changes.
     //**
     //** @param(Sender ViewVariableItem.)
-    /// <summary>Opens the Variable camera dialog, where dials set the angles.</summary>
-    /// <remarks>The dialog, TOrbitalSettingsForm, shows the current angles, distance factor and
-    /// pan, and every change is shown in the viewport at once. OK keeps the changes; Cancel
-    /// puts the camera back as it was. Either way the View checks are cleared and Variable is
-    /// checked. While the form is being created, as when the Variable view is restored at
-    /// start-up, no dialog is shown and only the check changes.</remarks>
-    /// <param name="Sender">ViewVariableItem.</param>
     procedure ViewVariableItemClick(Sender: TObject);
     //** @abstract(Sets the isometric view and fixes it.)
     //**
@@ -1368,14 +1018,6 @@ type
     //** camera reversed. The other fixed views work the same way with their own inclination.
     //**
     //** @param(Sender ViewIsometricItem.)
-    /// <summary>Sets the isometric view and fixes it.</summary>
-    /// <remarks>Clears every View check, sets the inclination to ArcTan(1/Sqrt(2)), about
-    /// 35.264 degrees, the true isometric elevation, the azimuth to 45 and the roll to 0, as
-    /// shown on the readouts, turns the dials to match and switches them off, refits the model
-    /// for the new view, then checks the Isometric item. As with the dial, the azimuth reaches
-    /// the camera reversed. The other fixed views work the same way with their own
-    /// inclination.</remarks>
-    /// <param name="Sender">ViewIsometricItem.</param>
     procedure ViewIsometricItemClick(Sender: TObject);
     //** @abstract(Moves the camera out by the slider's factor; test only.)
     //**
@@ -1384,11 +1026,6 @@ type
     //** is scaled instead. The factor is kept when the model is refitted.
     //**
     //** @param(Sender DistanceTrack.)
-    /// <summary>Moves the camera out by the slider's factor; test only.</summary>
-    /// <remarks>In perspective mode the camera's Distance becomes the fitted distance times
-    /// the factor; in orthographic mode, where distance does not change the size, OrthoHeight
-    /// is scaled instead. The factor is kept when the model is refitted.</remarks>
-    /// <param name="Sender">DistanceTrack.</param>
     procedure DistanceTrackChange(Sender: TObject);
     //** @abstract(Sets the pixel-art 2:1 view and fixes it.)
     //**
@@ -1397,11 +1034,6 @@ type
     //** pixel art.
     //**
     //** @param(Sender ViewPixel2To1Item.)
-    /// <summary>Sets the pixel-art 2:1 view and fixes it.</summary>
-    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(1/2), about 26.565
-    /// degrees, at which lines on the floor run 2 pixels across for each pixel up, as in 2:1
-    /// pixel art.</remarks>
-    /// <param name="Sender">ViewPixel2To1Item.</param>
     procedure ViewPixel2To1ItemClick(Sender: TObject);
     //** @abstract(Sets the 3/4 view and fixes it.)
     //**
@@ -1410,30 +1042,18 @@ type
     //** game art; the view no longer switches it on by itself.
     //**
     //** @param(Sender ViewThreeQuarterItem.)
-    /// <summary>Sets the 3/4 view and fixes it.</summary>
-    /// <remarks>The angle of military projection: inclination 45 degrees at azimuth 45. The
-    /// projection is applied again as it stands, so View, Orthographic gives the flat look of
-    /// 3/4-view game art; the view no longer switches it on by itself.</remarks>
-    /// <param name="Sender">ViewThreeQuarterItem.</param>
     procedure ViewThreeQuarterItemClick(Sender: TObject);
     //** @abstract(Sets the head-on view and fixes it.)
     //**
     //** Inclination 0 and azimuth 0: level with the model, looking along its Z axis.
     //**
     //** @param(Sender ViewHeadOnItem.)
-    /// <summary>Sets the head-on view and fixes it.</summary>
-    /// <remarks>Inclination 0 and azimuth 0: level with the model, looking along its Z
-    /// axis.</remarks>
-    /// <param name="Sender">ViewHeadOnItem.</param>
     procedure ViewHeadOnItemClick(Sender: TObject);
     //** @abstract(Sets the top-down view and fixes it.)
     //**
     //** Inclination 90 and azimuth 0: straight down onto the model.
     //**
     //** @param(Sender ViewTopDownItem.)
-    /// <summary>Sets the top-down view and fixes it.</summary>
-    /// <remarks>Inclination 90 and azimuth 0: straight down onto the model.</remarks>
-    /// <param name="Sender">ViewTopDownItem.</param>
     procedure ViewTopDownItemClick(Sender: TObject);
     //** @abstract(Sets the side view and fixes it.)
     //**
@@ -1441,10 +1061,6 @@ type
     //** from View, Camera, Head On.
     //**
     //** @param(Sender ViewSideItem.)
-    /// <summary>Sets the side view and fixes it.</summary>
-    /// <remarks>Inclination 0 and azimuth 90: level with the model, from the side, a quarter
-    /// turn from View, Camera, Head On.</remarks>
-    /// <param name="Sender">ViewSideItem.</param>
     procedure ViewSideItemClick(Sender: TObject);
     //** @abstract(Plays the chosen animation, or shows a static model as loaded.)
     //**
@@ -1453,12 +1069,6 @@ type
     //** Ignored while an animation is being saved, which needs the animation it started.
     //**
     //** @param(Sender AnimationListBox.)
-    /// <summary>Plays the chosen animation, or shows a static model as loaded.</summary>
-    /// <remarks>A click that moved the selection has already been played by
-    /// <see cref="AnimationListBoxChange"/>, so it is not played twice; a click on the entry
-    /// already selected plays it again. Ignored while an animation is being saved, which needs
-    /// the animation it started.</remarks>
-    /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxClick(Sender: TObject);
     //** @abstract(Plays the newly selected animation, or shows a static model as loaded,
     //** whatever moved the selection.)
@@ -1469,13 +1079,6 @@ type
     //** being saved, and when the list is emptied for another model.
     //**
     //** @param(Sender AnimationListBox.)
-    /// <summary>Plays the newly selected animation, or shows a static model as loaded, whatever
-    /// moved the selection.</summary>
-    /// <remarks>Runs whenever the selection moves: the Up and Down arrow keys, Home, End and
-    /// the page keys, a click on another entry, or code setting ItemIndex. So stepping through
-    /// the list with the keys plays each animation as a click does. Ignored while an animation
-    /// is being saved, and when the list is emptied for another model.</remarks>
-    /// <param name="Sender">AnimationListBox.</param>
     procedure AnimationListBoxChange(Sender: TObject);
     //** @abstract(Opens the Animations Used dialog, and on OK lists only the animations ticked
     //** there and refits to their swept volume.)
@@ -1490,17 +1093,6 @@ type
     //** the dialog does not block, and the choice is applied when it closes.
     //**
     //** @param(Sender AnimationsUsedItem.)
-    /// <summary>Opens the Animations Used dialog, and on OK lists only the animations ticked
-    /// there and refits to their swept volume.</summary>
-    /// <remarks>The dialog lists every animation of the model, ticked if it is used now, with
-    /// its own swept volume as a percentage of the combined one, measuring the animations first
-    /// if they have not been; Cancel changes nothing. On OK the animations list is rebuilt with
-    /// only those ticked, keeping the selection if it is still listed; if the animation playing
-    /// is left out, nothing is selected and the model is shown at rest. The model is then
-    /// refitted, to the swept volume joined over the rest pose and the animations used. Does
-    /// nothing without a model, or while an animation is being saved. On Android and iOS the
-    /// dialog does not block, and the choice is applied when it closes.</remarks>
-    /// <param name="Sender">AnimationsUsedItem.</param>
     procedure AnimationsUsedItemClick(Sender: TObject);
     //** @abstract(Opens the Directions dialog, and on OK keeps what is chosen there.)
     //**
@@ -1514,16 +1106,6 @@ type
     //** the dialog does not block, and the choice is kept when it closes.
     //**
     //** @param(Sender DirectionsItem.)
-    /// <summary>Opens the Directions dialog, and on OK keeps what is chosen there.</summary>
-    /// <remarks>The dialog, TDirectionsForm, shows a compass with a marker for each direction,
-    /// the first in red, and sets how many directions there are, the first one's bearing, the
-    /// order they are taken in, clockwise, anticlockwise or any order clicked with Change
-    /// Order, and whether the dial is locked to steps of one direction, as kept in
-    /// settings.json; Export and Import write them to and read them from a JSON file of their
-    /// own, in DirectionsFolder. OK keeps and saves them; Cancel changes nothing. The rest of
-    /// the program reads the result with DirectionBearings in the settings. On Android and iOS
-    /// the dialog does not block, and the choice is kept when it closes.</remarks>
-    /// <param name="Sender">DirectionsItem.</param>
     procedure DirectionsItemClick(Sender: TObject);
     //** @abstract(Sets the 1/4 view and fixes it.)
     //**
@@ -1531,10 +1113,6 @@ type
     //** projection is applied again as it stands, and the model refitted.
     //**
     //** @param(Sender ViewOneQuarterItem.)
-    /// <summary>Sets the 1/4 view and fixes it.</summary>
-    /// <remarks>Inclination 22.5 degrees at azimuth 45: a lower look than View, Camera, 3/4
-    /// View. The projection is applied again as it stands, and the model refitted.</remarks>
-    /// <param name="Sender">ViewOneQuarterItem.</param>
     procedure ViewOneQuarterItemClick(Sender: TObject);
     //** @abstract(Sets the Sqrt@(2@) view and fixes it.)
     //**
@@ -1542,10 +1120,6 @@ type
     //** degrees, the complement of the isometric angle.
     //**
     //** @param(Sender ViewRoot2Item.)
-    /// <summary>Sets the Sqrt(2) view and fixes it.</summary>
-    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(Sqrt(2)), about
-    /// 54.736 degrees, the complement of the isometric angle.</remarks>
-    /// <param name="Sender">ViewRoot2Item.</param>
     procedure ViewRoot2ItemClick(Sender: TObject);
     //** @abstract(Sets the golden-ratio view and fixes it.)
     //**
@@ -1553,10 +1127,6 @@ type
     //** ratio, about 58.283 degrees.
     //**
     //** @param(Sender ViewGoldenRatioItem.)
-    /// <summary>Sets the golden-ratio view and fixes it.</summary>
-    /// <remarks>As View, Camera, Isometric, but with the inclination ArcTan(1.618...), the
-    /// golden ratio, about 58.283 degrees.</remarks>
-    /// <param name="Sender">ViewGoldenRatioItem.</param>
     procedure ViewGoldenRatioItemClick(Sender: TObject);
   private
     { Private declarations }
@@ -2144,15 +1714,6 @@ type
     //** Documents folder on iOS. Setting it saves settings.json at once; a failure to write
     //** the file is reported with a message, and the new folder is still used this session.
     //** Set it to empty to be asked again.
-    /// <summary>The folder File, Grab saves into, kept between sessions; empty until one is
-    /// chosen.</summary>
-    /// <remarks>Read from settings.json at start-up, so it is empty only on the first run, or
-    /// until a folder is chosen. The first grab without a usable folder shows the "Save
-    /// Location" dialog and stores the choice here. Android and iOS have no such dialog: there
-    /// the first grab sets it to a Grabs folder in the app's public storage on Android, or its
-    /// Documents folder on iOS. Setting it saves settings.json at once; a failure to write the
-    /// file is reported with a message, and the new folder is still used this session. Set it
-    /// to empty to be asked again.</remarks>
     property SaveFolder: String read GetSaveFolder write SetSaveFolder;
     //** @abstract(The off-screen renderer File, Grab uses; set its Width and Height to
     //** change the grab size.)
@@ -2160,17 +1721,11 @@ type
     //** Created in FormCreate, attached to the viewport, which owns and frees it.
     //**
     //** @seealso(TSprite3DOffscreen)
-    /// <summary>The off-screen renderer File, Grab uses; set its Width and Height to change
-    /// the grab size.</summary>
-    /// <remarks>Created in FormCreate, attached to the viewport, which owns and frees
-    /// it.</remarks>
-    /// <seealso cref="Sprite3DOffscreen.TSprite3DOffscreen"/>
     property Offscreen: TSprite3DOffscreen read FOffscreen;
   end;
 
 var
   //** @abstract(The main form, created by Application.CreateForm in Sprite3d.dpr.)
-  /// <summary>The main form, created by Application.CreateForm in Sprite3d.dpr.</summary>
   MainForm: TMainForm;
 
 implementation

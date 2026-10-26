@@ -112,85 +112,57 @@ uses
 
 type
   //** @abstract(The four sides of an empty border, in the order left, top, right, bottom.)
-  /// <summary>The four sides of an empty border, in the order left, top, right,
-  /// bottom.</summary>
   TResultsSides = array[0..3] of Integer;
 
   //** @abstract(Where one frame is: which image, and which cell of its grid.)
-  /// <summary>Where one frame is: which image, and which cell of its grid.</summary>
   TResultsCell = record
     //** @abstract(The .png holding it; empty if no file has this frame.)
-    /// <summary>The .png holding it; empty if no file has this frame.</summary>
     FileName: String;
     //** @abstract(Its cell, counted from 0 left to right and then down.)
-    /// <summary>Its cell, counted from 0 left to right and then down.</summary>
     Cell: Integer;
     //** @abstract(How many cells the image's grid has across.)
-    /// <summary>How many cells the image's grid has across.</summary>
     Cols: Integer;
     //** @abstract(Whether Empty and SpriteEmpty were given in the metadata.)
-    /// <summary>Whether Empty and SpriteEmpty were given in the metadata.</summary>
     HasEmpty: Boolean;
     //** @abstract(This frame's empty border, frames[i].empty: left, top, right, bottom.)
-    /// <summary>This frame's empty border, frames[i].empty: left, top, right,
-    /// bottom.</summary>
     Empty: TResultsSides;
     //** @abstract(The image's image.sprite_empty, the least of its frames' empty borders:
     //** left, top, right, bottom.)
-    /// <summary>The image's image.sprite_empty, the least of its frames' empty borders:
-    /// left, top, right, bottom.</summary>
     SpriteEmpty: TResultsSides;
   end;
 
   //** @abstract(Where one frame is among a folder's animations: which animation, which of its
   //** directions, and which frame.)
-  /// <summary>Where one frame is among a folder's animations: which animation, which of its
-  /// directions, and which frame.</summary>
   TResultsFrameRef = record
     //** @abstract(The animation, as an index into the animations read.)
-    /// <summary>The animation, as an index into the animations read.</summary>
     Animation: Integer;
     //** @abstract(The direction, as an index into that animation's Directions.)
-    /// <summary>The direction, as an index into that animation's Directions.</summary>
     Direction: Integer;
     //** @abstract(The frame, counted from 0.)
-    /// <summary>The frame, counted from 0.</summary>
     Frame: Integer;
   end;
 
   //** @abstract(One direction of an animation: its bearing and where each frame is.)
-  /// <summary>One direction of an animation: its bearing and where each frame
-  /// is.</summary>
   TResultsDirection = record
     //** @abstract(The direction's compass bearing in degrees, as the metadata gives it.)
-    /// <summary>The direction's compass bearing in degrees, as the metadata gives
-    /// it.</summary>
     Bearing: Double;
     //** @abstract(Each frame, in order, frame_count of them.)
-    /// <summary>Each frame, in order, frame_count of them.</summary>
     Frames: TArray<TResultsCell>;
   end;
 
   //** @abstract(An animation found in a folder's metadata.)
-  /// <summary>An animation found in a folder's metadata.</summary>
   TResultsAnimation = record
     //** @abstract(Its name, as the metadata gives it.)
-    /// <summary>Its name, as the metadata gives it.</summary>
     Name: String;
     //** @abstract(How many frames each direction has.)
-    /// <summary>How many frames each direction has.</summary>
     FrameCount: Integer;
     //** @abstract(How long it takes to play once, in seconds.)
-    /// <summary>How long it takes to play once, in seconds.</summary>
     Time: Double;
     //** @abstract(One frame's width in pixels, image.sprite_size.)
-    /// <summary>One frame's width in pixels, image.sprite_size.</summary>
     SpriteWidth: Integer;
     //** @abstract(One frame's height in pixels, image.sprite_size.)
-    /// <summary>One frame's height in pixels, image.sprite_size.</summary>
     SpriteHeight: Integer;
     //** @abstract(Its directions, in the order they were first found.)
-    /// <summary>Its directions, in the order they were first found.</summary>
     Directions: TArray<TResultsDirection>;
   end;
 
@@ -219,32 +191,11 @@ type
 //**
 //** @returns(The animations found, each with at least one frame placed; empty if none. A
 //** dynamic array of records, owned by the caller.)
-/// <summary>The animations described by the metadata files in a folder.</summary>
-/// <remarks>Every .json in AFolder, in name order, is read. One is used only if it is
-/// Sprite3D metadata whose <c>animations</c> are objects with <c>name</c>,
-/// <c>frame_count</c> and <c>time</c>, and the .png of the same name is beside it; metadata
-/// from before that change is skipped. Each animation is listed once, in the order first
-/// found, with each of its directions, by bearing, in the order first found; where two files
-/// hold the same frame, the first one read is used. A file whose <c>sprite_size</c> or
-/// <c>frame_count</c> for an animation differs from what was already found for it adds
-/// nothing to that animation. Each frame's <c>empty</c> and its image's <c>sprite_empty</c>
-/// are kept with it. Only the .json files are read, not the images. Blocks while reading;
-/// touches no controls, so may be called on any thread.</remarks>
-/// <param name="AFolder">The folder to read; nothing is found if it is empty or not
-/// there.</param>
-/// <param name="AUsed">Set to how many metadata files were used.</param>
-/// <param name="ASkipped">Set to how many .json files could not be used.</param>
-/// <param name="AModels">Set to the names of the model files the metadata used was made
-/// from, from each file's <c>meta.file</c> with its folder taken off, each once, in the order
-/// found; empty if none gives one.</param>
-/// <returns>The animations found, each with at least one frame placed; empty if none. A
-/// dynamic array of records, owned by the caller.</returns>
 function ReadResultsFolder(const AFolder: String; out AUsed, ASkipped: Integer;
   out AModels: TArray<String>): TArray<TResultsAnimation>;
 
 type
   //** @abstract(The Results tab's controls and player; see the unit description.)
-  /// <summary>The Results tab's controls and player; see the unit description.</summary>
   TSprite3DResultsView = class(TComponent)
   private
     FParent: TFmxObject;
@@ -397,22 +348,11 @@ type
     //**
     //** @param(AParent The control the view is built in, normally the Results tab; it must
     //** outlive the view.)
-    /// <summary>Builds the Results tab's controls in AParent, empty until a folder is
-    /// read.</summary>
-    /// <remarks>Nothing is read yet: the first folder is read by <see cref="SetActive"/> or
-    /// <see cref="LoadFolder"/>. Main thread only.</remarks>
-    /// <param name="AOwner">Owns the view, and frees it and every control it makes; normally
-    /// the main form.</param>
-    /// <param name="AParent">The control the view is built in, normally the Results tab; it
-    /// must outlive the view.</param>
     constructor Create(AOwner: TComponent; const AParent: TFmxObject); reintroduce;
     //** @abstract(Stops playing and frees the frames.)
     //**
     //** The controls' events are unhooked first, so none reaches the view while its owner
     //** frees them. Main thread only.
-    /// <summary>Stops playing and frees the frames.</summary>
-    /// <remarks>The controls' events are unhooked first, so none reaches the view while its
-    /// owner frees them. Main thread only.</remarks>
     destructor Destroy; override;
     //** @abstract(Reads a folder's metadata, lists its animations and plays the first.)
     //**
@@ -422,14 +362,6 @@ type
     //** while the metadata and the first animation's images are read. Main thread only.
     //**
     //** @param(AFolder The folder to read.)
-    /// <summary>Reads a folder's metadata, lists its animations and plays the
-    /// first.</summary>
-    /// <remarks>The folder is read with <see cref="ReadResultsFolder"/>, replacing whatever
-    /// was shown. The first animation is selected at its first direction and played at its
-    /// own rate; its images are loaded then. If nothing usable is found, the drawing area says
-    /// so. Blocks while the metadata and the first animation's images are read. Main thread
-    /// only.</remarks>
-    /// <param name="AFolder">The folder to read.</param>
     procedure LoadFolder(const AFolder: String);
     //** @abstract(Tells the view whether its tab is showing, so it plays only while it is.)
     //**
@@ -439,14 +371,6 @@ type
     //** if it is there. Main thread only.
     //**
     //** @param(AActive True when the tab has been shown, False when another has.)
-    /// <summary>Tells the view whether its tab is showing, so it plays only while it
-    /// is.</summary>
-    /// <remarks>Hidden, the player's timer stops; shown, it carries on from the frame showing.
-    /// The first time it is shown, or the first time after <see cref="FolderChanged"/> for
-    /// the folder read, a folder is read: the one read before, or else the one
-    /// OnDefaultFolder gives, if it is there. Main thread only.</remarks>
-    /// <param name="AActive">True when the tab has been shown, False when another
-    /// has.</param>
     procedure SetActive(const AActive: Boolean);
     //** @abstract(Tells the view an export has written to a folder, so it can show the new
     //** files.)
@@ -455,44 +379,24 @@ type
     //** otherwise when it is next shown. Any other folder is ignored. Main thread only.
     //**
     //** @param(AFolder The folder the export wrote to.)
-    /// <summary>Tells the view an export has written to a folder, so it can show the new
-    /// files.</summary>
-    /// <remarks>If AFolder is the folder read, it is read again: now if the tab is showing,
-    /// otherwise when it is next shown. Any other folder is ignored. Main thread
-    /// only.</remarks>
-    /// <param name="AFolder">The folder the export wrote to.</param>
     procedure FolderChanged(const AFolder: String);
     //** @abstract(Gives the folder where exports last went, for Select Folder and the first
     //** look.)
     //**
     //** Select Folder... opens there, and it is read the first time the tab shows if no
     //** folder has been read yet. It may return an empty string. Called on the main thread.
-    /// <summary>Gives the folder where exports last went, for Select Folder and the first
-    /// look.</summary>
-    /// <remarks>Select Folder... opens there, and it is read the first time the tab shows if
-    /// no folder has been read yet. It may return an empty string. Called on the main
-    /// thread.</remarks>
     property OnDefaultFolder: TFunc<String> read FOnDefaultFolder write FOnDefaultFolder;
     //** @abstract(Whether Show grid is ticked, so the checker is drawn behind the animation.)
     //**
     //** True until set. Setting it does not call OnShowGridChange. Main thread only.
-    /// <summary>Whether Show grid is ticked, so the checker is drawn behind the
-    /// animation.</summary>
-    /// <remarks>True until set. Setting it does not call OnShowGridChange. Main thread
-    /// only.</remarks>
     property ShowGrid: Boolean read GetShowGrid write SetShowGrid;
     //** @abstract(Called on the main thread when Show grid is ticked or cleared by hand, so
     //** the owner can keep the choice.)
-    /// <summary>Called on the main thread when Show grid is ticked or cleared by hand, so the
-    /// owner can keep the choice.</summary>
     property OnShowGridChange: TNotifyEvent read FOnShowGridChange write FOnShowGridChange;
     //** @abstract(Whether the frame's empty border values, at the right of the Select Folder
     //** row, have a hint saying what they are; True until set.)
     //**
     //** File, Settings turns it off. Main thread only.
-    /// <summary>Whether the frame's empty border values, at the right of the Select Folder
-    /// row, have a hint saying what they are; True until set.</summary>
-    /// <remarks>File, Settings turns it off. Main thread only.</remarks>
     property ShowEdgeHint: Boolean read FShowEdgeHint write SetShowEdgeHint;
     //** @abstract(The zoom chosen, as a multiple of the sprite size; 1 until set.)
     //**
@@ -501,20 +405,11 @@ type
     //** Setting it, as from a kept setting, shows it at once as far as the space allows, and
     //** does not call OnZoomChange; moving the slider by hand sets it and calls
     //** OnZoomChange. A value of 0 or less counts as 1. Main thread only.
-    /// <summary>The zoom chosen, as a multiple of the sprite size; 1 until set.</summary>
-    /// <remarks>What is shown is this, or less where the drawing area is too small for it: the
-    /// Zoom slider never goes past what fits, and comes back up towards this as the space
-    /// grows. Setting it, as from a kept setting, shows it at once as far as the space allows,
-    /// and does not call OnZoomChange; moving the slider by hand sets it and calls
-    /// OnZoomChange. A value of 0 or less counts as 1. Main thread only.</remarks>
     property Zoom: Single read FZoomWanted write SetZoom;
     //** @abstract(Called on the main thread each time Zoom is moved by hand, so the owner can
     //** keep the zoom chosen.)
-    /// <summary>Called on the main thread each time Zoom is moved by hand, so the owner can
-    /// keep the zoom chosen.</summary>
     property OnZoomChange: TNotifyEvent read FOnZoomChange write FOnZoomChange;
     //** @abstract(The folder last read, or empty if none has been.)
-    /// <summary>The folder last read, or empty if none has been.</summary>
     property Folder: String read FFolder;
   end;
 

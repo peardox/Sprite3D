@@ -63,9 +63,6 @@ type
   //** @abstract(Receives a file the operating system asks the application to open.)
   //**
   //** @param(AFileName The file's full path; it existed when the request arrived.)
-  /// <summary>Receives a file the operating system asks the application to open.</summary>
-  /// <param name="AFileName">The file's full path; it existed when the request
-  /// arrived.</param>
   TSprite3DOpenFileEvent = procedure(const AFileName: String) of object;
 
   //** @abstract(The queue of files the operating system has asked the application to open.)
@@ -74,12 +71,6 @@ type
   //** FileOpenRequests; do not create or free it. Call TakePending once the application can
   //** open files, normally when the main form is shown, then set OnOpenFile for the requests
   //** that come later. For the main thread only.
-  /// <summary>The queue of files the operating system has asked the application to
-  /// open.</summary>
-  /// <remarks>There is one, created when the unit is initialised and reached through
-  /// FileOpenRequests; do not create or free it. Call TakePending once the application can
-  /// open files, normally when the main form is shown, then set OnOpenFile for the requests
-  /// that come later. For the main thread only.</remarks>
   TSprite3DFileOpenRequests = class
   private
     FPending: TArray<String>;
@@ -93,11 +84,8 @@ type
     {$ENDIF}
   public
     //** @abstract(Creates the queue; used only by the unit's initialisation.)
-    /// <summary>Creates the queue; used only by the unit's initialisation.</summary>
     constructor Create;
     //** @abstract(Stops listening for requests; used only by the unit's finalisation.)
-    /// <summary>Stops listening for requests; used only by the unit's
-    /// finalisation.</summary>
     destructor Destroy; override;
     //** @abstract(Adds a request, as the platform code does when the system sends one.)
     //**
@@ -106,12 +94,6 @@ type
     //** such as files dropped on the window, can use it too.
     //**
     //** @param(AFileName The file to open; made a full path.)
-    /// <summary>Adds a request, as the platform code does when the system sends
-    /// one.</summary>
-    /// <remarks>If OnOpenFile is set, it is called at once; otherwise the file waits for
-    /// TakePending. Files that do not exist are ignored. Other sources of files to open, such
-    /// as files dropped on the window, can use it too.</remarks>
-    /// <param name="AFileName">The file to open; made a full path.</param>
     procedure Request(const AFileName: String);
     //** @abstract(Returns and clears the requests so far, and starts listening for more.)
     //**
@@ -120,29 +102,17 @@ type
     //** another app.
     //**
     //** @returns(The files asked for so far, oldest first; empty if there are none.)
-    /// <summary>Returns and clears the requests so far, and starts listening for
-    /// more.</summary>
-    /// <remarks>The first call also reads the command line, and on Android the intent that
-    /// started the application. Blocks briefly on Android if a file must first be copied from
-    /// another app.</remarks>
-    /// <returns>The files asked for so far, oldest first; empty if there are none.</returns>
     function TakePending: TArray<String>;
     //** @abstract(Called for each request that arrives after TakePending; nil to queue them.)
     //**
     //** Set it to nil before the object it belongs to is freed. Command-line requests all
     //** arrive before TakePending, so on Windows and Linux it is never called.
-    /// <summary>Called for each request that arrives after TakePending; nil to queue
-    /// them.</summary>
-    /// <remarks>Set it to nil before the object it belongs to is freed. Command-line requests
-    /// all arrive before TakePending, so on Windows and Linux it is never called.</remarks>
     property OnOpenFile: TSprite3DOpenFileEvent read FOnOpenFile write FOnOpenFile;
   end;
 
 //** @abstract(The application's one queue of files to open.)
 //**
 //** @returns(The queue, which lives until the application ends.)
-/// <summary>The application's one queue of files to open.</summary>
-/// <returns>The queue, which lives until the application ends.</returns>
 function FileOpenRequests: TSprite3DFileOpenRequests;
 
 //** @abstract(Turns a @code(file:) URL into a local path; other text is returned unchanged.)
@@ -153,12 +123,6 @@ function FileOpenRequests: TSprite3DFileOpenRequests;
 //** @param(AUrl A URL or a path.)
 //**
 //** @returns(The local path.)
-/// <summary>Turns a <c>file:</c> URL into a local path; other text is returned
-/// unchanged.</summary>
-/// <remarks>Handles <c>file:///path</c> and <c>file://localhost/path</c>, and decodes percent
-/// escapes such as <c>%20</c>.</remarks>
-/// <param name="AUrl">A URL or a path.</param>
-/// <returns>The local path.</returns>
 function FileUrlToPath(const AUrl: String): String;
 
 implementation

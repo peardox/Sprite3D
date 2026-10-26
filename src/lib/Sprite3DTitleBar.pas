@@ -53,29 +53,20 @@ uses
 
 type
   //** @abstract(How title bars should look.)
-  /// <summary>How title bars should look.</summary>
   TSprite3DTitleBarSpec = record
     //** @abstract(True to leave title bars as the system draws them; the colours are then
     //** ignored.)
-    /// <summary>True to leave title bars as the system draws them; the colours are then
-    /// ignored.</summary>
     UseSystem: Boolean;
     //** @abstract(The caption's background colour; its brightness also picks dark or light
     //** where colours are not possible.)
-    /// <summary>The caption's background colour; its brightness also picks dark or light where
-    /// colours are not possible.</summary>
     Caption: TAlphaColor;
     //** @abstract(The caption text's colour.)
-    /// <summary>The caption text's colour.</summary>
     Text: TAlphaColor;
     //** @abstract(The window border's colour, or TAlphaColors.Null for the system's.)
-    /// <summary>The window border's colour, or TAlphaColors.Null for the system's.</summary>
     Border: TAlphaColor;
     //** @abstract(A spec that leaves title bars to the system.)
     //**
     //** @returns(The spec, with UseSystem True.)
-    /// <summary>A spec that leaves title bars to the system.</summary>
-    /// <returns>The spec, with UseSystem True.</returns>
     class function System: TSprite3DTitleBarSpec; static;
     //** @abstract(A spec with ACaption behind the caption, text in black or white, whichever
     //** reads better, and ABorder round the window.)
@@ -85,18 +76,11 @@ type
     //** @param(ABorder The border's colour; TAlphaColors.Null for the system's.)
     //**
     //** @returns(The spec.)
-    /// <summary>A spec with ACaption behind the caption, text in black or white, whichever
-    /// reads better, and ABorder round the window.</summary>
-    /// <param name="ACaption">The caption's background colour.</param>
-    /// <param name="ABorder">The border's colour; TAlphaColors.Null for the system's.</param>
-    /// <returns>The spec.</returns>
     class function Coloured(const ACaption: TAlphaColor;
       const ABorder: TAlphaColor = TAlphaColors.Null): TSprite3DTitleBarSpec; static;
     //** @abstract(True if Caption is darker than mid grey.)
     //**
     //** @returns(Whether a dark title bar suits the caption colour.)
-    /// <summary>True if Caption is darker than mid grey.</summary>
-    /// <returns>Whether a dark title bar suits the caption colour.</returns>
     function IsDark: Boolean;
   end;
 
@@ -108,11 +92,6 @@ type
 //** @param(AColour The colour found; unchanged if none is.)
 //**
 //** @returns(True if the style has a background with a colour.)
-/// <summary>The colour of the form background in the FMX style in use.</summary>
-/// <remarks>Reads the <c>backgroundstyle</c> resource that every FMX style draws behind a form;
-/// for a gradient, its first colour.</remarks>
-/// <param name="AColour">The colour found; unchanged if none is.</param>
-/// <returns>True if the style has a background with a colour.</returns>
 function StyleBackgroundColour(var AColour: TAlphaColor): Boolean;
 
 //** @abstract(A title bar spec to go with the FMX style in use.)
@@ -126,21 +105,12 @@ function StyleBackgroundColour(var AColour: TAlphaColor): Boolean;
 //** system's.)
 //**
 //** @returns(The spec.)
-/// <summary>A title bar spec to go with the FMX style in use.</summary>
-/// <remarks>The caption takes the style's form background colour, as StyleBackgroundColour
-/// reads it, or AFallback if the style has none.</remarks>
-/// <param name="AFallback">The caption colour to use if the style's cannot be read.</param>
-/// <param name="ABorder">The border colour, often the style's accent; TAlphaColors.Null for
-/// the system's.</param>
-/// <returns>The spec.</returns>
 function TitleBarSpecFromStyle(const AFallback: TAlphaColor;
   const ABorder: TAlphaColor = TAlphaColors.Null): TSprite3DTitleBarSpec;
 
 //** @abstract(Makes ASpec the look of every title bar, now and for forms shown later.)
 //**
 //** @param(ASpec How title bars should look.)
-/// <summary>Makes ASpec the look of every title bar, now and for forms shown later.</summary>
-/// <param name="ASpec">How title bars should look.</param>
 procedure SetTitleBarSpec(const ASpec: TSprite3DTitleBarSpec);
 
 //** @abstract(Gives one form's title bar the current spec.)
@@ -149,10 +119,6 @@ procedure SetTitleBarSpec(const ASpec: TSprite3DTitleBarSpec);
 //** has been made again. A form whose window does not exist yet is skipped.
 //**
 //** @param(AForm The form.)
-/// <summary>Gives one form's title bar the current spec.</summary>
-/// <remarks>SetTitleBarSpec already does this for every form; call it only for a form whose
-/// window has been made again. A form whose window does not exist yet is skipped.</remarks>
-/// <param name="AForm">The form.</param>
 procedure ApplyTitleBar(const AForm: TCommonCustomForm);
 
 implementation

@@ -35,79 +35,54 @@ uses
 
 type
   //** @abstract(The Creator Credits dialog; see the unit description.)
-  /// <summary>The Creator Credits dialog; see the unit description.</summary>
   TCreditsForm = class(TForm)
     //** @abstract(Names CreatorEdit.)
-    /// <summary>Names CreatorEdit.</summary>
     CreatorLabel: TLabel;
     //** @abstract(Who created the sprite set.)
-    /// <summary>Who created the sprite set.</summary>
     CreatorEdit: TEdit;
     //** @abstract(Names CreatorUrlEdit.)
-    /// <summary>Names CreatorUrlEdit.</summary>
     CreatorUrlLabel: TLabel;
     //** @abstract(Where the creator's work is.)
-    /// <summary>Where the creator's work is.</summary>
     CreatorUrlEdit: TEdit;
     //** @abstract(Names ModellerEdit.)
-    /// <summary>Names ModellerEdit.</summary>
     ModellerLabel: TLabel;
     //** @abstract(Who made the models.)
-    /// <summary>Who made the models.</summary>
     ModellerEdit: TEdit;
     //** @abstract(Names ModellerUrlEdit.)
-    /// <summary>Names ModellerUrlEdit.</summary>
     ModellerUrlLabel: TLabel;
     //** @abstract(Where the modeller's work is.)
-    /// <summary>Where the modeller's work is.</summary>
     ModellerUrlEdit: TEdit;
     //** @abstract(Names ArtistEdit.)
-    /// <summary>Names ArtistEdit.</summary>
     ArtistLabel: TLabel;
     //** @abstract(Who made the textures.)
-    /// <summary>Who made the textures.</summary>
     ArtistEdit: TEdit;
     //** @abstract(Names ArtistUrlEdit.)
-    /// <summary>Names ArtistUrlEdit.</summary>
     ArtistUrlLabel: TLabel;
     //** @abstract(Where the artist's work is.)
-    /// <summary>Where the artist's work is.</summary>
     ArtistUrlEdit: TEdit;
     //** @abstract(Names CreatedDate.)
-    /// <summary>Names CreatedDate.</summary>
     CreatedLabel: TLabel;
     //** @abstract(The day the project started.)
-    /// <summary>The day the project started.</summary>
     CreatedDate: TDateEdit;
     //** @abstract(The strip holding the Cancel and OK buttons.)
-    /// <summary>The strip holding the Cancel and OK buttons.</summary>
     ButtonLayout: TLayout;
     //** @abstract(Closes the dialog with mrOk.)
-    /// <summary>Closes the dialog with mrOk.</summary>
     OkButton: TButton;
     //** @abstract(Closes the dialog with mrCancel, keeping none of the changes.)
-    /// <summary>Closes the dialog with mrCancel, keeping none of the changes.</summary>
     CancelButton: TButton;
     //** @abstract(Starts with empty credits and today's date.)
     //**
     //** @param(Sender The form.)
-    /// <summary>Starts with empty credits and today's date.</summary>
-    /// <param name="Sender">The form.</param>
     procedure FormCreate(Sender: TObject);
     //** @abstract(Closes the dialog with the button's ModalResult.)
     //**
     //** @param(Sender OkButton or CancelButton.)
-    /// <summary>Closes the dialog with the button's ModalResult.</summary>
-    /// <param name="Sender">OkButton or CancelButton.</param>
     procedure ButtonClick(Sender: TObject);
     //** @abstract(Reports OK when shown with ShowAndFree, and frees the form then.)
     //**
     //** @param(Sender The form.)
     //**
     //** @param(Action Set to caFree when shown with ShowAndFree.)
-    /// <summary>Reports OK when shown with ShowAndFree, and frees the form then.</summary>
-    /// <param name="Sender">The form.</param>
-    /// <param name="Action">Set to caFree when shown with ShowAndFree.</param>
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     FFreeOnClose: Boolean;
@@ -119,20 +94,13 @@ type
     //**
     //** For Android and iOS, where ShowModal cannot block. OnAccept is called if it closes
     //** with OK.
-    /// <summary>Shows the dialog without blocking and frees it when it closes.</summary>
-    /// <remarks>For Android and iOS, where ShowModal cannot block. OnAccept is called if it
-    /// closes with OK.</remarks>
     procedure ShowAndFree;
     //** @abstract(The credits shown; read them after OK.)
     //**
     //** Written, a Created that is not a @code(yyyy-mm-dd) date shows as today. Read, the
     //** text is trimmed and Created is the date shown, as @code(yyyy-mm-dd).
-    /// <summary>The credits shown; read them after OK.</summary>
-    /// <remarks>Written, a Created that is not a <c>yyyy-mm-dd</c> date shows as today. Read,
-    /// the text is trimmed and Created is the date shown, as <c>yyyy-mm-dd</c>.</remarks>
     property Credits: TSprite3DCredits read GetCredits write SetCredits;
     //** @abstract(Called on OK when shown with ShowAndFree.)
-    /// <summary>Called on OK when shown with ShowAndFree.</summary>
     property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
   end;
 

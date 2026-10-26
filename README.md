@@ -388,7 +388,7 @@ The previous defaults are kept in `settings.json` as `associationBackup` until t
 
 ## Documentation
 
-Every public item in the source carries two kinds of documentation comment: `///` XML comments for Help Insight in the IDE, and `//**` comments for [PasDoc](https://pasdoc.github.io/). The HTML help is in `docs/lib` and `docs/ui`, one set for each source folder, built from within that folder with, for example:
+Every public item in the source is documented with `//**` comments for [PasDoc](https://pasdoc.github.io/). The HTML help is in `docs/lib` and `docs/ui`, one set for each source folder, built from within that folder with, for example:
 
 ```
 cd src/lib
