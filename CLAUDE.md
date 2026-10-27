@@ -57,9 +57,13 @@ Reference for the libraries used:
 - **Do not mention being unable to compile.** That is already known.
 - **Do not mention that nothing is committed or pushed.** The owner pushes
   when ready. Do not commit or push unless asked.
-- Update `README.md` when a feature, setting or requirement changes, and
-  this file when the state of the work or the rules change; include them in
-  the zip when they do.
+- Update `README.md`, and the design notes it links to, when a feature,
+  setting or requirement changes, and this file when the state of the work
+  or the rules change; include them in the zip when they do.
+- **The generated help in `docs/` is the owner's**: they rebuild it with
+  PasDoc only now and then, after a major milestone. Never change or
+  regenerate it. The PasDoc comments in the source are still written with
+  the code, ready for the next rebuild.
 - When something needs testing, say what to try and what the result should
   look like, on which platforms.
 
