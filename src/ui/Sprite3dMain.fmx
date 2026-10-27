@@ -10,9 +10,9 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   OnCloseQuery = FormCloseQuery
   OnDestroy = FormDestroy
-  OnShow = FormShow
   OnKeyDown = AnimationListBoxKeyDown
   OnKeyUp = AnimationListBoxKeyUp
+  OnShow = FormShow
   DesignerMasterStyle = 0
   object TabControl1: TTabControl
     Align = Client
@@ -26,13 +26,17 @@ object MainForm: TMainForm
       800s
       694s
       800s
+      694s
+      800s
+      694s
+      800s
       694s)
     object StaticTab: TTabItem
       CustomIcon = <
         item
         end>
       IsSelected = True
-      Size.Width = 52.000000000000000000
+      Size.Width = 49.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
@@ -46,7 +50,7 @@ object MainForm: TMainForm
         item
         end>
       IsSelected = False
-      Size.Width = 70.000000000000000000
+      Size.Width = 71.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
@@ -87,12 +91,12 @@ object MainForm: TMainForm
           object AnimationsHeader: TRectangle
             Align = Top
             Fill.Color = xFF2B2B2B
+            Padding.Left = 8.000000000000000000
+            Padding.Right = 8.000000000000000000
             Size.Width = 240.000000000000000000
             Size.Height = 26.000000000000000000
             Size.PlatformDefault = False
             Stroke.Kind = None
-            Padding.Left = 8.000000000000000000
-            Padding.Right = 8.000000000000000000
             object FramesLabel: TLabel
               Align = Right
               StyledSettings = [Family]
@@ -110,14 +114,12 @@ object MainForm: TMainForm
             object AnimationsLabel: TLabel
               Align = Client
               StyledSettings = [Family]
-              Position.X = 8.000000000000000000
               Size.Width = 174.000000000000000000
               Size.Height = 26.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Size = 14.000000000000000000
               TextSettings.Font.StyleExt = {00070000000000000004000000}
               TextSettings.FontColor = claYellow
-              TextSettings.HorzAlign = Leading
               Text = 'Animations'
               TabOrder = 0
             end
@@ -129,13 +131,13 @@ object MainForm: TMainForm
             Size.PlatformDefault = False
             TabOrder = 86
             OnClick = AnimationListBoxClick
-            OnChange = AnimationListBoxChange
-            OnKeyDown = AnimationListBoxKeyDown
-            OnKeyUp = AnimationListBoxKeyUp
             DisableFocusEffect = True
             DefaultItemStyles.ItemStyle = ''
             DefaultItemStyles.GroupHeaderStyle = ''
             DefaultItemStyles.GroupFooterStyle = ''
+            OnChange = AnimationListBoxChange
+            OnKeyDown = AnimationListBoxKeyDown
+            OnKeyUp = AnimationListBoxKeyUp
             Viewport.Width = 236.000000000000000000
             Viewport.Height = 664.000000000000000000
           end
@@ -147,13 +149,13 @@ object MainForm: TMainForm
             TabOrder = 87
             Visible = False
             OnClick = AnimationListBoxClick
-            OnChange = AnimationListBoxChange
-            OnKeyDown = AnimationListBoxKeyDown
-            OnKeyUp = AnimationListBoxKeyUp
             DisableFocusEffect = True
             DefaultItemStyles.ItemStyle = ''
             DefaultItemStyles.GroupHeaderStyle = ''
             DefaultItemStyles.GroupFooterStyle = ''
+            OnChange = AnimationListBoxChange
+            OnKeyDown = AnimationListBoxKeyDown
+            OnKeyUp = AnimationListBoxKeyUp
             Viewport.Width = 236.000000000000000000
             Viewport.Height = 664.000000000000000000
           end
@@ -171,7 +173,7 @@ object MainForm: TMainForm
         item
         end>
       IsSelected = False
-      Size.Width = 60.000000000000000000
+      Size.Width = 57.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
