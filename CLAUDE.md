@@ -325,6 +325,13 @@ Delivered on 27 October 2026, not yet tested or pushed:
   transparency (`viewport.md`, Still to check).
 - Popup menus (`FAnimationPopup`) on Linux were not part of the menu fix;
   check they show full names.
+- Linux: run under PAServer, closing gives "Runtime error 217" straight
+  after Gorilla3D's `ResetDefaultContextClass` log line, sometimes with
+  "AniThread not available anymore" lines before it. Run from a terminal it
+  closes cleanly. Tested on 27 October 2026: `FormDestroy` runs before
+  Gorilla3D unregisters its context, so the form is not freed late, and
+  nothing of Sprite3D's is left at that point. The owner has passed it to
+  Gorilla3D's author; do not work round it in Sprite3D.
 - `src/Sprite3d.dproj` has Deployment entries for `styles\buildstyles.cmd`
   (and the `.rc`) that are not disabled, so the script may be deployed, and
   on macOS copied into the user's folders by `System.StartUpCopy` (see
