@@ -1365,7 +1365,10 @@ type
     FMeasurer: TAnimationBoundsMeasurer;   // the new model's, while measured
     FLoadAborted: Boolean;
     FLoadError: String;      // shown once the dialog has closed
-    FPendingModel: String;   // asked for during a load; loaded after it
+    //** @abstract(Models asked for during a load, or while a folder is opened, oldest
+    //** first; each is loaded in turn after it.) Several can arrive at once, as when a
+    //** number of files are opened together from Explorer.
+    FPendingModels: TArray<String>;
     // Covers the view while no model is loaded, saying how to load one
     FNoModelPanel: TPanel;
     //** The no-model panel's line saying how to load a model, which differs between the
@@ -1507,6 +1510,44 @@ type
     // View, Camera, Lock Camera, and the line above it
     FLockCameraItem: TMenuItem;
     FLockSeparatorItem: TMenuItem;
+    //** @abstract(View, Camera, Temporary Mouse View, between the line and Lock Camera;
+    //** desktop only, so nil on Android and iOS.) See MouseViewItemClick.
+    FMouseViewItem: TMenuItem;
+    //** @abstract(The mouse view readout, top right over the view, shown while
+    //** FMouseViewItem is ticked.) A dark FMouseViewBack, as the frame rate readout has at
+    //** the top left, holding the centred title "Mouseview On", FMouseViewLabel, and under it
+    //** FMouseViewDetails, shown while the view is turned or zoomed: the azimuth and the
+    //** distance (or the orthographic size, named in FMouseDistanceName) as they differ from
+    //** the normal view, in FMouseAzimuthValue and FMouseDistanceValue, and "Right Click to
+    //** Reset". See UpdateMouseViewReadout.
+    FMouseViewBack: TRectangle;
+    FMouseViewLabel: TLabel;
+    FMouseViewDetails: TLayout;
+    FMouseAzimuthValue: TLabel;
+    FMouseDistanceName: TLabel;
+    FMouseDistanceValue: TLabel;
+    //** @abstract(The mouse view's turn and zoom, on top of the normal view.)
+    //** FMouseYaw is in degrees of the camera's own Azimuth, wrapped into 0 to 360, and
+    //** FMouseZoom a factor on the distance, or on the orthographic size; 0 and 1 while the
+    //** view is normal.
+    FMouseYaw: Single;
+    FMouseZoom: Single;
+    //** @abstract(True while FMouseYaw and FMouseZoom are on the camera.) SuspendMouseView
+    //** takes them off while the normal view is changed, and ResumeMouseView puts them back.
+    FMouseApplied: Boolean;
+    //** @abstract(How many SuspendMouseView calls are still to be matched by
+    //** ResumeMouseView.) The mouse view goes back on only when it falls to 0.
+    FMouseSuspend: Integer;
+    //** @abstract(Whether FMouseZoom is on the orthographic size rather than the distance.)
+    //** Kept, so it comes off the one it was put on even if the projection has changed since.
+    FMouseZoomOrtho: Boolean;
+    //** @abstract(What was shown when the mouse view first moved the camera, from
+    //** MouseViewSubject.) Anything else shown puts the normal view back.
+    FMouseSubject: String;
+    //** @abstract(True while the left button, pressed over the view, is held.) FMouseLastX
+    //** is where the pointer last was, in AspectLayout's coordinates.
+    FMouseDragging: Boolean;
+    FMouseLastX: Single;
     // True while a grab or a capture has its own framing on the camera,
     // which must be put back even if the camera is locked meanwhile
     FGrabFramed: Boolean;
@@ -1722,6 +1763,9 @@ type
     ModelDir: String;
     procedure SwitchModel(const AModel: String);
     function FitModel: Boolean;
+    //** @abstract(FitModel's fit, of the normal view alone; FitModel takes the mouse view
+    //** off around it.) False if the camera is locked or there is no model.
+    function FitNormalView: Boolean;
     procedure PlaySelectedAnimation;
     //** @abstract(The combined swept volume the view frames while two or more entries are
     //** ticked, every export frames, and Show Animation Volume draws.)
@@ -2035,6 +2079,70 @@ type
     function CameraLocked: Boolean;
     function IsCameraViewItem(const AItem: TMenuItem): Boolean;
     procedure UpdateCameraLockControls;
+    //** @abstract(Adds View, Camera, Temporary Mouse View and the "Mouseview On" readout,
+    //** and hooks the mouse on the view.) Desktop only; called by BuildLockCameraItem, just
+    //** before Lock Camera is added.
+    procedure BuildMouseViewItem;
+    //** @abstract(Puts the "Mouseview On" readout at the top right of the view.) Called as
+    //** the view is resized.
+    procedure PlaceMouseViewReadout;
+    //** @abstract(Shows the mouse view's turn and zoom in the readout.)
+    //** The azimuth, as the dials show it, and the distance, or in orthographic projection
+    //** the orthographic size, each as + or - its normal value, to 3 decimal places, with
+    //** "Right Click to Reset" under them; shown only while either differs from normal, the
+    //** readout shrinking back to its title when both are 0.
+    procedure UpdateMouseViewReadout;
+    //** @abstract(Ticks or unticks Temporary Mouse View, and keeps the tick in
+    //** settings.json.) Unticking it puts the normal view back. The view takes the mouse
+    //** only while it is ticked.
+    procedure MouseViewItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks Temporary Mouse View, without saving it.)
+    //** Unticked, the normal view is put back; the view takes the mouse and shows the
+    //** readout only while it is ticked.
+    //** @param(AOn True to tick it.)
+    procedure ApplyMouseViewTick(const AOn: Boolean);
+    //** @abstract(True while View, Camera, Temporary Mouse View is ticked.)
+    function MouseViewOn: Boolean;
+    //** @abstract(What the view shows, as far as the mouse view is concerned: the model and,
+    //** on the Animated tab, the animation selected.) Empty with no model.
+    function MouseViewSubject: String;
+    //** @abstract(Turns and zooms the camera, whether or not it is locked.)
+    //** @param(AYaw Degrees added to the camera's Azimuth.)
+    //** @param(AZoom The factor the distance, or the orthographic size, is multiplied by.)
+    //** @param(AOrtho True to zoom the orthographic size, False the distance.)
+    procedure ShiftCamera(const AYaw, AZoom: Single; const AOrtho: Boolean);
+    //** @abstract(Moves the mouse view on by a turn and a zoom, from the mouse.)
+    //** The zoom in all is kept within MOUSE_VIEW_ZOOM_MIN to MOUSE_VIEW_ZOOM_MAX. Nothing is
+    //** done with no model, or while the mouse view is suspended.
+    //** @param(AYaw Degrees added to the camera's Azimuth.)
+    //** @param(AZoom The factor the zoom is multiplied by.)
+    procedure MoveMouseView(const AYaw, AZoom: Single);
+    //** @abstract(Takes the mouse view off the camera, leaving the normal view, before code
+    //** changes the normal view.) Each call is matched by ResumeMouseView; they nest.
+    procedure SuspendMouseView;
+    //** @abstract(Puts the mouse view back on the camera, on top of whatever the normal view
+    //** now is, once every SuspendMouseView has been matched.)
+    procedure ResumeMouseView;
+    //** @abstract(Puts the normal view back and forgets the mouse view's turn and zoom.)
+    procedure ResetMouseView;
+    //** @abstract(Puts the normal view back if the view now shows another model or
+    //** animation than the mouse view was started on.) FitModel calls it, and so does
+    //** ReadoutTimerTimer, a few times a second, for changes that are not refitted, such as
+    //** a new model while the camera is locked.
+    procedure CheckMouseViewSubject;
+    //** @abstract(Mouse view: the left button starts turning the view; the right, or a
+    //** Control-click as elsewhere in Sprite3D, puts the normal view back.)
+    procedure ViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
+      X, Y: Single);
+    //** @abstract(Mouse view: while the left button is held, moving left or right turns the
+    //** view.)
+    procedure ViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single);
+    //** @abstract(Mouse view: letting go of the left button stops turning the view.)
+    procedure ViewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
+      X, Y: Single);
+    //** @abstract(Mouse view: the wheel moves the camera nearer or further.)
+    procedure ViewMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer;
+      var Handled: Boolean);
     procedure AnimationSettingsItemClick(Sender: TObject);
     // Keeps the overscan warning's Do not show this again at once, OK or not
     procedure AnimationDialogWarningChange(Sender: TObject);
@@ -2311,6 +2419,27 @@ const
   // passes, as a fraction of the view
   TWO_PASS_FINE_OVERSCAN = 4;
   TWO_PASS_FINE_FIT_MARGIN = 0.02;
+  //** @abstract(Temporary Mouse View: degrees the view turns for each pixel the pointer
+  //** moves left or right with the left button held; a full turn is 720 pixels.)
+  MOUSE_VIEW_DEGREES_PER_PIXEL = 0.5;
+  //** @abstract(Temporary Mouse View: the factor one notch of the wheel moves the camera
+  //** nearer or further by.)
+  MOUSE_VIEW_ZOOM_STEP = 1.1;
+  //** @abstract(Temporary Mouse View: the nearest the wheel brings the camera, as a factor
+  //** of the normal view's distance or orthographic size.)
+  MOUSE_VIEW_ZOOM_MIN = 0.2;
+  //** @abstract(Temporary Mouse View: the furthest the wheel takes the camera, as a factor
+  //** of the normal view's distance or orthographic size.)
+  MOUSE_VIEW_ZOOM_MAX = 10.0;
+  //** @abstract(Temporary Mouse View: the readout's width, its title's height, the height
+  //** of each line under the title, and the width of the values' column, in pixels.)
+  MOUSE_VIEW_READOUT_WIDTH = 160;
+  MOUSE_VIEW_TITLE_HEIGHT = 20;
+  MOUSE_VIEW_ROW_HEIGHT = 17;
+  MOUSE_VIEW_VALUE_WIDTH = 72;
+  //** @abstract(Temporary Mouse View: a difference from the normal view smaller than this
+  //** shows as 0.000, and counts as none.)
+  MOUSE_VIEW_SHOWN_ZERO = 0.0005;
 
 {$R *.fmx}
 
@@ -2427,6 +2556,8 @@ begin
   // No entry clicked yet for a Shift-click to range from
   FTickAnchor[False] := -1;
   FTickAnchor[True] := -1;
+  // The normal view: no mouse view turn or zoom
+  FMouseZoom := 1;
   FPlayedEntry := -1;
   // An animation chosen first shows held on its first frame
   FHoldNew := True;
@@ -2915,11 +3046,17 @@ procedure TMainForm.ApplyAngles;
 begin
   if CameraLocked then
     Exit;
-  if Assigned(GorillaCamera) then
-  begin
-    GorillaCamera.Azimuth := Wrap360(-FAzimuth);
-    GorillaCamera.PolarAngle := FPolarAngle;
-    GorillaCamera.Roll := Wrap360(-FRoll);   // reversed, as is Azimuth
+  // The normal view's angles; a mouse view turn goes back on top of them
+  SuspendMouseView;
+  try
+    if Assigned(GorillaCamera) then
+    begin
+      GorillaCamera.Azimuth := Wrap360(-FAzimuth);
+      GorillaCamera.PolarAngle := FPolarAngle;
+      GorillaCamera.Roll := Wrap360(-FRoll);   // reversed, as is Azimuth
+    end;
+  finally
+    ResumeMouseView;
   end;
 end;
 
@@ -3023,6 +3160,11 @@ begin
       FitFormToGrabShape;
       LoadStartupModel;
       FileOpenRequests.OnOpenFile := OpenRequestedFile;
+      // Files asked for while the start-up model loaded, as by another copy
+      // of Sprite3D handing its files to this one, would otherwise wait for
+      // ever
+      for var Request in FileOpenRequests.TakePending do
+        OpenRequestedFile(Request);
       {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
       TThread.ForceQueue(nil,
         procedure
@@ -3113,6 +3255,11 @@ begin
     end;
   if FileName <> String.Empty then
     SwitchModel(FileName);
+  // Every other model the system asked for, as when several are opened
+  // together from Explorer, each in turn
+  for var Request in Requested do
+    if IsModelFile(Request) and not SameFileName(Request, FileName) then
+      SwitchModel(Request);
 end;
 
 // A file the system asks to open while the application runs
@@ -3322,6 +3469,8 @@ end;
 procedure TMainForm.AspectLayoutResize(Sender: TObject);
 begin
   FitViewportToAspect;
+  // AspectLayout fills ViewportLayout, so this is its resize too
+  PlaceMouseViewReadout;
 end;
 
 // Makes the viewport, and its background behind it, as large as fits in
@@ -4028,6 +4177,8 @@ begin
     Exit;   // the last grab has not been saved yet
   if not FSettings.HasSaveFolder and not ChooseSaveFolder then
     Exit;   // no folder, no grab
+  // Grabs are of the normal view: the mouse view is only for looking
+  ResetMouseView;
 
   if not FOffscreen.Grab(
     procedure(const ABitmap: TBitmap; const AError: String)
@@ -4057,6 +4208,8 @@ end;
 procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
   const AWidth, AHeight: Integer);
 begin
+  // Every grab is of the normal view, whatever started it
+  ResetMouseView;
   // Animation exports show the model alone: the helpers drawn on screen to
   // show its box, axes, floor and volumes are left out. Grabs and icons are
   // saved as the view shows them, helpers and all.
@@ -4421,6 +4574,8 @@ begin
     Exit;   // a grab is still under way
   if not ChooseIconFile(FileName, Writer) then
     Exit;
+  // Icons are of the normal view: the mouse view is only for looking
+  ResetMouseView;
 
   if not FOffscreen.GrabSizes(Writer.DefaultSizes,
     procedure(const AImages: TArray<TBitmap>; const AError: String)
@@ -4591,11 +4746,17 @@ procedure TMainForm.ShowCameraSpec(const ASpec: TCameraSettings);
 begin
   if CameraLocked or not Assigned(GorillaCamera) then
     Exit;
-  GorillaCamera.Azimuth := Wrap360(-ASpec.Azimuth);
-  GorillaCamera.PolarAngle := ASpec.PolarAngle;
-  GorillaCamera.Roll := Wrap360(-ASpec.Roll);
-  ShowDistanceFactor(ASpec.Distance);
-  ShowPan(ASpec.PanEnabled, ASpec.PanX, ASpec.PanZ);
+  // The normal view as the dialog shows it; a mouse view goes back on top
+  SuspendMouseView;
+  try
+    GorillaCamera.Azimuth := Wrap360(-ASpec.Azimuth);
+    GorillaCamera.PolarAngle := ASpec.PolarAngle;
+    GorillaCamera.Roll := Wrap360(-ASpec.Roll);
+    ShowDistanceFactor(ASpec.Distance);
+    ShowPan(ASpec.PanEnabled, ASpec.PanX, ASpec.PanZ);
+  finally
+    ResumeMouseView;
+  end;
 end;
 
 // Keeps ASpec, from the dialog's OK, and shows it
@@ -4745,7 +4906,24 @@ end;
 // otherwise the volume of what is shown alone, as large as the view allows.
 // The dials do not call this: with the orbit centre on the turning axis, the
 // fit already allows for turning the azimuth.
+//
+// Temporary Mouse View sits on top of the fit: the fit is of the normal view
+// alone, with the mouse view's turn and zoom taken off around it and put back
+// after, so a refit of the same model and animation (paused, stepped, the
+// window resized) keeps them. A new model or animation shows the normal view:
+// they are forgotten, whether or not the camera is locked.
 function TMainForm.FitModel: Boolean;
+begin
+  CheckMouseViewSubject;
+  SuspendMouseView;
+  try
+    Result := FitNormalView;
+  finally
+    ResumeMouseView;
+  end;
+end;
+
+function TMainForm.FitNormalView: Boolean;
 begin
   Result := not CameraLocked and Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
@@ -4774,10 +4952,16 @@ procedure TMainForm.ShowDistanceFactor(const AFactor: Single);
 begin
   if CameraLocked or not Assigned(GorillaCamera) or (FFitDistance <= 0) then
     Exit;
-  if GorillaCamera.IsOrthographic then
-    GorillaCamera.OrthoHeight := FFitOrthoHeight * AFactor
-  else
-    GorillaCamera.Distance := FFitDistance * AFactor;
+  // The normal view's distance; a mouse view zoom goes back on top of it
+  SuspendMouseView;
+  try
+    if GorillaCamera.IsOrthographic then
+      GorillaCamera.OrthoHeight := FFitOrthoHeight * AFactor
+    else
+      GorillaCamera.Distance := FFitDistance * AFactor;
+  finally
+    ResumeMouseView;
+  end;
 end;
 
 procedure TMainForm.ApplyPan;
@@ -5137,7 +5321,11 @@ begin
   // A load under way, or a folder being opened, comes first
   if (FLoadStage <> lsNone) or FQueueActive then
   begin
-    FPendingModel := Model;
+    // Waits its turn, once however often it is asked for meanwhile
+    for var Waiting in FPendingModels do
+      if SameFileName(Waiting, Model) then
+        Exit;
+    FPendingModels := FPendingModels + [Model];
     Exit;
   end;
   if Capturing then
@@ -5867,6 +6055,10 @@ begin
   FLockSeparatorItem := TMenuItem.Create(Self);
   FLockSeparatorItem.Text := '-';
   CameraMenu.AddObject(FLockSeparatorItem);
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  // Temporary Mouse View, above Lock Camera; it needs a mouse
+  BuildMouseViewItem;
+  {$ENDIF}
   FLockCameraItem := TMenuItem.Create(Self);
   FLockCameraItem.Text := 'Lock Camera';
   FLockCameraItem.IsChecked := False;
@@ -5880,11 +6072,12 @@ begin
   Result := Assigned(FLockCameraItem) and FLockCameraItem.IsChecked;
 end;
 
-// One of the View, Camera views, rather than Lock Camera or a line
+// One of the View, Camera views, rather than Temporary Mouse View, Lock
+// Camera or a line
 function TMainForm.IsCameraViewItem(const AItem: TMenuItem): Boolean;
 begin
   Result := (AItem <> FLockCameraItem) and (AItem <> FLockSeparatorItem) and
-    (AItem.Text <> '-');
+    (AItem <> FMouseViewItem) and (AItem.Text <> '-');
 end;
 
 // Ticks or unticks Lock Camera. The camera keeps exactly what it has; on
@@ -5922,6 +6115,403 @@ begin
       CameraMenu.Items[I].Enabled := not Locked;
   OrthographicItem.Enabled := not Locked;
   FLockCameraItem.Enabled := not Capturing;
+end;
+
+// Temporary Mouse View
+//
+// While View, Camera, Temporary Mouse View is ticked, the mouse can turn and
+// zoom the view to look the model over: left-drag left or right turns it,
+// the wheel moves the camera nearer or further, and a right click puts the
+// normal view back. It is for looking only and has no lasting effect: the
+// dials, the views, the fit, Lock Camera and settings.json never hear of it,
+// grabs, icons and exports are always of the normal view, and a new model or
+// animation shows the normal view. It works whether or not the camera is
+// locked, which is why ShiftCamera unlocks the camera for each change.
+//
+// The turn and zoom are kept as offsets on top of the normal view, not as a
+// view of their own. Code that sets the normal view (FitModel, ApplyAngles,
+// ShowDistanceFactor, ShowCameraSpec) takes them off first with
+// SuspendMouseView and puts them back after with ResumeMouseView, so the
+// normal view always comes out as it would without them, and a refit of the
+// same model and animation keeps the mouse view on top of the new fit.
+//
+// The view takes the mouse only while the item is ticked: AspectLayout,
+// under the viewport and its surround, is otherwise left with HitTest off,
+// as before, so nothing else changes.
+procedure TMainForm.BuildMouseViewItem;
+
+  //** @abstract(A white label in the readout, letting clicks through.)
+  //** @param(AParent The control it goes in.)
+  //** @param(AText Its text.)
+  //** @param(AAlign Where in its width the text sits.)
+  //** @returns(The label, owned by the form.)
+  function MouseViewText(const AParent: TFmxObject; const AText: String;
+    const AAlign: TTextAlign): TLabel;
+  begin
+    Result := TLabel.Create(Self);
+    Result.Parent := AParent;
+    Result.StyledSettings := Result.StyledSettings - [TStyledSetting.FontColor];
+    Result.TextSettings.FontColor := TAlphaColors.White;
+    Result.TextSettings.HorzAlign := AAlign;
+    Result.TextSettings.WordWrap := False;
+    Result.HitTest := False;
+    Result.Text := AText;
+  end;
+
+  //** @abstract(One row of the readout's details: a name at the left and a value at the
+  //** right.)
+  //** @param(ARow The row, from 0 at the top, which sets its place.)
+  //** @param(AName The name.)
+  //** @param(AValue Set to the value's label, which starts empty.)
+  //** @returns(The name's label.)
+  function MouseViewRow(const ARow: Integer; const AName: String;
+    out AValue: TLabel): TLabel;
+  var
+    Row: TLayout;
+  begin
+    Row := TLayout.Create(Self);
+    Row.Parent := FMouseViewDetails;
+    // Top-aligned controls are laid out in the order of their positions
+    Row.Position.Y := ARow * MOUSE_VIEW_ROW_HEIGHT;
+    Row.Align := TAlignLayout.Top;
+    Row.Height := MOUSE_VIEW_ROW_HEIGHT;
+    Row.HitTest := False;
+    AValue := MouseViewText(Row, String.Empty, TTextAlign.Trailing);
+    AValue.Align := TAlignLayout.Right;
+    AValue.Width := MOUSE_VIEW_VALUE_WIDTH;
+    Result := MouseViewText(Row, AName, TTextAlign.Leading);
+    Result.Align := TAlignLayout.Client;
+  end;
+
+begin
+  FMouseViewItem := TMenuItem.Create(Self);
+  FMouseViewItem.Text := 'Temporary Mouse View';
+  FMouseViewItem.IsChecked := False;
+  FMouseViewItem.OnClick := MouseViewItemClick;
+  CameraMenu.AddObject(FMouseViewItem);
+
+  // As the frame rate readout, but top right, and only while ticked
+  FMouseViewBack := TRectangle.Create(Self);
+  FMouseViewBack.Parent := ViewportLayout;
+  FMouseViewBack.Align := TAlignLayout.None;
+  FMouseViewBack.Width := MOUSE_VIEW_READOUT_WIDTH;
+  FMouseViewBack.Height := MOUSE_VIEW_TITLE_HEIGHT;
+  FMouseViewBack.XRadius := 4;
+  FMouseViewBack.YRadius := 4;
+  FMouseViewBack.Fill.Kind := TBrushKind.Solid;
+  FMouseViewBack.Fill.Color := $C0000000;
+  FMouseViewBack.Stroke.Kind := TBrushKind.None;
+  FMouseViewBack.HitTest := False;
+  FMouseViewBack.Visible := False;
+
+  // The title, centred
+  FMouseViewLabel := MouseViewText(FMouseViewBack, 'Mouseview On', TTextAlign.Center);
+  FMouseViewLabel.Align := TAlignLayout.Top;
+  FMouseViewLabel.Height := MOUSE_VIEW_TITLE_HEIGHT;
+
+  // Under it, while turned or zoomed: two rows of a name at the left and a
+  // value at the right, and the reset hint, centred
+  FMouseViewDetails := TLayout.Create(Self);
+  FMouseViewDetails.Parent := FMouseViewBack;
+  FMouseViewDetails.Position.Y := MOUSE_VIEW_TITLE_HEIGHT;
+  FMouseViewDetails.Align := TAlignLayout.Top;
+  FMouseViewDetails.Height := 3 * MOUSE_VIEW_ROW_HEIGHT;
+  FMouseViewDetails.Padding.Left := 8;
+  FMouseViewDetails.Padding.Right := 8;
+  FMouseViewDetails.HitTest := False;
+  FMouseViewDetails.Visible := False;
+  MouseViewRow(0, 'Azimuth', FMouseAzimuthValue);
+  FMouseDistanceName := MouseViewRow(1, 'Distance', FMouseDistanceValue);
+  var ResetHint := MouseViewText(FMouseViewDetails, 'Right Click to Reset',
+    TTextAlign.Center);
+  ResetHint.Position.Y := 2 * MOUSE_VIEW_ROW_HEIGHT;
+  ResetHint.Align := TAlignLayout.Top;
+  ResetHint.Height := MOUSE_VIEW_ROW_HEIGHT;
+
+  FMouseViewBack.BringToFront;
+  PlaceMouseViewReadout;
+
+  AspectLayout.OnMouseDown := ViewMouseDown;
+  AspectLayout.OnMouseMove := ViewMouseMove;
+  AspectLayout.OnMouseUp := ViewMouseUp;
+  AspectLayout.OnMouseWheel := ViewMouseWheel;
+
+  // Ticked as it was left last session, from the normal view
+  ApplyMouseViewTick(FSettings.MouseView);
+end;
+
+procedure TMainForm.PlaceMouseViewReadout;
+var
+  Left: Single;
+begin
+  if not Assigned(FMouseViewBack) then
+    Exit;
+  // 8 pixels in from the right, as the frame rate is from the left, but
+  // never past the left edge in a very narrow view
+  Left := ViewportLayout.Width - FMouseViewBack.Width - 8;
+  if Left < 8 then
+    Left := 8;
+  FMouseViewBack.Position.Point := TPointF.Create(Left, 6);
+end;
+
+//** @abstract(A value with its sign, + or -, to 3 decimal places; a value that would show
+//** as 0.000 shows as +0.000.)
+//** @param(AValue The value.)
+//** @returns(Such as +12.500 or -0.250.)
+function SignedText(const AValue: Single): String;
+begin
+  if Abs(AValue) < MOUSE_VIEW_SHOWN_ZERO then
+    Result := '+' + FormatFloat('0.000', 0)
+  else if AValue < 0 then
+    Result := '-' + FormatFloat('0.000', -AValue)
+  else
+    Result := '+' + FormatFloat('0.000', AValue);
+end;
+
+procedure TMainForm.UpdateMouseViewReadout;
+var
+  Turn, Change: Single;
+  Shown: Boolean;
+begin
+  if not Assigned(FMouseViewBack) then
+    Exit;
+  Turn := 0;
+  Change := 0;
+  if FMouseApplied and Assigned(GorillaCamera) then
+  begin
+    // As the dials show the azimuth, which runs the other way to the
+    // camera's own, from -180 to +180
+    Turn := -FMouseYaw;
+    if Turn <= -180 then
+      Turn := Turn + 360;
+    // The camera now, less the camera without the zoom
+    if FMouseZoomOrtho then
+      Change := GorillaCamera.OrthoHeight * (1 - 1 / FMouseZoom)
+    else
+      Change := GorillaCamera.Distance * (1 - 1 / FMouseZoom);
+  end;
+  Shown := (Abs(Turn) >= MOUSE_VIEW_SHOWN_ZERO) or (Abs(Change) >= MOUSE_VIEW_SHOWN_ZERO);
+  if Shown then
+  begin
+    FMouseAzimuthValue.Text := SignedText(Turn);
+    FMouseDistanceValue.Text := SignedText(Change);
+    // In orthographic projection the wheel changes the view's size
+    if FMouseZoomOrtho then
+      FMouseDistanceName.Text := 'Size'
+    else
+      FMouseDistanceName.Text := 'Distance';
+  end;
+  if FMouseViewDetails.Visible <> Shown then
+  begin
+    FMouseViewDetails.Visible := Shown;
+    if Shown then
+      FMouseViewBack.Height := MOUSE_VIEW_TITLE_HEIGHT + 3 * MOUSE_VIEW_ROW_HEIGHT + 3
+    else
+      FMouseViewBack.Height := MOUSE_VIEW_TITLE_HEIGHT;
+  end;
+end;
+
+procedure TMainForm.ApplyMouseViewTick(const AOn: Boolean);
+begin
+  FMouseViewItem.IsChecked := AOn;
+  FMouseDragging := False;
+  if not AOn then
+    ResetMouseView;
+  AspectLayout.HitTest := AOn;
+  FMouseViewBack.Visible := AOn;
+  UpdateMouseViewReadout;
+end;
+
+function TMainForm.MouseViewOn: Boolean;
+begin
+  Result := Assigned(FMouseViewItem) and FMouseViewItem.IsChecked;
+end;
+
+procedure TMainForm.MouseViewItemClick(Sender: TObject);
+begin
+  ApplyMouseViewTick(not FMouseViewItem.IsChecked);
+  // Kept at once, as only the tick is kept
+  FSettings.MouseView := MouseViewOn;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  if MouseViewOn then
+    DebugMemo.Lines.Add('Temporary mouse view on: left-drag turns the view, the wheel ' +
+      'zooms, a right click puts the normal view back')
+  else
+    DebugMemo.Lines.Add('Temporary mouse view off');
+end;
+
+function TMainForm.MouseViewSubject: String;
+begin
+  Result := String.Empty;
+  if not Assigned(GorillaModel) then
+    Exit;
+  // The model object itself: each static model, and each model loaded, is
+  // a different one
+  Result := Format('%p', [Pointer(GorillaModel)]);
+  if not FStaticMode and IsAnimationEntry(AnimationListBox.ItemIndex) then
+    Result := Result + '|' + AnimationListBox.Items[AnimationListBox.ItemIndex];
+end;
+
+procedure TMainForm.ShiftCamera(const AYaw, AZoom: Single; const AOrtho: Boolean);
+var
+  WasLocked: Boolean;
+begin
+  if not Assigned(GorillaCamera) then
+    Exit;
+  // Whether or not Lock Camera is ticked; the lock is back as it was after
+  WasLocked := GorillaCamera.Locked;
+  GorillaCamera.Locked := False;
+  try
+    if AYaw <> 0 then
+      GorillaCamera.Azimuth := GorillaCamera.Azimuth + AYaw;
+    if AZoom <> 1 then
+      if AOrtho then
+      begin
+        // In orthographic projection the distance does not change the size
+        GorillaCamera.OrthoHeight := GorillaCamera.OrthoHeight * AZoom;
+        if GorillaCamera.OrthoWidth > 0 then
+          GorillaCamera.OrthoWidth := GorillaCamera.OrthoWidth * AZoom;
+      end
+      else
+        GorillaCamera.Distance := GorillaCamera.Distance * AZoom;
+  finally
+    GorillaCamera.Locked := WasLocked;
+  end;
+end;
+
+procedure TMainForm.MoveMouseView(const AYaw, AZoom: Single);
+var
+  Zoom: Single;
+begin
+  if (FMouseSuspend > 0) or not Assigned(GorillaCamera) or not Assigned(GorillaModel) then
+    Exit;
+  if not FMouseApplied then
+  begin
+    // The first move from the normal view: what it is of, and which size the
+    // zoom changes
+    FMouseYaw := 0;
+    FMouseZoom := 1;
+    FMouseSubject := MouseViewSubject;
+    FMouseZoomOrtho := GorillaCamera.IsOrthographic;
+  end;
+  Zoom := EnsureRange(FMouseZoom * AZoom, MOUSE_VIEW_ZOOM_MIN, MOUSE_VIEW_ZOOM_MAX);
+  ShiftCamera(AYaw, Zoom / FMouseZoom, FMouseZoomOrtho);
+  FMouseYaw := FMouseYaw + AYaw;
+  FMouseYaw := FMouseYaw - 360 * Floor(FMouseYaw / 360);
+  FMouseZoom := Zoom;
+  FMouseApplied := True;
+  UpdateMouseViewReadout;
+end;
+
+procedure TMainForm.SuspendMouseView;
+begin
+  Inc(FMouseSuspend);
+  if FMouseApplied then
+  begin
+    ShiftCamera(-FMouseYaw, 1 / FMouseZoom, FMouseZoomOrtho);
+    FMouseApplied := False;
+  end;
+end;
+
+procedure TMainForm.ResumeMouseView;
+begin
+  if FMouseSuspend > 0 then
+    Dec(FMouseSuspend);
+  if (FMouseSuspend > 0) or FMouseApplied or not Assigned(GorillaCamera) then
+    Exit;
+  if (FMouseYaw = 0) and (FMouseZoom = 1) then
+    Exit;
+  // On top of the normal view as it now is, zooming whichever size the
+  // projection now uses
+  FMouseZoomOrtho := GorillaCamera.IsOrthographic;
+  ShiftCamera(FMouseYaw, FMouseZoom, FMouseZoomOrtho);
+  FMouseApplied := True;
+  UpdateMouseViewReadout;
+end;
+
+procedure TMainForm.CheckMouseViewSubject;
+begin
+  if (FMouseSuspend = 0) and ((FMouseYaw <> 0) or (FMouseZoom <> 1)) and
+    (MouseViewSubject <> FMouseSubject) then
+    ResetMouseView;
+end;
+
+procedure TMainForm.ResetMouseView;
+begin
+  if FMouseApplied then
+  begin
+    ShiftCamera(-FMouseYaw, 1 / FMouseZoom, FMouseZoomOrtho);
+    FMouseApplied := False;
+  end;
+  FMouseYaw := 0;
+  FMouseZoom := 1;
+  FMouseSubject := String.Empty;
+  FMouseDragging := False;
+  UpdateMouseViewReadout;
+end;
+
+procedure TMainForm.ViewMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  if not MouseViewOn or Capturing or FOffscreen.Busy then
+    Exit;
+  // A Control-click counts as a right-click, as it does on the lists, for a
+  // Mac with one button
+  if (Button = TMouseButton.mbRight) or
+    ((Button = TMouseButton.mbLeft) and (ssCtrl in Shift)) then
+    ResetMouseView
+  else if Button = TMouseButton.mbLeft then
+  begin
+    FMouseDragging := True;
+    FMouseLastX := X;
+  end;
+end;
+
+procedure TMainForm.ViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single);
+var
+  Moved: Single;
+begin
+  if not FMouseDragging then
+    Exit;
+  // The left button let go where the view could not see it, outside the
+  // window or while another window had the mouse, sends no mouse-up: the
+  // first move without the button held ends the turn instead, so the pointer
+  // coming back over the view turns nothing
+  if not MouseViewOn or Capturing or FOffscreen.Busy or not (ssLeft in Shift) then
+  begin
+    FMouseDragging := False;
+    Exit;
+  end;
+  Moved := X - FMouseLastX;
+  FMouseLastX := X;
+  // Left turns the azimuth the dials show up, right turns it down; the
+  // camera's own Azimuth runs the other way, as ApplyAngles shows
+  if Moved <> 0 then
+    MoveMouseView(Moved * MOUSE_VIEW_DEGREES_PER_PIXEL, 1);
+end;
+
+procedure TMainForm.ViewMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  if Button = TMouseButton.mbLeft then
+    FMouseDragging := False;
+end;
+
+procedure TMainForm.ViewMouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: Integer; var Handled: Boolean);
+begin
+  if not MouseViewOn or Capturing or FOffscreen.Busy then
+    Exit;
+  Handled := True;
+  // A notch is 120; rolling the wheel away brings the camera nearer, towards
+  // you takes it further away
+  MoveMouseView(0, Power(MOUSE_VIEW_ZOOM_STEP, -WheelDelta / 120));
 end;
 
 // The list's entries are hooked as well as the list itself: depending on
@@ -6630,6 +7220,9 @@ begin
     AError := 'A capture or a grab is already under way.';
     Exit;
   end;
+  // Exports are of the normal view: the mouse view is only for looking, and
+  // the capture saves and frames the camera from here on
+  ResetMouseView;
   if (AIndex < 0) or (AIndex >= ActiveList.Count) then
   begin
     AError := Format('There is no such entry in the %s list.', [EntryNoun(True, False)]);
@@ -7227,6 +7820,10 @@ begin
   end;
   UpdateFrameReadout;
   CheckDisplay;
+  // A new model or animation shows the normal view, refitted or not; the
+  // distance's difference follows a refit of the same one
+  CheckMouseViewSubject;
+  UpdateMouseViewReadout;
 end;
 
 // A player for the selected animation, playing it from the start if it is
@@ -10795,15 +11392,17 @@ begin
     TThread.ForceQueue(nil, LoadNextQueued);
     Exit;
   end;
-  Pending := FPendingModel;
-  FPendingModel := String.Empty;
-  if Pending <> String.Empty then
-    TThread.ForceQueue(nil,
-      procedure
-      begin
-        if not MainFormGone then
-          SwitchModel(Pending);
-      end);
+  if Length(FPendingModels) = 0 then
+    Exit;
+  // The oldest; the rest follow, one after each load
+  Pending := FPendingModels[0];
+  Delete(FPendingModels, 0, 1);
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        SwitchModel(Pending);
+    end);
 end;
 
 procedure TMainForm.LoadNextQueued;

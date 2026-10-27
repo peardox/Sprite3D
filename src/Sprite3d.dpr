@@ -7,6 +7,8 @@
 //** shut-down are reported, as ReportMemoryLeaksOnShutdown is set; switch it off for a
 //** release build. On Windows FastMM5 is the memory manager and also writes them, in full, to
 //** Sprite3d_MemoryManager_EventLog.txt beside the executable. Builds for Windows, macOS, Linux, Android and iOS.
+//** On Windows a copy started while another is running, as by double-clicking a model in
+//** Explorer, hands its files to that one and ends; see HandOffToRunningInstance.
 //**
 //** @preformatted(
 //** ui/    the forms and the settings kept between sessions
@@ -27,6 +29,9 @@ program Sprite3d;
   Windows FastMM5 is the memory manager and also writes them, in full, to
   Sprite3d_MemoryManager_EventLog.txt beside the executable.
   Builds for Windows, macOS, Linux, Android and iOS.
+  On Windows a copy started while another is running, as by double-clicking
+  a model in Explorer, hands its files to that one and ends; see
+  HandOffToRunningInstance.
 
     ui/      the forms and the settings kept between sessions
     lib/     the camera, background, off-screen grabs, exporters and platform helpers
@@ -88,6 +93,12 @@ uses
 {$R 'styles\Sprite3DThemes.res'}
 
 begin
+  // A model opened from Explorer while Sprite3D is already running goes to
+  // the copy running, which loads it, rather than opening a second window;
+  // this copy then ends at once. See HandOffToRunningInstance.
+  if HandOffToRunningInstance('Sprite3D') then
+    Exit;
+
   { Report any dumb memory leaks - switch to false for release }
   // ReportMemoryLeaksOnShutdown := True;
   {$IF DEFINED(MSWINDOWS)}

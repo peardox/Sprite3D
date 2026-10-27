@@ -293,27 +293,58 @@ them.
 
 ## Where the work is
 
-GitHub is at `dcb48a7` ("Merge pull request #8 from peardox/split", static
-models on their own tab), 26 October 2026.
+GitHub is at `e160b7d` ("Missed stuff"), 27 October 2026. It has the Linux
+menu fix (`UseFmxMenuBar` copies the menu items rather than moving them,
+first thing in `FormCreate`), this file, `tools/pasdoc_check.py`, and the
+README brought up to date. The menu fix still wants the full Linux check:
+run from a terminal, no GTK warnings at start-up or while using the menus,
+one bar with full names, the items added in code working (Models, Animation
+Settings; View, Camera, Temporary Mouse View and Lock Camera; File, Debug
+with `--debug`), ticks moving, and the animation pop-up menu working.
 
 Delivered on 27 October 2026, not yet tested or pushed:
 
-1. **Linux menu fix** (`src/ui/Sprite3dMain.pas`): `UseFmxMenuBar`
-   rewritten to copy the menu items rather than move them, and called first
-   in `FormCreate`. It fixes the six `GLib-GObject-CRITICAL` /
-   `Gtk-CRITICAL` lines at start-up on Linux, and the crash the same code
-   caused in GDEMFetch. To test on Linux, from a terminal: no GTK warnings
-   at start-up or while using the menus; one menu bar with full names;
-   every menu works, including the items added in code (Models, Animation
-   Settings; View, Camera, Lock Camera; File, Debug with `--debug`); radio
-   and tick items move their ticks; items enabled and disabled at run time
-   update (Open Directory while scanning); the animation pop-up menu works.
-   Other platforms are unchanged.
-2. **This file**, and `tools/pasdoc_check.py`.
-3. `src/ui/Sprite3DResultsView.pas`: a degree sign in a comment, the only
-   non-ASCII character in the source, spelt out.
-4. `README.md`: the project layout brought up to date and the developer
-   notes pointed here.
+1. **Temporary Mouse View** (`src/ui/Sprite3dMain.pas`, `README.md`):
+   View, Camera, Temporary Mouse View, above Lock Camera, desktop only, with
+   a "Mouseview On" readout at the top right of the view; while the view
+   is turned or zoomed it adds Azimuth and Distance (Size in orthographic
+   projection) as +/- from normal to 3 decimal places, and "Right Click to
+   Reset" (`UpdateMouseViewReadout`). The tick is kept as `mouseView` in
+   `settings.json`; the turn and zoom never are. Left-drag turns
+   the view, the wheel zooms (distance, or the orthographic size), a right
+   click (or Control-click) puts the normal view back. Kept as offsets (`FMouseYaw`,
+   `FMouseZoom`) on top of the normal view: `SuspendMouseView` and
+   `ResumeMouseView` take them off around anything that sets the normal
+   view (`FitModel`, now a wrapper round `FitNormalView`, `ApplyAngles`,
+   `ShowDistanceFactor`, `ShowCameraSpec`); `ResetMouseView` puts the normal
+   view back for grabs, icons and captures, and `CheckMouseViewSubject`
+   (from `FitModel` and the readout timer) when the model or animation
+   changes. `ShiftCamera` unlocks the camera for each change, so it works
+   while Lock Camera is ticked. `AspectLayout` takes the mouse only while
+   the item is ticked. To test: turning and zooming, in perspective and
+   orthographic; a right click back to normal; with Lock Camera ticked;
+   choosing another animation or static model (normal again); pausing and
+   stepping (kept); a grab and an export while turned (normal view saved,
+   and the view normal afterwards); the Variable dialog's dials while
+   turned; whether the wheel reaches the view on each platform. On macOS
+   grabs are screenshots of the view as last drawn, so check that a grab
+   made while turned is of the normal view.
+2. **One window on Windows** (`src/lib/Sprite3DOpenFiles.pas`,
+   `src/Sprite3d.dpr`, `src/ui/Sprite3dMain.pas`, `README.md`):
+   `HandOffToRunningInstance`, first thing in the `.dpr`. The first copy
+   keeps a named mutex (`Local\Sprite3D.Instance`) and a hidden
+   message-only window (class `Sprite3D.OpenFiles`); a later copy started
+   with files sends their full paths by `WM_COPYDATA` (`SendMessageTimeout`,
+   waiting up to 5 s for the first copy's window) and ends. The running copy
+   passes them to `FileOpenRequests.Request` from a fresh main-loop turn and
+   brings its form forward (`AllowSetForegroundWindow` in the sender).
+   `FPendingModel` became a queue, `FPendingModels`, so several models asked
+   for during a load all load in turn; `LoadStartupModel` loads every model
+   requested, and the start-up drains requests that arrived while the first
+   model loaded. Linux still opens a second window; a Unix socket would do
+   the same there. To test on Windows: double-click a static and an animated
+   model while running, while a model is loading, and several selected
+   together with Enter; with Sprite3D minimised; with no copy running.
 
 ### Things to check
 

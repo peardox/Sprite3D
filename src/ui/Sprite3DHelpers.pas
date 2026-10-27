@@ -349,6 +349,7 @@ type
     FShowOverscanWarning: Boolean;
     FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
+    FMouseView: Boolean;
     FResultsEdgeHint: Boolean;
     FResultsZoom: Single;
     FOverscan: Integer;
@@ -739,6 +740,12 @@ type
     //**
     //** Stored as @code(resultsShowGrid); set by Show grid on the Results tab.
     property ResultsShowGrid: Boolean read FResultsShowGrid write FResultsShowGrid;
+    //** @abstract(Whether View, Camera, Temporary Mouse View is ticked; False by default.)
+    //**
+    //** Stored as @code(mouseView); set by the menu item, and saved as soon as it changes.
+    //** Only the tick is kept: the turn and zoom the mouse gives the view never are, and
+    //** each session starts from the normal view. Desktop only; ignored on Android and iOS.
+    property MouseView: Boolean read FMouseView write FMouseView;
     //** @abstract(Whether the Results tab's empty border values have a hint explaining them;
     //** True by default.)
     //**
@@ -1523,6 +1530,7 @@ begin
   FShowOverscanWarning := True;
   FShowExactWarning := True;
   FResultsShowGrid := True;
+  FMouseView := False;
   FResultsEdgeHint := True;
   FResultsZoom := 1;
   FOverscan := OVERSCAN_FACTOR_DEFAULT;

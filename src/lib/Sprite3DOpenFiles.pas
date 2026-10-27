@@ -15,7 +15,9 @@
 //** macOS and iOS, and an intent filter in AndroidManifest.xml on Android.
 //**
 //** @preformatted(
-//** Windows   command line: Explorer starts the program with the file's full path
+//** Windows   command line: Explorer starts the program with the file's full path; with
+//**           HandOffToRunningInstance, a copy started while another runs hands its files to
+//**           that one, through WM_COPYDATA to a hidden window, and ends
 //** Linux     command line: Exec=... %f in the .desktop file
 //** macOS     the "open documents" Apple event from Finder or the Dock, at launch and later;
 //**           also the command line, when started with a file name
@@ -45,7 +47,9 @@ unit Sprite3DOpenFiles;
   Linux, document types in Info.plist on macOS and iOS, and an intent
   filter in AndroidManifest.xml on Android.
 
-    Windows   command line: Explorer starts the program with the file's full path
+    Windows   command line: Explorer starts the program with the file's full path; with
+              HandOffToRunningInstance, a copy started while another runs hands its files to
+              that one, through WM_COPYDATA to a hidden window, and ends
     Linux     command line: Exec=... %f in the .desktop file
     macOS     the "open documents" Apple event from Finder or the Dock, at launch and later;
               also the command line, when started with a file name
@@ -73,13 +77,22 @@ type
   //** that come later. For the main thread only.
   TSprite3DFileOpenRequests = class
   private
+    //** @abstract(The requests waiting for TakePending, oldest first; FOnOpenFile receives
+    //** later ones; FStarted is set by the first TakePending; FMessageId is the iOS or Android
+    //** message subscription, or -1.)
     FPending: TArray<String>;
     FOnOpenFile: TSprite3DOpenFileEvent;
     FStarted: Boolean;
     FMessageId: Integer;
+    //** @abstract(Requests every file named on the command line.)
     procedure ReadCommandLine;
+    //** @abstract(Starts listening where the platform needs the application running: on
+    //** Android, for VIEW intents.)
     procedure StartPlatform;
     {$IF DEFINED(IOS) or DEFINED(ANDROID)}
+    //** @abstract(Requests the file of an iOS open-URL event or an Android VIEW intent.)
+    //** @param(Sender The message's sender.)
+    //** @param(AMessage The message.)
     procedure HandleMessage(const Sender: TObject; const AMessage: TMessage);
     {$ENDIF}
   public
@@ -115,6 +128,30 @@ type
 //** @returns(The queue, which lives until the application ends.)
 function FileOpenRequests: TSprite3DFileOpenRequests;
 
+//** @abstract(Hands the files on the command line to a copy of the application already
+//** running, so it opens them rather than a second window; True if it did.)
+//**
+//** Call it first thing in the program, before @code(Application.Initialize); on True, end
+//** the program at once. The first copy to call it becomes the one running: it keeps a
+//** named mutex and a hidden message-only window, and every later copy started with files,
+//** as by double-clicking a model in Explorer, sends their full paths to that window and
+//** returns True. The running copy then passes each to Request, from its own main loop,
+//** and brings its main form to the front. A later copy started with no files, or one that
+//** cannot reach the running copy within a few seconds (it is still starting, or hung),
+//** returns False and runs as a copy of its own, so no file is ever lost.
+//**
+//** Several files opened together from Explorer each start a copy; all reach the first,
+//** in turn. Only copies run by the same user in the same session are seen.
+//**
+//** Windows only. macOS already sends files to the copy running, through the "open
+//** documents" event; on other platforms it returns False.
+//**
+//** @param(AInstanceName A name for the application, the same in every copy, used for the
+//** mutex and the window class; letters, digits and dots only.)
+//**
+//** @returns(True if the files went to the copy running, and this one should end.)
+function HandOffToRunningInstance(const AInstanceName: String): Boolean;
+
 //** @abstract(Turns a @code(file:) URL into a local path; other text is returned unchanged.)
 //**
 //** Handles @code(file:///path) and @code(file://localhost/path), and decodes percent
@@ -129,7 +166,9 @@ implementation
 
 uses
   System.IOUtils, System.NetEncoding
-  {$IF DEFINED(IOS)}
+  {$IF DEFINED(MSWINDOWS)}
+  , Winapi.Windows, Winapi.Messages, FMX.Forms, FMX.Platform.Win
+  {$ELSEIF DEFINED(IOS)}
   , FMX.Platform, FMX.Platform.iOS
   {$ELSEIF DEFINED(MACOS)}
   , System.TypInfo, Macapi.ObjectiveC, Macapi.ObjCRuntime, Macapi.Foundation,
@@ -147,6 +186,205 @@ function FileOpenRequests: TSprite3DFileOpenRequests;
 begin
   Result := GRequests;
 end;
+
+// Every argument that names an existing file, as a full path; options such
+// as -x, and /x on Windows, are skipped
+function CommandLineFiles: TArray<String>;
+var
+  I: Integer;
+  Arg, FileName: String;
+begin
+  Result := nil;
+  for I := 1 to ParamCount do
+  begin
+    Arg := ParamStr(I);
+    if Arg.StartsWith('-') then
+      Continue;
+    {$IFDEF MSWINDOWS}
+    if Arg.StartsWith('/') then
+      Continue;
+    {$ENDIF}
+    FileName := ExpandFileName(Arg);
+    if FileExists(FileName) then
+      Result := Result + [FileName];
+  end;
+end;
+
+{$IFDEF MSWINDOWS}
+// Windows: one copy of the application at a time takes the files. The first
+// copy keeps a named mutex, which tells later copies that it is running, and
+// a hidden message-only window, which receives their files as WM_COPYDATA:
+// the paths, each ended by #0, in UTF-16. The message is sent with a
+// timeout, so a hung copy never holds up a new one.
+const
+  // WM_COPYDATA's dwData for a list of files, 'S3DF'
+  COPYDATA_OPEN_FILES = $53334446;
+  // How long a later copy waits for the first to create its window, which it
+  // does as it starts, and for it to take the files
+  HANDOFF_WAIT_MS = 5000;
+  HANDOFF_POLL_MS = 100;
+
+var
+  // The first copy's mutex and window; 0 in a later copy that runs on its own
+  GInstanceMutex: THandle;
+  GReceiverWindow: HWND;
+  GReceiverClass: String;
+
+function ReceiverClassName(const AInstanceName: String): String;
+begin
+  Result := AInstanceName + '.OpenFiles';
+end;
+
+// The running copy's main form, brought forward and restored if minimised.
+// Windows lets it come to the front because the copy that sent the files
+// allowed it with AllowSetForegroundWindow.
+procedure BringApplicationForward;
+var
+  Wnd: HWND;
+begin
+  if (Application = nil) or (Application.MainForm = nil) then
+    Exit;
+  Wnd := FormToHWND(Application.MainForm);
+  if Wnd = 0 then
+    Exit;
+  if IsIconic(Wnd) then
+    ShowWindow(Wnd, SW_RESTORE);
+  SetForegroundWindow(Wnd);
+end;
+
+// The hidden window's procedure: files from a later copy are passed to
+// Request from a fresh turn of the main loop, not inside SendMessage, so the
+// later copy is answered at once and can end while they load
+function ReceiverWindowProc(AWnd: HWND; AMsg: UINT; AWParam: WPARAM;
+  ALParam: LPARAM): LRESULT; stdcall;
+var
+  Data: PCopyDataStruct;
+  Text: String;
+begin
+  if AMsg = WM_COPYDATA then
+  begin
+    Data := PCopyDataStruct(ALParam);
+    if (Data <> nil) and (Data.dwData = COPYDATA_OPEN_FILES) and
+      (Data.lpData <> nil) and (Data.cbData >= SizeOf(Char)) then
+    begin
+      SetString(Text, PChar(Data.lpData), Data.cbData div SizeOf(Char));
+      TThread.ForceQueue(nil,
+        procedure
+        begin
+          try
+            BringApplicationForward;
+            if GRequests <> nil then
+              for var FileName in Text.Split([#0], TStringSplitOptions.ExcludeEmpty) do
+                GRequests.Request(FileName);
+          except
+            // A bad request must not end the application
+          end;
+        end);
+      Exit(1);
+    end;
+  end;
+  Result := DefWindowProc(AWnd, AMsg, AWParam, ALParam);
+end;
+
+// The first copy's hidden window, which later copies find by its class
+procedure CreateReceiver(const AInstanceName: String);
+var
+  WindowClass: TWndClass;
+begin
+  GReceiverClass := ReceiverClassName(AInstanceName);
+  FillChar(WindowClass, SizeOf(WindowClass), 0);
+  WindowClass.lpfnWndProc := @ReceiverWindowProc;
+  WindowClass.hInstance := HInstance;
+  WindowClass.lpszClassName := PChar(GReceiverClass);
+  if Winapi.Windows.RegisterClass(WindowClass) = 0 then
+    Exit;
+  GReceiverWindow := CreateWindowEx(0, PChar(GReceiverClass), nil, 0, 0, 0, 0, 0,
+    HWND_MESSAGE, 0, HInstance, nil);
+end;
+
+procedure DestroyReceiver;
+begin
+  if GReceiverWindow <> 0 then
+  begin
+    DestroyWindow(GReceiverWindow);
+    GReceiverWindow := 0;
+  end;
+  if GReceiverClass <> String.Empty then
+    Winapi.Windows.UnregisterClass(PChar(GReceiverClass), HInstance);
+  if GInstanceMutex <> 0 then
+  begin
+    CloseHandle(GInstanceMutex);
+    GInstanceMutex := 0;
+  end;
+end;
+
+// Sends AFiles to the running copy's window; True once it has taken them
+function SendToRunningInstance(const AInstanceName: String;
+  const AFiles: TArray<String>): Boolean;
+var
+  Text: String;
+  Data: TCopyDataStruct;
+  Wnd: HWND;
+  ProcessId: DWORD;
+  Answer: DWORD_PTR;
+  Waited: Integer;
+begin
+  Result := False;
+  Text := String.Join(#0, AFiles) + #0;
+  Waited := 0;
+  repeat
+    Wnd := FindWindowEx(HWND_MESSAGE, 0, PChar(ReceiverClassName(AInstanceName)), nil);
+    if Wnd <> 0 then
+    begin
+      // Lets the running copy bring its window to the front
+      ProcessId := 0;
+      GetWindowThreadProcessId(Wnd, @ProcessId);
+      if ProcessId <> 0 then
+        AllowSetForegroundWindow(ProcessId);
+      Data.dwData := COPYDATA_OPEN_FILES;
+      Data.cbData := Length(Text) * SizeOf(Char);
+      Data.lpData := PChar(Text);
+      Answer := 0;
+      Exit((SendMessageTimeout(Wnd, WM_COPYDATA, 0, LPARAM(@Data),
+        SMTO_ABORTIFHUNG or SMTO_BLOCK, HANDOFF_WAIT_MS, @Answer) <> 0) and (Answer = 1));
+    end;
+    // The first copy is still starting: its window comes soon
+    Sleep(HANDOFF_POLL_MS);
+    Inc(Waited, HANDOFF_POLL_MS);
+  until Waited >= HANDOFF_WAIT_MS;
+end;
+{$ENDIF}
+
+function HandOffToRunningInstance(const AInstanceName: String): Boolean;
+{$IFDEF MSWINDOWS}
+var
+  Files: TArray<String>;
+begin
+  Result := False;
+  if GInstanceMutex <> 0 then
+    Exit;   // asked again: this copy is the one running
+  GInstanceMutex := CreateMutex(nil, False, PChar('Local\' + AInstanceName + '.Instance'));
+  if GInstanceMutex = 0 then
+    Exit;   // cannot tell: run as usual
+  if GetLastError <> ERROR_ALREADY_EXISTS then
+  begin
+    // The first copy: it takes the files of every later one
+    CreateReceiver(AInstanceName);
+    Exit;
+  end;
+  // Another copy is running. Only the first keeps the mutex
+  CloseHandle(GInstanceMutex);
+  GInstanceMutex := 0;
+  Files := CommandLineFiles;
+  if Length(Files) = 0 then
+    Exit;   // started with no files: a window of its own
+  Result := SendToRunningInstance(AInstanceName, Files);
+end;
+{$ELSE}
+begin
+  Result := False;
+end;
+{$ENDIF}
 
 function FileUrlToPath(const AUrl: String): String;
 begin
@@ -435,21 +673,9 @@ end;
 // Every argument that names an existing file; options such as -x, and
 // /x on Windows, are skipped
 procedure TSprite3DFileOpenRequests.ReadCommandLine;
-var
-  I: Integer;
-  Arg: String;
 begin
-  for I := 1 to ParamCount do
-  begin
-    Arg := ParamStr(I);
-    if Arg.StartsWith('-') then
-      Continue;
-    {$IFDEF MSWINDOWS}
-    if Arg.StartsWith('/') then
-      Continue;
-    {$ENDIF}
-    Request(Arg);
-  end;
+  for var FileName in CommandLineFiles do
+    Request(FileName);
 end;
 
 // Starts listening where the platform needs the application to be running
@@ -517,6 +743,9 @@ initialization
   {$ENDIF}
 
 finalization
+  {$IFDEF MSWINDOWS}
+  DestroyReceiver;
+  {$ENDIF}
   {$IF DEFINED(MACOS) and not DEFINED(IOS)}
   StopObservingLaunch;
   FreeAndNil(GOpenDocuments);
