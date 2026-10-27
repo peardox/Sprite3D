@@ -1005,7 +1005,7 @@ begin
     DirPreviousButtonClick);
   FDirNextButton := AddTextButton(FTransportLayout, '>', 'Next direction',
     DirNextButtonClick);
-  // Wide enough for "Direction 16 of 16 (337.5°)", and no wider, so the
+  // Wide enough for "Direction 16 of 16 (337.5 degrees)", and no wider, so the
   // rate has the room it needs
   FDirLabel := AddLabel(FTransportLayout, TAlignLayout.Left, 150);
   FDirLabel.Margins.Left := 4;

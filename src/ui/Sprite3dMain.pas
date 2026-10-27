@@ -185,8 +185,11 @@
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
 //** hamburger button on a toolbar at the top, which opens a drawer listing every item in
 //** MainMenu1; ticks show the current camera view and which View items are on. Exit is left
-//** out on iOS. On Linux the same items are moved onto a TMenuBar that FMX draws itself, as
-//** the native GTK menu bar showed only the first letter of each item.
+//** out on iOS. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
+//** that FMX draws itself, as the native GTK menu bar showed only the first letter of each
+//** item: its items are copied onto the bar and the originals freed, and each copy takes its
+//** original's name, so the form's fields refer to the copies. They must be copied, not
+//** moved; see UseFmxMenuBar.
 //**
 //** @preformatted(
 //** TabControl1
@@ -445,9 +448,12 @@ unit Sprite3dMain;
   On Android and iOS, where FMX shows no menu bar, the same menus are reached
   through a hamburger button on a toolbar at the top, which opens a drawer
   listing every item in MainMenu1; ticks show the current camera view and
-  which View items are on. Exit is left out on iOS. On Linux the same items are
-  moved onto a TMenuBar that FMX draws itself, as the native GTK menu bar
-  showed only the first letter of each item.
+  which View items are on. Exit is left out on iOS. On Linux MainMenu1 is
+  replaced, first thing in FormCreate, by a TMenuBar that FMX draws itself, as
+  the native GTK menu bar showed only the first letter of each item: its items
+  are copied onto the bar and the originals freed, and each copy takes its
+  original's name, so the form's fields refer to the copies. They must be
+  copied, not moved; see UseFmxMenuBar.
 
     TabControl1
     |-- StaticTab "Static"     models without animations; MainLayout is moved here when chosen
@@ -2240,9 +2246,17 @@ type
     {$ENDIF}
     {$IF DEFINED(LINUX) and not DEFINED(ANDROID)}
   private
-    // Linux only: MainMenu1's items, moved onto a menu bar FMX draws itself,
-    // as the native GTK menu bar showed only each item's first letter
+    //** Linux only: the menu bar FMX draws itself, holding copies of MainMenu1's items, as
+    //** the native GTK menu bar showed only each item's first letter. Made by UseFmxMenuBar.
     FDesktopMenuBar: TMenuBar;
+    //** @abstract(Linux only: replaces MainMenu1 with FDesktopMenuBar.)
+    //** Copies every item of MainMenu1, with its submenus, onto a new TMenuBar, frees the
+    //** originals one at a time and then MainMenu1, and gives each copy its original's name,
+    //** which points the form's published field at the copy. The items are copied rather
+    //** than moved because each holds a handle to the GTK widget FMX has already made for
+    //** it, which freeing MainMenu1 destroys; a moved item's next change then reached a
+    //** destroyed widget (GTK-CRITICAL warnings, or a crash). It must be the first thing
+    //** FormCreate does, before any menu item is changed, added or kept in a private field.
     procedure UseFmxMenuBar;
     {$ENDIF}
   public
@@ -2344,6 +2358,11 @@ const
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  {$IF DEFINED(LINUX) and not DEFINED(ANDROID)}
+  // Before any menu item is changed, added or remembered; see UseFmxMenuBar
+  UseFmxMenuBar;
+  {$ENDIF}
+
   // The Static tab first, with the view and side panel on it from the start,
   // so they are laid out in the tab showing; ShowModelTab, at the end, sets
   // up the rest once everything it shows has been made
@@ -2474,17 +2493,17 @@ begin
   // for now; on the desktop that waits until the first model is shown
   StartVideo;
   {$ENDIF}
-  // View, Camera, Lock Camera; before the menu is moved or mirrored
+  // View, Camera, Lock Camera; before the menu is mirrored on mobile. On
+  // Linux the menu bar has already been swapped, so it goes straight onto it
   BuildLockCameraItem;
-  // File, Debug, only while debug_enabled; likewise before the menu moves
+  // File, Debug, only while debug_enabled; likewise
   BuildDebugMenu;
   // The Results tab's player, reading where exports last went once shown
   BuildResultsView;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // Built from the finished menus, so it comes after every item is added
   BuildMobileMenu;
-  {$ELSEIF DEFINED(LINUX)}
-  UseFmxMenuBar;
   {$ENDIF}
 
   // The view and side panel on the Static tab, with nothing loaded yet; the
@@ -2494,25 +2513,93 @@ end;
 
 {$IF DEFINED(LINUX) and not DEFINED(ANDROID)}
 // The native GTK menu bar FMX uses on Linux showed only the first letter of
-// each item, so MainMenu1's items are moved, as they are, onto a TMenuBar,
-// which FMX draws itself in the form's style. They are the same objects, so
-// every handler, tick and Enabled state in the form still applies. The
-// emptied MainMenu1 is then freed, so no native menu bar is made.
+// each item, so MainMenu1 is replaced by a TMenuBar, which FMX draws itself
+// in the form's style.
+//
+// The items are COPIED, not moved, and this must stay so. By the time
+// FormCreate runs, FMX has already made the GTK menu from MainMenu1, and
+// every item holds a handle to its GTK widget. Freeing MainMenu1 destroys
+// those widgets, so an item moved onto the bar beforehand kept a handle to a
+// destroyed widget, and its next change (Enabled, IsChecked, Text, Visible)
+// made FMX update it: GLib-GObject-CRITICAL and Gtk-CRITICAL warnings at
+// start-up, or an access violation in libgobject-2.0.so.0. The copies are
+// new objects that GTK has never seen.
+//
+// The originals are then freed one at a time while MainMenu1 still exists:
+// each removal makes FMX rebuild the GTK bar without that item, so it ends
+// up empty and goes. Freeing MainMenu1 with its items still in it would
+// leave GTK's bar of first letters showing above the TMenuBar. As each
+// original is freed, Delphi sets the form's field of that name to nil and
+// the name becomes free, so once MainMenu1 is gone each copy takes its
+// original's name, which points the form's published field at the copy, and
+// every handler and tick in the form carries on working unchanged.
+//
+// So this must run first in FormCreate, before any menu item is changed,
+// added or remembered in a private field: a reference taken before it would
+// be left pointing at a freed original. Items added later go in through the
+// published fields, so straight onto the TMenuBar.
 procedure TMainForm.UseFmxMenuBar;
 var
-  Items: TArray<TFmxObject>;
+  Copies: TArray<TMenuItem>;
+  Names: TArray<String>;
   I: Integer;
+
+  //** @abstract(Puts a copy of AItem, with copies of its submenus, in AParent.)
+  //** The copy is owned by the form, so naming it afterwards sets the form's field of that
+  //** name; it is added to Copies, and AItem's name to Names, for UseFmxMenuBar to do so.
+  //** Every TMenuItem property Sprite3dMain.fmx sets is copied (Text, Enabled, IsChecked,
+  //** RadioItem, GroupIndex and OnClick; Locked is design-time only), and a few more for
+  //** safety: add any other property the form comes to use.
+  //** @param(AItem The designed item to copy.)
+  //** @param(AParent The menu bar or menu item the copy goes in.)
+  procedure CopyItem(const AItem: TMenuItem; const AParent: TFmxObject);
+  var
+    Clone: TMenuItem;
+    J: Integer;
+  begin
+    Clone := TMenuItem.Create(Self);
+    Clone.Text := AItem.Text;
+    Clone.Enabled := AItem.Enabled;
+    Clone.Visible := AItem.Visible;
+    Clone.AutoCheck := AItem.AutoCheck;
+    Clone.IsChecked := AItem.IsChecked;
+    Clone.RadioItem := AItem.RadioItem;
+    Clone.GroupIndex := AItem.GroupIndex;
+    Clone.ShortCut := AItem.ShortCut;
+    Clone.Tag := AItem.Tag;
+    Clone.Hint := AItem.Hint;
+    Clone.OnClick := AItem.OnClick;
+    Clone.Parent := AParent;
+    Copies := Copies + [Clone];
+    Names := Names + [AItem.Name];
+    for J := 0 to AItem.ItemsCount - 1 do
+      CopyItem(AItem.Items[J], Clone);
+  end;
+
 begin
   FDesktopMenuBar := TMenuBar.Create(Self);
   FDesktopMenuBar.Parent := Self;
+  // Top-aligned controls are laid out in the order of their positions: this
+  // keeps the menu bar above any other top-aligned control
+  FDesktopMenuBar.Position.Y := -1;
   FDesktopMenuBar.Align := TAlignLayout.Top;
-  // Listed first, then moved in their order: moving one changes the list
-  SetLength(Items, MainMenu1.ItemsCount);
-  for I := 0 to High(Items) do
-    Items[I] := MainMenu1.Items[I];
-  for I := 0 to High(Items) do
-    Items[I].Parent := FDesktopMenuBar;
+  for I := 0 to MainMenu1.ItemsCount - 1 do
+    if MainMenu1.Items[I] is TMenuItem then
+      CopyItem(TMenuItem(MainMenu1.Items[I]), FDesktopMenuBar);
+
+  // Item by item, so FMX rebuilds the GTK bar after each and it ends up empty
+  // and gone; never free MainMenu1 with items still in it, nor move the
+  // originals instead of copying them (see above). Each original's field is
+  // set to nil as it is freed.
+  while MainMenu1.ItemsCount > 0 do
+    MainMenu1.Items[0].Free;
+  MainMenu1.RecreateOSMenu;
   FreeAndNil(MainMenu1);
+
+  // Naming a copy points the form's field of that name at it
+  for I := 0 to High(Copies) do
+    if Names[I] <> '' then
+      Copies[I].Name := Names[I];
 end;
 {$ENDIF}
 

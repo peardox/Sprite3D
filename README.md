@@ -171,11 +171,15 @@ On start-up the application loads `models/uvcube.glb`, a cube with its faces lab
 Sprite3D/
 |-- Sprite3DGroup.groupproj
 |-- README.md
+|-- CLAUDE.md                 handover notes and working rules for Claude
 |-- viewport.md, offscreen.md, volumes.md, directions.md, metadata.md  design notes
 |-- delphi-neon/              Neon JSON library (submodule)
+|-- FastMM5/                  FastMM5 memory manager, used on Windows (submodule)
 |-- docs/                     generated API help (PasDoc)
 |-- models/                   sample model: uvcube.glb
 |-- dlls/                     FFmpeg libraries, from the DLL pack; not in Git
+|-- tools/                    scripts for working on the source
+|   `-- pasdoc_check.py          checks the PasDoc comments and that sources are ASCII
 |-- openh264.json             no longer read; the list is fetched from sprite3d.com
 `-- src/
     |-- Sprite3d.dpr, .dproj, .res, Sprite3d_Icon.ico
@@ -207,6 +211,7 @@ Sprite3D/
     |   `-- Sprite3DNativeLibs.pas   each platform's folders for an app's own libraries
     |-- common/               small cross-project helpers
     |   |-- OSPaths.pas              where the program and its assets are; OS-friendly paths
+    |   |-- JsonText.pas             writes JSON indented or minified, as File, Settings says
     |   |-- GpuPreference.pas        Windows' per-program GPU preference
     |   `-- DisplayData.pas          the displays, their modes and refresh rates, per platform
     `-- ui/                   the application
@@ -221,6 +226,8 @@ Sprite3D/
         |-- Sprite3DExportForm.pas, .fmx  batch export progress dialog
         |-- Sprite3DOpenDirectoryForm.pas, .fmx  Open Directory dialog: folder and file spec
         |-- Sprite3DNameClashForm.pas, .fmx  replace, ignore or rename a clashing name
+        |-- Sprite3DCreditsForm.pas, .fmx  Creator Credits dialog, for Save Project
+        |-- Sprite3DResultsView.pas          the Results tab: exports played back
         `-- Sprite3DHelpers.pas              application rules, settings and model slots
 ```
 
@@ -404,6 +411,8 @@ Every public item in the source is documented with `//**` comments for [PasDoc](
 cd src/lib
 pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 ```
+
+`tools/pasdoc_check.py`, run from the repository root with Python 3, checks the comments PasDoc will read, and that every source file is plain ASCII, without needing PasDoc itself; `--summary` gives counts per file. The working rules for the code are in [CLAUDE.md](CLAUDE.md).
 
 ## Licences
 
