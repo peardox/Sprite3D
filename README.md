@@ -191,10 +191,12 @@ Sprite3D/
 |   `-- tools/                   the packages', icons' and test models' generators
 |-- delphi-neon/              Neon JSON library (submodule)
 |-- FastMM5/                  FastMM5 memory manager, used on Windows (submodule)
-|-- docs/                     generated API help (PasDoc)
+|-- docs/                     generated API help (PasDoc); html/ and chm/ from tools/pasdoc.bat, not in Git
 |-- models/                   sample model: uvcube.glb
 |-- dlls/                     FFmpeg libraries, from the DLL pack; not in Git
 |-- tools/                    scripts for working on the source
+|   |-- pasdoc.bat               builds the PasDoc reference in docs/html and docs/chm (Windows)
+|   |-- pasdoc-dark.css, pasdoc-chm-dark.css  dark colours pasdoc.bat adds to it
 |   `-- pasdoc_check.py          checks the PasDoc comments and that sources are ASCII
 |-- openh264.json             no longer read; the list is fetched from sprite3d.com
 `-- src/
@@ -428,6 +430,15 @@ pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 ```
 
 Spritely's units, in `Spritely/lib`, are documented the same way.
+
+On Windows, `tools\pasdoc.bat` (run from anywhere) builds the whole reference in one go, as HTML in `docs\html\` and as HTML Help in `docs\chm\`, with the same options. Git ignores both folders, and the script deletes them before each run; `docs/lib` and `docs/ui` are left alone. Each holds:
+
+- `api`: Sprite3D's reusable units, `src/lib` and `src/common`;
+- `spritely`: the Spritely components, `Spritely/lib` (without the design-time `Spritely.Reg`);
+- `Sprite3d`: the program, `src/Sprite3d.dpr` with every unit its `uses` clause names, forms included;
+- `ProjectionTest`: Spritely's test program and its own units.
+
+It needs `pasdoc` on the PATH, or `set PASDOC=` to the full path of `pasdoc.exe`. The `.chm` files also need Microsoft HTML Help Workshop's `hhc.exe`, in its default folder or named by `set HHC=`; without it the HTML Help projects are written but not compiled. After each run, dark colours are appended to the `pasdoc.css` PasDoc wrote, so PasDoc's own stylesheet is used as it is and no copy of it is kept here. `tools/pasdoc-dark.css` is for the HTML, which is dark only when the browser or system asks for it. `tools/pasdoc-chm-dark.css` is for the `.chm` files, which are always dark, as the HTML Help viewer cannot ask. `set PASDOC_DARK=0` leaves both out.
 
 `tools/pasdoc_check.py`, run from the repository root with Python 3, checks the comments PasDoc will read, and that every source file is plain ASCII, without needing PasDoc itself; `--summary` gives counts per file. The working rules for the code are in [CLAUDE.md](CLAUDE.md).
 

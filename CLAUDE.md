@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 8 November 2026, 22:00.
+Last updated: 8 November 2026, 22:05.
 
 ## Starting a new conversation
 
@@ -391,11 +391,59 @@ them.
 
 ## Where the work is
 
-**Branches (owner, 21:49-21:51).** `main` at `774727a` ("All correct
-with some updates") holds every zip up to Handover1 and is the safe
-point. The oblique projection work is on the branch **`oblique`**
-(`2c31cca`, "Messing with obliques": everything up to ObliqueView1), an
-experiment that may be thrown away. Work on `oblique` unless told
+### Handover (8 November 2026, 22:05): the oblique branch
+
+**State.** Everything delivered this session is on GitHub, so GitHub is
+the owner's copy again: no zip is outstanding, and a new session can
+build on it. Checked at 22:02:
+
+- `main` at `a0bb3d1` ("Spritely update"): every zip up to Handover1,
+  plus Branches1 (Spritely's per-context fix and notes). The safe point.
+- `oblique` at `2e41895` ("Spritely update"): `main`'s work plus
+  Projection1, Projection2, Notes1, ObliqueView1 and Branches1. Work here
+  unless told otherwise.
+- `Spritely/` is identical on the two branches, file for file. This file
+  differs: `main` has an older copy, and this one is for `oblique`.
+
+The owner (22:03): **"The views look good"**, and wants to hold the
+oblique work here and come back to it fresh. So View, Projection with the
+four obliques, the camera turned to suit each, and grabs matching the
+view (Projection2, 21:35) are all working on Windows.
+
+**Starting next time.** Clone with
+`git clone --recurse-submodules -b oblique https://github.com/peardox/Sprite3D.git`.
+A shallow or single-branch clone lacks the other branch: fetch it with
+an explicit refspec,
+`git fetch origin +refs/heads/main:refs/remotes/origin/main`. The
+Spritely package must be built from this source (Branches1 asked for a
+rebuild on `main`; on `oblique` it was already built).
+
+**Not yet reported**, beyond "the views look good":
+- ObliqueView1's details: the fixed views greyed while an oblique is
+  chosen; Variable's dialog with only Azimuth live; Perspective or
+  Orthographic putting the earlier view back (fixed or Variable with its
+  angles, "Camera view put back" in the Debug tab); restarting in an
+  oblique.
+- Projection1's: icons and exports in each oblique; metadata
+  `camera.projection`; benchmark folder prefixes; an old settings.json
+  with only `orthographic`; Lock Camera disabling the six items; the
+  Linux menu bar and the mobile drawer.
+- Other platforms: macOS (grabs are screenshots there), Linux, mobile.
+- The older items in the 20:35 handover below.
+
+**Next: ask the owner.** Nothing has been chosen. What has been
+mentioned: the rest of `TSpritelyProjection` in Sprite3D (dolly zoom,
+shift and rise), and in time whether `oblique` is merged into `main` or
+dropped. Any Spritely change still goes to both branches, with its
+`Spritely/NOTES.md` entry and the rebuild line.
+
+### Branches and the zips of the evening
+
+**Branches (owner, 21:49-21:51; heads updated at 22:02 above).** `main`
+was at `774727a` ("All correct with some updates"), every zip up to
+Handover1, and is the safe point. The oblique projection work is on the
+branch **`oblique`** (then `2c31cca`, "Messing with obliques": everything
+up to ObliqueView1), an experiment that may be thrown away. Work on `oblique` unless told
 otherwise. **`Spritely/` must be the same on both branches** (see
 *Spritely* above): a Spritely change is also delivered for `main`.
 Branches1 (below) brought `main`'s Spritely up to `oblique`'s.
@@ -408,7 +456,8 @@ either branch. Unzipped on `main` it adds the fix and the notes; on
 `====> REBUILD RUNTIME PACKAGE SPRITELY (ALL PLATFORMS) <====` on `main`
 (nothing to rebuild on `oblique`: the unit is unchanged there).
 
-**Zip ObliqueView1 (8 November 2026), not yet tested.** Follows Status1.
+**Zip ObliqueView1 (8 November 2026), applied: the views look good
+(owner, 22:03); the details below not yet reported.** Follows Status1.
 The owner (21:43): the obliques looked wrong because the camera stayed at
 the chosen view; choosing one should set the view to suit, with the fixed
 views unavailable and Variable limited to the azimuth. Done

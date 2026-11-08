@@ -83,3 +83,8 @@ __recovery/
 
 # Boss dependency manager vendor folder https://github.com/HashLoad/boss
 modules/
+
+# PasDoc output (tools/pasdoc.bat) and a log of it redirected to the root
+docs/html/
+docs/chm/
+/pasdoc.log
