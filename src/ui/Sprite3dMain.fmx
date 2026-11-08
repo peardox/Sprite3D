@@ -407,6 +407,72 @@ object MainForm: TMainForm
           OnClick = ViewSideItemClick
         end
       end
+      object LightsMenu: TMenuItem
+        Locked = True
+        Text = 'Lights'
+        object HeadlightItem: TMenuItem
+          Locked = True
+          IsChecked = True
+          Text = 'Headlight'
+          OnClick = HeadlightItemClick
+        end
+        object OriginalLightItem: TMenuItem
+          Locked = True
+          Text = 'Original Light'
+          OnClick = OriginalLightItemClick
+        end
+      end
+      object ProjectionMenu: TMenuItem
+        Locked = True
+        Text = 'Projection'
+        object PerspectiveItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          IsChecked = True
+          RadioItem = True
+          Text = 'Perspective'
+          OnClick = ProjectionItemClick
+        end
+        object OrthographicItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          RadioItem = True
+          Text = 'Orthographic'
+          OnClick = ProjectionItemClick
+        end
+        object ProjectionSeparatorItem: TMenuItem
+          Locked = True
+          Text = '-'
+        end
+        object CavalierItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          RadioItem = True
+          Text = 'Cavalier'
+          OnClick = ProjectionItemClick
+        end
+        object CabinetItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          RadioItem = True
+          Text = 'Cabinet'
+          OnClick = ProjectionItemClick
+        end
+        object MilitaryItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          RadioItem = True
+          Text = 'Military'
+          OnClick = ProjectionItemClick
+        end
+        object PlanObliqueItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          RadioItem = True
+          Text = 'Plan Oblique'
+          OnClick = ProjectionItemClick
+        end
+      end
       object ViewSeparatorItem: TMenuItem
         Locked = True
         Text = '-'
@@ -439,30 +505,6 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Show Animation Volume'
         OnClick = ShowCombinedSweepItemClick
-      end
-      object OrthographicItem: TMenuItem
-        Locked = True
-        Text = 'Orthographic'
-        OnClick = OrthographicItemClick
-      end
-      object LightsSeparatorItem: TMenuItem
-        Locked = True
-        Text = '-'
-      end
-      object LightsMenu: TMenuItem
-        Locked = True
-        Text = 'Lights'
-        object HeadlightItem: TMenuItem
-          Locked = True
-          IsChecked = True
-          Text = 'Headlight'
-          OnClick = HeadlightItemClick
-        end
-        object OriginalLightItem: TMenuItem
-          Locked = True
-          Text = 'Original Light'
-          OnClick = OriginalLightItemClick
-        end
       end
     end
   end

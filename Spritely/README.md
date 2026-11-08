@@ -11,6 +11,10 @@ repository owns it, ProjectionTest included; the copies in SRDelphiFMX are
 to be removed. Paths below
 are from this folder, `Spritely/`.
 
+Every change to Spritely is logged, newest first, in [NOTES.md](NOTES.md):
+what changed, why, and what a program using the components must do.
+Read it before relying on how a component behaves.
+
 ## Layout
 
 | Folder | What is in it |
@@ -20,6 +24,7 @@ are from this folder, `Spritely/`.
 | `packages/` | `Spritely` (runtime) and `dclSpritely` (design time) |
 | `ProjectionTest/` | The projection's test bed (see [The projection test](#the-projection-test)): `ProjectionTest.dpr` / `.dproj`, the form in `ui/`, the measuring and the test runner in `common/` |
 | `models/` | ProjectionTest's models: `DemoSceneNoWall.glb` (its test model), `DollyHallway.glb` (the dolly-zoom test) and `uvcube.glb` (a cube with a UV test texture; the fallback, and the subject of the hallway) |
+| `NOTES.md` | The log of updates, newest first |
 | `tools/` | `gen_packages.py` (the packages), `gen_icons.py` and `gen_icon_res.py` (the palette icons), `gen_demo_scene.py` and `gen_dolly_hallway.py` (the test models) |
 
 ## The components
@@ -99,7 +104,10 @@ A projection for any FireMonkey 3D viewport (`TViewport3D`,
 camera's own angle of view) and orthographic. FMX keeps the projection it
 draws with private (`TContext3D.FProjectionMatrix`); the component finds it
 inside the first frame, by its value, and writes its own over it in every
-frame, through an empty 3D object first in the viewport. It is made from
+frame, through an empty 3D object first in the viewport. Where several
+contexts draw the scene in turn, such as the viewport's own and a render
+pass's (an off-screen grab), it keeps where each keeps its projection, so
+each is written from its own FMX projection. It is made from
 FMX's own each time, so resizes and a new angle of view are followed, and
 FMX's goes back when nothing is changed or `Active` is False. It was found
 and measured with ProjectionTest (below).
@@ -127,7 +135,7 @@ and changes them, for tests and other uses.
 To use both: drop a `TSpritelyOrbitalCamera` and a `TSpritelyProjection`,
 set the camera's `Viewport` and its `Projection` to the projection (that
 sets the projection's `Focus` and `Viewport`), then set `Kind` and the
-rest. Sprite3D does not use `TSpritelyProjection` yet.
+rest. Sprite3D uses `TSpritelyProjection` for its oblique projections (cavalier, cabinet, military and plan oblique), made in code, with `CameraPreset` and `Dolly` off, so its own camera views keep the angles.
 
 ## Packages and installing
 

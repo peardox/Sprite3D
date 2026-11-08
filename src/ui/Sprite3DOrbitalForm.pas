@@ -211,7 +211,13 @@ type
     FOnCancel: TNotifyEvent;
     FOnPreview: TNotifyEvent;
     FCameraSettings: TCameraSettings;
+    //** @abstract(Backing field for AzimuthOnly.)
+    FAzimuthOnly: Boolean;
     procedure SetSpec(const ASettings: TCameraSettings);
+    //** @abstract(Setter for AzimuthOnly: enables or disables the Inclination and Roll dials.)
+    //**
+    //** @param(Value True to allow only the azimuth to change.)
+    procedure SetAzimuthOnly(const Value: Boolean);
     procedure ShowReadouts;
     procedure UpdatePanControls;
     procedure Preview;
@@ -232,6 +238,12 @@ type
     //**
     //** Set it before the dialog is shown; read it after OK.
     property CameraSpec: TCameraSettings read FCameraSettings write SetSpec;
+    //** @abstract(True: only the azimuth can be changed; the Inclination and Roll dials are
+    //** disabled and keep CameraSpec's angles. False by default.)
+    //**
+    //** The main form sets it while an oblique projection is chosen, as those are drawn from
+    //** fixed angles: turning the model round is all that may change.
+    property AzimuthOnly: Boolean read FAzimuthOnly write SetAzimuthOnly;
   end;
 
 var
@@ -399,6 +411,15 @@ end;
 procedure TOrbitalSettingsForm.SetSpec(const ASettings: TCameraSettings);
 begin
   FCameraSettings := ASettings;
+end;
+
+procedure TOrbitalSettingsForm.SetAzimuthOnly(const Value: Boolean);
+begin
+  FAzimuthOnly := Value;
+  // Disabled, the dials cannot be turned, so CameraSpec keeps its
+  // inclination and roll; their readouts still show them
+  AngleDial.Enabled := not Value;
+  RollDial.Enabled := not Value;
 end;
 
 procedure TOrbitalSettingsForm.ShowAndFree;

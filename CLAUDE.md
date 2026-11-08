@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 8 November 2026, 20:35.
+Last updated: 8 November 2026, 21:55.
 
 ## Starting a new conversation
 
@@ -13,10 +13,10 @@ Last updated: 8 November 2026, 20:35.
    `git clone --recurse-submodules https://github.com/peardox/Sprite3D.git`
    (branch `main`). The submodules are `delphi-neon` and `FastMM5`.
 2. Read the whole of `README.md`, then this file, then `Spritely/README.md`
-   before touching anything in `Spritely/`. The design notes in the
-   repository root (`viewport.md`, `offscreen.md`, `volumes.md`,
-   `directions.md`, `metadata.md`) explain the harder parts; read the one
-   that covers what you are about to change.
+   and `Spritely/NOTES.md` before touching anything in `Spritely/`. The
+   design notes in the repository root (`viewport.md`, `offscreen.md`,
+   `volumes.md`, `directions.md`, `metadata.md`) explain the harder parts;
+   read the one that covers what you are about to change.
 3. The owner's working copy is often ahead of GitHub. If the owner attaches
    or pastes files, build on those, not on GitHub. Anything delivered after
    the "Where the work is" section below was last updated is in the
@@ -146,6 +146,10 @@ the older ones.
   settings, it gets its own `Spritely.Storage`, with `System.JSON`.
 - A new component is first made in code to test it; once it works it is
   put on the form in the `.fmx`.
+- **Log every change to `Spritely/` in `Spritely/NOTES.md`**, newest
+  first, as its "Writing an entry" says (owner, 8 November 2026), so
+  sessions elsewhere that use Spritely can see what changed and what to
+  rebuild. The entry goes in the same zip as the change.
 - The rest of the code rules below apply to it as to Sprite3D.
 - ProjectionTest's own types keep the owner's prefix, `TPeardox...`
   (`TPeardoxProjectionTestForm`); its `.dproj` finds FastMM5 at
@@ -383,6 +387,156 @@ them.
 
 ## Where the work is
 
+**Zip ObliqueView1 (8 November 2026), not yet tested.** Follows Status1.
+The owner (21:43): the obliques looked wrong because the camera stayed at
+the chosen view; choosing one should set the view to suit, with the fixed
+views unavailable and Variable limited to the azimuth. Done
+(`src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DOrbitalForm.pas`,
+`README.md`), and it reverses Projection1's "angles stay View, Camera's":
+
+- `ApplyProjection` calls `EnterObliqueView(Kind)` for an oblique kind:
+  the first time, it keeps the checked view (`FObliqueView`, by its
+  settings key) and the angles (`FObliqueAzimuth` ...) and sets
+  `FObliqueActive`; every time, it sets the angles from
+  `TSpritelyProjection.PresetAngles` (readout azimuth reversed, as
+  `ApplyAngles` sends it; roll 0), checks Variable and logs "Camera at the
+  projection's angles: ...". A camera's own projection calls
+  `LeaveObliqueView`, which clears `FObliqueActive` first (a fixed view's
+  handler, 1/4 and 3/4, calls `ApplyProjection` again) and puts the view
+  back: Variable with the kept angles, or the fixed view's own handler;
+  logged "Camera view put back: <key>". `FProjection.CameraPreset` stays
+  off: the form does the turning, so its readouts and settings stay in
+  step.
+- `UpdateCameraLockControls` disables every View, Camera view but
+  Variable while `FObliqueActive`; `BuildLockCameraItem` now calls it,
+  since a session starting in an oblique chose it before that item
+  existed. `TOrbitalSettingsForm.AzimuthOnly` (new; disables `AngleDial`
+  and `RollDial`) is set from `FObliqueActive` when Variable's dialog
+  opens.
+- `SaveViewState` keeps `FObliqueView` and its angles while an oblique is
+  chosen, so the next session restores that view, then the projection
+  (`RestoreViewToggles` comes after `RestoreCameraView`) turns the camera.
+  An azimuth turned while oblique is not kept between sessions.
+- To test: from Isometric, choose Cavalier (level, front face true),
+  Cabinet, Military (from above, plan at 45 degrees), Plan Oblique (from
+  above, plan square); the fixed views greyed, Variable's dialog with only
+  Azimuth live; then Perspective: Isometric back. From Variable at some
+  angles, the same, and those angles back. Restart in an oblique: the
+  fixed views greyed and the oblique's angles. Grabs as the view.
+
+`====> NO PACKAGE REBUILD <====` for ObliqueView1.
+
+**Zip Notes1 (8 November 2026).** Follows Projection2. Asked by the
+owner (21:27): a log of Spritely updates for other sessions,
+`Spritely/NOTES.md`, newest first, with every change of the day back to
+the move from SRDelphiFMX, and how to write an entry; the rule is under
+*Spritely* above. `Spritely/README.md` and this file point to it.
+
+**Zip Projection2 (8 November 2026), applied: the grabs now match the
+view (owner, 21:35).** What else still looks wrong in the oblique
+projections was asked, not yet answered. It follows
+Projection1. The owner's first test (21:21, 21:25): the screen looked odd
+and a cabinet grab showed the model small, in the bottom-left corner. The
+Debug tab showed the cause: "Projection found in TContextOpenGLWindows at
++$60" twice, then "The context's projection is not a perspective" on
+every later find. The view and the off-screen grab pass draw with two
+different contexts. `TSpritelyProjection` kept one slot: when the other
+context drew, it forgot the first without putting FMX's projection back,
+so on that context's next frame it found only its own oblique matrix
+there, gave up, and the stale matrix stayed in use while the camera was
+refitted, on screen and in grabs alike. It did reach the grab pass (the
+grab was oblique), which settles Projection1's unknown.
+
+- Fix, in `Spritely/lib/Spritely.Projection.pas`: `FSlots`, one slot per
+  context (up to `SPRITELY_PROJECTION_MAX_CONTEXTS`, 8), kept while others
+  draw, so each context's tracker tells FMX's value and ours apart;
+  `SlotFor` finds a context's slot and drops one whose value is neither
+  ours nor a perspective (a new object at the same address, or the camera
+  out of perspective mode); `FFailedContexts` in place of the single
+  failed context; `LiveSlot` (the viewport's present context, the only one
+  surely alive outside a frame) in place of `SlotAlive`, for `DropSlot` and
+  `Changed`. `FindSlot` is a function and logs the context's address and
+  how many are kept. Spritely's checker: no problems.
+- To test (Windows): choose Cavalier, then a grab, then another camera
+  view and back, then another grab. The Debug tab should show two "found"
+  lines with different addresses ("2 context(s) kept") and no "not a
+  perspective"; the view should refit with every change; each grab should
+  be framed like the view, the model filling it. Then Cabinet, Military
+  and Plan Oblique the same way, an icon and a short export. ProjectionTest
+  should behave as before.
+
+`====> REBUILD RUNTIME PACKAGE SPRITELY (ALL PLATFORMS) <====` for
+Projection2 (`dclSpritely` needs no reinstall: `Spritely.Reg` and the
+icons are unchanged, but rebuild it if the IDE asks).
+
+**Zip Projection1 (8 November 2026), not yet tested.** It follows
+Handover1. The owner is pushing everything up to Handover1 and will branch
+once this is merged, so GitHub should then hold the zips below, and
+Projection1 goes on that branch. Asked by the owner (20:59): Lights below
+Camera, then a Projection submenu with Perspective, Orthographic, and the
+oblique Cavalier, Cabinet, Military and Plan Oblique, drawn by
+`TSpritelyProjection`.
+
+- View menu, top to bottom: Camera, Lights, Projection, then the Show
+  items. Projection is a radio group (`GroupIndex` 2): `PerspectiveItem`,
+  `OrthographicItem`, `ProjectionSeparatorItem`, `CavalierItem`,
+  `CabinetItem`, `MilitaryItem`, `PlanObliqueItem`, all on
+  `ProjectionItemClick`; the old top-level Orthographic toggle and the
+  Lights separator are gone. Lock Camera disables every Projection item.
+- `TSprite3DProjection` (`prPerspective` ... `prPlanOblique`) and
+  `ProjectionInfo` (settings key, caption, metadata name, benchmark
+  prefix) in `Sprite3DHelpers.pas`; `TSprite3DAppSettings.Projection`,
+  kept as `projection` (text, so an unknown name cannot stop
+  settings.json loading) with `ProjectionKind` for code. A file without
+  `projection` reads its old `orthographic`; writing keeps `orthographic`
+  in step for earlier versions.
+- `ApplyProjection`: Orthographic sets the camera's `cpOrthographic`;
+  every other choice `cpPerspective` (TSpritelyProjection is made from
+  FMX's perspective). `FProjection`, a `TSpritelyProjection` made in code
+  in `FormCreate` (a new component is first made in code), has `Kind`
+  pjPerspective for the camera's own projections (so it leaves FMX's
+  alone) and the oblique kind otherwise. It is `OrbitCamera.Projection`,
+  so the camera's fits (`FitPointsOnAxis`, `FitToBounds`) and
+  `ProjectToView` follow it, and its `Viewport` is set by hand
+  (`OrbitCamera.Projection` sets only its `Focus`). `CameraPreset` and
+  `Dolly` are off: the angles stay View, Camera's (decided here, not
+  asked: the owner split Camera and Projection into two menus). It is
+  freed first thing in `FormDestroy`, `OrbitCamera.Projection` nil first,
+  as ProjectionTest learned. The Debug tab gets "Projection: <name>, the
+  camera's own" or "..., drawn by TSpritelyProjection over the camera's
+  perspective" when the choice changes, and the component's `OnLog`
+  lines (queued, as it logs from inside a frame) prefixed "Projection
+  component:".
+- With an oblique projection, `FitPointsOnAxis` frames the swept volume
+  exactly but leaves the orbit centre where the fit puts it instead of on
+  the turning axis (Spritely's own choice: a parallel view is sheared
+  about the target plane), so turning the azimuth then needs a refit, which
+  the view does for every change it makes. Two-pass scaling by distance is
+  exact for the obliques; `ShiftView` (overscan's shifted drawings) is too.
+- Metadata: `TSprite3DSheetCamera.Projection` (text) writes
+  `camera.projection` as perspective, orthographic, cavalier, cabinet,
+  military or plan_oblique; `ortho_height` stays null but for
+  orthographic. Benchmark folders start `cav`, `cab`, `mil` or `plan`.
+- **The one unknown:** whether `TSpritelyProjection`'s hook also runs in
+  `TSprite3DOffscreen`'s render pass, so grabs, icons and exports are
+  drawn in the oblique projection rather than plain perspective. It
+  writes the projection wherever FMX keeps it in the context drawing the
+  frame, and takes a new value written there as FMX's own, so a pass that
+  draws with the same context at its own size should be followed. If the
+  pass draws with another context, the Debug tab shows a "Projection
+  component:" line saying it was not found there, and the grab comes out
+  in perspective. On macOS and iOS grabs are screenshots of the view, so
+  are right either way.
+- To test, Windows first: each projection from Head On and Top Down (and
+  Isometric); the view refits for each; a grab, an icon and an export
+  match the view (the unknown above); the Debug lines; Lock Camera
+  disables the six; the choice comes back next session, and a settings.json
+  from before (only `orthographic`) comes up Orthographic or Perspective;
+  metadata `camera.projection`; Linux menu bar and the mobile drawer show
+  "View, Projection" with the radio ticks.
+
+`====> NO PACKAGE REBUILD <====` for Projection1: Spritely is unchanged.
+
 ### Handover (8 November 2026, 20:35)
 
 **State.** The owner has applied every zip of 8 November in order,
@@ -422,8 +576,8 @@ Sprite3d for WinARM64EC, and ProjectionTest from `Spritely/`
 (SpritelyMove2); drag and drop and 4096 grabs in full (items 3 and 4
 below); the older items 1 and 2 and the Linux menu check below.
 
-**Next, as the owner has said:** `TSpritelyProjection` in Sprite3D is for
-later (the projection kinds as views, the dolly zoom, shift and rise).
+**Next, as the owner has said:** `TSpritelyProjection` in Sprite3D, begun
+in Projection1 above (the dolly zoom, shift and rise still to come).
 Changes to Spritely itself are now made here; any delivery touching
 `Spritely/lib` or `Spritely/packages` carries the rebuild line.
 
@@ -506,7 +660,7 @@ the two deliveries of 27 October listed below.
   Mouse View, pan, grabs, icons and every export as before; closing gives
   no access violation and no new leak in FastMM5's report.
 
-`TSpritelyProjection` is for later (owner): Sprite3D does not use it yet.
+`TSpritelyProjection`: used from Projection1 for the oblique projections.
 
 Before 8 November: GitHub was at `e160b7d` ("Missed stuff"), 27 October 2026. It has the Linux
 menu fix (`UseFmxMenuBar` copies the menu items rather than moving them,
@@ -643,6 +797,12 @@ These cost time once.
   platform's deployment; on macOS `System.StartUpCopy` then copies them
   into the user's folders. GDEM disables such entries in its `.dproj`'s
   Deployment section (`<Enabled>false</Enabled>`).
+- **Several contexts can draw one Gorilla3D scene.** Sprite3D's
+  off-screen grab pass draws with a `TContextOpenGLWindows` of its own,
+  not the viewport's. Anything that patches a context from inside the
+  frame (`TSpritelyProjection`) must keep its state per context, and must
+  not write to a context outside its own frame unless it is the
+  viewport's present one.
 - FMX's `TForm` has no `OnDragOver` or `OnDragDrop` events. To take drops
   on the form, override its public virtual `DragOver` and `DragDrop`.
   After one compile error, Delphi can report a spurious "There is no

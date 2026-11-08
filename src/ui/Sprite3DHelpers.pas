@@ -211,6 +211,48 @@ type
   //** @code(thRubyGraphite) red and @code(thGoldenGraphite) gold.
   TSprite3DTheme = (thDefault, thDark, thAquaGraphite, thRubyGraphite, thGoldenGraphite);
 
+  //** @abstract(The projection chosen in View, Projection on the main form.)
+  //**
+  //** Perspective and orthographic are the camera's own (its ProjectionMode). The four
+  //** oblique projections are drawn by the Spritely package's TSpritelyProjection, with the
+  //** camera in perspective: the picture is made from what the perspective shows at the
+  //** orbit centre's distance, with depth drawn across it. Cavalier draws depth at full
+  //** length at 45 degrees, cabinet at half length at 63.43 degrees (2 in 1), military at
+  //** full length straight down the picture (with the camera looking straight down, height
+  //** goes straight up and the plan keeps its shape), and plan oblique at full length down
+  //** and to the right (with the camera straight down and the plan square to the picture,
+  //** height goes up and to the left at 45 degrees). The camera's angles are left to View,
+  //** Camera: these look as intended from Head On (cavalier, cabinet) and Top Down (military,
+  //** plan oblique).
+  TSprite3DProjection = (
+    //** @abstract(The camera's own perspective.)
+    prPerspective,
+    //** @abstract(The camera's own orthographic projection.)
+    prOrthographic,
+    //** @abstract(Oblique: depth at full length, at 45 degrees.)
+    prCavalier,
+    //** @abstract(Oblique: depth at half length, at 63.43 degrees.)
+    prCabinet,
+    //** @abstract(Oblique: depth at full length, straight down the picture.)
+    prMilitary,
+    //** @abstract(Oblique: depth at full length, down and to the right, so height goes up and
+    //** to the left.)
+    prPlanOblique);
+
+  //** @abstract(How a TSprite3DProjection is named in each place it appears.)
+  TSprite3DProjectionInfo = record
+    //** @abstract(In settings.json and as the menu item's name: Perspective, Orthographic,
+    //** Cavalier, Cabinet, Military, PlanOblique.)
+    Key: String;
+    //** @abstract(As the menu, the window caption and the Debug tab show it.)
+    Caption: String;
+    //** @abstract(In the metadata's @code(camera.projection): perspective, orthographic,
+    //** cavalier, cabinet, military, plan_oblique.)
+    MetaName: String;
+    //** @abstract(Starting each benchmark's folder and file names.)
+    Prefix: String;
+  end;
+
   //** @abstract(Which graphics processor Windows gives the application.)
   //**
   //** @code(gmSystem) lets Windows decide; @code(gmPowerSaving) asks for the low-power GPU and
@@ -313,6 +355,8 @@ type
     FOrthographic: Boolean;
     //** @abstract(Backing fields for Headlight and OriginalLight.)
     FHeadlight, FOriginalLight: Boolean;
+    //** @abstract(Backing field for Projection.)
+    FProjection: String;
     FCameraView: String;
     FVariableAzimuth: Single;
     FVariableInclination: Single;
@@ -376,6 +420,10 @@ type
     procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
     function GetThemeKind: TSprite3DTheme;
     procedure SetThemeKind(const Value: TSprite3DTheme);
+    //** @abstract(Getter for ProjectionKind.)
+    function GetProjectionKind: TSprite3DProjection;
+    //** @abstract(Setter for ProjectionKind.)
+    procedure SetProjectionKind(const Value: TSprite3DProjection);
   public
     //** @abstract(Creates the settings with their defaults, for settings.json in
     //** SupportFolder.)
@@ -421,6 +469,13 @@ type
     //** A name in settings.json that is not one of the themes, such as one from an older
     //** version, reads as thDefault.
     property ThemeKind: TSprite3DTheme read GetThemeKind write SetThemeKind;
+    //** @abstract(Projection as a TSprite3DProjection.)
+    //**
+    //** A settings.json without @code(projection), as earlier versions wrote, reads as
+    //** prOrthographic if its @code(orthographic) is true and prPerspective if not; a name
+    //** this version does not know reads as prPerspective. Writing sets Orthographic too, so
+    //** an earlier version reading the file still finds orthographic or perspective.
+    property ProjectionKind: TSprite3DProjection read GetProjectionKind write SetProjectionKind;
     //** @abstract(Whether --debug was given on the command line; False by default.)
     //**
     //** Turns debugging on for this run only, as DebugEnabled does: it is public, not
@@ -511,10 +566,19 @@ type
     //** Stored as @code(showCombinedSweptVolume).
     property ShowCombinedSweptVolume: Boolean read FShowCombinedSweptVolume
       write FShowCombinedSweptVolume;
-    //** @abstract(Whether View, Orthographic is ticked on the main form; False by default.)
+    //** @abstract(Whether the main form's projection is orthographic; False by default.)
     //**
-    //** Stored as @code(orthographic).
+    //** Stored as @code(orthographic). Before View, Projection it was the View, Orthographic
+    //** tick; now Projection says which projection, and this is kept in step with it for
+    //** earlier versions, and read only when Projection is missing.
     property Orthographic: Boolean read FOrthographic write FOrthographic;
+    //** @abstract(The projection chosen in View, Projection on the main form; empty by default,
+    //** which reads as Orthographic says.)
+    //**
+    //** Stored as @code(projection): one of Perspective, Orthographic, Cavalier, Cabinet,
+    //** Military and PlanOblique. Kept as text so a name this version does not know can never
+    //** stop settings.json loading; use ProjectionKind in code.
+    property Projection: String read FProjection write FProjection;
     //** @abstract(Whether View, Lights, Headlight is ticked on the main form: the Spritely
     //** camera's own light; True by default.)
     //**
@@ -1361,6 +1425,13 @@ function AutoIconFileName(const AExtension: String): String;
 function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
   const APanX, APanZ: Single): TPoint3D;
 
+//** @abstract(The names of a projection: its settings key, caption, metadata name and
+//** benchmark prefix.)
+//**
+//** @param(AProjection The projection.)
+//** @returns(Its names.)
+function ProjectionInfo(const AProjection: TSprite3DProjection): TSprite3DProjectionInfo;
+
 //** @abstract(Gives the whole application, title bars included, the look ATheme names.)
 //**
 //** thDefault puts back FMX's own platform style and the system's title bars. The other
@@ -1502,6 +1573,9 @@ begin
   FShowSweptVolume := True;
   FShowCombinedSweptVolume := False;
   FOrthographic := False;
+  // Empty: decided by FOrthographic, so a file from before View, Projection
+  // keeps its projection
+  FProjection := String.Empty;
   FHeadlight := True;
   FOriginalLight := False;
   // The main form's view as it starts
@@ -2536,6 +2610,41 @@ end;
 procedure TSprite3DAppSettings.SetThemeKind(const Value: TSprite3DTheme);
 begin
   FTheme := THEMES[Value].Key;
+end;
+
+const
+  //** @abstract(The names of each projection; see TSprite3DProjectionInfo.)
+  PROJECTIONS: array[TSprite3DProjection] of TSprite3DProjectionInfo = (
+    (Key: 'Perspective';  Caption: 'Perspective';  MetaName: 'perspective';  Prefix: 'persp'),
+    (Key: 'Orthographic'; Caption: 'Orthographic'; MetaName: 'orthographic'; Prefix: 'ortho'),
+    (Key: 'Cavalier';     Caption: 'Cavalier';     MetaName: 'cavalier';     Prefix: 'cav'),
+    (Key: 'Cabinet';      Caption: 'Cabinet';      MetaName: 'cabinet';      Prefix: 'cab'),
+    (Key: 'Military';     Caption: 'Military';     MetaName: 'military';     Prefix: 'mil'),
+    (Key: 'PlanOblique';  Caption: 'Plan Oblique'; MetaName: 'plan_oblique'; Prefix: 'plan'));
+
+function ProjectionInfo(const AProjection: TSprite3DProjection): TSprite3DProjectionInfo;
+begin
+  Result := PROJECTIONS[AProjection];
+end;
+
+function TSprite3DAppSettings.GetProjectionKind: TSprite3DProjection;
+begin
+  if FProjection = String.Empty then
+  begin
+    if FOrthographic then
+      Exit(prOrthographic);
+    Exit(prPerspective);
+  end;
+  for var Kind := Low(TSprite3DProjection) to High(TSprite3DProjection) do
+    if SameText(FProjection, PROJECTIONS[Kind].Key) then
+      Exit(Kind);
+  Result := prPerspective;
+end;
+
+procedure TSprite3DAppSettings.SetProjectionKind(const Value: TSprite3DProjection);
+begin
+  FProjection := PROJECTIONS[Value].Key;
+  FOrthographic := Value = prOrthographic;
 end;
 
 function ApplyTheme(const ATheme: TSprite3DTheme; out AError: String): Boolean;

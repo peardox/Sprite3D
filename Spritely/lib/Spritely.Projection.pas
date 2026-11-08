@@ -84,6 +84,12 @@ const
   //** @abstract(The 2:1 dimetric camera's inclination, degrees: ArcSin(1 / 2), so a square on
   //** the ground is drawn twice as wide as it is high - the "isometric" of pixel art.)
   SPRITELY_PROJECTION_DIMETRIC_INCLINATION = 30;
+  //** @abstract(The most drawing contexts TSpritelyProjection keeps a slot for at once.)
+  //**
+  //** One per context that draws the viewport's scene: the viewport's own, and one for each
+  //** render pass with a context of its own (Sprite3D's off-screen grabs). A few are plenty;
+  //** past this the oldest is forgotten.
+  SPRITELY_PROJECTION_MAX_CONTEXTS = 8;
 
 type
   //** @abstract(Points at a matrix kept inside an object.)
@@ -663,8 +669,16 @@ type
     //** @abstract(The empty object first in the viewport that calls us inside each frame; nil
     //** at design time and without a viewport.)
     FHook: TSpritelyRenderHook;
-    //** @abstract(Where FMX keeps the projection, once found; owned.)
-    FSlot: TSpritelyMatrixSlot;
+    //** @abstract(Where FMX keeps the projection, one slot for each context it was found in,
+    //** oldest first; owned.)
+    //**
+    //** One per context, not one for the last, because several contexts can take turns
+    //** drawing the scene: the viewport's own and a render pass's (Sprite3D's off-screen
+    //** grabs, 8 November 2026: two TContextOpenGLWindows). Forgetting a context's slot when
+    //** another drew left ours written there, so on its next frame only our oblique matrix was
+    //** to be found, not FMX's perspective, and the projection stopped following the camera.
+    //** Kept, each context's slot knows FMX's own value and ours apart.
+    FSlots: TObjectList<TSpritelyMatrixSlot>;
     //** @abstract(Whether the projection is changed at all.)
     FActive: Boolean;
     //** @abstract(The projection drawn with.)
@@ -695,16 +709,26 @@ type
     FSavedCulling: Boolean;
     //** @abstract(Frames the projection has been written in.)
     FFrames: Int64;
-    //** @abstract(The context the projection was last NOT found in, so it is not looked for
+    //** @abstract(The contexts the projection was NOT found in, so they are not looked through
     //** (and logged) again every frame; cleared by Changed.)
-    FFailedContext: TContext3D;
+    FFailedContexts: TList<TContext3D>;
     //** @abstract(Where log lines go.)
     FOnLog: TSpritelyProjectionLogEvent;
-    //** @abstract(Whether the slot lies in the viewport's present context, so it is safe to
-    //** write: a context made again (a resize, a new form) leaves the slot in freed memory.)
+    //** @abstract(The slot in the viewport's present context, the one context known to be alive
+    //** outside a frame: a context made again (a resize, a new form) leaves its slot in freed
+    //** memory, and a render pass's context is only surely alive while it draws.)
     //**
-    //** @returns(True if FSlot is there and alive.)
-    function SlotAlive: Boolean;
+    //** @returns(The slot, or nil.)
+    function LiveSlot: TSpritelyMatrixSlot;
+    //** @abstract(The slot kept for a context, if it is still good there.)
+    //**
+    //** A slot whose value is neither ours nor a perspective is dropped: the context is not
+    //** the one it was found in (a new object at the same address), or the camera is no
+    //** longer in perspective mode.
+    //**
+    //** @param(AContext The context drawing; alive, as it is drawing.)
+    //** @returns(The slot, or nil.)
+    function SlotFor(AContext: TContext3D): TSpritelyMatrixSlot;
     //** @abstract(Sends a line to OnLog.)
     //**
     //** @param(AText The line.)
@@ -715,11 +739,17 @@ type
     //** @param(Sender The hook.)
     //** @param(AContext The context drawing the frame.)
     procedure HookRender(Sender: TObject; AContext: TContext3D);
-    //** @abstract(Finds where AContext keeps its projection, by its value.)
+    //** @abstract(Finds where AContext keeps its projection, by its value, and keeps a slot for
+    //** it.)
     //**
     //** @param(AContext The context.)
-    procedure FindSlot(AContext: TContext3D);
-    //** @abstract(Puts FMX's projection back and forgets where it is.)
+    //** @returns(The new slot, or nil if not found.)
+    function FindSlot(AContext: TContext3D): TSpritelyMatrixSlot;
+    //** @abstract(Puts FMX's projection back in the viewport's present context and forgets
+    //** every slot.)
+    //**
+    //** Only the present context is written to: another (a render pass's) may be gone, and
+    //** what is left in it no longer matters once the slots are forgotten.
     procedure DropSlot;
     //** @abstract(Makes the hook in the viewport, at run time.)
     procedure MakeHook;
@@ -1742,6 +1772,8 @@ begin
   FDistance := SPRITELY_PROJECTION_DEFAULT_DISTANCE;
   FOwnFieldOfView := SPRITELY_PROJECTION_DEFAULT_FOV;
   FManageCulling := True;
+  FSlots := TObjectList<TSpritelyMatrixSlot>.Create(True);
+  FFailedContexts := TList<TContext3D>.Create;
 end;
 
 destructor TSpritelyProjection.Destroy;
@@ -1751,8 +1783,10 @@ begin
   if (FViewport <> nil) and not (csDestroying in FViewport.ComponentState) then
     DropSlot
   else
-    FreeAndNil(FSlot);
+    FSlots.Clear;
   FreeHook;
+  FreeAndNil(FSlots);
+  FreeAndNil(FFailedContexts);
   inherited Destroy;
 end;
 
@@ -1781,7 +1815,8 @@ begin
   else if AComponent = FViewport then
   begin
     // The viewport frees its context and our hook with it: forget both
-    FreeAndNil(FSlot);
+    FSlots.Clear;
+    FFailedContexts.Clear;
     if FHook <> nil then
     begin
       FHook.RemoveFreeNotification(Self);
@@ -1822,13 +1857,13 @@ begin
   FreeAndNil(FHook);
 end;
 
-procedure TSpritelyProjection.FindSlot(AContext: TContext3D);
+function TSpritelyProjection.FindSlot(AContext: TContext3D): TSpritelyMatrixSlot;
 var
   Own: TMatrix3D;
   Base: PByte;
   Offset, Size: Integer;
 begin
-  FreeAndNil(FSlot);
+  Result := nil;
   Own := AContext.CurrentProjectionMatrix;
   if not TSpritelyProjectionAccess.IsPerspectiveLike(Own) then
   begin
@@ -1845,64 +1880,104 @@ begin
   begin
     if TSpritelyProjectionAccess.SameMatrix(TSpritelyMatrixPtr(Base + Offset)^, Own) then
     begin
-      FSlot := TSpritelyMatrixSlot.Create(AContext, Offset, mkProjection, '', 'context');
-      Log(Format('Projection found in %s at +$%x', [AContext.ClassName, Offset]));
+      Result := TSpritelyMatrixSlot.Create(AContext, Offset, mkProjection, '', 'context');
+      // The oldest first to go: its context is the likeliest to be gone
+      if FSlots.Count >= SPRITELY_PROJECTION_MAX_CONTEXTS then
+        FSlots.Delete(0);
+      FSlots.Add(Result);
+      Log(Format('Projection found in %s $%p at +$%x (%d context(s) kept)',
+        [AContext.ClassName, Pointer(AContext), Offset, FSlots.Count]));
       Exit;
     end;
     Inc(Offset, SizeOf(Single));
   end;
-  Log(Format('The projection was NOT found in %s: nothing changed', [AContext.ClassName]));
+  Log(Format('The projection was NOT found in %s $%p: nothing changed',
+    [AContext.ClassName, Pointer(AContext)]));
 end;
 
-function TSpritelyProjection.SlotAlive: Boolean;
+function TSpritelyProjection.LiveSlot: TSpritelyMatrixSlot;
 var
   VP: IViewport3D;
 begin
-  Result := (FSlot <> nil) and (FViewport <> nil) and Supports(FViewport, IViewport3D, VP) and
-    (VP.Context = FSlot.Holder);
+  Result := nil;
+  if (FViewport = nil) or not Supports(FViewport, IViewport3D, VP) or (VP.Context = nil) then
+    Exit;
+  for var Slot in FSlots do
+    if Slot.Holder = VP.Context then
+      Exit(Slot);
+end;
+
+function TSpritelyProjection.SlotFor(AContext: TContext3D): TSpritelyMatrixSlot;
+var
+  Here: TMatrix3D;
+begin
+  for var I := FSlots.Count - 1 downto 0 do
+    if FSlots[I].Holder = AContext then
+    begin
+      Result := FSlots[I];
+      // Ours, or FMX's perspective (its own, or made again after a resize):
+      // still good. Anything else was not put there by FMX or us
+      if Result.State <> 'changed' then
+        Exit;
+      Here := Result.Read;
+      if TSpritelyProjectionAccess.IsPerspectiveLike(Here) then
+        Exit;
+      Log(Format('The projection kept for %s $%p is no longer a perspective: looked for again',
+        [AContext.ClassName, Pointer(AContext)]));
+      FSlots.Delete(I);
+      Exit(nil);
+    end;
+  Result := nil;
 end;
 
 procedure TSpritelyProjection.DropSlot;
+var
+  Slot: TSpritelyMatrixSlot;
 begin
-  if SlotAlive then
-    FSlot.Restore;
-  FreeAndNil(FSlot);
+  Slot := LiveSlot;
+  if Slot <> nil then
+    Slot.Restore;
+  FSlots.Clear;
 end;
 
 procedure TSpritelyProjection.HookRender(Sender: TObject; AContext: TContext3D);
 var
+  Slot: TSpritelyMatrixSlot;
   Clean: TMatrix3D;
 begin
   if AContext = nil then
     Exit;
+  // Each context drawing the scene has its own slot, kept while others
+  // draw: see FSlots. AContext is alive, as it is drawing
+  Slot := SlotFor(AContext);
   if not FActive or not Changing then
   begin
     // FMX's own is to be drawn: put it back where ours still is, and note
     // the camera's own lens (the first dolly step starts from it)
-    if (FSlot <> nil) and (FSlot.Holder = AContext) then
-      FSlot.Restore;
+    if Slot <> nil then
+      Slot.Restore;
     if TSpritelyProjectionAccess.FieldOfView(AContext.CurrentProjectionMatrix) > 0 then
       FOwnFieldOfView := TSpritelyProjectionAccess.FieldOfView(AContext.CurrentProjectionMatrix);
     Exit;
   end;
-  if (FSlot = nil) or (FSlot.Holder <> AContext) then
+  if Slot = nil then
   begin
-    // A new context, or the first frame: the old one may be gone, so its
-    // slot is only forgotten. Not again in a context it was not found in
-    // (once logged), until a property changes
-    FreeAndNil(FSlot);
-    if AContext = FFailedContext then
+    // A context not seen before, or the first frame. Not again in a
+    // context it was not found in (once logged), until a property changes
+    if FFailedContexts.Contains(AContext) then
       Exit;
-    FindSlot(AContext);
-    if FSlot = nil then
+    Slot := FindSlot(AContext);
+    if Slot = nil then
     begin
-      FFailedContext := AContext;
+      if FFailedContexts.Count >= SPRITELY_PROJECTION_MAX_CONTEXTS then
+        FFailedContexts.Delete(0);
+      FFailedContexts.Add(AContext);
       Exit;
     end;
   end;
-  Clean := FSlot.CleanValue;
+  Clean := Slot.CleanValue;
   FOwnFieldOfView := TSpritelyProjectionAccess.FieldOfView(Clean);
-  FSlot.Apply(MakeMatrix(Clean));
+  Slot.Apply(MakeMatrix(Clean));
   Inc(FFrames);
 end;
 
@@ -1914,7 +1989,7 @@ end;
 
 function TSpritelyProjection.Found: Boolean;
 begin
-  Result := FSlot <> nil;
+  Result := FSlots.Count > 0;
 end;
 
 function TSpritelyProjection.FocusDistance: Single;
@@ -2035,11 +2110,11 @@ begin
   // Nothing to change now: FMX's projection back at once, not only in the
   // next frame, so a test or a screenshot taken before it sees FMX's; only
   // in a context still alive
-  if not (FActive and Changing) and SlotAlive then
-    FSlot.Restore;
+  if not (FActive and Changing) and (LiveSlot <> nil) then
+    LiveSlot.Restore;
   // Look again for a projection not found before (the camera may be in
   // perspective mode now)
-  FFailedContext := nil;
+  FFailedContexts.Clear;
   if FViewport is TGorillaViewport then
   begin
     VP := TGorillaViewport(FViewport);

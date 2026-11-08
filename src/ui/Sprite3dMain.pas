@@ -239,20 +239,26 @@
 //**     |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
 //**     |   |-- FLockSeparatorItem "-"
 //**     |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
+//**     |-- LightsMenu "Lights"
+//**     |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+//**     |   `-- OriginalLightItem "Original Light"  the light the form made before
+//**     |                                       Spritely; not ticked at start-up
+//**     |-- ProjectionMenu "Projection"      one of six, a radio group
+//**     |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
+//**     |   |-- OrthographicItem "Orthographic" the camera's own
+//**     |   |-- ProjectionSeparatorItem "-"
+//**     |   |-- CavalierItem "Cavalier"     oblique, by TSpritelyProjection
+//**     |   |-- CabinetItem "Cabinet"       oblique, by TSpritelyProjection
+//**     |   |-- MilitaryItem "Military"     oblique, by TSpritelyProjection
+//**     |   `-- PlanObliqueItem "Plan Oblique"  oblique, by TSpritelyProjection
 //**     |-- ViewSeparatorItem "-"
 //**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
 //**     |-- ShowGridItem "Show grid"        ticked at start-up
 //**     |-- ShowAxesItem "Show axes"        ticked at start-up
 //**     |-- ShowSweepItem "Show Model Volume"  ticked at start-up; the space swept turning
 //**     |                                      about the up axis
-//**     |-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
-//**     |                                      frames
-//**     |-- OrthographicItem "Orthographic" orthographic instead of perspective
-//**     |-- LightsSeparatorItem "-"
-//**     `-- LightsMenu "Lights"
-//**         |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
-//**         `-- OriginalLightItem "Original Light"  the light the form made before
-//**                                         Spritely; not ticked at start-up
+//**     `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+//**                                            frames
 //** )
 unit Sprite3dMain;
 {
@@ -508,20 +514,26 @@ unit Sprite3dMain;
         |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
         |   |-- FLockSeparatorItem "-"
         |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
+        |-- LightsMenu "Lights"
+        |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+        |   `-- OriginalLightItem "Original Light"  the light the form made before
+        |                                       Spritely; not ticked at start-up
+        |-- ProjectionMenu "Projection"      one of six, a radio group
+        |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
+        |   |-- OrthographicItem "Orthographic" the camera's own
+        |   |-- ProjectionSeparatorItem "-"
+        |   |-- CavalierItem "Cavalier"     oblique, by TSpritelyProjection
+        |   |-- CabinetItem "Cabinet"       oblique, by TSpritelyProjection
+        |   |-- MilitaryItem "Military"     oblique, by TSpritelyProjection
+        |   `-- PlanObliqueItem "Plan Oblique"  oblique, by TSpritelyProjection
         |-- ViewSeparatorItem "-"
         |-- ShowBoundsItem "Show bounding box"  ticked at start-up
         |-- ShowGridItem "Show grid"        ticked at start-up
         |-- ShowAxesItem "Show axes"        ticked at start-up
         |-- ShowSweepItem "Show Model Volume"  ticked at start-up; the space swept turning
         |                                      about the up axis
-        |-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
-        |                                      frames
-        |-- OrthographicItem "Orthographic" orthographic instead of perspective
-        |-- LightsSeparatorItem "-"
-        `-- LightsMenu "Lights"
-            |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
-            `-- OriginalLightItem "Original Light"  the light the form made before
-                                            Spritely; not ticked at start-up
+        `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+                                               frames
 }
 
 interface
@@ -533,7 +545,7 @@ uses
   Gorilla.Model, FMX.Controls3D, Gorilla.Light, Gorilla.Viewport,
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
-  FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Spritely.OrbitalCamera, FMX.Menus,
+  FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Spritely.OrbitalCamera, Spritely.Projection, FMX.Menus,
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
@@ -807,12 +819,29 @@ type
     //** with no animations used. It is redrawn for each new model and whenever the
     //** animations or statics used or the ticks change. See ShowCombinedSweepItemClick.
     ShowCombinedSweepItem: TMenuItem;
-    //** @abstract(Switches the camera between orthographic and perspective projection.)
+    //** @abstract(The View menu's "Projection" submenu: one of six projections, a radio
+    //** group; see ProjectionItemClick and ApplyProjection.)
     //**
-    //** Ticked, the camera is orthographic; see OrthographicItemClick.
+    //** Perspective and Orthographic are the camera's own. Cavalier, Cabinet, Military and
+    //** Plan Oblique are drawn by FProjection, a @code(TSpritelyProjection), with the camera
+    //** in perspective. Kept as @code(projection) in settings.json.
+    ProjectionMenu: TMenuItem;
+    //** @abstract(The camera's own perspective; chosen at start-up when nothing is saved.)
+    PerspectiveItem: TMenuItem;
+    //** @abstract(The camera's own orthographic projection.)
     OrthographicItem: TMenuItem;
-    //** @abstract(The separator above LightsMenu.)
-    LightsSeparatorItem: TMenuItem;
+    //** @abstract(The separator between the camera's own projections and the oblique ones.)
+    ProjectionSeparatorItem: TMenuItem;
+    //** @abstract(Cavalier: depth drawn at full length at 45 degrees; best from Head On.)
+    CavalierItem: TMenuItem;
+    //** @abstract(Cabinet: depth drawn at half length at 63.43 degrees; best from Head On.)
+    CabinetItem: TMenuItem;
+    //** @abstract(Military: depth drawn at full length straight down the picture; best from
+    //** Top Down, where height goes straight up and the plan keeps its shape.)
+    MilitaryItem: TMenuItem;
+    //** @abstract(Plan oblique: depth drawn at full length down and to the right; best from
+    //** Top Down, where height goes up and to the left at 45 degrees.)
+    PlanObliqueItem: TMenuItem;
     //** @abstract(The View menu's "Lights" submenu, holding HeadlightItem and
     //** OriginalLightItem, which switch each light on or off on its own.)
     //**
@@ -965,15 +994,13 @@ type
     //**
     //** @param(Sender AspectLayout.)
     procedure AspectLayoutResize(Sender: TObject);
-    //** @abstract(Ticks or unticks OrthographicItem, then switches the projection to match
-    //** and refits the model.)
+    //** @abstract(Chooses the projection of the View, Projection item clicked, then switches
+    //** to it and refits the model; see ApplyProjection.)
     //**
-    //** Sets ProjectionMode to cpOrthographic or cpPerspective, puts the mode's name in the
-    //** form caption, and refits, since the two modes size the view differently. Does nothing
-    //** while View, Camera, Lock Camera is ticked, when the item is disabled.
+    //** Does nothing while View, Camera, Lock Camera is ticked, when the items are disabled.
     //**
-    //** @param(Sender OrthographicItem.)
-    procedure OrthographicItemClick(Sender: TObject);
+    //** @param(Sender One of ProjectionMenu's items.)
+    procedure ProjectionItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks HeadlightItem, then switches OrbitCamera's headlight to
     //** match; see ApplyLights.)
     //**
@@ -1557,6 +1584,28 @@ type
     //** @abstract(ApplyLights has written its first Debug tab line, saying which lights the
     //** session starts with; after that it writes one only when they change.)
     FLightsLogged: Boolean;
+    //** @abstract(Draws the oblique projections chosen in View, Projection: a
+    //** @code(TSpritelyProjection), made in FormCreate and freed first thing in FormDestroy.)
+    //**
+    //** It is OrbitCamera's Projection, so the camera's fits and ProjectToView follow what it
+    //** draws, and its Viewport is GorillaViewport, where it puts an empty 3D object first
+    //** among the children to write the projection inside each frame. CameraPreset is off:
+    //** the camera's angles stay View, Camera's. For Perspective and Orthographic its Kind is
+    //** pjPerspective, so it leaves FMX's projection alone.
+    FProjection: TSpritelyProjection;
+    //** @abstract(The projection ApplyProjection last logged; Ord -1 before the first.)
+    FLoggedProjection: Integer;
+    //** @abstract(True while an oblique projection is chosen in View, Projection: the camera is
+    //** at the projection's angles, View, Camera's fixed views are disabled, and Variable
+    //** turns the azimuth only.)
+    FObliqueActive: Boolean;
+    //** @abstract(The View, Camera view, by its settings key, chosen before the first oblique
+    //** projection; put back when the projection is the camera's own again, and kept in
+    //** settings.json in place of the oblique one.)
+    FObliqueView: String;
+    //** @abstract(The angles, as the readouts show them, before the first oblique projection;
+    //** put back with FObliqueView when it is Variable.)
+    FObliqueAzimuth, FObliqueInclination, FObliqueRoll: Single;
     //** @abstract(The on-screen framing, kept while a grab is fitted to its target.)
     FSavedFraming: TSpritelyOrbitalFraming;
     // The camera pan, applied on top of every fit while FPanEnabled
@@ -1889,6 +1938,10 @@ type
     procedure AcceptCameraSpec(const ASpec: TCameraSettings);
     procedure RestoreCamera;
     procedure OrbitalDialogPreview(Sender: TObject);
+    //** @abstract(The window's caption: the projection's name from View, Projection, with
+    //** reminders when a pan is in use or the camera is locked.)
+    //**
+    //** @returns(The caption.)
     function ProjectionCaption: String;
     function DefaultModelFile: String;
     procedure LoadStartupModel;
@@ -1918,7 +1971,48 @@ type
     procedure ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
       const ASave: Boolean);
     procedure RestoreViewToggles;
+    //** @abstract(Puts the projection as View, Projection says, logs it in the Debug tab when
+    //** it changes, sets the caption, and refits the model.)
+    //**
+    //** Perspective and Orthographic set the camera's ProjectionMode and leave FProjection
+    //** drawing FMX's own; the oblique ones put the camera in perspective, which
+    //** @code(TSpritelyProjection) starts from, and set FProjection's Kind. The camera's
+    //** fits follow FProjection (it is OrbitCamera's Projection), so the model is framed in
+    //** the projection actually drawn. While the camera is locked only the caption changes.
     procedure ApplyProjection;
+    //** @abstract(Turns the camera to an oblique projection's own angles, with View, Camera,
+    //** Variable checked; remembers the view before, the first time, in FObliqueView.)
+    //**
+    //** The angles are @code(TSpritelyProjection.PresetAngles): cavalier and cabinet level at a
+    //** face, military from straight above with the plan turned 45 degrees, plan oblique from
+    //** straight above with the plan square to the picture. Roll is 0.
+    //**
+    //** @param(AKind The oblique kind.)
+    procedure EnterObliqueView(const AKind: TSpritelyProjectionKind);
+    //** @abstract(Puts back the View, Camera view, and its angles, from before the oblique
+    //** projections.)
+    procedure LeaveObliqueView;
+    //** @abstract(The View, Camera view checked, by its settings key; empty if none.)
+    //**
+    //** @returns(The key.)
+    function CheckedCameraViewKey: String;
+    //** @abstract(The projection View, Projection has ticked.)
+    //**
+    //** @returns(The projection; prPerspective if, somehow, none is ticked.)
+    function CheckedProjection: TSprite3DProjection;
+    //** @abstract(The View, Projection item for a projection.)
+    //**
+    //** @param(AProjection The projection.)
+    //** @returns(Its menu item.)
+    function ProjectionItem(const AProjection: TSprite3DProjection): TMenuItem;
+    //** @abstract(Puts a line from FProjection in the Debug tab: where it found FMX's
+    //** projection in a frame, or why it could not.)
+    //**
+    //** Queued, as FProjection calls it from inside a frame being drawn.
+    //**
+    //** @param(Sender FProjection.)
+    //** @param(AText The line.)
+    procedure ProjectionLog(Sender: TObject; const AText: string);
     procedure ApplyShowAxes;
     //** @abstract(Puts the lights as HeadlightItem and OriginalLightItem say, and logs which
     //** are on in the Debug tab when that has changed.)
@@ -2632,6 +2726,20 @@ begin
   OrbitCamera.FOV := 45;
   OrbitCamera.Viewport := GorillaViewport;
   GorillaCamera := OrbitCamera.Camera;
+  // The oblique projections of View, Projection: made in code, as a new
+  // component is first; ApplyProjection, from RestoreViewToggles below, sets
+  // its Kind. The camera's angles stay View, Camera's (no preset), and a
+  // lens change never moves the camera (no dolly). OrbitCamera's Projection
+  // makes the camera's fits follow it; its Viewport is set here, as that
+  // does not set it.
+  FLoggedProjection := -1;
+  FProjection := TSpritelyProjection.Create(Self);
+  FProjection.CameraPreset := False;
+  FProjection.Dolly := False;
+  FProjection.Kind := pjPerspective;
+  FProjection.OnLog := ProjectionLog;
+  FProjection.Viewport := GorillaViewport;
+  OrbitCamera.Projection := FProjection;
   GorillaLight := nil;
   GorillaModel := Nil;
 
@@ -3167,27 +3275,150 @@ begin
   end;
 end;
 
-procedure TMainForm.OrthographicItemClick(Sender: TObject);
+procedure TMainForm.ProjectionItemClick(Sender: TObject);
 begin
   if CameraLocked then
     Exit;   // the projection is part of the camera
-  OrthographicItem.IsChecked := not OrthographicItem.IsChecked;
+  if not (Sender is TMenuItem) or TMenuItem(Sender).IsChecked then
+    Exit;   // already the projection
+  TMenuItem(Sender).IsChecked := True;   // a radio item: the others untick
   ApplyProjection;
 end;
 
-// The projection and caption to match OrthographicItem, then a refit, as
-// the two modes size the view differently
+function TMainForm.ProjectionItem(const AProjection: TSprite3DProjection): TMenuItem;
+begin
+  case AProjection of
+    prOrthographic: Result := OrthographicItem;
+    prCavalier: Result := CavalierItem;
+    prCabinet: Result := CabinetItem;
+    prMilitary: Result := MilitaryItem;
+    prPlanOblique: Result := PlanObliqueItem;
+  else
+    Result := PerspectiveItem;
+  end;
+end;
+
+function TMainForm.CheckedProjection: TSprite3DProjection;
+begin
+  for var Kind := Low(TSprite3DProjection) to High(TSprite3DProjection) do
+    if ProjectionItem(Kind).IsChecked then
+      Exit(Kind);
+  Result := prPerspective;
+end;
+
+function TMainForm.CheckedCameraViewKey: String;
+begin
+  Result := String.Empty;
+  for var I := 0 to CameraMenu.ItemsCount - 1 do
+    if IsCameraViewItem(CameraMenu.Items[I]) and CameraMenu.Items[I].IsChecked then
+      Exit(CameraViewKey(CameraMenu.Items[I]));
+end;
+
+procedure TMainForm.EnterObliqueView(const AKind: TSpritelyProjectionKind);
+var
+  Azimuth, Inclination: Single;
+begin
+  if not FObliqueActive then
+  begin
+    // The view to go back to, kept until a camera's own projection is chosen
+    FObliqueView := CheckedCameraViewKey;
+    FObliqueAzimuth := FAzimuth;
+    FObliqueInclination := FPolarAngle;
+    FObliqueRoll := FRoll;
+    FObliqueActive := True;
+  end;
+  if not TSpritelyProjection.PresetAngles(AKind, Azimuth, Inclination) then
+    Exit;
+  // The readouts hold the azimuth reversed, as ApplyAngles sends it
+  FAzimuth := Wrap360(-Azimuth);
+  FPolarAngle := Inclination;
+  FRoll := 0;
+  ApplyAngles;
+  ClearViewChecks;
+  ViewVariableItem.IsChecked := True;
+  DebugMemo.Lines.Add(Format('Camera at the projection''s angles: azimuth %.0f, ' +
+    'inclination %.0f; View, Camera, Variable turns the azimuth only',
+    [FAzimuth, FPolarAngle]));
+end;
+
+procedure TMainForm.LeaveObliqueView;
+var
+  Item: TMenuItem;
+begin
+  // Cleared first: a fixed view's handler may call ApplyProjection again
+  FObliqueActive := False;
+  UpdateCameraLockControls;
+  Item := CameraViewItem(FObliqueView);
+  if (Item = nil) or (Item = ViewVariableItem) then
+  begin
+    FAzimuth := FObliqueAzimuth;
+    FPolarAngle := FObliqueInclination;
+    FRoll := FObliqueRoll;
+    ApplyAngles;
+    ClearViewChecks;
+    ViewVariableItem.IsChecked := True;
+  end
+  else if Assigned(Item.OnClick) then
+    Item.OnClick(Item);
+  DebugMemo.Lines.Add('Camera view put back: ' + CheckedCameraViewKey);
+end;
+
+procedure TMainForm.ProjectionLog(Sender: TObject; const AText: string);
+var
+  Line: String;
+begin
+  // Called from inside a frame: the memo is changed afterwards
+  Line := 'Projection component: ' + AText;
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        DebugMemo.Lines.Add(Line);
+    end);
+end;
+
+// The projection and caption to match View, Projection, then a refit, as
+// each projection sizes the view differently. The camera's own perspective
+// or orthographic, or an oblique one drawn by FProjection over the camera's
+// perspective (TSpritelyProjection is made from FMX's perspective, so the
+// camera must be in perspective for it). FProjection's Kind is set either
+// way, pjPerspective for the camera's own, so it lets FMX's projection be.
 procedure TMainForm.ApplyProjection;
+const
+  // FProjection's Kind for each: the camera's own projections need none
+  KINDS: array[TSprite3DProjection] of TSpritelyProjectionKind = (
+    pjPerspective, pjPerspective, pjCavalier, pjCabinet, pjMilitary, pjPlanOblique);
+var
+  Kind: TSprite3DProjection;
 begin
   if CameraLocked then
   begin
     Caption := ProjectionCaption;
     Exit;
   end;
-  if OrthographicItem.IsChecked then
+  Kind := CheckedProjection;
+  if Kind = prOrthographic then
     GorillaCamera.ProjectionMode := TGorillaCameraProjection.cpOrthographic
   else
     GorillaCamera.ProjectionMode := TGorillaCameraProjection.cpPerspective;
+  if FProjection <> nil then
+    FProjection.Kind := KINDS[Kind];
+  // An oblique projection is drawn from its own angles; the camera's own
+  // projections take back the view chosen before
+  if KINDS[Kind] <> pjPerspective then
+    EnterObliqueView(KINDS[Kind])
+  else if FObliqueActive then
+    LeaveObliqueView;
+  UpdateCameraLockControls;
+  if Ord(Kind) <> FLoggedProjection then
+  begin
+    FLoggedProjection := Ord(Kind);
+    if KINDS[Kind] = pjPerspective then
+      DebugMemo.Lines.Add('Projection: ' + ProjectionInfo(Kind).Caption + ', the camera''s own')
+    else
+      DebugMemo.Lines.Add('Projection: ' + ProjectionInfo(Kind).Caption +
+        ', drawn by TSpritelyProjection over the camera''s perspective');
+  end;
   Caption := ProjectionCaption;
   FitModel;
 end;
@@ -3504,6 +3735,13 @@ end;
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   MainFormGone := True;   // queued work arriving from here on does nothing
+  // The projection let go of and freed while the viewport, its hook's owner,
+  // and the camera are whole: freed later, with the form's other components,
+  // it could meet them half destroyed (ProjectionTest's exit fault in
+  // SRDelphiFMX was of that kind)
+  if OrbitCamera <> nil then
+    OrbitCamera.Projection := nil;
+  FreeAndNil(FProjection);
   if Assigned(FReadoutTimer) then
     FReadoutTimer.Enabled := False;
   // The tabs change as the form is torn down: the Results view, freed with
@@ -3560,7 +3798,7 @@ begin
   ShowAxesItem.IsChecked := FSettings.ShowAxes;
   ShowSweepItem.IsChecked := FSettings.ShowSweptVolume;
   ShowCombinedSweepItem.IsChecked := FSettings.ShowCombinedSweptVolume;
-  OrthographicItem.IsChecked := FSettings.Orthographic;
+  ProjectionItem(FSettings.ProjectionKind).IsChecked := True;
   HeadlightItem.IsChecked := FSettings.Headlight;
   OriginalLightItem.IsChecked := FSettings.OriginalLight;
   ApplyLights;
@@ -3633,21 +3871,36 @@ var
 begin
   if FSettings = nil then
     Exit;
-  for I := 0 to CameraMenu.ItemsCount - 1 do
-    if IsCameraViewItem(CameraMenu.Items[I]) and CameraMenu.Items[I].IsChecked then
-      FSettings.CameraView := CameraViewKey(CameraMenu.Items[I]);
-  if ViewVariableItem.IsChecked then
+  if FObliqueActive then
   begin
-    FSettings.VariableAzimuth := FAzimuth;
-    FSettings.VariableInclination := FPolarAngle;
-    FSettings.VariableRoll := FRoll;
+    // The view from before the oblique projection: the next session puts
+    // it back, then the projection turns the camera to its own angles
+    FSettings.CameraView := FObliqueView;
+    if CameraViewItem(FObliqueView) = ViewVariableItem then
+    begin
+      FSettings.VariableAzimuth := FObliqueAzimuth;
+      FSettings.VariableInclination := FObliqueInclination;
+      FSettings.VariableRoll := FObliqueRoll;
+    end;
+  end
+  else
+  begin
+    for I := 0 to CameraMenu.ItemsCount - 1 do
+      if IsCameraViewItem(CameraMenu.Items[I]) and CameraMenu.Items[I].IsChecked then
+        FSettings.CameraView := CameraViewKey(CameraMenu.Items[I]);
+    if ViewVariableItem.IsChecked then
+    begin
+      FSettings.VariableAzimuth := FAzimuth;
+      FSettings.VariableInclination := FPolarAngle;
+      FSettings.VariableRoll := FRoll;
+    end;
   end;
   FSettings.ShowBoundingBox := ShowBoundsItem.IsChecked;
   FSettings.ShowGrid := ShowGridItem.IsChecked;
   FSettings.ShowAxes := ShowAxesItem.IsChecked;
   FSettings.ShowSweptVolume := ShowSweepItem.IsChecked;
   FSettings.ShowCombinedSweptVolume := ShowCombinedSweepItem.IsChecked;
-  FSettings.Orthographic := OrthographicItem.IsChecked;
+  FSettings.ProjectionKind := CheckedProjection;
   FSettings.Headlight := HeadlightItem.IsChecked;
   FSettings.OriginalLight := OriginalLightItem.IsChecked;
   FSettings.PanEnabled := FPanEnabled;
@@ -4056,6 +4309,7 @@ begin
       Result.Camera.View := CameraViewKey(CameraMenu.Items[I]);
   Result.Camera.Orthographic :=
     GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpOrthographic;
+  Result.Camera.Projection := ProjectionInfo(CheckedProjection).MetaName;
   // The readouts, as shown; a direction's turn is not in them
   Result.Camera.Azimuth := FAzimuth;
   Result.Camera.Inclination := FPolarAngle;
@@ -4900,6 +5154,8 @@ begin
   begin
     Dialog := TOrbitalSettingsForm.Create(nil);
     Dialog.CameraSpec := CurrentCameraSpec;
+    // An oblique projection is drawn from its own inclination and roll
+    Dialog.AzimuthOnly := FObliqueActive;
     Dialog.OnPreview := OrbitalDialogPreview;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     // ShowModal cannot block here: the dialog reports OK or Cancel and
@@ -5005,12 +5261,7 @@ end;
 // The window's caption: the projection, and a reminder when a pan is in use
 function TMainForm.ProjectionCaption: String;
 begin
-  if GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpOrthographic then
-    Result := 'Orthographic'
-  else if GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpPerspective then
-    Result := 'Perspective'
-  else
-    Result := 'Some other projection';
+  Result := ProjectionInfo(CheckedProjection).Caption;
   if FPanEnabled and ((FPanX <> 0) or (FPanZ <> 0)) then
     Result := Result + ' (panned)';
   if CameraLocked then
@@ -6307,6 +6558,10 @@ begin
   FLockCameraItem.IsChecked := False;
   FLockCameraItem.OnClick := LockCameraItemClick;
   CameraMenu.AddObject(FLockCameraItem);
+  // The views as the projection allows: a session that starts in an oblique
+  // projection chose it (RestoreViewToggles) before this item was made, when
+  // UpdateCameraLockControls had nothing to work with
+  UpdateCameraLockControls;
 end;
 
 // True while View, Camera, Lock Camera is ticked
@@ -6353,10 +6608,13 @@ begin
   Locked := CameraLocked;
   if Assigned(GorillaCamera) then
     GorillaCamera.Locked := Locked;
+  // While an oblique projection is chosen only Variable, for the azimuth
   for I := 0 to CameraMenu.ItemsCount - 1 do
     if IsCameraViewItem(CameraMenu.Items[I]) then
-      CameraMenu.Items[I].Enabled := not Locked;
-  OrthographicItem.Enabled := not Locked;
+      CameraMenu.Items[I].Enabled := not Locked and
+        (not FObliqueActive or (CameraMenu.Items[I] = ViewVariableItem));
+  for I := 0 to ProjectionMenu.ItemsCount - 1 do
+    ProjectionMenu.Items[I].Enabled := not Locked;
   FLockCameraItem.Enabled := not Capturing;
 end;
 
@@ -9963,7 +10221,9 @@ begin
         (FTwoPassBounds.Right >= W) or (FTwoPassBounds.Bottom >= H) then
         Note := Note + '. The sprite touched the edge of the frame, so it may have been ' +
           'cut off and its padding may not come down to ' + IntToStr(FTwoPassPadding);
-      if not GorillaCamera.IsOrthographic then
+      // A parallel view's size goes with the distance exactly; perspective's
+      // only at the orbit centre's depth
+      if CheckedProjection = prPerspective then
         Note := Note + '. In perspective the result is close rather than exact';
     end;
   end;
@@ -10278,10 +10538,7 @@ begin
   UpdateBatchControls;
 
   FBenchmarkRoot := Root;
-  if GorillaCamera.ProjectionMode = TGorillaCameraProjection.cpOrthographic then
-    FBenchmarkPrefix := 'ortho'
-  else
-    FBenchmarkPrefix := 'persp';
+  FBenchmarkPrefix := ProjectionInfo(CheckedProjection).Prefix;
   // Local time, ending every folder and file name the benchmark makes, so
   // another benchmark into the same folder leaves this one alone
   FBenchmarkStamp := FormatDateTime('yymmddhhnnss', Now);
