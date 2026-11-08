@@ -153,7 +153,12 @@ const
   //** @abstract(The smallest width or height File, Grab renders, in pixels.)
   GRAB_SIZE_MIN = 8;
   //** @abstract(The largest width or height File, Grab renders, in pixels.)
-  GRAB_SIZE_MAX = 1024;
+  //**
+  //** Large grabs are slow and need a lot of memory: a capture is refused if its frames
+  //** would need more than about 1 GB (MAX_CAPTURE_BYTES in Sprite3dMain), which at 4096 by
+  //** 4096 is only a few frames, and a texture atlas page must be at least the grab size.
+  //** Overscan above OVERSCAN_TARGET_LIMIT is made up with shifted drawings.
+  GRAB_SIZE_MAX = 4096;
   //** @abstract(The width and height File, Grab renders until another size is chosen.)
   GRAB_SIZE_DEFAULT = 256;
   //** @abstract(The square grab sizes File, Settings offers, in pixels, smallest first.)
@@ -306,6 +311,8 @@ type
     FShowSweptVolume: Boolean;
     FShowCombinedSweptVolume: Boolean;
     FOrthographic: Boolean;
+    //** @abstract(Backing fields for Headlight and OriginalLight.)
+    FHeadlight, FOriginalLight: Boolean;
     FCameraView: String;
     FVariableAzimuth: Single;
     FVariableInclination: Single;
@@ -508,6 +515,16 @@ type
     //**
     //** Stored as @code(orthographic).
     property Orthographic: Boolean read FOrthographic write FOrthographic;
+    //** @abstract(Whether View, Lights, Headlight is ticked on the main form: the Spritely
+    //** camera's own light; True by default.)
+    //**
+    //** Stored as @code(headlight).
+    property Headlight: Boolean read FHeadlight write FHeadlight;
+    //** @abstract(Whether View, Lights, Original Light is ticked on the main form: the light
+    //** the form made before the Spritely camera; False by default.)
+    //**
+    //** Stored as @code(originalLight).
+    property OriginalLight: Boolean read FOriginalLight write FOriginalLight;
     //** @abstract(The main form's camera view, the checked View, Camera item; Isometric by
     //** default.)
     //**
@@ -1485,6 +1502,8 @@ begin
   FShowSweptVolume := True;
   FShowCombinedSweptVolume := False;
   FOrthographic := False;
+  FHeadlight := True;
+  FOriginalLight := False;
   // The main form's view as it starts
   FCameraView := 'Isometric';
   FVariableAzimuth := 0;

@@ -1,4 +1,5 @@
-//** @abstract(Demo form for TSprite3DCamera: loads a model and drives the camera with dials.)
+//** @abstract(Demo form for the Spritely orbital camera: loads a model and drives the camera
+//** with dials.)
 //**
 //** The form has four tabs. The Static and Animated tabs share one TGorillaViewport, created at
 //** run time, and the side panel beside it, which are moved onto whichever of the two is
@@ -71,7 +72,7 @@
 //** offered under Open With for model files and whether it is their default application, the
 //** start-up action (no model, the sample model or the model last opened), the size of
 //** off-screen grabs (a square preset from 8 to 512 pixels, or a custom width and height from 8
-//** to 1024), the theme (FMX's default style, Dark, or the coloured Aqua, Ruby and Golden
+//** to 4096), the theme (FMX's default style, Dark, or the coloured Aqua, Ruby and Golden
 //** Graphite styles, which the title bars follow where the system allows) and, on Windows,
 //** which GPU to ask for, which takes effect at the next start. All are kept in settings.json.
 //**
@@ -177,9 +178,9 @@
 //** view on the tighter axis, and the orbit centre is on the turning axis, so turning the
 //** azimuth dial keeps the model in view.
 //**
-//** The form only handles the user interface. The 3D work is done by the library units in
-//** @code(lib): Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and
-//** Sprite3DOffscreen. The application's other rules, such as where models are found, how a
+//** The form only handles the user interface. The 3D work is done by the orbital camera,
+//** @code(TSpritelyOrbitalCamera) from the Spritely package, and the library units in
+//** @code(lib): Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and Sprite3DOffscreen. The application's other rules, such as where models are found, how a
 //** model is loaded and placed, and how grabs are named and saved, are in Sprite3DHelpers.
 //**
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
@@ -246,12 +247,17 @@
 //**     |                                      about the up axis
 //**     |-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
 //**     |                                      frames
-//**     `-- OrthographicItem "Orthographic" orthographic instead of perspective
+//**     |-- OrthographicItem "Orthographic" orthographic instead of perspective
+//**     |-- LightsSeparatorItem "-"
+//**     `-- LightsMenu "Lights"
+//**         |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+//**         `-- OriginalLightItem "Original Light"  the light the form made before
+//**                                         Spritely; not ticked at start-up
 //** )
 unit Sprite3dMain;
 {
-  Demo form for TSprite3DCamera: loads a model and drives the camera with
-  dials.
+  Demo form for the Spritely orbital camera: loads a model and drives the
+  camera with dials.
 
   The form has four tabs. The Static and Animated tabs share one
   TGorillaViewport, created at run time, and the side panel beside it, moved
@@ -326,7 +332,7 @@ unit Sprite3dMain;
   Sprite3D is offered under Open With for model files and whether it is their
   default application, the start-up action (no model, the sample model or the
   model last opened), the size of off-screen grabs (a square preset from 8 to
-  512 pixels, or a custom width and height from 8 to 1024), the theme (FMX's
+  512 pixels, or a custom width and height from 8 to 4096), the theme (FMX's
   default style, Dark, or the coloured Aqua, Ruby and Golden Graphite styles,
   which the title bars follow where the system allows) and, on Windows, which
   GPU to ask for, which takes effect at the next start. All are kept in
@@ -439,9 +445,10 @@ unit Sprite3dMain;
   axis, and the orbit centre is on the turning axis, so turning the azimuth
   dial keeps the model in view.
 
-  The form only handles the user interface. The 3D work is done by the library
-  units in lib: Sprite3DCamera, Sprite3DAxes, Sprite3DGrid, Sprite3DSweep
-  and Sprite3DOffscreen. The application's other rules, such as where models are
+  The form only handles the user interface. The 3D work is done by the orbital
+  camera, TSpritelyOrbitalCamera from the Spritely package, and the library
+  units in lib: Sprite3DAxes, Sprite3DGrid, Sprite3DSweep and
+  Sprite3DOffscreen. The application's other rules, such as where models are
   found, how a model is loaded and placed, and how grabs are named and saved,
   are in Sprite3DHelpers.
 
@@ -509,7 +516,12 @@ unit Sprite3dMain;
         |                                      about the up axis
         |-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
         |                                      frames
-        `-- OrthographicItem "Orthographic" orthographic instead of perspective
+        |-- OrthographicItem "Orthographic" orthographic instead of perspective
+        |-- LightsSeparatorItem "-"
+        `-- LightsMenu "Lights"
+            |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+            `-- OriginalLightItem "Original Light"  the light the form made before
+                                            Spritely; not ticked at start-up
 }
 
 interface
@@ -521,7 +533,7 @@ uses
   Gorilla.Model, FMX.Controls3D, Gorilla.Light, Gorilla.Viewport,
   FMX.TabControl, FMX.Layouts, Gorilla.Controller, Gorilla.Animation.Controller,
   FMX.Memo.Types, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
-  FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Sprite3dCamera, FMX.Menus,
+  FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Spritely.OrbitalCamera, FMX.Menus,
   Sprite3DOffscreen, Sprite3DHelpers, Sprite3DIconWriter, Sprite3DBackground,
   Sprite3DOrbitalForm, Sprite3DSettingsForm, FMX.ListBox, Sprite3DAnimCapture,
   Sprite3DAnimationForm, Sprite3DVideo, Sprite3DLibraryUpdate, Sprite3DOpenH264,
@@ -619,10 +631,9 @@ type
 
   //** @abstract(The main form: a Gorilla3D view of one model, with dials for the camera.)
   //**
-  //** The viewport, light, model and TSprite3DCamera are created at run time, not at design
-  //** time; the form owns none of them directly. All event handlers run on the main thread.
-  //**
-  //** @seealso(TSprite3DCamera)
+  //** The viewport and model are created at run time, not at design time. The camera and its
+  //** light are made by OrbitCamera, a @code(TSpritelyOrbitalCamera) on the form, once
+  //** FormCreate gives it the viewport. All event handlers run on the main thread.
   TMainForm = class(TForm)
     //** @abstract(Fills the form and holds the Static, Animated, Results and Debug tabs.)
     TabControl1: TTabControl;
@@ -685,6 +696,14 @@ type
     //** Its filter is set from IconDialogFilter each time, so it offers every registered icon
     //** format; for now only Windows .ico. It prompts before overwriting a file.
     SaveIconDialog: TSaveDialog;
+    //** @abstract(The orbital camera, from the Spritely package: it builds the viewport's
+    //** camera, kept in GorillaCamera, and the headlight riding on it, kept in GorillaLight.)
+    //**
+    //** Placed in the form designer with no Viewport, as the viewport is made at run time;
+    //** FormCreate sets Viewport, which builds the camera. Headlight is on, so the light sits
+    //** where the camera is and points where it looks, lighting whatever side of the model is
+    //** in view. The rest of the form works on the camera itself, GorillaCamera, as before.
+    OrbitCamera: TSpritelyOrbitalCamera;
     //** @abstract(The form's menu bar, holding FileMenu.)
     MainMenu1: TMainMenu;
     //** @abstract(The "File" menu, holding OpenModelMenuItem, GrabMenuItem and ExitMenuItem.)
@@ -792,6 +811,27 @@ type
     //**
     //** Ticked, the camera is orthographic; see OrthographicItemClick.
     OrthographicItem: TMenuItem;
+    //** @abstract(The separator above LightsMenu.)
+    LightsSeparatorItem: TMenuItem;
+    //** @abstract(The View menu's "Lights" submenu, holding HeadlightItem and
+    //** OriginalLightItem, which switch each light on or off on its own.)
+    //**
+    //** Both can be on at once, which lights the model twice from the same point, or both
+    //** off, which leaves the model unlit; the Debug tab says which are on each time one
+    //** changes. See ApplyLights.
+    LightsMenu: TMenuItem;
+    //** @abstract(Switches OrbitCamera's headlight on or off; ticked at start-up.)
+    //**
+    //** The headlight is a point light that @code(TSpritelyOrbitalCamera) makes at the
+    //** camera's own position while its @code(Headlight) is True. See HeadlightItemClick.
+    HeadlightItem: TMenuItem;
+    //** @abstract(Switches the original light on or off; not ticked at start-up.)
+    //**
+    //** The original light is the point light the form made by hand before the Spritely
+    //** camera came in, kept in GorillaLight; it is the same kind of light in the same
+    //** place as the headlight, made by the form instead of the component. See
+    //** OriginalLightItemClick.
+    OriginalLightItem: TMenuItem;
     //** @abstract(The "Variable" view; see ViewVariableItemClick.)
     ViewVariableItem: TMenuItem;
     //** @abstract(The "Isometric" view, chosen at start-up when no other is saved; see
@@ -855,9 +895,10 @@ type
     //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is
     //** the current folder instead if that has a models subfolder. The handler creates a
     //** TGorillaViewport in AspectLayout, which FitViewportToAspect makes as large as fits
-    //** there at the aspect ratio of the grab size, centred; a TSprite3DCamera with a 45-degree
-    //** FOV, which becomes the viewport's camera; and a point light parented to the camera at
-    //** its origin, so it sits where the camera is and points where it looks. The viewport runs
+    //** there at the aspect ratio of the grab size, centred, and gives it to OrbitCamera,
+    //** which builds the camera, with a 45-degree FOV, makes it the viewport's camera, and
+    //** puts its headlight, a point light, on the camera at its origin, so it sits where the
+    //** camera is and points where it looks. The viewport runs
     //** at a fixed 60 frames per second without VSync. A TSprite3DBackground is put behind the
     //** viewport, showing the background kept in settings.json.
     //**
@@ -933,6 +974,16 @@ type
     //**
     //** @param(Sender OrthographicItem.)
     procedure OrthographicItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks HeadlightItem, then switches OrbitCamera's headlight to
+    //** match; see ApplyLights.)
+    //**
+    //** @param(Sender HeadlightItem.)
+    procedure HeadlightItemClick(Sender: TObject);
+    //** @abstract(Ticks or unticks OriginalLightItem, then makes or frees the original light
+    //** to match; see ApplyLights.)
+    //**
+    //** @param(Sender OriginalLightItem.)
+    procedure OriginalLightItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks ShowAxesItem, then adds or removes the model's axes to
     //** match.)
     //**
@@ -1331,9 +1382,22 @@ type
     FFitDistance: Single;
     FFitOrthoHeight: Single;
     GorillaViewport: TGorillaViewport;
+    //** @abstract(The original light, made by ApplyLights while OriginalLightItem is ticked,
+    //** and nil while it is not.)
+    //**
+    //** A point light parented to the camera at its origin with no turn of its own, as the
+    //** form made it before the Spritely camera, which brought its own headlight
+    //** (@code(OrbitCamera.Light)). Owned by the viewport; ApplyLights frees it when the item
+    //** is unticked, and the viewport frees it at the end otherwise.
     GorillaLight: TGorillaLight;
     GorillaModel: TGorillaModel;
-    GorillaCamera: TSprite3DCamera;
+    //** @abstract(The viewport's camera, built by OrbitCamera when FormCreate sets its
+    //** Viewport; everything that turns, fits or reads the camera uses it.)
+    //**
+    //** The camera's own methods, such as @code(FitPointsOnAxis), @code(ShiftView),
+    //** @code(SaveFraming) and @code(RestoreFraming), are on it rather than on OrbitCamera.
+    //** It is the viewport's, freed with it, never by the form.
+    GorillaCamera: TSpritelyOrbitalGorillaCamera;
     FOffscreen: TSprite3DOffscreen;
     // Number for the next grab file; back to 1 whenever SaveFolder is chosen
     FGrabNumber: Integer;
@@ -1490,8 +1554,11 @@ type
     FKeepingSelection: Boolean;
     // Quitting mid-export was confirmed: the next close goes ahead
     FQuitConfirmed: Boolean;
-    // The on-screen framing, kept while a grab is fitted to its target
-    FSavedFraming: TSprite3DFraming;
+    //** @abstract(ApplyLights has written its first Debug tab line, saying which lights the
+    //** session starts with; after that it writes one only when they change.)
+    FLightsLogged: Boolean;
+    //** @abstract(The on-screen framing, kept while a grab is fitted to its target.)
+    FSavedFraming: TSpritelyOrbitalFraming;
     // The camera pan, applied on top of every fit while FPanEnabled
     FPanEnabled: Boolean;
     FPanX: Single;
@@ -1548,6 +1615,9 @@ type
     //** is where the pointer last was, in AspectLayout's coordinates.
     FMouseDragging: Boolean;
     FMouseLastX: Single;
+    //** @abstract(True when the drag over the window was left to the form, no control under
+    //** the pointer taking it; set by DragOver, for DragDrop.)
+    FDropToForm: Boolean;
     // True while a grab or a capture has its own framing on the camera,
     // which must be put back even if the camera is locked meanwhile
     FGrabFramed: Boolean;
@@ -1566,8 +1636,8 @@ type
     FCaptureOrthoHeight: Single;
     // The capture under way, or nil; it frees itself when it reports
     FCapture: TSprite3DFrameCapture;
-    // The on-screen framing, put back when a capture ends
-    FCaptureRestore: TSprite3DFraming;
+    //** @abstract(The on-screen framing, put back when a capture ends.)
+    FCaptureRestore: TSpritelyOrbitalFraming;
     // The viewport was resized during the capture: refit when it ends
     FRefitAfterCapture: Boolean;
     // A 2-pass export. FTwoPassRun: this batch runs two passes. FBatchPass:
@@ -1830,11 +1900,33 @@ type
       const AAzimuth: Single = 45);
     function ChooseSaveFolder: Boolean;
     procedure OpenRequestedFile(const AFileName: String);
+    //** @abstract(The files in a drag that Sprite3D can open: models and project files, as
+    //** full paths, in the order dragged.)
+    //** Folders and other files are left out; @code(file:) URLs, as some Linux desktops
+    //** send, are turned into paths.
+    //** @param(AData What is being dragged.)
+    //** @returns(The files to open; empty if there are none.)
+    function DroppableFiles(const AData: TDragObject): TArray<String>;
+    //** @abstract(Opens dropped files, each as File, Open Model would.)
+    //** A model goes to SwitchModel, so a static model is added to the Models list and shown
+    //** and a model with animations replaces the Animated tab's; a project file is loaded as
+    //** File, Load Project would, though only the first of several projects. Several models
+    //** dropped together are opened one after another, in the order dropped. Anything else
+    //** dropped with them is noted in the Debug tab.
+    //** @param(AData What was dropped.)
+    procedure OpenDroppedFiles(const AData: TDragObject);
     procedure ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
       const ASave: Boolean);
     procedure RestoreViewToggles;
     procedure ApplyProjection;
     procedure ApplyShowAxes;
+    //** @abstract(Puts the lights as HeadlightItem and OriginalLightItem say, and logs which
+    //** are on in the Debug tab when that has changed.)
+    //**
+    //** The headlight through @code(OrbitCamera.Headlight), which makes or frees it; the
+    //** original light by making it in GorillaLight, a point light on the camera at its
+    //** origin, or freeing it.
+    procedure ApplyLights;
     procedure ApplyShowBounds;
     procedure ApplyShowGrid;
     procedure ApplyShowSweep;
@@ -2369,6 +2461,22 @@ type
     {$ENDIF}
   public
     { Public declarations }
+    //** @abstract(Accepts a drag of files from outside Sprite3D, such as from Explorer,
+    //** Finder or a Linux file manager, if any of them is a model or a project file.)
+    //** A control under the pointer that takes drops of its own is asked first, as
+    //** @code(inherited) does; Sprite3D's controls take none, so the drop comes to the form.
+    //** Refused while an animation is being saved, as File, Open Model is. Overrides the
+    //** form's own, which FMX calls as the system drags over the window.
+    //** @param(Data What is being dragged.)
+    //** @param(Point Where the pointer is, in the form's coordinates.)
+    //** @param(Operation Set to Copy to accept the drop, or None.)
+    procedure DragOver(const Data: TDragObject; const Point: TPointF;
+      var Operation: TDragOperation); override;
+    //** @abstract(Opens the files dropped on the window, with OpenDroppedFiles, unless a
+    //** control under the pointer took the drop for itself.)
+    //** @param(Data What was dropped.)
+    //** @param(Point Where, in the form's coordinates.)
+    procedure DragDrop(const Data: TDragObject; const Point: TPointF); override;
     //** @abstract(The folder File, Grab saves into, kept between sessions; empty until one is
     //** chosen.)
     //**
@@ -2514,19 +2622,18 @@ begin
   GorillaViewport.HitTest := False;
   GorillaViewport.FixedFrameRate := 60;
 //  GorillaViewport.DiagnosticsActive := true;
-  GorillaViewport.UsingDesignCamera := False;
-  GorillaCamera := TSprite3DCamera.Create(GorillaViewport);
-  GorillaViewport.Camera := GorillaCamera;// .Camera;
-  // The light rides on the camera: a child at its origin with no turn of its
-  // own, so it sits where the camera is and points where the camera looks,
-  // lighting whatever side of the model is in view
-  GorillaLight := TGorillaLight.Create(GorillaViewport);
-  GorillaLight.Parent := GorillaCamera;
-  GorillaLight.Position.Point := TPoint3D.Zero;
-  GorillaLight.RotationAngle.Point := TPoint3D.Zero;
-  GorillaLight.LightType := TLightType.Point;
+  // OrbitCamera, on the form, builds the camera in the viewport and makes it
+  // the viewport's camera (turning UsingDesignCamera off). The camera is the
+  // viewport's, freed with it; the rest of the form works on it through
+  // GorillaCamera. The lights, OrbitCamera's headlight and the original
+  // light, are put as View, Lights says by RestoreViewToggles, below: until
+  // then only the headlight, as the item starts ticked.
+  OrbitCamera.Headlight := HeadlightItem.IsChecked;
+  OrbitCamera.FOV := 45;
+  OrbitCamera.Viewport := GorillaViewport;
+  GorillaCamera := OrbitCamera.Camera;
+  GorillaLight := nil;
   GorillaModel := Nil;
-  GorillaCamera.FOV := 45;
 
   // Off-screen renderer for File, Grab, at the size set in File, Settings
   FOffscreen := TSprite3DOffscreen.Create(GorillaViewport);
@@ -3273,6 +3380,88 @@ begin
     ShowMessage('Not a model this application can open: ' + AFileName);
 end;
 
+function TMainForm.DroppableFiles(const AData: TDragObject): TArray<String>;
+var
+  FileName: String;
+begin
+  Result := nil;
+  for var Dropped in AData.Files do
+  begin
+    FileName := OSFriendlyPath(FileUrlToPath(Dropped));
+    if (FileName = String.Empty) or not FileExists(FileName) then
+      Continue;   // a folder, or nothing there
+    if IsModelFile(FileName) or IsProjectFile(FileName) then
+      Result := Result + [ExpandFileName(FileName)];
+  end;
+end;
+
+// Files dropped on the window from Explorer, Finder or a file manager open
+// as File, Open Model would. FMX's form passes a drag to the control under
+// the pointer that will take it, if any; FDropToForm notes whether none did,
+// so DragDrop knows whose drop it is.
+procedure TMainForm.DragOver(const Data: TDragObject; const Point: TPointF;
+  var Operation: TDragOperation);
+begin
+  Operation := TDragOperation.None;
+  inherited;
+  FDropToForm := Operation = TDragOperation.None;
+  if not FDropToForm then
+    Exit;   // a control takes it
+  // Only files from outside: Sprite3D's own drags carry a Source
+  if (Data.Source = nil) and not Capturing and (Length(DroppableFiles(Data)) > 0) then
+    Operation := TDragOperation.Copy;
+end;
+
+procedure TMainForm.DragDrop(const Data: TDragObject; const Point: TPointF);
+begin
+  if not FDropToForm then
+  begin
+    inherited;
+    Exit;
+  end;
+  FDropToForm := False;
+  if Data.Source = nil then
+    OpenDroppedFiles(Data);
+end;
+
+procedure TMainForm.OpenDroppedFiles(const AData: TDragObject);
+var
+  Files: TArray<String>;
+begin
+  if Capturing then
+  begin
+    ShowMessage('An animation is being saved; drop the files again when it is done.');
+    Exit;
+  end;
+  Files := DroppableFiles(AData);
+  if Length(Files) < Length(AData.Files) then
+    DebugMemo.Lines.Add(Format('Dropped %d item(s); %d not a model or project, left out',
+      [Length(AData.Files), Length(AData.Files) - Length(Files)]));
+  // From a fresh main-loop turn, so the system's drag has ended before any
+  // load dialog shows; the first loads at once and the rest wait their turn
+  TThread.ForceQueue(nil,
+    procedure
+    var
+      ProjectDone: Boolean;
+    begin
+      if MainFormGone then
+        Exit;
+      // One project at a time: a project's Animations list waits for its
+      // model, and a second would take its place
+      ProjectDone := False;
+      for var FileName in Files do
+        if not IsProjectFile(FileName) then
+          SwitchModel(FileName)
+        else if ProjectDone then
+          DebugMemo.Lines.Add('Only one project opens at a time; left out ' + FileName)
+        else
+        begin
+          ProjectDone := True;
+          LoadProjectFile(FileName);
+        end;
+    end);
+end;
+
 // Anything of an export still going: a capture, a batch, atlas pages or
 // files being written
 function TMainForm.Exporting: Boolean;
@@ -3372,6 +3561,9 @@ begin
   ShowSweepItem.IsChecked := FSettings.ShowSweptVolume;
   ShowCombinedSweepItem.IsChecked := FSettings.ShowCombinedSweptVolume;
   OrthographicItem.IsChecked := FSettings.Orthographic;
+  HeadlightItem.IsChecked := FSettings.Headlight;
+  OriginalLightItem.IsChecked := FSettings.OriginalLight;
+  ApplyLights;
   ApplyShowBounds;
   ApplyShowGrid;
   ApplyShowAxes;
@@ -3456,6 +3648,8 @@ begin
   FSettings.ShowSweptVolume := ShowSweepItem.IsChecked;
   FSettings.ShowCombinedSweptVolume := ShowCombinedSweepItem.IsChecked;
   FSettings.Orthographic := OrthographicItem.IsChecked;
+  FSettings.Headlight := HeadlightItem.IsChecked;
+  FSettings.OriginalLight := OriginalLightItem.IsChecked;
   FSettings.PanEnabled := FPanEnabled;
   FSettings.PanX := FPanX;
   FSettings.PanZ := FPanZ;
@@ -5202,6 +5396,55 @@ begin
     Exit;
   end;
   ShowCombinedSweep(GorillaModel, SweepFitVolume);
+end;
+
+procedure TMainForm.HeadlightItemClick(Sender: TObject);
+begin
+  HeadlightItem.IsChecked := not HeadlightItem.IsChecked;
+  ApplyLights;
+end;
+
+procedure TMainForm.OriginalLightItemClick(Sender: TObject);
+begin
+  OriginalLightItem.IsChecked := not OriginalLightItem.IsChecked;
+  ApplyLights;
+end;
+
+// The lights to match View, Lights. Both are point lights on the camera at
+// its origin, so they sit where the camera is and point where it looks,
+// lighting whatever side of the model is in view: the headlight is made and
+// freed by OrbitCamera itself; the original light, the one the form made by
+// hand before the Spritely camera, by this. The Debug tab gets a line only
+// when what is on changes, so restoring the settings at start-up says once
+// what the session starts with.
+procedure TMainForm.ApplyLights;
+const
+  ON_OFF: array[Boolean] of String = ('off', 'on');
+var
+  WasHead, WasOriginal: Boolean;
+begin
+  if GorillaCamera = nil then
+    Exit;
+  WasHead := OrbitCamera.Light <> nil;
+  WasOriginal := GorillaLight <> nil;
+  OrbitCamera.Headlight := HeadlightItem.IsChecked;
+  if OriginalLightItem.IsChecked and (GorillaLight = nil) then
+  begin
+    GorillaLight := TGorillaLight.Create(GorillaViewport);
+    GorillaLight.Parent := GorillaCamera;
+    GorillaLight.Position.Point := TPoint3D.Zero;
+    GorillaLight.RotationAngle.Point := TPoint3D.Zero;
+    GorillaLight.LightType := TLightType.Point;
+  end
+  else if not OriginalLightItem.IsChecked and (GorillaLight <> nil) then
+    FreeAndNil(GorillaLight);
+  if (WasHead <> (OrbitCamera.Light <> nil)) or (WasOriginal <> (GorillaLight <> nil)) or
+    not FLightsLogged then
+  begin
+    FLightsLogged := True;
+    DebugMemo.Lines.Add('Lights: headlight ' + ON_OFF[OrbitCamera.Light <> nil] +
+      ', original light ' + ON_OFF[GorillaLight <> nil]);
+  end;
 end;
 
 // The model's axes to match ShowAxesItem; nothing without a model

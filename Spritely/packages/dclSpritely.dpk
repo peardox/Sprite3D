@@ -1,0 +1,18 @@
+package dclSpritely;
+
+{ Spritely components for FireMonkey and Gorilla3D - design time. Written by tools/gen_packages.py - edit the script, not this file. }
+
+{$DESCRIPTION 'Spritely components for FireMonkey and Gorilla3D - design time'}
+{$DESIGNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  fmx,
+  designide,
+  Spritely;
+
+contains
+  Spritely.Reg in '..\lib\Spritely.Reg.pas';
+
+end.

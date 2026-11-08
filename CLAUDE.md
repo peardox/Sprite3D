@@ -5,14 +5,15 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 27 October 2026.
+Last updated: 8 November 2026, 20:35.
 
 ## Starting a new conversation
 
 1. Clone the repository with its submodules:
    `git clone --recurse-submodules https://github.com/peardox/Sprite3D.git`
    (branch `main`). The submodules are `delphi-neon` and `FastMM5`.
-2. Read the whole of `README.md`, then this file. The design notes in the
+2. Read the whole of `README.md`, then this file, then `Spritely/README.md`
+   before touching anything in `Spritely/`. The design notes in the
    repository root (`viewport.md`, `offscreen.md`, `volumes.md`,
    `directions.md`, `metadata.md`) explain the harder parts; read the one
    that covers what you are about to change.
@@ -49,14 +50,29 @@ Reference for the libraries used:
 
 ### Delivering work
 
+These rules were brought up to date on 8 November 2026 from
+peardox/SRDelphiFMX's, which the owner said apply here too and supersede
+the older ones.
+
 - **Never supply patches or diffs.** The owner will not use them. Supply
   whole files.
-- When supplying files as a zip, put **only the new and changed files** in
-  it, with paths from the repository root, so it can be unzipped straight
-  over the working copy. Name the files changed in the reply.
+- When supplying files as a zip, put **only the files new or changed since
+  the previous zip** in it, with paths from the repository root, so it can
+  be unzipped straight over the working copy. Give each zip a name, name
+  the files in the reply, and say which earlier zip it follows or
+  replaces.
+- **Files to delete or rename** cannot travel in a zip: list them in the
+  reply with the git commands (`git rm ...`, `git mv ...`).
+- **Package rebuilds**: whenever a delivery changes anything a package
+  compiles (`Spritely/lib`, `Spritely/packages`), say so IN CAPITALS on a
+  line of its own, naming the packages and platforms, e.g.
+  `====> REBUILD RUNTIME PACKAGE SPRITELY (ALL PLATFORMS) AND REINSTALL DCLSPRITELY <====`,
+  and `====> NO PACKAGE REBUILD <====` when nothing needs it.
 - **Do not mention being unable to compile.** That is already known.
 - **Do not mention that nothing is committed or pushed.** The owner pushes
-  when ready. Do not commit or push unless asked.
+  when ready. Do not commit or push unless asked. When a hook asks to
+  commit and push, answer "Noted." and do nothing.
+- No paths, user names, machine names or credentials in tracked files.
 - Update `README.md`, and the design notes it links to, when a feature,
   setting or requirement changes, and this file when the state of the work
   or the rules change; include them in the zip when they do.
@@ -75,12 +91,23 @@ Reference for the libraries used:
   PasDoc on the owner's machine; `models/` holds sample models.
 - Neon and FastMM5 are submodules: never copy their sources into the
   project, and never change them.
+- **`Spritely/` is the Spritely component set**, owned by this repository
+  from 8 November 2026 (it came from peardox/SRDelphiFMX, whose copy the
+  owner will remove). It is a product of its own, not part of Sprite3D:
+  `Spritely/README.md` describes it, its packages and its rules. Spritely
+  knows nothing of Sprite3D: Sprite3D requires Spritely, never the reverse,
+  and no Spritely unit may use a Sprite3D one.
 - `src/ffmpeg` holds third-party FFmpeg headers, kept unchanged for
   reference and not compiled in. Leave them alone (see Licences in the
   README).
-- The project is `src/Sprite3d.dproj` in `Sprite3DGroup.groupproj`. A new
-  unit goes in both the `.dpr`'s `uses` and the `.dproj`; keep the `.dproj`
-  as it is otherwise (it has a UTF-8 byte order mark; keep it).
+- The project is `src/Sprite3d.dproj` in `Sprite3DGroup.groupproj`, which
+  builds `Spritely/packages/Spritely`, `dclSpritely`, Sprite3D, then
+  `Spritely/ProjectionTest`. A new unit of Sprite3D's goes in both the
+  `.dpr`'s `uses` and the `.dproj`;
+  keep the `.dproj` as it is otherwise (it has a UTF-8 byte order mark;
+  keep it, and the `.groupproj`'s). Spritely's units are in neither:
+  Sprite3D uses the built package, whose DCUs go to Delphi's Dcp folder,
+  so it needs no search path for them.
 - `tools/` holds scripts for working on the source, such as
   `pasdoc_check.py`. They are not part of the program.
 
@@ -97,12 +124,54 @@ Reference for the libraries used:
   `Sprite3DHelpers.pas`, not in a form.
 - `src/styles`: the theme styles, compiled into a resource by the
   pre-build event `buildstyles.cmd`.
+- `Spritely/lib`, `Spritely/packages`, `Spritely/tools`: the Spritely
+  units, their packages and the scripts that write the packages, the
+  palette icons and the test models (see `Spritely/README.md`).
+- `Spritely/ProjectionTest`, `Spritely/models`: Spritely's test program,
+  the test bed for `TSpritelyProjection`, and its models. It finds
+  `models` up to five folders above its executable, so it uses
+  `Spritely/models`, not the root's.
+
+### Spritely
+
+- Types `TSpritely...`, units `Spritely.<Name>.pas` in `Spritely/lib`,
+  constants `SPRITELY_...`, packages `Spritely` / `dclSpritely`, palette
+  page **Spritely**, icon tiles green. Every component carries
+  `[ComponentPlatformsAttribute(SPRITELY_COMPONENT_PLATFORMS)]`.
+- A new Spritely unit goes in `SPRITELY_UNITS` in
+  `Spritely/tools/gen_packages.py` (which rewrites the `.dpk` files); a new
+  component also needs its icon in `gen_icons.py` and its class in
+  `gen_icon_res.py`. Never edit `Spritely.Reg.dcr` by hand.
+- Spritely uses only the RTL, FireMonkey and Gorilla3D. If it ever needs
+  settings, it gets its own `Spritely.Storage`, with `System.JSON`.
+- A new component is first made in code to test it; once it works it is
+  put on the form in the `.fmx`.
+- The rest of the code rules below apply to it as to Sprite3D.
+- ProjectionTest's own types keep the owner's prefix, `TPeardox...`
+  (`TPeardoxProjectionTestForm`); its `.dproj` finds FastMM5 at
+  `..\..\FastMM5`, the root's submodule.
+- `TSpritelyOrbitalGorillaCamera` began as Sprite3D's own `TSprite3DCamera`
+  (unit `Sprite3DCamera`, now deleted); `TSpritelyOrbitalFraming` was
+  `TSprite3DFraming`, `TSpritelyQuat` `TQuat`, `TSpritelyLookAtMode`
+  `TLookAtMode`. With no `Projection` attached it behaves exactly as the
+  old camera did (checked line by line on 8 November 2026).
 
 ## Code rules
 
+### Names and trademarks
+
+- **Peardox is the owner, not a product.** The products are Sprite3D and
+  Spritely.
+- **No trademarks in names, UI, logs, comments or docs** (owner,
+  8 November 2026): describe what a thing is, never name it after a
+  product or game that used it (Spritely's projection kinds are named for
+  the projection). Names of the libraries used (Gorilla3D, Neon, FFmpeg,
+  OpenH264, FastMM5) and of the platforms are fine.
+
 ### Cross-platform
 
-- The program targets Windows (32-bit, 64-bit, ARM64EC), macOS (Intel and
+- The program targets Windows (32-bit, 64-bit, ARM64EC; Gorilla3D, and so
+  Spritely, for ARM64EC from 8 November 2026), macOS (Intel and
   Apple silicon), Linux 64-bit, Android (32 and 64-bit) and iOS. **Keep it
   cross-platform as far as possible.**
 - No platform-specific unit or call without `{$IF}` alternatives for the
@@ -138,6 +207,9 @@ Reference for the libraries used:
 
 ### JSON and settings
 
+- Sprite3D keeps Neon for `settings.json` (owner, 8 November 2026: its
+  settings are more complex). SRDelphiFMX's rule of `System.JSON` and no
+  Neon is for Spritely, which must not depend on Neon.
 - `settings.json` is read and written by **Neon**, through
   `TSprite3DJsonSettings` (`lib/Sprite3DStorage.pas`) and its descendant
   `TSprite3DAppSettings` (`ui/Sprite3DHelpers.pas`). A new setting is a
@@ -248,18 +320,20 @@ Reference for the libraries used:
 - **Source files are ASCII only.** Delphi reads a file without a byte order
   mark as ANSI, so write characters such as the degree sign as character
   codes (`#176`, `#$00B0`), in comments too spell them out ("degrees").
-  A file that already has a UTF-8 byte order mark (`Sprite3DCamera.pas`,
-  the `.dproj`) keeps it.
+  A file that already has a UTF-8 byte order mark (the `.dproj` and
+  `.groupproj` files) keeps it.
 - Line endings and indentation as in the file being edited (two spaces).
 - Naming: fields `F`, parameters `A`, types `T`; units in `src/lib`
-  `Sprite3D*.pas`, forms `Sprite3D*Form.pas` with their `.fmx`.
+  `Sprite3D*.pas`, forms `Sprite3D*Form.pas` with their `.fmx`; Spritely's
+  as above.
 - Delphi requires every field of a class section before its first method
   or property (E2169).
 
 ### Checking the source
 
 `tools/pasdoc_check.py` checks the units in `src/lib`, `src/common` and
-`src/ui` and the `.dpr`:
+`src/ui` and the `.dpr` (not `Spritely/`; SRDelphiFMX's newer checker
+reported "No problems found" on Spritely's units on 8 November 2026):
 
 ```
 python3 tools/pasdoc_check.py                      every unit
@@ -291,13 +365,150 @@ them.
   animation's volumes shows the model being measured (`volumes.md`).
 - Animations are baked by Gorilla3D at about 60 poses a second; exports
   pick the nearest pose and never blend images.
+- Lessons from StereoModel, where Spritely was built: load a model by
+  making it (`TGorillaModel.Create(Viewport)`) and calling its
+  `LoadFromFile`, as Sprite3D does, never the class function
+  `TGorillaModel.LoadNewModelFromFile`, which in 1.5.3 never frees the FBX
+  loader's parse tree; the viewport sends its free notification before it
+  frees its children, so a component must let go of the camera and light
+  on that notice and never touch them again (`TSpritelyOrbitalCamera`
+  does); `MakeScreenshot` shows the `RenderManual` before the last, so
+  render twice before a screenshot that must show a change; FMX's
+  perspective is D3D-style (depth 0..1) with NDC y up, and a projection
+  written into the context stays until FMX makes it again (resize, lens
+  change).
 - `ReportMemoryLeaksOnShutdown` is set in the `.dpr`; FastMM5 on Windows
   writes the full leak report to `Sprite3d_MemoryManager_EventLog.txt`
   beside the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
 
-GitHub is at `e160b7d` ("Missed stuff"), 27 October 2026. It has the Linux
+### Handover (8 November 2026, 20:35)
+
+**State.** The owner has applied every zip of 8 November in order,
+SpritelyMove1, SpritelyMove2, Lights1, then Merge1, on top of GitHub's
+`03b7da3` plus the owner's GrabSize4096 and DragDrop, and reports "all
+back normal again" (20:35): Sprite3D builds and runs with the Spritely
+camera, drag and drop works again, and the custom grab size reaches 4096.
+None of it is pushed yet, so GitHub (`03b7da3`) is behind: **build on the
+files of the zips below, or ask for the owner's copy, never on GitHub,
+for any file they touch** (see the first lesson below).
+
+**What the session did.**
+- Checked that `TSpritelyOrbitalCamera` can replace Sprite3D's own camera
+  with no change to Spritely (it can: its camera is `TSprite3DCamera`
+  renamed, the extra code idle without a `Projection` or `Subject`), and
+  made the switch: `Sprite3DCamera.pas` deleted, `OrbitCamera` on the
+  main form.
+- Moved Spritely, from peardox/SRDelphiFMX, into `Spritely/` (the owner
+  will remove SRDelphiFMX's copy), with its packages in the group,
+  ProjectionTest and its models, and the generator scripts cut down to
+  Spritely. Spritely's runtime package now also builds for WinARM64EC.
+- View, Lights: the headlight and the original light, each on or off.
+- Took SRDelphiFMX's working rules in as updates to this file's
+  (delivery, package rebuild line, "Noted." to commit hooks, no
+  trademarks); Sprite3D keeps Neon (owner).
+- Merge1 put back GrabSize4096 and DragDrop, which the earlier zips had
+  overwritten.
+
+**Zips, in order** (each follows the one before; details below):
+SpritelyMove1, SpritelyMove2, Lights1, Merge1. One file to delete, from
+SpritelyMove1: `git rm src/lib/Sprite3DCamera.pas`.
+
+**Still to test** (only "all back normal" has been reported): the lights
+one by one (Lights1); every view, grab, icon and export framed as before
+with the new camera, and no new leak at exit (SpritelyMove1); Spritely and
+Sprite3d for WinARM64EC, and ProjectionTest from `Spritely/`
+(SpritelyMove2); drag and drop and 4096 grabs in full (items 3 and 4
+below); the older items 1 and 2 and the Linux menu check below.
+
+**Next, as the owner has said:** `TSpritelyProjection` in Sprite3D is for
+later (the projection kinds as views, the dolly zoom, shift and rise).
+Changes to Spritely itself are now made here; any delivery touching
+`Spritely/lib` or `Spritely/packages` carries the rebuild line.
+
+**Zip Merge1 (8 November 2026), applied; reported working (20:35).** It follows
+Lights1. SpritelyMove1 and Lights1 were built on GitHub's `03b7da3`, but
+the owner's copy already had two zips not on GitHub, GrabSize4096
+(4 November) and DragDrop (6 November; items 3 and 4 below). Their whole
+files overwrote those, so drag and drop stopped working and the custom
+grab size went back to 1024. Merge1 is the three-way merge (base
+`03b7da3`, the owner's DragDrop files, Sprite3D's with Spritely and the
+lights), with no conflicts: `src/ui/Sprite3dMain.pas`,
+`src/ui/Sprite3DHelpers.pas`, `README.md` and this file.
+`src/ui/Sprite3DSettingsForm.fmx`, the fourth file of those zips, was
+never overwritten. To test: drag and drop as in item 4, a custom grab of
+4096 as in item 3, and the lights as in Lights1.
+
+**Zip Lights1 (8 November 2026), not yet tested or pushed.** It follows
+SpritelyMove2. The owner suspects the original light of causing problems,
+so both lights can now be switched (`src/ui/Sprite3dMain.pas`, `.fmx`,
+`src/ui/Sprite3DHelpers.pas`, `README.md`):
+
+- View, Lights (after Orthographic, below a separator): **Headlight**
+  (`HeadlightItem`, ticked at first) sets `OrbitCamera.Headlight`, which
+  makes or frees the component's light; **Original Light**
+  (`OriginalLightItem`, unticked at first) makes or frees the form's own
+  light as it was made before SpritelyMove1, kept again in `GorillaLight`
+  (nil while off). Both are point lights on the camera at its origin.
+  `ApplyLights` does both and writes "Lights: headlight on, original light
+  off" (or as they are) in the Debug tab at start-up and whenever they
+  change. Kept as `headlight` and `originalLight` in `settings.json`
+  (`TSprite3DAppSettings.Headlight`, `OriginalLight`; restored by
+  `RestoreViewToggles`, saved by `SaveViewState`).
+- To test, on each platform: each item alone, both, and neither (unlit),
+  in the view and in a grab and an export; the Debug line each time; the
+  ticks restored next session; on Linux the submenu on the FMX menu bar
+  with full names; on Android and iOS the two items in the drawer.
+
+**Zip SpritelyMove2 (8 November 2026), not yet tested or pushed.** It
+follows SpritelyMove1, below, after the owner's answers (20:09): keep
+Neon; Gorilla3D is now installed for WinARM64EC; move ProjectionTest here.
+
+- The Spritely runtime package now builds for WinARM64EC
+  (`Spritely/packages/Spritely.dproj`, `Spritely/tools/gen_packages.py`).
+- ProjectionTest copied from SRDelphiFMX into `Spritely/ProjectionTest`
+  unchanged but for its FastMM5 path, with `DemoSceneNoWall.glb`,
+  `DollyHallway.glb` and `uvcube.glb` in `Spritely/models` and the scripts
+  that write the first two in `Spritely/tools` (run here,
+  `DollyHallway.glb` comes out byte for byte; `DemoSceneNoWall.glb`
+  differs only in its "generator" text, as it also does from
+  SRDelphiFMX's own copy of the script). In the group after Sprite3d.
+- To test: Spritely builds for WinARM64EC, and Sprite3d with it; on
+  Win64, ProjectionTest finds `Spritely/models`, loads
+  `DemoSceneNoWall.glb`, and Run test and the live controls work as they
+  did in SRDelphiFMX.
+
+**Zip SpritelyMove1 (8 November 2026), not yet tested or pushed.** It
+follows GitHub's `03b7da3` ("SingleInstance", 27 October 2026), which has
+the two deliveries of 27 October listed below.
+
+- Spritely copied whole from peardox/SRDelphiFMX into `Spritely/`: the
+  units, `.dcr`, icons and packages byte for byte, the three generator
+  scripts cut down to Spritely (run here, they rewrite the same files as
+  SRDelphiFMX's own scripts), and `Spritely/README.md`, made from the
+  component docs in SRDelphiFMX's `StereoModel/README.md`. ProjectionTest
+  followed in SpritelyMove2.
+- `Sprite3DGroup.groupproj`: Spritely, dclSpritely, then Sprite3d (which
+  depends on Spritely).
+- The camera: `src/lib/Sprite3DCamera.pas` deleted (out of the `.dpr` and
+  `.dproj`). The main form has a `TSpritelyOrbitalCamera`, `OrbitCamera`,
+  in the `.fmx` with no Viewport; `FormCreate` sets its `Headlight` and
+  `FOV`, then its `Viewport`, which builds the camera and the headlight,
+  and keeps them in `GorillaCamera` and `GorillaLight` as before, so the
+  rest of the form is unchanged. The headlight replaces the light the form
+  made by hand (the same point light at the camera's origin); both are
+  switchable from Lights1. `Sprite3DSweep` and `Sprite3DAnimCapture`
+  take a `TSpritelyOrbitalGorillaCamera`.
+- To test, on every platform built: the form opens in the designer (with
+  dclSpritely installed); the model is lit and framed exactly as before in
+  every view, perspective and orthographic; dials, Lock Camera, Temporary
+  Mouse View, pan, grabs, icons and every export as before; closing gives
+  no access violation and no new leak in FastMM5's report.
+
+`TSpritelyProjection` is for later (owner): Sprite3D does not use it yet.
+
+Before 8 November: GitHub was at `e160b7d` ("Missed stuff"), 27 October 2026. It has the Linux
 menu fix (`UseFmxMenuBar` copies the menu items rather than moving them,
 first thing in `FormCreate`), this file, `tools/pasdoc_check.py`, and the
 README brought up to date. The menu fix still wants the full Linux check:
@@ -349,9 +560,36 @@ Delivered on 27 October 2026, not yet tested or pushed:
    the same there. To test on Windows: double-click a static and an animated
    model while running, while a model is loading, and several selected
    together with Enter; with Sprite3D minimised; with no copy running.
+3. **Custom grab size up to 4096** (`GRAB_SIZE_MAX` in
+   `src/ui/Sprite3DHelpers.pas`, the two spin boxes' `Max` in
+   `src/ui/Sprite3DSettingsForm.fmx`, comments in `Sprite3dMain.pas`,
+   `README.md`), 4 November 2026; was 1024. Existing guards cover the
+   rest: `MAX_CAPTURE_BYTES` (1 GB) refuses a capture that would need more,
+   which at 4096 x 4096 is about 8 frames (two copies of each); an atlas
+   page smaller than the grab is reported; overscan past
+   `OVERSCAN_TARGET_LIMIT` (8192) uses shifted drawings. A GPU that cannot
+   draw 4096 at all reads back smaller and is scaled up, so is soft rather
+   than failing. To test: File, Settings, Custom 4096 x 4096; a grab, an
+   icon (unaffected), a short export, and a longer one (expect the memory
+   message).
+4. **Drag and drop** (`src/ui/Sprite3dMain.pas`, `README.md`), 6 November
+   2026: overrides of the form's virtual `DragOver` and `DragDrop` (FMX's
+   `TForm` has no `OnDragOver` or `OnDragDrop` events), with
+   `DroppableFiles` and `OpenDroppedFiles`. Models go to
+   `SwitchModel`, which queues them while one loads; project files to
+   `LoadProjectFile`, one per drop. Controls that take drops themselves get
+   them first: `inherited DragOver` asks the control under the pointer,
+   and `FDropToForm` notes whether none took it, for `DragDrop`.
+   Paths go through `FileUrlToPath` in case a Linux desktop sends
+   `file://` URLs. To test on each desktop platform: one static model, one
+   animated, several at once, a model with a folder and a text file, a
+   project file, dropping over the view, the lists and the Debug tab, and
+   during an export (refused).
 
 ### Things to check
 
+- A Windows chime when ProjectionTest closes, with no dialog (carried
+  over from SRDelphiFMX, cause unknown).
 - The README's Known issues say the viewport background shows 1.25 times
   brighter than chosen and is not drawn in orthographic projection, but
   `viewport.md` says both went when the background became a 2D control.
@@ -376,6 +614,13 @@ Delivered on 27 October 2026, not yet tested or pushed:
 
 These cost time once.
 
+- **GitHub can be behind the owner's copy by several zips.** Before
+  delivering a whole file, make sure it was built on the owner's latest
+  copy of it: the files the owner attached, the last zip of this
+  conversation, or, if neither has it and "Where the work is" lists zips
+  not on GitHub that touch it, ask for it first. On 8 November 2026 whole
+  files built on GitHub undid GrabSize4096 and DragDrop (see Merge1).
+
 - **FMX menus on Linux**: see *Menus* above. The full story, written for
   any FMX program, was worked out on GDEMFetch
   (<https://github.com/peardox/GDEM>) in October 2026: the native GTK bar
@@ -398,5 +643,11 @@ These cost time once.
   platform's deployment; on macOS `System.StartUpCopy` then copies them
   into the user's folders. GDEM disables such entries in its `.dproj`'s
   Deployment section (`<Enabled>false</Enabled>`).
+- FMX's `TForm` has no `OnDragOver` or `OnDragDrop` events. To take drops
+  on the form, override its public virtual `DragOver` and `DragDrop`.
+  After one compile error, Delphi can report a spurious "There is no
+  overloaded version of ... that can be called with these arguments"
+  (E2250) for every anonymous method later in the unit. Fix the first error
+  before looking at those.
 - Run Linux builds from a terminal when testing: GTK writes its warnings
   there, and the IDE does not show them.

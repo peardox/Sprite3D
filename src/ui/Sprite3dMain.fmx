@@ -226,6 +226,10 @@ object MainForm: TMainForm
     Left = 448
     Top = 64
   end
+  object OrbitCamera: TSpritelyOrbitalCamera
+    Left = 448
+    Top = 120
+  end
   object MainMenu1: TMainMenu
     Left = 504
     Top = 8
@@ -440,6 +444,25 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Orthographic'
         OnClick = OrthographicItemClick
+      end
+      object LightsSeparatorItem: TMenuItem
+        Locked = True
+        Text = '-'
+      end
+      object LightsMenu: TMenuItem
+        Locked = True
+        Text = 'Lights'
+        object HeadlightItem: TMenuItem
+          Locked = True
+          IsChecked = True
+          Text = 'Headlight'
+          OnClick = HeadlightItemClick
+        end
+        object OriginalLightItem: TMenuItem
+          Locked = True
+          Text = 'Original Light'
+          OnClick = OriginalLightItemClick
+        end
       end
     end
   end

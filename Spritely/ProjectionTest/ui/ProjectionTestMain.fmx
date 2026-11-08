@@ -1,0 +1,284 @@
+object PeardoxProjectionTestForm: TPeardoxProjectionTestForm
+  Left = 0
+  Top = 0
+  Caption = 'ProjectionTest'
+  ClientHeight = 640
+  ClientWidth = 1400
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnShow = FormShow
+  object LogMemo: TMemo
+    ReadOnly = True
+    Align = Right
+    Position.X = 760.000000000000000000
+    Position.Y = 96.000000000000000000
+    Size.Width = 640.000000000000000000
+    Size.Height = 544.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+  end
+  object ViewLayout: TLayout
+    Align = Client
+    Position.Y = 96.000000000000000000
+    Size.Width = 760.000000000000000000
+    Size.Height = 544.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    object GorillaViewport1: TGorillaViewport
+      RendererType = ForwardRenderer
+      ManualRendering = False
+      UseFixedFrameRate = True
+      FixedFrameRate = 60
+      FrustumCulling = True
+      HighRes = False
+      VSync = False
+      NearPlane = 0.100000001490116100
+      FarPlane = 10000.000000000000000000
+      Fog = False
+      FogKind = fkLinear
+      FogDensity = 0.001000000047497451
+      FogStart = 100.000000000000000000
+      FogEnd = 500.000000000000000000
+      FogColor = claBlack
+      OpaqueSaturation = 0.000000000000000000
+      TranslucentSaturation = 1.500000000000000000
+      CompositeSaturation = 0.000000000000000000
+      EmissiveBlur = 0
+      Shadows.CascadeSplitLambda = 0.750000000000000000
+      Shadows.Strength = 1.000000000000000000
+      Shadows.Bias = 0.000500000023748726
+      Shadows.SlopeBias = 0.001000000047497451
+      Shadows.NormalOffset = 0.019999999552965160
+      GlobalIllumDetail = 0
+      GlobalIllumSoftness = 1.000000000000000000
+      ShadowStrength = 0.400000005960464500
+      ReflectionStrength = 0.000000000000000000
+      FXAA = 0
+      SSS_Enabled = False
+      SSS_NumSamples = 128
+      SSS_SampleStep = 0.050000000745058060
+      SSS_ShadowStrength = 2.000000000000000000
+      SSAO_Enabled = False
+      SSAO_Radius = 1.000000000000000000
+      SSAO_Bias = 0.500000000000000000
+      DiagnosticsActive = False
+      RendererOutputLayer = OutputAll
+      Align = Client
+      Size.Width = 760.000000000000000000
+      Size.Height = 544.000000000000000000
+      Size.PlatformDefault = False
+    end
+  end
+  object ControlLayout: TLayout
+    Align = Top
+    Size.Width = 1400.000000000000000000
+    Size.Height = 96.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object btnRunTest: TButton
+      Position.X = 8.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 88.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Run test'
+    end
+    object ModelBox: TComboBox
+      Position.X = 104.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 200.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+    end
+    object btnOpen: TButton
+      Position.X = 312.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 72.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = 'Open...'
+    end
+    object btnFit: TButton
+      Position.X = 392.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 48.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+      Text = 'Fit'
+    end
+    object btnFront: TButton
+      Position.X = 448.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 60.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 4
+      Text = 'Front'
+    end
+    object ShiftLabel: TLabel
+      Position.X = 516.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 72.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 5
+      Text = 'Shift 0.00'
+    end
+    object ShiftTrack: TTrackBar
+      CanParentFocus = True
+      Orientation = Horizontal
+      Position.X = 588.000000000000000000
+      Position.Y = 10.000000000000000000
+      Size.Width = 170.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 6
+    end
+    object RiseLabel: TLabel
+      Position.X = 766.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 72.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 7
+      Text = 'Rise 0.00'
+    end
+    object RiseTrack: TTrackBar
+      CanParentFocus = True
+      Orientation = Horizontal
+      Position.X = 838.000000000000000000
+      Position.Y = 10.000000000000000000
+      Size.Width = 170.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 8
+    end
+    object btnCentre: TButton
+      Position.X = 1016.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 72.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 9
+      Text = 'Centre'
+    end
+    object ActiveCheck: TCheckBox
+      Position.X = 1096.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 100.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 10
+      Text = 'Active'
+    end
+    object FreeCheck: TCheckBox
+      Position.X = 1200.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 140.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 20
+      Text = 'Free Movement'
+    end
+    object KindBox: TComboBox
+      Position.X = 8.000000000000000000
+      Position.Y = 38.000000000000000000
+      Size.Width = 296.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 11
+    end
+    object AngleLabel: TLabel
+      Position.X = 320.000000000000000000
+      Position.Y = 38.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 12
+      Text = 'Angle 45'
+    end
+    object AngleTrack: TTrackBar
+      CanParentFocus = True
+      Orientation = Horizontal
+      Position.X = 400.000000000000000000
+      Position.Y = 40.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 13
+    end
+    object DepthLabel: TLabel
+      Position.X = 656.000000000000000000
+      Position.Y = 38.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 14
+      Text = 'Depth 1.00'
+    end
+    object DepthTrack: TTrackBar
+      CanParentFocus = True
+      Orientation = Horizontal
+      Position.X = 736.000000000000000000
+      Position.Y = 40.000000000000000000
+      Size.Width = 200.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 15
+    end
+    object LensLabel: TLabel
+      Position.X = 952.000000000000000000
+      Position.Y = 38.000000000000000000
+      Size.Width = 64.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 16
+      Text = 'Lens 45'
+    end
+    object LensTrack: TTrackBar
+      CanParentFocus = True
+      Orientation = Horizontal
+      Position.X = 1016.000000000000000000
+      Position.Y = 40.000000000000000000
+      Size.Width = 200.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 17
+    end
+    object DollyCheck: TCheckBox
+      Position.X = 1232.000000000000000000
+      Position.Y = 38.000000000000000000
+      Size.Width = 160.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 18
+      Text = 'Dolly (keep size)'
+    end
+    object StatusLabel: TLabel
+      Align = Bottom
+      Margins.Left = 8.000000000000000000
+      Margins.Right = 8.000000000000000000
+      Margins.Bottom = 6.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 68.000000000000000000
+      Size.Width = 1384.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Starting'
+      TabOrder = 19
+    end
+  end
+  object SpritelyOrbitalCamera1: TSpritelyOrbitalCamera
+    Viewport = GorillaViewport1
+    Left = 80
+    Top = 16
+  end
+end

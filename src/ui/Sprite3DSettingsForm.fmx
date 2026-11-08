@@ -255,7 +255,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
                 TabOrder = 1
                 Cursor = crIBeam
                 Min = 8.000000000000000000
-                Max = 1024.000000000000000000
+                Max = 4096.000000000000000000
                 Value = 256.000000000000000000
                 Position.X = 52.000000000000000000
                 Size.Width = 100.000000000000000000
@@ -276,7 +276,7 @@ object GeneralSettingsForm: TGeneralSettingsForm
                 TabOrder = 3
                 Cursor = crIBeam
                 Min = 8.000000000000000000
-                Max = 1024.000000000000000000
+                Max = 4096.000000000000000000
                 Value = 256.000000000000000000
                 Position.X = 228.000000000000000000
                 Size.Width = 100.000000000000000000

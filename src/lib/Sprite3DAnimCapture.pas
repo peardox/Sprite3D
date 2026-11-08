@@ -4,7 +4,8 @@
 //** A frame source says how many frames there are, how long they last together, and how to
 //** show frame N. TSprite3DAnimationFrames shows the frames of one of a Gorilla model's
 //** animations, from the first to the last; TSprite3DTurntableFrames turns a
-//** TSprite3DCamera once round the model, for a model or a moment with no animation to play.
+//** @code(TSpritelyOrbitalGorillaCamera) once round the model, for a model or a moment with
+//** no animation to play.
 //**
 //** TSprite3DFrameCapture then shows each frame in turn and grabs it with a
 //** TSprite3DOffscreen, starting the next grab from inside the previous one's procedure, as
@@ -46,8 +47,8 @@ unit Sprite3DAnimCapture;
   A frame source says how many frames there are, how long they last
   together, and how to show frame N. TSprite3DAnimationFrames shows the
   frames of one of a Gorilla model's animations, from the first to the last;
-  TSprite3DTurntableFrames turns a TSprite3DCamera once round the model, for
-  a model or a moment with no animation to play.
+  TSprite3DTurntableFrames turns a TSpritelyOrbitalGorillaCamera once round
+  the model, for a model or a moment with no animation to play.
 
   TSprite3DFrameCapture then shows each frame in turn and grabs it with a
   TSprite3DOffscreen, starting the next grab from inside the previous one's
@@ -89,7 +90,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, System.Math.Vectors, System.Diagnostics,
   FMX.Graphics, Gorilla.Model, Gorilla.Animation,
-  Sprite3DCamera, Sprite3DOffscreen, Sprite3DSpriteSheet;
+  Spritely.OrbitalCamera, Sprite3DOffscreen, Sprite3DSpriteSheet;
 
 type
   //** @abstract(Reports a finished capture: every frame, in order, or an error.)
@@ -237,7 +238,8 @@ type
   //** check it before capturing.
   TSprite3DTurntableFrames = class(TSprite3DFrameSource)
   private
-    FCamera: TSprite3DCamera;
+    //** @abstract(The camera turned once round the model; the caller's, never freed here.)
+    FCamera: TSpritelyOrbitalGorillaCamera;
     FFrames: Integer;
     FDuration: Single;
     FStartAzimuth: Single;
@@ -252,8 +254,8 @@ type
     //**
     //** @raises(EArgumentException If ACamera is nil, AFrames is less than 1 or ADuration is
     //** not more than 0.)
-    constructor Create(const ACamera: TSprite3DCamera; const AFrames: Integer;
-      const ADuration: Single);
+    constructor Create(const ACamera: TSpritelyOrbitalGorillaCamera;
+      const AFrames: Integer; const ADuration: Single);
     //** @abstract(The number of frames given to Create.)
     //**
     //** @returns(The frame count.)
@@ -708,7 +710,7 @@ end;
 
 { TSprite3DTurntableFrames }
 
-constructor TSprite3DTurntableFrames.Create(const ACamera: TSprite3DCamera;
+constructor TSprite3DTurntableFrames.Create(const ACamera: TSpritelyOrbitalGorillaCamera;
   const AFrames: Integer; const ADuration: Single);
 begin
   inherited Create;

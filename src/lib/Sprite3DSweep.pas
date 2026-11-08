@@ -19,8 +19,9 @@
 //** takes a while, so TAnimationBoundsMeasurer does the same in steps of a few milliseconds,
 //** for a caller to run between frames while the application stays responsive.
 //**
-//** FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis: it fills the
-//** view on the tighter axis, with the orbit centre on the turning axis, through the model's
+//** FitCameraToSweep frames a swept volume with
+//** @code(TSpritelyOrbitalGorillaCamera.FitPointsOnAxis), from the Spritely package: it fills
+//** the view on the tighter axis, with the orbit centre on the turning axis, through the model's
 //** centre of rotation; the angles are left alone. CombinedSweptVolume
 //** gives the volume to fit, joining the rest pose's with that of each animation named, so a
 //** chosen subset of the animations can define it.
@@ -93,7 +94,8 @@ unit Sprite3DSweep;
   milliseconds, for a caller to run between frames while the application
   stays responsive.
 
-  FitCameraToSweep frames a swept volume with TSprite3DCamera.FitPointsOnAxis:
+  FitCameraToSweep frames a swept volume with
+  TSpritelyOrbitalGorillaCamera.FitPointsOnAxis, from the Spritely package:
   it fills the view on the tighter axis, with the orbit centre on the turning
   axis, through the model's centre of rotation; the angles are left alone.
   CombinedSweptVolume gives the volume to fit,
@@ -150,7 +152,7 @@ uses
   System.Generics.Collections,
   FMX.Types, FMX.Types3D, FMX.Controls3D, FMX.Objects3D, FMX.Materials,
   Gorilla.Context, Gorilla.Context.Types, Gorilla.Model, Gorilla.Animation,
-  Sprite3DCamera;
+  Spritely.OrbitalCamera;
 
 type
   //** @abstract(The model's own axis that the sweep turns about.)
@@ -626,7 +628,8 @@ function SweepOutline(const AVolume: TSweptVolume;
 //** @returns(True if the volume was framed; False, with nothing changed, if ACamera or AModel
 //** is nil, AVolume is not Valid, the camera is locked, there is no viewport, or it has zero
 //** width or height.)
-function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl3D;
+function FitCameraToSweep(const ACamera: TSpritelyOrbitalGorillaCamera;
+  const AModel: TControl3D;
   const AVolume: TSweptVolume; const AMargin: Single = 0): Boolean; overload;
 
 //** @abstract(Frames a model's swept volume for an explicit view size.)
@@ -650,7 +653,8 @@ function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl
 //**
 //** @returns(True if the volume was framed; False, with nothing changed, if ACamera or AModel
 //** is nil, AVolume is not Valid, the camera is locked, or either size is zero or less.)
-function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl3D;
+function FitCameraToSweep(const ACamera: TSpritelyOrbitalGorillaCamera;
+  const AModel: TControl3D;
   const AVolume: TSweptVolume; const AViewWidth, AViewHeight: Single;
   const AMargin: Single = 0): Boolean; overload;
 
@@ -1283,7 +1287,8 @@ begin
   Result := AVolume.AxisPoint(1, 0, 0) - AVolume.AxisPoint(0, 0, 0);
 end;
 
-function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl3D;
+function FitCameraToSweep(const ACamera: TSpritelyOrbitalGorillaCamera;
+  const AModel: TControl3D;
   const AVolume: TSweptVolume; const AMargin: Single): Boolean;
 begin
   Result := (ACamera <> nil) and (AModel <> nil) and AVolume.Valid and
@@ -1291,7 +1296,8 @@ begin
       SweepDirection(AVolume), AModel, AMargin);
 end;
 
-function FitCameraToSweep(const ACamera: TSprite3DCamera; const AModel: TControl3D;
+function FitCameraToSweep(const ACamera: TSpritelyOrbitalGorillaCamera;
+  const AModel: TControl3D;
   const AVolume: TSweptVolume; const AViewWidth, AViewHeight: Single;
   const AMargin: Single): Boolean;
 begin

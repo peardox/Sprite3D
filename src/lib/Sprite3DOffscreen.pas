@@ -503,8 +503,8 @@ type
     //** the target.)
     //**
     //** Use it to fit the camera to the target's shape, for example with
-    //** @code(TSprite3DCamera.FitToBounds@(Model, AWidth, AHeight@)), so the model fills the
-    //** grab. Whatever it changes is drawn into the target and must be put back in
+    //** @code(TSpritelyOrbitalGorillaCamera.FitToBounds@(Model, AWidth, AHeight@)), so the
+    //** model fills the grab. Whatever it changes is drawn into the target and must be put back in
     //** OnAfterGrab, which follows it: after the pass has drawn, before the main pass draws the
     //** same frame, or from Cancel if the frame never comes. It is not called if the pass is
     //** freed first. Runs on the main thread.

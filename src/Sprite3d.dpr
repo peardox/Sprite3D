@@ -2,9 +2,10 @@
 //** sprite sheets, animated GIFs or MP4 video.)
 //**
 //** The program loads a glTF, FBX, OBJ, USD, Collada, STL or PLY model into a Gorilla3D
-//** viewport, frames it with TSprite3DCamera and grabs it off screen with TSprite3DOffscreen.
-//** TMainForm, in Sprite3dMain, holds the view and every command. Leaks still allocated at
-//** shut-down are reported, as ReportMemoryLeaksOnShutdown is set; switch it off for a
+//** viewport, frames it with the Spritely package's orbital camera,
+//** @code(TSpritelyOrbitalCamera), and grabs it off screen with TSprite3DOffscreen. TMainForm,
+//** in Sprite3dMain, holds the view and every command. Leaks still allocated at shut-down
+//** are reported, as ReportMemoryLeaksOnShutdown is set; switch it off for a
 //** release build. On Windows FastMM5 is the memory manager and also writes them, in full, to
 //** Sprite3d_MemoryManager_EventLog.txt beside the executable. Builds for Windows, macOS, Linux, Android and iOS.
 //** On Windows a copy started while another is running, as by double-clicking a model in
@@ -22,9 +23,9 @@ program Sprite3d;
   icons, sprite sheets, animated GIFs or MP4 video.
 
   The program loads a glTF, FBX, OBJ, USD, Collada, STL or PLY model into a
-  Gorilla3D viewport, frames it with TSprite3DCamera and grabs it off screen
-  with TSprite3DOffscreen. TMainForm, in Sprite3dMain, holds the view and
-  every command. Leaks still allocated at shut-down are reported, as
+  Gorilla3D viewport, frames it with the Spritely package's orbital camera,
+  TSpritelyOrbitalCamera, and grabs it off screen with TSprite3DOffscreen.
+  TMainForm, in Sprite3dMain, holds the view and every command. Leaks still allocated at shut-down are reported, as
   ReportMemoryLeaksOnShutdown is set; switch it off for a release build. On
   Windows FastMM5 is the memory manager and also writes them, in full, to
   Sprite3d_MemoryManager_EventLog.txt beside the executable.
@@ -48,7 +49,6 @@ uses
   FMX.Forms,
   Sprite3dMain in 'ui\Sprite3dMain.pas' {MainForm},
   Sprite3DHelpers in 'ui\Sprite3DHelpers.pas',
-  Sprite3DCamera in 'lib\Sprite3DCamera.pas',
   Sprite3DAxes in 'lib\Sprite3DAxes.pas',
   Sprite3DGrid in 'lib\Sprite3DGrid.pas',
   Sprite3DSweep in 'lib\Sprite3DSweep.pas',
