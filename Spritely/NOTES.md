@@ -8,6 +8,12 @@ relying on how a component behaves, and add an entry with every change to
 
 Spritely's description, packages and rules are in [README.md](README.md).
 
+**`Spritely/` is the same on every branch of Sprite3D.** A change to it
+goes to `main` as well as to the branch it was made on (as its own zip,
+or the same files applied to both), so dropping an experimental branch
+never drops a Spritely fix. Sprite3D's own use of Spritely may differ by
+branch; entries say which branch when it does.
+
 ---
 
 ## 8 November 2026: one projection slot per drawing context (Projection2)
@@ -53,15 +59,18 @@ off-screen target) now get the projection there too.
 
 ---
 
-## 8 November 2026: first used in Sprite3D (Projection1)
+## 8 November 2026: first used in Sprite3D, branch `oblique` (Projection1)
 
 **Changed in Spritely:** nothing. Recorded here as the first program
 other than ProjectionTest to use `TSpritelyProjection`.
 
-Sprite3D's View, Projection offers Perspective and Orthographic (the
-camera's own) and Cavalier, Cabinet, Military and Plan Oblique, drawn by a
-`TSpritelyProjection` made in code with `CameraPreset` and `Dolly` off, so
-Sprite3D's own camera views keep the angles. It is the
+On Sprite3D's experimental branch `oblique` (not `main`), View,
+Projection offers Perspective and Orthographic (the camera's own) and
+Cavalier, Cabinet, Military and Plan Oblique, drawn by a
+`TSpritelyProjection` made in code with `CameraPreset` and `Dolly` off.
+Since ObliqueView1, Sprite3D turns the camera to `PresetAngles` itself
+when an oblique is chosen, and limits its own camera dialog to the
+azimuth. It is the
 `TSpritelyOrbitalCamera`'s `Projection`, so the camera's fits and
 `ProjectToView` follow it.
 

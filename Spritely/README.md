@@ -135,7 +135,11 @@ and changes them, for tests and other uses.
 To use both: drop a `TSpritelyOrbitalCamera` and a `TSpritelyProjection`,
 set the camera's `Viewport` and its `Projection` to the projection (that
 sets the projection's `Focus` and `Viewport`), then set `Kind` and the
-rest. Sprite3D uses `TSpritelyProjection` for its oblique projections (cavalier, cabinet, military and plan oblique), made in code, with `CameraPreset` and `Dolly` off, so its own camera views keep the angles.
+rest. Sprite3D's oblique projections (cavalier, cabinet, military and
+plan oblique), on its experimental branch `oblique` from 8 November 2026,
+use `TSpritelyProjection` made in code, with `CameraPreset` and `Dolly`
+off: Sprite3D turns the camera to `PresetAngles` itself. Sprite3D's
+`main` does not use it yet.
 
 ## Packages and installing
 

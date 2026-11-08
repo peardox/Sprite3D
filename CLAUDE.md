@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 8 November 2026, 21:55.
+Last updated: 8 November 2026, 22:00.
 
 ## Starting a new conversation
 
@@ -146,6 +146,10 @@ the older ones.
   settings, it gets its own `Spritely.Storage`, with `System.JSON`.
 - A new component is first made in code to test it; once it works it is
   put on the form in the `.fmx`.
+- **`Spritely/` is the same on every branch** (owner, 8 November 2026:
+  `oblique` is an experiment that may be thrown away). A Spritely change
+  made on a branch is also delivered for `main`, usually as a zip of
+  just the `Spritely/` files, worded to be true on both.
 - **Log every change to `Spritely/` in `Spritely/NOTES.md`**, newest
   first, as its "Writing an entry" says (owner, 8 November 2026), so
   sessions elsewhere that use Spritely can see what changed and what to
@@ -386,6 +390,23 @@ them.
   beside the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
+
+**Branches (owner, 21:49-21:51).** `main` at `774727a` ("All correct
+with some updates") holds every zip up to Handover1 and is the safe
+point. The oblique projection work is on the branch **`oblique`**
+(`2c31cca`, "Messing with obliques": everything up to ObliqueView1), an
+experiment that may be thrown away. Work on `oblique` unless told
+otherwise. **`Spritely/` must be the same on both branches** (see
+*Spritely* above): a Spritely change is also delivered for `main`.
+Branches1 (below) brought `main`'s Spritely up to `oblique`'s.
+
+**Zip Branches1 (8 November 2026).** For both branches: `Spritely/`'s
+three changed files, `lib/Spritely.Projection.pas` (Projection2's
+per-context fix), `README.md` and `NOTES.md`, worded so they are true on
+either branch. Unzipped on `main` it adds the fix and the notes; on
+`oblique` only the wording changes. This file goes on `oblique` only.
+`====> REBUILD RUNTIME PACKAGE SPRITELY (ALL PLATFORMS) <====` on `main`
+(nothing to rebuild on `oblique`: the unit is unchanged there).
 
 **Zip ObliqueView1 (8 November 2026), not yet tested.** Follows Status1.
 The owner (21:43): the obliques looked wrong because the camera stayed at
