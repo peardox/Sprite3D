@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 9 November 2026, 14:20.
+Last updated: 9 November 2026, 20:10.
 
 ## Starting a new conversation
 
@@ -465,9 +465,36 @@ When the owner reports a result, note it here.
   on macOS copied into the user's folders by `System.StartUpCopy` (see
   Lessons learned). Ask the owner before disabling them.
 
+### In hand: the Tools menu (from 9 November 2026, evening)
+
+The owner is building a **Tools** menu, last on the menu bar, desktop only
+(freed in `FormCreate` on Android and iOS before the drawer is built, so
+`ToolsMenu` and `ScanSpritesItem` are nil there). Its first item:
+
+- **ScanSprites1** (20:10, not yet tested): Tools, Scan Sprites... measures
+  a sprite made elsewhere, to be replaced by one of Sprite3D's: one folder
+  of PNG frames per animation, the folder's own name as the reference.
+  New units: `lib/Sprite3DPngReader.pas` (pure-Pascal PNG reader, every
+  colour type and depth, Adam7, tRNS; worker-thread safe, as FMX bitmaps
+  are kept to the main thread), `lib/Sprite3DFolderDialog.pas`
+  (`SelectFolders`: `IFileOpenDialog` with `FOS_PICKFOLDERS or
+  FOS_ALLOWMULTISELECT` on Windows, `NSOpenPanel` on macOS, FMX's
+  single-folder dialog on Linux), `lib/Sprite3DSpriteScan.pas`
+  (`SpriteFolders`, `ScanSpriteFolder`: `MeasureFrameEmpty` per frame,
+  `LeastFrameEmpty` over the folder, content box, coverage = active pixels
+  / content box, min, mean, max), `ui/Sprite3DSpriteScanForm.pas` (grid,
+  Copy as TSV). Setting `scanSpritesFolder`. The owner said "a decision will
+  be made later" on what to do with the coverage figures; the next Tools
+  items will build on these scans.
+
+To check when the owner reports: the multi-select dialog on Windows and
+macOS (the macOS one uses `setMessage` and `setDirectoryURL` from
+`Macapi.AppKit`, unbuilt); the figures against frames whose borders are
+known; a folder of mixed sizes; the grid waiting while a model loads.
+
 ### Not yet chosen
 
-Nothing is in hand. What the owner has mentioned: the rest of
+What the owner has mentioned: the rest of
 `TSpritelyProjection` in Sprite3D (the dolly zoom; shift and rise are
 done); the background image in animation exports, and scaling it by hand
 (left out of Background1 on purpose); the Variable dialog's placement and

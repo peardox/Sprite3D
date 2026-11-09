@@ -407,6 +407,8 @@ type
     FLastExportFolder: String;
     FOpenDirectoryFolder: String;
     FOpenDirectorySpec: String;
+    //** Tools, Scan Sprites' folder; see ScanSpritesFolder.
+    FScanSpritesFolder: String;
     FShowOverscanWarning: Boolean;
     FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
@@ -854,6 +856,11 @@ type
     //** Stored as @code(openDirectorySpec). One or more patterns, such as @code(*.glb) or
     //** @code(*.glb;*.gltf); see SplitFileSpec in Sprite3DFileSearch.
     property OpenDirectorySpec: String read FOpenDirectorySpec write FOpenDirectorySpec;
+    //** @abstract(Where Tools, Scan Sprites' folder dialog opens: the folder above the last
+    //** folders scanned; empty until it has been used.)
+    //**
+    //** Stored as @code(scanSpritesFolder).
+    property ScanSpritesFolder: String read FScanSpritesFolder write FScanSpritesFolder;
     //** @abstract(Whether ticking Overscan in Models, Animation Settings first warns how
     //** much longer rendering takes; True by default.)
     //**
@@ -1655,6 +1662,7 @@ begin
   FLastExportFolder := String.Empty;
   FOpenDirectoryFolder := String.Empty;
   FOpenDirectorySpec := '*.glb';
+  FScanSpritesFolder := String.Empty;
   FShowOverscanWarning := True;
   FShowExactWarning := True;
   FResultsShowGrid := True;

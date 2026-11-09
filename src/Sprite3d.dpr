@@ -84,7 +84,11 @@ uses
   Sprite3DLibraryUpdate in 'lib\Sprite3DLibraryUpdate.pas',
   Sprite3DFileSearch in 'lib\Sprite3DFileSearch.pas',
   Sprite3DOpenDirectoryForm in 'ui\Sprite3DOpenDirectoryForm.pas' {OpenDirectoryForm},
-  Sprite3DNameClashForm in 'ui\Sprite3DNameClashForm.pas' {NameClashForm};
+  Sprite3DNameClashForm in 'ui\Sprite3DNameClashForm.pas' {NameClashForm},
+  Sprite3DPngReader in 'lib\Sprite3DPngReader.pas',
+  Sprite3DFolderDialog in 'lib\Sprite3DFolderDialog.pas',
+  Sprite3DSpriteScan in 'lib\Sprite3DSpriteScan.pas',
+  Sprite3DSpriteScanForm in 'ui\Sprite3DSpriteScanForm.pas' {SpriteScanForm};
 
 {$R *.res}
 // The themes' FMX styles, inside the program on every platform. The .res

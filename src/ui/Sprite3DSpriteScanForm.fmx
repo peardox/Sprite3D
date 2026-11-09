@@ -1,0 +1,72 @@
+object SpriteScanForm: TSpriteScanForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMaximize]
+  Caption = 'Scan Sprites'
+  ClientHeight = 400
+  ClientWidth = 1080
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object NoteLabel: TLabel
+    Align = Top
+    Margins.Left = 8.000000000000000000
+    Margins.Top = 8.000000000000000000
+    Margins.Right = 8.000000000000000000
+    Margins.Bottom = 4.000000000000000000
+    Position.X = 8.000000000000000000
+    Position.Y = 8.000000000000000000
+    Size.Width = 1064.000000000000000000
+    Size.Height = 36.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.VertAlign = Leading
+    TextSettings.WordWrap = True
+    Text = 
+      'One row per folder of frames. Left, Top, Right and Bottom are the e' +
+      'mpty border every frame shares, as sprite_empty is worked out; Cont' +
+      'ent is what is left once it is cropped. Coverage is each frame'#39's d' +
+      'rawn pixels as a share of Content: the lowest, mean and highest.'
+    TabOrder = 3
+  end
+  object Grid: TStringGrid
+    Align = Client
+    CanFocus = True
+    ClipChildren = True
+    Margins.Left = 8.000000000000000000
+    Margins.Right = 8.000000000000000000
+    Size.Width = 1064.000000000000000000
+    Size.Height = 312.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 356.000000000000000000
+    Size.Width = 1080.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    object CopyButton: TButton
+      Anchors = [akLeft, akBottom]
+      Position.X = 8.000000000000000000
+      Position.Y = 11.000000000000000000
+      TabOrder = 1
+      Text = 'Copy'
+      Hint = 'Copy the grid to the clipboard as tab-separated text, with its headings'
+      ShowHint = True
+      OnClick = CopyButtonClick
+    end
+    object CloseButton: TButton
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      Default = True
+      Position.X = 992.000000000000000000
+      Position.Y = 11.000000000000000000
+      TabOrder = 0
+      Text = 'Close'
+      OnClick = CloseButtonClick
+    end
+  end
+end

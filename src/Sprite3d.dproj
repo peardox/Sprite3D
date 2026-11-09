@@ -423,6 +423,13 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <Form>NameClashForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
+        <DCCReference Include="lib\Sprite3DPngReader.pas"/>
+        <DCCReference Include="lib\Sprite3DFolderDialog.pas"/>
+        <DCCReference Include="lib\Sprite3DSpriteScan.pas"/>
+        <DCCReference Include="ui\Sprite3DSpriteScanForm.pas">
+            <Form>SpriteScanForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>

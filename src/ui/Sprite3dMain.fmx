@@ -503,5 +503,13 @@ object MainForm: TMainForm
         OnClick = ShowCombinedSweepItemClick
       end
     end
+    object ToolsMenu: TMenuItem
+      Text = 'Tools'
+      object ScanSpritesItem: TMenuItem
+        Locked = True
+        Text = 'Scan Sprites...'
+        OnClick = ScanSpritesItemClick
+      end
+    end
   end
 end

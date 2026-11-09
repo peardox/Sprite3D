@@ -189,7 +189,7 @@
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
 //** hamburger button on a toolbar at the top, which opens a drawer listing every item in
 //** MainMenu1; ticks show the current camera view and which View items are on. Exit is left
-//** out on iOS. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
+//** out on iOS, and the Tools menu on Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
 //** that FMX draws itself, as the native GTK menu bar showed only the first letter of each
 //** item: its items are copied onto the bar and the originals freed, and each copy takes its
 //** original's name, so the form's fields refer to the copies. They must be copied, not
@@ -228,40 +228,42 @@
 //** |   |-- SaveAnimationSettingsItem "Save Animation Settings..."  writes the list
 //** |   |-- ModelActionsSeparatorItem "-"
 //** |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
-//** `-- ViewMenu "View"                   its ticks are kept in settings.json
-//**     |-- CameraMenu "Camera"             the view, kept in settings.json
-//**     |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
-//**     |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-//**     |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-//**     |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
-//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
-//**     |   |-- ViewRoot2Item "Sqrt@(2@)"       fixed, inclination about 54.736
-//**     |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
-//**     |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-//**     |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-//**     |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
-//**     |   |-- FLockSeparatorItem "-"
-//**     |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
-//**     |-- LightsMenu "Lights"
-//**     |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
-//**     |   `-- OriginalLightItem "Original Light"  the light the form made before
-//**     |                                       Spritely; not ticked at start-up
-//**     |-- ProjectionMenu "Projection"      one of six, a radio group
-//**     |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
-//**     |   |-- OrthographicItem "Orthographic" the camera's own
-//**     |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
-//**     |       |-- CavalierItem "Cavalier"
-//**     |       |-- CabinetItem "Cabinet"
-//**     |       |-- MilitaryItem "Military"
-//**     |       `-- PlanObliqueItem "Plan Oblique"
-//**     |-- ViewSeparatorItem "-"
-//**     |-- ShowBoundsItem "Show bounding box"  off at first
-//**     |-- ShowGridItem "Show grid"        off at first
-//**     |-- ShowAxesItem "Show axes"        off at first
-//**     |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
-//**     |                                      about the up axis
-//**     `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
-//**                                            frames
+//** |-- ViewMenu "View"                   its ticks are kept in settings.json
+//** |   |-- CameraMenu "Camera"             the view, kept in settings.json
+//** |   |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
+//** |   |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+//** |   |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+//** |   |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
+//** |   |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+//** |   |   |-- ViewRoot2Item "Sqrt@(2@)"       fixed, inclination about 54.736
+//** |   |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
+//** |   |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+//** |   |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+//** |   |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//** |   |   |-- FLockSeparatorItem "-"
+//** |   |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
+//** |   |-- LightsMenu "Lights"
+//** |   |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+//** |   |   `-- OriginalLightItem "Original Light"  the light the form made before
+//** |   |                                       Spritely; not ticked at start-up
+//** |   |-- ProjectionMenu "Projection"      one of six, a radio group
+//** |   |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
+//** |   |   |-- OrthographicItem "Orthographic" the camera's own
+//** |   |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
+//** |   |       |-- CavalierItem "Cavalier"
+//** |   |       |-- CabinetItem "Cabinet"
+//** |   |       |-- MilitaryItem "Military"
+//** |   |       `-- PlanObliqueItem "Plan Oblique"
+//** |   |-- ViewSeparatorItem "-"
+//** |   |-- ShowBoundsItem "Show bounding box"  off at first
+//** |   |-- ShowGridItem "Show grid"        off at first
+//** |   |-- ShowAxesItem "Show axes"        off at first
+//** |   |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
+//** |   |                                      about the up axis
+//** |   `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+//** |                                          frames
+//** `-- ToolsMenu "Tools"                 desktop only: left out on Android and iOS
+//**     `-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
 //** )
 unit Sprite3dMain;
 {
@@ -467,7 +469,8 @@ unit Sprite3dMain;
   On Android and iOS, where FMX shows no menu bar, the same menus are reached
   through a hamburger button on a toolbar at the top, which opens a drawer
   listing every item in MainMenu1; ticks show the current camera view and
-  which View items are on. Exit is left out on iOS. On Linux MainMenu1 is
+  which View items are on. Exit is left out on iOS, and the Tools menu on
+  Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is
   replaced, first thing in FormCreate, by a TMenuBar that FMX draws itself, as
   the native GTK menu bar showed only the first letter of each item: its items
   are copied onto the bar and the originals freed, and each copy takes its
@@ -506,40 +509,42 @@ unit Sprite3dMain;
     |   |-- SaveAnimationSettingsItem "Save Animation Settings..."  writes the list
     |   |-- ModelActionsSeparatorItem "-"
     |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
-    `-- ViewMenu "View"                   its ticks are kept in settings.json
-        |-- CameraMenu "Camera"             the view, kept in settings.json
-        |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
-        |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-        |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-        |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
-        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
-        |   |-- ViewRoot2Item "Sqrt(2)"         fixed, inclination about 54.736
-        |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
-        |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-        |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-        |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
-        |   |-- FLockSeparatorItem "-"
-        |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
-        |-- LightsMenu "Lights"
-        |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
-        |   `-- OriginalLightItem "Original Light"  the light the form made before
-        |                                       Spritely; not ticked at start-up
-        |-- ProjectionMenu "Projection"      one of six, a radio group
-        |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
-        |   |-- OrthographicItem "Orthographic" the camera's own
-        |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
-        |       |-- CavalierItem "Cavalier"
-        |       |-- CabinetItem "Cabinet"
-        |       |-- MilitaryItem "Military"
-        |       `-- PlanObliqueItem "Plan Oblique"
-        |-- ViewSeparatorItem "-"
-        |-- ShowBoundsItem "Show bounding box"  off at first
-        |-- ShowGridItem "Show grid"        off at first
-        |-- ShowAxesItem "Show axes"        off at first
-        |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
-        |                                      about the up axis
-        `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
-                                               frames
+    |-- ViewMenu "View"                   its ticks are kept in settings.json
+    |   |-- CameraMenu "Camera"             the view, kept in settings.json
+    |   |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
+    |   |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+    |   |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+    |   |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
+    |   |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+    |   |   |-- ViewRoot2Item "Sqrt(2)"         fixed, inclination about 54.736
+    |   |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
+    |   |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+    |   |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+    |   |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+    |   |   |-- FLockSeparatorItem "-"
+    |   |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
+    |   |-- LightsMenu "Lights"
+    |   |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+    |   |   `-- OriginalLightItem "Original Light"  the light the form made before
+    |   |                                       Spritely; not ticked at start-up
+    |   |-- ProjectionMenu "Projection"      one of six, a radio group
+    |   |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
+    |   |   |-- OrthographicItem "Orthographic" the camera's own
+    |   |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
+    |   |       |-- CavalierItem "Cavalier"
+    |   |       |-- CabinetItem "Cabinet"
+    |   |       |-- MilitaryItem "Military"
+    |   |       `-- PlanObliqueItem "Plan Oblique"
+    |   |-- ViewSeparatorItem "-"
+    |   |-- ShowBoundsItem "Show bounding box"  off at first
+    |   |-- ShowGridItem "Show grid"        off at first
+    |   |-- ShowAxesItem "Show axes"        off at first
+    |   |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
+    |   |                                      about the up axis
+    |   `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+    |                                          frames
+    `-- ToolsMenu "Tools"                 desktop only: left out on Android and iOS
+        `-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
 }
 
 interface
@@ -558,7 +563,7 @@ uses
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
-  Sprite3DResultsView, Sprite3DNameClashForm,
+  Sprite3DResultsView, Sprite3DNameClashForm, Sprite3DSpriteScan,
   System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -772,6 +777,16 @@ type
     ModelActionsSeparatorItem: TMenuItem;
     //** @abstract(The "Directions..." item; see DirectionsItemClick.)
     DirectionsItem: TMenuItem;
+    //** @abstract(The menu captioned "Tools", last on the menu bar: tools that work on files
+    //** rather than on the model shown, starting with ScanSpritesItem.)
+    //**
+    //** Desktop only: FormCreate frees it on Android and iOS, before the drawer is built,
+    //** as its tools need folder dialogs those platforms lack; the field, and
+    //** ScanSpritesItem's, are then nil.
+    ToolsMenu: TMenuItem;
+    //** @abstract(The Tools menu's "Scan Sprites..." item; see ScanSpritesItemClick.
+    //** Disabled while a scan runs.)
+    ScanSpritesItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
@@ -1092,6 +1107,25 @@ type
     //**
     //** @param(Sender OpenDirectoryMenuItem.)
     procedure OpenDirectoryMenuItemClick(Sender: TObject);
+    //** @abstract(Measures the frames of a sprite made elsewhere, to be replaced by one of
+    //** Sprite3D's: one folder of PNG frames per animation.)
+    //**
+    //** The system's folder dialog (SelectFolders, from Sprite3DFolderDialog) asks for the
+    //** folders, several at once on Windows and macOS, opening where the last scan's were.
+    //** A folder with no PNG files of its own stands for those of its sub-folders that have
+    //** some, so choosing a character's folder scans each of its animations, which is also
+    //** how several are scanned on Linux, whose dialog chooses one. The folders are read on
+    //** a worker thread, each with ScanSpriteFolder from Sprite3DSpriteScan: every frame's
+    //** empty border, measured as an export's metadata measures it, combined over the
+    //** folder as @code(sprite_empty) is, the content box left once that is cropped, and each
+    //** frame's coverage of it. The results go to the Debug tab in full and to
+    //** TSpriteScanForm, a grid with one row per folder named by the folder's own name; if
+    //** a model is loading or an export running when they are ready, the grid waits until it
+    //** has finished. Nothing happens if the dialog is cancelled, or while a scan runs.
+    //** Desktop only.
+    //**
+    //** @param(Sender ScanSpritesItem.)
+    procedure ScanSpritesItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -2696,6 +2730,74 @@ type
       const AAnimation: String; const ADirections: TArray<Single>;
       const AMeta: TSprite3DSheetMeta; const ABorders, ADeferMetadata: Boolean;
       out APending: TSprite3DSheetMetadata; out AHasPending: Boolean): String;
+  private
+    //** True from the start of a Tools, Scan Sprites scan until its results are ready.
+    FSpriteScanning: Boolean;
+    //** A scan's results, kept until they can be shown: the folders' scans, and why the
+    //** scan stopped, if it did; see ShowPendingSpriteScan.
+    FPendingSpriteScan: TArray<TSprite3DSpriteScan>;
+    FPendingSpriteScanError: String;
+    //** True while a scan's results are waiting to be shown.
+    FSpriteScanWaiting: Boolean;
+    //** Made when a scan's results first have to wait; ticks ShowPendingSpriteScan until
+    //** they can be shown, and is disabled then. Owned by the form.
+    FSpriteScanTimer: TTimer;
+    //** @abstract(Enables Tools, Scan Sprites unless a scan is running or its results are
+    //** waiting.)
+    procedure UpdateScanSpritesItem;
+    //** @abstract(Scans the folders chosen on a worker thread and hands the results to
+    //** FinishSpriteScan.)
+    //**
+    //** SpriteFolders turns the folders chosen into the folders to scan, and each is read
+    //** with ScanSpriteFolder in turn, its name logged as it starts. The worker stops at the
+    //** next frame if the main form goes.
+    //**
+    //** @param(AFolders The folders chosen, as full paths, already through OSFriendlyPath.)
+    procedure StartSpriteScan(const AFolders: TArray<String>);
+    //** @abstract(From the scan's worker thread: queues SpriteScanProgress on the main
+    //** thread.)
+    //**
+    //** A method of its own, so the queued call captures these parameters' values, not the
+    //** worker's loop variables.
+    //**
+    //** @param(AName The folder's own name.)
+    //** @param(AIndex Which folder it is, from 1.)
+    //** @param(ACount How many folders there are.)
+    procedure QueueSpriteScanProgress(const AName: String; const AIndex, ACount: Integer);
+    //** @abstract(Logs which folder the scan has reached, in the Debug tab.)
+    //** @param(AName The folder's own name.)
+    //** @param(AIndex Which folder it is, from 1.)
+    //** @param(ACount How many folders there are.)
+    procedure SpriteScanProgress(const AName: String; const AIndex, ACount: Integer);
+    //** @abstract(From the scan's worker thread: queues FinishSpriteScan on the main thread
+    //** with the scan's results.)
+    //** @param(AScans The folders' scans, in order.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure QueueSpriteScanResults(const AScans: TArray<TSprite3DSpriteScan>;
+      const AError: String);
+    //** @abstract(Takes a scan's results on the main thread: logs them in full and shows
+    //** them, now or once nothing stands in the way.)
+    //** @param(AScans The folders' scans, in order.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure FinishSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+      const AError: String);
+    //** @abstract(Writes a scan's results to the Debug tab: one line per folder with every
+    //** column of the grid, its full path and active pixel counts, and a line for each file
+    //** not read.)
+    //** @param(AScans The folders' scans, in order.)
+    procedure LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>);
+    //** @abstract(Whether a scan's results must wait: while a model is loading, a folder
+    //** is being opened, or anything is being captured or exported, each of which has a
+    //** dialog of its own up, and a second dialog must not open over it.)
+    //** @returns(True to wait.)
+    function SpriteScanBlocked: Boolean;
+    //** @abstract(Shows the waiting results in TSpriteScanForm, or a message if there are
+    //** none or the scan stopped; or, while SpriteScanBlocked, leaves FSpriteScanTimer to
+    //** try again.)
+    procedure ShowPendingSpriteScan;
+    //** @abstract(FSpriteScanTimer's tick: tries ShowPendingSpriteScan again.)
+    //** @param(Sender FSpriteScanTimer.)
+    procedure SpriteScanTimerTick(Sender: TObject);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -2773,7 +2875,7 @@ uses
   Sprite3DOpenFiles, Sprite3DBackgroundForm,
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
   Sprite3DCreditsForm, System.DateUtils, JsonText, Sprite3DOpenDirectoryForm,
-  Sprite3DFileSearch;
+  Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DSpriteScanForm;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -3034,6 +3136,10 @@ begin
   BuildResultsView;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // Tools needs folder dialogs, which Android and iOS lack: it goes before
+  // the drawer is built from the menus. Freeing it sets ToolsMenu and
+  // ScanSpritesItem to nil
+  ToolsMenu.Free;
   // Built from the finished menus, so it comes after every item is added
   BuildMobileMenu;
   {$ENDIF}
@@ -12301,6 +12407,248 @@ begin
   StartFolderScan(FSettings.OpenDirectoryFolder, FSettings.OpenDirectorySpec);
 end;
 {$ENDIF}
+
+procedure TMainForm.UpdateScanSpritesItem;
+begin
+  if ScanSpritesItem <> nil then
+    ScanSpritesItem.Enabled := not FSpriteScanning and not FSpriteScanWaiting;
+end;
+
+procedure TMainForm.ScanSpritesItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+
+  // Where the next scan's dialog opens: the folder above the one chosen, so
+  // its sister folders, the character's other animations, are in view. A
+  // root, which has nothing above it, is kept whole (ExcludeTrailing-
+  // PathDelimiter would turn C:\ into C:, the current folder on drive C)
+  function StartFolderFor(const AFolder: String): String;
+  begin
+    if SameText(IncludeTrailingPathDelimiter(TPath.GetPathRoot(AFolder)),
+      IncludeTrailingPathDelimiter(AFolder)) then
+      Result := AFolder
+    else
+      Result := ExtractFileDir(ExcludeTrailingPathDelimiter(AFolder));
+    if Result = String.Empty then
+      Result := AFolder;
+  end;
+
+var
+  Folders: TArray<String>;
+  Title: String;
+  I: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if FSpriteScanning or FSpriteScanWaiting then
+    Exit;
+  if CanSelectSeveralFolders then
+    Title := 'Scan Sprites: choose the folders of frames, one per animation'
+  else
+    Title := 'Scan Sprites: choose a folder of frames, or the folder holding them';
+  if not SelectFolders(Title, FSettings.ScanSpritesFolder, Folders) then
+    Exit;
+  for I := 0 to High(Folders) do
+    Folders[I] := OSFriendlyPath(Folders[I]);
+  FSettings.ScanSpritesFolder := StartFolderFor(Folders[0]);
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  StartSpriteScan(Folders);
+  {$ENDIF}
+end;
+
+// The folders are read on a worker thread, which touches nothing of the
+// form's: it hands its results back through QueueSpriteScanResults, and its
+// progress through QueueSpriteScanProgress. MainFormGone stops it at the
+// next frame if the window closes meanwhile.
+procedure TMainForm.StartSpriteScan(const AFolders: TArray<String>);
+var
+  Chosen: TArray<String>;
+begin
+  if FSpriteScanning or FSpriteScanWaiting then
+    Exit;
+  Chosen := AFolders;
+  FSpriteScanning := True;
+  UpdateScanSpritesItem;
+  DebugMemo.Lines.Add(Format('Scan Sprites: %d folders chosen: %s',
+    [Length(Chosen), String.Join('; ', Chosen)]));
+  TTask.Run(
+    procedure
+    var
+      Folders: TArray<String>;
+      Scans: TArray<TSprite3DSpriteScan>;
+      Error: String;
+      I: Integer;
+    begin
+      Scans := nil;
+      Error := String.Empty;
+      try
+        Folders := SpriteFolders(Chosen);
+        for I := 0 to High(Folders) do
+        begin
+          if MainFormGone then
+            Exit;
+          QueueSpriteScanProgress(SpriteFolderName(Folders[I]), I + 1, Length(Folders));
+          Scans := Scans + [ScanSpriteFolder(Folders[I],
+            function: Boolean
+            begin
+              Result := MainFormGone;
+            end)];
+        end;
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      if not MainFormGone then
+        QueueSpriteScanResults(Scans, Error);
+    end);
+end;
+
+procedure TMainForm.QueueSpriteScanProgress(const AName: String;
+  const AIndex, ACount: Integer);
+var
+  Name: String;
+  Index, Count: Integer;
+begin
+  // Copies, captured by the queued call, of this call's values
+  Name := AName;
+  Index := AIndex;
+  Count := ACount;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        SpriteScanProgress(Name, Index, Count);
+    end);
+end;
+
+procedure TMainForm.SpriteScanProgress(const AName: String; const AIndex, ACount: Integer);
+begin
+  DebugMemo.Lines.Add(Format('Scan Sprites: reading %s (%d of %d)', [AName, AIndex, ACount]));
+end;
+
+procedure TMainForm.QueueSpriteScanResults(const AScans: TArray<TSprite3DSpriteScan>;
+  const AError: String);
+var
+  Scans: TArray<TSprite3DSpriteScan>;
+  Error: String;
+begin
+  Scans := AScans;
+  Error := AError;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        FinishSpriteScan(Scans, Error);
+    end);
+end;
+
+procedure TMainForm.FinishSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+  const AError: String);
+begin
+  FSpriteScanning := False;
+  LogSpriteScan(AScans);
+  if AError <> String.Empty then
+    DebugMemo.Lines.Add('Scan Sprites stopped: ' + AError);
+  FPendingSpriteScan := AScans;
+  FPendingSpriteScanError := AError;
+  FSpriteScanWaiting := True;
+  UpdateScanSpritesItem;
+  ShowPendingSpriteScan;
+end;
+
+procedure TMainForm.LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>);
+var
+  Scan: TSprite3DSpriteScan;
+  Headers, Cells, Parts: TArray<String>;
+  Skipped: String;
+  I: Integer;
+begin
+  Headers := SpriteScanHeaders;
+  for Scan in AScans do
+  begin
+    // Every column the grid has, by its heading, then what the grid leaves
+    // out: the full path and the active pixel counts
+    Cells := SpriteScanCells(Scan);
+    Parts := nil;
+    for I := 1 to Min(High(Headers), High(Cells)) do
+      if Cells[I] <> String.Empty then
+        Parts := Parts + [Headers[I] + ' ' + Cells[I]];
+    DebugMemo.Lines.Add(Format('Scan Sprites: %s (%s): %s', [Scan.Name, Scan.Folder,
+      String.Join(', ', Parts)]));
+    if Scan.Valid then
+      DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, ' +
+        'of %d in the content box', [Scan.ActiveMin, FormatFloat('0.0', Scan.ActiveMean),
+        Scan.ActiveMax, Int64(Scan.ContentWidth) * Scan.ContentHeight]));
+    for Skipped in Scan.Skipped do
+      DebugMemo.Lines.Add('  not read: ' + Skipped);
+  end;
+end;
+
+function TMainForm.SpriteScanBlocked: Boolean;
+begin
+  Result := Capturing or FAtlasSaving or FQueueActive or FScanning or
+    (FLoadStage <> lsNone) or (FLoadDialog <> nil);
+end;
+
+procedure TMainForm.ShowPendingSpriteScan;
+var
+  Scans: TArray<TSprite3DSpriteScan>;
+  Error: String;
+  Dialog: TSpriteScanForm;
+begin
+  if not FSpriteScanWaiting or MainFormGone then
+    Exit;
+  if SpriteScanBlocked then
+  begin
+    // Tried again every half second until nothing has a dialog up
+    if FSpriteScanTimer = nil then
+    begin
+      FSpriteScanTimer := TTimer.Create(Self);
+      FSpriteScanTimer.Interval := 500;
+      FSpriteScanTimer.OnTimer := SpriteScanTimerTick;
+    end;
+    if not FSpriteScanTimer.Enabled then
+      DebugMemo.Lines.Add('Scan Sprites: the results will show once loading or ' +
+        'exporting has finished');
+    FSpriteScanTimer.Enabled := True;
+    Exit;
+  end;
+  if FSpriteScanTimer <> nil then
+    FSpriteScanTimer.Enabled := False;
+  Scans := FPendingSpriteScan;
+  Error := FPendingSpriteScanError;
+  FPendingSpriteScan := nil;
+  FPendingSpriteScanError := String.Empty;
+  FSpriteScanWaiting := False;
+  UpdateScanSpritesItem;
+
+  if Error <> String.Empty then
+    ShowMessage('Scan Sprites stopped: ' + Error);
+  if Length(Scans) = 0 then
+  begin
+    if Error = String.Empty then
+      ShowMessage('Scan Sprites found no folders to scan.');
+    Exit;
+  end;
+  // Scan Sprites is desktop only, so the dialog can block
+  Dialog := TSpriteScanForm.Create(nil);
+  try
+    Dialog.SetScans(Scans);
+    Dialog.ShowModal;
+  finally
+    Dialog.Free;
+  end;
+end;
+
+procedure TMainForm.SpriteScanTimerTick(Sender: TObject);
+begin
+  ShowPendingSpriteScan;
+end;
 
 // The search runs on a worker thread, into a list of its own; the result is
 // handed back to the main thread, which then opens the files. The window
