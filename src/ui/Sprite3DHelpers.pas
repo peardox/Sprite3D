@@ -91,11 +91,12 @@ const
   //**
   //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
   ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
-  //** @abstract(The largest camera pan either way, as a multiple of the model's radius.)
+  //** @abstract(The largest shift or rise either way, as a fraction of how far the picture
+  //** can slide.)
   //**
-  //** The radius is half the diagonal of the model's bounding box, so a pan of 1 moves the
-  //** orbit centre out to where the model's farthest corner was.
-  PAN_LIMIT = 2.0;
+  //** 1 slides it until the near side of the model's fitted volume is on that edge of the
+  //** picture: the model just gone off it.
+  PAN_LIMIT = 1.0;
   //** @abstract(The lowest frame rate Models, Animation Settings offers for saved
   //** animations, in frames per second.)
   ANIMATION_FPS_MIN = 1;
@@ -347,6 +348,8 @@ type
     FCheckerSize: Integer;
     FCheckerLight: String;
     FCheckerDark: String;
+    FBackgroundImage: String;
+    FBackgroundImageFit: TSprite3DImageFit;
     FShowBoundingBox: Boolean;
     FShowGrid: Boolean;
     FShowAxes: Boolean;
@@ -364,6 +367,8 @@ type
     FPanEnabled: Boolean;
     FPanX: Single;
     FPanZ: Single;
+    FKeepShift: Boolean;
+    FDistanceFactor: Single;
     FStartupAction: TSprite3DStartupAction;
     FLastModel: String;
     FLastAnimatedModel: String;
@@ -504,7 +509,7 @@ type
     //**
     //** Stored as @code(directionsFolder) in settings.json.
     property DirectionsFolder: String read FDirectionsFolder write FDirectionsFolder;
-    //** @abstract(What the background shows: None, Transparent, Solid or Gradient.)
+    //** @abstract(What the background shows: None, Transparent, Solid, Gradient or Image.)
     //**
     //** Stored as @code(backgroundKind), by name. None, the default until one is chosen,
     //** draws no background; Transparent shows a checker in the viewport. Both leave grabs
@@ -542,6 +547,18 @@ type
     //**
     //** Stored as @code(checkerDark).
     property CheckerDark: String read FCheckerDark write FCheckerDark;
+    //** @abstract(The Image background's image file, a full path; empty until one is
+    //** chosen.)
+    //**
+    //** Stored as @code(backgroundImage). A file that has gone shows the Solid colour
+    //** instead, and the Debug tab says so.
+    property BackgroundImage: String read FBackgroundImage write FBackgroundImage;
+    //** @abstract(How the Image background's image is fitted to the picture.)
+    //**
+    //** Stored as @code(backgroundImageFit), by name. Fit, the default, is used when
+    //** settings.json has none.
+    property BackgroundImageFit: TSprite3DImageFit read FBackgroundImageFit
+      write FBackgroundImageFit;
     //** @abstract(Whether View, Show bounding box is ticked on the main form; True by
     //** default.)
     //**
@@ -613,21 +630,37 @@ type
     //** Stored as @code(variableRoll). Kept whenever the session ends in the Variable view,
     //** and restored with it.
     property VariableRoll: Single read FVariableRoll write FVariableRoll;
-    //** @abstract(Whether the camera pan is applied; False by default.)
+    //** @abstract(Whether the shift and rise are applied; False by default.)
     //**
-    //** Stored as @code(panEnabled). Set by the Pan box in the Variable camera dialog. While
-    //** False, PanX and PanZ are kept but have no effect.
+    //** Stored as @code(panEnabled), the name from before they were a lens shift. Set by the
+    //** Shift and rise box in the Variable camera dialog. While False, PanX and PanZ are kept
+    //** but have no effect.
     property PanEnabled: Boolean read FPanEnabled write FPanEnabled;
-    //** @abstract(The camera pan along the model's X axis, as a multiple of its radius; 0 by
-    //** default.)
+    //** @abstract(The shift: the picture slid right (positive) or left, as a fraction of how
+    //** far it can go; 0 by default.)
     //**
-    //** Stored as @code(panX). Values beyond PAN_LIMIT either way are limited to it.
+    //** Stored as @code(panX). Values beyond PAN_LIMIT either way are limited to it, which also
+    //** brings a value from before, when it was a multiple of the model's radius, into range.
     property PanX: Single read FPanX write FPanX;
-    //** @abstract(The camera pan along the model's Z axis, as a multiple of its radius; 0 by
-    //** default.)
+    //** @abstract(The rise: the picture slid up (positive) or down, as a fraction of how far
+    //** it can go; 0 by default.)
     //**
     //** Stored as @code(panZ). Values beyond PAN_LIMIT either way are limited to it.
     property PanZ: Single read FPanZ write FPanZ;
+    //** @abstract(Whether the shift and rise are kept for the next session; False by
+    //** default.)
+    //**
+    //** Stored as @code(keepShift). Set by Save shift, rise and distance values between
+    //** sessions in the Variable camera dialog. While False, PanEnabled, PanX and PanZ are
+    //** saved off and at 0 and DistanceFactor at 1, and none is read at start-up, so each
+    //** session starts without a shift or rise, at the fitted distance.
+    property KeepShift: Boolean read FKeepShift write FKeepShift;
+    //** @abstract(The Variable camera dialog's distance, a factor on the fitted distance; 1
+    //** by default.)
+    //**
+    //** Stored as @code(distanceFactor); saved, and read at start-up, only while KeepShift.
+    //** A value of 0 or less counts as 1.
+    property DistanceFactor: Single read FDistanceFactor write FDistanceFactor;
     //** @abstract(What is loaded at start-up; the sample model by default.)
     //**
     //** Stored as @code(startupAction), by name.
@@ -1406,25 +1439,6 @@ procedure SaveAnimationBoundsCache(const AModelFile: String; const ANames: TArra
 //** @returns(The full path on Android and iOS; an empty string on other platforms.)
 function AutoIconFileName(const AExtension: String): String;
 
-//** @abstract(How far to move the orbit centre for a camera pan.)
-//**
-//** The pan runs along the model's own X and Z axes, as View, Show axes draws them, so it
-//** never moves the view up or down the model's Y axis. Each amount is a multiple of the
-//** model's radius, half the diagonal of ABox, so a pan looks the same for a model of any
-//** size. The camera's angles and distance are not involved.
-//**
-//** @param(AModel The model; nil gives no offset.)
-//**
-//** @param(ABox The model's own bounds as loaded, for its size.)
-//**
-//** @param(APanX The pan along the model's X axis; limited to PAN_LIMIT either way.)
-//**
-//** @param(APanZ The pan along the model's Z axis; limited to PAN_LIMIT either way.)
-//**
-//** @returns(The offset to add to the fitted orbit centre, in the viewport's space.)
-function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
-  const APanX, APanZ: Single): TPoint3D;
-
 //** @abstract(The names of a projection: its settings key, caption, metadata name and
 //** benchmark prefix.)
 //**
@@ -1587,6 +1601,8 @@ begin
   FPanEnabled := False;
   FPanX := 0;
   FPanZ := 0;
+  FKeepShift := False;
+  FDistanceFactor := 1;
   // File, Settings: as the application behaved before it had them
   FStartupAction := saDefaultModel;
   FLastModel := String.Empty;
@@ -1741,6 +1757,8 @@ begin
   Result.CheckerSize := Max(FCheckerSize, 1);
   Result.CheckerLight := TextToColour(FCheckerLight, Defaults.CheckerLight);
   Result.CheckerDark := TextToColour(FCheckerDark, Defaults.CheckerDark);
+  Result.ImageFile := FBackgroundImage;
+  Result.ImageFit := FBackgroundImageFit;
 end;
 
 procedure TSprite3DAppSettings.SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
@@ -1753,6 +1771,8 @@ begin
   FCheckerSize := Max(Value.CheckerSize, 1);
   FCheckerLight := ColourToText(Value.CheckerLight);
   FCheckerDark := ColourToText(Value.CheckerDark);
+  FBackgroundImage := Value.ImageFile;
+  FBackgroundImageFit := Value.ImageFit;
 end;
 
 class function TSprite3DAppSettings.SupportFolder: String;
@@ -2556,31 +2576,6 @@ begin
   Grid := FindModelGrid(AModel);
   if Grid <> nil then
     Grid.Shown := AShown;
-end;
-
-function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
-  const APanX, APanZ: Single): TPoint3D;
-var
-  Origin, AxisX, AxisZ: TPoint3D;
-  Radius: Single;
-begin
-  Result := TPoint3D.Zero;
-  if AModel = nil then
-    Exit;
-  Radius := 0.5 * Sqrt(Sqr(ABox.Width) + Sqr(ABox.Height) + Sqr(ABox.Depth));
-  if Radius <= 0 then
-    Radius := 1;
-  // The model's own X and Z directions in the viewport's space, which is
-  // where the camera's rig lives; scale is taken out, the radius puts it back
-  Origin := AModel.LocalToAbsolute3D(TPoint3D.Zero);
-  AxisX := AModel.LocalToAbsolute3D(Point3D(1, 0, 0)) - Origin;
-  AxisZ := AModel.LocalToAbsolute3D(Point3D(0, 0, 1)) - Origin;
-  if AxisX.Length > 0 then
-    AxisX := AxisX.Normalize;
-  if AxisZ.Length > 0 then
-    AxisZ := AxisZ.Normalize;
-  Result := AxisX * (EnsureRange(APanX, -PAN_LIMIT, PAN_LIMIT) * Radius) +
-    AxisZ * (EnsureRange(APanZ, -PAN_LIMIT, PAN_LIMIT) * Radius);
 end;
 
 type

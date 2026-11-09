@@ -1,15 +1,18 @@
 //** @abstract(The Background Settings dialog: choose no background, or a transparent,
-//** solid or gradient one.)
+//** solid, gradient or image one.)
 //**
 //** A small modal form, laid out in its .fmx file with standard FMX controls. On the right a
-//** group of four radio buttons chooses the background image style: None, Transparent, Solid
-//** or Gradient. On the left a TColorPanel sets the colour: for Solid, the one colour; for
+//** group of five radio buttons chooses the background image style: None, Transparent, Solid,
+//** Gradient or Image. On the left a TColorPanel sets the colour: for Solid, the one colour; for
 //** Gradient, the end chosen under it, From or To, whose swatches show both, with a drop-down
 //** list below them for the gradient's direction; under it a Hex box shows the same colour as
 //** #RRGGBB and takes one typed in. None and Transparent need no colour, so the panel is
 //** disabled then; for Transparent a slider sets the size of the checker that stands for
-//** transparency on screen. A preview shows the result, with the checker at a quarter of its
-//** size and None as black, as the viewport shows it.
+//** transparency on screen. For Image, the file is typed or chosen with Browse (desktop
+//** only), a drop-down chooses how it is fitted to the picture, a line under them gives its
+//** size or why it cannot be read, and the colour panel sets the colour where the image does
+//** not reach. A preview shows the result, with the checker at a quarter of its size and None
+//** as black, as the viewport shows it.
 //**
 //** The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it
 //** back after OK. Each change also calls OnPreview, so the owner can show it in the viewport
@@ -26,28 +29,35 @@
 //**     |   |-- ToRadio, ToBox             edit the ending colour
 //**     |   `-- DirectionLabel, DirectionCombo   the gradient's direction
 //**     |-- HexLabel, HexEdit              the colour being edited, as #RRGGBB
-//**     |-- StyleGroup                     None, Transparent, Solid, Gradient
+//**     |-- StyleGroup                     None, Transparent, Solid, Gradient, Image
 //**     |-- PreviewLabel, PreviewRect
 //**     |-- CheckerLabel, CheckerTrack     checker size, for Transparent only
+//**     |-- ImageLayout                    enabled for Image only
+//**     |   |-- ImageFileLabel, ImageEdit, ImageBrowseButton   the file
+//**     |   |-- FitLabel, FitCombo          how it is fitted
+//**     |   `-- ImageStatusLabel           its size, or why it cannot be read
 //**     `-- OkButton, CancelButton
 //** )
 unit Sprite3DBackgroundForm;
 
 {
   The Background Settings dialog: choose no background, or a transparent,
-  solid or gradient one.
+  solid, gradient or image one.
 
   A small modal form, laid out in its .fmx file with standard FMX controls.
-  On the right a group of four radio buttons chooses the background image
-  style: None, Transparent, Solid or Gradient. On the left a TColorPanel
+  On the right a group of five radio buttons chooses the background image
+  style: None, Transparent, Solid, Gradient or Image. On the left a TColorPanel
   sets the colour: for Solid, the one colour; for Gradient, the end chosen
   under it, From or To, whose swatches show both, with a drop-down list
   below them for the gradient's direction; under it a Hex box shows the
   same colour as #RRGGBB and takes one typed in. None and Transparent need
   no colour, so the panel is disabled then; for Transparent a slider sets
-  the size of the checker that stands for transparency on screen. A
-  preview shows the result, with the checker at a quarter of its size and
-  None as black, as the viewport shows it.
+  the size of the checker that stands for transparency on screen. For Image,
+  the file is typed or chosen with Browse (desktop only), a drop-down
+  chooses how it is fitted to the picture, a line under them gives its size
+  or why it cannot be read, and the colour panel sets the colour where the
+  image does not reach. A preview shows the result, with the checker at a
+  quarter of its size and None as black, as the viewport shows it.
 
   The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing
   it and read it back after OK. Each change also calls OnPreview, so the
@@ -65,9 +75,13 @@ unit Sprite3DBackgroundForm;
         |   |-- ToRadio, ToBox             edit the ending colour
         |   `-- DirectionLabel, DirectionCombo   the gradient's direction
         |-- HexLabel, HexEdit              the colour being edited, as #RRGGBB
-        |-- StyleGroup                     None, Transparent, Solid, Gradient
+        |-- StyleGroup                     None, Transparent, Solid, Gradient, Image
         |-- PreviewLabel, PreviewRect
         |-- CheckerLabel, CheckerTrack     checker size, for Transparent only
+        |-- ImageLayout                    enabled for Image only
+        |   |-- ImageFileLabel, ImageEdit, ImageBrowseButton   the file
+        |   |-- FitLabel, FitCombo          how it is fitted
+        |   `-- ImageStatusLabel           its size, or why it cannot be read
         `-- OkButton, CancelButton
 }
 
@@ -125,6 +139,8 @@ type
     SolidRadio: TRadioButton;
     //** @abstract(Chooses the Gradient style.)
     GradientRadio: TRadioButton;
+    //** @abstract(Chooses the Image style.)
+    ImageRadio: TRadioButton;
     //** @abstract(The caption above PreviewRect.)
     PreviewLabel: TLabel;
     //** @abstract(Shows the background as chosen; a checker stands for transparency.)
@@ -138,6 +154,26 @@ type
     OkButton: TButton;
     //** @abstract(Closes the dialog with mrCancel; also Esc.)
     CancelButton: TButton;
+    //** @abstract(Holds the image's file, fit and status; enabled for Image only.)
+    ImageLayout: TLayout;
+    //** @abstract(The caption above ImageEdit.)
+    ImageFileLabel: TLabel;
+    //** @abstract(The image file's full path; typed in, or set by ImageBrowseButton.)
+    //**
+    //** A typed path is taken when Enter is pressed or the box is left, and also when OK is
+    //** clicked.
+    ImageEdit: TEdit;
+    //** @abstract(Chooses the image file with the system's file dialog; hidden on Android and
+    //** iOS, which have none.)
+    ImageBrowseButton: TButton;
+    //** @abstract(The caption beside FitCombo.)
+    FitLabel: TLabel;
+    //** @abstract(Chooses how the image is fitted to the picture; its items are in
+    //** TSprite3DImageFit's order.)
+    FitCombo: TComboBox;
+    //** @abstract(The image's size in pixels, or why it cannot be read; its hint gives the
+    //** whole of it.)
+    ImageStatusLabel: TLabel;
     //** @abstract(Makes the preview's checker tile.)
     //**
     //** @param(Sender The form.)
@@ -185,6 +221,19 @@ type
     //**
     //** @param(Sender OkButton or CancelButton.)
     procedure ButtonClick(Sender: TObject);
+    //** @abstract(Takes the path typed into ImageEdit as the image file.)
+    //**
+    //** @param(Sender ImageEdit.)
+    procedure ImageEditChange(Sender: TObject);
+    //** @abstract(Chooses the image file with the system's file dialog, opening in the
+    //** present file's folder.)
+    //**
+    //** @param(Sender ImageBrowseButton.)
+    procedure ImageBrowseButtonClick(Sender: TObject);
+    //** @abstract(Takes FitCombo's choice as how the image is fitted.)
+    //**
+    //** @param(Sender FitCombo.)
+    procedure FitComboChange(Sender: TObject);
   private
     FSpec: TSprite3DBackgroundSpec;
     FUpdating: Boolean;   // set while code changes controls, to ignore their events
@@ -232,7 +281,7 @@ type
 implementation
 
 uses
-  System.Math;
+  System.Math, FMX.Dialogs;
 
 {$R *.fmx}
 
@@ -288,9 +337,11 @@ end;
 
 procedure TBackgroundSettingsForm.ButtonClick(Sender: TObject);
 begin
-  // A colour typed but not yet entered still counts
+  // A colour or path typed but not yet entered still counts
   if (Sender = OkButton) and HexEdit.Enabled then
     HexEditChange(HexEdit);
+  if (Sender = OkButton) and ImageLayout.Enabled then
+    ImageEditChange(ImageEdit);
   if not FFreeOnClose then
     Exit;   // ShowModal closes the dialog itself
   ModalResult := TButton(Sender).ModalResult;
@@ -338,9 +389,13 @@ begin
         GradientRadio.IsChecked := True;
       TSprite3DBackgroundKind.Transparent:
         TransparentRadio.IsChecked := True;
+      TSprite3DBackgroundKind.Image:
+        ImageRadio.IsChecked := True;
     else
       NoneRadio.IsChecked := True;
     end;
+    ImageEdit.Text := FSpec.ImageFile;
+    FitCombo.ItemIndex := Ord(FSpec.ImageFit);
     FromBox.Color := FSpec.GradientFrom;
     DirectionCombo.ItemIndex := Ord(FSpec.GradientDirection);
     ToBox.Color := FSpec.GradientTo;
@@ -392,7 +447,7 @@ var
 begin
   Colour := AColour or $FF000000;   // backgrounds are opaque
   case FSpec.Kind of
-    TSprite3DBackgroundKind.Solid:
+    TSprite3DBackgroundKind.Solid, TSprite3DBackgroundKind.Image:
       FSpec.Colour := Colour;
     TSprite3DBackgroundKind.Gradient:
       if ToRadio.IsChecked then
@@ -421,18 +476,41 @@ begin
 end;
 
 procedure TBackgroundSettingsForm.UpdateControls;
+var
+  Picture: TBitmap;
+  Problem: String;
 begin
   ColourPanel.Enabled := FSpec.Kind in [TSprite3DBackgroundKind.Solid,
-    TSprite3DBackgroundKind.Gradient];
+    TSprite3DBackgroundKind.Gradient, TSprite3DBackgroundKind.Image];
   HexEdit.Enabled := ColourPanel.Enabled;
   HexLabel.Enabled := ColourPanel.Enabled;
   CheckerTrack.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Transparent;
   CheckerLabel.Enabled := CheckerTrack.Enabled;
   CheckerLabel.Text := Format('Checker size: %d px', [FSpec.CheckerSize]);
   GradientLayout.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Gradient;
+  ImageLayout.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Image;
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  ImageBrowseButton.Visible := False;   // no file dialog: the path is typed
+  {$ENDIF}
+  // The image's size, or why there is none; only while Image is chosen, so
+  // nothing is read otherwise
+  if ImageLayout.Enabled then
+  begin
+    Picture := BackgroundImage(FSpec.ImageFile, Problem);
+    if Picture <> nil then
+      ImageStatusLabel.Text := Format('%d x %d pixels', [Picture.Width, Picture.Height])
+    else
+      ImageStatusLabel.Text := Problem;
+  end
+  else
+    ImageStatusLabel.Text := ' ';
+  ImageStatusLabel.Hint := ImageStatusLabel.Text;
+  ImageStatusLabel.ShowHint := True;
   case FSpec.Kind of
     TSprite3DBackgroundKind.Solid:
       ColourLabel.Text := 'Colour';
+    TSprite3DBackgroundKind.Image:
+      ColourLabel.Text := 'Colour where the image does not reach';
     TSprite3DBackgroundKind.Gradient:
       if ToRadio.IsChecked then
         ColourLabel.Text := 'Gradient: To colour'
@@ -446,8 +524,24 @@ begin
 end;
 
 procedure TBackgroundSettingsForm.UpdatePreview;
+var
+  Picture: TBitmap;
 begin
   case FSpec.Kind of
+    TSprite3DBackgroundKind.Image:
+      begin
+        // Fitted to the preview's own shape, as the view fits it to its own;
+        // an Original image at a quarter, as the checker is
+        Picture := FSpec.NewBitmap(Max(Round(PreviewRect.Width), 1),
+          Max(Round(PreviewRect.Height), 1), 1, 1 / PREVIEW_SCALE);
+        try
+          PreviewRect.Fill.Kind := TBrushKind.Bitmap;
+          PreviewRect.Fill.Bitmap.WrapMode := TWrapMode.TileStretch;
+          PreviewRect.Fill.Bitmap.Bitmap := Picture;   // copied
+        finally
+          Picture.Free;
+        end;
+      end;
     TSprite3DBackgroundKind.Solid:
       begin
         PreviewRect.Fill.Kind := TBrushKind.Solid;
@@ -512,10 +606,71 @@ begin
     FSpec.Kind := TSprite3DBackgroundKind.Gradient
   else if Sender = TransparentRadio then
     FSpec.Kind := TSprite3DBackgroundKind.Transparent
+  else if Sender = ImageRadio then
+    FSpec.Kind := TSprite3DBackgroundKind.Image
   else
     FSpec.Kind := TSprite3DBackgroundKind.None;
   LoadColourPanel;
   UpdateControls;
+  UpdatePreview;
+end;
+
+procedure TBackgroundSettingsForm.ImageEditChange(Sender: TObject);
+var
+  Path: String;
+begin
+  if FUpdating then
+    Exit;
+  Path := ImageEdit.Text.Trim;
+  if Path = FSpec.ImageFile then
+    Exit;
+  FSpec.ImageFile := Path;
+  UpdateControls;
+  UpdatePreview;
+end;
+
+procedure TBackgroundSettingsForm.ImageBrowseButtonClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TOpenDialog;
+begin
+  Dialog := TOpenDialog.Create(nil);
+  try
+    Dialog.Title := 'Background Image';
+    Dialog.Filter := 'Images (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif|' +
+      'All files|*.*';
+    if FSpec.ImageFile <> String.Empty then
+    begin
+      Dialog.InitialDir := ExtractFilePath(FSpec.ImageFile);
+      Dialog.FileName := ExtractFileName(FSpec.ImageFile);
+    end;
+    if not Dialog.Execute then
+      Exit;
+    FUpdating := True;
+    try
+      ImageEdit.Text := Dialog.FileName;
+    finally
+      FUpdating := False;
+    end;
+    FSpec.ImageFile := Dialog.FileName;
+  finally
+    Dialog.Free;
+  end;
+  UpdateControls;
+  UpdatePreview;
+end;
+{$ELSE}
+begin
+  // No file dialog here; the button is hidden
+end;
+{$ENDIF}
+
+procedure TBackgroundSettingsForm.FitComboChange(Sender: TObject);
+begin
+  if FUpdating or (FitCombo.ItemIndex < 0) then
+    Exit;
+  FSpec.ImageFit := TSprite3DImageFit(EnsureRange(FitCombo.ItemIndex,
+    Ord(Low(TSprite3DImageFit)), Ord(High(TSprite3DImageFit))));
   UpdatePreview;
 end;
 

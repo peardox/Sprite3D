@@ -78,7 +78,10 @@ the older ones.
   or the rules change; include them in the zip when they do.
 - **The generated help in `docs/` is the owner's**: they rebuild it with
   PasDoc only now and then, after a major milestone. Never change or
-  regenerate it. The PasDoc comments in the source are still written with
+  regenerate it. The one hand-written file there,
+  `docs/licences-required.md` (owner, 9 November 2026), is kept up to date:
+  change it, with the README's Licences, whenever a dependency, its licence
+  or how it is shipped changes. The PasDoc comments in the source are still written with
   the code, ready for the next rebuild.
 - When something needs testing, say what to try and what the result should
   look like, on which platforms.
@@ -390,6 +393,319 @@ them.
   beside the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
+
+### Zip GrabDistance1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows Licences1, below. Files: `src/ui/Sprite3dMain.pas`, `README.md`,
+this file. The owner (12:42, two screenshots, Military, shifted, a wide
+grab with an image background): the view shows the cube at the bottom
+right; the grab has no cube, and its grid squares are about 2.5 times
+larger.
+
+- Why: the view is the fit moved out by Variable's Distance
+  (`ShowDistanceFactor`, `FFactor`), but `OffscreenBeforeGrab` fitted the
+  grab (`GrabFit`) and never applied `FFactor`, so the grab was the plain
+  fit, nearer; a shift of +1 placed for that puts the cube just off the
+  edge, as +1 means. The distance factor was never in grabs (its comment
+  called it "Test only").
+- Fix: after `GrabFit`, `Distance` (or `OrthoHeight`) times `FFactor`, as
+  `ShowDistanceFactor` does on screen, then the shift. The framing put back
+  after the grab holds both. Exports are unchanged: their two passes frame
+  the sprite themselves. Mouse View's turn and zoom are still left out of
+  grabs, by design (the readout shows when they are on).
+- To test: the owner's case; a grab at Distance x1 and at a larger factor,
+  in perspective, Orthographic and an oblique, with and without a shift;
+  each matches the view, grid and all; an icon.
+
+`====> NO PACKAGE REBUILD <====` for GrabDistance1.
+
+### Zip Licences1 (9 November 2026, branch `oblique`)
+
+Follows Background1, below. Files: `docs/licences-required.md` (new),
+`README.md` (Licences links to it), this file. Asked by the owner (12:33)
+from the 12:29 notes on what each third-party part asks: FastMM5 GPL v3 or
+commercial, in every Windows build; Neon MIT; the DelphiFFmpeg.com and
+OpenH264 declaration BSD notices; FFmpeg LGPL; Gorilla3D and RAD Studio;
+no licence for Sprite3D itself; the notices not yet in the program. The
+owner will point `openh264.json`'s entries at Cisco's own downloads, as
+copies served from sprite3d.com are not under Cisco's patent cover; when
+that is done, update the file.
+
+`====> NO PACKAGE REBUILD <====` for Licences1.
+
+### Zip Background1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ShiftKeep1, below. Files: `src/ui/Sprite3dMain.pas`,
+`src/ui/Sprite3DHelpers.pas`, `src/ui/Sprite3DOrbitalForm.pas`, `.fmx`,
+`src/ui/Sprite3DBackgroundForm.pas`, `.fmx`, `src/lib/Sprite3DBackground.pas`,
+`src/lib/Sprite3DOffscreen.pas`, `README.md`, `viewport.md`, this file.
+Asked by the owner (12:16 to 12:22):
+
+- **Variable's ticks.** "Shift and rise (slide the model)"; "Save shift,
+  rise and distance values between sessions" (full width), which now keeps
+  the distance factor too: `TSprite3DAppSettings.DistanceFactor`, kept as
+  `distanceFactor`, saved and read only while `keepShift`
+  (`KeepShiftSettings`, `FormCreate`), 1 otherwise.
+- **"Temporary Mouse View" is now "Mouse View"**, in the menu, the Debug
+  lines, the comments and the README (the settings key stays `mouseView`).
+- **Image backgrounds.** `TSprite3DBackgroundKind.Image` (last, so the
+  names kept in settings.json are unchanged), with
+  `TSprite3DBackgroundSpec.ImageFile` and `ImageFit`
+  (`TSprite3DImageFit`: Fit, Fill, Stretch, FitWidth, FitHeight, Original;
+  always centred), over `Colour` where it does not reach or is
+  transparent. `ImageRect` places it; `NewBitmap` draws it (Colour, then
+  the image, smoothly) at any size, so the view, the dialog's preview and
+  grabs fit it alike. `BackgroundImage` reads the file (through
+  `OSFriendlyPath`) and keeps it until another file or a newer time of last
+  change; main thread only. Original is one image pixel to one grab pixel,
+  so `TSprite3DBackground.GrabWidth` (set in `FitViewportToAspect`) scales
+  it on screen.
+- Grabs and icons: `Collect` (main thread) passes `BackdropPixels`, the
+  image fitted at the grab's size as opaque RGBA bottom-first, to
+  `FillBackdrop`, which blends it in as it does a colour or gradient; the
+  Metal screenshot path draws it under the screenshot. Animation exports
+  still have no background (the owner's purpose was grabs: "when grabbed
+  uses their image as a background").
+- Dialog: `ImageRadio` in the style group; `ImageLayout` under the checker
+  size with `ImageEdit` (the path, typed or from `ImageBrowseButton`, a
+  `TOpenDialog`, hidden on Android and iOS), `FitCombo` (in
+  `TSprite3DImageFit`'s order) and `ImageStatusLabel` (its size, or why it
+  cannot be read); the colour panel edits Colour for Image too. The dialog
+  is 108 pixels taller. Settings: `backgroundImage`, `backgroundImageFit`
+  (by name). `ApplyBackground` writes "Background image: <file>, W x H
+  pixels, <fit>" or why the colour shows instead.
+- Not done, for later as the owner said: placing the image other than
+  centred, scaling it by hand, transparent bars, the image in animation
+  exports.
+- To test (Windows first): Image with a PNG and a JPEG of another shape
+  than the grab, each fit, in the preview, the view and a grab (they
+  match); Original at two grab sizes (the image the same in pixels, so
+  smaller in the larger grab); a missing file (the colour, the status
+  line and the Debug line); a PNG with transparency (the colour through
+  it); an icon; restart (kept); the two Variable ticks' text and the
+  distance kept with the save tick; the menu reads Mouse View. Linux:
+  the file dialog. Mobile: the path typed.
+
+`====> NO PACKAGE REBUILD <====` for Background1.
+
+### Zip ShiftKeep1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ShiftLog1, below. Files: `src/ui/Sprite3dMain.pas`,
+`src/ui/Sprite3DHelpers.pas`, `src/ui/Sprite3DOrbitalForm.pas`, `.fmx`,
+`README.md`, this file. ShiftLog1's Debug line settled the 12:00 report
+(12:05: "shift +1.000, rise +1.000 (the camera slid +1.063, +1.290 ...)":
+the values kept from earlier testing). The owner (12:07): don't save the
+shift and rise, or better, make keeping them explicit.
+
+- Variable has a fourth row under the sliders, `PanKeepLayout` with
+  `PanKeepCheck` "Keep between sessions" (the dialog 32 pixels taller);
+  `TCameraSettings.PanKeep`. The main form's `FPanKeep`, kept as
+  `keepShift` (`TSprite3DAppSettings.KeepShift`, False by default).
+- `KeepShiftSettings` (from `SaveViewState` and `AcceptCameraSpec`) saves
+  the shift and rise as they are only while `FPanKeep`, otherwise
+  `panEnabled` false and `panX`, `panZ` 0; `FormCreate` reads them only if
+  `keepShift`. So by default each session starts with the box unticked
+  and both at 0; within a session the sliders keep their values. A
+  settings.json from before has no `keepShift`, so starts without them.
+- To test: tick Keep, set a shift, OK, restart (kept); untick Keep, OK,
+  restart (off and 0); the shift kept within a session either way.
+
+`====> NO PACKAGE REBUILD <====` for ShiftKeep1.
+
+### Zip ShiftLog1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows PresetViews1, below. Files: `src/ui/Sprite3dMain.pas`,
+`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `README.md`, this file. The
+owner (12:00, two screenshots, Orthographic, Isometric angles, distance
+x4.6): ticking Shift and rise "with no values altered" took the cube off
+the view; nothing in the Debug tab.
+
+- What the screenshots show: the Shift and Rise labels read only "Shift"
+  and "Rise", and their thumbs are past the dialog's right edge, which is
+  off the screen; the Distance thumb, at 22% of the same track, puts 0 in
+  sight, and no thumb is there. So the values were most likely at or near
+  +1, kept from earlier testing, which since ShiftRise4 takes the model
+  just off the top-right corner. With 0 and 0 `PlaceShift` slides nothing.
+  Confirmed by the Debug line (12:05).
+- The labels: `Format('Shift %+.2f', ...)`, from before (as `'X %+.2f'`):
+  Delphi's `Format` has no `+` flag. Now `FormatFloat` with
+  `SIGNED_FORMAT` (`'+0.00;-0.00;+0.00'`), and the two labels have
+  `TextSettings.WordWrap = False`.
+- `LogShift`, from `ShowPan`: "Shift and rise on: shift +1.000, rise +1.000
+  (the camera slid +1.234, +0.567 of the picture's half-width and
+  half-height)", or "lens shift" in perspective, or "Shift and rise off";
+  only when the line changes (`FLoggedShift`), so dragging a slider writes
+  a line per step.
+- Also seen: Variable's dialog goes past the right of the screen on a wide
+  window (it is placed at the main form's centre). Not changed; ask.
+- To test: open Variable; the labels show "Shift +0.00" and the like;
+  tick the box at 0, 0 (nothing moves, a Debug line with +0.000s); Centre;
+  move each slider (the label and the Debug line follow).
+
+`====> NO PACKAGE REBUILD <====` for ShiftLog1.
+
+### Zip PresetViews1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ShiftRise4, below. Files: `src/ui/Sprite3dMain.pas`, `README.md`,
+this file. The owner (11:53): the pre-defined views are starting points
+with set values, so they should also reset distance, shift and rise, and
+set or zero all three angles; any change after is no longer a standard
+view.
+
+- Every fixed view goes through `SelectFixedView` and `SetPolarViewAngle`,
+  which already set inclination and azimuth and roll 0. It now also calls
+  `ResetViewSettings`: `FFactor` 1, `FPanX` and `FPanZ` 0 (the Shift and
+  rise tick left as it is), `ResetMouseView`, and the caption. The refit
+  (`FitModel`) then shows them. `EnterObliqueView` calls it too, so
+  choosing an oblique, or the same one again, does the same.
+- Changes after a fixed view already make it Variable: they are only made
+  in Variable's dialog, which checks Variable. Temporary Mouse View, being
+  temporary, leaves the check alone.
+- A session restored into a fixed view or an oblique starts with no shift
+  and distance factor 1, whatever `settings.json` kept; it can only have
+  kept a shift from Variable, so that is the same rule.
+- To test: in Variable, set a distance, a shift and rise and odd angles,
+  and turn the view with the mouse view; then each fixed view (all of it
+  gone: the caption without "(shifted)", the mouse readout gone, Variable's
+  dialog then showing distance x1.0 and shift and rise 0); the same with an
+  oblique.
+
+`====> NO PACKAGE REBUILD <====` for PresetViews1.
+
+### Zip ShiftRise3 (9 November 2026, branch `oblique`), withdrawn
+
+Sent at 11:42 with an Apply Mouseview button; the owner (11:42) said OK
+already handles that, so ShiftRise4 replaces it. Skip it, or unzip
+ShiftRise4 over it: ShiftRise4 holds every file ShiftRise3 did.
+
+### Zip ShiftRise4 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ShiftRise2, below (or ShiftRise3, which it replaces). Files:
+`src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DHelpers.pas`,
+`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `src/lib/Sprite3DSweep.pas`
+(`SweepViewExtent` back), `README.md`, this file. The owner (11:37): the
+mouse view readout's "+37" against Variable's "x10" are at odds; shift and
+rise nearly right, but should go half the object's width further, to the
+edge. (Also asked for, then withdrawn at 11:42: an Apply Mouseview button;
+opening Variable already takes the mouse view in, as ShiftRise2 made it,
+and OK keeps it.)
+
+- **Readout.** The mouse view's Distance (or Size) is now a factor,
+  `x10.000` (`FMouseZoom`), as Variable's Distance slider gives its own; it
+  was the change in scene units. Opening Variable multiplies the two.
+- **Range.** 1 or -1 is now how far the picture can slide that way: until
+  the near side of the fitted volume, as drawn now (`SweepViewExtent`, the
+  lens shift taken off what it measures), is on that edge, the model just
+  off the picture. That is the target on the edge plus half the volume's
+  width or height. As the zoom changes the volume's size in the picture,
+  `ShiftCamera` now places the shift again after every mouse view turn or
+  zoom, in every projection (`FPlaceEnabled`, `FPlaceShift`, `FPlaceRise`),
+  except while a grab or capture has its own framing on. The volume is the
+  swept one the fits use, so a model narrower than its sweep is a little
+  past the edge at 1.
+- To test: zoom with the mouse view, then open Variable (its Distance the
+  readout's factor times the old one, the view still, the readout gone);
+  Shift and Rise to each end, zoomed out and normal, in perspective,
+  Orthographic and an oblique: the model just off each edge; then wheel
+  with a shift at an end (it stays just off); a grab matching the view.
+
+`====> NO PACKAGE REBUILD <====` for ShiftRise4.
+
+### Zip ShiftRise2 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ShiftRise1, below, which it partly replaces. Files:
+`src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DHelpers.pas`,
+`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `src/lib/Sprite3DSweep.pas`
+(back as it was before ShiftRise1: `SweepViewExtent` is gone),
+`README.md`, this file. The owner's test of ShiftRise1 (11:23, with a
+screenshot, a wide view zoomed well out with Temporary Mouse View): Shift
+not far enough in perspective when zoomed out; Orthographic as little as
+before; Rise did nothing; Variable should show the actual values, mouse
+view included.
+
+- **Why.** ShiftRise1 measured the room on the normal fitted view, mouse
+  view taken off, where the volume fills the height: no room for Rise, and
+  only the normal view's for Shift, while the mouse view zoomed out. In
+  orthographic the slide was a world offset, fixed before the mouse zoom
+  changed the size, so it covered less of the picture.
+- **Now** the slider ends are the target on the edge: 1 or -1 is a lens
+  shift of 1 normalised device unit, the target (the point the camera looks
+  at, the picture's middle before) on that edge, whatever the zoom; no
+  measuring (`PlaceShift` sets `FSlideX`, `FSlideY`). Orthographic: the
+  camera slide (`PutOnSlide`, by `ShiftView`) is taken off and put on again
+  around every change `ShiftCamera` makes for Temporary Mouse View
+  (`TakeOffSlide`), so it stays that fraction of the picture and the camera
+  turns about the model's axis; ShiftRise1's known issue about that is
+  gone. `ApplyDistance` is always followed by `ApplyPan`, which redoes it.
+  Captures keep the view's slide in `FCaptureAppliedPan` and zero
+  `FAppliedPan` after their own fit; `EndCapture` puts it back.
+- **Variable takes in the mouse view.** `ViewVariableItemClick` starts the
+  dialog from `ShownCameraSpec` (azimuth less `FMouseYaw`, the readouts
+  running the other way; distance factor times `FMouseZoom`), resets the
+  mouse view and shows the spec, so nothing moves; OK keeps it, Cancel
+  puts the camera back and the mouse view with it (`RestoreMouseView`).
+  The distance slider now starts at 0.2 (`DistanceTrack.Min`), a mouse zoom
+  in being down to a fifth; a factor beyond 20 shows at the slider's end
+  but is kept unless the slider is moved.
+- To test: the owner's case (wide grab size, mouse view zoomed out, both
+  sliders to each end: the cube's centre on each edge); the same in
+  Orthographic, then wheel and drag with a shift on (the target stays at
+  the same place in the picture, the model turning about itself); Rise in
+  the normal fitted view (the target to top and bottom, the model cut
+  off); open Variable while mouse-viewed (the dials and distance as shown,
+  the view not moving; Cancel gives the mouse view back, OK keeps it as the
+  normal view, the readout gone); a grab with a shift matching the view.
+
+`====> NO PACKAGE REBUILD <====` for ShiftRise2.
+
+### Zip ShiftRise1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ObliqueMenu1, below (needs it: `Sprite3dMain.pas` holds both).
+Files: `src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DHelpers.pas`,
+`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `src/lib/Sprite3DSweep.pas`,
+`README.md`, this file. Asked by the owner (10:48): Variable's pan moved
+the view a little when ticked, its sliders reached only a little way (a
+1024 x 256 grab), and it changed the view of the model; it should be
+`TSpritelyProjection`'s shift and rise, going all the way, with names to
+match.
+
+- **Why it moved the view.** The old pan moved the orbit centre along the
+  model's X and Z axes, by up to twice its radius, setting it from a kept
+  `FFitCenter` plus the offset: in perspective that changes the view, and
+  the slider values kept while it was off came back when it was ticked.
+  Gone, with `ModelPanOffset` and `FFitCenter`.
+- **Now** (`PlaceShift`): the fitted volume is measured where it falls
+  (`SweepViewExtent`, new in `Sprite3DSweep`: the outline through
+  `ProjectToView`), with any slide already in place taken off; the shift
+  is that fraction of the room on its side (1 or -1 puts the volume's edge
+  on the picture's), the rise likewise. Perspective and obliques:
+  `FProjection.ShiftX` / `ShiftY` (`SetLensShift`), the camera never moves.
+  Orthographic, which `TSpritelyProjection` cannot draw over: the camera
+  slides by `ShiftView`, the same picture in a parallel view, kept in
+  `FAppliedPan` to take off again.
+- **Fits run unshifted**: the camera's fits allow for the lens shift and
+  would centre the model in the shifted picture. `FitNormalView` and
+  `ApplyProjection` set it to 0 first; `OffscreenBeforeGrab` keeps the
+  view's (`FGrabAppliedPan`, `FGrabShiftX/Y`), fits, then shifts for the
+  grab's size, and `OffscreenAfterGrab` puts them back.
+  `FrameCaptureFraming` sets it to 0 (exports leave it out: two passes
+  centre the sprite anyway) and `EndCapture` calls `ApplyPan`.
+- **Names**: the dialog shows "Shift and rise (slide the picture)", "Shift
+  +0.00", "Rise +0.00", sliders -1 to 1 (`PAN_LIMIT` 1); the caption says
+  "(shifted)". The identifiers (`PanX`, `PanCheck` ...) and the settings
+  keys (`panEnabled`, `panX`, `panZ`) are unchanged; an old value beyond 1
+  is taken as 1. Renaming them was not asked; offer it.
+- Known issue added: in orthographic projection with a shift, Temporary
+  Mouse View turns about the slid orbit centre.
+- To test (Windows): tick Shift and rise at 0, 0 (nothing moves, in every
+  projection); a 1024 x 256 grab size, Shift to 1 and -1 (the model's
+  volume to each edge, the model itself unchanged), Rise (nothing to do
+  there, as the height is full); the same in a square grab size, and in
+  Orthographic and an oblique; a grab of each matching the view; an export
+  (centred, as before); Directions export; restart (kept). The caption
+  "(shifted)".
+
+`====> NO PACKAGE REBUILD <====` for ShiftRise1.
 
 ### Zip ObliqueMenu1 (9 November 2026, branch `oblique`), not yet tested
 

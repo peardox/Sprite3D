@@ -28,9 +28,9 @@
 //** OnAfterGrab are not called, so the framing is the screen's. The on-screen background is
 //** a 2D control behind the viewport, so it is not in the screenshot: what is behind the
 //** model is the viewport's own Color, fully transparent unless the background is None.
-//** For a Solid or Gradient Backdrop, the screenshot is laid over it at the target's size;
-//** otherwise the image keeps whatever transparency the screenshot has. Soft edges are not
-//** matted as on the other platforms, and TransparentBackground is not used.
+//** For a Solid, Gradient or Image Backdrop, the screenshot is laid over it at the target's
+//** size; otherwise the image keeps whatever transparency the screenshot has. Soft edges are
+//** not matted as on the other platforms, and TransparentBackground is not used.
 //**
 //** Overscan, 1 unless changed, renders each grab at that many times its size each way and
 //** scales the result back down to Width by Height with the Resample filter, from
@@ -98,8 +98,8 @@ unit Sprite3DOffscreen;
   not called, so the framing is the screen's. The on-screen background is a
   2D control behind the viewport, so it is not in the screenshot: what is
   behind the model is the viewport's own Color, fully transparent unless
-  the background is None. For a Solid or Gradient Backdrop, the screenshot
-  is laid over it at the target's size; otherwise the image keeps whatever
+  the background is None. For a Solid, Gradient or Image Backdrop, the
+  screenshot is laid over it at the target's size; otherwise the image keeps whatever
   transparency the screenshot has. Soft edges are not matted as on the
   other platforms, and TransparentBackground is not used.
 
@@ -394,11 +394,12 @@ type
       const AOnGrabbed: TSprite3DGrabSizesProc): Boolean;
     //** @abstract(What grabs show behind the model when TransparentBackground is True.)
     //**
-    //** None, the default, and Transparent leave the background transparent. Solid and
-    //** Gradient fill it, after the matting, with the colour or with the gradient from
-    //** GradientFrom to GradientTo in GradientDirection; soft edges blend into it as they
-    //** would on screen. The checker settings are not used: the checker only stands for
-    //** transparency on screen. Changes made while Busy apply from the next grab.
+    //** None, the default, and Transparent leave the background transparent. Solid,
+    //** Gradient and Image fill it, after the matting, with the colour, with the gradient from
+    //** GradientFrom to GradientTo in GradientDirection, or with the image fitted to the
+    //** grab's size as ImageFit says (TSprite3DBackgroundSpec.NewBitmap); soft edges blend
+    //** into it as they would on screen. The checker settings are not used: the checker only
+    //** stands for transparency on screen. Changes made while Busy apply from the next grab.
     property Backdrop: TSprite3DBackgroundSpec read FBackdrop write FBackdrop;
     //** @abstract(The largest overscan factor a grab of AWidth by AHeight can use here.)
     //**
@@ -944,19 +945,65 @@ begin
   end;
 end;
 
+// An Image backdrop as opaque RGBA pixels, rows bottom first like a grab's,
+// the image fitted to AWidth by AHeight as the view fits it; nil for any
+// other kind. Main thread only, as it draws with TBitmap.
+function BackdropPixels(const ABackdrop: TSprite3DBackgroundSpec; const AWidth,
+  AHeight: Integer): TBytes;
+var
+  Picture: TBitmap;
+  Data: TBitmapData;
+  X, Y, I: Integer;
+  C: TAlphaColorRec;
+begin
+  Result := nil;
+  if ABackdrop.Kind <> TSprite3DBackgroundKind.Image then
+    Exit;
+  Picture := ABackdrop.NewBitmap(AWidth, AHeight, 1);
+  try
+    if not Picture.Map(TMapAccess.Read, Data) then
+      Exit;
+    try
+      SetLength(Result, AWidth * AHeight * 4);
+      I := 0;
+      for Y := AHeight - 1 downto 0 do
+        for X := 0 to AWidth - 1 do
+        begin
+          // Opaque, as NewBitmap paints Colour under the image, so the same
+          // premultiplied or not
+          C := TAlphaColorRec(Data.GetPixel(X, Y));
+          Result[I] := C.R;
+          Result[I + 1] := C.G;
+          Result[I + 2] := C.B;
+          Result[I + 3] := 255;
+          Inc(I, 4);
+        end;
+    finally
+      Picture.Unmap(Data);
+    end;
+  finally
+    Picture.Free;
+  end;
+end;
+
 // Fills the transparent parts of a matted image, RGBA rows bottom first and
-// premultiplied, with a solid colour or a gradient in its direction: each
-// pixel becomes itself plus the backdrop times what it lets through,
-// 1 - alpha, so soft edges blend into the backdrop. Every pixel ends opaque.
+// premultiplied, with a solid colour, a gradient in its direction, or an
+// image's pixels (ABackPixels, from BackdropPixels): each pixel becomes
+// itself plus the backdrop times what it lets through, 1 - alpha, so soft
+// edges blend into the backdrop. Every pixel ends opaque. An Image backdrop
+// without its pixels, the file not read, is filled with its Colour.
 procedure FillBackdrop(var APixels: TBytes; const AWidth, AHeight: Integer;
-  const ABackdrop: TSprite3DBackgroundSpec);
+  const ABackdrop: TSprite3DBackgroundSpec; const ABackPixels: TBytes);
 var
   X, Y, I, Rest: Integer;
   Fill: TAlphaColorRec;
+  UseImage: Boolean;
 begin
   if ABackdrop.Kind in [TSprite3DBackgroundKind.None,
     TSprite3DBackgroundKind.Transparent] then
     Exit;
+  UseImage := (ABackdrop.Kind = TSprite3DBackgroundKind.Image) and
+    (Length(ABackPixels) = Length(APixels));
   Fill := TAlphaColorRec(ABackdrop.Colour);
   for Y := 0 to AHeight - 1 do
   begin
@@ -967,7 +1014,13 @@ begin
       // left, at the pixel's centre
       if ABackdrop.Kind = TSprite3DBackgroundKind.Gradient then
         Fill := TAlphaColorRec(ABackdrop.GradientAtPoint(X + 0.5, AHeight - Y - 0.5,
-          AWidth, AHeight));
+          AWidth, AHeight))
+      else if UseImage then
+      begin
+        Fill.R := ABackPixels[I];
+        Fill.G := ABackPixels[I + 1];
+        Fill.B := ABackPixels[I + 2];
+      end;
       Rest := 255 - APixels[I + 3];
       if Rest > 0 then
       begin
@@ -1242,10 +1295,11 @@ begin
       if Image.Canvas.BeginScene then
       try
         Image.Canvas.Clear(TAlphaColors.Null);
-        // The on-screen background is not in the screenshot; a colour or
-        // gradient goes under it here, as the other platforms fill it in
+        // The on-screen background is not in the screenshot; a colour,
+        // gradient or image goes under it here, as the other platforms fill
+        // it in
         if FBackdrop.Kind in [TSprite3DBackgroundKind.Solid,
-          TSprite3DBackgroundKind.Gradient] then
+          TSprite3DBackgroundKind.Gradient, TSprite3DBackgroundKind.Image] then
         begin
           Under := FBackdrop.NewBitmap(FWidth, FHeight, 1);
           try
@@ -1880,7 +1934,8 @@ begin
   begin
     Pixels := APixels;
     if AMatte then
-      FillBackdrop(Pixels, FGrabWidth, FGrabHeight, FBackdrop);
+      FillBackdrop(Pixels, FGrabWidth, FGrabHeight, FBackdrop,
+        BackdropPixels(FBackdrop, FGrabWidth, FGrabHeight));
     Finish(Pixels, FGrabWidth, FGrabHeight, String.Empty);
     Exit;
   end;
@@ -1926,7 +1981,8 @@ begin
   end;
   FAccum := nil;
   if AMatte then
-    FillBackdrop(Pixels, FGrabWidth, FGrabHeight, FBackdrop);
+    FillBackdrop(Pixels, FGrabWidth, FGrabHeight, FBackdrop,
+      BackdropPixels(FBackdrop, FGrabWidth, FGrabHeight));
   Finish(Pixels, FGrabWidth, FGrabHeight, String.Empty);
 end;
 

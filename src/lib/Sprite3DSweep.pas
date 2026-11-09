@@ -658,6 +658,38 @@ function FitCameraToSweep(const ACamera: TSpritelyOrbitalGorillaCamera;
   const AVolume: TSweptVolume; const AViewWidth, AViewHeight: Single;
   const AMargin: Single = 0): Boolean; overload;
 
+//** @abstract(Where a model's swept volume falls in a view, as the camera stands.)
+//**
+//** Every point of the volume's outline, by SweepOutline, is put through
+//** @code(ACamera.ProjectToView), so the result is the picture's own, in whatever projection
+//** the camera draws, a lens shift included. The outline holds the volume from any direction,
+//** so this is the least box in the picture that holds it. Main thread only.
+//**
+//** @param(ACamera The camera; nil makes the call return False.)
+//**
+//** @param(AModel The model the volume belongs to; nil makes the call return False.)
+//**
+//** @param(AVolume The volume, in AModel's own coordinates.)
+//**
+//** @param(AViewWidth The width of the view, in pixels.)
+//**
+//** @param(AViewHeight The height of the view, in pixels.)
+//**
+//** @param(ALeft Set to the leftmost point's distance from the view's left edge, in pixels.)
+//**
+//** @param(ATop Set to the highest point's distance from the view's top edge.)
+//**
+//** @param(ARight Set to the rightmost point's distance from the view's left edge.)
+//**
+//** @param(ABottom Set to the lowest point's distance from the view's top edge.)
+//**
+//** @returns(False, with the four at 0, if ACamera or AModel is nil, AVolume is not Valid,
+//** the view has no size, or no point is in front of the camera.)
+function SweepViewExtent(const ACamera: TSpritelyOrbitalGorillaCamera;
+  const AModel: TControl3D; const AVolume: TSweptVolume;
+  const AViewWidth, AViewHeight: Single;
+  out ALeft, ATop, ARight, ABottom: Single): Boolean;
+
 //** @abstract(Draws the volume AModel sweeps in a full turn about its up axis, at rest and
 //** in each animation.)
 //**
@@ -1304,6 +1336,42 @@ begin
   Result := (ACamera <> nil) and (AModel <> nil) and AVolume.Valid and
     ACamera.FitPointsOnAxis(SweepOutline(AVolume, DEFAULT_SEGMENTS), AVolume.Pivot,
       SweepDirection(AVolume), AModel, AViewWidth, AViewHeight, AMargin);
+end;
+
+function SweepViewExtent(const ACamera: TSpritelyOrbitalGorillaCamera;
+  const AModel: TControl3D; const AVolume: TSweptVolume;
+  const AViewWidth, AViewHeight: Single;
+  out ALeft, ATop, ARight, ABottom: Single): Boolean;
+var
+  P: TPoint3D;
+  X, Y: Single;
+begin
+  ALeft := 0;
+  ATop := 0;
+  ARight := 0;
+  ABottom := 0;
+  Result := False;
+  if (ACamera = nil) or (AModel = nil) or not AVolume.Valid or (AViewWidth <= 0) or
+    (AViewHeight <= 0) then
+    Exit;
+  // The same outline the fits frame, so the box is the one they filled
+  for P in SweepOutline(AVolume, DEFAULT_SEGMENTS) do
+    if ACamera.ProjectToView(P, AModel, AViewWidth, AViewHeight, X, Y) then
+      if not Result then
+      begin
+        ALeft := X;
+        ARight := X;
+        ATop := Y;
+        ABottom := Y;
+        Result := True;
+      end
+      else
+      begin
+        ALeft := Min(ALeft, X);
+        ARight := Max(ARight, X);
+        ATop := Min(ATop, Y);
+        ABottom := Max(ABottom, Y);
+      end;
 end;
 
 function FindModelSweep(const AModel: TGorillaModel): TModelSweep;

@@ -76,11 +76,14 @@
 //** Graphite styles, which the title bars follow where the system allows) and, on Windows,
 //** which GPU to ask for, which takes effect at the next start. All are kept in settings.json.
 //**
-//** The Variable camera dialog can also pan the view along the model's own X and Z axes,
-//** for the odd model that should sit off centre. The pan moves the point the camera
-//** orbits, on top of every fit, on screen and in grabs and icons, in whichever view is
-//** chosen, until it is switched off; it never changes the angles or the distance. It is
-//** off by default and kept in settings.json.
+//** The Variable camera dialog can also shift and rise the picture, for the odd model that
+//** should sit off centre: the picture slides right or left and up or down, at most until
+//** the model is just off that edge, with the view of the model itself unchanged (a lens shift
+//** and rise by FProjection, or in orthographic projection a slide of the camera across the
+//** picture). It is put on top of every fit, on screen and in grabs and icons, in whichever
+//** view and projection is chosen, until it is switched off; exports leave it out, as their
+//** two passes centre the sprite. It never changes the angles or the distance. It is off by
+//** default and kept in settings.json.
 //**
 //** The Animations list shows, to the right of each entry under the Frames title, how many
 //** frames saving it makes at the Models, Animation Settings frame rate: the animation's
@@ -160,7 +163,7 @@
 //** so on; see SaveAtlas.
 //**
 //** View, Camera, Lock Camera fixes the camera where it is. While it is ticked nothing moves or
-//** turns the camera: the views, Orthographic and the pan are switched off, a new model or a
+//** turns the camera: the views, Orthographic and the shift are switched off, a new model or a
 //** resized view is not refitted, and grabs, icons and animation captures use the view exactly
 //** as it stands instead of fitting the model to their own size. The lock is not kept between
 //** sessions.
@@ -227,7 +230,7 @@
 //** |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
-//**     |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
+//**     |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
 //**     |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
 //**     |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
 //**     |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
@@ -344,12 +347,15 @@ unit Sprite3dMain;
   GPU to ask for, which takes effect at the next start. All are kept in
   settings.json.
 
-  The Variable camera dialog can also pan the view along the model's own X
-  and Z axes, for the odd model that should sit off centre. The pan moves
-  the point the camera orbits, on top of every fit, on screen and in grabs
-  and icons, in whichever view is chosen, until it is switched off; it never
-  changes the angles or the distance. It is off by default and kept in
-  settings.json.
+  The Variable camera dialog can also shift and rise the picture, for the
+  odd model that should sit off centre: the picture slides right or left and
+  up or down, at most until the model is just off that edge, with the view of
+  the model itself unchanged (a lens shift and rise by FProjection, or in
+  orthographic projection a slide of the camera across the picture). It is
+  put on top of every fit, on screen and in grabs and icons, in whichever
+  view and projection is chosen, until it is switched off; exports leave it
+  out, as their two passes centre the sprite. It never changes the angles or
+  the distance. It is off by default and kept in settings.json.
 
   The Animations list shows, to the right of each entry under the Frames
   title, how many frames saving it makes at the Models, Animation Settings
@@ -431,7 +437,7 @@ unit Sprite3dMain;
   folder dialog, the batch goes to the Grabs folder.
 
   View, Camera, Lock Camera fixes the camera where it is. While it is ticked
-  nothing moves or turns the camera: the views, Orthographic and the pan are
+  nothing moves or turns the camera: the views, Orthographic and the shift are
   switched off, a new model or a resized view is not refitted, and grabs,
   icons and animation captures use the view exactly as it stands instead of
   fitting the model to their own size. The lock is not kept between sessions.
@@ -502,7 +508,7 @@ unit Sprite3dMain;
     |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
-        |   |-- ViewVariableItem "Variable"     dials set the angles; also the pan
+        |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
         |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
         |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
         |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
@@ -1204,11 +1210,14 @@ type
     procedure ExitMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Variable camera dialog, where dials set the angles.)
     //**
-    //** The dialog, TOrbitalSettingsForm, shows the current angles, distance factor and pan,
-    //** and every change is shown in the viewport at once. OK keeps the changes; Cancel puts
-    //** the camera back as it was. Either way the View checks are cleared and Variable is
-    //** checked. While the form is being created, as when the Variable view is restored at
-    //** start-up, no dialog is shown and only the check changes.
+    //** The dialog, TOrbitalSettingsForm, shows the current angles, distance factor, shift
+    //** and rise as the view shows them: a Mouse View turn and zoom are taken into
+    //** them (ShownCameraSpec) and the mouse view reset, so the view does not move and OK
+    //** keeps it as the normal view. Every change is shown in the viewport at once. Cancel
+    //** puts the camera back as it was, mouse view and all. Either way the View checks are
+    //** cleared and Variable is checked.
+    //** While the form is being created, as when the Variable view is restored at start-up,
+    //** no dialog is shown and only the check changes.
     //**
     //** @param(Sender ViewVariableItem.)
     procedure ViewVariableItemClick(Sender: TObject);
@@ -1615,13 +1624,43 @@ type
     FObliqueAzimuth, FObliqueInclination, FObliqueRoll: Single;
     //** @abstract(The on-screen framing, kept while a grab is fitted to its target.)
     FSavedFraming: TSpritelyOrbitalFraming;
-    // The camera pan, applied on top of every fit while FPanEnabled
+    //** @abstract(The shift and rise from View, Camera, Variable, applied on top of every fit
+    //** while FPanEnabled: FPanX the shift, right positive, FPanZ the rise, up positive, each
+    //** a fraction of how far the picture can slide, PAN_LIMIT either way; see PlaceShift.)
+    //**
+    //** The names are from before they were a lens shift, when they moved the orbit centre
+    //** along the model's X and Z axes; settings.json keeps the same keys.
     FPanEnabled: Boolean;
-    FPanX: Single;
-    FPanZ: Single;
-    // The orbit centre from the last fit, before the pan is added
-    FFitCenter: TPoint3D;
+    FPanX, FPanZ: Single;
+    //** @abstract(Whether the shift, rise and distance factor are kept for the next session:
+    //** Variable's Save shift, rise and distance values between sessions, kept as
+    //** @code(keepShift); False by default. See KeepShiftSettings.)
+    FPanKeep: Boolean;
+    //** @abstract(True once the view has been fitted, so there is a fit to shift.)
     FFitted: Boolean;
+    //** @abstract(How far PutOnSlide has slid the orbit centre, in orthographic projection,
+    //** where the slide stands in for the lens shift; zero otherwise.)
+    //**
+    //** Taken off again before every new slide and around every change Mouse View
+    //** makes (ShiftCamera, which then places the shift again), and set to zero by every
+    //** fit, which puts the centre back where the fit wants it.
+    FAppliedPan: TPoint3D;
+    //** @abstract(The shift and rise PlaceShift last placed, in normalised device units, 0
+    //** while off.)
+    FSlideX, FSlideY: Single;
+    //** @abstract(What PlaceShift was last asked for, the fractions and whether on, so
+    //** ShiftCamera can place it again when Mouse View turns or zooms.)
+    FPlaceEnabled: Boolean;
+    FPlaceShift, FPlaceRise: Single;
+    //** @abstract(The shift and rise line LogShift wrote last, so it writes only changes.)
+    FLoggedShift: String;
+    //** @abstract(The view's FAppliedPan, kept while an export's capture is framed without it,
+    //** and put back by EndCapture.)
+    FCaptureAppliedPan: TPoint3D;
+    //** @abstract(The view's FAppliedPan and lens shift, kept while a grab is fitted and
+    //** shifted for its own size, and put back after it.)
+    FGrabAppliedPan: TPoint3D;
+    FGrabShiftX, FGrabShiftY: Single;
     // The animation list's pop-up menu: Save as sprite strip, Save as
     // Spritesheet, Save as AniGif
     FAnimationPopup: TPopupMenu;
@@ -1633,7 +1672,7 @@ type
     // View, Camera, Lock Camera, and the line above it
     FLockCameraItem: TMenuItem;
     FLockSeparatorItem: TMenuItem;
-    //** @abstract(View, Camera, Temporary Mouse View, between the line and Lock Camera;
+    //** @abstract(View, Camera, Mouse View, between the line and Lock Camera;
     //** desktop only, so nil on Android and iOS.) See MouseViewItemClick.
     FMouseViewItem: TMenuItem;
     //** @abstract(The mouse view readout, top right over the view, shown while
@@ -1937,24 +1976,116 @@ type
     function GrabFit(const AWidth, AHeight: Integer): Boolean;
     procedure ApplyAngles;
     procedure ApplyDistance;
+    //** @abstract(Puts the view's shift and rise, FPanEnabled, FPanX and FPanZ, on the view;
+    //** see ShowPan.)
     procedure ApplyPan;
     procedure ShowDistanceFactor(const AFactor: Single);
+    //** @abstract(Shows a shift and rise on the view, at the viewport's size, without keeping
+    //** them; see PlaceShift.)
+    //**
+    //** Does nothing while the camera is locked or before the first fit.
+    //**
+    //** @param(AEnabled Whether the shift and rise are on; False slides nothing.)
+    //** @param(APanX The shift, -1 to 1.)
+    //** @param(APanZ The rise, -1 to 1.)
     procedure ShowPan(const AEnabled: Boolean; const APanX, APanZ: Single);
+    //** @abstract(Slides the picture by a shift and rise, the view of the model itself
+    //** unchanged.)
+    //**
+    //** Each is a fraction of how far the picture can slide that way: until the near side of
+    //** the volume, as it is drawn now (SweepViewExtent), is on that edge, so at 1 or -1 the
+    //** model has just gone off the picture's right or left edge, or top or bottom, however
+    //** near or far the camera is. In perspective and the oblique
+    //** projections the slide is FProjection's lens shift and rise (@code(ShiftX),
+    //** @code(ShiftY)): the camera does not move, so nothing in the picture changes but its
+    //** place. In orthographic projection, which FProjection cannot draw over, the camera
+    //** slides across the picture instead (PutOnSlide), which in a parallel view is the same
+    //** thing exactly. Whatever this slid before is taken off first. FSlideX and FSlideY keep
+    //** what is placed.
+    //**
+    //** @param(AEnabled Whether to slide at all; False only takes off the slide before.)
+    //** @param(AShift The shift, right positive; limited to PAN_LIMIT either way.)
+    //** @param(ARise The rise, up positive; limited to PAN_LIMIT either way.)
+    //** @param(AVolume The volume the view is fitted to, whose width and height set how far
+    //** the picture can slide.)
+    //** @param(AWidth The view's width, in pixels.)
+    //** @param(AHeight The view's height, in pixels.)
+    procedure PlaceShift(const AEnabled: Boolean; const AShift, ARise: Single;
+      const AVolume: TSweptVolume; const AWidth, AHeight: Single);
+    //** @abstract(Takes the orthographic slide, FAppliedPan, off the orbit centre.)
+    procedure TakeOffSlide;
+    //** @abstract(In orthographic projection, slides the camera across the picture by FSlideX
+    //** and FSlideY, from the orthographic size as it is now, and keeps how far in
+    //** FAppliedPan.)
+    //**
+    //** Does nothing in perspective, where the slide is a lens shift, or with nothing to slide.
+    //**
+    //** @param(AWidth The view's width, in pixels.)
+    //** @param(AHeight The view's height, in pixels.)
+    procedure PutOnSlide(const AWidth, AHeight: Single);
+    //** @abstract(Sets FProjection's lens shift and rise, only where they differ, as each
+    //** change makes it repaint.)
+    //**
+    //** @param(AShiftX The shift, in normalised device units: the picture is 2 wide.)
+    //** @param(AShiftY The rise, in normalised device units, up positive.)
+    procedure SetLensShift(const AShiftX, AShiftY: Single);
+    //** @abstract(Writes the view's shift and rise to the Debug tab, as asked for and as
+    //** placed, when that differs from the line written last.)
+    //**
+    //** @param(AEnabled Whether the shift and rise are on.)
+    //** @param(AShift The shift asked for, -1 to 1.)
+    //** @param(ARise The rise asked for, -1 to 1.)
+    procedure LogShift(const AEnabled: Boolean; const AShift, ARise: Single);
+    //** @abstract(Puts the shift, rise and distance factor into FSettings as they are to be
+    //** saved: as they are while FPanKeep, otherwise off, 0 and 1; and FPanKeep itself, as
+    //** @code(keepShift).)
+    procedure KeepShiftSettings;
     function CurrentCameraSpec: TCameraSettings;
+    //** @abstract(What the view shows: CurrentCameraSpec with Mouse View's turn
+    //** added to the azimuth and its zoom multiplied into the distance factor, for the
+    //** Variable dialog to start from.)
+    //**
+    //** @returns(The angles, distance factor, shift and rise as shown.)
+    function ShownCameraSpec: TCameraSettings;
+    //** @abstract(Puts back a Mouse View turn and zoom that opening the Variable
+    //** dialog took in, when the dialog is cancelled.)
+    //**
+    //** @param(AYaw The turn, in the camera's own degrees, as FMouseYaw.)
+    //** @param(AZoom The zoom, as FMouseZoom; 1 with AYaw 0 puts nothing back.)
+    //** @param(ASubject What the mouse view was of, as FMouseSubject.)
+    procedure RestoreMouseView(const AYaw, AZoom: Single; const ASubject: String);
     procedure ShowCameraSpec(const ASpec: TCameraSettings);
     procedure AcceptCameraSpec(const ASpec: TCameraSettings);
     procedure RestoreCamera;
     procedure OrbitalDialogPreview(Sender: TObject);
     //** @abstract(The window's caption: the projection's name from View, Projection, with
-    //** reminders when a pan is in use or the camera is locked.)
+    //** reminders when a shift or rise is in use or the camera is locked.)
     //**
     //** @returns(The caption.)
     function ProjectionCaption: String;
     function DefaultModelFile: String;
     procedure LoadStartupModel;
     procedure ApplyGeneralSettings(const AOld, ANew: TSprite3DGeneralSettings);
+    //** @abstract(Sets a fixed view: every setting of the camera view to the view's own, then
+    //** a refit.)
+    //**
+    //** The inclination and azimuth given, roll 0, and through ResetViewSettings the distance
+    //** factor 1, no shift or rise, and no Mouse View turn or zoom: a fixed view is
+    //** a starting point with set values, and anything changed after it is View, Camera,
+    //** Variable's. The View menu checks are the caller's job.
+    //**
+    //** @param(APolarAngle The inclination, in degrees.)
+    //** @param(AAzimuth The azimuth, in degrees, as the readouts show it.)
     procedure SetPolarViewAngle(const APolarAngle: Single;
       const AAzimuth: Single = 45);
+    //** @abstract(Puts the settings a preset view does not name back to their own: the
+    //** distance factor to 1, the shift and rise to 0, and Mouse View to the normal
+    //** view.)
+    //**
+    //** For the fixed views and the oblique projections' angles. Only the values change: the
+    //** caller turns the camera and refits, which shows them. The Shift and rise tick is left
+    //** as it is, with nothing to slide.
+    procedure ResetViewSettings;
     procedure ClearViewChecks;
     procedure SelectFixedView(const AItem: TMenuItem; const APolarAngle: Single;
       const AAzimuth: Single = 45);
@@ -2283,7 +2414,7 @@ type
     function CameraLocked: Boolean;
     function IsCameraViewItem(const AItem: TMenuItem): Boolean;
     procedure UpdateCameraLockControls;
-    //** @abstract(Adds View, Camera, Temporary Mouse View and the "Mouseview On" readout,
+    //** @abstract(Adds View, Camera, Mouse View and the "Mouseview On" readout,
     //** and hooks the mouse on the view.) Desktop only; called by BuildLockCameraItem, just
     //** before Lock Camera is added.
     procedure BuildMouseViewItem;
@@ -2291,21 +2422,22 @@ type
     //** the view is resized.
     procedure PlaceMouseViewReadout;
     //** @abstract(Shows the mouse view's turn and zoom in the readout.)
-    //** The azimuth, as the dials show it, and the distance, or in orthographic projection
-    //** the orthographic size, each as + or - its normal value, to 3 decimal places, with
-    //** "Right Click to Reset" under them; shown only while either differs from normal, the
-    //** readout shrinking back to its title when both are 0.
+    //** The azimuth, as the dials show it, as + or - its normal value, and the distance, or in
+    //** orthographic projection the orthographic size, as a factor on its normal value, as
+    //** Variable's Distance slider gives its own, each to 3 decimal places, with "Right Click
+    //** to Reset" under them; shown only while either differs from normal, the readout
+    //** shrinking back to its title when the turn is 0 and the factor 1.
     procedure UpdateMouseViewReadout;
-    //** @abstract(Ticks or unticks Temporary Mouse View, and keeps the tick in
+    //** @abstract(Ticks or unticks Mouse View, and keeps the tick in
     //** settings.json.) Unticking it puts the normal view back. The view takes the mouse
     //** only while it is ticked.
     procedure MouseViewItemClick(Sender: TObject);
-    //** @abstract(Ticks or unticks Temporary Mouse View, without saving it.)
+    //** @abstract(Ticks or unticks Mouse View, without saving it.)
     //** Unticked, the normal view is put back; the view takes the mouse and shows the
     //** readout only while it is ticked.
     //** @param(AOn True to tick it.)
     procedure ApplyMouseViewTick(const AOn: Boolean);
-    //** @abstract(True while View, Camera, Temporary Mouse View is ticked.)
+    //** @abstract(True while View, Camera, Mouse View is ticked.)
     function MouseViewOn: Boolean;
     //** @abstract(What the view shows, as far as the mouse view is concerned: the model and,
     //** on the Animated tab, the animation selected.) Empty with no model.
@@ -2639,25 +2771,25 @@ const
   // passes, as a fraction of the view
   TWO_PASS_FINE_OVERSCAN = 4;
   TWO_PASS_FINE_FIT_MARGIN = 0.02;
-  //** @abstract(Temporary Mouse View: degrees the view turns for each pixel the pointer
+  //** @abstract(Mouse View: degrees the view turns for each pixel the pointer
   //** moves left or right with the left button held; a full turn is 720 pixels.)
   MOUSE_VIEW_DEGREES_PER_PIXEL = 0.5;
-  //** @abstract(Temporary Mouse View: the factor one notch of the wheel moves the camera
+  //** @abstract(Mouse View: the factor one notch of the wheel moves the camera
   //** nearer or further by.)
   MOUSE_VIEW_ZOOM_STEP = 1.1;
-  //** @abstract(Temporary Mouse View: the nearest the wheel brings the camera, as a factor
+  //** @abstract(Mouse View: the nearest the wheel brings the camera, as a factor
   //** of the normal view's distance or orthographic size.)
   MOUSE_VIEW_ZOOM_MIN = 0.2;
-  //** @abstract(Temporary Mouse View: the furthest the wheel takes the camera, as a factor
+  //** @abstract(Mouse View: the furthest the wheel takes the camera, as a factor
   //** of the normal view's distance or orthographic size.)
   MOUSE_VIEW_ZOOM_MAX = 10.0;
-  //** @abstract(Temporary Mouse View: the readout's width, its title's height, the height
+  //** @abstract(Mouse View: the readout's width, its title's height, the height
   //** of each line under the title, and the width of the values' column, in pixels.)
   MOUSE_VIEW_READOUT_WIDTH = 160;
   MOUSE_VIEW_TITLE_HEIGHT = 20;
   MOUSE_VIEW_ROW_HEIGHT = 17;
   MOUSE_VIEW_VALUE_WIDTH = 72;
-  //** @abstract(Temporary Mouse View: a difference from the normal view smaller than this
+  //** @abstract(Mouse View: a difference from the normal view smaller than this
   //** shows as 0.000, and counts as none.)
   MOUSE_VIEW_SHOWN_ZERO = 0.0005;
 
@@ -2812,10 +2944,18 @@ begin
     if not ApplyTheme(FSettings.ThemeKind, ThemeError) then
       DebugMemo.Lines.Add(ThemeError);
   end;
-  // The camera pan, applied by every fit from here on
-  FPanEnabled := FSettings.PanEnabled;
-  FPanX := EnsureRange(FSettings.PanX, -PAN_LIMIT, PAN_LIMIT);
-  FPanZ := EnsureRange(FSettings.PanZ, -PAN_LIMIT, PAN_LIMIT);
+  // The shift, rise and distance, applied after every fit from here on: from
+  // the last session only when it asked for them to be kept, otherwise no
+  // shift or rise, at the fitted distance
+  FPanKeep := FSettings.KeepShift;
+  if FPanKeep then
+  begin
+    FPanEnabled := FSettings.PanEnabled;
+    FPanX := EnsureRange(FSettings.PanX, -PAN_LIMIT, PAN_LIMIT);
+    FPanZ := EnsureRange(FSettings.PanZ, -PAN_LIMIT, PAN_LIMIT);
+    if FSettings.DistanceFactor > 0 then
+      FFactor := FSettings.DistanceFactor;
+  end;
   // Placed by FitViewportToAspect, at the shape of the grabs, once the
   // background is attached below
   GorillaViewport.Align := TAlignLayout.None;
@@ -3379,6 +3519,8 @@ begin
   FAzimuth := Wrap360(Azimuth);
   FPolarAngle := Inclination;
   FRoll := 0;
+  // The distance, shift and rise too: ApplyProjection's refit shows them
+  ResetViewSettings;
   ApplyAngles;
   ClearViewChecks;
   ViewVariableItem.IsChecked := True;
@@ -3442,6 +3584,10 @@ begin
     Exit;
   end;
   Kind := CheckedProjection;
+  // The lens shift off before the camera may leave perspective, where
+  // FProjection could not draw it; FitModel below puts the shift and rise
+  // back in the new projection's own way
+  SetLensShift(0, 0);
   if Kind = prOrthographic then
     GorillaCamera.ProjectionMode := TGorillaCameraProjection.cpOrthographic
   else
@@ -3948,9 +4094,7 @@ begin
   FSettings.ProjectionKind := CheckedProjection;
   FSettings.Headlight := HeadlightItem.IsChecked;
   FSettings.OriginalLight := OriginalLightItem.IsChecked;
-  FSettings.PanEnabled := FPanEnabled;
-  FSettings.PanX := FPanX;
-  FSettings.PanZ := FPanZ;
+  KeepShiftSettings;
   try
     FSettings.Save;
   except
@@ -3999,6 +4143,9 @@ begin
     GorillaViewport.BoundsRect := Box;
   if (FBackground <> nil) and (FBackground.BoundsRect <> Box) then
     FBackground.BoundsRect := Box;
+  // An Original-size background image is one image pixel to one grab pixel
+  if FBackground <> nil then
+    FBackground.GrabWidth := FSettings.GrabWidth;
 end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
@@ -4718,10 +4865,33 @@ begin
     Exit;
   FSavedFraming := GorillaCamera.SaveFraming;
   FGrabFramed := True;
-  if Assigned(GorillaModel) and GrabFit(AWidth, AHeight) and FPanEnabled then
-    // The pan as on screen, on top of the grab's own fit
-    GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
-      ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
+  // The view's slide, put back afterwards; the grab is fitted with none, as
+  // the fit would centre the model in a shifted picture
+  FGrabAppliedPan := FAppliedPan;
+  FGrabShiftX := 0;
+  FGrabShiftY := 0;
+  if FProjection <> nil then
+  begin
+    FGrabShiftX := FProjection.ShiftX;
+    FGrabShiftY := FProjection.ShiftY;
+  end;
+  SetLensShift(0, 0);
+  if Assigned(GorillaModel) and GrabFit(AWidth, AHeight) then
+  begin
+    // Variable's Distance as on screen, on the grab's own fit, as
+    // ShowDistanceFactor puts it on the view's: without it the grab is the
+    // plain fit, nearer than the view, and a shift placed for it lands
+    // elsewhere. The framing put back after the grab holds both
+    if FFactor <> 1 then
+      if GorillaCamera.IsOrthographic then
+        GorillaCamera.OrthoHeight := GorillaCamera.OrthoHeight * FFactor
+      else
+        GorillaCamera.Distance := GorillaCamera.Distance * FFactor;
+    // The shift and rise as on screen, on the grab's own fit and size: the
+    // same fraction of the picture, so the same picture
+    FAppliedPan := TPoint3D.Zero;
+    PlaceShift(FPanEnabled, FPanX, FPanZ, ViewVolume, AWidth, AHeight);
+  end;
 end;
 
 // Hides, for one drawing of an animation export, everything drawn on
@@ -4788,6 +4958,9 @@ begin
     Exit;
   FGrabFramed := False;
   GorillaCamera.RestoreFraming(FSavedFraming);
+  // The view's own slide: the framing holds its orbit centre, slide and all
+  FAppliedPan := FGrabAppliedPan;
+  SetLensShift(FGrabShiftX, FGrabShiftY);
 end;
 
 procedure TMainForm.BackgroundSettingsMenuItemClick(Sender: TObject);
@@ -5022,9 +5195,25 @@ end;
 // it in settings.json
 procedure TMainForm.ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
   const ASave: Boolean);
+const
+  FIT_NAMES: array[TSprite3DImageFit] of String = ('fitted whole', 'filling the picture',
+    'stretched', 'fitted to the width', 'fitted to the height', 'at its original size');
+var
+  Picture: TBitmap;
+  Problem: String;
 begin
   FBackground.Spec := ASpec;
   FOffscreen.Backdrop := ASpec;
+  // Which image grabs and the view show, or why the colour shows instead
+  if ASpec.Kind = TSprite3DBackgroundKind.Image then
+  begin
+    Picture := BackgroundImage(ASpec.ImageFile, Problem);
+    if Picture <> nil then
+      DebugMemo.Lines.Add(Format('Background image: %s, %d x %d pixels, %s', [ASpec.ImageFile,
+        Picture.Width, Picture.Height, FIT_NAMES[ASpec.ImageFit]]))
+    else
+      DebugMemo.Lines.Add('Background image: ' + Problem + ' The colour shows instead.');
+  end;
   if not ASave then
     Exit;
   FSettings.BackgroundSpec := ASpec;
@@ -5190,6 +5379,11 @@ end;
 procedure TMainForm.ViewVariableItemClick(Sender: TObject);
 var
   Dialog: TOrbitalSettingsForm;
+  Spec: TCameraSettings;
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  MouseYaw, MouseZoom: Single;
+  MouseSubject: String;
+  {$ENDIF}
 begin
   if CameraLocked then
     Exit;   // the views are switched off while the camera is locked
@@ -5198,7 +5392,18 @@ begin
   if FSetupComplete then
   begin
     Dialog := TOrbitalSettingsForm.Create(nil);
-    Dialog.CameraSpec := CurrentCameraSpec;
+    // What is on screen, Mouse View's turn and zoom included, which
+    // becomes the dialog's to change, so OK keeps it as the normal view;
+    // Cancel gives the mouse view back (there is none on Android and iOS)
+    {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+    MouseYaw := FMouseYaw;
+    MouseZoom := FMouseZoom;
+    MouseSubject := FMouseSubject;
+    {$ENDIF}
+    Spec := ShownCameraSpec;
+    ResetMouseView;
+    ShowCameraSpec(Spec);
+    Dialog.CameraSpec := Spec;
     // Every dial is live, oblique projection or not (AzimuthOnly was for
     // debugging the obliques; owner, 9 November 2026)
     Dialog.OnPreview := OrbitalDialogPreview;
@@ -5213,7 +5418,10 @@ begin
       if Dialog.ShowModal = mrOk then
         AcceptCameraSpec(Dialog.CameraSpec)
       else
+      begin
         RestoreCamera;   // the previews moved the camera; put it back
+        RestoreMouseView(MouseYaw, MouseZoom, MouseSubject);
+      end;
     finally
       Dialog.Free;
     end;
@@ -5221,6 +5429,30 @@ begin
   end;
   ClearViewChecks;
   ViewVariableItem.IsChecked := True;
+end;
+
+function TMainForm.ShownCameraSpec: TCameraSettings;
+begin
+  Result := CurrentCameraSpec;
+  if not FMouseApplied then
+    Exit;
+  // The mouse view's turn is in the camera's own sense, which the readouts
+  // reverse; its zoom is on the distance or the orthographic size, as the
+  // distance factor is, so the two multiply
+  Result.Azimuth := Wrap360(Result.Azimuth - FMouseYaw);
+  Result.Distance := Result.Distance * FMouseZoom;
+end;
+
+procedure TMainForm.RestoreMouseView(const AYaw, AZoom: Single; const ASubject: String);
+begin
+  if (AYaw = 0) and (AZoom = 1) then
+    Exit;
+  FMouseYaw := AYaw;
+  FMouseZoom := AZoom;
+  FMouseSubject := ASubject;
+  // Put on top of the normal view as ResumeMouseView does after any change
+  SuspendMouseView;
+  ResumeMouseView;
 end;
 
 // The dialog's starting values: what the camera is showing now
@@ -5233,6 +5465,7 @@ begin
   Result.PanEnabled := FPanEnabled;
   Result.PanX := FPanX;
   Result.PanZ := FPanZ;
+  Result.PanKeep := FPanKeep;
 end;
 
 // Shows ASpec in the viewport without keeping it: the form's own fields
@@ -5264,12 +5497,11 @@ begin
   FPanEnabled := ASpec.PanEnabled;
   FPanX := EnsureRange(ASpec.PanX, -PAN_LIMIT, PAN_LIMIT);
   FPanZ := EnsureRange(ASpec.PanZ, -PAN_LIMIT, PAN_LIMIT);
+  FPanKeep := ASpec.PanKeep;
   RestoreCamera;
   Caption := ProjectionCaption;
   // Kept straight away; SaveViewState writes them again on the way out
-  FSettings.PanEnabled := FPanEnabled;
-  FSettings.PanX := FPanX;
-  FSettings.PanZ := FPanZ;
+  KeepShiftSettings;
   try
     FSettings.Save;
   except
@@ -5303,12 +5535,13 @@ begin
 end;
 {$ENDIF}
 
-// The window's caption: the projection, and a reminder when a pan is in use
+// The window's caption: the projection, and a reminder when a shift or rise
+// is in use
 function TMainForm.ProjectionCaption: String;
 begin
   Result := ProjectionInfo(CheckedProjection).Caption;
   if FPanEnabled and ((FPanX <> 0) or (FPanZ <> 0)) then
-    Result := Result + ' (panned)';
+    Result := Result + ' (shifted)';
   if CameraLocked then
     Result := Result + ' (camera locked)';
 end;
@@ -5372,6 +5605,16 @@ begin
   SelectFixedView(ViewSideItem, 0, 90);
 end;
 
+procedure TMainForm.ResetViewSettings;
+begin
+  ResetMouseView;
+  FFactor := 1;
+  FPanX := 0;
+  FPanZ := 0;
+  // The caption drops "(shifted)"
+  Caption := ProjectionCaption;
+end;
+
 // Sets a fixed view: the given inclination and azimuth (45 unless given)
 // with roll 0, all as shown on the readouts, with the dials turned to
 // match and switched off, then refits. The View menu checks are the
@@ -5380,6 +5623,8 @@ procedure TMainForm.SetPolarViewAngle(const APolarAngle, AAzimuth: Single);
 const
   FIXED_ROLL = 0;
 begin
+  // A fixed view is a starting point: nothing changed before carries over
+  ResetViewSettings;
   // The dial fields hold the readout values; ApplyAngles sends azimuth to
   // the camera reversed, as it does for the dial
   FAzimuth := AAzimuth;
@@ -5397,7 +5642,7 @@ end;
 // The dials do not call this: with the orbit centre on the turning axis, the
 // fit already allows for turning the azimuth.
 //
-// Temporary Mouse View sits on top of the fit: the fit is of the normal view
+// Mouse View sits on top of the fit: the fit is of the normal view
 // alone, with the mouse view's turn and zoom taken off around it and put back
 // after, so a refit of the same model and animation (paused, stepped, the
 // window resized) keeps them. A new model or animation shows the normal view:
@@ -5418,21 +5663,26 @@ begin
   Result := not CameraLocked and Assigned(GorillaCamera) and Assigned(GorillaModel);
   if not Result then
     Exit;
+  // No lens shift while fitting: the fit allows for one, and would centre the
+  // model in the shifted picture, undoing it
+  SetLensShift(0, 0);
   Result := FitCameraToSweep(GorillaCamera, GorillaModel, ViewVolume);
   if Result then
   begin
-    // Remember the fit, then apply the test distance factor and the pan on
-    // top of it
+    // Remember the fit, then apply the test distance factor and the shift
+    // and rise on top of it. The fit put the orbit centre where it wants it,
+    // so no orthographic slide is left on it
     FFitDistance := GorillaCamera.Distance;
     FFitOrthoHeight := GorillaCamera.OrthoHeight;
-    FFitCenter := GorillaCamera.OrbitCenter.Point;
+    FAppliedPan := TPoint3D.Zero;
     FFitted := True;
     ApplyDistance;
     ApplyPan;
   end;
 end;
 
-// Test only: the fitted view moved out by the distance slider's factor
+// The fitted view moved out by Variable's Distance factor; grabs and icons
+// do the same on their own fit (OffscreenBeforeGrab)
 procedure TMainForm.ApplyDistance;
 begin
   ShowDistanceFactor(FFactor);
@@ -5459,18 +5709,169 @@ begin
   ShowPan(FPanEnabled, FPanX, FPanZ);
 end;
 
-// The orbit centre from the last fit, moved by the pan if it is on. Only the
-// centre moves: the angles, distance and orthographic size are untouched.
 procedure TMainForm.ShowPan(const AEnabled: Boolean; const APanX, APanZ: Single);
-var
-  Center: TPoint3D;
 begin
-  if CameraLocked or not Assigned(GorillaCamera) or not FFitted then
+  if CameraLocked or not Assigned(GorillaCamera) or not FFitted or
+    not Assigned(GorillaModel) then
     Exit;
-  Center := FFitCenter;
+  // Measured with a mouse view's turn and zoom on, as they are drawn;
+  // ShiftCamera places it again whenever they change
+  PlaceShift(AEnabled, APanX, APanZ, ViewVolume, GorillaViewport.Width,
+    GorillaViewport.Height);
+  LogShift(AEnabled, APanX, APanZ);
+end;
+
+procedure TMainForm.KeepShiftSettings;
+begin
+  FSettings.KeepShift := FPanKeep;
+  // Not kept, they are saved off, at 0 and at 1, so a file read by an
+  // earlier version starts without them too
+  FSettings.PanEnabled := FPanKeep and FPanEnabled;
+  if FPanKeep then
+  begin
+    FSettings.PanX := FPanX;
+    FSettings.PanZ := FPanZ;
+    FSettings.DistanceFactor := FFactor;
+  end
+  else
+  begin
+    FSettings.PanX := 0;
+    FSettings.PanZ := 0;
+    FSettings.DistanceFactor := 1;
+  end;
+end;
+
+procedure TMainForm.LogShift(const AEnabled: Boolean; const AShift, ARise: Single);
+var
+  Line, How: String;
+begin
+  if not AEnabled then
+    Line := 'Shift and rise off'
+  else
+  begin
+    if GorillaCamera.IsOrthographic then
+      How := 'the camera slid'
+    else
+      How := 'lens shift';
+    Line := Format('Shift and rise on: shift %s, rise %s (%s %s, %s of the picture''s ' +
+      'half-width and half-height)', [FormatFloat('+0.000;-0.000;+0.000', AShift),
+      FormatFloat('+0.000;-0.000;+0.000', ARise), How,
+      FormatFloat('+0.000;-0.000;+0.000', FSlideX),
+      FormatFloat('+0.000;-0.000;+0.000', FSlideY)]);
+  end;
+  if Line = FLoggedShift then
+    Exit;
+  FLoggedShift := Line;
+  DebugMemo.Lines.Add(Line);
+end;
+
+procedure TMainForm.SetLensShift(const AShiftX, AShiftY: Single);
+begin
+  if FProjection = nil then
+    Exit;
+  if FProjection.ShiftX <> AShiftX then
+    FProjection.ShiftX := AShiftX;
+  if FProjection.ShiftY <> AShiftY then
+    FProjection.ShiftY := AShiftY;
+end;
+
+procedure TMainForm.PlaceShift(const AEnabled: Boolean; const AShift, ARise: Single;
+  const AVolume: TSweptVolume; const AWidth, AHeight: Single);
+var
+  Shift, Rise, Left, Top, Right, Bottom: Single;
+  ToRight, ToLeft, ToTop, ToBottom: Single;
+begin
+  if not Assigned(GorillaCamera) or (AWidth <= 0) or (AHeight <= 0) then
+    Exit;
+  FPlaceEnabled := AEnabled;
+  FPlaceShift := AShift;
+  FPlaceRise := ARise;
+  // The slide before taken off: the orbit centre back where the fit put it.
+  // Turning the camera since does not matter, as the centre is the pivot
+  TakeOffSlide;
+  FSlideX := 0;
+  FSlideY := 0;
+  Shift := 0;
+  Rise := 0;
   if AEnabled then
-    Center := Center + ModelPanOffset(GorillaModel, FModelBox, APanX, APanZ);
-  GorillaCamera.OrbitCenter.Point := Center;
+  begin
+    Shift := EnsureRange(AShift, -PAN_LIMIT, PAN_LIMIT);
+    Rise := EnsureRange(ARise, -PAN_LIMIT, PAN_LIMIT);
+  end;
+  if (Shift <> 0) or (Rise <> 0) then
+  begin
+    // How far the picture can slide each way, in normalised device units
+    // (the picture is 2 across and 2 down): until the volume's near side is
+    // on that edge. Without a volume to measure, until the target is
+    ToRight := 1;
+    ToLeft := 1;
+    ToTop := 1;
+    ToBottom := 1;
+    if Assigned(GorillaModel) and SweepViewExtent(GorillaCamera, GorillaModel, AVolume,
+      AWidth, AHeight, Left, Top, Right, Bottom) then
+    begin
+      // y down, as measured
+      Left := 2 * Left / AWidth - 1;
+      Right := 2 * Right / AWidth - 1;
+      Top := 2 * Top / AHeight - 1;
+      Bottom := 2 * Bottom / AHeight - 1;
+      // A lens shift in use only adds to every point (up is negative y), so
+      // it is taken off what was measured; the orthographic slide is off
+      // already
+      if not GorillaCamera.IsOrthographic and (FProjection <> nil) then
+      begin
+        Left := Left - FProjection.ShiftX;
+        Right := Right - FProjection.ShiftX;
+        Top := Top + FProjection.ShiftY;
+        Bottom := Bottom + FProjection.ShiftY;
+      end;
+      ToRight := Max(1 - Left, 0);
+      ToLeft := Max(1 + Right, 0);
+      ToTop := Max(1 + Bottom, 0);
+      ToBottom := Max(1 - Top, 0);
+    end;
+    if Shift > 0 then
+      FSlideX := Shift * ToRight
+    else
+      FSlideX := Shift * ToLeft;
+    if Rise > 0 then
+      FSlideY := Rise * ToTop
+    else
+      FSlideY := Rise * ToBottom;
+  end;
+  if GorillaCamera.IsOrthographic then
+  begin
+    // FProjection cannot draw over the camera's own orthographic projection,
+    // so the camera slides instead: in a parallel view, exactly the same
+    SetLensShift(0, 0);
+    PutOnSlide(AWidth, AHeight);
+  end
+  else
+    SetLensShift(FSlideX, FSlideY);
+end;
+
+procedure TMainForm.TakeOffSlide;
+begin
+  if FAppliedPan.Length > 0 then
+  begin
+    GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point - FAppliedPan;
+    FAppliedPan := TPoint3D.Zero;
+  end;
+end;
+
+procedure TMainForm.PutOnSlide(const AWidth, AHeight: Single);
+var
+  Before: TPoint3D;
+begin
+  if not GorillaCamera.IsOrthographic or ((FSlideX = 0) and (FSlideY = 0)) or
+    (AWidth <= 0) or (AHeight <= 0) then
+    Exit;
+  // ShiftView moves the camera, so the picture goes the other way; it works
+  // from the orthographic size as it is now, so the slide is redone whenever
+  // that changes
+  Before := GorillaCamera.OrbitCenter.Point;
+  GorillaCamera.ShiftView(-FSlideX * AWidth / 2, -FSlideY * AHeight / 2, AWidth, AHeight);
+  FAppliedPan := GorillaCamera.OrbitCenter.Point - Before;
 end;
 
 procedure TMainForm.DistanceTrackChange(Sender: TObject);
@@ -6595,7 +6996,7 @@ begin
   FLockSeparatorItem.Text := '-';
   CameraMenu.AddObject(FLockSeparatorItem);
   {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
-  // Temporary Mouse View, above Lock Camera; it needs a mouse
+  // Mouse View, above Lock Camera; it needs a mouse
   BuildMouseViewItem;
   {$ENDIF}
   FLockCameraItem := TMenuItem.Create(Self);
@@ -6615,7 +7016,7 @@ begin
   Result := Assigned(FLockCameraItem) and FLockCameraItem.IsChecked;
 end;
 
-// One of the View, Camera views, rather than Temporary Mouse View, Lock
+// One of the View, Camera views, rather than Mouse View, Lock
 // Camera or a line
 function TMainForm.IsCameraViewItem(const AItem: TMenuItem): Boolean;
 begin
@@ -6666,9 +7067,9 @@ begin
   FLockCameraItem.Enabled := not Capturing;
 end;
 
-// Temporary Mouse View
+// Mouse View
 //
-// While View, Camera, Temporary Mouse View is ticked, the mouse can turn and
+// While View, Camera, Mouse View is ticked, the mouse can turn and
 // zoom the view to look the model over: left-drag left or right turns it,
 // the wheel moves the camera nearer or further, and a right click puts the
 // normal view back. It is for looking only and has no lasting effect: the
@@ -6734,7 +7135,7 @@ procedure TMainForm.BuildMouseViewItem;
 
 begin
   FMouseViewItem := TMenuItem.Create(Self);
-  FMouseViewItem.Text := 'Temporary Mouse View';
+  FMouseViewItem.Text := 'Mouse View';
   FMouseViewItem.IsChecked := False;
   FMouseViewItem.OnClick := MouseViewItemClick;
   CameraMenu.AddObject(FMouseViewItem);
@@ -6819,13 +7220,13 @@ end;
 
 procedure TMainForm.UpdateMouseViewReadout;
 var
-  Turn, Change: Single;
+  Turn, Zoom: Single;
   Shown: Boolean;
 begin
   if not Assigned(FMouseViewBack) then
     Exit;
   Turn := 0;
-  Change := 0;
+  Zoom := 1;
   if FMouseApplied and Assigned(GorillaCamera) then
   begin
     // As the dials show the azimuth, which runs the other way to the
@@ -6833,17 +7234,16 @@ begin
     Turn := -FMouseYaw;
     if Turn <= -180 then
       Turn := Turn + 360;
-    // The camera now, less the camera without the zoom
-    if FMouseZoomOrtho then
-      Change := GorillaCamera.OrthoHeight * (1 - 1 / FMouseZoom)
-    else
-      Change := GorillaCamera.Distance * (1 - 1 / FMouseZoom);
+    // A factor on the normal view's distance, or size, as Variable's
+    // Distance slider gives its own; opening Variable multiplies the two
+    Zoom := FMouseZoom;
   end;
-  Shown := (Abs(Turn) >= MOUSE_VIEW_SHOWN_ZERO) or (Abs(Change) >= MOUSE_VIEW_SHOWN_ZERO);
+  Shown := (Abs(Turn) >= MOUSE_VIEW_SHOWN_ZERO) or
+    (Abs(Zoom - 1) >= MOUSE_VIEW_SHOWN_ZERO);
   if Shown then
   begin
     FMouseAzimuthValue.Text := SignedText(Turn);
-    FMouseDistanceValue.Text := SignedText(Change);
+    FMouseDistanceValue.Text := 'x' + FormatFloat('0.000', Zoom);
     // In orthographic projection the wheel changes the view's size
     if FMouseZoomOrtho then
       FMouseDistanceName.Text := 'Size'
@@ -6889,10 +7289,10 @@ begin
         E.Message);
   end;
   if MouseViewOn then
-    DebugMemo.Lines.Add('Temporary mouse view on: left-drag turns the view, the wheel ' +
+    DebugMemo.Lines.Add('Mouse view on: left-drag turns the view, the wheel ' +
       'zooms, a right click puts the normal view back')
   else
-    DebugMemo.Lines.Add('Temporary mouse view off');
+    DebugMemo.Lines.Add('Mouse view off');
 end;
 
 function TMainForm.MouseViewSubject: String;
@@ -6909,13 +7309,21 @@ end;
 
 procedure TMainForm.ShiftCamera(const AYaw, AZoom: Single; const AOrtho: Boolean);
 var
-  WasLocked: Boolean;
+  WasLocked, Slid: Boolean;
 begin
   if not Assigned(GorillaCamera) then
     Exit;
   // Whether or not Lock Camera is ticked; the lock is back as it was after
   WasLocked := GorillaCamera.Locked;
   GorillaCamera.Locked := False;
+  // The shift and rise placed again after the turn or zoom, as the model's
+  // size in the picture, and so how far it can slide, changes with them: not
+  // while a grab or capture has its own framing on. An orthographic slide is
+  // off while turning, so the camera turns about the model's own axis
+  Slid := FFitted and not (FGrabFramed or FCaptureFramed) and FPlaceEnabled and
+    ((FPlaceShift <> 0) or (FPlaceRise <> 0));
+  if Slid then
+    TakeOffSlide;
   try
     if AYaw <> 0 then
       GorillaCamera.Azimuth := GorillaCamera.Azimuth + AYaw;
@@ -6930,6 +7338,9 @@ begin
       else
         GorillaCamera.Distance := GorillaCamera.Distance * AZoom;
   finally
+    if Slid then
+      PlaceShift(FPlaceEnabled, FPlaceShift, FPlaceRise, ViewVolume,
+        GorillaViewport.Width, GorillaViewport.Height);
     GorillaCamera.Locked := WasLocked;
   end;
 end;
@@ -7912,13 +8323,21 @@ begin
   FRefitAfterCapture := False;
   FCaptureFramed := not CameraLocked;
   if FCaptureFramed then
+  begin
     FCaptureRestore := GorillaCamera.SaveFraming;
+    FCaptureAppliedPan := FAppliedPan;
+  end;
   if HasDirection then
     TurnToDirection(FBatchBearings[ADirection]);
   Source.Start;
-  if FCaptureFramed and
-    not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
-    DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
+  if FCaptureFramed then
+  begin
+    if not FrameCaptureFraming(Source, FOffscreen.Width, FOffscreen.Height) then
+      DebugMemo.Lines.Add('Could not frame the capture; using the view as it is');
+    // The fit put the orbit centre where it wants it: no orthographic slide
+    // on it now, until EndCapture puts the view's framing back
+    FAppliedPan := TPoint3D.Zero;
+  end;
   // A 2-pass export's second pass: the framing reworked from what the first
   // pass measured, so the sprite fills the frame. The fit is the same as the
   // first pass's, so its pixels are the ones measured.
@@ -9978,7 +10397,7 @@ begin
 end;
 
 // Frames the camera once for every frame of ASource, for a target of
-// AWidth x AHeight, with the pan on top as for every fit. A single
+// AWidth x AHeight, with no shift or rise. A single
 // animation saved from the list's pop-up menu, or the Models menu on
 // Android and iOS, is framed to its own swept volume, so it fills the
 // target as far as its own poses allow. A batch, and a static model's still, are
@@ -9999,6 +10418,12 @@ begin
   end
   else
     Volume := SweepFitVolume;
+  // No shift or rise in an export: its two passes centre the sprite in the
+  // frame whatever the view shows, and the fit would centre the model in a
+  // shifted picture anyway. EndCapture puts the view's back. The fit puts
+  // the orbit centre where it wants it, so an orthographic slide goes too
+  // (the framing EndCapture restores still holds it)
+  SetLensShift(0, 0);
   // A fine 2-pass export leaves room in both passes, so its measuring pass
   // never draws up to the edge and is never cut off
   if FBatchActive and FTwoPassFine then
@@ -10006,9 +10431,6 @@ begin
       TWO_PASS_FINE_FIT_MARGIN)
   else
     Result := FitCameraToSweep(GorillaCamera, GorillaModel, Volume, AWidth, AHeight);
-  if Result and FPanEnabled then
-    GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point +
-      ModelPanOffset(GorillaModel, FModelBox, FPanX, FPanZ);
 end;
 
 // The on-screen view as it was before the capture, refitted if the
@@ -10031,9 +10453,15 @@ begin
   end;
   // Only a framing the capture set is put back
   if FCaptureFramed then
+  begin
     GorillaCamera.RestoreFraming(FCaptureRestore);
+    // The framing holds the view's orbit centre, slide and all
+    FAppliedPan := FCaptureAppliedPan;
+  end;
   FCaptureFramed := False;
   ApplyAngles;
+  // The view's shift and rise, which the capture took off
+  ApplyPan;
   if FRefitAfterCapture then
   begin
     ApplyShowCombinedSweep;
