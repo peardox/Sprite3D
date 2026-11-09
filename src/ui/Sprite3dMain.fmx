@@ -440,37 +440,37 @@ object MainForm: TMainForm
           Text = 'Orthographic'
           OnClick = ProjectionItemClick
         end
-        object ProjectionSeparatorItem: TMenuItem
+        object ObliqueMenu: TMenuItem
           Locked = True
-          Text = '-'
-        end
-        object CavalierItem: TMenuItem
-          Locked = True
-          GroupIndex = 2
-          RadioItem = True
-          Text = 'Cavalier'
-          OnClick = ProjectionItemClick
-        end
-        object CabinetItem: TMenuItem
-          Locked = True
-          GroupIndex = 2
-          RadioItem = True
-          Text = 'Cabinet'
-          OnClick = ProjectionItemClick
-        end
-        object MilitaryItem: TMenuItem
-          Locked = True
-          GroupIndex = 2
-          RadioItem = True
-          Text = 'Military'
-          OnClick = ProjectionItemClick
-        end
-        object PlanObliqueItem: TMenuItem
-          Locked = True
-          GroupIndex = 2
-          RadioItem = True
-          Text = 'Plan Oblique'
-          OnClick = ProjectionItemClick
+          Text = 'Oblique'
+          object CavalierItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Cavalier'
+            OnClick = ProjectionItemClick
+          end
+          object CabinetItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Cabinet'
+            OnClick = ProjectionItemClick
+          end
+          object MilitaryItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Military'
+            OnClick = ProjectionItemClick
+          end
+          object PlanObliqueItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Plan Oblique'
+            OnClick = ProjectionItemClick
+          end
         end
       end
       object ViewSeparatorItem: TMenuItem

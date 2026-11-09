@@ -246,11 +246,11 @@
 //**     |-- ProjectionMenu "Projection"      one of six, a radio group
 //**     |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
 //**     |   |-- OrthographicItem "Orthographic" the camera's own
-//**     |   |-- ProjectionSeparatorItem "-"
-//**     |   |-- CavalierItem "Cavalier"     oblique, by TSpritelyProjection
-//**     |   |-- CabinetItem "Cabinet"       oblique, by TSpritelyProjection
-//**     |   |-- MilitaryItem "Military"     oblique, by TSpritelyProjection
-//**     |   `-- PlanObliqueItem "Plan Oblique"  oblique, by TSpritelyProjection
+//**     |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
+//**     |       |-- CavalierItem "Cavalier"
+//**     |       |-- CabinetItem "Cabinet"
+//**     |       |-- MilitaryItem "Military"
+//**     |       `-- PlanObliqueItem "Plan Oblique"
 //**     |-- ViewSeparatorItem "-"
 //**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
 //**     |-- ShowGridItem "Show grid"        ticked at start-up
@@ -521,11 +521,11 @@ unit Sprite3dMain;
         |-- ProjectionMenu "Projection"      one of six, a radio group
         |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
         |   |-- OrthographicItem "Orthographic" the camera's own
-        |   |-- ProjectionSeparatorItem "-"
-        |   |-- CavalierItem "Cavalier"     oblique, by TSpritelyProjection
-        |   |-- CabinetItem "Cabinet"       oblique, by TSpritelyProjection
-        |   |-- MilitaryItem "Military"     oblique, by TSpritelyProjection
-        |   `-- PlanObliqueItem "Plan Oblique"  oblique, by TSpritelyProjection
+        |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
+        |       |-- CavalierItem "Cavalier"
+        |       |-- CabinetItem "Cabinet"
+        |       |-- MilitaryItem "Military"
+        |       `-- PlanObliqueItem "Plan Oblique"
         |-- ViewSeparatorItem "-"
         |-- ShowBoundsItem "Show bounding box"  ticked at start-up
         |-- ShowGridItem "Show grid"        ticked at start-up
@@ -830,8 +830,12 @@ type
     PerspectiveItem: TMenuItem;
     //** @abstract(The camera's own orthographic projection.)
     OrthographicItem: TMenuItem;
-    //** @abstract(The separator between the camera's own projections and the oblique ones.)
-    ProjectionSeparatorItem: TMenuItem;
+    //** @abstract(View, Projection's "Oblique" submenu, below Orthographic: CavalierItem,
+    //** CabinetItem, MilitaryItem and PlanObliqueItem.)
+    //**
+    //** Its items are in the same radio group as PerspectiveItem and OrthographicItem, but FMX
+    //** unticks only an item's siblings, so CheckProjection ticks and unticks all six.
+    ObliqueMenu: TMenuItem;
     //** @abstract(Cavalier: depth drawn at full length at 45 degrees; best from Head On.)
     CavalierItem: TMenuItem;
     //** @abstract(Cabinet: depth drawn at half length at 63.43 degrees; best from Head On.)
@@ -997,9 +1001,12 @@ type
     //** @abstract(Chooses the projection of the View, Projection item clicked, then switches
     //** to it and refits the model; see ApplyProjection.)
     //**
-    //** Does nothing while View, Camera, Lock Camera is ticked, when the items are disabled.
+    //** Clicking the oblique projection already ticked turns the camera back to its angles,
+    //** undoing whatever View, Camera, Variable has turned since; clicking Perspective or
+    //** Orthographic while ticked does nothing. Does nothing while View, Camera, Lock Camera
+    //** is ticked, when the items are disabled.
     //**
-    //** @param(Sender One of ProjectionMenu's items.)
+    //** @param(Sender PerspectiveItem, OrthographicItem or one of ObliqueMenu's items.)
     procedure ProjectionItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks HeadlightItem, then switches OrbitCamera's headlight to
     //** match; see ApplyLights.)
@@ -1595,9 +1602,9 @@ type
     FProjection: TSpritelyProjection;
     //** @abstract(The projection ApplyProjection last logged; Ord -1 before the first.)
     FLoggedProjection: Integer;
-    //** @abstract(True while an oblique projection is chosen in View, Projection: the camera is
-    //** at the projection's angles, View, Camera's fixed views are disabled, and Variable
-    //** turns the azimuth only.)
+    //** @abstract(True while an oblique projection is chosen in View, Projection: the camera
+    //** starts at the projection's angles, View, Camera's fixed views are disabled, and
+    //** Variable's dials turn it from there.)
     FObliqueActive: Boolean;
     //** @abstract(The View, Camera view, by its settings key, chosen before the first oblique
     //** projection; put back when the projection is the camera's own again, and kept in
@@ -1983,9 +1990,11 @@ type
     //** @abstract(Turns the camera to an oblique projection's own angles, with View, Camera,
     //** Variable checked; remembers the view before, the first time, in FObliqueView.)
     //**
-    //** The angles are @code(TSpritelyProjection.PresetAngles): cavalier and cabinet level at a
-    //** face, military from straight above with the plan turned 45 degrees, plan oblique from
-    //** straight above with the plan square to the picture. Roll is 0.
+    //** All three angles are set, whatever they were before: the azimuth and inclination
+    //** from @code(TSpritelyProjection.PresetAngles), the roll 0, and an angle the preset does
+    //** not use is 0 too. Cavalier and cabinet: 0, 0, 0 (level at the south face); military:
+    //** azimuth 45, inclination 90 (from straight above, the plan turned to the south-west,
+    //** as Isometric is); plan oblique: 0, 90, 0. The Debug tab gives all three.
     //**
     //** @param(AKind The oblique kind.)
     procedure EnterObliqueView(const AKind: TSpritelyProjectionKind);
@@ -2005,6 +2014,15 @@ type
     //** @param(AProjection The projection.)
     //** @returns(Its menu item.)
     function ProjectionItem(const AProjection: TSprite3DProjection): TMenuItem;
+    //** @abstract(Ticks the View, Projection item for a projection and unticks the other
+    //** five.)
+    //**
+    //** FMX unticks only a radio item's siblings, and the oblique items are in ObliqueMenu,
+    //** a level below Perspective and Orthographic, so ticking one alone would leave two
+    //** ticked and CheckedProjection would read the first.
+    //**
+    //** @param(AProjection The projection to tick.)
+    procedure CheckProjection(const AProjection: TSprite3DProjection);
     //** @abstract(Puts a line from FProjection in the Debug tab: where it found FMX's
     //** projection in a frame, or why it could not.)
     //**
@@ -3279,10 +3297,28 @@ procedure TMainForm.ProjectionItemClick(Sender: TObject);
 begin
   if CameraLocked then
     Exit;   // the projection is part of the camera
-  if not (Sender is TMenuItem) or TMenuItem(Sender).IsChecked then
-    Exit;   // already the projection
-  TMenuItem(Sender).IsChecked := True;   // a radio item: the others untick
-  ApplyProjection;
+  if not (Sender is TMenuItem) then
+    Exit;
+  for var Kind := Low(TSprite3DProjection) to High(TSprite3DProjection) do
+    if ProjectionItem(Kind) = Sender then
+    begin
+      // Already the projection: an oblique one is chosen again to put its
+      // angles back after Variable has turned them; the camera's own have
+      // nothing to put back
+      if TMenuItem(Sender).IsChecked and (Kind in [prPerspective, prOrthographic]) then
+        Exit;
+      CheckProjection(Kind);
+      ApplyProjection;
+      Exit;
+    end;
+end;
+
+procedure TMainForm.CheckProjection(const AProjection: TSprite3DProjection);
+begin
+  // Not left to RadioItem: FMX unticks only siblings, and the oblique items
+  // are a level down, in ObliqueMenu
+  for var Kind := Low(TSprite3DProjection) to High(TSprite3DProjection) do
+    ProjectionItem(Kind).IsChecked := Kind = AProjection;
 end;
 
 function TMainForm.ProjectionItem(const AProjection: TSprite3DProjection): TMenuItem;
@@ -3327,18 +3363,27 @@ begin
     FObliqueRoll := FRoll;
     FObliqueActive := True;
   end;
+  // Every angle is set, so nothing turned before is left over: one the
+  // preset does not give is 0
   if not TSpritelyProjection.PresetAngles(AKind, Azimuth, Inclination) then
-    Exit;
-  // The readouts hold the azimuth reversed, as ApplyAngles sends it
-  FAzimuth := Wrap360(-Azimuth);
+  begin
+    Azimuth := 0;
+    Inclination := 0;
+  end;
+  // FAzimuth is in Sprite3D's own terms, as the readouts and fixed views
+  // give it: 0 is south and it grows clockwise seen from above, so 45 is
+  // south-west (Isometric). PresetAngles' military 45 is a plan turned 45
+  // degrees, either way being the same projection mirrored, so it is taken
+  // as it stands, south-west, rather than reversed to 315 as the camera's
+  // own sense would make it (ApplyAngles does that reversing).
+  FAzimuth := Wrap360(Azimuth);
   FPolarAngle := Inclination;
   FRoll := 0;
   ApplyAngles;
   ClearViewChecks;
   ViewVariableItem.IsChecked := True;
   DebugMemo.Lines.Add(Format('Camera at the projection''s angles: azimuth %.0f, ' +
-    'inclination %.0f; View, Camera, Variable turns the azimuth only',
-    [FAzimuth, FPolarAngle]));
+    'inclination %.0f, roll %.0f', [FAzimuth, FPolarAngle, FRoll]));
 end;
 
 procedure TMainForm.LeaveObliqueView;
@@ -3798,7 +3843,7 @@ begin
   ShowAxesItem.IsChecked := FSettings.ShowAxes;
   ShowSweepItem.IsChecked := FSettings.ShowSweptVolume;
   ShowCombinedSweepItem.IsChecked := FSettings.ShowCombinedSweptVolume;
-  ProjectionItem(FSettings.ProjectionKind).IsChecked := True;
+  CheckProjection(FSettings.ProjectionKind);
   HeadlightItem.IsChecked := FSettings.Headlight;
   OriginalLightItem.IsChecked := FSettings.OriginalLight;
   ApplyLights;
@@ -5154,8 +5199,8 @@ begin
   begin
     Dialog := TOrbitalSettingsForm.Create(nil);
     Dialog.CameraSpec := CurrentCameraSpec;
-    // An oblique projection is drawn from its own inclination and roll
-    Dialog.AzimuthOnly := FObliqueActive;
+    // Every dial is live, oblique projection or not (AzimuthOnly was for
+    // debugging the obliques; owner, 9 November 2026)
     Dialog.OnPreview := OrbitalDialogPreview;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     // ShowModal cannot block here: the dialog reports OK or Cancel and
@@ -6608,13 +6653,16 @@ begin
   Locked := CameraLocked;
   if Assigned(GorillaCamera) then
     GorillaCamera.Locked := Locked;
-  // While an oblique projection is chosen only Variable, for the azimuth
+  // While an oblique projection is chosen only Variable
   for I := 0 to CameraMenu.ItemsCount - 1 do
     if IsCameraViewItem(CameraMenu.Items[I]) then
       CameraMenu.Items[I].Enabled := not Locked and
         (not FObliqueActive or (CameraMenu.Items[I] = ViewVariableItem));
-  for I := 0 to ProjectionMenu.ItemsCount - 1 do
-    ProjectionMenu.Items[I].Enabled := not Locked;
+  // Every item itself, not only ObliqueMenu: the mobile drawer lists the
+  // oblique items as rows of their own and checks each one's Enabled
+  ObliqueMenu.Enabled := not Locked;
+  for var Kind := Low(TSprite3DProjection) to High(TSprite3DProjection) do
+    ProjectionItem(Kind).Enabled := not Locked;
   FLockCameraItem.Enabled := not Capturing;
 end;
 

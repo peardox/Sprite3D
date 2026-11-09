@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 8 November 2026, 22:05.
+Last updated: 9 November 2026, 10:30.
 
 ## Starting a new conversation
 
@@ -390,6 +390,51 @@ them.
   beside the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
+
+### Zip ObliqueMenu1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows GitHub's `oblique` at `9594824` ("docs"), which has everything
+below. Files: `src/ui/Sprite3dMain.pas`, `src/ui/Sprite3dMain.fmx`,
+`README.md`, this file. Asked by the owner (10:21, 10:23):
+
+- **Military's azimuth.** Sprite3D's own azimuth, as the readouts and the
+  fixed views give it, is 0 at south and grows clockwise seen from above,
+  so 45 is south-west (Isometric); `ApplyAngles` reverses it for the
+  camera. `EnterObliqueView` reversed `PresetAngles`' military 45 too, so
+  the readouts showed 315. It now takes the preset's number as it stands
+  (a plan turned 45 degrees either way is the same projection mirrored):
+  Military reads azimuth 45.
+- **Every angle set.** `EnterObliqueView` sets azimuth, inclination and
+  roll every time, 0 for any the preset does not give, and logs all three
+  ("Camera at the projection's angles: azimuth 45, inclination 90, roll
+  0"). The code already set all three when a different oblique was
+  chosen; what could leave values over was choosing the oblique already
+  ticked, which `ProjectionItemClick` ignored. Now that puts its angles
+  back (Perspective or Orthographic ticked again still does nothing). If
+  leftover values are still seen, the Debug line says which.
+- **Dials free again.** Variable's Inclination and Roll dials are no
+  longer disabled while an oblique is chosen (owner: that was for
+  debugging). `TOrbitalSettingsForm.AzimuthOnly` is left in that unit,
+  unused, so it is unchanged. The fixed views stay disabled while an
+  oblique is chosen.
+- **Oblique submenu.** View, Projection is Perspective, Orthographic, then
+  `ObliqueMenu` "Oblique" holding the four (the separator
+  `ProjectionSeparatorItem` is gone). FMX unticks only a radio item's
+  siblings, so `CheckProjection` ticks one projection and unticks the
+  other five; `ProjectionItemClick` and `RestoreViewToggles` use it.
+  `UpdateCameraLockControls` enables `ObliqueMenu` and each item.
+  `UseFmxMenuBar` (Linux) and `BuildMobileMenu` both recurse, so the third
+  level is copied and the drawer gets a "View, Projection, Oblique" group.
+- To test (Windows first): the menu shape; each oblique from Isometric,
+  with the Debug line's three angles (Military 45, 90, 0); Variable with all
+  dials live; turn the roll, then the same oblique again (roll back to 0),
+  then another oblique (all three its own); only one projection ticked at a
+  time across the two levels; restart in an oblique (it comes back ticked,
+  Perspective not); Lock Camera greys the submenu; Perspective puts the
+  earlier view back. Linux: the submenu on the FMX menu bar with full
+  names. Mobile: the drawer group.
+
+`====> NO PACKAGE REBUILD <====` for ObliqueMenu1.
 
 ### Handover (8 November 2026, 22:05): the oblique branch
 
