@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 9 November 2026, 10:30.
+Last updated: 9 November 2026, 14:05.
 
 ## Starting a new conversation
 
@@ -149,10 +149,11 @@ the older ones.
   settings, it gets its own `Spritely.Storage`, with `System.JSON`.
 - A new component is first made in code to test it; once it works it is
   put on the form in the `.fmx`.
-- **`Spritely/` is the same on every branch** (owner, 8 November 2026:
-  `oblique` is an experiment that may be thrown away). A Spritely change
-  made on a branch is also delivered for `main`, usually as a zip of
-  just the `Spritely/` files, worded to be true on both.
+- **`Spritely/` is the same on every branch** (owner, 8 November 2026).
+  If work moves to a branch again, a Spritely change made there is also
+  delivered for `main`, usually as a zip of just the `Spritely/` files,
+  worded to be true on both. (`oblique`, the branch this was made for, was
+  merged into `main` on 9 November 2026.)
 - **Log every change to `Spritely/` in `Spritely/NOTES.md`**, newest
   first, as its "Writing an entry" says (owner, 8 November 2026), so
   sessions elsewhere that use Spritely can see what changed and what to
@@ -394,941 +395,120 @@ them.
 
 ## Where the work is
 
-### Zip ViewDefaults1 (9 November 2026, branch `oblique`), not yet tested
+### Handover (9 November 2026, 14:05)
 
-Follows CutPreview1, below. Files: `src/ui/Sprite3dMain.pas`, `.fmx`,
-`src/ui/Sprite3DHelpers.pas`, `README.md`, this file. The owner (13:47):
-with no settings file, the view options should all start off.
+**State.** `main` at `2b98a73` ("Merge pull request #9 from peardox/oblique")
+holds everything: the `oblique` branch was merged at 13:58 and the owner
+works on `main` again. Checked file by file at 14:00 against every zip
+delivered: all present. The only file of the owner's own since is
+`Spritely/packages/Spritely.dproj`, re-saved by the IDE (Win64x added to
+its targets). No zip is outstanding, so GitHub is the owner's copy and a
+new session can build on it. `oblique` is done with; work on `main`.
 
-- `TSprite3DAppSettings.Create`: `ShowBoundingBox`, `ShowGrid`, `ShowAxes`
-  and `ShowSweptVolume` False (Animation Volume was already). The `.fmx`'s
-  four Show items lose `IsChecked = True`, so the menu agrees before
-  `RestoreViewToggles`. A settings.json that has the keys keeps them.
-  (The README's "as can Orthographic" was out of date since Projection;
-  dropped.) Lights unchanged: the headlight still starts on, or the model
-  would be unlit.
-- To test: rename settings.json away, start (no box, grid, axes or
-  volumes; the menu unticked); tick some, restart (kept).
+**Next, as the owner said (14:01):**
 
-`====> NO PACKAGE REBUILD <====` for ViewDefaults1.
+1. **A review**, which the owner is having done before anything else.
+   Wait for it; its findings come first.
+2. **Measuring external sprites**: read sprites that Sprite3D did not make
+   (an existing game's art), measure their edge values, and match them, so
+   an existing game can be modified, where that is permitted. The first
+   target is Windy Woods (the owner's words), a game made to be a starting
+   point to build on, which is why modifying it is allowed. Sprite3D
+   already measures its own output: each frame's `empty` borders and the
+   image's `sprite_empty`, and the `origin` (see `metadata.md`; the Results
+   tab reads them back, and its Edge Case Finder steps through them).
+   Matching external art presumably means measuring those same values from
+   images alone, with no metadata, and then making exports line up with
+   them: grab size, padding, origin and scale. Ask the owner for the
+   sprite files, how they are laid out (strips, sheets, single frames) and
+   which values must match, before designing anything.
 
-### Zip CutPreview1 (9 November 2026, branch `oblique`), not yet tested
+**What came in on 9 November (all on `main`).** By area; the code names
+are for searching.
 
-Follows ImageAlign1, below. Files: `src/ui/Sprite3DBackgroundForm.pas`,
-`src/ui/Sprite3dMain.pas`, `README.md`, this file. Asked by the owner
-(13:39), the last before committing: the Image preview should show which
-parts are cut off, with a box that shows on any image.
-
-- `TBackgroundSettingsForm.NewImagePreview`, for the Image preview in
-  place of `NewBitmap`: in the grab's own pixels (`GrabWidth`,
-  `GrabHeight`, new, set by `BackgroundSettingsMenuItemClick`; the
-  preview's shape if 0) the frame and `ImageRect`'s rectangle, their union
-  scaled to fit `PreviewRect` and centred, drawn at twice its size: dark
-  grey round about, the frame in Colour, the image, everything outside the
-  frame darkened (`$A0000000`), then the frame outlined, 2 pixels, white
-  solid with black `TStrokeDash.Dash` over it.
-- To test: an image wider than the grab with Fill (the cut sides dark,
-  the box round what is kept); each position; Fit (no darkening, the
-  colour bars inside the box); Original larger and smaller than the grab;
-  a missing file (just the frame in the colour); a dark and a light image
-  (the box shows on both).
-
-`====> NO PACKAGE REBUILD <====` for CutPreview1.
-
-### Zip ImageAlign1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows OutputSetting1, below. Files: `src/lib/Sprite3DBackground.pas`,
-`src/ui/Sprite3DBackgroundForm.pas`, `.fmx`, `src/ui/Sprite3DSettingsForm.pas`,
-`.fmx`, `src/ui/Sprite3DHelpers.pas`, `src/ui/Sprite3dMain.pas`,
-`README.md`, `viewport.md`, this file. Asked by the owner (13:31); after
-testing these the owner will commit and move on to the next task.
-
-- "Grid, Axes and Model Volume in Render", in File, Settings' group now
-  captioned Render (the controls keep their names, `OutputGroup` and
-  `OutputHelpersCheck`; the key stays `helpersInOutput`).
-- `TSprite3DImageAlign` (TopLeft ... BottomRight, row by row, Ord mod 3 the
-  column, div 3 the row; Centre the default), `TSprite3DBackgroundSpec`'s
-  `ImageAlign`: `ImageRect` puts the left-over or cut-off part
-  0, half or all to the left (and above) for the column (and row), so a
-  larger image shows that part. Kept as `backgroundImageAlign` by name;
-  `ApplyBackground`'s Debug line names it.
-- Dialog: `AlignLayout` in the left column under Hex, `AlignLabel` "Image
-  position" and nine `TRadioButton`s (`AlignTopLeftRadio` ...), group
-  `ImageAlign`, Tag the Ord, one handler `AlignRadioChange`; enabled for
-  Image but Stretch (`FitComboChange` now calls `UpdateControls`).
-- To test: an image wider than the grab with Fit, then each of the nine
-  (left, centre, right matter; top and bottom do not); with Fill (which
-  part shows); Stretch greys the square; a grab matches the view; restart.
-
-`====> NO PACKAGE REBUILD <====` for ImageAlign1.
-
-### Zip OutputSetting1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows DialogWheel1, below. Files: `src/ui/Sprite3dMain.pas`, `.fmx`,
-`src/ui/Sprite3DSettingsForm.pas`, `.fmx`, `src/ui/Sprite3DHelpers.pas`,
-`README.md`, this file. The owner (13:19): Grid, Axes and Model Volume in
-Output should be a setting, not a menu item; everything else seems fine.
-
-- OutputHelpers1's `OutputSeparatorItem` and `HelpersInOutputItem` are
-  gone from the View menu. File, Settings has `OutputGroup` "Output", in
-  the right column between Files and Graphics processor, with
-  `OutputHelpersCheck`; `TSprite3DGeneralSettings.HelpersInOutput`,
-  `ReadGeneralSettings`, applied in `ApplyGeneralSettings` with its Debug
-  line. Still kept as `helpersInOutput`; `HideHelpersForGrab` reads
-  `FSettings.HelpersInOutput`.
-- To test: File, Settings shows the group and the tick as it was; OK
-  changes grabs as before; the View menu ends at Show Animation Volume.
-
-`====> NO PACKAGE REBUILD <====` for OutputSetting1.
-
-### Zip DialogWheel1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows KeepRestore1, below. Files: `src/ui/Sprite3dMain.pas`,
-`src/ui/Sprite3DOrbitalForm.pas`, `README.md`, this file. The owner
-(12:58): Mouse View's wheel still zooms while Variable's dialog is open,
-but its Distance slider does not follow.
-
-- `FOrbitalDialog` holds the dialog while it is open (desktop, around
-  `ShowModal`). `MoveMouseView` then calls `DialogMouseView` instead: the
-  turn into the dialog's azimuth (reversed, as the readouts are), the zoom
-  multiplied into its distance (0.2 to 20), `TakeSpec` to set its
-  controls, and `ShowCameraSpec` to show it. So the mouse view itself does
-  not change, and OK or Cancel treat it like any change in the dialog.
-- `TOrbitalSettingsForm.TakeSpec` and `ShowSpec` are back (`FormShow`
-  calls `ShowSpec`).
-- To test: open Variable with Mouse View on; the wheel over the view
-  (the Distance slider and label follow, the readout shows no zoom); a
-  left-drag (the Azimuth dial follows); OK keeps it; Cancel puts back the
-  view as before the dialog.
-
-`====> NO PACKAGE REBUILD <====` for DialogWheel1.
-
-### Zip KeepRestore1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows OutputHelpers1, below. Files: `src/ui/Sprite3dMain.pas`, this
-file. The owner (12:52): with Save shift, rise and distance ticked, they
-are not restored on reload.
-
-- Why (PresetViews1's doing): `FormCreate` loads them, then
-  `RestoreCameraView` and `RestoreViewToggles` put the last view back
-  through the fixed views' handlers (`SetPolarViewAngle`) and
-  `EnterObliqueView`, which call `ResetViewSettings`. In an oblique,
-  `settings.json` keeps the view from before it (`FObliqueView`, such as
-  Isometric), so both reset them; the owner's session was in Military.
-- Fix: `FRestoringView`, True around those two calls in `FormCreate`;
-  `ResetViewSettings` does nothing while it is. PresetViews1's note that a
-  restored session starts without them no longer holds when they are kept.
-- To test: tick Save, set a distance, shift and rise, OK, restart: in
-  Perspective with Variable, and in Military (both come back); untick
-  Save, restart (gone); choosing a fixed view or an oblique still resets
-  them.
-
-`====> NO PACKAGE REBUILD <====` for KeepRestore1.
-
-### Zip OutputHelpers1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows GrabDistance1, below. Files: `src/ui/Sprite3dMain.pas`, `.fmx`,
-`src/ui/Sprite3DHelpers.pas`, `README.md`, this file. Asked by the owner
-(12:46): an option, off by default, to draw the grid, axes and Model Volume
-in output; unticked, none of them; ticked, those the View menu shows.
-
-- View, `OutputSeparatorItem` then `HelpersInOutputItem` "Grid, Axes and
-  Model Volume in Output", kept as `helpersInOutput`
-  (`TSprite3DAppSettings.HelpersInOutput`, False), restored and saved with
-  the other View ticks; a Debug line when it changes.
-- `OffscreenBeforeGrab` now calls `HideHelpersForGrab` for every grab, not
-  only during a capture, so grabs and icons lose the helpers too (before,
-  they kept everything showing). It always hides the bounding box and the
-  Animation Volume (the owner named only the three); the grid, axes and
-  Model Volume unless the item is ticked and it is not a 2-pass measuring
-  pass (`FBatchActive` and `FBatchPass = 1`), so the sprite is still framed
-  by the model. Exports drawn with the grid get empty borders of 0 in their
-  metadata, which the Debug tab reports as frames that may be cut off.
-- Metal (macOS, iOS): grabs are screenshots of the view, so everything
-  showing is in them, as before.
-- To test: unticked, a grab, an icon and an export with every Show item on
-  (the model alone); ticked, each of grid, axes and Model Volume on and off
-  (only those on, in a grab, an icon and an export; never the bounding box
-  or Animation Volume); restart (kept); Linux menu bar and mobile drawer.
-
-`====> NO PACKAGE REBUILD <====` for OutputHelpers1.
-
-### Zip GrabDistance1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows Licences1, below. Files: `src/ui/Sprite3dMain.pas`, `README.md`,
-this file. The owner (12:42, two screenshots, Military, shifted, a wide
-grab with an image background): the view shows the cube at the bottom
-right; the grab has no cube, and its grid squares are about 2.5 times
-larger.
-
-- Why: the view is the fit moved out by Variable's Distance
-  (`ShowDistanceFactor`, `FFactor`), but `OffscreenBeforeGrab` fitted the
-  grab (`GrabFit`) and never applied `FFactor`, so the grab was the plain
-  fit, nearer; a shift of +1 placed for that puts the cube just off the
-  edge, as +1 means. The distance factor was never in grabs (its comment
-  called it "Test only").
-- Fix: after `GrabFit`, `Distance` (or `OrthoHeight`) times `FFactor`, as
-  `ShowDistanceFactor` does on screen, then the shift. The framing put back
-  after the grab holds both. Exports are unchanged: their two passes frame
-  the sprite themselves. Mouse View's turn and zoom are still left out of
-  grabs, by design (the readout shows when they are on).
-- To test: the owner's case; a grab at Distance x1 and at a larger factor,
-  in perspective, Orthographic and an oblique, with and without a shift;
-  each matches the view, grid and all; an icon.
-
-`====> NO PACKAGE REBUILD <====` for GrabDistance1.
-
-### Zip Licences1 (9 November 2026, branch `oblique`)
-
-Follows Background1, below. Files: `docs/licences-required.md` (new),
-`README.md` (Licences links to it), this file. Asked by the owner (12:33)
-from the 12:29 notes on what each third-party part asks: FastMM5 GPL v3 or
-commercial, in every Windows build; Neon MIT; the DelphiFFmpeg.com and
-OpenH264 declaration BSD notices; FFmpeg LGPL; Gorilla3D and RAD Studio;
-no licence for Sprite3D itself; the notices not yet in the program. The
-owner will point `openh264.json`'s entries at Cisco's own downloads, as
-copies served from sprite3d.com are not under Cisco's patent cover; when
-that is done, update the file.
-
-`====> NO PACKAGE REBUILD <====` for Licences1.
-
-### Zip Background1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows ShiftKeep1, below. Files: `src/ui/Sprite3dMain.pas`,
-`src/ui/Sprite3DHelpers.pas`, `src/ui/Sprite3DOrbitalForm.pas`, `.fmx`,
-`src/ui/Sprite3DBackgroundForm.pas`, `.fmx`, `src/lib/Sprite3DBackground.pas`,
-`src/lib/Sprite3DOffscreen.pas`, `README.md`, `viewport.md`, this file.
-Asked by the owner (12:16 to 12:22):
-
-- **Variable's ticks.** "Shift and rise (slide the model)"; "Save shift,
-  rise and distance values between sessions" (full width), which now keeps
-  the distance factor too: `TSprite3DAppSettings.DistanceFactor`, kept as
-  `distanceFactor`, saved and read only while `keepShift`
-  (`KeepShiftSettings`, `FormCreate`), 1 otherwise.
-- **"Temporary Mouse View" is now "Mouse View"**, in the menu, the Debug
-  lines, the comments and the README (the settings key stays `mouseView`).
-- **Image backgrounds.** `TSprite3DBackgroundKind.Image` (last, so the
-  names kept in settings.json are unchanged), with
-  `TSprite3DBackgroundSpec.ImageFile` and `ImageFit`
-  (`TSprite3DImageFit`: Fit, Fill, Stretch, FitWidth, FitHeight, Original;
-  always centred), over `Colour` where it does not reach or is
-  transparent. `ImageRect` places it; `NewBitmap` draws it (Colour, then
-  the image, smoothly) at any size, so the view, the dialog's preview and
-  grabs fit it alike. `BackgroundImage` reads the file (through
-  `OSFriendlyPath`) and keeps it until another file or a newer time of last
-  change; main thread only. Original is one image pixel to one grab pixel,
-  so `TSprite3DBackground.GrabWidth` (set in `FitViewportToAspect`) scales
-  it on screen.
-- Grabs and icons: `Collect` (main thread) passes `BackdropPixels`, the
-  image fitted at the grab's size as opaque RGBA bottom-first, to
-  `FillBackdrop`, which blends it in as it does a colour or gradient; the
-  Metal screenshot path draws it under the screenshot. Animation exports
-  still have no background (the owner's purpose was grabs: "when grabbed
-  uses their image as a background").
-- Dialog: `ImageRadio` in the style group; `ImageLayout` under the checker
-  size with `ImageEdit` (the path, typed or from `ImageBrowseButton`, a
-  `TOpenDialog`, hidden on Android and iOS), `FitCombo` (in
-  `TSprite3DImageFit`'s order) and `ImageStatusLabel` (its size, or why it
-  cannot be read); the colour panel edits Colour for Image too. The dialog
-  is 108 pixels taller. Settings: `backgroundImage`, `backgroundImageFit`
-  (by name). `ApplyBackground` writes "Background image: <file>, W x H
-  pixels, <fit>" or why the colour shows instead.
-- Not done, for later as the owner said: placing the image other than
-  centred, scaling it by hand, transparent bars, the image in animation
-  exports.
-- To test (Windows first): Image with a PNG and a JPEG of another shape
-  than the grab, each fit, in the preview, the view and a grab (they
-  match); Original at two grab sizes (the image the same in pixels, so
-  smaller in the larger grab); a missing file (the colour, the status
-  line and the Debug line); a PNG with transparency (the colour through
-  it); an icon; restart (kept); the two Variable ticks' text and the
-  distance kept with the save tick; the menu reads Mouse View. Linux:
-  the file dialog. Mobile: the path typed.
-
-`====> NO PACKAGE REBUILD <====` for Background1.
-
-### Zip ShiftKeep1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows ShiftLog1, below. Files: `src/ui/Sprite3dMain.pas`,
-`src/ui/Sprite3DHelpers.pas`, `src/ui/Sprite3DOrbitalForm.pas`, `.fmx`,
-`README.md`, this file. ShiftLog1's Debug line settled the 12:00 report
-(12:05: "shift +1.000, rise +1.000 (the camera slid +1.063, +1.290 ...)":
-the values kept from earlier testing). The owner (12:07): don't save the
-shift and rise, or better, make keeping them explicit.
-
-- Variable has a fourth row under the sliders, `PanKeepLayout` with
-  `PanKeepCheck` "Keep between sessions" (the dialog 32 pixels taller);
-  `TCameraSettings.PanKeep`. The main form's `FPanKeep`, kept as
-  `keepShift` (`TSprite3DAppSettings.KeepShift`, False by default).
-- `KeepShiftSettings` (from `SaveViewState` and `AcceptCameraSpec`) saves
-  the shift and rise as they are only while `FPanKeep`, otherwise
-  `panEnabled` false and `panX`, `panZ` 0; `FormCreate` reads them only if
-  `keepShift`. So by default each session starts with the box unticked
-  and both at 0; within a session the sliders keep their values. A
-  settings.json from before has no `keepShift`, so starts without them.
-- To test: tick Keep, set a shift, OK, restart (kept); untick Keep, OK,
-  restart (off and 0); the shift kept within a session either way.
-
-`====> NO PACKAGE REBUILD <====` for ShiftKeep1.
-
-### Zip ShiftLog1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows PresetViews1, below. Files: `src/ui/Sprite3dMain.pas`,
-`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `README.md`, this file. The
-owner (12:00, two screenshots, Orthographic, Isometric angles, distance
-x4.6): ticking Shift and rise "with no values altered" took the cube off
-the view; nothing in the Debug tab.
-
-- What the screenshots show: the Shift and Rise labels read only "Shift"
-  and "Rise", and their thumbs are past the dialog's right edge, which is
-  off the screen; the Distance thumb, at 22% of the same track, puts 0 in
-  sight, and no thumb is there. So the values were most likely at or near
-  +1, kept from earlier testing, which since ShiftRise4 takes the model
-  just off the top-right corner. With 0 and 0 `PlaceShift` slides nothing.
-  Confirmed by the Debug line (12:05).
-- The labels: `Format('Shift %+.2f', ...)`, from before (as `'X %+.2f'`):
-  Delphi's `Format` has no `+` flag. Now `FormatFloat` with
-  `SIGNED_FORMAT` (`'+0.00;-0.00;+0.00'`), and the two labels have
-  `TextSettings.WordWrap = False`.
-- `LogShift`, from `ShowPan`: "Shift and rise on: shift +1.000, rise +1.000
-  (the camera slid +1.234, +0.567 of the picture's half-width and
-  half-height)", or "lens shift" in perspective, or "Shift and rise off";
-  only when the line changes (`FLoggedShift`), so dragging a slider writes
-  a line per step.
-- Also seen: Variable's dialog goes past the right of the screen on a wide
-  window (it is placed at the main form's centre). Not changed; ask.
-- To test: open Variable; the labels show "Shift +0.00" and the like;
-  tick the box at 0, 0 (nothing moves, a Debug line with +0.000s); Centre;
-  move each slider (the label and the Debug line follow).
-
-`====> NO PACKAGE REBUILD <====` for ShiftLog1.
-
-### Zip PresetViews1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows ShiftRise4, below. Files: `src/ui/Sprite3dMain.pas`, `README.md`,
-this file. The owner (11:53): the pre-defined views are starting points
-with set values, so they should also reset distance, shift and rise, and
-set or zero all three angles; any change after is no longer a standard
-view.
-
-- Every fixed view goes through `SelectFixedView` and `SetPolarViewAngle`,
-  which already set inclination and azimuth and roll 0. It now also calls
-  `ResetViewSettings`: `FFactor` 1, `FPanX` and `FPanZ` 0 (the Shift and
-  rise tick left as it is), `ResetMouseView`, and the caption. The refit
-  (`FitModel`) then shows them. `EnterObliqueView` calls it too, so
-  choosing an oblique, or the same one again, does the same.
-- Changes after a fixed view already make it Variable: they are only made
-  in Variable's dialog, which checks Variable. Temporary Mouse View, being
-  temporary, leaves the check alone.
-- A session restored into a fixed view or an oblique starts with no shift
-  and distance factor 1, whatever `settings.json` kept; it can only have
-  kept a shift from Variable, so that is the same rule.
-- To test: in Variable, set a distance, a shift and rise and odd angles,
-  and turn the view with the mouse view; then each fixed view (all of it
-  gone: the caption without "(shifted)", the mouse readout gone, Variable's
-  dialog then showing distance x1.0 and shift and rise 0); the same with an
-  oblique.
-
-`====> NO PACKAGE REBUILD <====` for PresetViews1.
-
-### Zip ShiftRise3 (9 November 2026, branch `oblique`), withdrawn
-
-Sent at 11:42 with an Apply Mouseview button; the owner (11:42) said OK
-already handles that, so ShiftRise4 replaces it. Skip it, or unzip
-ShiftRise4 over it: ShiftRise4 holds every file ShiftRise3 did.
-
-### Zip ShiftRise4 (9 November 2026, branch `oblique`), not yet tested
-
-Follows ShiftRise2, below (or ShiftRise3, which it replaces). Files:
-`src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DHelpers.pas`,
-`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `src/lib/Sprite3DSweep.pas`
-(`SweepViewExtent` back), `README.md`, this file. The owner (11:37): the
-mouse view readout's "+37" against Variable's "x10" are at odds; shift and
-rise nearly right, but should go half the object's width further, to the
-edge. (Also asked for, then withdrawn at 11:42: an Apply Mouseview button;
-opening Variable already takes the mouse view in, as ShiftRise2 made it,
-and OK keeps it.)
-
-- **Readout.** The mouse view's Distance (or Size) is now a factor,
-  `x10.000` (`FMouseZoom`), as Variable's Distance slider gives its own; it
-  was the change in scene units. Opening Variable multiplies the two.
-- **Range.** 1 or -1 is now how far the picture can slide that way: until
-  the near side of the fitted volume, as drawn now (`SweepViewExtent`, the
-  lens shift taken off what it measures), is on that edge, the model just
-  off the picture. That is the target on the edge plus half the volume's
-  width or height. As the zoom changes the volume's size in the picture,
-  `ShiftCamera` now places the shift again after every mouse view turn or
-  zoom, in every projection (`FPlaceEnabled`, `FPlaceShift`, `FPlaceRise`),
-  except while a grab or capture has its own framing on. The volume is the
-  swept one the fits use, so a model narrower than its sweep is a little
-  past the edge at 1.
-- To test: zoom with the mouse view, then open Variable (its Distance the
-  readout's factor times the old one, the view still, the readout gone);
-  Shift and Rise to each end, zoomed out and normal, in perspective,
-  Orthographic and an oblique: the model just off each edge; then wheel
-  with a shift at an end (it stays just off); a grab matching the view.
-
-`====> NO PACKAGE REBUILD <====` for ShiftRise4.
-
-### Zip ShiftRise2 (9 November 2026, branch `oblique`), not yet tested
-
-Follows ShiftRise1, below, which it partly replaces. Files:
-`src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DHelpers.pas`,
-`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `src/lib/Sprite3DSweep.pas`
-(back as it was before ShiftRise1: `SweepViewExtent` is gone),
-`README.md`, this file. The owner's test of ShiftRise1 (11:23, with a
-screenshot, a wide view zoomed well out with Temporary Mouse View): Shift
-not far enough in perspective when zoomed out; Orthographic as little as
-before; Rise did nothing; Variable should show the actual values, mouse
-view included.
-
-- **Why.** ShiftRise1 measured the room on the normal fitted view, mouse
-  view taken off, where the volume fills the height: no room for Rise, and
-  only the normal view's for Shift, while the mouse view zoomed out. In
-  orthographic the slide was a world offset, fixed before the mouse zoom
-  changed the size, so it covered less of the picture.
-- **Now** the slider ends are the target on the edge: 1 or -1 is a lens
-  shift of 1 normalised device unit, the target (the point the camera looks
-  at, the picture's middle before) on that edge, whatever the zoom; no
-  measuring (`PlaceShift` sets `FSlideX`, `FSlideY`). Orthographic: the
-  camera slide (`PutOnSlide`, by `ShiftView`) is taken off and put on again
-  around every change `ShiftCamera` makes for Temporary Mouse View
-  (`TakeOffSlide`), so it stays that fraction of the picture and the camera
-  turns about the model's axis; ShiftRise1's known issue about that is
-  gone. `ApplyDistance` is always followed by `ApplyPan`, which redoes it.
-  Captures keep the view's slide in `FCaptureAppliedPan` and zero
-  `FAppliedPan` after their own fit; `EndCapture` puts it back.
-- **Variable takes in the mouse view.** `ViewVariableItemClick` starts the
-  dialog from `ShownCameraSpec` (azimuth less `FMouseYaw`, the readouts
-  running the other way; distance factor times `FMouseZoom`), resets the
-  mouse view and shows the spec, so nothing moves; OK keeps it, Cancel
-  puts the camera back and the mouse view with it (`RestoreMouseView`).
-  The distance slider now starts at 0.2 (`DistanceTrack.Min`), a mouse zoom
-  in being down to a fifth; a factor beyond 20 shows at the slider's end
-  but is kept unless the slider is moved.
-- To test: the owner's case (wide grab size, mouse view zoomed out, both
-  sliders to each end: the cube's centre on each edge); the same in
-  Orthographic, then wheel and drag with a shift on (the target stays at
-  the same place in the picture, the model turning about itself); Rise in
-  the normal fitted view (the target to top and bottom, the model cut
-  off); open Variable while mouse-viewed (the dials and distance as shown,
-  the view not moving; Cancel gives the mouse view back, OK keeps it as the
-  normal view, the readout gone); a grab with a shift matching the view.
-
-`====> NO PACKAGE REBUILD <====` for ShiftRise2.
-
-### Zip ShiftRise1 (9 November 2026, branch `oblique`), not yet tested
-
-Follows ObliqueMenu1, below (needs it: `Sprite3dMain.pas` holds both).
-Files: `src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DHelpers.pas`,
-`src/ui/Sprite3DOrbitalForm.pas`, `.fmx`, `src/lib/Sprite3DSweep.pas`,
-`README.md`, this file. Asked by the owner (10:48): Variable's pan moved
-the view a little when ticked, its sliders reached only a little way (a
-1024 x 256 grab), and it changed the view of the model; it should be
-`TSpritelyProjection`'s shift and rise, going all the way, with names to
-match.
-
-- **Why it moved the view.** The old pan moved the orbit centre along the
-  model's X and Z axes, by up to twice its radius, setting it from a kept
-  `FFitCenter` plus the offset: in perspective that changes the view, and
-  the slider values kept while it was off came back when it was ticked.
-  Gone, with `ModelPanOffset` and `FFitCenter`.
-- **Now** (`PlaceShift`): the fitted volume is measured where it falls
-  (`SweepViewExtent`, new in `Sprite3DSweep`: the outline through
-  `ProjectToView`), with any slide already in place taken off; the shift
-  is that fraction of the room on its side (1 or -1 puts the volume's edge
-  on the picture's), the rise likewise. Perspective and obliques:
-  `FProjection.ShiftX` / `ShiftY` (`SetLensShift`), the camera never moves.
+- *Projection.* View, Projection: Perspective, Orthographic, then an
+  Oblique submenu with Cavalier, Cabinet, Military and Plan Oblique, drawn
+  by Spritely's `TSpritelyProjection` (`FProjection`). FMX unticks only a
+  radio item's siblings, so `CheckProjection` ticks one and unticks the
+  other five. Choosing an oblique (`EnterObliqueView`) turns the camera to
+  `TSpritelyProjection.PresetAngles`, the azimuth taken as it stands in
+  Sprite3D's own sense (0 south, clockwise from above: Military's 45 is
+  south-west, as Isometric), sets all three angles, and greys the fixed
+  views; choosing the same one again puts its angles back. Variable's dials
+  are all live in an oblique (the azimuth-only limit was for debugging).
+- *Preset views.* Every fixed view (`SetPolarViewAngle`) and every
+  oblique sets or zeroes all three angles and, through
+  `ResetViewSettings`, puts the distance factor to 1, the shift and rise to
+  0 and Mouse View to normal: a preset is a starting point. Not while
+  `FRestoringView` (the start-up putting back the last session's view).
+- *Shift and rise* (Variable, "Shift and rise (slide the model)";
+  identifiers still `Pan...`, keys `panEnabled`, `panX`, `panZ`).
+  `PlaceShift`: -1 to 1, a fraction of how far the model can slide that
+  way, 1 taking the near side of the fitted volume (`SweepViewExtent` in
+  `Sprite3DSweep`) to that edge. Perspective and obliques: `FProjection`'s
+  lens `ShiftX` / `ShiftY` (`SetLensShift`), the camera never moving.
   Orthographic, which `TSpritelyProjection` cannot draw over: the camera
-  slides by `ShiftView`, the same picture in a parallel view, kept in
-  `FAppliedPan` to take off again.
-- **Fits run unshifted**: the camera's fits allow for the lens shift and
-  would centre the model in the shifted picture. `FitNormalView` and
-  `ApplyProjection` set it to 0 first; `OffscreenBeforeGrab` keeps the
-  view's (`FGrabAppliedPan`, `FGrabShiftX/Y`), fits, then shifts for the
-  grab's size, and `OffscreenAfterGrab` puts them back.
-  `FrameCaptureFraming` sets it to 0 (exports leave it out: two passes
-  centre the sprite anyway) and `EndCapture` calls `ApplyPan`.
-- **Names**: the dialog shows "Shift and rise (slide the picture)", "Shift
-  +0.00", "Rise +0.00", sliders -1 to 1 (`PAN_LIMIT` 1); the caption says
-  "(shifted)". The identifiers (`PanX`, `PanCheck` ...) and the settings
-  keys (`panEnabled`, `panX`, `panZ`) are unchanged; an old value beyond 1
-  is taken as 1. Renaming them was not asked; offer it.
-- Known issue added: in orthographic projection with a shift, Temporary
-  Mouse View turns about the slid orbit centre.
-- To test (Windows): tick Shift and rise at 0, 0 (nothing moves, in every
-  projection); a 1024 x 256 grab size, Shift to 1 and -1 (the model's
-  volume to each edge, the model itself unchanged), Rise (nothing to do
-  there, as the height is full); the same in a square grab size, and in
-  Orthographic and an oblique; a grab of each matching the view; an export
-  (centred, as before); Directions export; restart (kept). The caption
-  "(shifted)".
+  slides (`PutOnSlide`, `ShiftView`; `FAppliedPan`, `TakeOffSlide`). Every
+  fit runs with no lens shift (the camera's fits allow for one and would
+  undo it). `ShiftCamera` re-places it after every Mouse View change.
+  `LogShift` writes each change to the Debug tab. "Save shift, rise and
+  distance values between sessions" (`FPanKeep`, `keepShift`, with
+  `distanceFactor`; `KeepShiftSettings`), off by default.
+- *Mouse View* (was Temporary Mouse View; key `mouseView`). Its readout's
+  distance is a factor (`x10.000`). Opening Variable takes its turn and
+  zoom into the dialog (`ShownCameraSpec`) and resets it; Cancel gives it
+  back (`RestoreMouseView`). While the dialog is open the wheel and drag
+  change the dialog's Distance and Azimuth (`FOrbitalDialog`,
+  `DialogMouseView`, `TOrbitalSettingsForm.TakeSpec`). Variable's Distance
+  slider runs 0.2 to 20.
+- *Grabs and icons* apply Variable's Distance on their own fit
+  (`OffscreenBeforeGrab`), then the shift, so they match the view; before,
+  the distance factor was never in grabs.
+- *Helpers in output.* File, Settings, Render, "Grid, Axes and Model
+  Volume in Render" (`helpersInOutput`, off): unticked, no helpers in
+  grabs, icons or exports; ticked, those of the three the View menu shows.
+  The bounding box and Animation Volume never. `HideHelpersForGrab` runs
+  for every grab, and hides them all in a 2-pass measuring pass.
+- *Background image* (`TSprite3DBackgroundKind.Image`): `ImageFile`,
+  `ImageFit` (Fit, Fill, Stretch, FitWidth, FitHeight, Original) and
+  `ImageAlign` (nine positions, Centre by default) in
+  `TSprite3DBackgroundSpec`; `ImageRect` places it; `NewBitmap` draws it,
+  so the view, the preview and grabs fit it alike; `BackgroundImage` reads
+  and keeps the file; grabs get it through `BackdropPixels` and
+  `FillBackdrop`. Keys `backgroundImage`, `backgroundImageFit`,
+  `backgroundImageAlign`. The dialog's preview (`NewImagePreview`) shows
+  the grab's frame with the whole image round it, the cut-off parts dark,
+  the frame dashed black over white. Animation exports still have no
+  background.
+- *Defaults.* With no settings.json the Show items all start off.
+- *Licences.* `docs/licences-required.md`: what each third-party part
+  asks. FastMM5 is GPL v3 or commercial and is in every Windows build;
+  the OpenH264 list points at sprite3d.com, which is outside Cisco's patent
+  cover, and the owner will point it at Cisco's own downloads (then update
+  the file). Notices still to add: Neon's, DelphiFFmpeg.com's, Cisco's,
+  and the LGPL for builds shipped with the FFmpeg pack.
 
-`====> NO PACKAGE REBUILD <====` for ShiftRise1.
+**Tested** by the owner on Windows, as they went (the last at 13:58,
+"committed and merged"): the obliques and their angles, shift and rise in
+every projection, the Debug lines, Mouse View with Variable, grabs
+matching the view, the background image, its fits, positions and preview,
+the Render setting, the view defaults. **Not tested:** macOS, Linux and
+mobile for all of it (the Linux menu bar and the mobile drawer with the
+Oblique submenu, the background image's file dialog on Linux, a typed path
+on mobile, Metal grabs with an image backdrop); exports drawn with the
+helpers (their metadata empty borders are then 0); the older items below.
 
-### Zip ObliqueMenu1 (9 November 2026, branch `oblique`), not yet tested
+**Older items not yet reported** (from 27 October and 8 November):
+the lights one by one; WinARM64EC builds of Spritely and Sprite3D;
+ProjectionTest from `Spritely/`; drag and drop and 4096 grabs in full;
+one window on Windows (a model double-clicked while running); the Linux
+menu check (run from a terminal: no GTK warnings, full names, the items
+added in code working).
 
-Follows GitHub's `oblique` at `9594824` ("docs"), which has everything
-below. Files: `src/ui/Sprite3dMain.pas`, `src/ui/Sprite3dMain.fmx`,
-`README.md`, this file. Asked by the owner (10:21, 10:23):
-
-- **Military's azimuth.** Sprite3D's own azimuth, as the readouts and the
-  fixed views give it, is 0 at south and grows clockwise seen from above,
-  so 45 is south-west (Isometric); `ApplyAngles` reverses it for the
-  camera. `EnterObliqueView` reversed `PresetAngles`' military 45 too, so
-  the readouts showed 315. It now takes the preset's number as it stands
-  (a plan turned 45 degrees either way is the same projection mirrored):
-  Military reads azimuth 45.
-- **Every angle set.** `EnterObliqueView` sets azimuth, inclination and
-  roll every time, 0 for any the preset does not give, and logs all three
-  ("Camera at the projection's angles: azimuth 45, inclination 90, roll
-  0"). The code already set all three when a different oblique was
-  chosen; what could leave values over was choosing the oblique already
-  ticked, which `ProjectionItemClick` ignored. Now that puts its angles
-  back (Perspective or Orthographic ticked again still does nothing). If
-  leftover values are still seen, the Debug line says which.
-- **Dials free again.** Variable's Inclination and Roll dials are no
-  longer disabled while an oblique is chosen (owner: that was for
-  debugging). `TOrbitalSettingsForm.AzimuthOnly` is left in that unit,
-  unused, so it is unchanged. The fixed views stay disabled while an
-  oblique is chosen.
-- **Oblique submenu.** View, Projection is Perspective, Orthographic, then
-  `ObliqueMenu` "Oblique" holding the four (the separator
-  `ProjectionSeparatorItem` is gone). FMX unticks only a radio item's
-  siblings, so `CheckProjection` ticks one projection and unticks the
-  other five; `ProjectionItemClick` and `RestoreViewToggles` use it.
-  `UpdateCameraLockControls` enables `ObliqueMenu` and each item.
-  `UseFmxMenuBar` (Linux) and `BuildMobileMenu` both recurse, so the third
-  level is copied and the drawer gets a "View, Projection, Oblique" group.
-- To test (Windows first): the menu shape; each oblique from Isometric,
-  with the Debug line's three angles (Military 45, 90, 0); Variable with all
-  dials live; turn the roll, then the same oblique again (roll back to 0),
-  then another oblique (all three its own); only one projection ticked at a
-  time across the two levels; restart in an oblique (it comes back ticked,
-  Perspective not); Lock Camera greys the submenu; Perspective puts the
-  earlier view back. Linux: the submenu on the FMX menu bar with full
-  names. Mobile: the drawer group.
-
-`====> NO PACKAGE REBUILD <====` for ObliqueMenu1.
-
-### Handover (8 November 2026, 22:05): the oblique branch
-
-**State.** Everything delivered this session is on GitHub, so GitHub is
-the owner's copy again: no zip is outstanding, and a new session can
-build on it. Checked at 22:02:
-
-- `main` at `a0bb3d1` ("Spritely update"): every zip up to Handover1,
-  plus Branches1 (Spritely's per-context fix and notes). The safe point.
-- `oblique` at `2e41895` ("Spritely update"): `main`'s work plus
-  Projection1, Projection2, Notes1, ObliqueView1 and Branches1. Work here
-  unless told otherwise.
-- `Spritely/` is identical on the two branches, file for file. This file
-  differs: `main` has an older copy, and this one is for `oblique`.
-
-The owner (22:03): **"The views look good"**, and wants to hold the
-oblique work here and come back to it fresh. So View, Projection with the
-four obliques, the camera turned to suit each, and grabs matching the
-view (Projection2, 21:35) are all working on Windows.
-
-**Starting next time.** Clone with
-`git clone --recurse-submodules -b oblique https://github.com/peardox/Sprite3D.git`.
-A shallow or single-branch clone lacks the other branch: fetch it with
-an explicit refspec,
-`git fetch origin +refs/heads/main:refs/remotes/origin/main`. The
-Spritely package must be built from this source (Branches1 asked for a
-rebuild on `main`; on `oblique` it was already built).
-
-**Not yet reported**, beyond "the views look good":
-- ObliqueView1's details: the fixed views greyed while an oblique is
-  chosen; Variable's dialog with only Azimuth live; Perspective or
-  Orthographic putting the earlier view back (fixed or Variable with its
-  angles, "Camera view put back" in the Debug tab); restarting in an
-  oblique.
-- Projection1's: icons and exports in each oblique; metadata
-  `camera.projection`; benchmark folder prefixes; an old settings.json
-  with only `orthographic`; Lock Camera disabling the six items; the
-  Linux menu bar and the mobile drawer.
-- Other platforms: macOS (grabs are screenshots there), Linux, mobile.
-- The older items in the 20:35 handover below.
-
-**Next: ask the owner.** Nothing has been chosen. What has been
-mentioned: the rest of `TSpritelyProjection` in Sprite3D (dolly zoom,
-shift and rise), and in time whether `oblique` is merged into `main` or
-dropped. Any Spritely change still goes to both branches, with its
-`Spritely/NOTES.md` entry and the rebuild line.
-
-### Branches and the zips of the evening
-
-**Branches (owner, 21:49-21:51; heads updated at 22:02 above).** `main`
-was at `774727a` ("All correct with some updates"), every zip up to
-Handover1, and is the safe point. The oblique projection work is on the
-branch **`oblique`** (then `2c31cca`, "Messing with obliques": everything
-up to ObliqueView1), an experiment that may be thrown away. Work on `oblique` unless told
-otherwise. **`Spritely/` must be the same on both branches** (see
-*Spritely* above): a Spritely change is also delivered for `main`.
-Branches1 (below) brought `main`'s Spritely up to `oblique`'s.
-
-**Zip Branches1 (8 November 2026).** For both branches: `Spritely/`'s
-three changed files, `lib/Spritely.Projection.pas` (Projection2's
-per-context fix), `README.md` and `NOTES.md`, worded so they are true on
-either branch. Unzipped on `main` it adds the fix and the notes; on
-`oblique` only the wording changes. This file goes on `oblique` only.
-`====> REBUILD RUNTIME PACKAGE SPRITELY (ALL PLATFORMS) <====` on `main`
-(nothing to rebuild on `oblique`: the unit is unchanged there).
-
-**Zip ObliqueView1 (8 November 2026), applied: the views look good
-(owner, 22:03); the details below not yet reported.** Follows Status1.
-The owner (21:43): the obliques looked wrong because the camera stayed at
-the chosen view; choosing one should set the view to suit, with the fixed
-views unavailable and Variable limited to the azimuth. Done
-(`src/ui/Sprite3dMain.pas`, `src/ui/Sprite3DOrbitalForm.pas`,
-`README.md`), and it reverses Projection1's "angles stay View, Camera's":
-
-- `ApplyProjection` calls `EnterObliqueView(Kind)` for an oblique kind:
-  the first time, it keeps the checked view (`FObliqueView`, by its
-  settings key) and the angles (`FObliqueAzimuth` ...) and sets
-  `FObliqueActive`; every time, it sets the angles from
-  `TSpritelyProjection.PresetAngles` (readout azimuth reversed, as
-  `ApplyAngles` sends it; roll 0), checks Variable and logs "Camera at the
-  projection's angles: ...". A camera's own projection calls
-  `LeaveObliqueView`, which clears `FObliqueActive` first (a fixed view's
-  handler, 1/4 and 3/4, calls `ApplyProjection` again) and puts the view
-  back: Variable with the kept angles, or the fixed view's own handler;
-  logged "Camera view put back: <key>". `FProjection.CameraPreset` stays
-  off: the form does the turning, so its readouts and settings stay in
-  step.
-- `UpdateCameraLockControls` disables every View, Camera view but
-  Variable while `FObliqueActive`; `BuildLockCameraItem` now calls it,
-  since a session starting in an oblique chose it before that item
-  existed. `TOrbitalSettingsForm.AzimuthOnly` (new; disables `AngleDial`
-  and `RollDial`) is set from `FObliqueActive` when Variable's dialog
-  opens.
-- `SaveViewState` keeps `FObliqueView` and its angles while an oblique is
-  chosen, so the next session restores that view, then the projection
-  (`RestoreViewToggles` comes after `RestoreCameraView`) turns the camera.
-  An azimuth turned while oblique is not kept between sessions.
-- To test: from Isometric, choose Cavalier (level, front face true),
-  Cabinet, Military (from above, plan at 45 degrees), Plan Oblique (from
-  above, plan square); the fixed views greyed, Variable's dialog with only
-  Azimuth live; then Perspective: Isometric back. From Variable at some
-  angles, the same, and those angles back. Restart in an oblique: the
-  fixed views greyed and the oblique's angles. Grabs as the view.
-
-`====> NO PACKAGE REBUILD <====` for ObliqueView1.
-
-**Zip Notes1 (8 November 2026).** Follows Projection2. Asked by the
-owner (21:27): a log of Spritely updates for other sessions,
-`Spritely/NOTES.md`, newest first, with every change of the day back to
-the move from SRDelphiFMX, and how to write an entry; the rule is under
-*Spritely* above. `Spritely/README.md` and this file point to it.
-
-**Zip Projection2 (8 November 2026), applied: the grabs now match the
-view (owner, 21:35).** What else still looks wrong in the oblique
-projections was asked, not yet answered. It follows
-Projection1. The owner's first test (21:21, 21:25): the screen looked odd
-and a cabinet grab showed the model small, in the bottom-left corner. The
-Debug tab showed the cause: "Projection found in TContextOpenGLWindows at
-+$60" twice, then "The context's projection is not a perspective" on
-every later find. The view and the off-screen grab pass draw with two
-different contexts. `TSpritelyProjection` kept one slot: when the other
-context drew, it forgot the first without putting FMX's projection back,
-so on that context's next frame it found only its own oblique matrix
-there, gave up, and the stale matrix stayed in use while the camera was
-refitted, on screen and in grabs alike. It did reach the grab pass (the
-grab was oblique), which settles Projection1's unknown.
-
-- Fix, in `Spritely/lib/Spritely.Projection.pas`: `FSlots`, one slot per
-  context (up to `SPRITELY_PROJECTION_MAX_CONTEXTS`, 8), kept while others
-  draw, so each context's tracker tells FMX's value and ours apart;
-  `SlotFor` finds a context's slot and drops one whose value is neither
-  ours nor a perspective (a new object at the same address, or the camera
-  out of perspective mode); `FFailedContexts` in place of the single
-  failed context; `LiveSlot` (the viewport's present context, the only one
-  surely alive outside a frame) in place of `SlotAlive`, for `DropSlot` and
-  `Changed`. `FindSlot` is a function and logs the context's address and
-  how many are kept. Spritely's checker: no problems.
-- To test (Windows): choose Cavalier, then a grab, then another camera
-  view and back, then another grab. The Debug tab should show two "found"
-  lines with different addresses ("2 context(s) kept") and no "not a
-  perspective"; the view should refit with every change; each grab should
-  be framed like the view, the model filling it. Then Cabinet, Military
-  and Plan Oblique the same way, an icon and a short export. ProjectionTest
-  should behave as before.
-
-`====> REBUILD RUNTIME PACKAGE SPRITELY (ALL PLATFORMS) <====` for
-Projection2 (`dclSpritely` needs no reinstall: `Spritely.Reg` and the
-icons are unchanged, but rebuild it if the IDE asks).
-
-**Zip Projection1 (8 November 2026), not yet tested.** It follows
-Handover1. The owner is pushing everything up to Handover1 and will branch
-once this is merged, so GitHub should then hold the zips below, and
-Projection1 goes on that branch. Asked by the owner (20:59): Lights below
-Camera, then a Projection submenu with Perspective, Orthographic, and the
-oblique Cavalier, Cabinet, Military and Plan Oblique, drawn by
-`TSpritelyProjection`.
-
-- View menu, top to bottom: Camera, Lights, Projection, then the Show
-  items. Projection is a radio group (`GroupIndex` 2): `PerspectiveItem`,
-  `OrthographicItem`, `ProjectionSeparatorItem`, `CavalierItem`,
-  `CabinetItem`, `MilitaryItem`, `PlanObliqueItem`, all on
-  `ProjectionItemClick`; the old top-level Orthographic toggle and the
-  Lights separator are gone. Lock Camera disables every Projection item.
-- `TSprite3DProjection` (`prPerspective` ... `prPlanOblique`) and
-  `ProjectionInfo` (settings key, caption, metadata name, benchmark
-  prefix) in `Sprite3DHelpers.pas`; `TSprite3DAppSettings.Projection`,
-  kept as `projection` (text, so an unknown name cannot stop
-  settings.json loading) with `ProjectionKind` for code. A file without
-  `projection` reads its old `orthographic`; writing keeps `orthographic`
-  in step for earlier versions.
-- `ApplyProjection`: Orthographic sets the camera's `cpOrthographic`;
-  every other choice `cpPerspective` (TSpritelyProjection is made from
-  FMX's perspective). `FProjection`, a `TSpritelyProjection` made in code
-  in `FormCreate` (a new component is first made in code), has `Kind`
-  pjPerspective for the camera's own projections (so it leaves FMX's
-  alone) and the oblique kind otherwise. It is `OrbitCamera.Projection`,
-  so the camera's fits (`FitPointsOnAxis`, `FitToBounds`) and
-  `ProjectToView` follow it, and its `Viewport` is set by hand
-  (`OrbitCamera.Projection` sets only its `Focus`). `CameraPreset` and
-  `Dolly` are off: the angles stay View, Camera's (decided here, not
-  asked: the owner split Camera and Projection into two menus). It is
-  freed first thing in `FormDestroy`, `OrbitCamera.Projection` nil first,
-  as ProjectionTest learned. The Debug tab gets "Projection: <name>, the
-  camera's own" or "..., drawn by TSpritelyProjection over the camera's
-  perspective" when the choice changes, and the component's `OnLog`
-  lines (queued, as it logs from inside a frame) prefixed "Projection
-  component:".
-- With an oblique projection, `FitPointsOnAxis` frames the swept volume
-  exactly but leaves the orbit centre where the fit puts it instead of on
-  the turning axis (Spritely's own choice: a parallel view is sheared
-  about the target plane), so turning the azimuth then needs a refit, which
-  the view does for every change it makes. Two-pass scaling by distance is
-  exact for the obliques; `ShiftView` (overscan's shifted drawings) is too.
-- Metadata: `TSprite3DSheetCamera.Projection` (text) writes
-  `camera.projection` as perspective, orthographic, cavalier, cabinet,
-  military or plan_oblique; `ortho_height` stays null but for
-  orthographic. Benchmark folders start `cav`, `cab`, `mil` or `plan`.
-- **The one unknown:** whether `TSpritelyProjection`'s hook also runs in
-  `TSprite3DOffscreen`'s render pass, so grabs, icons and exports are
-  drawn in the oblique projection rather than plain perspective. It
-  writes the projection wherever FMX keeps it in the context drawing the
-  frame, and takes a new value written there as FMX's own, so a pass that
-  draws with the same context at its own size should be followed. If the
-  pass draws with another context, the Debug tab shows a "Projection
-  component:" line saying it was not found there, and the grab comes out
-  in perspective. On macOS and iOS grabs are screenshots of the view, so
-  are right either way.
-- To test, Windows first: each projection from Head On and Top Down (and
-  Isometric); the view refits for each; a grab, an icon and an export
-  match the view (the unknown above); the Debug lines; Lock Camera
-  disables the six; the choice comes back next session, and a settings.json
-  from before (only `orthographic`) comes up Orthographic or Perspective;
-  metadata `camera.projection`; Linux menu bar and the mobile drawer show
-  "View, Projection" with the radio ticks.
-
-`====> NO PACKAGE REBUILD <====` for Projection1: Spritely is unchanged.
-
-### Handover (8 November 2026, 20:35)
-
-**State.** The owner has applied every zip of 8 November in order,
-SpritelyMove1, SpritelyMove2, Lights1, then Merge1, on top of GitHub's
-`03b7da3` plus the owner's GrabSize4096 and DragDrop, and reports "all
-back normal again" (20:35): Sprite3D builds and runs with the Spritely
-camera, drag and drop works again, and the custom grab size reaches 4096.
-None of it is pushed yet, so GitHub (`03b7da3`) is behind: **build on the
-files of the zips below, or ask for the owner's copy, never on GitHub,
-for any file they touch** (see the first lesson below).
-
-**What the session did.**
-- Checked that `TSpritelyOrbitalCamera` can replace Sprite3D's own camera
-  with no change to Spritely (it can: its camera is `TSprite3DCamera`
-  renamed, the extra code idle without a `Projection` or `Subject`), and
-  made the switch: `Sprite3DCamera.pas` deleted, `OrbitCamera` on the
-  main form.
-- Moved Spritely, from peardox/SRDelphiFMX, into `Spritely/` (the owner
-  will remove SRDelphiFMX's copy), with its packages in the group,
-  ProjectionTest and its models, and the generator scripts cut down to
-  Spritely. Spritely's runtime package now also builds for WinARM64EC.
-- View, Lights: the headlight and the original light, each on or off.
-- Took SRDelphiFMX's working rules in as updates to this file's
-  (delivery, package rebuild line, "Noted." to commit hooks, no
-  trademarks); Sprite3D keeps Neon (owner).
-- Merge1 put back GrabSize4096 and DragDrop, which the earlier zips had
-  overwritten.
-
-**Zips, in order** (each follows the one before; details below):
-SpritelyMove1, SpritelyMove2, Lights1, Merge1. One file to delete, from
-SpritelyMove1: `git rm src/lib/Sprite3DCamera.pas`.
-
-**Still to test** (only "all back normal" has been reported): the lights
-one by one (Lights1); every view, grab, icon and export framed as before
-with the new camera, and no new leak at exit (SpritelyMove1); Spritely and
-Sprite3d for WinARM64EC, and ProjectionTest from `Spritely/`
-(SpritelyMove2); drag and drop and 4096 grabs in full (items 3 and 4
-below); the older items 1 and 2 and the Linux menu check below.
-
-**Next, as the owner has said:** `TSpritelyProjection` in Sprite3D, begun
-in Projection1 above (the dolly zoom, shift and rise still to come).
-Changes to Spritely itself are now made here; any delivery touching
-`Spritely/lib` or `Spritely/packages` carries the rebuild line.
-
-**Zip Merge1 (8 November 2026), applied; reported working (20:35).** It follows
-Lights1. SpritelyMove1 and Lights1 were built on GitHub's `03b7da3`, but
-the owner's copy already had two zips not on GitHub, GrabSize4096
-(4 November) and DragDrop (6 November; items 3 and 4 below). Their whole
-files overwrote those, so drag and drop stopped working and the custom
-grab size went back to 1024. Merge1 is the three-way merge (base
-`03b7da3`, the owner's DragDrop files, Sprite3D's with Spritely and the
-lights), with no conflicts: `src/ui/Sprite3dMain.pas`,
-`src/ui/Sprite3DHelpers.pas`, `README.md` and this file.
-`src/ui/Sprite3DSettingsForm.fmx`, the fourth file of those zips, was
-never overwritten. To test: drag and drop as in item 4, a custom grab of
-4096 as in item 3, and the lights as in Lights1.
-
-**Zip Lights1 (8 November 2026), not yet tested or pushed.** It follows
-SpritelyMove2. The owner suspects the original light of causing problems,
-so both lights can now be switched (`src/ui/Sprite3dMain.pas`, `.fmx`,
-`src/ui/Sprite3DHelpers.pas`, `README.md`):
-
-- View, Lights (after Orthographic, below a separator): **Headlight**
-  (`HeadlightItem`, ticked at first) sets `OrbitCamera.Headlight`, which
-  makes or frees the component's light; **Original Light**
-  (`OriginalLightItem`, unticked at first) makes or frees the form's own
-  light as it was made before SpritelyMove1, kept again in `GorillaLight`
-  (nil while off). Both are point lights on the camera at its origin.
-  `ApplyLights` does both and writes "Lights: headlight on, original light
-  off" (or as they are) in the Debug tab at start-up and whenever they
-  change. Kept as `headlight` and `originalLight` in `settings.json`
-  (`TSprite3DAppSettings.Headlight`, `OriginalLight`; restored by
-  `RestoreViewToggles`, saved by `SaveViewState`).
-- To test, on each platform: each item alone, both, and neither (unlit),
-  in the view and in a grab and an export; the Debug line each time; the
-  ticks restored next session; on Linux the submenu on the FMX menu bar
-  with full names; on Android and iOS the two items in the drawer.
-
-**Zip SpritelyMove2 (8 November 2026), not yet tested or pushed.** It
-follows SpritelyMove1, below, after the owner's answers (20:09): keep
-Neon; Gorilla3D is now installed for WinARM64EC; move ProjectionTest here.
-
-- The Spritely runtime package now builds for WinARM64EC
-  (`Spritely/packages/Spritely.dproj`, `Spritely/tools/gen_packages.py`).
-- ProjectionTest copied from SRDelphiFMX into `Spritely/ProjectionTest`
-  unchanged but for its FastMM5 path, with `DemoSceneNoWall.glb`,
-  `DollyHallway.glb` and `uvcube.glb` in `Spritely/models` and the scripts
-  that write the first two in `Spritely/tools` (run here,
-  `DollyHallway.glb` comes out byte for byte; `DemoSceneNoWall.glb`
-  differs only in its "generator" text, as it also does from
-  SRDelphiFMX's own copy of the script). In the group after Sprite3d.
-- To test: Spritely builds for WinARM64EC, and Sprite3d with it; on
-  Win64, ProjectionTest finds `Spritely/models`, loads
-  `DemoSceneNoWall.glb`, and Run test and the live controls work as they
-  did in SRDelphiFMX.
-
-**Zip SpritelyMove1 (8 November 2026), not yet tested or pushed.** It
-follows GitHub's `03b7da3` ("SingleInstance", 27 October 2026), which has
-the two deliveries of 27 October listed below.
-
-- Spritely copied whole from peardox/SRDelphiFMX into `Spritely/`: the
-  units, `.dcr`, icons and packages byte for byte, the three generator
-  scripts cut down to Spritely (run here, they rewrite the same files as
-  SRDelphiFMX's own scripts), and `Spritely/README.md`, made from the
-  component docs in SRDelphiFMX's `StereoModel/README.md`. ProjectionTest
-  followed in SpritelyMove2.
-- `Sprite3DGroup.groupproj`: Spritely, dclSpritely, then Sprite3d (which
-  depends on Spritely).
-- The camera: `src/lib/Sprite3DCamera.pas` deleted (out of the `.dpr` and
-  `.dproj`). The main form has a `TSpritelyOrbitalCamera`, `OrbitCamera`,
-  in the `.fmx` with no Viewport; `FormCreate` sets its `Headlight` and
-  `FOV`, then its `Viewport`, which builds the camera and the headlight,
-  and keeps them in `GorillaCamera` and `GorillaLight` as before, so the
-  rest of the form is unchanged. The headlight replaces the light the form
-  made by hand (the same point light at the camera's origin); both are
-  switchable from Lights1. `Sprite3DSweep` and `Sprite3DAnimCapture`
-  take a `TSpritelyOrbitalGorillaCamera`.
-- To test, on every platform built: the form opens in the designer (with
-  dclSpritely installed); the model is lit and framed exactly as before in
-  every view, perspective and orthographic; dials, Lock Camera, Temporary
-  Mouse View, pan, grabs, icons and every export as before; closing gives
-  no access violation and no new leak in FastMM5's report.
-
-`TSpritelyProjection`: used from Projection1 for the oblique projections.
-
-Before 8 November: GitHub was at `e160b7d` ("Missed stuff"), 27 October 2026. It has the Linux
-menu fix (`UseFmxMenuBar` copies the menu items rather than moving them,
-first thing in `FormCreate`), this file, `tools/pasdoc_check.py`, and the
-README brought up to date. The menu fix still wants the full Linux check:
-run from a terminal, no GTK warnings at start-up or while using the menus,
-one bar with full names, the items added in code working (Models, Animation
-Settings; View, Camera, Temporary Mouse View and Lock Camera; File, Debug
-with `--debug`), ticks moving, and the animation pop-up menu working.
-
-Delivered on 27 October 2026, not yet tested or pushed:
-
-1. **Temporary Mouse View** (`src/ui/Sprite3dMain.pas`, `README.md`):
-   View, Camera, Temporary Mouse View, above Lock Camera, desktop only, with
-   a "Mouseview On" readout at the top right of the view; while the view
-   is turned or zoomed it adds Azimuth and Distance (Size in orthographic
-   projection) as +/- from normal to 3 decimal places, and "Right Click to
-   Reset" (`UpdateMouseViewReadout`). The tick is kept as `mouseView` in
-   `settings.json`; the turn and zoom never are. Left-drag turns
-   the view, the wheel zooms (distance, or the orthographic size), a right
-   click (or Control-click) puts the normal view back. Kept as offsets (`FMouseYaw`,
-   `FMouseZoom`) on top of the normal view: `SuspendMouseView` and
-   `ResumeMouseView` take them off around anything that sets the normal
-   view (`FitModel`, now a wrapper round `FitNormalView`, `ApplyAngles`,
-   `ShowDistanceFactor`, `ShowCameraSpec`); `ResetMouseView` puts the normal
-   view back for grabs, icons and captures, and `CheckMouseViewSubject`
-   (from `FitModel` and the readout timer) when the model or animation
-   changes. `ShiftCamera` unlocks the camera for each change, so it works
-   while Lock Camera is ticked. `AspectLayout` takes the mouse only while
-   the item is ticked. To test: turning and zooming, in perspective and
-   orthographic; a right click back to normal; with Lock Camera ticked;
-   choosing another animation or static model (normal again); pausing and
-   stepping (kept); a grab and an export while turned (normal view saved,
-   and the view normal afterwards); the Variable dialog's dials while
-   turned; whether the wheel reaches the view on each platform. On macOS
-   grabs are screenshots of the view as last drawn, so check that a grab
-   made while turned is of the normal view.
-2. **One window on Windows** (`src/lib/Sprite3DOpenFiles.pas`,
-   `src/Sprite3d.dpr`, `src/ui/Sprite3dMain.pas`, `README.md`):
-   `HandOffToRunningInstance`, first thing in the `.dpr`. The first copy
-   keeps a named mutex (`Local\Sprite3D.Instance`) and a hidden
-   message-only window (class `Sprite3D.OpenFiles`); a later copy started
-   with files sends their full paths by `WM_COPYDATA` (`SendMessageTimeout`,
-   waiting up to 5 s for the first copy's window) and ends. The running copy
-   passes them to `FileOpenRequests.Request` from a fresh main-loop turn and
-   brings its form forward (`AllowSetForegroundWindow` in the sender).
-   `FPendingModel` became a queue, `FPendingModels`, so several models asked
-   for during a load all load in turn; `LoadStartupModel` loads every model
-   requested, and the start-up drains requests that arrived while the first
-   model loaded. Linux still opens a second window; a Unix socket would do
-   the same there. To test on Windows: double-click a static and an animated
-   model while running, while a model is loading, and several selected
-   together with Enter; with Sprite3D minimised; with no copy running.
-3. **Custom grab size up to 4096** (`GRAB_SIZE_MAX` in
-   `src/ui/Sprite3DHelpers.pas`, the two spin boxes' `Max` in
-   `src/ui/Sprite3DSettingsForm.fmx`, comments in `Sprite3dMain.pas`,
-   `README.md`), 4 November 2026; was 1024. Existing guards cover the
-   rest: `MAX_CAPTURE_BYTES` (1 GB) refuses a capture that would need more,
-   which at 4096 x 4096 is about 8 frames (two copies of each); an atlas
-   page smaller than the grab is reported; overscan past
-   `OVERSCAN_TARGET_LIMIT` (8192) uses shifted drawings. A GPU that cannot
-   draw 4096 at all reads back smaller and is scaled up, so is soft rather
-   than failing. To test: File, Settings, Custom 4096 x 4096; a grab, an
-   icon (unaffected), a short export, and a longer one (expect the memory
-   message).
-4. **Drag and drop** (`src/ui/Sprite3dMain.pas`, `README.md`), 6 November
-   2026: overrides of the form's virtual `DragOver` and `DragDrop` (FMX's
-   `TForm` has no `OnDragOver` or `OnDragDrop` events), with
-   `DroppableFiles` and `OpenDroppedFiles`. Models go to
-   `SwitchModel`, which queues them while one loads; project files to
-   `LoadProjectFile`, one per drop. Controls that take drops themselves get
-   them first: `inherited DragOver` asks the control under the pointer,
-   and `FDropToForm` notes whether none took it, for `DragDrop`.
-   Paths go through `FileUrlToPath` in case a Linux desktop sends
-   `file://` URLs. To test on each desktop platform: one static model, one
-   animated, several at once, a model with a folder and a text file, a
-   project file, dropping over the view, the lists and the Debug tab, and
-   during an export (refused).
+**Delivering on `main`.** The rules in *Delivering work* hold: whole
+files in a zip of what changed, the rebuild line, a `Spritely/NOTES.md`
+entry for any Spritely change, "Noted." to commit hooks. Name each zip and
+say which it follows; the last was ViewDefaults1.
 
 ### Things to check
 
@@ -1358,12 +538,33 @@ Delivered on 27 October 2026, not yet tested or pushed:
 
 These cost time once.
 
+- **FMX radio menu items untick only their siblings.** Items of one
+  `GroupIndex` split across a submenu (View, Projection's Oblique) stay
+  ticked together; tick and untick them all in code (`CheckProjection`),
+  including when restoring from settings.
+- **Delphi's `Format` has no `+` flag.** `'%+.2f'` does not give a signed
+  number; use `FormatFloat('+0.00;-0.00;+0.00', ...)`.
+- **The camera's fits allow for `TSpritelyProjection`'s lens shift**, and
+  so re-centre the model inside a shifted picture, undoing the shift. Fit
+  with no shift, then shift.
+- **Restoring the last session goes through the same handlers as choosing
+  a view.** Anything a choice resets (the preset views reset the distance
+  and shift) must be skipped while restoring (`FRestoringView`), or saved
+  values are lost at start-up.
+- **Grabs fit the model for themselves.** Anything the view puts on top of
+  its fit (the distance factor, the shift) must be put on the grab's fit
+  too, or the grab differs from the view. Compare a grid in both: its
+  square size gives the scale away.
+- **Values kept from earlier tests look like bugs.** When a control does
+  "something with nothing changed", first make the values visible (labels,
+  a Debug line); here the sliders were at +1, out of sight.
+
 - **GitHub can be behind the owner's copy by several zips.** Before
   delivering a whole file, make sure it was built on the owner's latest
   copy of it: the files the owner attached, the last zip of this
   conversation, or, if neither has it and "Where the work is" lists zips
   not on GitHub that touch it, ask for it first. On 8 November 2026 whole
-  files built on GitHub undid GrabSize4096 and DragDrop (see Merge1).
+  files built on GitHub undid GrabSize4096 and DragDrop; a merge put them back.
 
 - **FMX menus on Linux**: see *Menus* above. The full story, written for
   any FMX program, was worked out on GDEMFetch
