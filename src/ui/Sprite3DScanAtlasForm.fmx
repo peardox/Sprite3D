@@ -1,0 +1,163 @@
+object ScanAtlasForm: TScanAtlasForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Scan Atlas'
+  ClientHeight = 360
+  ClientWidth = 560
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object SizeLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 19.000000000000000000
+    Size.Width = 96.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Frame size'
+    TabOrder = 10
+  end
+  object WidthBox: TSpinBox
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 0
+    Cursor = crIBeam
+    DecimalDigits = 0
+    Min = 1.000000000000000000
+    Max = 16384.000000000000000000
+    Value = 64.000000000000000000
+    Position.X = 120.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 96.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'The width of every frame, in pixels'
+    ShowHint = True
+  end
+  object ByLabel: TLabel
+    Position.X = 224.000000000000000000
+    Position.Y = 19.000000000000000000
+    Size.Width = 16.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.HorzAlign = Center
+    Text = 'x'
+    TabOrder = 11
+  end
+  object HeightBox: TSpinBox
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 1
+    Cursor = crIBeam
+    DecimalDigits = 0
+    Min = 1.000000000000000000
+    Max = 16384.000000000000000000
+    Value = 64.000000000000000000
+    Position.X = 248.000000000000000000
+    Position.Y = 16.000000000000000000
+    Size.Width = 96.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    Hint = 'The height of every frame, in pixels'
+    ShowHint = True
+  end
+  object SheetsLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 52.000000000000000000
+    Size.Width = 528.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Sheets, in order'
+    TabOrder = 12
+  end
+  object SheetsList: TListBox
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Position.X = 16.000000000000000000
+    Position.Y = 72.000000000000000000
+    Size.Width = 432.000000000000000000
+    Size.Height = 228.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    DisableFocusEffect = True
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    OnChange = SheetsListChange
+    Viewport.Width = 428.000000000000000000
+    Viewport.Height = 224.000000000000000000
+  end
+  object AddButton: TButton
+    Anchors = [akTop, akRight]
+    Position.X = 456.000000000000000000
+    Position.Y = 72.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Add...'
+    Hint = 'Choose PNG sheets to add; several can be chosen at once'
+    ShowHint = True
+    OnClick = AddButtonClick
+  end
+  object RemoveButton: TButton
+    Anchors = [akTop, akRight]
+    Position.X = 456.000000000000000000
+    Position.Y = 102.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Text = 'Remove'
+    Hint = 'Take the selected sheet off the list'
+    ShowHint = True
+    OnClick = RemoveButtonClick
+  end
+  object ClearButton: TButton
+    Anchors = [akTop, akRight]
+    Position.X = 456.000000000000000000
+    Position.Y = 132.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 5
+    Text = 'Clear'
+    Hint = 'Take every sheet off the list'
+    ShowHint = True
+    OnClick = ClearButtonClick
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 316.000000000000000000
+    Size.Width = 560.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 6
+    object CancelButton: TButton
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      Position.X = 368.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Cancel'
+      OnClick = CancelButtonClick
+    end
+    object ScanButton: TButton
+      Anchors = [akRight, akBottom]
+      Default = True
+      Position.X = 456.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 88.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Scan'
+      Hint = 'Scan every sheet listed as one atlas'
+      ShowHint = True
+      OnClick = ScanButtonClick
+    end
+  end
+end

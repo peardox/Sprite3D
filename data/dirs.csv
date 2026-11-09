@@ -1,0 +1,9 @@
+"CompassShort", "CompassLong", "CompassAngle"
+"S",            "South",           270
+"W",            "West",            180
+"E",            "East",            000
+"N",            "North",           090
+"SW",           "SouthWest",       215
+"NW",           "NorthWest",       135
+"SE",           "SouthEast",       315
+"NE",           "NorthEast",       045

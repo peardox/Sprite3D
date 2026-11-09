@@ -1,0 +1,42 @@
+Accessories
+Base
+Bottom
+Hair
+Head
+Shadow
+Top
+Weapons
+    Axe
+    Bow
+    Dagger
+    DaggerOffhand
+    Halberd
+    Mace
+    Shield
+    Spear
+    Staff
+    Sword
+    Xbow
+    
+Character
+D:\work\assets\PVG\Otherworlds\Other Worlds Characters
+D:\work\assets\PVG\Northfolk\Northfolk_CharacterCreatorKit_1\Northfolk Character Creator Kit 1
+D:\work\assets\PVG\Northfolk\Northfolk_CharacterCreatorKit_1\Northfolk Character Creator Kit 2
+D:\work\assets\PVG\Doomsday\Doomsday Character Creator Kit 1 Pt1
+D:\work\assets\PVG\Doomsday\Doomsday Character Creator Kit 2 Pt1
+D:\work\assets\PVG\CyberCity\CyberCity_CharacterCreator
+D:\work\assets\PVG\Apocalypse\CharacterPieces
+D:\work\assets\PVG\Apocalypse\Characters
+D:\work\assets\PVG\RPG_Tools\RPGTools_CharacterPieces_1
+D:\work\assets\PVG\RPG_Tools\RPGTools_Addon_Characters_1
+
+Monster
+D:\work\assets\PVG\Apocalypse\Zombies
+
+Constructed
+8 way = 486
+4 way = 380
+
+312 x 220 / 381.76 = 0.57627829002 = 35.1892009 deg / 0.614167416 rad
+
+417 / 296 = 35.368356789767 deg / 0.617294277 rad

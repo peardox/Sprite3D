@@ -1,0 +1,20 @@
+# Code, Desc, Files, Directions, xspr, yspr, sheetcount, totalrows, totalsprites, totalfree
+"MonsterNew","","Direction8", 2,21,21,1,14,440,1
+# Filename, rows, sprites,free
+"Spritesheet.png",14,440,1
+"Spritesheet_Shadow.png",14,440,1
+# sprite rows start
+"walk",                   64,         "L",        8,       8
+"run",                    64,         "L",        8,       8
+"idle",                   40,         "L",        5,       8
+"idle fidget",            24,        "SP",        3,       8
+"attack 1",               24,         "S",        3,       8
+"attack 2",               24,         "S",        3,       8
+"use skill",              24,         "S",        3,       8
+"block",                  24,         "S",        3,       8
+"evade",                  24,         "S",        3,       8
+"get hit",                24,         "S",        3,       8
+"critical HP",            24,         "P",        3,       8
+"down",                   24,         "S",        3,       8
+"down poses",             32,         "U",        4,       8
+"behaviour",              24,         "P",        3,       8

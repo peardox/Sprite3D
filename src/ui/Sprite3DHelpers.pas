@@ -409,6 +409,11 @@ type
     FOpenDirectorySpec: String;
     //** Tools, Scan Sprites' folder; see ScanSpritesFolder.
     FScanSpritesFolder: String;
+    //** Tools, Scan Atlas' folder and frame size; see ScanAtlasFolder, ScanAtlasFrameWidth
+    //** and ScanAtlasFrameHeight.
+    FScanAtlasFolder: String;
+    FScanAtlasFrameWidth: Integer;
+    FScanAtlasFrameHeight: Integer;
     FShowOverscanWarning: Boolean;
     FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
@@ -861,6 +866,21 @@ type
     //**
     //** Stored as @code(scanSpritesFolder).
     property ScanSpritesFolder: String read FScanSpritesFolder write FScanSpritesFolder;
+    //** @abstract(Where Tools, Scan Atlas' file dialog opens: the folder the last sheets
+    //** were added from; empty until it has been used.)
+    //**
+    //** Stored as @code(scanAtlasFolder).
+    property ScanAtlasFolder: String read FScanAtlasFolder write FScanAtlasFolder;
+    //** @abstract(The frame width Tools, Scan Atlas last used, in pixels; 64 by default.)
+    //**
+    //** Stored as @code(scanAtlasFrameWidth).
+    property ScanAtlasFrameWidth: Integer read FScanAtlasFrameWidth
+      write FScanAtlasFrameWidth;
+    //** @abstract(The frame height Tools, Scan Atlas last used, in pixels; 64 by default.)
+    //**
+    //** Stored as @code(scanAtlasFrameHeight).
+    property ScanAtlasFrameHeight: Integer read FScanAtlasFrameHeight
+      write FScanAtlasFrameHeight;
     //** @abstract(Whether ticking Overscan in Models, Animation Settings first warns how
     //** much longer rendering takes; True by default.)
     //**
@@ -1663,6 +1683,9 @@ begin
   FOpenDirectoryFolder := String.Empty;
   FOpenDirectorySpec := '*.glb';
   FScanSpritesFolder := String.Empty;
+  FScanAtlasFolder := String.Empty;
+  FScanAtlasFrameWidth := 64;
+  FScanAtlasFrameHeight := 64;
   FShowOverscanWarning := True;
   FShowExactWarning := True;
   FResultsShowGrid := True;

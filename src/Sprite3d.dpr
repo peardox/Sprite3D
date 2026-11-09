@@ -88,7 +88,8 @@ uses
   Sprite3DPngReader in 'lib\Sprite3DPngReader.pas',
   Sprite3DFolderDialog in 'lib\Sprite3DFolderDialog.pas',
   Sprite3DSpriteScan in 'lib\Sprite3DSpriteScan.pas',
-  Sprite3DSpriteScanForm in 'ui\Sprite3DSpriteScanForm.pas' {SpriteScanForm};
+  Sprite3DSpriteScanForm in 'ui\Sprite3DSpriteScanForm.pas' {SpriteScanForm},
+  Sprite3DScanAtlasForm in 'ui\Sprite3DScanAtlasForm.pas' {ScanAtlasForm};
 
 {$R *.res}
 // The themes' FMX styles, inside the program on every platform. The .res

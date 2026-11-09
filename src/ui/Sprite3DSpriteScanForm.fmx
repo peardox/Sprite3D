@@ -19,15 +19,11 @@ object SpriteScanForm: TSpriteScanForm
     Position.X = 8.000000000000000000
     Position.Y = 8.000000000000000000
     Size.Width = 1064.000000000000000000
-    Size.Height = 36.000000000000000000
+    Size.Height = 72.000000000000000000
     Size.PlatformDefault = False
     TextSettings.VertAlign = Leading
     TextSettings.WordWrap = True
-    Text = 
-      'One row per folder of frames. Left, Top, Right and Bottom are the e' +
-      'mpty border every frame shares, as sprite_empty is worked out; Cont' +
-      'ent is what is left once it is cropped. Coverage is each frame'#39's d' +
-      'rawn pixels as a share of Content: the lowest, mean and highest.'
+    Text = 'One row per folder of frames.'
     TabOrder = 3
   end
   object Grid: TStringGrid

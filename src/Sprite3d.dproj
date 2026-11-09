@@ -430,6 +430,10 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <Form>SpriteScanForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
+        <DCCReference Include="ui\Sprite3DScanAtlasForm.pas">
+            <Form>ScanAtlasForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <None Include="styles\Sprite3DThemes.rc"/>
         <None Include="styles\buildstyles.cmd"/>
         <None Include="..\README.md"/>

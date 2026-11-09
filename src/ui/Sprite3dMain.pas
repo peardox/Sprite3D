@@ -263,7 +263,8 @@
 //** |   `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
 //** |                                          frames
 //** `-- ToolsMenu "Tools"                 desktop only: left out on Android and iOS
-//**     `-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+//**     |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+//**     `-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
 //** )
 unit Sprite3dMain;
 {
@@ -544,7 +545,8 @@ unit Sprite3dMain;
     |   `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
     |                                          frames
     `-- ToolsMenu "Tools"                 desktop only: left out on Android and iOS
-        `-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+        |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+        `-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
 }
 
 interface
@@ -563,7 +565,7 @@ uses
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
-  Sprite3DResultsView, Sprite3DNameClashForm, Sprite3DSpriteScan,
+  Sprite3DResultsView, Sprite3DNameClashForm, Sprite3DSpriteScan, Sprite3DSpriteScanForm,
   System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -781,12 +783,15 @@ type
     //** rather than on the model shown, starting with ScanSpritesItem.)
     //**
     //** Desktop only: FormCreate frees it on Android and iOS, before the drawer is built,
-    //** as its tools need folder dialogs those platforms lack; the field, and
-    //** ScanSpritesItem's, are then nil.
+    //** as its tools need folder dialogs those platforms lack; the field, and its items',
+    //** are then nil.
     ToolsMenu: TMenuItem;
     //** @abstract(The Tools menu's "Scan Sprites..." item; see ScanSpritesItemClick.
-    //** Disabled while a scan runs.)
+    //** Disabled while a Tools scan runs.)
     ScanSpritesItem: TMenuItem;
+    //** @abstract(The Tools menu's "Scan Atlas..." item; see ScanAtlasItemClick. Disabled
+    //** while a Tools scan runs.)
+    ScanAtlasItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
@@ -1118,7 +1123,11 @@ type
     //** a worker thread, each with ScanSpriteFolder from Sprite3DSpriteScan: every frame's
     //** empty border, measured as an export's metadata measures it, combined over the
     //** folder as @code(sprite_empty) is, the content box left once that is cropped, and each
-    //** frame's coverage of it. The results go to the Debug tab in full and to
+    //** frame's coverage of it. CombineSpriteScans then takes the least of each side over
+    //** every folder, and every frame's coverage is worked out again against the content
+    //** box they share. Every frame of every folder must be the same size: if any differs,
+    //** the scan has failed, a message says which two differ, and no grid is shown.
+    //** Otherwise the results go to the Debug tab in full and to
     //** TSpriteScanForm, a grid with one row per folder named by the folder's own name; if
     //** a model is loading or an export running when they are ready, the grid waits until it
     //** has finished. Nothing happens if the dialog is cancelled, or while a scan runs.
@@ -1126,6 +1135,23 @@ type
     //**
     //** @param(Sender ScanSpritesItem.)
     procedure ScanSpritesItemClick(Sender: TObject);
+    //** @abstract(Measures an atlas made elsewhere: one or more sheets, each a grid of frames
+    //** of one size, holding a character's animations.)
+    //**
+    //** TScanAtlasForm asks for the frame size and the sheets, starting with the size and
+    //** folder used last, kept in settings.json. The sheets are read on a worker thread with
+    //** ScanAtlas from Sprite3DSpriteScan: every frame of every sheet measured as Scan
+    //** Sprites measures a folder's, frames with nothing drawn counted as unused padding and
+    //** left out, the border combined over the rest as @code(sprite_empty) is, and each
+    //** frame's coverage of the box left. A sheet that is not a whole number of frames, or
+    //** cannot be read, fails the scan, and a message says which. Otherwise one row for the
+    //** whole atlas goes to TSpriteScanForm and the Debug tab, with the lowest, median and
+    //** highest coverage. The grid waits, as Scan Sprites' does, while a model loads or an
+    //** export runs. Nothing happens if the dialog is cancelled, or while a Tools scan runs.
+    //** Desktop only.
+    //**
+    //** @param(Sender ScanAtlasItem.)
+    procedure ScanAtlasItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -2731,73 +2757,112 @@ type
       const AMeta: TSprite3DSheetMeta; const ABorders, ADeferMetadata: Boolean;
       out APending: TSprite3DSheetMetadata; out AHasPending: Boolean): String;
   private
-    //** True from the start of a Tools, Scan Sprites scan until its results are ready.
-    FSpriteScanning: Boolean;
-    //** A scan's results, kept until they can be shown: the folders' scans, and why the
-    //** scan stopped, if it did; see ShowPendingSpriteScan.
-    FPendingSpriteScan: TArray<TSprite3DSpriteScan>;
-    FPendingSpriteScanError: String;
-    //** True while a scan's results are waiting to be shown.
-    FSpriteScanWaiting: Boolean;
-    //** Made when a scan's results first have to wait; ticks ShowPendingSpriteScan until
-    //** they can be shown, and is disabled then. Owned by the form.
-    FSpriteScanTimer: TTimer;
-    //** @abstract(Enables Tools, Scan Sprites unless a scan is running or its results are
+    //** True from the start of a Tools scan (Scan Sprites or Scan Atlas) until its results
+    //** are ready; one runs at a time.
+    FToolScanning: Boolean;
+    //** True while a Tools scan's results are waiting to be shown.
+    FToolResultsWaiting: Boolean;
+    //** The waiting results: the table to show, or, if not empty, why the scan failed or
+    //** stopped, shown in a message instead; see ShowPendingToolResults.
+    FToolResults: TScanTable;
+    FToolFailure: String;
+    //** Made when a Tools scan's results first have to wait; ticks ShowPendingToolResults
+    //** until they can be shown, and is disabled then. Owned by the form.
+    FToolTimer: TTimer;
+    //** @abstract(Enables the Tools menu's scans unless one is running or its results are
     //** waiting.)
-    procedure UpdateScanSpritesItem;
+    procedure UpdateToolItems;
     //** @abstract(Scans the folders chosen on a worker thread and hands the results to
     //** FinishSpriteScan.)
     //**
     //** SpriteFolders turns the folders chosen into the folders to scan, and each is read
-    //** with ScanSpriteFolder in turn, its name logged as it starts. The worker stops at the
-    //** next frame if the main form goes.
+    //** with ScanSpriteFolder in turn, its name logged as it starts; CombineSpriteScans
+    //** then works out the box every animation shares. The worker stops at the next frame if
+    //** the main form goes.
     //**
     //** @param(AFolders The folders chosen, as full paths, already through OSFriendlyPath.)
     procedure StartSpriteScan(const AFolders: TArray<String>);
-    //** @abstract(From the scan's worker thread: queues SpriteScanProgress on the main
+    //** @abstract(Scans an atlas's sheets with ScanAtlas on a worker thread and hands the
+    //** result to FinishAtlasScan.)
+    //**
+    //** @param(AFiles The sheets, as full paths, already through OSFriendlyPath, in order.)
+    //** @param(AFrameWidth The width of every frame, in pixels.)
+    //** @param(AFrameHeight The height of every frame, in pixels.)
+    procedure StartAtlasScan(const AFiles: TArray<String>; const AFrameWidth,
+      AFrameHeight: Integer);
+    //** @abstract(From a Tools scan's worker thread: queues ToolProgress on the main
     //** thread.)
     //**
     //** A method of its own, so the queued call captures these parameters' values, not the
     //** worker's loop variables.
     //**
-    //** @param(AName The folder's own name.)
-    //** @param(AIndex Which folder it is, from 1.)
-    //** @param(ACount How many folders there are.)
-    procedure QueueSpriteScanProgress(const AName: String; const AIndex, ACount: Integer);
-    //** @abstract(Logs which folder the scan has reached, in the Debug tab.)
-    //** @param(AName The folder's own name.)
-    //** @param(AIndex Which folder it is, from 1.)
-    //** @param(ACount How many folders there are.)
-    procedure SpriteScanProgress(const AName: String; const AIndex, ACount: Integer);
-    //** @abstract(From the scan's worker thread: queues FinishSpriteScan on the main thread
-    //** with the scan's results.)
+    //** @param(ATool The tool, such as @code(Scan Sprites), for the log.)
+    //** @param(AName The folder's or sheet's name.)
+    //** @param(AIndex Which it is, from 1.)
+    //** @param(ACount How many there are.)
+    procedure QueueToolProgress(const ATool, AName: String; const AIndex, ACount: Integer);
+    //** @abstract(Logs which folder or sheet a Tools scan has reached, in the Debug tab.)
+    //** @param(ATool The tool, such as @code(Scan Sprites).)
+    //** @param(AName The folder's or sheet's name.)
+    //** @param(AIndex Which it is, from 1.)
+    //** @param(ACount How many there are.)
+    procedure ToolProgress(const ATool, AName: String; const AIndex, ACount: Integer);
+    //** @abstract(From Scan Sprites' worker thread: queues FinishSpriteScan on the main
+    //** thread with the scan's results.)
     //** @param(AScans The folders' scans, in order.)
+    //** @param(AShared What CombineSpriteScans returned for them.)
     //** @param(AError Why the scan stopped, or empty.)
     procedure QueueSpriteScanResults(const AScans: TArray<TSprite3DSpriteScan>;
-      const AError: String);
-    //** @abstract(Takes a scan's results on the main thread: logs them in full and shows
-    //** them, now or once nothing stands in the way.)
+      const AShared: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Takes Scan Sprites' results on the main thread: logs them in full and
+    //** shows them with ShowToolResults, or says why the scan failed.)
+    //**
+    //** Every frame of every folder must be the same size: if any differs, the scan has
+    //** failed, and a message says which two differ instead of the grid.
+    //**
     //** @param(AScans The folders' scans, in order.)
+    //** @param(AShared What CombineSpriteScans returned for them.)
     //** @param(AError Why the scan stopped, or empty.)
     procedure FinishSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
-      const AError: String);
-    //** @abstract(Writes a scan's results to the Debug tab: one line per folder with every
-    //** column of the grid, its full path and active pixel counts, and a line for each file
-    //** not read.)
+      const AShared: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Writes Scan Sprites' results to the Debug tab: one line per folder with
+    //** every column of the grid, its full path and active pixel counts, a line for each
+    //** file not read, and the box every animation shares, or why the scan failed.)
     //** @param(AScans The folders' scans, in order.)
-    procedure LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>);
-    //** @abstract(Whether a scan's results must wait: while a model is loading, a folder
-    //** is being opened, or anything is being captured or exported, each of which has a
-    //** dialog of its own up, and a second dialog must not open over it.)
+    //** @param(AShared What CombineSpriteScans returned for them.)
+    procedure LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+      const AShared: TSprite3DSpriteScan);
+    //** @abstract(From Scan Atlas' worker thread: queues FinishAtlasScan on the main
+    //** thread with the scan's result.)
+    //** @param(AAtlas What ScanAtlas returned.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure QueueAtlasScanResult(const AAtlas: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Takes Scan Atlas' result on the main thread: logs it and shows it with
+    //** ShowToolResults, or says why the scan failed.)
+    //**
+    //** A sheet that is not a whole number of frames, or cannot be read, fails the scan,
+    //** and a message says which instead of the grid.
+    //**
+    //** @param(AAtlas What ScanAtlas returned.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure FinishAtlasScan(const AAtlas: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Hands a Tools scan's results to ShowPendingToolResults, which shows them
+    //** now or once nothing stands in the way.)
+    //** @param(ATable The table to show, if AFailure is empty.)
+    //** @param(AFailure Why the scan failed or stopped, shown in a message instead; empty if
+    //** it did not.)
+    procedure ShowToolResults(const ATable: TScanTable; const AFailure: String);
+    //** @abstract(Whether a Tools scan's results must wait: while a model is loading, a
+    //** folder is being opened, or anything is being captured or exported, each of which
+    //** has a dialog of its own up, and a second dialog must not open over it.)
     //** @returns(True to wait.)
-    function SpriteScanBlocked: Boolean;
-    //** @abstract(Shows the waiting results in TSpriteScanForm, or a message if there are
-    //** none or the scan stopped; or, while SpriteScanBlocked, leaves FSpriteScanTimer to
-    //** try again.)
-    procedure ShowPendingSpriteScan;
-    //** @abstract(FSpriteScanTimer's tick: tries ShowPendingSpriteScan again.)
-    //** @param(Sender FSpriteScanTimer.)
-    procedure SpriteScanTimerTick(Sender: TObject);
+    function ToolResultsBlocked: Boolean;
+    //** @abstract(Shows the waiting results in TSpriteScanForm, or the failure in a
+    //** message; or, while ToolResultsBlocked, leaves FToolTimer to try again.)
+    procedure ShowPendingToolResults;
+    //** @abstract(FToolTimer's tick: tries ShowPendingToolResults again.)
+    //** @param(Sender FToolTimer.)
+    procedure ToolTimerTick(Sender: TObject);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -2875,7 +2940,7 @@ uses
   Sprite3DOpenFiles, Sprite3DBackgroundForm,
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
   Sprite3DCreditsForm, System.DateUtils, JsonText, Sprite3DOpenDirectoryForm,
-  Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DSpriteScanForm;
+  Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DScanAtlasForm;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -12408,10 +12473,12 @@ begin
 end;
 {$ENDIF}
 
-procedure TMainForm.UpdateScanSpritesItem;
+procedure TMainForm.UpdateToolItems;
 begin
   if ScanSpritesItem <> nil then
-    ScanSpritesItem.Enabled := not FSpriteScanning and not FSpriteScanWaiting;
+    ScanSpritesItem.Enabled := not FToolScanning and not FToolResultsWaiting;
+  if ScanAtlasItem <> nil then
+    ScanAtlasItem.Enabled := not FToolScanning and not FToolResultsWaiting;
 end;
 
 procedure TMainForm.ScanSpritesItemClick(Sender: TObject);
@@ -12439,7 +12506,7 @@ var
 {$ENDIF}
 begin
   {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
-  if FSpriteScanning or FSpriteScanWaiting then
+  if FToolScanning or FToolResultsWaiting then
     Exit;
   if CanSelectSeveralFolders then
     Title := 'Scan Sprites: choose the folders of frames, one per animation'
@@ -12463,17 +12530,17 @@ end;
 
 // The folders are read on a worker thread, which touches nothing of the
 // form's: it hands its results back through QueueSpriteScanResults, and its
-// progress through QueueSpriteScanProgress. MainFormGone stops it at the
-// next frame if the window closes meanwhile.
+// progress through QueueToolProgress. MainFormGone stops it at the next
+// frame if the window closes meanwhile.
 procedure TMainForm.StartSpriteScan(const AFolders: TArray<String>);
 var
   Chosen: TArray<String>;
 begin
-  if FSpriteScanning or FSpriteScanWaiting then
+  if FToolScanning or FToolResultsWaiting then
     Exit;
   Chosen := AFolders;
-  FSpriteScanning := True;
-  UpdateScanSpritesItem;
+  FToolScanning := True;
+  UpdateToolItems;
   DebugMemo.Lines.Add(Format('Scan Sprites: %d folders chosen: %s',
     [Length(Chosen), String.Join('; ', Chosen)]));
   TTask.Run(
@@ -12481,10 +12548,12 @@ begin
     var
       Folders: TArray<String>;
       Scans: TArray<TSprite3DSpriteScan>;
+      Shared: TSprite3DSpriteScan;
       Error: String;
       I: Integer;
     begin
       Scans := nil;
+      Shared := EmptySpriteScan;
       Error := String.Empty;
       try
         Folders := SpriteFolders(Chosen);
@@ -12492,29 +12561,119 @@ begin
         begin
           if MainFormGone then
             Exit;
-          QueueSpriteScanProgress(SpriteFolderName(Folders[I]), I + 1, Length(Folders));
+          QueueToolProgress('Scan Sprites', SpriteFolderName(Folders[I]), I + 1,
+            Length(Folders));
           Scans := Scans + [ScanSpriteFolder(Folders[I],
             function: Boolean
             begin
               Result := MainFormGone;
             end)];
         end;
+        // The least of each side over every animation, and every frame's
+        // coverage of the content box they then share; or, if any frames
+        // differ in size, the reason nothing can be worked out
+        Shared := CombineSpriteScans(Scans);
       except
         on E: Exception do
           Error := E.Message;
       end;
       if not MainFormGone then
-        QueueSpriteScanResults(Scans, Error);
+        QueueSpriteScanResults(Scans, Shared, Error);
     end);
 end;
 
-procedure TMainForm.QueueSpriteScanProgress(const AName: String;
+procedure TMainForm.ScanAtlasItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TScanAtlasForm;
+  Files: TArray<String>;
+  FrameWidth, FrameHeight, I: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Dialog := TScanAtlasForm.Create(nil);
+  try
+    Dialog.FrameWidth := FSettings.ScanAtlasFrameWidth;
+    Dialog.FrameHeight := FSettings.ScanAtlasFrameHeight;
+    Dialog.Folder := FSettings.ScanAtlasFolder;
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    Files := Dialog.Files;
+    FrameWidth := Dialog.FrameWidth;
+    FrameHeight := Dialog.FrameHeight;
+    FSettings.ScanAtlasFrameWidth := FrameWidth;
+    FSettings.ScanAtlasFrameHeight := FrameHeight;
+    FSettings.ScanAtlasFolder := Dialog.Folder;
+  finally
+    Dialog.Free;
+  end;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  for I := 0 to High(Files) do
+    Files[I] := OSFriendlyPath(Files[I]);
+  StartAtlasScan(Files, FrameWidth, FrameHeight);
+  {$ENDIF}
+end;
+
+// As StartSpriteScan: the sheets are read on a worker thread, which hands its
+// result back through QueueAtlasScanResult
+procedure TMainForm.StartAtlasScan(const AFiles: TArray<String>; const AFrameWidth,
+  AFrameHeight: Integer);
+var
+  Files: TArray<String>;
+  FrameWidth, FrameHeight: Integer;
+begin
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Files := AFiles;
+  FrameWidth := AFrameWidth;
+  FrameHeight := AFrameHeight;
+  FToolScanning := True;
+  UpdateToolItems;
+  DebugMemo.Lines.Add(Format('Scan Atlas: frames of %d x %d, %d sheets: %s',
+    [FrameWidth, FrameHeight, Length(Files), String.Join('; ', Files)]));
+  TTask.Run(
+    procedure
+    var
+      Atlas: TSprite3DSpriteScan;
+      Error: String;
+    begin
+      Atlas := EmptySpriteScan;
+      Error := String.Empty;
+      try
+        Atlas := ScanAtlas(Files, FrameWidth, FrameHeight,
+          function: Boolean
+          begin
+            Result := MainFormGone;
+          end,
+          procedure(const AName: String; const AIndex, ACount: Integer)
+          begin
+            QueueToolProgress('Scan Atlas', AName, AIndex, ACount);
+          end);
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      if not MainFormGone then
+        QueueAtlasScanResult(Atlas, Error);
+    end);
+end;
+
+procedure TMainForm.QueueToolProgress(const ATool, AName: String;
   const AIndex, ACount: Integer);
 var
-  Name: String;
+  Tool, Name: String;
   Index, Count: Integer;
 begin
   // Copies, captured by the queued call, of this call's values
+  Tool := ATool;
   Name := AName;
   Index := AIndex;
   Count := ACount;
@@ -12522,46 +12681,59 @@ begin
     procedure
     begin
       if not MainFormGone then
-        SpriteScanProgress(Name, Index, Count);
+        ToolProgress(Tool, Name, Index, Count);
     end);
 end;
 
-procedure TMainForm.SpriteScanProgress(const AName: String; const AIndex, ACount: Integer);
+procedure TMainForm.ToolProgress(const ATool, AName: String; const AIndex, ACount: Integer);
 begin
-  DebugMemo.Lines.Add(Format('Scan Sprites: reading %s (%d of %d)', [AName, AIndex, ACount]));
+  DebugMemo.Lines.Add(Format('%s: reading %s (%d of %d)', [ATool, AName, AIndex, ACount]));
 end;
 
 procedure TMainForm.QueueSpriteScanResults(const AScans: TArray<TSprite3DSpriteScan>;
-  const AError: String);
+  const AShared: TSprite3DSpriteScan; const AError: String);
 var
   Scans: TArray<TSprite3DSpriteScan>;
+  Shared: TSprite3DSpriteScan;
   Error: String;
 begin
   Scans := AScans;
+  Shared := AShared;
   Error := AError;
   TThread.Queue(nil,
     procedure
     begin
       if not MainFormGone then
-        FinishSpriteScan(Scans, Error);
+        FinishSpriteScan(Scans, Shared, Error);
     end);
 end;
 
 procedure TMainForm.FinishSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
-  const AError: String);
+  const AShared: TSprite3DSpriteScan; const AError: String);
 begin
-  FSpriteScanning := False;
-  LogSpriteScan(AScans);
+  FToolScanning := False;
   if AError <> String.Empty then
+  begin
     DebugMemo.Lines.Add('Scan Sprites stopped: ' + AError);
-  FPendingSpriteScan := AScans;
-  FPendingSpriteScanError := AError;
-  FSpriteScanWaiting := True;
-  UpdateScanSpritesItem;
-  ShowPendingSpriteScan;
+    ShowToolResults(EmptyScanTable, 'Scan Sprites stopped: ' + AError);
+    Exit;
+  end;
+  LogSpriteScan(AScans, AShared);
+  if Length(AScans) = 0 then
+    ShowToolResults(EmptyScanTable, 'Scan Sprites found no folders to scan.')
+  // Every frame of every folder must be the same size; if not, the scan
+  // has failed, as none of its figures mean anything
+  else if AShared.SizeMismatch then
+    ShowToolResults(EmptyScanTable, 'Scan Sprites failed: every frame must be the ' +
+      'same size, and they are not.' + sLineBreak + sLineBreak + AShared.Error +
+      sLineBreak + sLineBreak + 'Nothing can be worked out until they are. The Debug tab ' +
+      'lists each folder.')
+  else
+    ShowToolResults(SpriteScanTable(AScans, AShared), String.Empty);
 end;
 
-procedure TMainForm.LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>);
+procedure TMainForm.LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+  const AShared: TSprite3DSpriteScan);
 var
   Scan: TSprite3DSpriteScan;
   Headers, Cells, Parts: TArray<String>;
@@ -12580,74 +12752,137 @@ begin
         Parts := Parts + [Headers[I] + ' ' + Cells[I]];
     DebugMemo.Lines.Add(Format('Scan Sprites: %s (%s): %s', [Scan.Name, Scan.Folder,
       String.Join(', ', Parts)]));
-    if Scan.Valid then
+    // Cover is the most of these over the box every animation shares
+    if Scan.Valid and AShared.Valid then
       DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, ' +
-        'of %d in the content box', [Scan.ActiveMin, FormatFloat('0.0', Scan.ActiveMean),
-        Scan.ActiveMax, Int64(Scan.ContentWidth) * Scan.ContentHeight]));
+        'of %d in the shared box', [Scan.ActiveMin, FormatFloat('0.0', Scan.ActiveMean),
+        Scan.ActiveMax, Int64(AShared.ContentWidth) * AShared.ContentHeight]));
     for Skipped in Scan.Skipped do
       DebugMemo.Lines.Add('  not read: ' + Skipped);
   end;
+  if AShared.SizeMismatch then
+    DebugMemo.Lines.Add('Scan Sprites FAILED: the frames are not all the same size. ' +
+      AShared.Error)
+  else
+    DebugMemo.Lines.Add('Scan Sprites: shared by every animation: ' +
+      SpriteScanSharedText(AShared));
 end;
 
-function TMainForm.SpriteScanBlocked: Boolean;
+procedure TMainForm.QueueAtlasScanResult(const AAtlas: TSprite3DSpriteScan;
+  const AError: String);
+var
+  Atlas: TSprite3DSpriteScan;
+  Error: String;
+begin
+  Atlas := AAtlas;
+  Error := AError;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        FinishAtlasScan(Atlas, Error);
+    end);
+end;
+
+procedure TMainForm.FinishAtlasScan(const AAtlas: TSprite3DSpriteScan; const AError: String);
+var
+  Headers, Cells, Parts: TArray<String>;
+  I: Integer;
+begin
+  FToolScanning := False;
+  if AError <> String.Empty then
+  begin
+    DebugMemo.Lines.Add('Scan Atlas stopped: ' + AError);
+    ShowToolResults(EmptyScanTable, 'Scan Atlas stopped: ' + AError);
+    Exit;
+  end;
+  if not AAtlas.Valid then
+  begin
+    DebugMemo.Lines.Add(Format('Scan Atlas FAILED: %s: %s', [AAtlas.Name, AAtlas.Error]));
+    ShowToolResults(EmptyScanTable, 'Scan Atlas failed: ' + AAtlas.Error +
+      sLineBreak + sLineBreak + 'Nothing can be worked out until it is put right.');
+    Exit;
+  end;
+  // Every column the grid has, by its heading, then the active pixel counts
+  Headers := AtlasScanHeaders;
+  Cells := AtlasScanCells(AAtlas);
+  Parts := nil;
+  for I := 1 to Min(High(Headers), High(Cells)) do
+    if Cells[I] <> String.Empty then
+      Parts := Parts + [Headers[I] + ' ' + Cells[I]];
+  DebugMemo.Lines.Add(Format('Scan Atlas: %s: %s', [AAtlas.Name, String.Join(', ', Parts)]));
+  DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, of %d ' +
+    'in the box', [AAtlas.ActiveMin, FormatFloat('0.0', AAtlas.ActiveMean), AAtlas.ActiveMax,
+    Int64(AAtlas.ContentWidth) * AAtlas.ContentHeight]));
+  DebugMemo.Lines.Add('  ' + AtlasScanPackingText(AAtlas));
+  ShowToolResults(AtlasScanTable(AAtlas), String.Empty);
+end;
+
+procedure TMainForm.ShowToolResults(const ATable: TScanTable; const AFailure: String);
+begin
+  FToolResults := ATable;
+  FToolFailure := AFailure;
+  FToolResultsWaiting := True;
+  UpdateToolItems;
+  ShowPendingToolResults;
+end;
+
+function TMainForm.ToolResultsBlocked: Boolean;
 begin
   Result := Capturing or FAtlasSaving or FQueueActive or FScanning or
     (FLoadStage <> lsNone) or (FLoadDialog <> nil);
 end;
 
-procedure TMainForm.ShowPendingSpriteScan;
+procedure TMainForm.ShowPendingToolResults;
 var
-  Scans: TArray<TSprite3DSpriteScan>;
-  Error: String;
+  Table: TScanTable;
+  Failure: String;
   Dialog: TSpriteScanForm;
 begin
-  if not FSpriteScanWaiting or MainFormGone then
+  if not FToolResultsWaiting or MainFormGone then
     Exit;
-  if SpriteScanBlocked then
+  if ToolResultsBlocked then
   begin
     // Tried again every half second until nothing has a dialog up
-    if FSpriteScanTimer = nil then
+    if FToolTimer = nil then
     begin
-      FSpriteScanTimer := TTimer.Create(Self);
-      FSpriteScanTimer.Interval := 500;
-      FSpriteScanTimer.OnTimer := SpriteScanTimerTick;
+      FToolTimer := TTimer.Create(Self);
+      FToolTimer.Interval := 500;
+      FToolTimer.OnTimer := ToolTimerTick;
     end;
-    if not FSpriteScanTimer.Enabled then
-      DebugMemo.Lines.Add('Scan Sprites: the results will show once loading or ' +
-        'exporting has finished');
-    FSpriteScanTimer.Enabled := True;
+    if not FToolTimer.Enabled then
+      DebugMemo.Lines.Add('Tools: the results will show once loading or exporting has ' +
+        'finished');
+    FToolTimer.Enabled := True;
     Exit;
   end;
-  if FSpriteScanTimer <> nil then
-    FSpriteScanTimer.Enabled := False;
-  Scans := FPendingSpriteScan;
-  Error := FPendingSpriteScanError;
-  FPendingSpriteScan := nil;
-  FPendingSpriteScanError := String.Empty;
-  FSpriteScanWaiting := False;
-  UpdateScanSpritesItem;
+  if FToolTimer <> nil then
+    FToolTimer.Enabled := False;
+  Table := FToolResults;
+  Failure := FToolFailure;
+  FToolResults := EmptyScanTable;
+  FToolFailure := String.Empty;
+  FToolResultsWaiting := False;
+  UpdateToolItems;
 
-  if Error <> String.Empty then
-    ShowMessage('Scan Sprites stopped: ' + Error);
-  if Length(Scans) = 0 then
+  if Failure <> String.Empty then
   begin
-    if Error = String.Empty then
-      ShowMessage('Scan Sprites found no folders to scan.');
+    ShowMessage(Failure);
     Exit;
   end;
-  // Scan Sprites is desktop only, so the dialog can block
+  // The Tools menu is desktop only, so the dialog can block
   Dialog := TSpriteScanForm.Create(nil);
   try
-    Dialog.SetScans(Scans);
+    Dialog.SetTable(Table);
     Dialog.ShowModal;
   finally
     Dialog.Free;
   end;
 end;
 
-procedure TMainForm.SpriteScanTimerTick(Sender: TObject);
+procedure TMainForm.ToolTimerTick(Sender: TObject);
 begin
-  ShowPendingSpriteScan;
+  ShowPendingToolResults;
 end;
 
 // The search runs on a worker thread, into a list of its own; the result is
