@@ -153,10 +153,10 @@ A **static** model, one without animations, has no animations to list, so its `a
 | `image.overscan.enabled` | whether **Overscan** was ticked in Models, Animation Settings |
 | `image.overscan.factor` | the overscan factor set there, from its slider; given even when overscan is off |
 | `camera.view` | the View, Camera view checked: `Variable`, `Isometric`, `Pixel2To1`, `ThreeQuarter`, `HeadOn`, `TopDown` or `Side`, as `settings.json` names them |
-| `camera.projection` | `orthographic` or `perspective`, from View, Orthographic |
+| `camera.projection` | from View, Projection: `perspective`, `orthographic`, `cavalier`, `cabinet`, `military` or `plan_oblique` |
 | `camera.azimuth`, `camera.inclination`, `camera.roll` | the three readouts, in degrees, as the dials show them, to four decimal places |
 | `camera.distance` | the camera's distance from its orbit centre as the frames were captured, in scene units |
-| `camera.ortho_height` | for orthographic projection, the height of scene the frames show, in scene units, as captured; `null` for perspective |
+| `camera.ortho_height` | for orthographic projection, the height of scene the frames show, in scene units, as captured; `null` for the others (an oblique projection's size goes with `distance`) |
 | `camera.pan.enabled`, `camera.pan.x`, `camera.pan.z` | whether the pan is applied, and the pan along the model's X and Z axes as multiples of its radius; kept even when not applied |
 | `camera.locked` | whether View, Camera, Lock Camera was ticked |
 | `frames[i]` | the frame in cell *i*, in cell order: one entry per frame |
@@ -254,7 +254,7 @@ The cropped frame is (width − `left` − `right`) by (height − `top` − `bo
 The origin is the model's **centre of rotation**: its own origin, (0, 0, 0) in the model file, which the camera orbits and which [Volumes](volumes.md) explains. For a character it is often between the feet, which makes it a natural anchor or pivot for the sprite.
 
 1. **Framed once.** The camera is framed once for the whole export, and the model never moves during it, so the origin falls in the same place in every frame. It is worked out once, as the capture starts.
-2. **Projected.** The centre of rotation is carried into the camera's space and through the camera's own projection for the grab size, in perspective or orthographic projection as the view is set. That gives where it falls in a frame, to a fraction of a pixel. This is `TSprite3DCamera.ProjectToView`.
+2. **Projected.** The centre of rotation is carried into the camera's space and through the camera's own projection for the grab size, in perspective or orthographic projection as the view is set, or, for an oblique projection, through the projection `TSpritelyProjection` draws. That gives where it falls in a frame, to a fraction of a pixel. This is `TSprite3DCamera.ProjectToView`.
 3. **Reported.** The origin is that place, in the frame's pixels, rounded to a thousandth of a pixel. The pixels are counted from 0 and a whole number is the centre of a pixel, so `127` is the middle of column 127, as earlier versions gave it, and `127.5` the line between columns 127 and 128. This is `MeasureCaptureOrigin` in the main form.
 
 The view is not moved to put the origin on a pixel, as earlier versions did, so the framing, and with 2-pass the fit, is not held back by it: a sprite can be centred exactly, so with 2-pass both edges on the axis with least room come out alike.

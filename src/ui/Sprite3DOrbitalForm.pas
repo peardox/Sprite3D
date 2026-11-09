@@ -1,13 +1,18 @@
 //** @abstract(The Variable camera dialog: dials for the camera's angles, a distance slider and
-//** an optional pan.)
+//** an optional shift and rise.)
 //**
 //** Three dials set Azimuth, Inclination and Roll, whose readouts show whole degrees and,
 //** beside the Roll dial, the same three angles to six decimal places; a slider moves the
-//** camera out from the fitted distance, and, below them, the Pan box switches on two sliders
-//** that move the view along the model's own X and Z axes, the directions that are not the
-//** model's up. Pan is off by default and is meant for the odd case where the model should sit
-//** off centre; it moves the point the camera orbits, on top of the fit, and leaves the angles
-//** and the distance alone. Centre puts both sliders back to 0.
+//** camera out from the fitted distance, and, below them, the Shift and rise box switches on
+//** two sliders that slide the model: Shift right or left, Rise up or down, each from -1 to
+//** 1, a fraction of how far the picture can slide, so 1 or -1 takes the model to just off
+//** that edge. Only the picture's place changes, never the view of the model: a lens shift
+//** and rise, or in orthographic projection a slide of the camera across the picture, which
+//** there is the same thing. It is off by default and is meant for the odd case where the
+//** model should sit off centre. Centre puts both sliders back to 0. Save shift, rise and
+//** distance values between sessions keeps them, the distance and itself for the next
+//** session; it is off by default. (The
+//** controls keep the names Pan..., from when they moved the orbit centre.)
 //**
 //** The dialog only edits a TCameraSettings. It never touches the camera itself: each change
 //** calls OnPreview, so the owner can show it at once, and the owner keeps or undoes the
@@ -24,7 +29,8 @@
 //** |       |-- PanLayout
 //** |       |   |-- PanTopLayout     PanCheck, PanResetButton
 //** |       |   |-- PanXLayout       PanXLabel, PanXTrack
-//** |       |   `-- PanZLayout       PanZLabel, PanZTrack
+//** |       |   |-- PanZLayout       PanZLabel, PanZTrack
+//** |       |   `-- PanKeepLayout    PanKeepCheck
 //** |       `-- DistanceLayout       DistanceLabel, DistanceTrack
 //** `-- Layout2                      CancelButton, OkButton
 //** )
@@ -32,17 +38,22 @@ unit Sprite3DOrbitalForm;
 
 {
   The Variable camera dialog: dials for the camera's angles, a distance
-  slider and an optional pan.
+  slider and an optional shift and rise.
 
   Three dials set Azimuth, Inclination and Roll, whose readouts show whole
   degrees and, beside the Roll dial, the same three angles to six decimal
   places; a slider moves the camera out from the fitted distance, and, below
-  them, the Pan box switches on two sliders that move the view along the
-  model's own X and Z axes, the directions that are not the model's up. Pan
-  is off by default and is meant for the odd case where the model should sit
-  off centre; it moves the point the camera orbits, on top of the fit, and
-  leaves the angles and the distance alone. Centre puts both sliders back to
-  0.
+  them, the Shift and rise box switches on two sliders that slide the
+  model: Shift right or left, Rise up or down, each from -1 to 1, a
+  fraction of how far the picture can slide, so 1 or -1 takes the model to
+  just off that edge. Only the picture's place changes, never the view of
+  the model: a lens shift and rise, or in orthographic projection a slide of
+  the camera across the picture, which there is the same thing. It is off by
+  default and is meant for the odd case where the model should sit off
+  centre. Centre puts both sliders back to 0. Save shift, rise and distance
+  values between sessions keeps them, the distance and itself for the next
+  session; it is off by default. (The
+  controls keep the names Pan..., from when they moved the orbit centre.)
 
   The dialog only edits a TCameraSettings. It never touches the camera
   itself: each change calls OnPreview, so the owner can show it at once,
@@ -59,7 +70,8 @@ unit Sprite3DOrbitalForm;
     |       |-- PanLayout
     |       |   |-- PanTopLayout     PanCheck, PanResetButton
     |       |   |-- PanXLayout       PanXLabel, PanXTrack
-    |       |   `-- PanZLayout       PanZLabel, PanZTrack
+    |       |   |-- PanZLayout       PanZLabel, PanZTrack
+    |       |   `-- PanKeepLayout    PanKeepCheck
     |       `-- DistanceLayout       DistanceLabel, DistanceTrack
     `-- Layout2                      CancelButton, OkButton
 }
@@ -80,14 +92,20 @@ type
     Roll: Single;
     //** @abstract(The Inclination readout, in degrees, 0 to 360.)
     PolarAngle: Single;
-    //** @abstract(How far the camera is moved out from the fitted distance, 1 to 20.)
+    //** @abstract(The camera's distance as a factor on the fitted distance, 0.2 to 20; below
+    //** 1 only when taken in from Temporary Mouse View's zoom.)
     Distance: Single;
-    //** @abstract(Whether the pan is applied.)
+    //** @abstract(Whether the shift and rise are applied.)
     PanEnabled: Boolean;
-    //** @abstract(The pan along the model's X axis, as a multiple of its radius.)
+    //** @abstract(The shift, -1 to 1: the picture slid right (positive) or left, as a fraction
+    //** of how far it can go, 1 taking the model to just off the right edge.)
     PanX: Single;
-    //** @abstract(The pan along the model's Z axis, as a multiple of its radius.)
+    //** @abstract(The rise, -1 to 1: the picture slid up (positive) or down, as a fraction of
+    //** how far it can go, 1 taking the model to just off the top edge.)
     PanZ: Single;
+    //** @abstract(Whether the shift, rise and distance, and this, are kept for the next
+    //** session.)
+    PanKeep: Boolean;
   end;
 
   //** @abstract(The Variable camera dialog.)
@@ -98,7 +116,7 @@ type
     ControlLayout: TLayout;
     //** @abstract(Holds the OK and Cancel buttons.)
     ButtonLayout: TLayout;
-    //** @abstract(Holds the dials, the pan and the distance slider.)
+    //** @abstract(Holds the dials, the shift and rise and the distance slider.)
     OrbitalLayout: TLayout;
     //** @abstract(Sets the inclination.)
     AngleDial: TArcDial;
@@ -132,31 +150,36 @@ type
     RollExactLabel: TLabel;
     //** @abstract(The roll in degrees to six decimal places.)
     RollExactText: TLabel;
-    //** @abstract(Holds the pan's controls.)
+    //** @abstract(Holds the shift and rise controls.)
     PanLayout: TLayout;
     //** @abstract(Holds PanCheck and PanResetButton.)
     PanTopLayout: TLayout;
-    //** @abstract(Switches the pan on or off; off by default.)
+    //** @abstract(Switches the shift and rise on or off; off by default.)
     PanCheck: TCheckBox;
-    //** @abstract(Puts both pan sliders back to 0.)
+    //** @abstract(Puts the Shift and Rise sliders back to 0.)
     PanResetButton: TButton;
-    //** @abstract(Holds the X pan slider and its label.)
+    //** @abstract(Holds the Shift slider and its label.)
     PanXLayout: TLayout;
-    //** @abstract(Shows the X pan.)
+    //** @abstract(Shows the shift.)
     PanXLabel: TLabel;
-    //** @abstract(Sets the pan along the model's X axis.)
+    //** @abstract(Sets the shift, -1 to 1: the picture slid left or right.)
     PanXTrack: TTrackBar;
-    //** @abstract(Holds the Z pan slider and its label.)
+    //** @abstract(Holds the Rise slider and its label.)
     PanZLayout: TLayout;
-    //** @abstract(Shows the Z pan.)
+    //** @abstract(Shows the rise.)
     PanZLabel: TLabel;
-    //** @abstract(Sets the pan along the model's Z axis.)
+    //** @abstract(Sets the rise, -1 to 1: the picture slid down or up.)
     PanZTrack: TTrackBar;
+    //** @abstract(Holds PanKeepCheck.)
+    PanKeepLayout: TLayout;
+    //** @abstract(Saves the shift, rise and distance for the next session; off by default,
+    //** when each session starts with no shift or rise and distance x1.0.)
+    PanKeepCheck: TCheckBox;
     //** @abstract(Holds the distance slider and its label.)
     DistanceLayout: TLayout;
     //** @abstract(Shows the distance factor.)
     DistanceLabel: TLabel;
-    //** @abstract(Sets the distance factor, 1 to 20.)
+    //** @abstract(Sets the distance factor, 0.2 to 20.)
     DistanceTrack: TTrackBar;
     //** @abstract(Closes the dialog and drops the changes.)
     CancelButton: TButton;
@@ -192,18 +215,23 @@ type
     //**
     //** @param(Sender The slider.)
     procedure DistanceTrackChange(Sender: TObject);
-    //** @abstract(Switches the pan on or off.)
+    //** @abstract(Switches the shift and rise on or off.)
     //**
     //** @param(Sender The check box.)
     procedure PanCheckChange(Sender: TObject);
-    //** @abstract(Takes the pan from both sliders.)
+    //** @abstract(Takes the shift and rise from both sliders.)
     //**
     //** @param(Sender The slider moved.)
     procedure PanTrackChange(Sender: TObject);
-    //** @abstract(Puts both pan sliders back to 0.)
+    //** @abstract(Puts the Shift and Rise sliders back to 0.)
     //**
     //** @param(Sender The button.)
     procedure PanResetButtonClick(Sender: TObject);
+    //** @abstract(Takes whether to save the shift, rise and distance between sessions from
+    //** its box.)
+    //**
+    //** @param(Sender The check box.)
+    procedure PanKeepCheckChange(Sender: TObject);
   strict private
     FFreeOnClose: Boolean;
     FUpdating: Boolean;   // set while code sets the controls, to hold back previews
@@ -211,7 +239,15 @@ type
     FOnCancel: TNotifyEvent;
     FOnPreview: TNotifyEvent;
     FCameraSettings: TCameraSettings;
+    //** @abstract(Backing field for AzimuthOnly.)
+    FAzimuthOnly: Boolean;
     procedure SetSpec(const ASettings: TCameraSettings);
+    //** @abstract(Sets every control from the settings being edited, without a preview.)
+    procedure ShowSpec;
+    //** @abstract(Setter for AzimuthOnly: enables or disables the Inclination and Roll dials.)
+    //**
+    //** @param(Value True to allow only the azimuth to change.)
+    procedure SetAzimuthOnly(const Value: Boolean);
     procedure ShowReadouts;
     procedure UpdatePanControls;
     procedure Preview;
@@ -232,6 +268,20 @@ type
     //**
     //** Set it before the dialog is shown; read it after OK.
     property CameraSpec: TCameraSettings read FCameraSettings write SetSpec;
+    //** @abstract(True: only the azimuth can be changed; the Inclination and Roll dials are
+    //** disabled and keep CameraSpec's angles. False by default.)
+    //**
+    //** The main form sets it while an oblique projection is chosen, as those are drawn from
+    //** fixed angles: turning the model round is all that may change.
+    property AzimuthOnly: Boolean read FAzimuthOnly write SetAzimuthOnly;
+    //** @abstract(Replaces the settings being edited while the dialog is open, and sets the
+    //** controls to match, without calling OnPreview.)
+    //**
+    //** For the owner, when something outside the dialog changes what it edits, such as the
+    //** mouse wheel over the view changing the distance; the owner shows the change itself.
+    //**
+    //** @param(ASpec The new settings.)
+    procedure TakeSpec(const ASpec: TCameraSettings);
   end;
 
 var
@@ -244,6 +294,10 @@ implementation
 
 uses
   System.Math, Sprite3DHelpers;
+
+const
+  // A value to two places with its sign, + or -; 0 as +0.00
+  SIGNED_FORMAT = '+0.00;-0.00;+0.00';
 
 // An angle from 0 to 360 as the same direction from -180 to 180: above 180
 // it counts back from 360, so 359 is -1
@@ -339,6 +393,12 @@ begin
   Preview;
 end;
 
+procedure TOrbitalSettingsForm.PanKeepCheckChange(Sender: TObject);
+begin
+  // Nothing to show: it only decides what is saved
+  FCameraSettings.PanKeep := PanKeepCheck.IsChecked;
+end;
+
 procedure TOrbitalSettingsForm.PanResetButtonClick(Sender: TObject);
 begin
   FUpdating := True;
@@ -367,6 +427,17 @@ begin
 end;
 
 procedure TOrbitalSettingsForm.FormShow(Sender: TObject);
+begin
+  ShowSpec;
+end;
+
+procedure TOrbitalSettingsForm.TakeSpec(const ASpec: TCameraSettings);
+begin
+  FCameraSettings := ASpec;
+  ShowSpec;
+end;
+
+procedure TOrbitalSettingsForm.ShowSpec;
 var
   Spec: TCameraSettings;
 begin
@@ -386,6 +457,7 @@ begin
     PanXTrack.Value := EnsureRange(Spec.PanX, -PAN_LIMIT, PAN_LIMIT);
     PanZTrack.Value := EnsureRange(Spec.PanZ, -PAN_LIMIT, PAN_LIMIT);
     PanCheck.IsChecked := Spec.PanEnabled;
+    PanKeepCheck.IsChecked := Spec.PanKeep;
   finally
     FUpdating := False;
   end;
@@ -399,6 +471,16 @@ end;
 procedure TOrbitalSettingsForm.SetSpec(const ASettings: TCameraSettings);
 begin
   FCameraSettings := ASettings;
+end;
+
+
+procedure TOrbitalSettingsForm.SetAzimuthOnly(const Value: Boolean);
+begin
+  FAzimuthOnly := Value;
+  // Disabled, the dials cannot be turned, so CameraSpec keeps its
+  // inclination and roll; their readouts still show them
+  AngleDial.Enabled := not Value;
+  RollDial.Enabled := not Value;
 end;
 
 procedure TOrbitalSettingsForm.ShowAndFree;
@@ -420,12 +502,13 @@ begin
   AngleExactText.Text := ExactDegreesText(Signed180(FCameraSettings.PolarAngle));
   RollExactText.Text := ExactDegreesText(FCameraSettings.Roll);
   DistanceLabel.Text := Format('Distance x%.1f', [FCameraSettings.Distance]);
-  PanXLabel.Text := Format('X %+.2f', [FCameraSettings.PanX]);
-  PanZLabel.Text := Format('Z %+.2f', [FCameraSettings.PanZ]);
+  // FormatFloat for the sign: Format has no + flag
+  PanXLabel.Text := 'Shift ' + FormatFloat(SIGNED_FORMAT, FCameraSettings.PanX);
+  PanZLabel.Text := 'Rise ' + FormatFloat(SIGNED_FORMAT, FCameraSettings.PanZ);
 end;
 
-// The sliders keep their values while the pan is off, so switching it back
-// on returns to the same place
+// The sliders keep their values while the shift and rise are off, so
+// switching them back on returns to the same place
 procedure TOrbitalSettingsForm.UpdatePanControls;
 begin
   PanXLayout.Enabled := FCameraSettings.PanEnabled;

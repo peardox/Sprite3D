@@ -1,0 +1,82 @@
+/* ==== Sprite3D and Spritely: dark colours for PasDoc's HTML Help (.chm) ====
+
+   tools\pasdoc.bat appends this file to the pasdoc.css that each HTML Help
+   run writes (docs\chm\api, docs\chm\spritely, docs\chm\<program>), before hhc.exe compiles it,
+   so the .chm files are always dark.
+
+   The HTML Help viewer draws pages with the old Internet Explorer engine
+   (IE 7 mode by default). That has no prefers-color-scheme, no custom
+   properties (var(...) is dropped, so Bootstrap's and PasDoc's own colours
+   mostly never apply), no :root and no rgba(). Hence plain colours here,
+   with simple selectors, and !important where the page would otherwise keep
+   a fixed colour. The palette is the same as tools\pasdoc-dark.css (the
+   HTML output's), Bootstrap 5.3's dark theme. It covers PasDoc 1.0 and
+   later and 0.16 and earlier. */
+
+/* Page and text */
+body { background-color: #212529 !important; color: #dee2e6 !important; }
+h1, h2, h3, h4, h5, h6 { color: #f8f9fa; }
+hr { border: 0; border-top: 1px solid #495057; }
+
+/* Links */
+a:link, a:visited,
+a.bold:link, a.bold:visited,
+ul.useslist a:link, ul.useslist a:visited,
+p.unitlink a:link, p.unitlink a:visited,
+a.section { color: #6ea8fe !important; }
+a:hover, a.section:hover { color: #8bb9fe !important; }
+
+/* Navigation and section links (0.16 and earlier) */
+.navigation { background-color: #2b3035 !important; color: #dee2e6 !important; }
+.navigation a:link, .navigation a:visited { color: #dee2e6 !important; }
+.sections { background-color: #212529 !important; }
+.sections .one_section { background-color: #343a40 !important; }
+
+/* Tables */
+table.wide_list td, table.wide_list th { border-bottom: 1px solid #495057; }
+tr.listheader { background-color: #2b3035 !important; color: #adb5bd !important; }
+tr.list { background-color: #212529 !important; }
+tr.list2 { background-color: #2b3035 !important; }
+table.detail { border: 1px solid #495057; }
+table.table_tag td, table.table_tag th { border: 1px solid #495057; }
+table.table_tag th { background-color: #2b3035; }
+
+/* Code */
+.longcode, pre.preformatted {
+  background-color: #2b3035 !important;
+  color: #dee2e6;
+  border: 1px solid #495057;
+}
+code { color: #e685b5; }
+span.pascal_string { color: #a5d6ff !important; }
+span.pascal_keyword { color: #ff7b72 !important; }
+span.pascal_comment { color: #8b949e !important; }
+span.pascal_compiler_comment { color: #7ee787 !important; }
+span.pascal_numeric, span.pascal_hex, span.pascal_float { color: #79c0ff !important; }
+
+/* Descriptions */
+p.nodescription, p.inheritdescription, p.description-inherited,
+dl.description dt, .appinfo, .source_position,
+.show-members-toggles .show-members-toggles-label { color: #adb5bd !important; }
+dl.parameters dt { color: #6ea8fe !important; }
+p.hint_directive { color: #ea868f !important; }
+acronym.mispelling { background-color: #842029 !important; }
+
+/* @warning and @note */
+dl.tag.warning {
+  background-color: #2c0b0e !important;
+  border: 1px solid #842029 !important;
+  border-left: 4px solid #dc3545 !important;
+}
+dl.tag.warning dt { color: #ea868f !important; }
+dl.tag.warning dd { color: #f1aeb5 !important; }
+dl.tag.note {
+  background-color: #332701 !important;
+  border: 1px solid #997404 !important;
+  border-left: 4px solid #ffc107 !important;
+}
+dl.tag.note dt, dl.tag.note dd { color: #ffda6a !important; }
+
+/* Member toggles and search box */
+.show-members-toggles { background-color: #2b3035; border: 1px solid #495057; }
+input { background-color: #2b3035; color: #dee2e6; border: 1px solid #495057; }

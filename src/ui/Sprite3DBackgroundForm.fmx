@@ -4,7 +4,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Background Settings'
-  ClientHeight = 420
+  ClientHeight = 528
   ClientWidth = 528
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -16,7 +16,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
   object BackPanel: TPanel
     Align = Client
     Size.Width = 528.000000000000000000
-    Size.Height = 420.000000000000000000
+    Size.Height = 528.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object ColourLabel: TLabel
@@ -131,7 +131,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
       Position.X = 272.000000000000000000
       Position.Y = 12.000000000000000000
       Size.Width = 240.000000000000000000
-      Size.Height = 138.000000000000000000
+      Size.Height = 164.000000000000000000
       Size.PlatformDefault = False
       Text = 'Background image style'
       TabOrder = 3
@@ -180,10 +180,21 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
         Text = 'Gradient'
         OnChange = StyleChange
       end
+      object ImageRadio: TRadioButton
+        GroupName = 'Style'
+        Position.X = 16.000000000000000000
+        Position.Y = 132.000000000000000000
+        Size.Width = 200.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 4
+        Text = 'Image'
+        OnChange = StyleChange
+      end
     end
     object PreviewLabel: TLabel
       Position.X = 272.000000000000000000
-      Position.Y = 160.000000000000000000
+      Position.Y = 186.000000000000000000
       Size.Width = 240.000000000000000000
       Size.Height = 17.000000000000000000
       Size.PlatformDefault = False
@@ -192,7 +203,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
     end
     object PreviewRect: TRectangle
       Position.X = 272.000000000000000000
-      Position.Y = 180.000000000000000000
+      Position.Y = 206.000000000000000000
       Size.Width = 240.000000000000000000
       Size.Height = 112.000000000000000000
       Size.PlatformDefault = False
@@ -200,7 +211,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
     end
     object CheckerLabel: TLabel
       Position.X = 272.000000000000000000
-      Position.Y = 304.000000000000000000
+      Position.Y = 330.000000000000000000
       Size.Width = 240.000000000000000000
       Size.Height = 17.000000000000000000
       Size.PlatformDefault = False
@@ -214,7 +225,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
       Min = 8.000000000000000000
       Orientation = Horizontal
       Position.X = 272.000000000000000000
-      Position.Y = 326.000000000000000000
+      Position.Y = 352.000000000000000000
       Size.Width = 240.000000000000000000
       Size.Height = 19.000000000000000000
       Size.PlatformDefault = False
@@ -222,11 +233,216 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
       Value = 64.000000000000000000
       OnChange = CheckerTrackChange
     end
+    object AlignLayout: TLayout
+      Position.X = 16.000000000000000000
+      Position.Y = 412.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 96.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 12
+      object AlignLabel: TLabel
+        Size.Width = 240.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Image position'
+        TabOrder = 0
+      end
+      object AlignTopLeftRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 0.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Tag = 0
+        Hint = 'Top left'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignTopRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 28.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        Tag = 1
+        Hint = 'Top'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignTopRightRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 56.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        Tag = 2
+        Hint = 'Top right'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignLeftRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 0.000000000000000000
+        Position.Y = 46.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 4
+        Tag = 3
+        Hint = 'Left'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignCentreRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        IsChecked = True
+        Position.X = 28.000000000000000000
+        Position.Y = 46.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 5
+        Tag = 4
+        Hint = 'Centre'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignRightRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 56.000000000000000000
+        Position.Y = 46.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 6
+        Tag = 5
+        Hint = 'Right'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignBottomLeftRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 0.000000000000000000
+        Position.Y = 70.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 7
+        Tag = 6
+        Hint = 'Bottom left'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignBottomRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 28.000000000000000000
+        Position.Y = 70.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 8
+        Tag = 7
+        Hint = 'Bottom'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignBottomRightRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 56.000000000000000000
+        Position.Y = 70.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 9
+        Tag = 8
+        Hint = 'Bottom right'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+    end
+    object ImageLayout: TLayout
+      Position.X = 272.000000000000000000
+      Position.Y = 384.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 96.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 11
+      object ImageFileLabel: TLabel
+        Size.Width = 240.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Image file'
+        TabOrder = 0
+      end
+      object ImageEdit: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        TabOrder = 1
+        Position.Y = 20.000000000000000000
+        Size.Width = 160.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TextPrompt = 'Choose an image'
+        Hint = 'The image'#39's full path; Browse chooses one'
+        ShowHint = True
+        OnChange = ImageEditChange
+      end
+      object ImageBrowseButton: TButton
+        Position.X = 168.000000000000000000
+        Position.Y = 20.000000000000000000
+        Size.Width = 72.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        Text = 'Browse...'
+        OnClick = ImageBrowseButtonClick
+      end
+      object FitLabel: TLabel
+        Position.Y = 54.000000000000000000
+        Size.Width = 48.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Fit'
+        TabOrder = 3
+      end
+      object FitCombo: TComboBox
+        Items.Strings = (
+          'Fit: whole image, Colour beside'
+          'Fill: cover, image cut off'
+          'Stretch to the picture'
+          'Fit width'
+          'Fit height'
+          'Original size')
+        ItemIndex = 0
+        Position.X = 56.000000000000000000
+        Position.Y = 50.000000000000000000
+        Size.Width = 184.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 4
+        OnChange = FitComboChange
+      end
+      object ImageStatusLabel: TLabel
+        Position.Y = 78.000000000000000000
+        Size.Width = 240.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.WordWrap = False
+        TextSettings.Trimming = Character
+        Text = ' '
+        TabOrder = 5
+      end
+    end
     object OkButton: TButton
       Default = True
       ModalResult = 1
       Position.X = 336.000000000000000000
-      Position.Y = 380.000000000000000000
+      Position.Y = 488.000000000000000000
       Size.Width = 80.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -238,7 +454,7 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
       Cancel = True
       ModalResult = 2
       Position.X = 432.000000000000000000
-      Position.Y = 380.000000000000000000
+      Position.Y = 488.000000000000000000
       Size.Width = 80.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False

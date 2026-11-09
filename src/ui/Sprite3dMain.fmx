@@ -407,48 +407,6 @@ object MainForm: TMainForm
           OnClick = ViewSideItemClick
         end
       end
-      object ViewSeparatorItem: TMenuItem
-        Locked = True
-        Text = '-'
-      end
-      object ShowBoundsItem: TMenuItem
-        Locked = True
-        IsChecked = True
-        Text = 'Show bounding box'
-        OnClick = ShowBoundsItemClick
-      end
-      object ShowGridItem: TMenuItem
-        Locked = True
-        IsChecked = True
-        Text = 'Show grid'
-        OnClick = ShowGridItemClick
-      end
-      object ShowAxesItem: TMenuItem
-        Locked = True
-        IsChecked = True
-        Text = 'Show axes'
-        OnClick = ShowAxesItemClick
-      end
-      object ShowSweepItem: TMenuItem
-        Locked = True
-        IsChecked = True
-        Text = 'Show Model Volume'
-        OnClick = ShowSweepItemClick
-      end
-      object ShowCombinedSweepItem: TMenuItem
-        Locked = True
-        Text = 'Show Animation Volume'
-        OnClick = ShowCombinedSweepItemClick
-      end
-      object OrthographicItem: TMenuItem
-        Locked = True
-        Text = 'Orthographic'
-        OnClick = OrthographicItemClick
-      end
-      object LightsSeparatorItem: TMenuItem
-        Locked = True
-        Text = '-'
-      end
       object LightsMenu: TMenuItem
         Locked = True
         Text = 'Lights'
@@ -463,6 +421,86 @@ object MainForm: TMainForm
           Text = 'Original Light'
           OnClick = OriginalLightItemClick
         end
+      end
+      object ProjectionMenu: TMenuItem
+        Locked = True
+        Text = 'Projection'
+        object PerspectiveItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          IsChecked = True
+          RadioItem = True
+          Text = 'Perspective'
+          OnClick = ProjectionItemClick
+        end
+        object OrthographicItem: TMenuItem
+          Locked = True
+          GroupIndex = 2
+          RadioItem = True
+          Text = 'Orthographic'
+          OnClick = ProjectionItemClick
+        end
+        object ObliqueMenu: TMenuItem
+          Locked = True
+          Text = 'Oblique'
+          object CavalierItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Cavalier'
+            OnClick = ProjectionItemClick
+          end
+          object CabinetItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Cabinet'
+            OnClick = ProjectionItemClick
+          end
+          object MilitaryItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Military'
+            OnClick = ProjectionItemClick
+          end
+          object PlanObliqueItem: TMenuItem
+            Locked = True
+            GroupIndex = 2
+            RadioItem = True
+            Text = 'Plan Oblique'
+            OnClick = ProjectionItemClick
+          end
+        end
+      end
+      object ViewSeparatorItem: TMenuItem
+        Locked = True
+        Text = '-'
+      end
+      object ShowBoundsItem: TMenuItem
+        Locked = True
+        Text = 'Show bounding box'
+        OnClick = ShowBoundsItemClick
+      end
+      object ShowGridItem: TMenuItem
+        Locked = True
+        Text = 'Show grid'
+        OnClick = ShowGridItemClick
+      end
+      object ShowAxesItem: TMenuItem
+        Locked = True
+        Text = 'Show axes'
+        OnClick = ShowAxesItemClick
+      end
+      object ShowSweepItem: TMenuItem
+        Locked = True
+        Text = 'Show Model Volume'
+        OnClick = ShowSweepItemClick
+      end
+      object ShowCombinedSweepItem: TMenuItem
+        Locked = True
+        Text = 'Show Animation Volume'
+        OnClick = ShowCombinedSweepItemClick
       end
     end
   end

@@ -91,11 +91,12 @@ const
   //**
   //** An SVG path in a 24 by 24 box; see @link(ICON_FIRST).
   ICON_LAST = 'M4 6v12l6-6z M10 6v12l6-6z M17 6h2v12h-2z';
-  //** @abstract(The largest camera pan either way, as a multiple of the model's radius.)
+  //** @abstract(The largest shift or rise either way, as a fraction of how far the picture
+  //** can slide.)
   //**
-  //** The radius is half the diagonal of the model's bounding box, so a pan of 1 moves the
-  //** orbit centre out to where the model's farthest corner was.
-  PAN_LIMIT = 2.0;
+  //** 1 slides it until the near side of the model's fitted volume is on that edge of the
+  //** picture: the model just gone off it.
+  PAN_LIMIT = 1.0;
   //** @abstract(The lowest frame rate Models, Animation Settings offers for saved
   //** animations, in frames per second.)
   ANIMATION_FPS_MIN = 1;
@@ -211,6 +212,48 @@ type
   //** @code(thRubyGraphite) red and @code(thGoldenGraphite) gold.
   TSprite3DTheme = (thDefault, thDark, thAquaGraphite, thRubyGraphite, thGoldenGraphite);
 
+  //** @abstract(The projection chosen in View, Projection on the main form.)
+  //**
+  //** Perspective and orthographic are the camera's own (its ProjectionMode). The four
+  //** oblique projections are drawn by the Spritely package's TSpritelyProjection, with the
+  //** camera in perspective: the picture is made from what the perspective shows at the
+  //** orbit centre's distance, with depth drawn across it. Cavalier draws depth at full
+  //** length at 45 degrees, cabinet at half length at 63.43 degrees (2 in 1), military at
+  //** full length straight down the picture (with the camera looking straight down, height
+  //** goes straight up and the plan keeps its shape), and plan oblique at full length down
+  //** and to the right (with the camera straight down and the plan square to the picture,
+  //** height goes up and to the left at 45 degrees). The camera's angles are left to View,
+  //** Camera: these look as intended from Head On (cavalier, cabinet) and Top Down (military,
+  //** plan oblique).
+  TSprite3DProjection = (
+    //** @abstract(The camera's own perspective.)
+    prPerspective,
+    //** @abstract(The camera's own orthographic projection.)
+    prOrthographic,
+    //** @abstract(Oblique: depth at full length, at 45 degrees.)
+    prCavalier,
+    //** @abstract(Oblique: depth at half length, at 63.43 degrees.)
+    prCabinet,
+    //** @abstract(Oblique: depth at full length, straight down the picture.)
+    prMilitary,
+    //** @abstract(Oblique: depth at full length, down and to the right, so height goes up and
+    //** to the left.)
+    prPlanOblique);
+
+  //** @abstract(How a TSprite3DProjection is named in each place it appears.)
+  TSprite3DProjectionInfo = record
+    //** @abstract(In settings.json and as the menu item's name: Perspective, Orthographic,
+    //** Cavalier, Cabinet, Military, PlanOblique.)
+    Key: String;
+    //** @abstract(As the menu, the window caption and the Debug tab show it.)
+    Caption: String;
+    //** @abstract(In the metadata's @code(camera.projection): perspective, orthographic,
+    //** cavalier, cabinet, military, plan_oblique.)
+    MetaName: String;
+    //** @abstract(Starting each benchmark's folder and file names.)
+    Prefix: String;
+  end;
+
   //** @abstract(Which graphics processor Windows gives the application.)
   //**
   //** @code(gmSystem) lets Windows decide; @code(gmPowerSaving) asks for the low-power GPU and
@@ -242,6 +285,9 @@ type
     MinifyJson: Boolean;
     //** @abstract(Whether the Results tab's empty border values have a hint explaining them.)
     ResultsEdgeHint: Boolean;
+    //** @abstract(Whether grabs, icons and exports draw the grid, axes and Model Volume the
+    //** View menu shows.)
+    HelpersInOutput: Boolean;
     //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
     //** kept.)
     MaxViewFps: Integer;
@@ -305,14 +351,20 @@ type
     FCheckerSize: Integer;
     FCheckerLight: String;
     FCheckerDark: String;
+    FBackgroundImage: String;
+    FBackgroundImageFit: TSprite3DImageFit;
+    FBackgroundImageAlign: TSprite3DImageAlign;
     FShowBoundingBox: Boolean;
     FShowGrid: Boolean;
     FShowAxes: Boolean;
     FShowSweptVolume: Boolean;
     FShowCombinedSweptVolume: Boolean;
+    FHelpersInOutput: Boolean;
     FOrthographic: Boolean;
     //** @abstract(Backing fields for Headlight and OriginalLight.)
     FHeadlight, FOriginalLight: Boolean;
+    //** @abstract(Backing field for Projection.)
+    FProjection: String;
     FCameraView: String;
     FVariableAzimuth: Single;
     FVariableInclination: Single;
@@ -320,6 +372,8 @@ type
     FPanEnabled: Boolean;
     FPanX: Single;
     FPanZ: Single;
+    FKeepShift: Boolean;
+    FDistanceFactor: Single;
     FStartupAction: TSprite3DStartupAction;
     FLastModel: String;
     FLastAnimatedModel: String;
@@ -376,6 +430,10 @@ type
     procedure SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
     function GetThemeKind: TSprite3DTheme;
     procedure SetThemeKind(const Value: TSprite3DTheme);
+    //** @abstract(Getter for ProjectionKind.)
+    function GetProjectionKind: TSprite3DProjection;
+    //** @abstract(Setter for ProjectionKind.)
+    procedure SetProjectionKind(const Value: TSprite3DProjection);
   public
     //** @abstract(Creates the settings with their defaults, for settings.json in
     //** SupportFolder.)
@@ -421,6 +479,13 @@ type
     //** A name in settings.json that is not one of the themes, such as one from an older
     //** version, reads as thDefault.
     property ThemeKind: TSprite3DTheme read GetThemeKind write SetThemeKind;
+    //** @abstract(Projection as a TSprite3DProjection.)
+    //**
+    //** A settings.json without @code(projection), as earlier versions wrote, reads as
+    //** prOrthographic if its @code(orthographic) is true and prPerspective if not; a name
+    //** this version does not know reads as prPerspective. Writing sets Orthographic too, so
+    //** an earlier version reading the file still finds orthographic or perspective.
+    property ProjectionKind: TSprite3DProjection read GetProjectionKind write SetProjectionKind;
     //** @abstract(Whether --debug was given on the command line; False by default.)
     //**
     //** Turns debugging on for this run only, as DebugEnabled does: it is public, not
@@ -449,7 +514,7 @@ type
     //**
     //** Stored as @code(directionsFolder) in settings.json.
     property DirectionsFolder: String read FDirectionsFolder write FDirectionsFolder;
-    //** @abstract(What the background shows: None, Transparent, Solid or Gradient.)
+    //** @abstract(What the background shows: None, Transparent, Solid, Gradient or Image.)
     //**
     //** Stored as @code(backgroundKind), by name. None, the default until one is chosen,
     //** draws no background; Transparent shows a checker in the viewport. Both leave grabs
@@ -487,20 +552,39 @@ type
     //**
     //** Stored as @code(checkerDark).
     property CheckerDark: String read FCheckerDark write FCheckerDark;
-    //** @abstract(Whether View, Show bounding box is ticked on the main form; True by
+    //** @abstract(The Image background's image file, a full path; empty until one is
+    //** chosen.)
+    //**
+    //** Stored as @code(backgroundImage). A file that has gone shows the Solid colour
+    //** instead, and the Debug tab says so.
+    property BackgroundImage: String read FBackgroundImage write FBackgroundImage;
+    //** @abstract(How the Image background's image is fitted to the picture.)
+    //**
+    //** Stored as @code(backgroundImageFit), by name. Fit, the default, is used when
+    //** settings.json has none.
+    property BackgroundImageFit: TSprite3DImageFit read FBackgroundImageFit
+      write FBackgroundImageFit;
+    //** @abstract(Where the Image background's image sits where its shape and the picture's
+    //** differ.)
+    //**
+    //** Stored as @code(backgroundImageAlign), by name. Centre, the default, is used when
+    //** settings.json has none.
+    property BackgroundImageAlign: TSprite3DImageAlign read FBackgroundImageAlign
+      write FBackgroundImageAlign;
+    //** @abstract(Whether View, Show bounding box is ticked on the main form; False by
     //** default.)
     //**
     //** Stored as @code(showBoundingBox).
     property ShowBoundingBox: Boolean read FShowBoundingBox write FShowBoundingBox;
-    //** @abstract(Whether View, Show grid is ticked on the main form; True by default.)
+    //** @abstract(Whether View, Show grid is ticked on the main form; False by default.)
     //**
     //** Stored as @code(showGrid).
     property ShowGrid: Boolean read FShowGrid write FShowGrid;
-    //** @abstract(Whether View, Show axes is ticked on the main form; True by default.)
+    //** @abstract(Whether View, Show axes is ticked on the main form; False by default.)
     //**
     //** Stored as @code(showAxes).
     property ShowAxes: Boolean read FShowAxes write FShowAxes;
-    //** @abstract(Whether View, Show Model Volume is ticked on the main form; True by
+    //** @abstract(Whether View, Show Model Volume is ticked on the main form; False by
     //** default.)
     //**
     //** Stored as @code(showSweptVolume).
@@ -511,10 +595,25 @@ type
     //** Stored as @code(showCombinedSweptVolume).
     property ShowCombinedSweptVolume: Boolean read FShowCombinedSweptVolume
       write FShowCombinedSweptVolume;
-    //** @abstract(Whether View, Orthographic is ticked on the main form; False by default.)
+    //** @abstract(Whether File, Settings, Render, Grid, Axes and Model Volume in Render is
+    //** ticked; False by default.)
     //**
-    //** Stored as @code(orthographic).
+    //** Stored as @code(helpersInOutput). Ticked, grabs, icons and exports draw whichever of
+    //** the grid, axes and Model Volume the View menu shows; unticked, none of them.
+    property HelpersInOutput: Boolean read FHelpersInOutput write FHelpersInOutput;
+    //** @abstract(Whether the main form's projection is orthographic; False by default.)
+    //**
+    //** Stored as @code(orthographic). Before View, Projection it was the View, Orthographic
+    //** tick; now Projection says which projection, and this is kept in step with it for
+    //** earlier versions, and read only when Projection is missing.
     property Orthographic: Boolean read FOrthographic write FOrthographic;
+    //** @abstract(The projection chosen in View, Projection on the main form; empty by default,
+    //** which reads as Orthographic says.)
+    //**
+    //** Stored as @code(projection): one of Perspective, Orthographic, Cavalier, Cabinet,
+    //** Military and PlanOblique. Kept as text so a name this version does not know can never
+    //** stop settings.json loading; use ProjectionKind in code.
+    property Projection: String read FProjection write FProjection;
     //** @abstract(Whether View, Lights, Headlight is ticked on the main form: the Spritely
     //** camera's own light; True by default.)
     //**
@@ -549,21 +648,37 @@ type
     //** Stored as @code(variableRoll). Kept whenever the session ends in the Variable view,
     //** and restored with it.
     property VariableRoll: Single read FVariableRoll write FVariableRoll;
-    //** @abstract(Whether the camera pan is applied; False by default.)
+    //** @abstract(Whether the shift and rise are applied; False by default.)
     //**
-    //** Stored as @code(panEnabled). Set by the Pan box in the Variable camera dialog. While
-    //** False, PanX and PanZ are kept but have no effect.
+    //** Stored as @code(panEnabled), the name from before they were a lens shift. Set by the
+    //** Shift and rise box in the Variable camera dialog. While False, PanX and PanZ are kept
+    //** but have no effect.
     property PanEnabled: Boolean read FPanEnabled write FPanEnabled;
-    //** @abstract(The camera pan along the model's X axis, as a multiple of its radius; 0 by
-    //** default.)
+    //** @abstract(The shift: the picture slid right (positive) or left, as a fraction of how
+    //** far it can go; 0 by default.)
     //**
-    //** Stored as @code(panX). Values beyond PAN_LIMIT either way are limited to it.
+    //** Stored as @code(panX). Values beyond PAN_LIMIT either way are limited to it, which also
+    //** brings a value from before, when it was a multiple of the model's radius, into range.
     property PanX: Single read FPanX write FPanX;
-    //** @abstract(The camera pan along the model's Z axis, as a multiple of its radius; 0 by
-    //** default.)
+    //** @abstract(The rise: the picture slid up (positive) or down, as a fraction of how far
+    //** it can go; 0 by default.)
     //**
     //** Stored as @code(panZ). Values beyond PAN_LIMIT either way are limited to it.
     property PanZ: Single read FPanZ write FPanZ;
+    //** @abstract(Whether the shift and rise are kept for the next session; False by
+    //** default.)
+    //**
+    //** Stored as @code(keepShift). Set by Save shift, rise and distance values between
+    //** sessions in the Variable camera dialog. While False, PanEnabled, PanX and PanZ are
+    //** saved off and at 0 and DistanceFactor at 1, and none is read at start-up, so each
+    //** session starts without a shift or rise, at the fitted distance.
+    property KeepShift: Boolean read FKeepShift write FKeepShift;
+    //** @abstract(The Variable camera dialog's distance, a factor on the fitted distance; 1
+    //** by default.)
+    //**
+    //** Stored as @code(distanceFactor); saved, and read at start-up, only while KeepShift.
+    //** A value of 0 or less counts as 1.
+    property DistanceFactor: Single read FDistanceFactor write FDistanceFactor;
     //** @abstract(What is loaded at start-up; the sample model by default.)
     //**
     //** Stored as @code(startupAction), by name.
@@ -1342,24 +1457,12 @@ procedure SaveAnimationBoundsCache(const AModelFile: String; const ANames: TArra
 //** @returns(The full path on Android and iOS; an empty string on other platforms.)
 function AutoIconFileName(const AExtension: String): String;
 
-//** @abstract(How far to move the orbit centre for a camera pan.)
+//** @abstract(The names of a projection: its settings key, caption, metadata name and
+//** benchmark prefix.)
 //**
-//** The pan runs along the model's own X and Z axes, as View, Show axes draws them, so it
-//** never moves the view up or down the model's Y axis. Each amount is a multiple of the
-//** model's radius, half the diagonal of ABox, so a pan looks the same for a model of any
-//** size. The camera's angles and distance are not involved.
-//**
-//** @param(AModel The model; nil gives no offset.)
-//**
-//** @param(ABox The model's own bounds as loaded, for its size.)
-//**
-//** @param(APanX The pan along the model's X axis; limited to PAN_LIMIT either way.)
-//**
-//** @param(APanZ The pan along the model's Z axis; limited to PAN_LIMIT either way.)
-//**
-//** @returns(The offset to add to the fitted orbit centre, in the viewport's space.)
-function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
-  const APanX, APanZ: Single): TPoint3D;
+//** @param(AProjection The projection.)
+//** @returns(Its names.)
+function ProjectionInfo(const AProjection: TSprite3DProjection): TSprite3DProjectionInfo;
 
 //** @abstract(Gives the whole application, title bars included, the look ATheme names.)
 //**
@@ -1494,14 +1597,18 @@ begin
   FIconFolder := String.Empty;
   FDirectionsFolder := String.Empty;
   SetBackgroundSpec(TSprite3DBackgroundSpec.Default);
-  // As the main form's check boxes start; a settings.json without these
-  // keys leaves them so
-  FShowBoundingBox := True;
-  FShowGrid := True;
-  FShowAxes := True;
-  FShowSweptVolume := True;
+  // As the main form's check boxes start: all off, the first run showing
+  // the model alone; a settings.json without these keys leaves them so
+  FShowBoundingBox := False;
+  FShowGrid := False;
+  FShowAxes := False;
+  FShowSweptVolume := False;
   FShowCombinedSweptVolume := False;
+  FHelpersInOutput := False;
   FOrthographic := False;
+  // Empty: decided by FOrthographic, so a file from before View, Projection
+  // keeps its projection
+  FProjection := String.Empty;
   FHeadlight := True;
   FOriginalLight := False;
   // The main form's view as it starts
@@ -1513,6 +1620,8 @@ begin
   FPanEnabled := False;
   FPanX := 0;
   FPanZ := 0;
+  FKeepShift := False;
+  FDistanceFactor := 1;
   // File, Settings: as the application behaved before it had them
   FStartupAction := saDefaultModel;
   FLastModel := String.Empty;
@@ -1667,6 +1776,9 @@ begin
   Result.CheckerSize := Max(FCheckerSize, 1);
   Result.CheckerLight := TextToColour(FCheckerLight, Defaults.CheckerLight);
   Result.CheckerDark := TextToColour(FCheckerDark, Defaults.CheckerDark);
+  Result.ImageFile := FBackgroundImage;
+  Result.ImageFit := FBackgroundImageFit;
+  Result.ImageAlign := FBackgroundImageAlign;
 end;
 
 procedure TSprite3DAppSettings.SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
@@ -1679,6 +1791,9 @@ begin
   FCheckerSize := Max(Value.CheckerSize, 1);
   FCheckerLight := ColourToText(Value.CheckerLight);
   FCheckerDark := ColourToText(Value.CheckerDark);
+  FBackgroundImage := Value.ImageFile;
+  FBackgroundImageFit := Value.ImageFit;
+  FBackgroundImageAlign := Value.ImageAlign;
 end;
 
 class function TSprite3DAppSettings.SupportFolder: String;
@@ -2484,31 +2599,6 @@ begin
     Grid.Shown := AShown;
 end;
 
-function ModelPanOffset(const AModel: TGorillaModel; const ABox: TBoundingBox;
-  const APanX, APanZ: Single): TPoint3D;
-var
-  Origin, AxisX, AxisZ: TPoint3D;
-  Radius: Single;
-begin
-  Result := TPoint3D.Zero;
-  if AModel = nil then
-    Exit;
-  Radius := 0.5 * Sqrt(Sqr(ABox.Width) + Sqr(ABox.Height) + Sqr(ABox.Depth));
-  if Radius <= 0 then
-    Radius := 1;
-  // The model's own X and Z directions in the viewport's space, which is
-  // where the camera's rig lives; scale is taken out, the radius puts it back
-  Origin := AModel.LocalToAbsolute3D(TPoint3D.Zero);
-  AxisX := AModel.LocalToAbsolute3D(Point3D(1, 0, 0)) - Origin;
-  AxisZ := AModel.LocalToAbsolute3D(Point3D(0, 0, 1)) - Origin;
-  if AxisX.Length > 0 then
-    AxisX := AxisX.Normalize;
-  if AxisZ.Length > 0 then
-    AxisZ := AxisZ.Normalize;
-  Result := AxisX * (EnsureRange(APanX, -PAN_LIMIT, PAN_LIMIT) * Radius) +
-    AxisZ * (EnsureRange(APanZ, -PAN_LIMIT, PAN_LIMIT) * Radius);
-end;
-
 type
   // What the application knows about each theme
   TThemeInfo = record
@@ -2536,6 +2626,41 @@ end;
 procedure TSprite3DAppSettings.SetThemeKind(const Value: TSprite3DTheme);
 begin
   FTheme := THEMES[Value].Key;
+end;
+
+const
+  //** @abstract(The names of each projection; see TSprite3DProjectionInfo.)
+  PROJECTIONS: array[TSprite3DProjection] of TSprite3DProjectionInfo = (
+    (Key: 'Perspective';  Caption: 'Perspective';  MetaName: 'perspective';  Prefix: 'persp'),
+    (Key: 'Orthographic'; Caption: 'Orthographic'; MetaName: 'orthographic'; Prefix: 'ortho'),
+    (Key: 'Cavalier';     Caption: 'Cavalier';     MetaName: 'cavalier';     Prefix: 'cav'),
+    (Key: 'Cabinet';      Caption: 'Cabinet';      MetaName: 'cabinet';      Prefix: 'cab'),
+    (Key: 'Military';     Caption: 'Military';     MetaName: 'military';     Prefix: 'mil'),
+    (Key: 'PlanOblique';  Caption: 'Plan Oblique'; MetaName: 'plan_oblique'; Prefix: 'plan'));
+
+function ProjectionInfo(const AProjection: TSprite3DProjection): TSprite3DProjectionInfo;
+begin
+  Result := PROJECTIONS[AProjection];
+end;
+
+function TSprite3DAppSettings.GetProjectionKind: TSprite3DProjection;
+begin
+  if FProjection = String.Empty then
+  begin
+    if FOrthographic then
+      Exit(prOrthographic);
+    Exit(prPerspective);
+  end;
+  for var Kind := Low(TSprite3DProjection) to High(TSprite3DProjection) do
+    if SameText(FProjection, PROJECTIONS[Kind].Key) then
+      Exit(Kind);
+  Result := prPerspective;
+end;
+
+procedure TSprite3DAppSettings.SetProjectionKind(const Value: TSprite3DProjection);
+begin
+  FProjection := PROJECTIONS[Value].Key;
+  FOrthographic := Value = prOrthographic;
 end;
 
 function ApplyTheme(const ATheme: TSprite3DTheme; out AError: String): Boolean;
@@ -2799,6 +2924,7 @@ begin
   Result.ViewFps := ASettings.ViewFps;
   Result.MinifyJson := ASettings.MinifyJson;
   Result.ResultsEdgeHint := ASettings.ResultsEdgeHint;
+  Result.HelpersInOutput := ASettings.HelpersInOutput;
   // The caller knows the display; until it says, at least the rate in use
   Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then

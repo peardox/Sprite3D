@@ -207,8 +207,15 @@ type
   TSprite3DSheetCamera = record
     //** @abstract(The View, Camera view checked, such as Isometric or Variable.)
     View: String;
-    //** @abstract(True for orthographic projection, False for perspective.)
+    //** @abstract(True for orthographic projection, False for any other; decides whether
+    //** @code(ortho_height) is written.)
     Orthographic: Boolean;
+    //** @abstract(The projection's name, written as @code(projection), such as perspective,
+    //** orthographic or cavalier; empty writes orthographic or perspective as Orthographic
+    //** says.)
+    //**
+    //** Text, so the unit needs to know nothing of the projections the program offers.
+    Projection: String;
     //** @abstract(The Azimuth readout, in degrees.)
     Azimuth: Single;
     //** @abstract(The Inclination readout, in degrees.)
@@ -1818,7 +1825,9 @@ begin
     Item := TJSONObject.Create;
     Root.AddPair('camera', Item);
     Item.AddPair('view', Text(AInfo.Meta.Camera.View));
-    if AInfo.Meta.Camera.Orthographic then
+    if AInfo.Meta.Camera.Projection <> String.Empty then
+      Item.AddPair('projection', AInfo.Meta.Camera.Projection)
+    else if AInfo.Meta.Camera.Orthographic then
       Item.AddPair('projection', 'orthographic')
     else
       Item.AddPair('projection', 'perspective');

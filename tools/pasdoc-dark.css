@@ -1,0 +1,114 @@
+/* ==== Sprite3D and Spritely: dark colours for PasDoc's HTML output ====
+
+   tools\pasdoc.bat appends this file to the pasdoc.css that each HTML run
+   writes (docs\html\api, docs\html\spritely, docs\html\<program>), so PasDoc's own stylesheet
+   is used as it is and only the colours are changed here. Nothing applies
+   unless the browser or the system asks for dark (prefers-color-scheme), so
+   the light look is PasDoc's own.
+
+   It covers both of PasDoc's looks: 1.0 and later (Bootstrap 5.3, the
+   pasdoc.css custom properties), and 0.16 and earlier (plain CSS with fixed
+   colours). The palette is Bootstrap 5.3's own dark theme, which PasDoc's
+   pages never switch on themselves (they set no data-bs-theme), with
+   GitHub-dark colours for the Pascal syntax highlighting.
+
+   The .chm files use tools\pasdoc-chm-dark.css instead: the HTML Help
+   viewer has no prefers-color-scheme and no custom properties. */
+
+@media (prefers-color-scheme: dark) {
+
+  /* Bootstrap 5.3's dark theme variables, and PasDoc's own */
+  :root {
+    color-scheme: dark;
+    --bs-body-color: #dee2e6;
+    --bs-body-color-rgb: 222, 226, 230;
+    --bs-body-bg: #212529;
+    --bs-body-bg-rgb: 33, 37, 41;
+    --bs-emphasis-color: #fff;
+    --bs-emphasis-color-rgb: 255, 255, 255;
+    --bs-secondary-color: rgba(222, 226, 230, 0.75);
+    --bs-secondary-color-rgb: 222, 226, 230;
+    --bs-secondary-bg: #343a40;
+    --bs-secondary-bg-rgb: 52, 58, 64;
+    --bs-tertiary-color: rgba(222, 226, 230, 0.5);
+    --bs-tertiary-color-rgb: 222, 226, 230;
+    --bs-tertiary-bg: #2b3035;
+    --bs-tertiary-bg-rgb: 43, 48, 53;
+    --bs-heading-color: inherit;
+    --bs-link-color: #6ea8fe;
+    --bs-link-hover-color: #8bb9fe;
+    --bs-link-color-rgb: 110, 168, 254;
+    --bs-link-hover-color-rgb: 139, 185, 254;
+    --bs-code-color: #e685b5;
+    --bs-highlight-color: #dee2e6;
+    --bs-highlight-bg: #664d03;
+    --bs-border-color: #495057;
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+
+    --pasdoc-accent: #6ea8fe;
+    --pasdoc-accent-hover: #8bb9fe;
+    --pasdoc-accent-light: #1c2b44;
+    --pasdoc-sidebar-bg: #2b3035;
+    --pasdoc-border-color: #495057;
+    --pasdoc-code-bg: #2b3035;
+    --pasdoc-muted: #adb5bd;
+  }
+
+  /* Page and text (0.16 and earlier set black on white here) */
+  body { background-color: #212529; color: #dee2e6; }
+
+  /* Sidebar and the narrow-screen bar above the page */
+  .offcanvas-body .nav-link { color: #ced4da; }
+  .offcanvas-md { --bs-offcanvas-bg: #2b3035; --bs-offcanvas-color: #dee2e6; }
+  .navbar {
+    --bs-navbar-color: rgba(255, 255, 255, 0.55);
+    --bs-navbar-hover-color: rgba(255, 255, 255, 0.75);
+    --bs-navbar-brand-color: #fff;
+    --bs-navbar-brand-hover-color: #fff;
+    --bs-navbar-toggler-border-color: rgba(255, 255, 255, 0.1);
+    --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28222, 226, 230, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+  }
+  .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+  .navigation { background-color: #2b3035; color: #dee2e6; }
+
+  /* Links (0.16 and earlier: dark red, brown when visited, green sections) */
+  a:link, a:visited,
+  a.bold:link, a.bold:visited,
+  ul.useslist a:link, ul.useslist a:visited,
+  p.unitlink a:link, p.unitlink a:visited,
+  a.section { color: #6ea8fe; }
+  a:hover, a.section:hover { color: #8bb9fe; }
+  .sections .one_section a.section:hover { color: #212529; }
+  .sections { background-color: transparent; }
+
+  /* Tables */
+  tr.listheader { background-color: #2b3035; color: #adb5bd; }
+  tr.list { background-color: #212529; }
+  tr.list2 { background-color: #2b3035; }
+  tr.list:hover, tr.list2:hover { background-color: #1c2b44; }
+
+  /* Code */
+  .longcode, pre.preformatted { background-color: #2b3035; color: #dee2e6; }
+  code { color: #e685b5; }
+  span.pascal_string { color: #a5d6ff; }
+  span.pascal_keyword { color: #ff7b72; }
+  span.pascal_comment { color: #8b949e; }
+  span.pascal_compiler_comment { color: #7ee787; }
+  span.pascal_numeric, span.pascal_hex, span.pascal_float { color: #79c0ff; }
+
+  /* Descriptions */
+  dl.parameters dt { color: #6ea8fe; }
+  p.hint_directive { color: #ea868f; }
+  .source_position { color: #8b949e; }
+  acronym.mispelling { background-color: #842029; }
+
+  /* @warning and @note */
+  dl.tag.warning { background-color: #2c0b0e; border-color: #842029; border-left-color: #dc3545; }
+  dl.tag.warning dt { color: #ea868f; }
+  dl.tag.warning dd { color: #f1aeb5; }
+  dl.tag.note { background-color: #332701; border-color: #997404; border-left-color: #ffc107; }
+  dl.tag.note dt, dl.tag.note dd { color: #ffda6a; }
+
+  /* Search box */
+  .search-input input { background-color: #2b3035; color: #dee2e6; border-color: #495057; }
+}

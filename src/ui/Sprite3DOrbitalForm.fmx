@@ -4,7 +4,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
   Caption = 'Variable Camera'
-  ClientHeight = 554
+  ClientHeight = 586
   ClientWidth = 350
   Position = MainFormCenter
   FormFactor.Width = 320
@@ -16,7 +16,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
   object ControlLayout: TLayout
     Align = Client
     Size.Width = 350.000000000000000000
-    Size.Height = 517.000000000000000000
+    Size.Height = 549.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 97
     object OrbitalLayout: TLayout
@@ -135,7 +135,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
       end
       object DistanceLayout: TLayout
         Align = Bottom
-        Position.Y = 485.000000000000000000
+        Position.Y = 517.000000000000000000
         Size.Width = 350.000000000000000000
         Size.Height = 32.000000000000000000
         Size.PlatformDefault = False
@@ -154,7 +154,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
           Align = Client
           CanParentFocus = True
           Max = 20.000000000000000000
-          Min = 1.000000000000000000
+          Min = 0.200000000000000000
           Orientation = Horizontal
           Margins.Right = 8.000000000000000000
           Size.Width = 238.000000000000000000
@@ -236,7 +236,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
         Align = Bottom
         Position.Y = 381.000000000000000000
         Size.Width = 350.000000000000000000
-        Size.Height = 104.000000000000000000
+        Size.Height = 136.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 4
         object PanTopLayout: TLayout
@@ -253,7 +253,7 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
             Size.Height = 32.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Text = 'Pan (along the model'#39's X and Z axes)'
+            Text = 'Shift and rise (slide the model)'
             OnChange = PanCheckChange
           end
           object PanResetButton: TButton
@@ -285,15 +285,16 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
             Size.Width = 96.000000000000000000
             Size.Height = 32.000000000000000000
             Size.PlatformDefault = False
-            Text = 'X +0.00'
+            Text = 'Shift +0.00'
+            TextSettings.WordWrap = False
             TabOrder = 0
           end
           object PanXTrack: TTrackBar
             Align = Client
             CanParentFocus = True
             Frequency = 0.009999999776482582
-            Max = 2.000000000000000000
-            Min = -2.000000000000000000
+            Max = 1.000000000000000000
+            Min = -1.000000000000000000
             Orientation = Horizontal
             Margins.Right = 8.000000000000000000
             Size.Width = 238.000000000000000000
@@ -317,15 +318,16 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
             Size.Width = 96.000000000000000000
             Size.Height = 32.000000000000000000
             Size.PlatformDefault = False
-            Text = 'Z +0.00'
+            Text = 'Rise +0.00'
+            TextSettings.WordWrap = False
             TabOrder = 0
           end
           object PanZTrack: TTrackBar
             Align = Client
             CanParentFocus = True
             Frequency = 0.009999999776482582
-            Max = 2.000000000000000000
-            Min = -2.000000000000000000
+            Max = 1.000000000000000000
+            Min = -1.000000000000000000
             Orientation = Horizontal
             Margins.Right = 8.000000000000000000
             Size.Width = 238.000000000000000000
@@ -335,12 +337,33 @@ object OrbitalSettingsForm: TOrbitalSettingsForm
             OnChange = PanTrackChange
           end
         end
+        object PanKeepLayout: TLayout
+          Align = Top
+          Position.Y = 96.000000000000000000
+          Size.Width = 350.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 3
+          object PanKeepCheck: TCheckBox
+            Align = Left
+            Margins.Left = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Size.Width = 334.000000000000000000
+            Size.Height = 32.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 0
+            Text = 'Save shift, rise and distance values between sessions'
+            Hint = 'Ticked, the shift, rise and distance, and this tick, are saved for the next session; otherwise each session starts with no shift or rise and distance x1.0'
+            ShowHint = True
+            OnChange = PanKeepCheckChange
+          end
+        end
       end
     end
   end
   object ButtonLayout: TLayout
     Align = Bottom
-    Position.Y = 517.000000000000000000
+    Position.Y = 549.000000000000000000
     Size.Width = 350.000000000000000000
     Size.Height = 37.000000000000000000
     Size.PlatformDefault = False

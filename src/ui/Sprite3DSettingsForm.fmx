@@ -395,6 +395,30 @@ object GeneralSettingsForm: TGeneralSettingsForm
               TabOrder = 1
             end
           end
+          object OutputGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 788.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 60.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'Render'
+            TabOrder = 8
+            object OutputHelpersCheck: TCheckBox
+              Position.X = 12.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 400.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Grid, Axes and Model Volume in Render'
+              Hint = 'Ticked, grabs, icons and exports draw whichever of the grid, axes and Model Volume the View menu shows; unticked, none of them'
+              ShowHint = True
+            end
+          end
           object GpuGroup: TGroupBox
             Align = Top
             Margins.Left = 8.000000000000000000

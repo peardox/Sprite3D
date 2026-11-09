@@ -16,6 +16,7 @@
 > Solid: no bitmap; the control's area is filled with the colour.
 > Gradient: a bitmap of at most 512 pixels along its longer side, each pixel coloured by the spec's own `GradientAtPoint` arithmetic (the same the off-screen grabs use), stretched smoothly to the control. A blend loses nothing by being stretched, and it stays quick to remake while the window is resized.
 > Transparent (the checker): a bitmap at the display's real pixel size, drawn without smoothing so the square edges stay sharp. Squares are `CheckerSize` logical pixels, light at the top-left. Only two distinct rows exist, so each is painted once and copied to every other row.
+> Image: an image file, fitted to the control by the spec's `ImageFit` (Fit, Fill, Stretch, Fit width, Fit height or Original size), placed by `ImageAlign` (a corner, an edge or centred, the default) over `Colour`, drawn into a bitmap at the display's real pixel size by `NewBitmap`, which the off-screen grabs use too at their own size. The file is read once by `BackgroundImage` and kept until another file is asked for or the file's time of last change differs. Original size is one image pixel to one grab pixel, so the control is told the grab's width (`GrabWidth`) and draws the image at the view's width over it.
 >
 > The bitmap is kept and only remade when the spec, the control's size or the display scale changes. `TSprite3DBackgroundSpec.NewBitmap` does the painting and can be used on its own.
 >
@@ -25,7 +26,7 @@
 >
 > Grabs and icons
 >
-> The off-screen pass draws the scene into a frame buffer of its own with its own clear colours, so the 2D background can never end up in a grab, and the main form no longer needs to hide it around a grab. As before, None and Transparent grab transparent, and Solid or Gradient are filled in afterwards, per pixel, so soft edges blend into them. On macOS and iOS, where a grab is a screenshot of the viewport, the screenshot no longer contains the background either; for Solid or Gradient the backdrop is painted under the screenshot at the grab size.
+> The off-screen pass draws the scene into a frame buffer of its own with its own clear colours, so the 2D background can never end up in a grab, and the main form no longer needs to hide it around a grab. As before, None and Transparent grab transparent, and Solid, Gradient or Image are filled in afterwards, per pixel, so soft edges blend into them; for Image the pixels come from the image fitted to the grab's size (`BackdropPixels`, on the main thread, as it draws with `TBitmap`). On macOS and iOS, where a grab is a screenshot of the viewport, the screenshot no longer contains the background either; for Solid, Gradient or Image the backdrop is painted under the screenshot at the grab size.
 >
 > Still to check
 >
