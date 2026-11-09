@@ -233,6 +233,139 @@ object BackgroundSettingsForm: TBackgroundSettingsForm
       Value = 64.000000000000000000
       OnChange = CheckerTrackChange
     end
+    object AlignLayout: TLayout
+      Position.X = 16.000000000000000000
+      Position.Y = 412.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 96.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 12
+      object AlignLabel: TLabel
+        Size.Width = 240.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Image position'
+        TabOrder = 0
+      end
+      object AlignTopLeftRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 0.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Tag = 0
+        Hint = 'Top left'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignTopRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 28.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        Tag = 1
+        Hint = 'Top'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignTopRightRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 56.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        Tag = 2
+        Hint = 'Top right'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignLeftRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 0.000000000000000000
+        Position.Y = 46.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 4
+        Tag = 3
+        Hint = 'Left'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignCentreRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        IsChecked = True
+        Position.X = 28.000000000000000000
+        Position.Y = 46.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 5
+        Tag = 4
+        Hint = 'Centre'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignRightRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 56.000000000000000000
+        Position.Y = 46.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 6
+        Tag = 5
+        Hint = 'Right'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignBottomLeftRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 0.000000000000000000
+        Position.Y = 70.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 7
+        Tag = 6
+        Hint = 'Bottom left'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignBottomRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 28.000000000000000000
+        Position.Y = 70.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 8
+        Tag = 7
+        Hint = 'Bottom'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+      object AlignBottomRightRadio: TRadioButton
+        GroupName = 'ImageAlign'
+        Position.X = 56.000000000000000000
+        Position.Y = 70.000000000000000000
+        Size.Width = 22.000000000000000000
+        Size.Height = 19.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 9
+        Tag = 8
+        Hint = 'Bottom right'
+        ShowHint = True
+        OnChange = AlignRadioChange
+      end
+    end
     object ImageLayout: TLayout
       Position.X = 272.000000000000000000
       Position.Y = 384.000000000000000000

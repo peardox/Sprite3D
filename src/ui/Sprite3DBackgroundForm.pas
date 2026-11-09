@@ -10,9 +10,12 @@
 //** disabled then; for Transparent a slider sets the size of the checker that stands for
 //** transparency on screen. For Image, the file is typed or chosen with Browse (desktop
 //** only), a drop-down chooses how it is fitted to the picture, a line under them gives its
-//** size or why it cannot be read, and the colour panel sets the colour where the image does
-//** not reach. A preview shows the result, with the checker at a quarter of its size and None
-//** as black, as the viewport shows it.
+//** size or why it cannot be read, nine buttons in a square under the colour place it,
+//** centred unless changed, and the colour panel sets the colour where the image does not
+//** reach. A preview shows the result, with the checker at a quarter of its size and None
+//** as black, as the viewport shows it; for Image it shows the grab's frame (GrabWidth by
+//** GrabHeight) with the whole image round it, darkening what a grab cuts off and
+//** outlining the frame in black dashes over white.
 //**
 //** The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing it and read it
 //** back after OK. Each change also calls OnPreview, so the owner can show it in the viewport
@@ -29,6 +32,8 @@
 //**     |   |-- ToRadio, ToBox             edit the ending colour
 //**     |   `-- DirectionLabel, DirectionCombo   the gradient's direction
 //**     |-- HexLabel, HexEdit              the colour being edited, as #RRGGBB
+//**     |-- AlignLayout                    AlignLabel and nine buttons, 3 by 3: the image's
+//**     |                                  position, for Image but Stretch
 //**     |-- StyleGroup                     None, Transparent, Solid, Gradient, Image
 //**     |-- PreviewLabel, PreviewRect
 //**     |-- CheckerLabel, CheckerTrack     checker size, for Transparent only
@@ -55,9 +60,13 @@ unit Sprite3DBackgroundForm;
   the size of the checker that stands for transparency on screen. For Image,
   the file is typed or chosen with Browse (desktop only), a drop-down
   chooses how it is fitted to the picture, a line under them gives its size
-  or why it cannot be read, and the colour panel sets the colour where the
+  or why it cannot be read, nine buttons in a square under the colour place
+  it, centred unless changed, and the colour panel sets the colour where the
   image does not reach. A preview shows the result, with the checker at a
-  quarter of its size and None as black, as the viewport shows it.
+  quarter of its size and None as black, as the viewport shows it; for
+  Image it shows the grab's frame (GrabWidth by GrabHeight) with the whole
+  image round it, darkening what a grab cuts off and outlining the frame in
+  black dashes over white.
 
   The dialog only edits a TSprite3DBackgroundSpec: set Spec before showing
   it and read it back after OK. Each change also calls OnPreview, so the
@@ -75,6 +84,8 @@ unit Sprite3DBackgroundForm;
         |   |-- ToRadio, ToBox             edit the ending colour
         |   `-- DirectionLabel, DirectionCombo   the gradient's direction
         |-- HexLabel, HexEdit              the colour being edited, as #RRGGBB
+        |-- AlignLayout                    AlignLabel and nine buttons, 3 by 3: the image's
+        |                                  position, for Image but Stretch
         |-- StyleGroup                     None, Transparent, Solid, Gradient, Image
         |-- PreviewLabel, PreviewRect
         |-- CheckerLabel, CheckerTrack     checker size, for Transparent only
@@ -174,6 +185,38 @@ type
     //** @abstract(The image's size in pixels, or why it cannot be read; its hint gives the
     //** whole of it.)
     ImageStatusLabel: TLabel;
+    //** @abstract(Holds AlignLabel and the nine image position buttons; enabled for Image,
+    //** but for Stretch, which fills the picture.)
+    AlignLayout: TLayout;
+    //** @abstract(The caption above the image position buttons.)
+    AlignLabel: TLabel;
+    //** @abstract(Places the image at the top left; Tag 0, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignTopLeftRadio: TRadioButton;
+    //** @abstract(Places the image at the top; Tag 1, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignTopRadio: TRadioButton;
+    //** @abstract(Places the image at the top right; Tag 2, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignTopRightRadio: TRadioButton;
+    //** @abstract(Places the image at the left; Tag 3, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignLeftRadio: TRadioButton;
+    //** @abstract(Places the image in the centre; Tag 4, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignCentreRadio: TRadioButton;
+    //** @abstract(Places the image at the right; Tag 5, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignRightRadio: TRadioButton;
+    //** @abstract(Places the image at the bottom left; Tag 6, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignBottomLeftRadio: TRadioButton;
+    //** @abstract(Places the image at the bottom; Tag 7, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignBottomRadio: TRadioButton;
+    //** @abstract(Places the image at the bottom right; Tag 8, Ord of its
+    //** TSprite3DImageAlign.)
+    AlignBottomRightRadio: TRadioButton;
     //** @abstract(Makes the preview's checker tile.)
     //**
     //** @param(Sender The form.)
@@ -234,6 +277,10 @@ type
     //**
     //** @param(Sender FitCombo.)
     procedure FitComboChange(Sender: TObject);
+    //** @abstract(Takes the image position button turned on, by its Tag, as ImageAlign.)
+    //**
+    //** @param(Sender The radio button that changed.)
+    procedure AlignRadioChange(Sender: TObject);
   private
     FSpec: TSprite3DBackgroundSpec;
     FUpdating: Boolean;   // set while code changes controls, to ignore their events
@@ -242,7 +289,15 @@ type
     FOnAccept: TNotifyEvent;
     FOnCancel: TNotifyEvent;
     FOnPreview: TNotifyEvent;
+    //** @abstract(Backing fields for GrabWidth and GrabHeight.)
+    FGrabWidth, FGrabHeight: Integer;
     procedure SetSpec(const Value: TSprite3DBackgroundSpec);
+    //** @abstract(The Image preview: the grab's frame and the whole image round it, the part
+    //** of the image outside the frame darkened and the frame outlined in white and black
+    //** dashes, all scaled to fit PreviewRect.)
+    //**
+    //** @returns(A new bitmap at twice PreviewRect's size, owned by the caller.)
+    function NewImagePreview: TBitmap;
     procedure LoadColourPanel;
     function EditedColour: TAlphaColor;
     procedure SetEditedColour(const AColour: TAlphaColor);
@@ -276,6 +331,13 @@ type
     //** The dialog never changes the viewport itself; on Cancel the owner undoes what the
     //** previews showed.
     property OnPreview: TNotifyEvent read FOnPreview write FOnPreview;
+    //** @abstract(The grab size, in pixels, whose frame the Image preview outlines; 0, the
+    //** default, for the preview's own shape.)
+    //**
+    //** Set them before showing the dialog.
+    property GrabWidth: Integer read FGrabWidth write FGrabWidth;
+    //** @abstract(See GrabWidth.)
+    property GrabHeight: Integer read FGrabHeight write FGrabHeight;
   end;
 
 implementation
@@ -396,6 +458,11 @@ begin
     end;
     ImageEdit.Text := FSpec.ImageFile;
     FitCombo.ItemIndex := Ord(FSpec.ImageFit);
+    // The position button whose Tag is the alignment
+    for var I := 0 to AlignLayout.ChildrenCount - 1 do
+      if (AlignLayout.Children[I] is TRadioButton) and
+        (TRadioButton(AlignLayout.Children[I]).Tag = Ord(FSpec.ImageAlign)) then
+        TRadioButton(AlignLayout.Children[I]).IsChecked := True;
     FromBox.Color := FSpec.GradientFrom;
     DirectionCombo.ItemIndex := Ord(FSpec.GradientDirection);
     ToBox.Color := FSpec.GradientTo;
@@ -489,6 +556,9 @@ begin
   CheckerLabel.Text := Format('Checker size: %d px', [FSpec.CheckerSize]);
   GradientLayout.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Gradient;
   ImageLayout.Enabled := FSpec.Kind = TSprite3DBackgroundKind.Image;
+  // Stretch fills the picture, so there is nothing to place
+  AlignLayout.Enabled := ImageLayout.Enabled and
+    (FSpec.ImageFit <> TSprite3DImageFit.Stretch);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   ImageBrowseButton.Visible := False;   // no file dialog: the path is typed
   {$ENDIF}
@@ -530,10 +600,9 @@ begin
   case FSpec.Kind of
     TSprite3DBackgroundKind.Image:
       begin
-        // Fitted to the preview's own shape, as the view fits it to its own;
-        // an Original image at a quarter, as the checker is
-        Picture := FSpec.NewBitmap(Max(Round(PreviewRect.Width), 1),
-          Max(Round(PreviewRect.Height), 1), 1, 1 / PREVIEW_SCALE);
+        // The grab's frame, outlined, with the whole image round it, so what
+        // a grab cuts off shows too
+        Picture := NewImagePreview;
         try
           PreviewRect.Fill.Kind := TBrushKind.Bitmap;
           PreviewRect.Fill.Bitmap.WrapMode := TWrapMode.TileStretch;
@@ -593,6 +662,92 @@ begin
   // The viewport shows the same, live
   if Assigned(FOnPreview) then
     FOnPreview(Self);
+end;
+
+function TBackgroundSettingsForm.NewImagePreview: TBitmap;
+const
+  // Drawn at twice the preview's size, so the outline stays crisp
+  DETAIL = 2;
+  // Behind everything: what is neither the frame nor the image
+  SURROUND = $FF2B2B2B;
+  // Laid over what a grab cuts off
+  CUT_SHADE = $A0000000;
+var
+  Picture: TBitmap;
+  Problem: String;
+  PW, PH: Integer;
+  GW, GH, Scale, OffX, OffY: Single;
+  Frame, Img, Union: TRectF;
+
+  function Mapped(const R: TRectF): TRectF;
+  begin
+    Result := TRectF.Create(R.Left * Scale + OffX, R.Top * Scale + OffY,
+      R.Right * Scale + OffX, R.Bottom * Scale + OffY);
+  end;
+
+begin
+  PW := Max(Round(PreviewRect.Width * DETAIL), 1);
+  PH := Max(Round(PreviewRect.Height * DETAIL), 1);
+  // The frame in the grab's own pixels, so Original size is exact; without
+  // a grab size, the preview's shape
+  GW := FGrabWidth;
+  GH := FGrabHeight;
+  if (GW <= 0) or (GH <= 0) then
+  begin
+    GW := PW;
+    GH := PH;
+  end;
+  Frame := TRectF.Create(0, 0, GW, GH);
+  Picture := BackgroundImage(FSpec.ImageFile, Problem);
+  if Picture <> nil then
+    Img := FSpec.ImageRect(Picture.Width, Picture.Height, GW, GH, 1)
+  else
+    Img := Frame;
+  // Everything there is to see, scaled to fit the preview and centred in it
+  Union := TRectF.Union(Frame, Img);
+  Scale := Min(PW / Max(Union.Width, 1), PH / Max(Union.Height, 1));
+  OffX := (PW - Union.Width * Scale) / 2 - Union.Left * Scale;
+  OffY := (PH - Union.Height * Scale) / 2 - Union.Top * Scale;
+  Frame := Mapped(Frame);
+  Img := Mapped(Img);
+  Result := TBitmap.Create(PW, PH);
+  try
+    if Result.Canvas.BeginScene then
+    try
+      Result.Canvas.Clear(SURROUND);
+      // The grab: the colour, and the image over it, as NewBitmap draws it
+      Result.Canvas.Fill.Kind := TBrushKind.Solid;
+      Result.Canvas.Fill.Color := FSpec.Colour or $FF000000;
+      Result.Canvas.FillRect(Frame, 0, 0, [], 1);
+      if Picture <> nil then
+        Result.Canvas.DrawBitmap(Picture, TRectF.Create(0, 0, Picture.Width,
+          Picture.Height), Img, 1, False);
+      // What a grab cuts off, darkened: everything outside the frame
+      Result.Canvas.Fill.Color := CUT_SHADE;
+      Result.Canvas.FillRect(TRectF.Create(0, 0, PW, Frame.Top), 0, 0, [], 1);
+      Result.Canvas.FillRect(TRectF.Create(0, Frame.Bottom, PW, PH), 0, 0, [], 1);
+      Result.Canvas.FillRect(TRectF.Create(0, Frame.Top, Frame.Left, Frame.Bottom), 0, 0,
+        [], 1);
+      Result.Canvas.FillRect(TRectF.Create(Frame.Right, Frame.Top, PW, Frame.Bottom), 0, 0,
+        [], 1);
+      // The frame's edge: black dashes over a white line, which shows over
+      // any image
+      Frame.Inflate(-DETAIL / 2, -DETAIL / 2);
+      Result.Canvas.Stroke.Kind := TBrushKind.Solid;
+      Result.Canvas.Stroke.Thickness := DETAIL;
+      Result.Canvas.Stroke.Dash := TStrokeDash.Solid;
+      Result.Canvas.Stroke.Color := TAlphaColors.White;
+      Result.Canvas.DrawRect(Frame, 0, 0, [], 1);
+      Result.Canvas.Stroke.Dash := TStrokeDash.Dash;
+      Result.Canvas.Stroke.Color := TAlphaColors.Black;
+      Result.Canvas.DrawRect(Frame, 0, 0, [], 1);
+    finally
+      Result.Canvas.EndScene;
+    end;
+  except
+    Result.Free;
+    raise;
+  end;
 end;
 
 procedure TBackgroundSettingsForm.StyleChange(Sender: TObject);
@@ -671,6 +826,17 @@ begin
     Exit;
   FSpec.ImageFit := TSprite3DImageFit(EnsureRange(FitCombo.ItemIndex,
     Ord(Low(TSprite3DImageFit)), Ord(High(TSprite3DImageFit))));
+  UpdateControls;
+  UpdatePreview;
+end;
+
+procedure TBackgroundSettingsForm.AlignRadioChange(Sender: TObject);
+begin
+  // Each change fires for the button turned off as well as the one turned on
+  if FUpdating or not TRadioButton(Sender).IsChecked then
+    Exit;
+  FSpec.ImageAlign := TSprite3DImageAlign(EnsureRange(TRadioButton(Sender).Tag,
+    Ord(Low(TSprite3DImageAlign)), Ord(High(TSprite3DImageAlign))));
   UpdatePreview;
 end;
 

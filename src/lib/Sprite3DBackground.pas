@@ -124,8 +124,9 @@ type
 
   //** @abstract(How an Image background's image is fitted to the picture.)
   //**
-  //** Every one but Stretch keeps the image's shape, and centres it: what does not reach an
-  //** edge shows the background's Colour, and what goes past one is cut off.
+  //** Every one but Stretch keeps the image's shape, and places it as ImageAlign says,
+  //** centred unless changed: what does not reach an edge shows the background's Colour, and
+  //** what goes past one is cut off.
   TSprite3DImageFit = (
     //** @abstract(The whole image, as large as fits: Colour above and below, or either side,
     //** where the shapes differ. The default.)
@@ -142,6 +143,33 @@ type
     //** @abstract(One image pixel to one pixel of the grab, whatever its size; the view shows
     //** it scaled as it shows the grab.)
     Original);
+
+  //** @abstract(Where an Image background's image sits in the picture where their shapes
+  //** differ: against which edges, or centred.)
+  //**
+  //** In the order of a 3 by 3 grid, row by row from the top-left, so Ord mod 3 is the
+  //** column and Ord div 3 the row. Where the image is smaller than the picture it sits
+  //** there, Colour filling the rest; where larger, as Fill can make it, that part of it is
+  //** what shows. Stretch fills the picture, so it does not apply.
+  TSprite3DImageAlign = (
+    //** @abstract(Against the top and left edges.)
+    TopLeft,
+    //** @abstract(Against the top edge, centred across.)
+    Top,
+    //** @abstract(Against the top and right edges.)
+    TopRight,
+    //** @abstract(Against the left edge, centred down.)
+    Left,
+    //** @abstract(Centred both ways. The default.)
+    Centre,
+    //** @abstract(Against the right edge, centred down.)
+    Right,
+    //** @abstract(Against the bottom and left edges.)
+    BottomLeft,
+    //** @abstract(Against the bottom edge, centred across.)
+    Bottom,
+    //** @abstract(Against the bottom and right edges.)
+    BottomRight);
   {$SCOPEDENUMS OFF}
 
   //** @abstract(Describes a background: its kind, colours and checker size.)
@@ -173,11 +201,14 @@ type
     ImageFile: String;
     //** @abstract(How the Image background's image is fitted to the picture.)
     ImageFit: TSprite3DImageFit;
+    //** @abstract(Where the Image background's image sits where its shape and the picture's
+    //** differ.)
+    ImageAlign: TSprite3DImageAlign;
     //** @abstract(The starting background: None.)
     //**
     //** The checker has 64-pixel squares of light and mid grey, Colour is mid grey and the
     //** gradient runs from light grey at the top to dark grey at the bottom, ready for when
-    //** another kind is chosen; no image file, fitted with Fit.
+    //** another kind is chosen; no image file, fitted with Fit and centred.
     //**
     //** @returns(The default spec.)
     class function Default: TSprite3DBackgroundSpec; static;
@@ -205,7 +236,7 @@ type
     //** @param(ALength The gradient's length, in the unit of AWidth and AHeight.)
     procedure GradientAxis(const AWidth, AHeight: Single; out ADX, ADY, ALength: Single);
     //** @abstract(Where the Image background's image goes in a picture of the given size, as
-    //** ImageFit says.)
+    //** ImageFit and ImageAlign say.)
     //**
     //** The rectangle may reach past the picture's edges, for Fill and the like, where the
     //** image is cut off.
@@ -427,6 +458,7 @@ begin
   Result.CheckerDark := $FF999999;
   Result.ImageFile := String.Empty;
   Result.ImageFit := TSprite3DImageFit.Fit;
+  Result.ImageAlign := TSprite3DImageAlign.Centre;
 end;
 
 function TSprite3DBackgroundSpec.GradientAt(const AFraction: Single): TAlphaColor;
@@ -487,7 +519,7 @@ end;
 function TSprite3DBackgroundSpec.ImageRect(const AImageWidth, AImageHeight, AWidth,
   AHeight, AImageScale: Single): TRectF;
 var
-  Scale, W, H: Single;
+  Scale, W, H, AcrossFraction, DownFraction: Single;
 begin
   if (ImageFit = TSprite3DImageFit.Stretch) or (AImageWidth <= 0) or (AImageHeight <= 0) then
     Exit(TRectF.Create(0, 0, AWidth, AHeight));
@@ -503,11 +535,15 @@ begin
   else
     Scale := Min(AWidth / AImageWidth, AHeight / AImageHeight);
   end;
-  // Centred: what is left over, or cut off, is shared between the two sides
+  // What is left over, or cut off, goes to the sides ImageAlign does not
+  // name: none of it to the left for the left column, all of it for the
+  // right, half for the middle; likewise down
   W := AImageWidth * Scale;
   H := AImageHeight * Scale;
-  Result := TRectF.Create((AWidth - W) / 2, (AHeight - H) / 2, (AWidth + W) / 2,
-    (AHeight + H) / 2);
+  AcrossFraction := (Ord(ImageAlign) mod 3) / 2;
+  DownFraction := (Ord(ImageAlign) div 3) / 2;
+  Result := TRectF.Create(0, 0, W, H);
+  Result.Offset((AWidth - W) * AcrossFraction, (AHeight - H) * DownFraction);
 end;
 
 function TSprite3DBackgroundSpec.GradientAtPoint(const AX, AY, AWidth,

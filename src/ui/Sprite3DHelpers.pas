@@ -285,6 +285,9 @@ type
     MinifyJson: Boolean;
     //** @abstract(Whether the Results tab's empty border values have a hint explaining them.)
     ResultsEdgeHint: Boolean;
+    //** @abstract(Whether grabs, icons and exports draw the grid, axes and Model Volume the
+    //** View menu shows.)
+    HelpersInOutput: Boolean;
     //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
     //** kept.)
     MaxViewFps: Integer;
@@ -350,11 +353,13 @@ type
     FCheckerDark: String;
     FBackgroundImage: String;
     FBackgroundImageFit: TSprite3DImageFit;
+    FBackgroundImageAlign: TSprite3DImageAlign;
     FShowBoundingBox: Boolean;
     FShowGrid: Boolean;
     FShowAxes: Boolean;
     FShowSweptVolume: Boolean;
     FShowCombinedSweptVolume: Boolean;
+    FHelpersInOutput: Boolean;
     FOrthographic: Boolean;
     //** @abstract(Backing fields for Headlight and OriginalLight.)
     FHeadlight, FOriginalLight: Boolean;
@@ -559,20 +564,27 @@ type
     //** settings.json has none.
     property BackgroundImageFit: TSprite3DImageFit read FBackgroundImageFit
       write FBackgroundImageFit;
-    //** @abstract(Whether View, Show bounding box is ticked on the main form; True by
+    //** @abstract(Where the Image background's image sits where its shape and the picture's
+    //** differ.)
+    //**
+    //** Stored as @code(backgroundImageAlign), by name. Centre, the default, is used when
+    //** settings.json has none.
+    property BackgroundImageAlign: TSprite3DImageAlign read FBackgroundImageAlign
+      write FBackgroundImageAlign;
+    //** @abstract(Whether View, Show bounding box is ticked on the main form; False by
     //** default.)
     //**
     //** Stored as @code(showBoundingBox).
     property ShowBoundingBox: Boolean read FShowBoundingBox write FShowBoundingBox;
-    //** @abstract(Whether View, Show grid is ticked on the main form; True by default.)
+    //** @abstract(Whether View, Show grid is ticked on the main form; False by default.)
     //**
     //** Stored as @code(showGrid).
     property ShowGrid: Boolean read FShowGrid write FShowGrid;
-    //** @abstract(Whether View, Show axes is ticked on the main form; True by default.)
+    //** @abstract(Whether View, Show axes is ticked on the main form; False by default.)
     //**
     //** Stored as @code(showAxes).
     property ShowAxes: Boolean read FShowAxes write FShowAxes;
-    //** @abstract(Whether View, Show Model Volume is ticked on the main form; True by
+    //** @abstract(Whether View, Show Model Volume is ticked on the main form; False by
     //** default.)
     //**
     //** Stored as @code(showSweptVolume).
@@ -583,6 +595,12 @@ type
     //** Stored as @code(showCombinedSweptVolume).
     property ShowCombinedSweptVolume: Boolean read FShowCombinedSweptVolume
       write FShowCombinedSweptVolume;
+    //** @abstract(Whether File, Settings, Render, Grid, Axes and Model Volume in Render is
+    //** ticked; False by default.)
+    //**
+    //** Stored as @code(helpersInOutput). Ticked, grabs, icons and exports draw whichever of
+    //** the grid, axes and Model Volume the View menu shows; unticked, none of them.
+    property HelpersInOutput: Boolean read FHelpersInOutput write FHelpersInOutput;
     //** @abstract(Whether the main form's projection is orthographic; False by default.)
     //**
     //** Stored as @code(orthographic). Before View, Projection it was the View, Orthographic
@@ -1579,13 +1597,14 @@ begin
   FIconFolder := String.Empty;
   FDirectionsFolder := String.Empty;
   SetBackgroundSpec(TSprite3DBackgroundSpec.Default);
-  // As the main form's check boxes start; a settings.json without these
-  // keys leaves them so
-  FShowBoundingBox := True;
-  FShowGrid := True;
-  FShowAxes := True;
-  FShowSweptVolume := True;
+  // As the main form's check boxes start: all off, the first run showing
+  // the model alone; a settings.json without these keys leaves them so
+  FShowBoundingBox := False;
+  FShowGrid := False;
+  FShowAxes := False;
+  FShowSweptVolume := False;
   FShowCombinedSweptVolume := False;
+  FHelpersInOutput := False;
   FOrthographic := False;
   // Empty: decided by FOrthographic, so a file from before View, Projection
   // keeps its projection
@@ -1759,6 +1778,7 @@ begin
   Result.CheckerDark := TextToColour(FCheckerDark, Defaults.CheckerDark);
   Result.ImageFile := FBackgroundImage;
   Result.ImageFit := FBackgroundImageFit;
+  Result.ImageAlign := FBackgroundImageAlign;
 end;
 
 procedure TSprite3DAppSettings.SetBackgroundSpec(const Value: TSprite3DBackgroundSpec);
@@ -1773,6 +1793,7 @@ begin
   FCheckerDark := ColourToText(Value.CheckerDark);
   FBackgroundImage := Value.ImageFile;
   FBackgroundImageFit := Value.ImageFit;
+  FBackgroundImageAlign := Value.ImageAlign;
 end;
 
 class function TSprite3DAppSettings.SupportFolder: String;
@@ -2903,6 +2924,7 @@ begin
   Result.ViewFps := ASettings.ViewFps;
   Result.MinifyJson := ASettings.MinifyJson;
   Result.ResultsEdgeHint := ASettings.ResultsEdgeHint;
+  Result.HelpersInOutput := ASettings.HelpersInOutput;
   // The caller knows the display; until it says, at least the rate in use
   Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then

@@ -255,10 +255,10 @@
 //**     |       |-- MilitaryItem "Military"
 //**     |       `-- PlanObliqueItem "Plan Oblique"
 //**     |-- ViewSeparatorItem "-"
-//**     |-- ShowBoundsItem "Show bounding box"  ticked at start-up
-//**     |-- ShowGridItem "Show grid"        ticked at start-up
-//**     |-- ShowAxesItem "Show axes"        ticked at start-up
-//**     |-- ShowSweepItem "Show Model Volume"  ticked at start-up; the space swept turning
+//**     |-- ShowBoundsItem "Show bounding box"  off at first
+//**     |-- ShowGridItem "Show grid"        off at first
+//**     |-- ShowAxesItem "Show axes"        off at first
+//**     |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
 //**     |                                      about the up axis
 //**     `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
 //**                                            frames
@@ -533,10 +533,10 @@ unit Sprite3dMain;
         |       |-- MilitaryItem "Military"
         |       `-- PlanObliqueItem "Plan Oblique"
         |-- ViewSeparatorItem "-"
-        |-- ShowBoundsItem "Show bounding box"  ticked at start-up
-        |-- ShowGridItem "Show grid"        ticked at start-up
-        |-- ShowAxesItem "Show axes"        ticked at start-up
-        |-- ShowSweepItem "Show Model Volume"  ticked at start-up; the space swept turning
+        |-- ShowBoundsItem "Show bounding box"  off at first
+        |-- ShowGridItem "Show grid"        off at first
+        |-- ShowAxesItem "Show axes"        off at first
+        |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
         |                                      about the up axis
         `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
                                                frames
@@ -784,24 +784,24 @@ type
     CameraMenu: TMenuItem;
     //** @abstract(The line between CameraMenu and the View menu's on/off items.)
     ViewSeparatorItem: TMenuItem;
-    //** @abstract(Shows or hides the model's bounding box; ticked at start-up.)
+    //** @abstract(Shows or hides the model's bounding box; off at first.)
     //**
     //** Ticked, every model is drawn with Gorilla's ShowBoundingBox, an orange box round the
     //** bounds of its current pose. See ShowBoundsItemClick.
     ShowBoundsItem: TMenuItem;
-    //** @abstract(Shows or hides the floor grid; ticked at start-up.)
+    //** @abstract(Shows or hides the floor grid; off at first.)
     //**
     //** Ticked, every model is loaded with ShowModelGrid from Sprite3DGrid, which draws a
     //** shader grid of grey lines 1.0 apart on the model's floor, the lowest point of its own
     //** geometry. See ShowGridItemClick.
     ShowGridItem: TMenuItem;
-    //** @abstract(Shows or hides the model's X, Y and Z axes; ticked at start-up.)
+    //** @abstract(Shows or hides the model's X, Y and Z axes; off at first.)
     //**
     //** Ticked, every model is loaded with ShowModelAxes from Sprite3DAxes, which draws red,
     //** green and blue lines through its centre of rotation. See ShowAxesItemClick.
     ShowAxesItem: TMenuItem;
     //** @abstract(Shows or hides the Model Volume, the volume the model sweeps turning about
-    //** its up axis; ticked at start-up.)
+    //** its up axis; off at first.)
     //**
     //** Ticked, every model is loaded with ShowModelSweep from Sprite3DSweep, which works out
     //** the space the model's bounds pass through in a full turn about the line through its
@@ -1636,6 +1636,13 @@ type
     //** Variable's Save shift, rise and distance values between sessions, kept as
     //** @code(keepShift); False by default. See KeepShiftSettings.)
     FPanKeep: Boolean;
+    //** @abstract(True while FormCreate puts back the last session's camera view and
+    //** projection, so ResetViewSettings leaves the distance, shift and rise it loaded.)
+    FRestoringView: Boolean;
+    //** @abstract(The Variable camera dialog while it is open on the desktop, else nil, so
+    //** Mouse View's wheel and drag change its distance and azimuth rather than the mouse
+    //** view; see DialogMouseView.)
+    FOrbitalDialog: TOrbitalSettingsForm;
     //** @abstract(True once the view has been fitted, so there is a fit to shift.)
     FFitted: Boolean;
     //** @abstract(How far PutOnSlide has slid the orbit centre, in orthographic projection,
@@ -2084,7 +2091,8 @@ type
     //**
     //** For the fixed views and the oblique projections' angles. Only the values change: the
     //** caller turns the camera and refits, which shows them. The Shift and rise tick is left
-    //** as it is, with nothing to slide.
+    //** as it is, with nothing to slide. Does nothing while FRestoringView, as the start-up
+    //** putting back the last session's view is not a choice of view.
     procedure ResetViewSettings;
     procedure ClearViewChecks;
     procedure SelectFixedView(const AItem: TMenuItem; const APolarAngle: Single;
@@ -2453,6 +2461,13 @@ type
     //** @param(AYaw Degrees added to the camera's Azimuth.)
     //** @param(AZoom The factor the zoom is multiplied by.)
     procedure MoveMouseView(const AYaw, AZoom: Single);
+    //** @abstract(Mouse View's wheel or drag while Variable's dialog is open: the turn added
+    //** to the dialog's azimuth and the zoom multiplied into its distance (0.2 to 20, the
+    //** slider's range), its controls set to match, and the view showing it.)
+    //**
+    //** @param(AYaw The turn, in the camera's own degrees, as MoveMouseView takes it.)
+    //** @param(AZoom The zoom, a factor on the distance, as MoveMouseView takes it.)
+    procedure DialogMouseView(const AYaw, AZoom: Single);
     //** @abstract(Takes the mouse view off the camera, leaving the normal view, before code
     //** changes the normal view.) Each call is matched by ResumeMouseView; they nest.
     procedure SuspendMouseView;
@@ -2553,6 +2568,11 @@ type
     procedure LastButtonClick(Sender: TObject);
     function SelectedAnimation: TGorillaAnimation;
     function TickedAnimationCount: Integer;
+    //** @abstract(Hides, for one grab, icon or export frame, the helpers that are not to be
+    //** drawn in output: the bounding box and Animation Volume always, and the grid, axes and
+    //** Model Volume unless File, Settings' Grid, Axes and Model Volume in Render is ticked
+    //** and this is not a 2-pass export's measuring pass. ShowHelpersAfterGrab shows them
+    //** again.)
     procedure HideHelpersForGrab;
     procedure ShowHelpersAfterGrab;
     function UsesCombinedView: Boolean;
@@ -2968,11 +2988,19 @@ begin
   AspectLayout.HitTest := False;
   FitViewportToAspect;
 
-  // The camera view as it was left last session; Isometric the first time
-  RestoreCameraView;
+  // The camera view as it was left last session; Isometric the first time.
+  // Its handlers, and an oblique projection's below, would reset the
+  // distance, shift and rise loaded above, as choosing a view does: not when
+  // putting back the last session's
+  FRestoringView := True;
+  try
+    RestoreCameraView;
 
-  // The View menu's on/off items as they were left last session
-  RestoreViewToggles;
+    // The View menu's on/off items as they were left last session
+    RestoreViewToggles;
+  finally
+    FRestoringView := False;
+  end;
 
   // Moves a model load on, a tick at a time
   FLoadTimer := TTimer.Create(Self);
@@ -4850,11 +4878,11 @@ procedure TMainForm.OffscreenBeforeGrab(Sender: TObject;
 begin
   // Every grab is of the normal view, whatever started it
   ResetMouseView;
-  // Animation exports show the model alone: the helpers drawn on screen to
-  // show its box, axes, floor and volumes are left out. Grabs and icons are
-  // saved as the view shows them, helpers and all.
-  if Assigned(FCapture) then
-    HideHelpersForGrab;
+  // The helpers drawn on screen to show the model's box, axes, floor and
+  // volumes are left out of every grab, icon and export, but for the grid,
+  // axes and Model Volume while File, Settings, Grid, Axes and Model Volume
+  // in Render is ticked (HideHelpersForGrab)
+  HideHelpersForGrab;
   // The on-screen background is a 2D control behind the viewport, so it is
   // never in the grab's frame buffer; grabs add their own backdrop after
   // matting
@@ -4894,9 +4922,13 @@ begin
   end;
 end;
 
-// Hides, for one drawing of an animation export, everything drawn on
-// screen only to help see the model: its bounding box, axes and grid, and the Model and
-// Animation Volume wireframes. Only what is showing is hidden, and
+// Hides, for one drawing of a grab, an icon or an export, what is drawn on
+// screen only to help see the model: its bounding box and the Animation
+// Volume always, and its axes, grid and Model Volume unless File,
+// Settings' Grid, Axes and Model Volume in Render is ticked, when those the
+// View menu shows are kept.
+// A 2-pass export's measuring pass hides them all, so the sprite is framed
+// by the model alone. Only what is showing is hidden, and
 // ShowHelpersAfterGrab shows exactly that again.
 procedure TMainForm.HideHelpersForGrab;
 
@@ -4909,13 +4941,19 @@ procedure TMainForm.HideHelpersForGrab;
     end;
   end;
 
+var
+  Keep: Boolean;
 begin
   ShowHelpersAfterGrab;   // anything still hidden from a grab that ended early
   if GorillaModel = nil then
     Exit;
+  Keep := FSettings.HelpersInOutput and not (FBatchActive and (FBatchPass = 1));
   FGrabHidBounds := GorillaModel.ShowBoundingBox;
   if FGrabHidBounds then
     GorillaModel.ShowBoundingBox := False;
+  HideIt(FindCombinedSweep(GorillaModel));
+  if Keep then
+    Exit;
   // The axes and grid draw beside the model, not as their own children, so
   // they are hidden with Shown rather than Visible
   FGrabHidAxes := FindModelAxes(GorillaModel);
@@ -4929,7 +4967,6 @@ begin
   else
     FGrabHidGrid := nil;
   HideIt(FindModelSweep(GorillaModel));
-  HideIt(FindCombinedSweep(GorillaModel));
 end;
 
 // Shows again what HideHelpersForGrab hid, before the main pass draws
@@ -4968,6 +5005,9 @@ var
   Dialog: TBackgroundSettingsForm;
 begin
   Dialog := TBackgroundSettingsForm.Create(nil);
+  // The frame an Image preview outlines
+  Dialog.GrabWidth := FSettings.GrabWidth;
+  Dialog.GrabHeight := FSettings.GrabHeight;
   Dialog.Spec := FSettings.BackgroundSpec;
   // Every change shows in the viewport at once
   Dialog.OnPreview := BackgroundDialogPreview;
@@ -5156,6 +5196,17 @@ begin
     if ANew.MinifyJson <> AOld.MinifyJson then
       FSettings.MinifyJson := ANew.MinifyJson;
 
+    // The grid, axes and Model Volume in grabs, icons and exports, or not
+    if ANew.HelpersInOutput <> AOld.HelpersInOutput then
+    begin
+      FSettings.HelpersInOutput := ANew.HelpersInOutput;
+      if FSettings.HelpersInOutput then
+        DebugMemo.Lines.Add('Grabs, icons and exports draw the grid, axes and Model ' +
+          'Volume the View menu shows')
+      else
+        DebugMemo.Lines.Add('Grabs, icons and exports draw no grid, axes or volumes');
+    end;
+
     // The Results tab's empty border values, explained in a hint or not
     if ANew.ResultsEdgeHint <> AOld.ResultsEdgeHint then
     begin
@@ -5198,6 +5249,8 @@ procedure TMainForm.ApplyBackground(const ASpec: TSprite3DBackgroundSpec;
 const
   FIT_NAMES: array[TSprite3DImageFit] of String = ('fitted whole', 'filling the picture',
     'stretched', 'fitted to the width', 'fitted to the height', 'at its original size');
+  ALIGN_NAMES: array[TSprite3DImageAlign] of String = ('top left', 'top', 'top right',
+    'left', 'centre', 'right', 'bottom left', 'bottom', 'bottom right');
 var
   Picture: TBitmap;
   Problem: String;
@@ -5209,8 +5262,9 @@ begin
   begin
     Picture := BackgroundImage(ASpec.ImageFile, Problem);
     if Picture <> nil then
-      DebugMemo.Lines.Add(Format('Background image: %s, %d x %d pixels, %s', [ASpec.ImageFile,
-        Picture.Width, Picture.Height, FIT_NAMES[ASpec.ImageFit]]))
+      DebugMemo.Lines.Add(Format('Background image: %s, %d x %d pixels, %s, %s',
+        [ASpec.ImageFile, Picture.Width, Picture.Height, FIT_NAMES[ASpec.ImageFit],
+        ALIGN_NAMES[ASpec.ImageAlign]]))
     else
       DebugMemo.Lines.Add('Background image: ' + Problem + ' The colour shows instead.');
   end;
@@ -5414,6 +5468,9 @@ begin
     Dialog.OnCancel := OrbitalDialogCancel;
     Dialog.ShowAndFree;
     {$ELSE}
+    // Mouse View's wheel and drag over the view change the dialog's
+    // distance and azimuth while it is open
+    FOrbitalDialog := Dialog;
     try
       if Dialog.ShowModal = mrOk then
         AcceptCameraSpec(Dialog.CameraSpec)
@@ -5423,6 +5480,7 @@ begin
         RestoreMouseView(MouseYaw, MouseZoom, MouseSubject);
       end;
     finally
+      FOrbitalDialog := nil;
       Dialog.Free;
     end;
     {$ENDIF}
@@ -5607,6 +5665,10 @@ end;
 
 procedure TMainForm.ResetViewSettings;
 begin
+  // Not while the last session's view is put back: that is not a choice of
+  // view, and its distance, shift and rise were kept on purpose
+  if FRestoringView then
+    Exit;
   ResetMouseView;
   FFactor := 1;
   FPanX := 0;
@@ -7345,12 +7407,37 @@ begin
   end;
 end;
 
+procedure TMainForm.DialogMouseView(const AYaw, AZoom: Single);
+const
+  // The Variable dialog's Distance slider's range
+  DISTANCE_MIN = 0.2;
+  DISTANCE_MAX = 20;
+var
+  Spec: TCameraSettings;
+begin
+  Spec := FOrbitalDialog.CameraSpec;
+  // The mouse view's turn is in the camera's own sense, which the dials
+  // reverse; its zoom is a factor on the distance, as the slider's is
+  Spec.Azimuth := Wrap360(Spec.Azimuth - AYaw);
+  Spec.Distance := EnsureRange(Spec.Distance * AZoom, DISTANCE_MIN, DISTANCE_MAX);
+  FOrbitalDialog.TakeSpec(Spec);
+  ShowCameraSpec(Spec);
+end;
+
 procedure TMainForm.MoveMouseView(const AYaw, AZoom: Single);
 var
   Zoom: Single;
 begin
   if (FMouseSuspend > 0) or not Assigned(GorillaCamera) or not Assigned(GorillaModel) then
     Exit;
+  // While Variable's dialog is open the wheel and drag change what it edits,
+  // so its Distance slider and Azimuth dial show them and OK or Cancel deal
+  // with them like any other change made there
+  if FOrbitalDialog <> nil then
+  begin
+    DialogMouseView(AYaw, AZoom);
+    Exit;
+  end;
   if not FMouseApplied then
   begin
     // The first move from the normal view: what it is of, and which size the

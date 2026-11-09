@@ -21,6 +21,7 @@
 //**     |           |                  GrabFolderText, GrabFolderResetButton
 //**     |           |-- FrameRateGroup FrameRateTrack, FrameRateValueLabel, FrameRateNote
 //**     |           |-- FilesGroup     MinifyJsonCheck, MinifyJsonNote
+//**     |           |-- OutputGroup    OutputHelpersCheck, captioned Render
 //**     |           `-- GpuGroup       Windows only: system, low power, high power, GpuNote
 //**     `-- ButtonLayout               OkButton, CancelButton
 //** )
@@ -68,6 +69,7 @@ unit Sprite3DSettingsForm;
         |           |                  GrabFolderText, GrabFolderResetButton
         |           |-- FrameRateGroup FrameRateTrack, FrameRateValueLabel, FrameRateNote
         |           |-- FilesGroup     MinifyJsonCheck, MinifyJsonNote
+        |           |-- OutputGroup    OutputHelpersCheck, captioned Render
         |           `-- GpuGroup       Windows only: system, low power, high power, GpuNote
         `-- ButtonLayout               OkButton, CancelButton
 
@@ -153,6 +155,11 @@ type
     ResultsEdgeHintCheck: TCheckBox;
     //** @abstract(The GPU choices; Windows only.)
     GpuGroup: TGroupBox;
+    //** @abstract(What grabs, icons and exports draw besides the model.)
+    OutputGroup: TGroupBox;
+    //** @abstract(Ticked, grabs, icons and exports draw whichever of the grid, axes and Model
+    //** Volume the View menu shows; unticked, the default, none of them.)
+    OutputHelpersCheck: TCheckBox;
     //** @abstract(How Sprite3D writes its files.)
     FilesGroup: TGroupBox;
     //** @abstract(Writes every JSON file minified, with no indents or line breaks.)
@@ -480,6 +487,7 @@ begin
 
   MinifyJsonCheck.IsChecked := Value.MinifyJson;
   ResultsEdgeHintCheck.IsChecked := Value.ResultsEdgeHint;
+  OutputHelpersCheck.IsChecked := Value.HelpersInOutput;
 
   case Value.GpuMode of
     gmPowerSaving: GpuLowRadio.IsChecked := True;
@@ -528,6 +536,7 @@ begin
 
   FValues.MinifyJson := MinifyJsonCheck.IsChecked;
   FValues.ResultsEdgeHint := ResultsEdgeHintCheck.IsChecked;
+  FValues.HelpersInOutput := OutputHelpersCheck.IsChecked;
 
   if GpuGroup.Visible then
   begin

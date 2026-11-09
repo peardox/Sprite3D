@@ -242,6 +242,8 @@ type
     //** @abstract(Backing field for AzimuthOnly.)
     FAzimuthOnly: Boolean;
     procedure SetSpec(const ASettings: TCameraSettings);
+    //** @abstract(Sets every control from the settings being edited, without a preview.)
+    procedure ShowSpec;
     //** @abstract(Setter for AzimuthOnly: enables or disables the Inclination and Roll dials.)
     //**
     //** @param(Value True to allow only the azimuth to change.)
@@ -272,6 +274,14 @@ type
     //** The main form sets it while an oblique projection is chosen, as those are drawn from
     //** fixed angles: turning the model round is all that may change.
     property AzimuthOnly: Boolean read FAzimuthOnly write SetAzimuthOnly;
+    //** @abstract(Replaces the settings being edited while the dialog is open, and sets the
+    //** controls to match, without calling OnPreview.)
+    //**
+    //** For the owner, when something outside the dialog changes what it edits, such as the
+    //** mouse wheel over the view changing the distance; the owner shows the change itself.
+    //**
+    //** @param(ASpec The new settings.)
+    procedure TakeSpec(const ASpec: TCameraSettings);
   end;
 
 var
@@ -417,6 +427,17 @@ begin
 end;
 
 procedure TOrbitalSettingsForm.FormShow(Sender: TObject);
+begin
+  ShowSpec;
+end;
+
+procedure TOrbitalSettingsForm.TakeSpec(const ASpec: TCameraSettings);
+begin
+  FCameraSettings := ASpec;
+  ShowSpec;
+end;
+
+procedure TOrbitalSettingsForm.ShowSpec;
 var
   Spec: TCameraSettings;
 begin

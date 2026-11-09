@@ -394,6 +394,165 @@ them.
 
 ## Where the work is
 
+### Zip ViewDefaults1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows CutPreview1, below. Files: `src/ui/Sprite3dMain.pas`, `.fmx`,
+`src/ui/Sprite3DHelpers.pas`, `README.md`, this file. The owner (13:47):
+with no settings file, the view options should all start off.
+
+- `TSprite3DAppSettings.Create`: `ShowBoundingBox`, `ShowGrid`, `ShowAxes`
+  and `ShowSweptVolume` False (Animation Volume was already). The `.fmx`'s
+  four Show items lose `IsChecked = True`, so the menu agrees before
+  `RestoreViewToggles`. A settings.json that has the keys keeps them.
+  (The README's "as can Orthographic" was out of date since Projection;
+  dropped.) Lights unchanged: the headlight still starts on, or the model
+  would be unlit.
+- To test: rename settings.json away, start (no box, grid, axes or
+  volumes; the menu unticked); tick some, restart (kept).
+
+`====> NO PACKAGE REBUILD <====` for ViewDefaults1.
+
+### Zip CutPreview1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows ImageAlign1, below. Files: `src/ui/Sprite3DBackgroundForm.pas`,
+`src/ui/Sprite3dMain.pas`, `README.md`, this file. Asked by the owner
+(13:39), the last before committing: the Image preview should show which
+parts are cut off, with a box that shows on any image.
+
+- `TBackgroundSettingsForm.NewImagePreview`, for the Image preview in
+  place of `NewBitmap`: in the grab's own pixels (`GrabWidth`,
+  `GrabHeight`, new, set by `BackgroundSettingsMenuItemClick`; the
+  preview's shape if 0) the frame and `ImageRect`'s rectangle, their union
+  scaled to fit `PreviewRect` and centred, drawn at twice its size: dark
+  grey round about, the frame in Colour, the image, everything outside the
+  frame darkened (`$A0000000`), then the frame outlined, 2 pixels, white
+  solid with black `TStrokeDash.Dash` over it.
+- To test: an image wider than the grab with Fill (the cut sides dark,
+  the box round what is kept); each position; Fit (no darkening, the
+  colour bars inside the box); Original larger and smaller than the grab;
+  a missing file (just the frame in the colour); a dark and a light image
+  (the box shows on both).
+
+`====> NO PACKAGE REBUILD <====` for CutPreview1.
+
+### Zip ImageAlign1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows OutputSetting1, below. Files: `src/lib/Sprite3DBackground.pas`,
+`src/ui/Sprite3DBackgroundForm.pas`, `.fmx`, `src/ui/Sprite3DSettingsForm.pas`,
+`.fmx`, `src/ui/Sprite3DHelpers.pas`, `src/ui/Sprite3dMain.pas`,
+`README.md`, `viewport.md`, this file. Asked by the owner (13:31); after
+testing these the owner will commit and move on to the next task.
+
+- "Grid, Axes and Model Volume in Render", in File, Settings' group now
+  captioned Render (the controls keep their names, `OutputGroup` and
+  `OutputHelpersCheck`; the key stays `helpersInOutput`).
+- `TSprite3DImageAlign` (TopLeft ... BottomRight, row by row, Ord mod 3 the
+  column, div 3 the row; Centre the default), `TSprite3DBackgroundSpec`'s
+  `ImageAlign`: `ImageRect` puts the left-over or cut-off part
+  0, half or all to the left (and above) for the column (and row), so a
+  larger image shows that part. Kept as `backgroundImageAlign` by name;
+  `ApplyBackground`'s Debug line names it.
+- Dialog: `AlignLayout` in the left column under Hex, `AlignLabel` "Image
+  position" and nine `TRadioButton`s (`AlignTopLeftRadio` ...), group
+  `ImageAlign`, Tag the Ord, one handler `AlignRadioChange`; enabled for
+  Image but Stretch (`FitComboChange` now calls `UpdateControls`).
+- To test: an image wider than the grab with Fit, then each of the nine
+  (left, centre, right matter; top and bottom do not); with Fill (which
+  part shows); Stretch greys the square; a grab matches the view; restart.
+
+`====> NO PACKAGE REBUILD <====` for ImageAlign1.
+
+### Zip OutputSetting1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows DialogWheel1, below. Files: `src/ui/Sprite3dMain.pas`, `.fmx`,
+`src/ui/Sprite3DSettingsForm.pas`, `.fmx`, `src/ui/Sprite3DHelpers.pas`,
+`README.md`, this file. The owner (13:19): Grid, Axes and Model Volume in
+Output should be a setting, not a menu item; everything else seems fine.
+
+- OutputHelpers1's `OutputSeparatorItem` and `HelpersInOutputItem` are
+  gone from the View menu. File, Settings has `OutputGroup` "Output", in
+  the right column between Files and Graphics processor, with
+  `OutputHelpersCheck`; `TSprite3DGeneralSettings.HelpersInOutput`,
+  `ReadGeneralSettings`, applied in `ApplyGeneralSettings` with its Debug
+  line. Still kept as `helpersInOutput`; `HideHelpersForGrab` reads
+  `FSettings.HelpersInOutput`.
+- To test: File, Settings shows the group and the tick as it was; OK
+  changes grabs as before; the View menu ends at Show Animation Volume.
+
+`====> NO PACKAGE REBUILD <====` for OutputSetting1.
+
+### Zip DialogWheel1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows KeepRestore1, below. Files: `src/ui/Sprite3dMain.pas`,
+`src/ui/Sprite3DOrbitalForm.pas`, `README.md`, this file. The owner
+(12:58): Mouse View's wheel still zooms while Variable's dialog is open,
+but its Distance slider does not follow.
+
+- `FOrbitalDialog` holds the dialog while it is open (desktop, around
+  `ShowModal`). `MoveMouseView` then calls `DialogMouseView` instead: the
+  turn into the dialog's azimuth (reversed, as the readouts are), the zoom
+  multiplied into its distance (0.2 to 20), `TakeSpec` to set its
+  controls, and `ShowCameraSpec` to show it. So the mouse view itself does
+  not change, and OK or Cancel treat it like any change in the dialog.
+- `TOrbitalSettingsForm.TakeSpec` and `ShowSpec` are back (`FormShow`
+  calls `ShowSpec`).
+- To test: open Variable with Mouse View on; the wheel over the view
+  (the Distance slider and label follow, the readout shows no zoom); a
+  left-drag (the Azimuth dial follows); OK keeps it; Cancel puts back the
+  view as before the dialog.
+
+`====> NO PACKAGE REBUILD <====` for DialogWheel1.
+
+### Zip KeepRestore1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows OutputHelpers1, below. Files: `src/ui/Sprite3dMain.pas`, this
+file. The owner (12:52): with Save shift, rise and distance ticked, they
+are not restored on reload.
+
+- Why (PresetViews1's doing): `FormCreate` loads them, then
+  `RestoreCameraView` and `RestoreViewToggles` put the last view back
+  through the fixed views' handlers (`SetPolarViewAngle`) and
+  `EnterObliqueView`, which call `ResetViewSettings`. In an oblique,
+  `settings.json` keeps the view from before it (`FObliqueView`, such as
+  Isometric), so both reset them; the owner's session was in Military.
+- Fix: `FRestoringView`, True around those two calls in `FormCreate`;
+  `ResetViewSettings` does nothing while it is. PresetViews1's note that a
+  restored session starts without them no longer holds when they are kept.
+- To test: tick Save, set a distance, shift and rise, OK, restart: in
+  Perspective with Variable, and in Military (both come back); untick
+  Save, restart (gone); choosing a fixed view or an oblique still resets
+  them.
+
+`====> NO PACKAGE REBUILD <====` for KeepRestore1.
+
+### Zip OutputHelpers1 (9 November 2026, branch `oblique`), not yet tested
+
+Follows GrabDistance1, below. Files: `src/ui/Sprite3dMain.pas`, `.fmx`,
+`src/ui/Sprite3DHelpers.pas`, `README.md`, this file. Asked by the owner
+(12:46): an option, off by default, to draw the grid, axes and Model Volume
+in output; unticked, none of them; ticked, those the View menu shows.
+
+- View, `OutputSeparatorItem` then `HelpersInOutputItem` "Grid, Axes and
+  Model Volume in Output", kept as `helpersInOutput`
+  (`TSprite3DAppSettings.HelpersInOutput`, False), restored and saved with
+  the other View ticks; a Debug line when it changes.
+- `OffscreenBeforeGrab` now calls `HideHelpersForGrab` for every grab, not
+  only during a capture, so grabs and icons lose the helpers too (before,
+  they kept everything showing). It always hides the bounding box and the
+  Animation Volume (the owner named only the three); the grid, axes and
+  Model Volume unless the item is ticked and it is not a 2-pass measuring
+  pass (`FBatchActive` and `FBatchPass = 1`), so the sprite is still framed
+  by the model. Exports drawn with the grid get empty borders of 0 in their
+  metadata, which the Debug tab reports as frames that may be cut off.
+- Metal (macOS, iOS): grabs are screenshots of the view, so everything
+  showing is in them, as before.
+- To test: unticked, a grab, an icon and an export with every Show item on
+  (the model alone); ticked, each of grid, axes and Model Volume on and off
+  (only those on, in a grab, an icon and an export; never the bounding box
+  or Animation Volume); restart (kept); Linux menu bar and mobile drawer.
+
+`====> NO PACKAGE REBUILD <====` for OutputHelpers1.
+
 ### Zip GrabDistance1 (9 November 2026, branch `oblique`), not yet tested
 
 Follows Licences1, below. Files: `src/ui/Sprite3dMain.pas`, `README.md`,

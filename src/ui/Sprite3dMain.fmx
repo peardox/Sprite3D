@@ -479,25 +479,21 @@ object MainForm: TMainForm
       end
       object ShowBoundsItem: TMenuItem
         Locked = True
-        IsChecked = True
         Text = 'Show bounding box'
         OnClick = ShowBoundsItemClick
       end
       object ShowGridItem: TMenuItem
         Locked = True
-        IsChecked = True
         Text = 'Show grid'
         OnClick = ShowGridItemClick
       end
       object ShowAxesItem: TMenuItem
         Locked = True
-        IsChecked = True
         Text = 'Show axes'
         OnClick = ShowAxesItemClick
       end
       object ShowSweepItem: TMenuItem
         Locked = True
-        IsChecked = True
         Text = 'Show Model Volume'
         OnClick = ShowSweepItemClick
       end
