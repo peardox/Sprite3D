@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 9 November 2026, 14:20.
+Last updated: 9 November 2026, 23:00.
 
 ## Starting a new conversation
 
@@ -185,10 +185,13 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 
 ### Cross-platform
 
-- The program targets Windows (32-bit, 64-bit, ARM64EC; Gorilla3D, and so
+- The program targets Windows (64-bit and ARM64EC; Gorilla3D, and so
   Spritely, for ARM64EC from 8 November 2026), macOS (Intel and
   Apple silicon), Linux 64-bit, Android (32 and 64-bit) and iOS. **Keep it
-  cross-platform as far as possible.**
+  cross-platform as far as possible.** Windows 32-bit is built only to
+  make the design-time packages for the owner's 32-bit IDE; nothing is
+  released for it (owner, 9 November 2026), so a Win32-only concern
+  matters only for what runs in the IDE at design time.
 - No platform-specific unit or call without `{$IF}` alternatives for the
   other platforms, so every platform still compiles. The conditions used
   are `MSWINDOWS`, `MACOS`, `IOS`, `ANDROID` and
@@ -409,21 +412,22 @@ gone up.
 
 ## Where the work is
 
-### State (9 November 2026, 14:20)
+### State (9 November 2026, 14:25)
 
-**GitHub `main` is at `2b98a73`, "Merge pull request #9 from
-peardox/oblique" (13:53), and is the owner's copy.** The oblique
+**GitHub `main` is at `0d0103f`, "Move project notes to notes"
+(14:16), and is the owner's copy.** It follows `2b98a73`, "Merge pull
+request #9 from peardox/oblique" (13:53). The oblique
 projection work, begun on 8 November on the branch `oblique`, is merged:
 there is one line of work again, no zip is outstanding, and a new session
 builds on `main`. Whether the branch has been deleted on GitHub is not
 recorded; nothing depends on it.
 
-Since the merge, two documentation zips, not yet on GitHub: **Review1**
-(14:12; this file rewritten for `main` and cut down, the README's
+`0d0103f` holds two documentation zips: **Review1** (14:12; this file rewritten for `main` and cut down, the README's
 settings table, the two viewport Known issues removed as `viewport.md`
 says they are gone) and **NotesFolder1** (14:20; the five design notes
 moved to `notes/`, every link in this file and the README following; the
-owner deletes the root copies by hand). Before them, the last zip was
+root copies removed). Checked at 14:25: GitHub's seven files are byte
+for byte the delivered ones. Before them, the last zip was
 ViewDefaults1 (13:47), the last of the 9 November deliveries listed
 below. The owner committed those in one go,
 and this file does not record which of them were tested first; the
@@ -439,10 +443,12 @@ When the owner reports a result, note it here.
   `panZ`, from when they moved the camera along the model's axes) was
   offered with ShiftRise1 and not answered. The README now names the keys
   without the history. If they are renamed, read the old keys too.
-- `docs/licences-required.md`: the owner will point `openh264.json`'s
-  entries at Cisco's own downloads, as copies served from sprite3d.com are
-  not under Cisco's patent cover; when that is done, update the file and
-  the README's OpenH264 text.
+- `notes/cisco.md`: the owner will point `openh264.json`'s entries at
+  Cisco's own downloads, as copies served from sprite3d.com are not under
+  Cisco's patent cover. The note says what the client needs first (the
+  same-name replace, review item 8; optionally a `sha256` check, item 9)
+  and which documents follow (`docs/licences-required.md`, the README's
+  OpenH264 text).
 - Other platforms have not seen the 9 November work: macOS (grabs are
   screenshots there), Linux (the Oblique submenu on the FMX menu bar, the
   Background dialog's file dialog) and mobile (the drawer's "View,
@@ -460,10 +466,33 @@ When the owner reports a result, note it here.
   Gorilla3D unregisters its context, so the form is not freed late, and
   nothing of Sprite3D's is left at that point. The owner has passed it to
   Gorilla3D's author; do not work round it in Sprite3D.
-- `src/Sprite3d.dproj` has Deployment entries for `styles\buildstyles.cmd`
-  (and the `.rc`) that are not disabled, so the script may be deployed, and
-  on macOS copied into the user's folders by `System.StartUpCopy` (see
-  Lessons learned). Ask the owner before disabling them.
+- `notes/code-review.md` (9 November 2026) is a full code review of
+  `0d0103f`, 62 findings in the order to take them, with the state of
+  each kept at its top. Zip **Fixes1** (22:45, applied, not yet
+  tested) took its items 1, 2, 3, 4 and 6: the progress dialog is finished
+  when a quit is confirmed mid-export (`FinishBatch`); `HeaderWritten` is
+  cleared before `av_write_trailer` (`Sprite3DVideo`, both routines);
+  `DefaultModelDir` lost its dead lines and its two descriptions now say
+  what it does (the assets folder everywhere; behaviour unchanged);
+  `SwitchModel` waits while `FScanning`; and calls `ContinueLoading` on
+  its not-found and capturing exits. **Fixes2** (22:55, not yet tested) took item 7:
+  `AnimationListToJson` saves the first animation's frame override too
+  (test: type a count for the first animation, restart, it must still
+  be there). Item 5 (GIF LZW) was withdrawn as
+  wrong. Items 8 and 9 (the OpenH264 downloader) wait for the Cisco
+  change. To test Fixes1: start a strip export, close the window, answer
+  Yes (it must quit); open a folder of many models and drop a model on
+  the window while the count is rising (it must load after the folder);
+  open several files at once with one missing (the rest must load); an
+  MP4 export still saves.
+- `src/Sprite3d.dproj` deploys `styles\buildstyles.cmd` and `README.md`
+  to several platforms (on macOS under StartUp, so `System.StartUpCopy`
+  copies them into the user's folders; see Lessons learned); nothing is
+  disabled. The `.rc` is not deployed. Ask the owner before disabling
+  them.
+- `src/Sprite3d.dpr` has `ReportMemoryLeaksOnShutdown := True` commented
+  out, though its comments, the README and this file's Gorilla3D notes
+  say it is set. Ask whether to turn it on or correct the descriptions.
 
 ### Not yet chosen
 

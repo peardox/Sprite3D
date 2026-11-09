@@ -1052,8 +1052,10 @@ begin
     while not Drain do
       ;   // Drain stops at the end of the stream
 
-    Check(Api.av_write_trailer(Output), 'Finishing the MP4 file');
+    // Cleared first: a trailer that fails has still consumed the muxer's
+    // state, and the finally block must not write it a second time
     HeaderWritten := False;
+    Check(Api.av_write_trailer(Output), 'Finishing the MP4 file');
   finally
     if HeaderWritten then
       Api.av_write_trailer(Output);   // after an error: close the file tidily
@@ -1179,8 +1181,10 @@ begin
     if Written = 0 then
       raise ESprite3DH264Error.Create('OpenH264 skipped every frame.');
 
-    Check(Api.av_write_trailer(Output), 'Finishing the MP4 file');
+    // Cleared first: a trailer that fails has still consumed the muxer's
+    // state, and the finally block must not write it a second time
     HeaderWritten := False;
+    Check(Api.av_write_trailer(Output), 'Finishing the MP4 file');
   finally
     if HeaderWritten then
       Api.av_write_trailer(Output);   // after an error: close the file tidily

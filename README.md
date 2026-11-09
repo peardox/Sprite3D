@@ -494,3 +494,5 @@ Every file the application opens or writes, models, settings, the bounds cache, 
 - [Volumes](notes/volumes.md): the volume a model sweeps turning about its up axis, how it is measured for each animation, and how the camera is fitted to it.
 - [Metadata](notes/metadata.md): the JSON saved beside a strip or spritesheet, and how its empty sections and origin are measured.
 - [Directions](notes/directions.md): the Models, Directions dialog, how the order of the directions works, Change Order, and the directions file Export and Import use.
+- [Code review](notes/code-review.md): the findings of the 9 November 2026 review of the whole source, in the order to take them.
+- [Cisco](notes/cisco.md): what pointing the OpenH264 downloads at Cisco's servers needs, and in what order.

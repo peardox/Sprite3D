@@ -930,9 +930,9 @@ type
     CameraSeparatorItem2: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
-    //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
-    //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is
-    //** the current folder instead if that has a models subfolder. The handler creates a
+    //** The models folder comes from DefaultModelDir in Sprite3DHelpers: the program's assets
+    //** folder, which is the executable's on Windows (three folders up when started from the
+    //** IDE), the bundle's Resources on macOS and the resource folder on Android. The handler creates a
     //** TGorillaViewport in AspectLayout, which FitViewportToAspect makes as large as fits
     //** there at the aspect ratio of the grab size, centred, and gives it to OrbitCamera,
     //** which builds the camera, with a 45-degree FOV, makes it the viewport's camera, and
@@ -4247,9 +4247,9 @@ begin
     List.AddElement(Entry);
     Entry.AddPair('name', AnimationListBox.Items[I]);
     Entry.AddPair('checked', TJSONBool.Create(AnimationListBox.ListItems[I].IsChecked));
-    Count := 0;
-    if I > 0 then
-      Count := FrameOverride(AnimationListBox.Items[I]);
+    // Every entry: the "if I > 0" that once skipped the "(None)" first
+    // entry lost the first animation's count after that entry went
+    Count := FrameOverride(AnimationListBox.Items[I]);
     if Count > 0 then
       Entry.AddPair('frames', TJSONNumber.Create(Count));
   end;
@@ -6318,10 +6318,15 @@ begin
   if (Model = String.Empty) or (not FileExists(Model)) then
     begin
       ShowMessage('Model Not Found ' + Model);
+      // No load, so no EndLoad: the models waiting behind this one must
+      // still be started, or they waited for ever
+      ContinueLoading;
       Exit;
     end;
-  // A load under way, or a folder being opened, comes first
-  if (FLoadStage <> lsNone) or FQueueActive then
+  // A load under way, or a folder being opened, comes first. A folder
+  // still being searched counts as being opened: a load started then would
+  // meet the folder's own load dialog, and the two dialogs held each other
+  if (FLoadStage <> lsNone) or FQueueActive or FScanning then
   begin
     // Waits its turn, once however often it is asked for meanwhile
     for var Waiting in FPendingModels do
@@ -6333,6 +6338,7 @@ begin
   if Capturing then
     begin
       ShowMessage('An animation is being saved; open the model again when it is done.');
+      ContinueLoading;
       Exit;
     end;
 
@@ -9874,7 +9880,10 @@ begin
   FOffscreen.KeepOverscanFile := String.Empty;
   if FQuitConfirmed then
   begin
-    // Quitting: nothing more is saved, and nothing is reported
+    // Quitting: nothing more is saved, and nothing is reported. The
+    // progress dialog is finished all the same: on the desktop it refuses
+    // to close until it is, so without this its ShowModal in StartBatch
+    // never returned and the confirmed quit hung behind it
     FBatchPass := 0;
     FBatchActive := False;
     FAtlasParts := nil;
@@ -9882,6 +9891,9 @@ begin
     FAtlasPending := nil;
     FPendingMetadata := nil;
     PauseViewForExport(False);
+    if FExportDialog <> nil then
+      FExportDialog.Finish('Export abandoned', FBatchErrors);
+    FBatchErrors := nil;
     Exit;
   end;
   if FBatchPass = 1 then

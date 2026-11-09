@@ -1157,11 +1157,11 @@ function DegreesText(const ADegrees: Single): String;
 
 //** @abstract(The folder that holds the application's models folder, for this platform.)
 //**
-//** The library path on macOS, the home folder on Linux and @code('../../../') elsewhere;
-//** on Windows it is the current folder instead, returned as an empty string, if that has a
-//** models subfolder.
+//** The program's assets folder, from @link(GetAssetsPath): the executable's folder on Windows
+//** (three folders up from it, @code('../../../'), when started from the IDE), the bundle's
+//** Resources folder on macOS, and the application's resource folder on Android.
 //**
-//** @returns(A folder path ending in a path delimiter, or empty for the current folder.)
+//** @returns(A folder path ending in a path delimiter.)
 function DefaultModelDir: String;
 
 //** @abstract(The folder grabs are saved in without asking, or empty where the user should
@@ -2089,20 +2089,10 @@ end;
 
 function DefaultModelDir: String;
 begin
-  {$IF DEFINED(MACOS)}
-  Result := IncludeTrailingPathDelimiter(TPath.GetLibraryPath);
-  {$ELSEIF DEFINED(LINUX)}
-  Result := IncludeTrailingPathDelimiter(TPath.GetHomePath);
-  {$ELSE}
-  Result := '../../../';
-  {$ENDIF}
-
-  {$IF DEFINED(MSWINDOWS)}
-  if DirectoryExists('models') then
-    Result := String.Empty;
-  {$ENDIF}
+  // Once the library path on macOS and the home folder on Linux, with the
+  // current folder on Windows when it had a models subfolder; a later line
+  // overrode all of that with the assets folder, so that is what it is
   Result := GetAssetsPath('../../../');
-
 end;
 
 function PaddingLimit(const AGrabWidth, AGrabHeight: Integer): Integer;
