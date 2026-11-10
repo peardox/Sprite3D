@@ -654,6 +654,54 @@ in the frames. On Delphi 13 a seek is evaluated on the next drawn frame,
 so if exported frames show the eyes one frame behind the body, the
 capture needs to wait a frame after `ShowFrame`; not done until seen.
 
+**Bear2** (14:35; owner: "Not fixed", screenshot at 15/21: the eye now
+floats above the head, so the seek moved it, but to another pose than the
+body's). The seek used `Baked / FAnimation.FrameRate`; it now uses the
+same phase as the baked frame, `Phase * FDuration` (the skeleton's own
+length), in case the baked frames' rate and the skeleton's length
+disagree. In DEBUG builds each held frame logs (FMX `Log.d`, the IDE's
+event log) the frame, phase, baked frame and count, `FrameRate`, both
+lengths and the seek time. If the eye is still off, those numbers say
+whether it is timing or Gorilla not posing the head joint while a fixed
+cache frame is set.
+
+**Bear3** (14:40; owner: "Eyes in the one place when stepping", log
+showing the seek times right: 161 baked frames at 60 = 2.683 s, skeleton
+2.667 s). So with a fixed cache frame set, Gorilla does not pose the
+skeleton. `SetFixedCacheFrame` is no longer used: `ShowFrame` seeks the
+paused clip (`SeekTo(Phase * FDuration)`) whether baked or not, and
+`Finish` no longer unsets a fixed frame. On Delphi 13 a seek is posed on
+the next drawn frame, so `TSprite3DFrameSource.NeedsDrawnFrame` (True for
+animations there) makes `TSprite3DFrameCapture.QueueGrab` wait at least
+`POSE_SETTLE_TIME` (35 ms) before each grab; `FDelayPending` stops
+`Cancel` freeing the capture while such a wait is queued. README's
+"Poses, not blended images" rewritten; behaviour 16 in
+`notes/imports.md` gains the result. **To test**: step Talk (eyes must
+follow); export Talk (eyes in place in every frame, no frame lagging);
+an export of the parrot or another model looks as before.
+
+**Bear4** (14:50; owner: Bear3 "doesn't move at all when frame-stepping";
+then sent Gorilla.Animation.pas and Gorilla.Animation.Controller.pas,
+staged outside the repo). The source shows why: `TSkeletonKeyAnimation.
+SeekTo` only sets FTime; the pose (and `TransitionTime`, which picks the
+baked frame) is computed by `ProcessTick`, and on Delphi 13
+`TGorillaRenderClock.Tick` skips paused clips (it drops `FPause` for one
+`ProcessTick` per frame). `GorillaSkipJointsWhenCached` is False, so a
+tick poses the joints too. `TSprite3DAnimationFrames.SeekTo` now does
+what the clock does: `SeekTo`, `Pause := False`, `ProcessTick(0, 0)`,
+`Pause` back (as it was on Delphi 13; True before, as the old code did).
+The pose is there at once, so the 35 ms wait and `NeedsDrawnFrame` from
+Bear3 are gone (`FDelayPending` stays, for SettleTime). Behaviour 16 in
+`notes/imports.md` gains this and asks for a public "pose at T now".
+
+**Notes3** (14:55; owner: "explain this fix in detail for Gorilla3D's
+author"): `notes/imports.md` has a new section, *Holding an animation on
+one frame*: the bear, what the render clock, `ProcessAnimation` and
+`GetCurrentCachedFrame` do, a table of the three failed attempts and why,
+the code Sprite3D now runs, and the two Gorilla3D changes that would
+replace it. Item 16 points there, and a question asks whether the
+workaround is safe to rely on.
+
 ### Things to check
 
 - Variable's dialog is placed at the main form's centre, so on a wide

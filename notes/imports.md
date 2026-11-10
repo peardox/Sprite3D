@@ -206,24 +206,112 @@ These may all be intended; they are listed because a converter has to know them.
     The extra one, `Rig`, is the armature object, made a joint. The FBX also has a stray
     `Action` clip beside the 33 `Rig|...` ones, which is probably in the file itself.
 
-16. **`SetFixedCacheFrame` poses only the skinned vertices.** With
-    `TAnimationCachingFlag.VertexPosition`, `TGorillaAnimation.SetFixedCacheFrame(N)` shows
-    frame N of the baked skinned vertices. The skeleton and the animated nodes stay at the
-    clip's clock time, and so does anything rigidly attached to them. Gorilla3D's own
-    playback, with the same caching, moves them all, so a held frame is two poses mixed.
+16. **`SetFixedCacheFrame` poses only the skinned vertices.** A held frame showed the body
+    at that frame and everything else where the clip was paused. The section *Holding an
+    animation on one frame* below explains it in full, with the workaround Sprite3D now
+    uses.
 
-    The test case is a bear (glTF). It has one skinned body, and four unskinned eye meshes
-    under nodes "Eye Right" and "Eye Left", which are children of the head joint
-    "Bear Head_07". Its Talk clip moves the head joint and also animates the two eye nodes
-    directly. Played normally, the eyes move with the head. Paused and held on a frame with
-    `SetFixedCacheFrame`, the body poses at that frame and the eyes stay where the pause left
-    them. Every sprite capture built on held frames has the same fault.
+## Holding an animation on one frame
 
-    Frame stepping, sprite capture and thumbnails all want the whole model at frame N. Could
-    `SetFixedCacheFrame` also pose the skeleton and node tree at that frame's time? Or failing
-    that, is there a supported way to pose everything at an exact time with no lag? On Delphi
-    13, `Skeleton.SeekTo` is evaluated on the next frame drawn, so an off-screen grab made
-    straight after it may not see the new pose.
+Sprite3D shows an animation one export frame at a time. Its frame buttons step through the
+frames, and its sprite exports grab each frame off screen in turn. So it needs to hold a
+clip, paused, on an exact time and see the whole model posed there. This section explains
+why its first three ways of doing that failed, and what it does now. Everything here was
+read from Gorilla3D 1.5.4's `Gorilla.Animation.pas`, on Delphi 13 (`CompilerVersion` 37).
+
+### The test case
+
+A bear (glTF) with 15 clips. Its body is one skinned mesh on 48 joints. Its eyes are four
+unskinned meshes, the eyes and their shine, under the nodes "Eye Right" and "Eye Left". Those
+nodes are children of the head joint, "Bear Head_07". The Talk clip moves the head joint and
+also animates the two eye nodes directly. The model is loaded with
+`[TAnimationCachingFlag.VertexPosition]`, so the body's vertices are baked: 161 frames at 60
+a second for Talk.
+
+Played normally with `AnimationManager.PlayAnimation`, the eyes stay in their sockets.
+Held on a frame by each of the first three methods below, they did not.
+
+### What Gorilla3D does each frame
+
+Three things in `Gorilla.Animation.pas` decide it:
+
+1. **`TGorillaRenderClock.Tick`** drives every clip it has taken over, once per rendered frame
+   (`TGorillaViewport` calls it). It keeps `TAnimation.Pause` set on each of those clips all
+   the time. For exactly one call per frame it clears `Pause`, calls
+   `ProcessTick(LTick, LDelta)`, and sets `Pause` again, because FMX's `ProcessTick` leaves at
+   once while `Pause` is set. A clip paused with `Skeleton.Paused := True` is skipped
+   (`if LList[I].Paused then Continue`), so it gets no `ProcessTick` at all.
+
+2. **`TSkeletonKeyAnimation.ProcessAnimation`**, run from `ProcessTick`, does two things:
+   - it sets `FTransitionTime := NormalizedTime`, the clip's position from 0 to 1;
+   - it runs every interpolator's `ProcessAnimation`, which writes the joints' and animated
+     nodes' transforms. It is skipped only when `GorillaSkipJointsWhenCached` is set, and
+     that is False by default.
+
+   So an ordinary tick moves the head joint and the eye nodes, and the eyes with them, even
+   when the frames are baked.
+
+3. **`TGorillaAnimation.GetCurrentCachedFrame`** picks the baked body to draw. It uses
+   `FFixedCacheFrame` when one is set. Otherwise it uses
+   `Round((FFrameCount - 1) * FSkeleton.TransitionTime)`: the frame comes from the
+   `TransitionTime` that the last `ProcessAnimation` left. It returns nil unless the clip
+   `IsRunning`.
+
+And **`TSkeletonKeyAnimation.SeekTo`** only sets the play head (`FTime`, and clears the
+delays). Its own comment says it leaves "the evaluation to the next ordinary tick". Nothing
+is posed by the seek itself.
+
+### Why each attempt failed
+
+| What Sprite3D did on a paused clip | What happened | Why |
+| --- | --- | --- |
+| `SetFixedCacheFrame(N)` (Sprite3D's original method) | The body showed frame N; the eyes stayed where the clip was paused. | The fixed frame replaces only the baked body. No tick runs, so the joints and eye nodes are never posed. |
+| `Skeleton.SeekTo(T)`, then `SetFixedCacheFrame(N)` | The same. | The seek only moved the play head. Paused, the clip got no tick to pose it. |
+| `Skeleton.SeekTo(T)` alone | Nothing moved at all, not even the body. | No tick, so `TransitionTime` never changed, and `GetCurrentCachedFrame` kept picking the same baked frame. |
+
+### What Sprite3D does now
+
+To hold a frame, Sprite3D does what `TGorillaRenderClock.Tick` does, for one call, with no
+time passing:
+
+```pascal
+// The clip is running (Start was called) and paused (Skeleton.Paused := True)
+Skeleton.SeekTo(Time);              // put the play head at the frame's time
+Was := Skeleton.Pause;              // the flag the render clock keeps set
+Skeleton.Pause := False;            // let ProcessTick through, as Tick does
+try
+  Skeleton.ProcessTick(0, 0);       // no time passes, the clip stays at Time
+finally
+  Skeleton.Pause := Was;            // hand the flag back to the render clock
+end;
+```
+
+This one `ProcessTick` runs `ProcessAnimation` at the sought time. That sets
+`TransitionTime`, so `GetCurrentCachedFrame` picks the matching baked body, and poses the
+joints and animated nodes, so the eyes follow. `FAutoRepaint` repaints the mesh. The pose is
+there before the call returns, so an off-screen grab made straight after it sees the whole
+frame. There is no frame to wait for, and `SetFixedCacheFrame` is no longer used.
+
+The clip stays paused throughout: `Skeleton.Paused` is never changed, so the render clock
+still skips it, and the next `Tick` does not move it on.
+
+Before Delphi 13 there is no render clock, and `Pause` is the pause itself. There Sprite3D
+clears `Pause`, ticks, and sets it again, leaving the clip held until it is released.
+
+### Why this should be in Gorilla3D
+
+The workaround depends on how the render clock works inside: that `Pause` is the flag it
+keeps set, and that clearing it for one `ProcessTick` is safe. Any change there would break
+it silently. Two things would make it unnecessary:
+
+- **A public "pose at time T now".** For example `TGorillaAnimation.PoseAt(ATime)`, or a
+  `SeekTo` that evaluates when the clip is paused. It would do the above inside Gorilla3D,
+  where the clock's rules are known.
+- **Or a `SetFixedCacheFrame` that also poses the skeleton** at that frame's time, so the
+  baked body and the joints always agree. As it stands it is right only for models with
+  nothing hung on a joint and no animated nodes.
+
+Frame stepping, sprite capture and thumbnails all need one of these.
 
 ## Questions
 
@@ -233,6 +321,8 @@ These may all be intended; they are listed because a converter has to know them.
 - Is there a supported way to ask which extensions the loaders are registered for?
   Sprite3D keeps its own list (`.usdc`, `.usda`, `.usd`, `.usdz`; `.usdz` loads), and it
   would be better to ask Gorilla3D.
+- Is clearing `Skeleton.Pause` around one `ProcessTick(0, 0)` safe to rely on for posing a
+  paused clip, until a public way exists (see *Holding an animation on one frame*)?
 - For an FBX clip, how are the pre-rotation and absolute-key decisions meant to be made,
   and can a loader option force them (for example "keys are relative" or "pre-rotation
   baked") when the heuristics guess wrong?
