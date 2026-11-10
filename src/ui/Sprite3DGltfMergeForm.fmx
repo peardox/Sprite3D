@@ -1,0 +1,149 @@
+object GltfMergeForm: TGltfMergeForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Merge Animations'
+  ClientHeight = 380
+  ClientWidth = 560
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object InfoLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 12.000000000000000000
+    Size.Width = 528.000000000000000000
+    Size.Height = 34.000000000000000000
+    Size.PlatformDefault = False
+    Text = ''
+    TabOrder = 10
+  end
+  object FilesLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 52.000000000000000000
+    Size.Width = 528.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Animation files (.glb or .gltf)'
+    TabOrder = 11
+  end
+  object FilesList: TListBox
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Position.X = 16.000000000000000000
+    Position.Y = 72.000000000000000000
+    Size.Width = 432.000000000000000000
+    Size.Height = 220.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    DisableFocusEffect = True
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    OnChange = FilesListChange
+    Viewport.Width = 428.000000000000000000
+    Viewport.Height = 216.000000000000000000
+  end
+  object AddButton: TButton
+    Position.X = 456.000000000000000000
+    Position.Y = 72.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Text = 'Add...'
+    Hint = 
+      'Choose glTF files whose animations are to be added; several can ' +
+      'be chosen at once'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = AddButtonClick
+  end
+  object RemoveButton: TButton
+    Position.X = 456.000000000000000000
+    Position.Y = 102.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Text = 'Remove'
+    Hint = 'Take the selected file off the list'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = RemoveButtonClick
+  end
+  object ClearButton: TButton
+    Position.X = 456.000000000000000000
+    Position.Y = 132.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Clear'
+    Hint = 'Take every file off the list'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = ClearButtonClick
+  end
+  object DuplicatesLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 303.000000000000000000
+    Size.Width = 200.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'When a name is taken already'
+    TabOrder = 12
+    Anchors = [akLeft, akBottom]
+  end
+  object DuplicatesCombo: TComboBox
+    Anchors = [akLeft, akBottom]
+    Position.X = 216.000000000000000000
+    Position.Y = 300.000000000000000000
+    Size.Width = 240.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Items.Strings = (
+      'Rename the new animation'
+      'Replace the old animation'
+      'Keep the old animation')
+    ItemIndex = 0
+    Hint = 'What to do with an animation whose name the model already has'
+    ShowHint = True
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 336.000000000000000000
+    Size.Width = 560.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 5
+    object CancelButton: TButton
+      Position.X = 368.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Cancel'
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      OnClick = CancelButtonClick
+    end
+    object MergeButton: TButton
+      Position.X = 456.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 88.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Merge...'
+      Hint = 'Add the animations, then choose where to save the GLB'
+      ShowHint = True
+      Anchors = [akRight, akBottom]
+      Default = True
+      OnClick = MergeButtonClick
+    end
+  end
+end

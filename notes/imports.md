@@ -304,6 +304,8 @@ procedure SeekTo(Time);                           // every Delphi version
 - **The `Pause` flag** is cleared for that one call on every Delphi version. On Delphi 13
   the render clock keeps it set and would otherwise never tick the paused clip.
 
+Tested in Sprite3D on the bear: the eyes stay with the head when frames are stepped.
+
 He also added `GorillaModel.ResetToBindPose()` before `PlayAnimation` when Sprite3D switches
 clip. Without it, a node the new clip does not animate (an eye, say) keeps whatever the last
 clip left it at.

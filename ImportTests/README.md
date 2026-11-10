@@ -113,5 +113,5 @@ If the IDE will not take the `.dproj`, delete it and open `ImportTests.dpr`. The
 | --- | --- |
 | `ImportTests.dpr`, `ImportTests.dproj` | The program. |
 | `src/ImportTests.Main.pas`, `.fmx` | The window: two views, the options and the log. The controls are made in code. |
-| `src/ImportTests.GltfExport.pas` | The exporter: Gorilla3D's definitions to GLB bytes, then through GLTFLib to a file. Knows nothing of the window. |
+| `../src/lib/Sprite3DGltfExport.pas` | The exporter, now part of Sprite3D's library: Gorilla3D's definitions to GLB bytes, then through GLTFLib to a file. Knows nothing of the window. |
 | `GLTFMerge/` | Submodule, [G3DGames/GLTFMerge](https://github.com/G3DGames/GLTFMerge) (MIT). |

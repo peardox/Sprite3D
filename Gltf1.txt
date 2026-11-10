@@ -1,0 +1,7 @@
+====> NO PACKAGE REBUILD <====
+
+Gltf1: unzip at the repository root, then remove the old copy of the exporter:
+
+  git rm ImportTests/src/ImportTests.GltfExport.pas
+
+(it moved to src/lib/Sprite3DGltfExport.pas).

@@ -2,7 +2,7 @@
 //** loaded back on the right, and a log below.)
 //**
 //** Open model... loads any format Gorilla3D reads into the left view. Export GLB writes it
-//** with ImportTests.GltfExport, to the file last chosen with Export GLB as..., and loads the
+//** with Sprite3DGltfExport, to the file last chosen with Export GLB as..., and loads the
 //** result into the right view, so the two can be compared. The boxes above choose how the
 //** coordinates are written; change them and export again.
 //**
@@ -26,7 +26,7 @@ uses
   FMX.Types3D, FMX.Controls3D, FMX.ListBox,
   Gorilla.DefTypes, Gorilla.Viewport, Gorilla.Model,
   Spritely.OrbitalCamera,
-  ImportTests.GltfExport;
+  Sprite3DGltfExport;
 
 type
   //** @abstract(One of the two views: a caption, a viewport, its camera and the model in

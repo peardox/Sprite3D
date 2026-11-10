@@ -111,7 +111,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_UnitSearchPath>ffmpeg;..\delphi-neon\Source;..\FastMM5;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>ffmpeg;..\delphi-neon\Source;..\FastMM5;..\ImportTests\GLTFMerge\GLTFLib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_E>false</DCC_E>
@@ -427,6 +427,24 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DLicences.pas"/>
         <DCCReference Include="lib\Sprite3DFolderDialog.pas"/>
         <DCCReference Include="lib\Sprite3DSpriteScan.pas"/>
+        <DCCReference Include="lib\Sprite3DGltfExport.pas"/>
+        <DCCReference Include="lib\Sprite3DGltfDocument.pas"/>
+        <DCCReference Include="ui\Sprite3DGltfExportForm.pas">
+            <Form>GltfExportForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DGltfMergeForm.pas">
+            <Form>GltfMergeForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DGltfSplitForm.pas">
+            <Form>GltfSplitForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DGltfPartsForm.pas">
+            <Form>GltfPartsForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <DCCReference Include="ui\Sprite3DSpriteScanForm.pas">
             <Form>SpriteScanForm</Form>
             <FormType>fmx</FormType>

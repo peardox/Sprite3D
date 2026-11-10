@@ -27,8 +27,9 @@
 //** cameras are written as empty nodes.
 //**
 //** The coordinates are written as Gorilla holds them. Whether that is right is what
-//** ImportTests is for: TGltfExportOptions can negate any axis, reverse the winding and flip
-//** V, so the output can be compared with the original until a rule is found.
+//** ImportTests (in ImportTests/) was for: TGltfExportOptions can negate any axis, reverse
+//** the winding and flip V. GLB, glTF, FBX and USD all came out right with the defaults; see
+//** notes/imports.md.
 //**
 //** The GLB is put together in memory, then loaded by GLTFLib's TglTFDocument, which checks
 //** it, and saved by it. A file GLTFLib refuses is written beside the output as .raw.glb for
@@ -36,7 +37,7 @@
 //**
 //** Uses Gorilla.DefTypes, FMX for the vertex buffers and bitmaps, and GLTFLib. Knows nothing
 //** of the application.
-unit ImportTests.GltfExport;
+unit Sprite3DGltfExport;
 
 interface
 
@@ -246,7 +247,7 @@ const
   GLB_CHUNK_JSON = $4E4F534A;
   GLB_CHUNK_BIN = $004E4942;
 
-  GENERATOR = 'Sprite3D ImportTests (Gorilla3D definitions, GLTFLib)';
+  GENERATOR = 'Sprite3D (Gorilla3D definitions, GLTFLib)';
 
   // Below this a matrix entry counts as equal to the identity's
   MATRIX_TOLERANCE = 1E-6;

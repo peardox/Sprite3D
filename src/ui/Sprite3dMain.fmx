@@ -527,5 +527,28 @@ object MainForm: TMainForm
         OnClick = ScanAtlasFoldersItemClick
       end
     end
+    object GltfMenu: TMenuItem
+      Text = 'glTF'
+      object GltfExportItem: TMenuItem
+        Locked = True
+        Text = 'Export as GLB...'
+        OnClick = GltfExportItemClick
+      end
+      object GltfMergeItem: TMenuItem
+        Locked = True
+        Text = 'Merge Animations...'
+        OnClick = GltfMergeItemClick
+      end
+      object GltfSplitItem: TMenuItem
+        Locked = True
+        Text = 'Split Long Animation...'
+        OnClick = GltfSplitItemClick
+      end
+      object GltfPartsItem: TMenuItem
+        Locked = True
+        Text = 'Add Parts...'
+        OnClick = GltfPartsItemClick
+      end
+    end
   end
 end

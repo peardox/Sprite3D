@@ -1,0 +1,126 @@
+object GltfPartsForm: TGltfPartsForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Add Parts'
+  ClientHeight = 420
+  ClientWidth = 600
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object InfoLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 12.000000000000000000
+    Size.Width = 568.000000000000000000
+    Size.Height = 34.000000000000000000
+    Size.PlatformDefault = False
+    Text = ''
+    TabOrder = 10
+  end
+  object PartsLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 52.000000000000000000
+    Size.Width = 568.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Parts found (tick those to put on)'
+    TabOrder = 11
+  end
+  object PartsList: TListBox
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Position.X = 16.000000000000000000
+    Position.Y = 72.000000000000000000
+    Size.Width = 472.000000000000000000
+    Size.Height = 280.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    DisableFocusEffect = True
+    ShowCheckboxes = True
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    OnChangeCheck = PartsListChangeCheck
+    Viewport.Width = 468.000000000000000000
+    Viewport.Height = 276.000000000000000000
+  end
+  object AddButton: TButton
+    Position.X = 496.000000000000000000
+    Position.Y = 72.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Text = 'Add files...'
+    Hint = 
+      'Choose glTF files holding parts made for this model; several can' +
+      ' be chosen at once'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = AddButtonClick
+  end
+  object ClearButton: TButton
+    Position.X = 496.000000000000000000
+    Position.Y = 102.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Text = 'Clear'
+    Hint = 'Take every part off the list'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = ClearButtonClick
+  end
+  object TickAllButton: TButton
+    Position.X = 496.000000000000000000
+    Position.Y = 142.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Tick all'
+    Hint = 'Tick every part'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = TickAllButtonClick
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 376.000000000000000000
+    Size.Width = 600.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    object CancelButton: TButton
+      Position.X = 408.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Cancel'
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      OnClick = CancelButtonClick
+    end
+    object ApplyButton: TButton
+      Position.X = 496.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 88.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Put on...'
+      Hint = 
+      'Put the ticked parts on the model, then choose where to save the' +
+      ' GLB'
+      ShowHint = True
+      Anchors = [akRight, akBottom]
+      Default = True
+      OnClick = ApplyButtonClick
+    end
+  end
+end

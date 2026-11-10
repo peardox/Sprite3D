@@ -138,10 +138,11 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   units, their packages and the scripts that write the packages, the
   palette icons and the test models (see `Spritely/README.md`).
 - `ImportTests/`: a separate test program (not in `Sprite3DGroup.groupproj`)
-  that loads any format Gorilla3D reads and writes it as GLB through
-  GLTFLib, from the `ImportTests/GLTFMerge` submodule. It must change
-  nothing outside `ImportTests/`; its own `README.md` describes it. Its
-  exporter may move into Sprite3D later, if it proves itself.
+  that loads any format Gorilla3D reads and writes it as GLB. Its
+  `GLTFMerge` submodule supplies GLTFLib to Sprite3D too
+  (`..\ImportTests\GLTFMerge\GLTFLib` on `Sprite3d.dproj`'s search path),
+  and it uses Sprite3D's `src/lib/Sprite3DGltfExport.pas`, which began as
+  its own exporter. Its own `README.md` describes it.
 - `Spritely/ProjectionTest`, `Spritely/models`: Spritely's test program,
   the test bed for `TSpritelyProjection`, and its models. It finds
   `models` up to five folders above its executable, so it uses
@@ -720,6 +721,36 @@ Only the class description was corrected (it still said a seek lags a
 frame on Delphi 13). README's "Poses, not blended images" and
 `notes/imports.md` (item 16, "What Sprite3D does now (the author's fix)",
 "Left for Gorilla3D") describe it.
+**Tested by the owner** (15:08): "Yep - that is a good fix".
+
+**Gltf1** (15:40; owner: "behind debug is good. There are some features
+from the GLTFMerge application we actually want to add as well so this
+will be a submenu with modals for new options"; chose Merge animations,
+Split long animations, Add parts, plus import; work on the open model,
+saving a GLB and opening it; a glTF model read from its own file; GLTFLib
+from `ImportTests/GLTFMerge`):
+- `ImportTests/src/ImportTests.GltfExport.pas` moved (git mv) to
+  `src/lib/Sprite3DGltfExport.pas`; ImportTests now uses it from there;
+- `src/lib/Sprite3DGltfDocument.pas`: `IsGltfFile`, `LoadModelDocument`
+  (glTF straight from its file, anything else through `BuildGlb`),
+  `SaveDocumentAsGlb`;
+- File, Debug, **glTF** submenu (`GltfMenu` in `Sprite3dMain.fmx`, moved
+  into Debug by `BuildDebugMenu` or freed with Tools): Export as GLB...,
+  Merge Animations..., Split Long Animation..., Add Parts...; dialogs
+  `Sprite3DGltfExportForm`, `...MergeForm`, `...SplitForm`, `...PartsForm`
+  (generated .fmx, kept in step with the .pas); handlers and
+  `GltfToolsReady`, `GltfModelDocument`, `SaveGltfResult` in Sprite3dMain;
+  each tool saves `<model>_export/_merged/_split/_parts.glb`, refuses the
+  model's own name, and opens the result with `SwitchModel`;
+- merging, splitting and parts run on the main thread (debug tools; small
+  files): one duplicate answer chosen in the dialog, no per-name question;
+- GLTFLib's MIT licence: `licences/GLTFLib-LICENSE.txt`, `LICENCE_GLTFLIB`
+  in the `.rc` and `Sprite3DLicences`, `.res` rebuilt (a Python writer in
+  the scratchpad reproduced the old `.res` byte for byte first), and
+  `docs/licences-required.md`;
+- README: the glTF entries under the features, the requirements, the
+  layout trees.
+Not compiled. To test: each tool on a GLB, and Export on an FBX.
 
 ### Things to check
 

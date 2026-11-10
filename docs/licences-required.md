@@ -37,6 +37,16 @@ Copyright (c) 2015 Paolo Rossi, reads and writes `settings.json`.
   documentation or About box. **Done:** `licences/Neon-LICENSE.txt`, in File,
   Licences.
 
+## GLTFLib: MIT
+
+GLTFLib (the `GLTFLib` folder of the `ImportTests/GLTFMerge` submodule,
+<https://github.com/G3DGames/GLTFMerge>), Copyright (c) 2026 Simon Booth, reads and
+writes glTF for File, Debug, glTF.
+
+- Keep its copyright and licence notice with every copy; for a binary, in its
+  documentation or About box. **Done:** `licences/GLTFLib-LICENSE.txt`, in File,
+  Licences.
+
 ## FFmpeg headers: BSD-style
 
 `src/ffmpeg` holds the FFmpeg Delphi/Pascal headers from DelphiFFmpeg.com,

@@ -56,6 +56,9 @@ const
   LICENCE_DELPHIFFMPEG = 'LICENCE_DELPHIFFMPEG';
   //** @abstract(The resource holding Neon's MIT licence.)
   LICENCE_NEON = 'LICENCE_NEON';
+  //** @abstract(The resource holding GLTFLib's MIT licence (the GLTFMerge submodule's
+  //** library, used by File, Debug, glTF).)
+  LICENCE_GLTFLIB = 'LICENCE_GLTFLIB';
 
 type
   //** @abstract(One licence or notice the program carries.)
@@ -105,7 +108,8 @@ begin
     Entry('FFmpeg libraries: notice', LICENCE_FFMPEG),
     Entry('GNU LGPL v2.1: FFmpeg''s licence', LICENCE_LGPL21),
     Entry('FFmpeg Delphi/Pascal headers: DelphiFFmpeg.com licence', LICENCE_DELPHIFFMPEG),
-    Entry('Neon JSON library: MIT licence', LICENCE_NEON)];
+    Entry('Neon JSON library: MIT licence', LICENCE_NEON),
+    Entry('GLTFLib glTF library: MIT licence', LICENCE_GLTFLIB)];
 end;
 
 function LicenceText(const AResource: String): String;

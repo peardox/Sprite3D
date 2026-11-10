@@ -221,10 +221,15 @@
 //** |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
 //** |   |-- FDebugMenu "Debug"              made only while debugging; see BuildDebugMenu
 //** |   |   |-- ...                         Frame Borders, Compare Images..., Benchmark
-//** |   |   `-- ToolsMenu "Tools"           moved here; desktop only
-//** |   |       |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
-//** |   |       |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
-//** |   |       `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+//** |   |   |-- ToolsMenu "Tools"           moved here; desktop only
+//** |   |   |   |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+//** |   |   |   |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+//** |   |   |   `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+//** |   |   `-- GltfMenu "glTF"             moved here; desktop only
+//** |   |       |-- GltfExportItem "Export as GLB..."  the open model as GLB
+//** |   |       |-- GltfMergeItem "Merge Animations..."  adds other files' animations
+//** |   |       |-- GltfSplitItem "Split Long Animation..."  cuts one into named ranges
+//** |   |       `-- GltfPartsItem "Add Parts..."  puts on parts rigged to the skeleton
 //** |   |-- FileSeparatorItem "-"
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** |-- ModelMenu "Models"
@@ -507,10 +512,15 @@ unit Sprite3dMain;
     |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
     |   |-- FDebugMenu "Debug"              made only while debugging; see BuildDebugMenu
     |   |   |-- ...                         Frame Borders, Compare Images..., Benchmark
-    |   |   `-- ToolsMenu "Tools"           moved here; desktop only
-    |   |       |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
-    |   |       |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
-    |   |       `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+    |   |   |-- ToolsMenu "Tools"           moved here; desktop only
+    |   |   |   |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+    |   |   |   |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+    |   |   |   `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+    |   |   `-- GltfMenu "glTF"             moved here; desktop only
+    |   |       |-- GltfExportItem "Export as GLB..."  the open model as GLB
+    |   |       |-- GltfMergeItem "Merge Animations..."  adds other files' animations
+    |   |       |-- GltfSplitItem "Split Long Animation..."  cuts one into named ranges
+    |   |       `-- GltfPartsItem "Add Parts..."  puts on parts rigged to the skeleton
     |   |-- FileSeparatorItem "-"
     |   `-- ExitMenuItem "Exit"             closes the application
     |-- ModelMenu "Models"
@@ -575,7 +585,7 @@ uses
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
   Sprite3DResultsView, Sprite3DNameClashForm, Sprite3DSpriteScan, Sprite3DSpriteScanForm,
-  System.Diagnostics
+  System.Diagnostics, Sprite3DGltfExport
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
@@ -811,6 +821,20 @@ type
     //** @abstract(The Tools menu's "Scan Atlas Folders..." item; see
     //** ScanAtlasFoldersItemClick. Disabled while a Tools scan runs.)
     ScanAtlasFoldersItem: TMenuItem;
+    //** @abstract(The menu captioned "glTF": GLTFLib's tools, working on the open model and
+    //** opening what they save. Found under File, Debug.)
+    //**
+    //** Designed on the menu bar after ToolsMenu; BuildDebugMenu moves it into File, Debug,
+    //** or frees it, as it does ToolsMenu.
+    GltfMenu: TMenuItem;
+    //** @abstract(The glTF menu's "Export as GLB..." item; see GltfExportItemClick.)
+    GltfExportItem: TMenuItem;
+    //** @abstract(The glTF menu's "Merge Animations..." item; see GltfMergeItemClick.)
+    GltfMergeItem: TMenuItem;
+    //** @abstract(The glTF menu's "Split Long Animation..." item; see GltfSplitItemClick.)
+    GltfSplitItem: TMenuItem;
+    //** @abstract(The glTF menu's "Add Parts..." item; see GltfPartsItemClick.)
+    GltfPartsItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
@@ -1186,6 +1210,40 @@ type
     //**
     //** @param(Sender ScanAtlasFoldersItem.)
     procedure ScanAtlasFoldersItemClick(Sender: TObject);
+    //** @abstract(Saves the open model as GLB.)
+    //**
+    //** TGltfExportForm says where the GLB comes from and, for a model that is not glTF, asks
+    //** how it is converted (Apply unit scale ticked at first, so an FBX comes out in
+    //** metres). The GLB is then saved where a save dialog says, and opened. A .glb or
+    //** .gltf model is saved from its own file, so it keeps everything in it. Desktop only.
+    //**
+    //** @param(Sender GltfExportItem.)
+    procedure GltfExportItemClick(Sender: TObject);
+    //** @abstract(Adds the animations of other glTF files to the open model, saves it as GLB
+    //** and opens it.)
+    //**
+    //** TGltfMergeForm asks for the files and what to do with a name that is taken; GLTFLib's
+    //** TglTFAnimationImporter matches each animation's channels to the model's nodes by
+    //** name. What it did goes to the Debug tab. Desktop only.
+    //**
+    //** @param(Sender GltfMergeItem.)
+    procedure GltfMergeItemClick(Sender: TObject);
+    //** @abstract(Cuts one of the open model's animations into named frame ranges, saves the
+    //** model as GLB and opens it.)
+    //**
+    //** TGltfSplitForm asks for the animation, the frame rate and the ranges;
+    //** TglTFAnimationSplitter.Split does the cutting. Desktop only.
+    //**
+    //** @param(Sender GltfSplitItem.)
+    procedure GltfSplitItemClick(Sender: TObject);
+    //** @abstract(Puts parts rigged to the open model's skeleton on it, saves it as GLB and
+    //** opens it.)
+    //**
+    //** TGltfPartsForm loads the part files and asks which to put on; TglTFPartApplier puts
+    //** them on with GLTFLib's default options, hiding the body under them. Desktop only.
+    //**
+    //** @param(Sender GltfPartsItem.)
+    procedure GltfPartsItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -2749,6 +2807,28 @@ type
       var ANotes: TArray<String>): String;
     procedure WriteBatchMetadata;
     procedure BuildDebugMenu;
+    //** @abstract(Whether the glTF tools can run now: a model is open and nothing is loading
+    //** or being saved; says why not otherwise.)
+    //**
+    //** @returns(True when they can.)
+    function GltfToolsReady: Boolean;
+    //** @abstract(The open model as a GLTFLib document, from its own file if it is glTF,
+    //** otherwise converted with AOptions; what happened goes to the Debug tab.)
+    //**
+    //** @param(AOptions How a model that is not glTF is converted.)
+    //**
+    //** @returns(The document, for the caller to free; nil, after a message, if it failed.)
+    function GltfModelDocument(const AOptions: TGltfExportOptions): TObject;
+    //** @abstract(Asks where to save ADocument as GLB, saves it and opens it.)
+    //**
+    //** @param(ADocument The document, a TglTFDocument; not changed.)
+    //**
+    //** @param(ASuffix Added to the model's name for the name offered, as "_merged".)
+    //**
+    //** @param(ATitle The save dialog's title.)
+    //**
+    //** @returns(True if it was saved.)
+    function SaveGltfResult(const ADocument: TObject; const ASuffix, ATitle: String): Boolean;
     procedure BuildResultsView;
     procedure TabControl1Change(Sender: TObject);
     procedure ResultsShowGridChange(Sender: TObject);
@@ -3009,7 +3089,10 @@ uses
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
   Sprite3DCreditsForm, System.DateUtils, JsonText, Sprite3DOpenDirectoryForm,
   Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DScanAtlasForm,
-  Sprite3DScanAtlasFoldersForm, Sprite3DLicencesForm;
+  Sprite3DScanAtlasFoldersForm, Sprite3DLicencesForm,
+  glTF.Document, glTF.Animations, glTF.AnimationSplit, glTF.Parts,
+  Sprite3DGltfDocument, Sprite3DGltfExportForm, Sprite3DGltfMergeForm, Sprite3DGltfSplitForm,
+  Sprite3DGltfPartsForm;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -11270,9 +11353,10 @@ begin
   DebugTab.Visible := FSettings.DebugActive;
   if not FSettings.DebugActive then
   begin
-    // Tools lives in Debug, so goes with it. Freeing it sets ToolsMenu and
-    // its items' fields to nil
+    // Tools and glTF live in Debug, so go with it. Freeing them sets their
+    // fields and their items' to nil
     ToolsMenu.Free;
+    GltfMenu.Free;
     Exit;
   end;
   // Above File's own separator, so Exit stays set apart and no second
@@ -11302,11 +11386,14 @@ begin
   Item.OnClick := BenchmarkItemClick;
   FDebugMenu.AddObject(Item);
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
-  // Tools needs folder dialogs, which Android and iOS lack
+  // Tools needs folder dialogs, which Android and iOS lack, and the glTF
+  // tools file dialogs
   ToolsMenu.Free;
+  GltfMenu.Free;
   {$ELSE}
-  // Moved from the menu bar, where the form designs it, with its items
+  // Moved from the menu bar, where the form designs them, with their items
   FDebugMenu.AddObject(ToolsMenu);
+  FDebugMenu.AddObject(GltfMenu);
   {$ENDIF}
   // Only debug_enabled can be turned off: --debug lasts for the run
   if FSettings.DebugEnabled then
@@ -13016,6 +13103,321 @@ begin
         E.Message);
   end;
   StartAtlasTreeScan(Root, FileName, FrameWidth, FrameHeight);
+  {$ENDIF}
+end;
+
+// The glTF tools (File, Debug, glTF) work on the model shown. A .glb or .gltf
+// model is read from its own file; any other is converted from what
+// Gorilla3D loaded. Each saves a GLB and opens it, so the result is on
+// screen at once and the original file is never changed.
+function TMainForm.GltfToolsReady: Boolean;
+begin
+  Result := False;
+  if (GorillaModel = nil) or (FModelFile = String.Empty) then
+  begin
+    ShowMessage('Open a model first.');
+    Exit;
+  end;
+  if (FLoadStage <> lsNone) or FQueueActive or FScanning or Capturing then
+  begin
+    ShowMessage('Wait until the model has loaded and nothing is being saved.');
+    Exit;
+  end;
+  Result := True;
+end;
+
+function TMainForm.GltfModelDocument(const AOptions: TGltfExportOptions): TObject;
+var
+  Lines: TStringList;
+  Def: TModelDef;
+begin
+  Result := nil;
+  // TGorillaModel.Def is declared as a TCustomDef; a loaded model's is a
+  // TModelDef
+  if GorillaModel.Def is TModelDef then
+    Def := TModelDef(GorillaModel.Def)
+  else
+    Def := nil;
+  Lines := TStringList.Create;
+  try
+    DebugMemo.Lines.Add('glTF: reading ' + FModelFile);
+    try
+      Result := LoadModelDocument(FModelFile, Def, AOptions, Lines);
+    except
+      on E: Exception do
+      begin
+        DebugMemo.Lines.AddStrings(Lines);
+        DebugMemo.Lines.Add('glTF: could not read the model: ' + E.Message);
+        ShowMessage('The model could not be read as glTF: ' + E.Message);
+        Exit(nil);
+      end;
+    end;
+    DebugMemo.Lines.AddStrings(Lines);
+  finally
+    Lines.Free;
+  end;
+end;
+
+function TMainForm.SaveGltfResult(const ADocument: TObject;
+  const ASuffix, ATitle: String): Boolean;
+var
+  Dialog: TSaveDialog;
+  FileName: String;
+  Lines: TStringList;
+begin
+  Result := False;
+  Dialog := TSaveDialog.Create(nil);
+  try
+    Dialog.Title := ATitle;
+    Dialog.Filter := 'GLB (*.glb)|*.glb';
+    Dialog.DefaultExt := 'glb';
+    Dialog.InitialDir := ExtractFileDir(FModelFile);
+    Dialog.FileName := TPath.GetFileNameWithoutExtension(FModelFile) + ASuffix + '.glb';
+    Dialog.Options := Dialog.Options + [TOpenOption.ofOverwritePrompt];
+    if not Dialog.Execute then
+      Exit;
+    FileName := TPath.ChangeExtension(Dialog.FileName, '.glb');
+  finally
+    Dialog.Free;
+  end;
+  // The model shown is never written over: it is still on screen, and its
+  // file may be wanted again
+  if SameFileName(ExpandFileName(FileName), ExpandFileName(FModelFile)) then
+  begin
+    ShowMessage('Choose another name: that is the model being worked on.');
+    Exit;
+  end;
+  Lines := TStringList.Create;
+  try
+    try
+      SaveDocumentAsGlb(ADocument as TglTFDocument, FileName, Lines);
+    except
+      on E: Exception do
+      begin
+        DebugMemo.Lines.AddStrings(Lines);
+        DebugMemo.Lines.Add('glTF: could not save ' + FileName + ': ' + E.Message);
+        ShowMessage('The GLB could not be saved: ' + E.Message);
+        Exit;
+      end;
+    end;
+    DebugMemo.Lines.AddStrings(Lines);
+  finally
+    Lines.Free;
+  end;
+  DebugMemo.Lines.Add('glTF: saved ' + FileName + '; opening it');
+  Result := True;
+  SwitchModel(FileName);
+end;
+
+procedure TMainForm.GltfExportItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TGltfExportForm;
+  Options: TGltfExportOptions;
+  Doc: TObject;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if not GltfToolsReady then
+    Exit;
+  Options := TGltfExportOptions.Create;
+  // glTF is in metres: an FBX in centimetres would otherwise come out 100
+  // times too big everywhere else
+  Options.ApplyUnitScale := True;
+  Dialog := TGltfExportForm.Create(nil);
+  try
+    Dialog.Options := Options;
+    Dialog.SetSource(FModelFile, IsGltfFile(FModelFile));
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    Options := Dialog.Options;
+  finally
+    Dialog.Free;
+  end;
+  Doc := GltfModelDocument(Options);
+  if Doc = nil then
+    Exit;
+  try
+    SaveGltfResult(Doc, '_export', 'Export as GLB');
+  finally
+    Doc.Free;
+  end;
+  {$ENDIF}
+end;
+
+procedure TMainForm.GltfMergeItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TGltfMergeForm;
+  Doc: TglTFDocument;
+  Importer: TglTFAnimationImporter;
+  Files: TArray<String>;
+  Action: TglTFDuplicateAction;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if not GltfToolsReady then
+    Exit;
+  Doc := GltfModelDocument(TGltfExportOptions.Create) as TglTFDocument;
+  if Doc = nil then
+    Exit;
+  try
+    Dialog := TGltfMergeForm.Create(nil);
+    try
+      Dialog.SetModel(ExtractFileName(FModelFile), Doc.Root.Animations.Count);
+      Dialog.Folder := ExtractFileDir(FModelFile);
+      if Dialog.ShowModal <> mrOk then
+        Exit;
+      Files := Dialog.Files;
+      Action := Dialog.DuplicateAction;
+    finally
+      Dialog.Free;
+    end;
+    Importer := TglTFAnimationImporter.Create(Doc);
+    try
+      // One answer for every name taken, chosen in the dialog
+      Importer.OnDuplicate :=
+        procedure(AImporter: TglTFAnimationImporter; ACandidate: TglTFAnimationCandidate;
+          AExisting: Integer; var AAction: TglTFDuplicateAction; var ANewName: string)
+        begin
+          AAction := Action;
+        end;
+      try
+        Importer.ImportFiles(Files);
+      except
+        on E: Exception do
+          DebugMemo.Lines.Add('glTF: merging stopped: ' + E.Message);
+      end;
+      for var Line in Importer.Log do
+        DebugMemo.Lines.Add('glTF merge: ' + Line);
+      DebugMemo.Lines.Add(Format('glTF: %d animations merged; the model now has %d',
+        [Importer.ImportedCount, Doc.Root.Animations.Count]));
+      if Importer.ImportedCount = 0 then
+      begin
+        ShowMessage('No animation could be merged; the Debug tab says why.');
+        Exit;
+      end;
+    finally
+      Importer.Free;
+    end;
+    SaveGltfResult(Doc, '_merged', 'Merge Animations: save as GLB');
+  finally
+    Doc.Free;
+  end;
+  {$ENDIF}
+end;
+
+procedure TMainForm.GltfSplitItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TGltfSplitForm;
+  Doc: TglTFDocument;
+  Warnings: TStringList;
+  Count: Integer;
+  ClipName: String;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if not GltfToolsReady then
+    Exit;
+  Doc := GltfModelDocument(TGltfExportOptions.Create) as TglTFDocument;
+  if Doc = nil then
+    Exit;
+  try
+    Dialog := TGltfSplitForm.Create(nil);
+    try
+      if not Dialog.SetModel(Doc.Root) then
+      begin
+        ShowMessage('This model has no animations to split.');
+        Exit;
+      end;
+      Dialog.Folder := ExtractFileDir(FModelFile);
+      if Dialog.ShowModal <> mrOk then
+        Exit;
+      ClipName := Doc.Root.Animations[Dialog.AnimationIndex].Name;
+      Warnings := TStringList.Create;
+      try
+        try
+          Count := TglTFAnimationSplitter.Split(Doc.Root, Dialog.AnimationIndex,
+            Dialog.FrameRate, Dialog.Ranges, Warnings);
+        except
+          on E: Exception do
+          begin
+            DebugMemo.Lines.Add('glTF: could not split ' + ClipName + ': ' + E.Message);
+            ShowMessage('The animation could not be split: ' + E.Message);
+            Exit;
+          end;
+        end;
+        for var Line in Warnings do
+          DebugMemo.Lines.Add('glTF split: ' + Line);
+      finally
+        Warnings.Free;
+      end;
+      DebugMemo.Lines.Add(Format('glTF: split %s into %d animations at %s frames a second',
+        [ClipName, Count, FloatToStr(Dialog.FrameRate)]));
+    finally
+      Dialog.Free;
+    end;
+    SaveGltfResult(Doc, '_split', 'Split Long Animation: save as GLB');
+  finally
+    Doc.Free;
+  end;
+  {$ENDIF}
+end;
+
+procedure TMainForm.GltfPartsItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TGltfPartsForm;
+  Doc: TglTFDocument;
+  Applier: TglTFPartApplier;
+  Count: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if not GltfToolsReady then
+    Exit;
+  Doc := GltfModelDocument(TGltfExportOptions.Create) as TglTFDocument;
+  if Doc = nil then
+    Exit;
+  try
+    Dialog := TGltfPartsForm.Create(nil);
+    try
+      Dialog.SetModel(ExtractFileName(FModelFile));
+      Dialog.Folder := ExtractFileDir(FModelFile);
+      if Dialog.ShowModal <> mrOk then
+      begin
+        DebugMemo.Lines.AddStrings(Dialog.Log);
+        Exit;
+      end;
+      DebugMemo.Lines.AddStrings(Dialog.Log);
+      // The parts belong to the dialog's library, so they go on before it is
+      // freed
+      Applier := TglTFPartApplier.Create(Doc);
+      try
+        try
+          Count := Applier.Apply(Dialog.TickedParts, TglTFPartOptions.Default);
+        except
+          on E: Exception do
+          begin
+            DebugMemo.Lines.Add('glTF: could not put the parts on: ' + E.Message);
+            ShowMessage('The parts could not be put on: ' + E.Message);
+            Exit;
+          end;
+        end;
+        for var Line in Applier.Log do
+          DebugMemo.Lines.Add('glTF parts: ' + Line);
+        DebugMemo.Lines.Add(Format('glTF: %d parts put on', [Count]));
+      finally
+        Applier.Free;
+      end;
+    finally
+      Dialog.Free;
+    end;
+    SaveGltfResult(Doc, '_parts', 'Add Parts: save as GLB');
+  finally
+    Doc.Free;
+  end;
   {$ENDIF}
 end;
 

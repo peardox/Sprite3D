@@ -1,0 +1,196 @@
+object GltfSplitForm: TGltfSplitForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Split Long Animation'
+  ClientHeight = 460
+  ClientWidth = 600
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object AnimationLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 15.000000000000000000
+    Size.Width = 96.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Animation'
+    TabOrder = 10
+  end
+  object AnimationCombo: TComboBox
+    Position.X = 120.000000000000000000
+    Position.Y = 12.000000000000000000
+    Size.Width = 464.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    Anchors = [akLeft, akTop, akRight]
+    TabOrder = 0
+    OnChange = AnimationComboChange
+    Hint = 'The animation to cut into named ranges'
+    ShowHint = True
+  end
+  object RateLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 47.000000000000000000
+    Size.Width = 96.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Frame rate'
+    TabOrder = 11
+  end
+  object RateBox: TSpinBox
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 1
+    Cursor = crIBeam
+    DecimalDigits = 2
+    Min = 1.000000000000000000
+    Max = 1000.000000000000000000
+    Value = 30.000000000000000000
+    Position.X = 120.000000000000000000
+    Position.Y = 44.000000000000000000
+    Size.Width = 96.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    OnChange = RateBoxChange
+    Hint = 
+      'Frames per second the ranges are counted in; found from the key ' +
+      'frames'
+    ShowHint = True
+  end
+  object LastFrameLabel: TLabel
+    Position.X = 232.000000000000000000
+    Position.Y = 47.000000000000000000
+    Size.Width = 352.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = ''
+    TabOrder = 12
+  end
+  object RangesLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 80.000000000000000000
+    Size.Width = 568.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Ranges: a name, a first frame and a last frame on each row'
+    TabOrder = 13
+  end
+  object RangesGrid: TStringGrid
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    CanFocus = True
+    ClipChildren = True
+    Position.X = 16.000000000000000000
+    Position.Y = 100.000000000000000000
+    Size.Width = 472.000000000000000000
+    Size.Height = 250.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    RowCount = 0
+    Viewport.Width = 468.000000000000000000
+    Viewport.Height = 225.000000000000000000
+    object NameColumn: TStringColumn
+      Header = 'Name'
+      Size.Width = 220.000000000000000000
+    end
+    object StartColumn: TStringColumn
+      Header = 'First frame'
+      Size.Width = 100.000000000000000000
+    end
+    object EndColumn: TStringColumn
+      Header = 'Last frame'
+      Size.Width = 100.000000000000000000
+    end
+  end
+  object AddRowButton: TButton
+    Position.X = 496.000000000000000000
+    Position.Y = 100.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Add row'
+    Hint = 'Add an empty range at the end'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = AddRowButtonClick
+  end
+  object RemoveRowButton: TButton
+    Position.X = 496.000000000000000000
+    Position.Y = 130.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Text = 'Remove row'
+    Hint = 'Take the selected range off'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = RemoveRowButtonClick
+  end
+  object ImportListButton: TButton
+    Position.X = 496.000000000000000000
+    Position.Y = 170.000000000000000000
+    Size.Width = 88.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 5
+    Text = 'Import list...'
+    Hint = 
+      'Read the ranges from a text file, as animation packs often come ' +
+      'with'
+    ShowHint = True
+    Anchors = [akTop, akRight]
+    OnClick = ImportListButtonClick
+  end
+  object IncreasingCheck: TCheckBox
+    Anchors = [akLeft, akBottom]
+    Position.X = 16.000000000000000000
+    Position.Y = 360.000000000000000000
+    Size.Width = 568.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 6
+    Text = 'Check that the ranges follow one another'
+    Hint = 'Each range must start after the one above it ends'
+    ShowHint = True
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 416.000000000000000000
+    Size.Width = 600.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 7
+    object CancelButton: TButton
+      Position.X = 408.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Cancel'
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      OnClick = CancelButtonClick
+    end
+    object SplitButton: TButton
+      Position.X = 496.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 88.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Split...'
+      Hint = 
+      'Cut the animation into the ranges, then choose where to save the' +
+      ' GLB'
+      ShowHint = True
+      Anchors = [akRight, akBottom]
+      Default = True
+      OnClick = SplitButtonClick
+    end
+  end
+end

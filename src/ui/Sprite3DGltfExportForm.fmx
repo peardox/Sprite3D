@@ -1,0 +1,129 @@
+object GltfExportForm: TGltfExportForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = Single
+  Caption = 'Export as GLB'
+  ClientHeight = 300
+  ClientWidth = 480
+  Position = MainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object SourceLabel: TLabel
+    Position.X = 16.000000000000000000
+    Position.Y = 12.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 48.000000000000000000
+    Size.PlatformDefault = False
+    Text = ''
+    TabOrder = 10
+  end
+  object TexturesCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 68.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    Text = 'Textures'
+    Hint = 'Embed the materials textures as PNG'
+    ShowHint = True
+  end
+  object SkinsCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 94.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    Text = 'Skins'
+    Hint = 
+      'Write the joints, the vertex weights and the inverse bind matric' +
+      'es'
+    ShowHint = True
+  end
+  object AnimationsCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 120.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Text = 'Animations'
+    Hint = 'Write every animation, as translation, rotation and scale keys'
+    ShowHint = True
+  end
+  object ThinKeysCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 146.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Thin keys'
+    Hint = 'Leave out animation keys that the keys either side give anyway'
+    ShowHint = True
+  end
+  object UnitScaleCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 172.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Text = 'Apply unit scale (metres)'
+    Hint = 
+      'Scale the model by its unit scale, so an FBX in centimetres come' +
+      's out in metres, as glTF expects'
+    ShowHint = True
+  end
+  object VertexColoursCheck: TCheckBox
+    Position.X = 16.000000000000000000
+    Position.Y = 198.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 5
+    Text = 'Vertex colours'
+    Hint = 
+      'Write the vertex colours as COLOR_0; glTF multiplies the base co' +
+      'lour by them'
+    ShowHint = True
+  end
+  object ButtonLayout: TLayout
+    Align = Bottom
+    Position.Y = 256.000000000000000000
+    Size.Width = 480.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 8
+    object CancelButton: TButton
+      Position.X = 288.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Cancel'
+      Anchors = [akRight, akBottom]
+      Cancel = True
+      OnClick = CancelButtonClick
+    end
+    object ExportButton: TButton
+      Position.X = 376.000000000000000000
+      Position.Y = 11.000000000000000000
+      Size.Width = 88.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Export...'
+      Hint = 'Choose where to save the GLB'
+      ShowHint = True
+      Anchors = [akRight, akBottom]
+      Default = True
+      OnClick = ExportButtonClick
+    end
+  end
+end
