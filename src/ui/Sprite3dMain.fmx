@@ -210,11 +210,12 @@ object MainForm: TMainForm
   end
   object OpenDialog1: TOpenDialog
     Filter = 
-      'All supported models (*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.dae;*.st' +
-      'l;*.ply)|*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.dae;*.stl;*.ply|glTF ' +
-      'binary (*.glb)|*.glb|glTF (*.gltf)|*.gltf|FBX (*.fbx)|*.fbx|Wave' +
-      'front OBJ (*.obj)|*.obj|USD binary (*.usdc)|*.usdc|Collada (*.da' +
-      'e)|*.dae|STL (*.stl)|*.stl|PLY (*.ply)|*.ply'
+      'All supported models (*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.usda;*.u' +
+      'sd;*.usdz;*.dae;*.stl;*.ply)|*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.u' +
+      'sda;*.usd;*.usdz;*.dae;*.stl;*.ply|glTF binary (*.glb)|*.glb|glT' +
+      'F (*.gltf)|*.gltf|FBX (*.fbx)|*.fbx|Wavefront OBJ (*.obj)|*.obj|' +
+      'USD (*.usdc;*.usda;*.usd;*.usdz)|*.usdc;*.usda;*.usd;*.usdz|Coll' +
+      'ada (*.dae)|*.dae|STL (*.stl)|*.stl|PLY (*.ply)|*.ply'
     Left = 448
     Top = 8
   end

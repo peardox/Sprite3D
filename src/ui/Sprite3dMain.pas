@@ -726,8 +726,8 @@ type
     //** @abstract(Asks for the model file that File, Open Model loads.)
     //**
     //** Its filter, set in the form designer, offers only the formats the unit has loaders
-    //** for: .glb, .gltf, .fbx, .obj, .usdc, .dae, .stl and .ply, all together first and then
-    //** one at a time.
+    //** for: .glb, .gltf, .fbx, .obj, .usdc, .usda, .usd, .usdz, .dae, .stl and .ply, all
+    //** together first and then one at a time.
     OpenDialog1: TOpenDialog;
     //** @abstract(Asks where File, Save As Icon saves; see SaveAsIconMenuItemClick.)
     //**

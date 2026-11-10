@@ -111,7 +111,7 @@ A build failing with *F2613 Unit 'Spritely.OrbitalCamera' not found* has not got
 - **No model.** While the tab showing has no model, for example with the start-up action None, after aborting the first load, or after Clear, the view is covered by a panel saying so, its text centred. On the Animated tab it says to use File, Open Model to open a model with animations for anything to show there; on the Static tab, to open a model without animations, each one being added to the Models list.
 - **Quick start-up, responsive window.** The window appears before the first model loads. The FFmpeg libraries are looked for only once that load has ended, so MP4 is offered a moment later. Overscanned grabs are matted and scaled down, and strips, spritesheets, GIFs and MP4s are composed and encoded, on a worker thread, so the window keeps responding while that is done; closing the window waits for a file being written.
 
-Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
+Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`, `.usda`, `.usd`, `.usdz`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
 
 ### FFmpeg libraries (optional, for MP4 export)
 
@@ -515,4 +515,5 @@ Every file the application opens or writes, models, settings, the bounds cache, 
 - [Volumes](notes/volumes.md): the volume a model sweeps turning about its up axis, how it is measured for each animation, and how the camera is fitted to it.
 - [Metadata](notes/metadata.md): the JSON saved beside a strip or spritesheet, and how its empty sections and origin are measured.
 - [Directions](notes/directions.md): the Models, Directions dialog, how the order of the directions works, Change Order, and the directions file Export and Import use.
+- [Imports](notes/imports.md): what Gorilla3D's loaders hand over for glTF, FBX and USD, found with ImportTests, written for Gorilla3D's author: two USD loader bugs and the behaviours a converter has to know.
 - [Code review](notes/code-review.md): the findings of the 9 November 2026 review of the whole source, in the order to take them.

@@ -137,6 +137,11 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 - `Spritely/lib`, `Spritely/packages`, `Spritely/tools`: the Spritely
   units, their packages and the scripts that write the packages, the
   palette icons and the test models (see `Spritely/README.md`).
+- `ImportTests/`: a separate test program (not in `Sprite3DGroup.groupproj`)
+  that loads any format Gorilla3D reads and writes it as GLB through
+  GLTFLib, from the `ImportTests/GLTFMerge` submodule. It must change
+  nothing outside `ImportTests/`; its own `README.md` describes it. Its
+  exporter may move into Sprite3D later, if it proves itself.
 - `Spritely/ProjectionTest`, `Spritely/models`: Spritely's test program,
   the test bed for `TSpritelyProjection`, and its models. It finds
   `models` up to five folders above its executable, so it uses
@@ -449,6 +454,115 @@ note it here.
 it's fixed"): `Gorilla.USD.Loader` back in `Sprite3DHelpers`' uses. The
 file filters, Open Directory, drops and file associations had kept
 `.usdc` all along. README's requirement is now Gorilla3D 1.5.4.
+
+**ImportTests1** (10 November, 11:40; owner: "The test project should
+not alter anything in Sprite3D"; first step chosen: static meshes): the
+new `ImportTests/` project, outside Sprite3D:
+- `ImportTests.dpr` and a minimal `ImportTests.dproj` (Win64 only, search
+  path `src;GLTFMerge\GLTFLib;..\delphi-neon\Source;..\Spritely\lib`);
+- `src/ImportTests.GltfExport.pas`, which walks `TGorillaModel.Def`
+  (a `TModelDef`) into GLB bytes and saves them through GLTFLib's
+  `TglTFDocument.LoadFromGLBBytes` and `SaveToFile`;
+- `src/ImportTests.Main.pas` and `.fmx`: the original on the left, the
+  reloaded GLB on the right, the cameras turning together, and a log;
+- `README.md`.
+
+Not built in the cloud. Things to watch when it is first compiled:
+- Gorilla.DefTypes declares its enumerations unscoped (`Default`,
+  `Diffuse`, `Normal`, `None`, `Vertical`...);
+- the FMX `TBitmapData`, `TVertexBuffer` and `TJSONArray.Add` overloads
+  were written from memory.
+
+First tests: an FBX, a USD and a GLB, to see whether Gorilla keeps source
+coordinates (the Negate and winding boxes are for finding that out).
+
+**ImportTests2** (11:45): the first compile found that `TGorillaModel.Def`
+is declared as a `TCustomDef`, not a `TModelDef`. `TModelView.Def` now
+returns it as a `TModelDef`, or nil when it is not one. The exporter unit
+compiled.
+
+**ImportTests3** (12:20). The owner's first run, on mashed_potatos.glb
+(from a model-sharing site), matched the original's box and counts. The two files compared
+in the scratchpad:
+- positions, normals and UVs were the same sets of values (Gorilla
+  reorders the vertices);
+- **every triangle was reversed**, which the double-sided material hid,
+  so Gorilla holds triangles clockwise and `ReverseWinding` is now on by
+  default;
+- Gorilla flattened the five-node hierarchy the site's converter wrote, whose two
+  rotations cancel, into a model node and a mesh node with no matrices;
+- the base colour came out as `TMaterialDef`'s starting 0.75 grey, where
+  the file gave none, so with a diffuse texture that default is now
+  written as white.
+
+Checked at 12:15 with the owner's second export: every triangle, with its
+winding, positions, normals and UVs match the original; the base colour is
+white; the texture is the same pixel for pixel, though stored as RGBA PNG
+(2.16 MB against the original's 1.76 MB RGB). The GLB round trip is exact.
+
+**ImportTests4** (12:30), after the owner's first FBX (mashed-potatoes.fbx,
+the same model): box and counts match, and the shape is right with no axis
+negated, so Gorilla's FBX loader also hands over Y-up coordinates. Two
+differences:
+- the material is Gorilla's Phong (`mkDefault`), and roughness
+  `sqrt(2/(n+2))` made it a glossy PBR with dark edges. That is the
+  Beckmann alpha; glTF's roughness is its square root, so it is now the
+  fourth root, and 1 when `UseSpecular` is off or the specular colour is
+  black. The log gives the specular colour and power it came from.
+- UnitScale is 0.01 (centimetres), and Gorilla shows the model at
+  101.9 units. The new **Apply unit scale** box (off by default) adds a
+  parent node scaled by it, so the GLB is in metres.
+
+The right view drew the FBX's export smaller than the left, though the
+boxes match; not yet explained (the GLB test framed both the same).
+
+**ImportTests5** (12:45). christmas_tree_decorated, as the owner's glTF
+(written by the owner's 3D suite) and as FBX, compared in the scratchpad against the glTF:
+- **the FBX export is exact**: every triangle of both materials, with
+  winding, positions, UVs and normals (hard edges included), once the
+  node's matrix and the unit scale are applied;
+- Gorilla's FBX loader **keeps node transforms rather than baking them**:
+  the mesh node carries the exporter's Z-up turn (-90 about X) and a scale of
+  100, and UnitScale is 0.01, so with Apply unit scale the GLB comes out
+  at the glTF's size in metres;
+- both materials came through on one mesh with two vertex groups;
+- the export embedded the one atlas three times (the glTF uses it as two
+  base colours and an emissive map); identical PNGs now share one image;
+- not carried: the glTF's roughness 0.5 (the FBX has specular off, so 1)
+  and `KHR_materials_emissive_strength` 4, which the FBX cannot hold.
+The potato's framing difference did not recur with the tree.
+
+**USD test** (12:55, no code change). The tree exported by the owner's 3D suite
+as `.usda` (Z-up, metres, indexed faceVarying `st`), compared in the
+scratchpad with the glTF:
+- **positions and winding are exact** once Z-up is turned to Y-up;
+- **Gorilla's USD loader reads the UVs wrongly**: it takes `st[n]` for the
+  n-th face corner and ignores `primvars:st:indices`. The file is right
+  (`st[st:indices[n]]` with V flipped matches the glTF at 39,695 of 39,708
+  corners; the rest is rounding). Gorilla's UVs match the corner-number
+  reading at 14,569 of the 14,582 values there are. For Gorilla's author.
+- **Gorilla turns USD's Z-up the other way from its other loaders**: the
+  model definition's matrix maps (x, y, z) to (x, -z, y), so up becomes
+  -Y (FMX's screen up), where the glTF and FBX loaders leave +Y up. With
+  Sprite3D's 180-degree X turn, a USD model therefore shows upside down
+  in Sprite3D as well. For Gorilla's author too.
+- In ImportTests, ticking Negate Y and Negate Z (a 180-degree turn about
+  X, no mirror, so the winding is unchanged) gives a right-way-up GLB.
+
+**USD2** (13:10; owner: "Sprite3d wont open usd (specifically usdc/a
+files)"): `.usda` and `.usd` added beside `.usdc` in `MODEL_EXTENSIONS`
+(with their MIME types and descriptions), OpenDialog1's filter (one "USD"
+entry for all three), Open Directory's specs and the README. Gorilla's own
+list of extensions could not be seen; ImportTests opened a `.usda`, so the
+USD loader takes that. If a `.usdc` still fails, the error message will
+say whether Gorilla lacks a loader for it. **notes/imports.md** written
+for Gorilla3D's author: the two USD bugs with their evidence, the
+behaviours a converter must know, and questions; linked from the README's
+Further reading.
+
+**USD3** (13:08; owner: "I already know G3D opens them fine", tried in
+ImportTests): `.usdz` added the same way, MIME type `model/vnd.usdz+zip`
+(the registered one), description "USD package".
 
 ### Things to check
 

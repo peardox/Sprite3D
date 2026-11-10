@@ -1,0 +1,4 @@
+====> NO PACKAGE REBUILD <====
+
+ImportTests1: new ImportTests project (unzip at the repository root).
+Changed outside ImportTests/: CLAUDE.md only.

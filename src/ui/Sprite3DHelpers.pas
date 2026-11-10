@@ -1366,8 +1366,8 @@ function UniqueModelName(const AName: String; const ASlots: TArray<TSprite3DMode
 
 //** @abstract(The file spec of every model format LoadModelFile loads.)
 //**
-//** @returns(@code(*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.dae;*.stl;*.ply), from the same list
-//** IsModelFile uses.)
+//** @returns(@code(*.glb;*.gltf;*.fbx;*.obj;*.usdc;*.usda;*.usd;*.usdz;*.dae;*.stl;*.ply),
+//** from the same list IsModelFile uses.)
 function AllModelsFileSpec: String;
 
 //** @abstract(Frees a slot's model, with its helpers, and empties the slot.)
@@ -1394,7 +1394,7 @@ procedure ShowModelWithHelpers(const AModel: TGorillaModel; const AShown: Boolea
 //** @abstract(Whether a file is a model LoadModelFile can load, judged by its extension.)
 //**
 //** The extensions are those of the loaders this unit registers: .glb, .gltf, .fbx, .obj,
-//** .usdc, .dae, .stl and .ply, in any case. The file's contents are not checked.
+//** .usdc, .usda, .usd, .usdz, .dae, .stl and .ply, in any case. The file's contents are not checked.
 //**
 //** @param(AFileName A file name or path.)
 //**
@@ -2209,8 +2209,11 @@ end;
 
 const
   // One for each loader in the uses clause above
-  MODEL_EXTENSIONS: array[0..7] of String =
-    ('.glb', '.gltf', '.fbx', '.obj', '.usdc', '.dae', '.stl', '.ply');
+  // (Gorilla.USD.Loader reads USD's binary, text and either-format files,
+  // and the zipped package)
+  MODEL_EXTENSIONS: array[0..10] of String =
+    ('.glb', '.gltf', '.fbx', '.obj', '.usdc', '.usda', '.usd', '.usdz', '.dae', '.stl',
+     '.ply');
 
 function AllModelsFileSpec: String;
 begin
@@ -2756,12 +2759,14 @@ end;
 const
   // The MIME types Linux knows the model files by; each pairs with an
   // extension in MODEL_EXTENSIONS
-  MODEL_MIME_TYPES: array[0..7] of String =
+  MODEL_MIME_TYPES: array[0..10] of String =
     ('model/gltf-binary', 'model/gltf+json', 'model/x-fbx', 'model/obj',
-     'model/x-usdc', 'model/vnd.collada+xml', 'model/stl', 'model/x-ply');
-  MODEL_DESCRIPTIONS: array[0..7] of String =
+     'model/x-usdc', 'model/x-usda', 'model/x-usd', 'model/vnd.usdz+zip',
+     'model/vnd.collada+xml', 'model/stl', 'model/x-ply');
+  MODEL_DESCRIPTIONS: array[0..10] of String =
     ('glTF binary model', 'glTF model', 'FBX model', 'Wavefront OBJ model',
-     'USD binary model', 'Collada model', 'STL model', 'PLY model');
+     'USD binary model', 'USD text model', 'USD model', 'USD package', 'Collada model',
+     'STL model', 'PLY model');
 
 // Sprite3D's own project files, as the associations know them
 function ProjectFileType: TSprite3DFileType;
