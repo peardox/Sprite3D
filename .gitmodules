@@ -4,3 +4,6 @@
 [submodule "FastMM5"]
 	path = FastMM5
 	url = https://github.com/pleriche/FastMM5.git
+[submodule "ImportTests/GLTFMerge"]
+	path = ImportTests/GLTFMerge
+	url = https://github.com/G3DGames/GLTFMerge

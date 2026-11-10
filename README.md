@@ -9,7 +9,7 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 ## Requirements
 
 - RAD Studio (Delphi) with FireMonkey.
-- [Gorilla3D](https://www.gorilla3d.de/) 1.5, installed in the IDE.
+- [Gorilla3D](https://www.gorilla3d.de/) 1.5.4 or later, installed in the IDE. USD files need 1.5.4: 1.5.3's USD loader had faults, so Sprite3D did not load USD with it.
 - Spritely, the camera components in `Spritely/` (see [Spritely/README.md](Spritely/README.md)): its runtime package built for each platform you compile for, and its design package installed in the IDE. Sprite3D uses its orbital camera, `TSpritelyOrbitalCamera`.
 - [Neon](https://github.com/paolo-rossi/delphi-neon), the JSON serialisation library, included as a Git submodule.
 - Optional, for MP4 export only: the FFmpeg 8.1 shared libraries, from the DLL pack described under *FFmpeg libraries* below. Without them everything else works, and MP4 is simply not offered.

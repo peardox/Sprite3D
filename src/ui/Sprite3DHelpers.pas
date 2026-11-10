@@ -1630,7 +1630,7 @@ uses
   Gorilla.GLB.Loader,
   Gorilla.GLTF.Loader,
   Gorilla.OBJ.Loader,
-//  Gorilla.USD.Loader,
+  Gorilla.USD.Loader,
   Gorilla.FBX.Loader,
   Gorilla.DAE.Loader,
   Gorilla.STL.Loader,

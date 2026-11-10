@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 10 November 2026, 10:15.
+Last updated: 10 November 2026, 11:15.
 
 ## Starting a new conversation
 
@@ -28,7 +28,9 @@ Last updated: 10 November 2026, 10:15.
 
 Reference for the libraries used:
 
-- Gorilla3D 1.5.3: <https://gorilla3d.de/doc/v3/version/v1.5>, with further
+- Gorilla3D 1.5.4 (from 10 November 2026; 1.5.3 before, whose USD loader
+  had faults, so `Gorilla.USD.Loader` was commented out of
+  `Sprite3DHelpers` until 1.5.4 fixed it): <https://gorilla3d.de/doc/v3/version/v1.5>, with further
   notes at <https://peardox.com/G3D/>.
 - Neon, the JSON serialiser: <https://github.com/paolo-rossi/delphi-neon>.
 - FastMM5: <https://github.com/pleriche/FastMM5>.
@@ -412,27 +414,41 @@ gone up.
 
 ## Where the work is
 
-### State (9 November 2026, 14:25)
+### State (10 November 2026, 10:52)
 
-**GitHub `main` is at `0d0103f`, "Move project notes to notes"
-(14:16), and is the owner's copy.** It follows `2b98a73`, "Merge pull
-request #9 from peardox/oblique" (13:53). The oblique
-projection work, begun on 8 November on the branch `oblique`, is merged:
-there is one line of work again, no zip is outstanding, and a new session
-builds on `main`. Whether the branch has been deleted on GitHub is not
-recorded; nothing depends on it.
+**GitHub `main` is at `c2b9f2f`, "Merge branch 'external-edges'"
+(10 November, about 10:45), and is the owner's copy.** It merges
+`external-edges` (`873be04`, "Add some tools + fix licenses/h264": every
+zip from ScanSprites1 to Licences1) into `50e4711`, "Fixed per code
+review" (Fixes1 and Fixes2). The owner built and tested it at 10:51:
+"everything appears correct". There is one line of work again, no zip is
+outstanding, and a new session builds on `main`. `external-edges` is
+merged; nothing depends on it.
 
-`0d0103f` holds two documentation zips: **Review1** (14:12; this file rewritten for `main` and cut down, the README's
-settings table, the two viewport Known issues removed as `viewport.md`
-says they are gone) and **NotesFolder1** (14:20; the five design notes
-moved to `notes/`, every link in this file and the README following; the
-root copies removed). Checked at 14:25: GitHub's seven files are byte
-for byte the delivered ones. Before them, the last zip was
-ViewDefaults1 (13:47), the last of the 9 November deliveries listed
-below. The owner committed those in one go,
-and this file does not record which of them were tested first; the
-"To test" lists are in the README's feature text and the design notes.
-When the owner reports a result, note it here.
+How the merge went, for next time: the code-review fixes had reached
+`external-edges` on 9 November only as files unzipped from MergeMain1,
+not as a git merge, so git saw both branches change the `.md` files and
+the merge conflicted in `README.md`, `CLAUDE.md`, `notes/code-review.md`
+and `notes/cisco.md`. The branch's versions were right for the first three
+(they were written on top of `main`'s); `notes/cisco.md` and the unused
+`src/lib/Sprite3DCiscoLicence.pas`, which zips could not delete, were
+removed in the merge. MergeMain1 had also left out `Sprite3DVideo.pas`
+(unchanged from `main` at the time), so the branch lacked Fixes1's
+`av_write_trailer` change until this merge brought it in. Checked at
+10:47: `main` equals `external-edges` but for those three files, with no
+conflict markers, and every unit, form and resource the project names
+exists. When a branch needs another's changes, merge with git rather
+than unzipping files over it.
+
+Which of the 9 and 10 November deliveries the owner tested one by one is
+not recorded beyond what each entry under *In hand* says; the "To test"
+lists are in the README's feature text. When the owner reports a result,
+note it here.
+
+**USD1** (10 November, 11:15; owner, 11:11: "we're now on 1.5.4 and
+it's fixed"): `Gorilla.USD.Loader` back in `Sprite3DHelpers`' uses. The
+file filters, Open Directory, drops and file associations had kept
+`.usdc` all along. README's requirement is now Gorilla3D 1.5.4.
 
 ### Things to check
 
@@ -488,7 +504,7 @@ When the owner reports a result, note it here.
   out, though its comments, the README and this file's Gorilla3D notes
   say it is set. Ask whether to turn it on or correct the descriptions.
 
-### In hand: the Tools menu (from 9 November 2026, evening)
+### Done: the Tools menu, OpenH264 and licences (9 and 10 November 2026; merged into `main` as `c2b9f2f`)
 
 **MergeMain1** (23:00): the Tools work, on `external-edges` up to
 `448eb6c` "Tools1" (ScanSprites1 to ScanAtlas3 and the owner's `data/`
