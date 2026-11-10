@@ -23,7 +23,7 @@ uses
   System.Math.Vectors,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.StdCtrls,
   FMX.Layouts, FMX.Memo, FMX.Memo.Types, FMX.ScrollBox, FMX.Controls.Presentation,
-  FMX.Types3D, FMX.Controls3D,
+  FMX.Types3D, FMX.Controls3D, FMX.ListBox,
   Gorilla.DefTypes, Gorilla.Viewport, Gorilla.Model,
   Spritely.OrbitalCamera,
   ImportTests.GltfExport;
@@ -78,6 +78,8 @@ type
     property Model: TGorillaModel read FModel;
     //** @abstract(The model's bounding box as loaded, before it was placed.)
     property Box: TBoundingBox read FBox;
+    //** @abstract(The caption's text before a file name, as "Original".)
+    property Title: string read FTitle;
   end;
 
   //** @abstract(The main window; everything but the form itself is made in FormCreate.)
@@ -103,6 +105,13 @@ type
     FTextures: TCheckBox;
     FRaw: TCheckBox;
     FUnitScale: TCheckBox;
+    FSkins: TCheckBox;
+    FAnimations: TCheckBox;
+    FThinKeys: TCheckBox;
+    FAnimationBar: TLayout;
+    FAnimationList: TComboBox;
+    FPlayButton: TButton;
+    FStopButton: TButton;
     FViews: TLayout;
     FLeft: TModelView;
     FRight: TModelView;
@@ -127,6 +136,10 @@ type
     procedure ExportAsClick(Sender: TObject);
     procedure FitClick(Sender: TObject);
     procedure ClearClick(Sender: TObject);
+    procedure PlayClick(Sender: TObject);
+    procedure StopClick(Sender: TObject);
+    procedure FillAnimations;
+    procedure PlayOn(const AView: TModelView; const AName: string);
     procedure ViewsResize(Sender: TObject);
     procedure AreaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
       X, Y: Single);
@@ -147,6 +160,7 @@ implementation
 
 uses
   System.IOUtils,
+  Gorilla.Animation, Gorilla.Animation.Controller,
   // The loaders register the formats Gorilla3D reads, as in Sprite3DHelpers
   Gorilla.GLB.Loader,
   Gorilla.GLTF.Loader,
@@ -179,8 +193,9 @@ end;
 
 function CountsText(const ACounts: TGltfModelCounts): string;
 begin
-  Result := Format('%d meshes, %d vertices, %d triangles, %d materials',
-    [ACounts.Meshes, ACounts.Vertices, ACounts.Triangles, ACounts.Materials]);
+  Result := Format('%d meshes, %d vertices, %d triangles, %d materials, %d skins, ' +
+    '%d animations', [ACounts.Meshes, ACounts.Vertices, ACounts.Triangles, ACounts.Materials,
+    ACounts.Skins, ACounts.Animations]);
 end;
 
 { TModelView }
@@ -331,6 +346,37 @@ begin
   FTextures := AddCheck('Textures', Defaults.Textures);
   FRaw := AddCheck('Also write .raw.glb', Defaults.WriteRaw);
   FUnitScale := AddCheck('Apply unit scale', Defaults.ApplyUnitScale);
+  FSkins := AddCheck('Skins', Defaults.Skins);
+  FAnimations := AddCheck('Animations', Defaults.Animations);
+  FThinKeys := AddCheck('Thin keys', Defaults.ThinKeys);
+
+  // Plays the same animation, by name, in both views
+  FAnimationBar := TLayout.Create(Self);
+  FAnimationBar.Parent := Self;
+  FAnimationBar.Align := TAlignLayout.Top;
+  FAnimationBar.Height := 32;
+  FAnimationBar.Position.Y := FOptionsBar.Position.Y + FOptionsBar.Height;
+  FAnimationList := TComboBox.Create(Self);
+  FAnimationList.Parent := FAnimationBar;
+  FAnimationList.Align := TAlignLayout.Left;
+  FAnimationList.Width := 320;
+  FAnimationList.Margins.Rect := RectF(4, 4, 0, 4);
+  FPlayButton := TButton.Create(Self);
+  FPlayButton.Parent := FAnimationBar;
+  FPlayButton.Align := TAlignLayout.Left;
+  FPlayButton.Width := 70;
+  FPlayButton.Margins.Rect := RectF(4, 4, 0, 4);
+  FPlayButton.Position.X := 400;
+  FPlayButton.Text := 'Play';
+  FPlayButton.OnClick := PlayClick;
+  FStopButton := TButton.Create(Self);
+  FStopButton.Parent := FAnimationBar;
+  FStopButton.Align := TAlignLayout.Left;
+  FStopButton.Width := 70;
+  FStopButton.Margins.Rect := RectF(4, 4, 0, 4);
+  FStopButton.Position.X := 500;
+  FStopButton.Text := 'Stop';
+  FStopButton.OnClick := StopClick;
 
   // The memo and its splitter sit at the bottom: the memo first, so it is
   // the lower of the two
@@ -417,6 +463,9 @@ begin
   Result.Textures := FTextures.IsChecked;
   Result.WriteRaw := FRaw.IsChecked;
   Result.ApplyUnitScale := FUnitScale.IsChecked;
+  Result.Skins := FSkins.IsChecked;
+  Result.Animations := FAnimations.IsChecked;
+  Result.ThinKeys := FThinKeys.IsChecked;
 end;
 
 procedure TImportTestsForm.UpdateButtons;
@@ -427,6 +476,57 @@ begin
   FExportButton.Enabled := HasModel;
   FExportAsButton.Enabled := HasModel;
   FFitButton.Enabled := HasModel;
+  FPlayButton.Enabled := HasModel and (FAnimationList.Count > 0);
+  FStopButton.Enabled := FPlayButton.Enabled;
+end;
+
+procedure TImportTestsForm.FillAnimations;
+var
+  Animation: TGorillaAnimation;
+begin
+  FAnimationList.Clear;
+  if FLeft.Model <> nil then
+    for Animation in FLeft.Model.AnimationManager.GetSortedAnimations() do
+      FAnimationList.Items.Add(Animation.Id);
+  if FAnimationList.Count > 0 then
+    FAnimationList.ItemIndex := 0;
+end;
+
+procedure TImportTestsForm.PlayOn(const AView: TModelView; const AName: string);
+begin
+  if AView.Model = nil then
+    Exit;
+  if AView.Model.AnimationManager.GetAnimation(AName) = nil then
+  begin
+    Log('The ' + LowerCase(AView.Title) + ' has no animation called ' + AName);
+    Exit;
+  end;
+  AView.Model.AnimationManager.PlayAnimation(AName);
+end;
+
+procedure TImportTestsForm.PlayClick(Sender: TObject);
+var
+  Name: string;
+begin
+  if FAnimationList.ItemIndex < 0 then
+    Exit;
+  Name := FAnimationList.Items[FAnimationList.ItemIndex];
+  // The export keeps the original's names, so the same one plays in both
+  PlayOn(FLeft, Name);
+  PlayOn(FRight, Name);
+end;
+
+procedure TImportTestsForm.StopClick(Sender: TObject);
+
+  procedure StopOn(const AView: TModelView);
+  begin
+    if (AView.Model <> nil) and (AView.Model.AnimationManager.Current <> nil) then
+      AView.Model.AnimationManager.Current.Stop;
+  end;
+
+begin
+  StopOn(FLeft);
+  StopOn(FRight);
 end;
 
 procedure TImportTestsForm.LoadSource(const AFileName: string);
@@ -447,11 +547,14 @@ begin
       Log('Holds: ' + CountsText(CountModel(FLeft.Def)) + ', unit scale ' +
         FloatToStr(FLeft.Def.UnitScale));
       Log('Definitions: ' + DescribeModel(FLeft.Def));
+      if DescribeAnimations(FLeft.Def) <> '' then
+        Log('Animations: ' + DescribeAnimations(FLeft.Def));
     end;
   except
     on E: Exception do
       Log('Could not load it: ' + E.ClassName + ': ' + E.Message);
   end;
+  FillAnimations;
   UpdateButtons;
 end;
 
@@ -489,9 +592,12 @@ begin
   if not Exported then
     Exit;
   Log(Format('Wrote %d nodes, %d meshes, %d primitives, %d vertices, %d triangles, ' +
-    '%d materials, %d images; %d bytes',
+    '%d materials, %d images, %d skins (%d joints), %d animations (%d channels); %d bytes',
     [Stats.Nodes, Stats.Meshes, Stats.Primitives, Stats.Vertices, Stats.Triangles,
-     Stats.Materials, Stats.Images, Stats.Bytes]));
+     Stats.Materials, Stats.Images, Stats.Skins, Stats.Joints, Stats.Animations,
+     Stats.Channels, Stats.Bytes]));
+  if Stats.KeysHeld > 0 then
+    Log(Format('Animation keys: %d held, %d written', [Stats.KeysHeld, Stats.KeysWritten]));
   try
     // The cameras keep their angles between loads and always turn together,
     // so the export is seen from the same side as the original
@@ -512,6 +618,8 @@ begin
   begin
     Log('Exported holds ' + CountsText(CountModel(FRight.Def)));
     Log('Exported definitions: ' + DescribeModel(FRight.Def));
+    if DescribeAnimations(FRight.Def) <> '' then
+      Log('Exported animations: ' + DescribeAnimations(FRight.Def));
   end;
 end;
 

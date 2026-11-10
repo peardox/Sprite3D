@@ -3920,11 +3920,21 @@ begin
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
+var
+  AssocNote, Backup: String;
 begin
   FSetupComplete := True;
   if FStarted then
     Exit;   // the form can be shown again; the model stays as it is
   FStarted := True;
+  // Model types added since Open With was chosen are offered too, and open
+  // with this copy of the program
+  Backup := FSettings.AssociationBackup;
+  if not RefreshModelAssociations(FSettings, AssocNote) then
+    DebugMemo.Lines.Add('Can''t bring the model file associations up to date: ' +
+      AssocNote);
+  if FSettings.AssociationBackup <> Backup then
+    FSettings.Save;
   // Project files open with this copy of the program, off the main thread,
   // as on Linux it runs the system's database updates
   TTask.Run(

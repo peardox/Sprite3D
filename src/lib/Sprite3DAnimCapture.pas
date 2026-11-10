@@ -164,8 +164,10 @@ type
   //** Sprite3D loads models with vertex caching, so Gorilla has already baked the animation
   //** into @code(FrameCount) poses at its own rate (60 a second on desktop, 24 on some mobile
   //** platforms). Each output time is mapped onto that grid and the nearest baked pose is
-  //** shown with @code(SetFixedCacheFrame), whatever the animation clock is doing; on desktop
-  //** that is within 1/120 of a second of the exact time. The poses themselves are
+  //** shown with @code(SetFixedCacheFrame); on desktop that is within 1/120 of a second of
+  //** the exact time. The baked poses hold only the skinned vertices, so the skeleton is
+  //** sought to the same pose's time as well: joints, animated nodes and meshes hung
+  //** unskinned from them (a character's eyes under its head joint) then show the same frame. The poses themselves are
   //** interpolated between the file's keyframes when Gorilla bakes them; the images are never
   //** blended, which would leave ghosts in a sprite. At a rate above the baked rate some poses
   //** repeat.
@@ -687,6 +689,14 @@ begin
   begin
     // The nearest baked pose; past the last one is the first again
     Baked := Round(Phase * FCachedFrames) mod FCachedFrames;
+    // The baked poses are the skinned vertices only. The skeleton and the
+    // animated nodes, and whatever hangs from them unskinned (a bear's
+    // eyes under its head joint), follow the clip's clock, so it is put at
+    // the baked pose's own time too (Bear1)
+    if FAnimation.FrameRate > 0 then
+      SeekTo(Baked / FAnimation.FrameRate)
+    else
+      SeekTo(Phase * FDuration);
     FAnimation.SetFixedCacheFrame(Baked);
   end
   else

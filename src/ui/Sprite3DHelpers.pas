@@ -1586,6 +1586,27 @@ function ApplyFileAssociations(const ASettings: TSprite3DAppSettings;
 //** @returns(True on success, or where there is nothing to do.)
 function RegisterProjectFiles(out AMessage: String): Boolean;
 
+//** @abstract(Brings the model file associations up to date at start-up, on Windows, when
+//** Open With is already on.)
+//**
+//** Windows keeps the list of extensions as they were when Open With was ticked, so a model
+//** format added since (as .usda, .usd and .usdz were on 10 November 2026) was not offered,
+//** and a copy of the program moved elsewhere was still the one run. Registering again
+//** lists every extension IsModelFile accepts, with this program file. When Always is on
+//** too, the new extensions are made to open with Sprite3D as the others are, and their
+//** old defaults go into ASettings.AssociationBackup for Settings to restore. A default
+//** chosen in Windows' own dialog still wins; nothing is shown about it at start-up.
+//** Elsewhere it does nothing: Linux brings its desktop entry up to date in
+//** RegisterProjectFiles, and macOS takes its types from the bundle.
+//**
+//** @param(ASettings The settings; its AssociationBackup may change, so save them after.)
+//**
+//** @param(AMessage Set to what went wrong; empty if nothing did.)
+//**
+//** @returns(True on success, or where there is nothing to do.)
+function RefreshModelAssociations(const ASettings: TSprite3DAppSettings;
+  out AMessage: String): Boolean;
+
 //** @abstract(True where the GPU preference can be set: Windows only.)
 //**
 //** @returns(True on Windows.)
@@ -2817,6 +2838,37 @@ begin
   {$ELSE}
   // Nothing to register here
   Result := True;
+  {$ENDIF}
+end;
+
+function RefreshModelAssociations(const ASettings: TSprite3DAppSettings;
+  out AMessage: String): Boolean;
+{$IF DEFINED(MSWINDOWS)}
+var
+  Assoc: TSprite3DFileAssociations;
+  Backup: String;
+{$ENDIF}
+begin
+  AMessage := String.Empty;
+  Result := True;
+  {$IF DEFINED(MSWINDOWS)}
+  Assoc := CreateModelAssociations;
+  try
+    // Only a choice the user has made is brought up to date
+    if not Assoc.IsRegistered then
+      Exit;
+    Result := Assoc.Register;
+    if Result and ASettings.AlwaysOpenWith and not Assoc.IsDefault then
+    begin
+      Backup := ASettings.AssociationBackup;
+      Result := Assoc.MakeDefault(Backup);
+      ASettings.AssociationBackup := Backup;
+    end;
+    if not Result then
+      AMessage := Assoc.LastError;
+  finally
+    Assoc.Free;
+  end;
   {$ENDIF}
 end;
 

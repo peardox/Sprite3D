@@ -564,6 +564,96 @@ Further reading.
 ImportTests): `.usdz` added the same way, MIME type `model/vnd.usdz+zip`
 (the registered one), description "USD package".
 
+**Assoc1** (13:25; owner: "The file association isn't linked with
+Sprite3D"). Windows had the model types as they were when Open With was
+ticked; nothing registered them again, so `.usda`, `.usd` and `.usdz`
+were never offered (`IsRegistered` checks only the ProgID, so Settings
+still showed it on). New `RefreshModelAssociations` (Sprite3DHelpers),
+called first in `FormShow`: on Windows, when Open With is on, registers
+again (every extension, this exe), and when Always is on and not every
+type opens with Sprite3D, `MakeDefault` for them, saving the backup if it
+changed. No dialog at start-up. Linux already re-registered in
+`RegisterProjectFiles`; macOS uses the bundle. To test: start Sprite3D
+once, then double-click a `.usdz`.
+
+**ImportTests7** (13:55; owner has an animated parrot as GLB and FBX; the
+FBX's animations are named "Rig|..."; "we can live with that"): skins and
+animations in the exporter, from reading Gorilla.DefTypes:
+- joints are reached through `Children`, `TJointDef.Joints` (a map, taken
+  in name order) and `TArmatureDef.Roots`; armatures not reached are put
+  under the model's node;
+- weights: per `Skin.LinkedJoints[j]`, its `Indices`/`Weights` (after
+  `ApplyMeshWeights(mesh.Id)` when it has per-mesh sets), mapped through
+  the mesh's `VertexIndexMap` as `ApplyVertexJointsRelation` does; four
+  heaviest, normalised; unweighted vertices follow joint 0;
+- inverse bind matrices = mesh global * inverse(joint global) at rest
+  (row vectors), with the largest difference from Gorilla's
+  `InvBindMatrix` logged, as its meaning is not certain;
+- channels: `TTransformationInterpolatorDef` decomposed to T/R/S;
+  `TPoint3DInterpolatorDef` Position.Point / Scale.Point;
+  `TQuaternion3DInterpolatorDef` through FMX's quaternion-to-matrix, then
+  decomposed, so its sense is Gorilla's; times = key * Duration; LINEAR;
+  each animation's kinds of key are logged;
+- animated nodes are written as TRS (glTF forbids an animated matrix);
+- the window has Skins and Animations boxes and Play/Stop for the chosen
+  animation in both views.
+
+**ImportTests8** (14:10). The parrot GLB (owner's screenshot and files,
+13:52), compared in the scratchpad with the source:
+- **skin exact**: same 66 joints in the same order, every vertex's
+  weights to 1e-7, inverse bind matrices to 4e-7 (Gorilla's own agree with
+  the rest-pose ones to 4e-7, so `InvBindMatrix` is the inverse bind
+  matrix in row-vector form);
+- **animations exact**: all 33, every channel at every key, to 0.06
+  degrees; Gorilla hands over only `TTransformationInterpolatorDef`
+  (TransformMatrix) keys, one per joint, at every time any channel had a
+  key (383,685 against the source's 143,335). The source used STEP on
+  179 of 198 samplers; FMX's interpolation types have no step, and the
+  values came through anyway.
+Changes: **Thin keys** (on) drops keys the kept neighbours give to 1e-5
+(checked over all dropped keys; rotations only drop when essentially
+equal, as unit quaternions never lie on a chord), giving about 102,000
+keys and 0.04 degrees; **metallic-roughness**: Gorilla splits glTF's
+texture into Roughness and Metalness channels, so the same picture is
+written once as `metallicRoughnessTexture`, or two are packed (G, B).
+
+**Parrot FBX** (14:05, owner's log and `.raw.glb`; no code change),
+compared in the scratchpad with the parrot GLB:
+- rest pose exact: every joint where the GLB has it, to 5e-8, at scale
+  0.01 (centimetres) with no turn; the FBX has one more joint, `Rig`;
+- the GLB's clips start one frame (1/30 s) later than the FBX's (keys at
+  1/30.. against 0..; 1.000 s against 0.967 s), so they compare shifted;
+- shifted, 27 of the 33 clips match to 0.2-0.74 degrees on every joint;
+  **Dead, Dead_Falling (COG 123 deg), Death (25), FlyDown, FlyGlide and
+  Walk (legs, 34)** do not. Either the two sources differ or Gorilla's
+  FBX key heuristics (pre-rotation and absolute-key votes per stage)
+  misfire on those. The owner (14:15): "The GLB looks good walking
+  straight, the FBX is walking down-hill", so it is the FBX loader;
+- 376 weights beyond four per vertex dropped (the FBX has more
+  influences; the GLB had four); JOINTS_1/WEIGHTS_1 could carry eight.
+
+**Notes2** (14:20; owner: "Add all findings to notes for Gorilla3D
+author"): `notes/imports.md` now has bug 3 (the six FBX clips, with the
+heuristics suspected), and behaviours 10-15 (metallic-roughness split,
+dense matrix keys, STEP lost, `InvBindMatrix` meaning, more than four
+weights, the extra `Rig` joint and stray `Action` clip), plus the parrot in
+the results table and a question on forcing the FBX decisions.
+
+**Bear1** (14:30; owner: a bear's eyes stay put when Sprite3D holds or
+steps Talk, but move in ImportTests). The eyes are unskinned meshes under
+"Eye Right"/"Eye Left", children of the head joint; Talk moves the joint
+and animates the eye nodes. ImportTests plays with `PlayAnimation`, so the
+skeleton is evaluated. Sprite3D's held frames (the player and every
+capture) paused the clock and used `SetFixedCacheFrame`, which poses only
+the baked skinned vertices. `TSprite3DAnimationFrames.ShowFrame` now also
+calls `SeekTo(Baked / FAnimation.FrameRate)` (or the phase's time when the
+rate is 0) before `SetFixedCacheFrame`. Behaviour 16 in
+`notes/imports.md` asks Gorilla's author about it. **To test**: hold and
+step Talk (the eyes must follow the head); export Talk and check the eyes
+in the frames. On Delphi 13 a seek is evaluated on the next drawn frame,
+so if exported frames show the eyes one frame behind the body, the
+capture needs to wait a frame after `ShowFrame`; not done until seen.
+
 ### Things to check
 
 - Variable's dialog is placed at the main form's centre, so on a wide

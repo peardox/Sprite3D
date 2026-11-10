@@ -19,10 +19,13 @@ into Sprite3D later.
 3. The log then lists every mesh and material written, anything left out, GLTFLib's warnings,
    and both models' boxes and counts, so the two can be compared by numbers as well as by eye.
 
+The animation bar lists the original's animations: **Play** plays the one chosen in both
+views (the export keeps the names), and **Stop** stops both.
+
 Dragging in either view turns both cameras together, and the wheel zooms both. **Fit views**
 frames both again. A model named on the command line is opened at start-up.
 
-## What is exported (first version: static meshes)
+## What is exported
 
 - **Nodes:** every definition in Gorilla's tree, with its transform as the node's matrix.
   Armature joints, lights and cameras become empty nodes.
@@ -36,13 +39,29 @@ frames both again. A model named on the command line is opened at start-up.
   - metallic and roughness for a PBR material. For any other material, metallic is 0 and
     roughness is estimated from the specular power, as the fourth root of 2 / (power + 2),
     or 1 when the material has no specular highlight;
+  - a metallic-roughness texture: Gorilla splits glTF's into Roughness and Metalness
+    channels; one picture is written as it is, two are packed (green roughness, blue
+    metalness);
   - double-sidedness, and MASK when an alpha cutoff is set, or BLEND when the material or its
     texture is transparent.
 - **Textures:** diffuse, normal, emissive and ambient occlusion, embedded as PNG. They are
   taken as Gorilla draws them, with any flips it applied. Other texture channels are listed
   in the log as not exported.
 
-Skins, animations, morph targets, lights and cameras are not exported yet.
+- **Skins** (exact on the parrot GLB): the joints become nodes, and each skinned mesh
+  gets JOINTS_0 and WEIGHTS_0 and a skin. The weights come from Gorilla's joint references,
+  mapped to the drawn vertices as Gorilla maps them; the four heaviest per vertex are kept
+  and made to add up to 1. The inverse bind matrices are worked out from the joints' rest
+  pose, and the log says how far Gorilla's own differ from them.
+- **Animations** (exact on the parrot GLB, to 0.04 degrees): each animation's stages become channels on
+  the nodes they drive. Matrix keys become translation, rotation and scale; position, scale
+  and quaternion keys become one channel each; every channel is LINEAR. The log lists the
+  kinds of key each animation had, and any left out. Nodes an animation drives are written
+  as translation, rotation and scale, as glTF requires. Gorilla holds keys as matrices at
+  every time any channel has one, so **Thin keys** leaves out those the keys either side give
+  anyway (the parrot: 383,685 keys held, about 102,000 written, against the source's 143,335).
+
+Morph targets, lights and cameras are not exported yet.
 
 ## The options
 
@@ -58,13 +77,16 @@ exactly, apart from the winding (see below). These boxes change the output, for 
 | Vertex colours | Writes COLOR_0. Off by default, because glTF multiplies the base colour by it. |
 | Textures | Embeds the textures. |
 | Apply unit scale | Scales the model by Gorilla's unit scale (0.01 for an FBX in centimetres), as a parent node, so the GLB is in metres as glTF expects. Off by default, so the two views show the same size. |
+| Skins | Writes the skins. |
+| Animations | Writes the animations. |
+| Thin keys | Leaves out animation keys the keys either side give anyway. |
 | Also write .raw.glb | Also saves the GLB as built, before GLTFLib loads and re-saves it. |
 
 Found so far (10 November 2026):
 
 | Source | Result |
 | --- | --- |
-| GLB, glTF | Exact, with the default options. |
+| GLB, glTF | Exact, with the default options, including the parrot's skin and 33 animations. |
 | FBX (from a 3D suite's exporter) | Exact. Node transforms are kept; tick Apply unit scale for metres. |
 | USD (`.usda` from a 3D suite's exporter, Z-up) | Positions and winding exact, but upside down: tick Negate Y and Negate Z. The UVs are wrong, because Gorilla3D's USD loader ignores `primvars:st:indices`. |
 

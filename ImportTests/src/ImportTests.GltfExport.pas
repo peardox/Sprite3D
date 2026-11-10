@@ -19,8 +19,12 @@
 //**     them, flipped as it draws them, embedded as PNG.)
 //** )
 //**
-//** Skins, animations, morph targets, lights and cameras are not written yet; the nodes of
-//** armatures, lights and cameras are written as empty nodes.
+//** Skins and animations are written too (see TGltfExportOptions.Skins and Animations):
+//** the joints become nodes, each skinned mesh gets JOINTS_0, WEIGHTS_0 and a skin, and each
+//** animation's stages become channels on the nodes they drive. A node an animation drives
+//** is written as translation, rotation and scale, as glTF requires; every other node keeps
+//** its matrix. Morph targets, lights and cameras are not written; the nodes of lights and
+//** cameras are written as empty nodes.
 //**
 //** The coordinates are written as Gorilla holds them. Whether that is right is what
 //** ImportTests is for: TGltfExportOptions can negate any axis, reverse the winding and flip
@@ -77,8 +81,33 @@ type
     //** other viewers unless this is on. It is written as a parent node with that scale, so
     //** the vertices are not changed. Off by default, so the two views compare.
     ApplyUnitScale: Boolean;
+    //** @abstract(Writes skins: the joints as nodes, JOINTS_0 and WEIGHTS_0, and the inverse
+    //** bind matrices; on by default.)
+    //**
+    //** The weights come from each joint reference's vertex indices and weights, mapped to
+    //** the drawn vertices through the mesh's VertexIndexMap as Gorilla does; the four
+    //** heaviest are kept and made to add up to 1. The inverse bind matrices are worked out
+    //** from the joints' rest transforms, so the rest pose is the bind pose.
+    Skins: Boolean;
+    //** @abstract(Writes the animations; on by default.)
+    //**
+    //** Each stage drives the node of the definition it refers to. Matrix keys
+    //** (TransformMatrix) become translation, rotation and scale channels; Position.Point,
+    //** Scale.Point and Quaternion keys become one channel each. Key times are the
+    //** interpolator's normalised keys times its Duration, in seconds, and every channel is
+    //** written as LINEAR. Other kinds of key are listed in the log as left out.
+    Animations: Boolean;
+    //** @abstract(Leaves out animation keys that the keys either side give anyway; on by
+    //** default.)
+    //**
+    //** Gorilla holds each joint's keys as matrices at every time any of its channels has a
+    //** key, so translation, rotation and scale all get keys where the source had few. A
+    //** key is left out when interpolating between the keys kept either side of it gives
+    //** its value to 1E-5 (times the channel's largest value, if over 1), checked for every
+    //** key left out between them. A channel that never changes keeps one key.
+    ThinKeys: Boolean;
     //** @abstract(Returns the defaults: nothing negated or flipped, the winding reversed,
-    //** textures on, vertex colours and the raw file off.)
+    //** textures, skins and animations on, vertex colours and the raw file off.)
     class function Create: TGltfExportOptions; static;
   end;
 
@@ -98,6 +127,18 @@ type
     Materials: Integer;
     //** @abstract(Images embedded.)
     Images: Integer;
+    //** @abstract(Skins written.)
+    Skins: Integer;
+    //** @abstract(Joints over every skin written.)
+    Joints: Integer;
+    //** @abstract(Animations written.)
+    Animations: Integer;
+    //** @abstract(Channels over every animation written.)
+    Channels: Integer;
+    //** @abstract(Animation keys Gorilla held, over every channel.)
+    KeysHeld: Integer;
+    //** @abstract(Animation keys written, after ThinKeys.)
+    KeysWritten: Integer;
     //** @abstract(Size of the GLB put together, in bytes.)
     Bytes: Int64;
   end;
@@ -113,6 +154,10 @@ type
     Triangles: Integer;
     //** @abstract(Materials in the model's table.)
     Materials: Integer;
+    //** @abstract(Animations in the model.)
+    Animations: Integer;
+    //** @abstract(Skins, counted as the controllers that have one.)
+    Skins: Integer;
   end;
 
 //** @abstract(Puts a model together as GLB bytes.)
@@ -168,12 +213,20 @@ function CountModel(const AModel: TModelDef): TGltfModelCounts;
 //** @returns(The list.)
 function DescribeModel(const AModel: TModelDef): string;
 
+//** @abstract(Lists a model's animations with their length in seconds and number of stages,
+//** as "walk 1.20 s 34 stages, idle 2.00 s 34 stages".)
+//**
+//** @param(AModel The model's definitions; nil gives an empty string.)
+//**
+//** @returns(The list, or an empty string when there are none.)
+function DescribeAnimations(const AModel: TModelDef): string;
+
 implementation
 
 uses
   System.Types, System.UITypes, System.Math, System.Math.Vectors, System.JSON,
   System.TypInfo, System.StrUtils, System.IOUtils, System.Generics.Collections,
-  System.Generics.Defaults,
+  System.Generics.Defaults, System.RTLConsts,
   FMX.Types, FMX.Types3D, FMX.Graphics,
   glTF.Document;
 
@@ -204,6 +257,23 @@ type
     HasAlpha: Boolean;
   end;
 
+  // A skinned mesh's node, waiting for the joints' nodes to be written
+  TPendingSkin = record
+    Node: Integer;
+    Mesh: TCustomMeshDef;
+    Skin: TSkinDef;
+  end;
+
+  // A transform taken apart as glTF wants it
+  TTrs = record
+    T: TPoint3D;
+    // x, y, z, w
+    R: array[0..3] of Single;
+    S: TPoint3D;
+    // The three axes are not at right angles, so no TRS gives the matrix
+    Sheared: Boolean;
+  end;
+
   TGlbBuilder = class
   private
     FModel: TModelDef;
@@ -222,12 +292,40 @@ type
     FImages: TJSONArray;
     FMaterialIndex: TDictionary<TMaterialDef, Integer>;
     FTextureIndex: TDictionary<TTextureDef, TTextureInfo>;
+    // The PNG bytes of each image written, by image index, so a picture used by
+    // several textures is stored once
+    FImageBytes: TList<TBytes>;
+    // Every definition written as a node, with its node index (-1 while its
+    // children are being written), and its global transform in Gorilla's terms
+    FNodeIndex: TDictionary<TTransformDef, Integer>;
+    FGlobal: TDictionary<TTransformDef, TMatrix3D>;
+    // Definitions an animation drives, written as TRS rather than a matrix
+    FAnimated: TDictionary<TTransformDef, Boolean>;
+    FMeshSkin: TDictionary<TCustomMeshDef, TSkinDef>;
+    FPendingSkins: TList<TPendingSkin>;
+    FSkins: TJSONArray;
+    FAnimations: TJSONArray;
     procedure Log(const AText: string);
+    function Conjugated(const AMatrix: TMatrix3D): TMatrix3D;
+    function ChildrenOf(const ADef: TTransformDef): TArray<TTransformDef>;
+    procedure FindSkinsAndAnimated;
+    procedure AddArmatures(const ARootNode: Integer);
+    procedure WriteSkinAttributes(const AMesh: TCustomMeshDef; const ASkin: TSkinDef;
+      const AAttributes: TJSONObject);
+    procedure WriteSkins;
+    function AddFloatAccessor(const AValues: TArray<Single>; const ACount: Integer;
+      const AType: string; const AMinMax: Boolean): Integer;
+    procedure AddChannel(const ANode: Integer; const APath: string;
+      const ATimes, AValues: TArray<Single>; const AType: string;
+      const ASamplers, AChannels: TJSONArray);
+    procedure AddInterpolatorChannels(const AInterpolator: TCustomDef; const ANode: Integer;
+      const ADuration: Single; const ASamplers, AChannels: TJSONArray; var ASkipped: string);
+    procedure WriteAnimations;
     function AddView(const AData; const ASize, ATarget: Integer): Integer;
     function AddAccessor(const AView, AComponent, ACount: Integer; const AType: string;
       const ANormalized: Boolean): TJSONObject;
     function NodeMatrix(const AMatrix: TMatrix3D): TJSONArray;
-    function AddNode(const ADef: TTransformDef): Integer;
+    function AddNode(const ADef: TTransformDef; const AParentGlobal: TMatrix3D): Integer;
     function AddMesh(const AMesh: TCustomMeshDef): Integer;
     function WriteAttributes(const ABuffer: TVertexBuffer; const AName: string): TJSONObject;
     function AddPrimitive(const AIndices: TIndexBuffer; const AMaterial: TMaterialRefDef;
@@ -236,6 +334,8 @@ type
     function ResolveMaterial(const ARef: TMaterialRefDef): TMaterialDef;
     function MaterialFor(const ARef: TMaterialRefDef): Integer;
     function TextureFor(const ATexture: TTextureDef): TTextureInfo;
+    function AddBitmapTexture(const ABitmap: TBitmap; const AName, ANote: string): TTextureInfo;
+    function MetallicRoughnessFor(const AMaterial: TMaterialDef): Integer;
     procedure AddTextureRef(const AParent: TJSONObject; const AName: string;
       const AMaterial: TMaterialDef; const AChannel: TColorChannelDef;
       out AInfo: TTextureInfo);
@@ -374,6 +474,113 @@ begin
     Result := AIndices.Length - (AIndices.Length mod 3);
 end;
 
+// Takes an FMX matrix apart. FMX matrices act on row vectors: the first three
+// rows are the images of the axes, and the fourth row the translation. glTF's
+// rotation matrix acts on column vectors, so its columns are those rows.
+function Decompose(const M: TMatrix3D): TTrs;
+var
+  R1, R2, R3: TPoint3D;
+  SX, SY, SZ, Trace, K: Single;
+  A: array[0..2, 0..2] of Single;
+  Len: Single;
+  I: Integer;
+begin
+  Result.T := Point3D(M.m41, M.m42, M.m43);
+  R1 := Point3D(M.m11, M.m12, M.m13);
+  R2 := Point3D(M.m21, M.m22, M.m23);
+  R3 := Point3D(M.m31, M.m32, M.m33);
+  SX := R1.Length;
+  SY := R2.Length;
+  SZ := R3.Length;
+  // A mirror is put into the scale of X
+  if R1.DotProduct(R2.CrossProduct(R3)) < 0 then
+    SX := -SX;
+  Result.S := Point3D(SX, SY, SZ);
+  Result.Sheared := False;
+  if (Abs(SX) < 1E-12) or (Abs(SY) < 1E-12) or (Abs(SZ) < 1E-12) then
+  begin
+    Result.R[0] := 0;
+    Result.R[1] := 0;
+    Result.R[2] := 0;
+    Result.R[3] := 1;
+    Exit;
+  end;
+  R1 := R1 / SX;
+  R2 := R2 / SY;
+  R3 := R3 / SZ;
+  if (Abs(R1.DotProduct(R2)) > 1E-3) or (Abs(R1.DotProduct(R3)) > 1E-3) or
+    (Abs(R2.DotProduct(R3)) > 1E-3) then
+    Result.Sheared := True;
+  // A[row, column] of glTF's rotation: column j is FMX's row j
+  A[0, 0] := R1.X; A[0, 1] := R2.X; A[0, 2] := R3.X;
+  A[1, 0] := R1.Y; A[1, 1] := R2.Y; A[1, 2] := R3.Y;
+  A[2, 0] := R1.Z; A[2, 1] := R2.Z; A[2, 2] := R3.Z;
+  Trace := A[0, 0] + A[1, 1] + A[2, 2];
+  if Trace > 0 then
+  begin
+    K := Sqrt(Trace + 1) * 2;
+    Result.R[3] := 0.25 * K;
+    Result.R[0] := (A[2, 1] - A[1, 2]) / K;
+    Result.R[1] := (A[0, 2] - A[2, 0]) / K;
+    Result.R[2] := (A[1, 0] - A[0, 1]) / K;
+  end
+  else if (A[0, 0] > A[1, 1]) and (A[0, 0] > A[2, 2]) then
+  begin
+    K := Sqrt(1 + A[0, 0] - A[1, 1] - A[2, 2]) * 2;
+    Result.R[3] := (A[2, 1] - A[1, 2]) / K;
+    Result.R[0] := 0.25 * K;
+    Result.R[1] := (A[0, 1] + A[1, 0]) / K;
+    Result.R[2] := (A[0, 2] + A[2, 0]) / K;
+  end
+  else if A[1, 1] > A[2, 2] then
+  begin
+    K := Sqrt(1 + A[1, 1] - A[0, 0] - A[2, 2]) * 2;
+    Result.R[3] := (A[0, 2] - A[2, 0]) / K;
+    Result.R[0] := (A[0, 1] + A[1, 0]) / K;
+    Result.R[1] := 0.25 * K;
+    Result.R[2] := (A[1, 2] + A[2, 1]) / K;
+  end
+  else
+  begin
+    K := Sqrt(1 + A[2, 2] - A[0, 0] - A[1, 1]) * 2;
+    Result.R[3] := (A[1, 0] - A[0, 1]) / K;
+    Result.R[0] := (A[0, 2] + A[2, 0]) / K;
+    Result.R[1] := (A[1, 2] + A[2, 1]) / K;
+    Result.R[2] := 0.25 * K;
+  end;
+  Len := 0;
+  for I := 0 to 3 do
+    Len := Len + Sqr(Result.R[I]);
+  Len := Sqrt(Len);
+  if Len > 0 then
+    for I := 0 to 3 do
+      Result.R[I] := Result.R[I] / Len;
+end;
+
+// Keeps a run of quaternions on one side, so LINEAR goes the short way round
+procedure KeepNear(var AQ: array of Single; const APrevious: array of Single);
+var
+  Dot: Single;
+  I: Integer;
+begin
+  Dot := 0;
+  for I := 0 to 3 do
+    Dot := Dot + AQ[I] * APrevious[I];
+  if Dot < 0 then
+    for I := 0 to 3 do
+      AQ[I] := -AQ[I];
+end;
+
+function MatrixDifference(const A, B: TMatrix3D): Single;
+var
+  I, J: Integer;
+begin
+  Result := 0;
+  for I := 0 to 3 do
+    for J := 0 to 3 do
+      Result := Max(Result, Abs(A.M[I].V[J] - B.M[I].V[J]));
+end;
+
 { TGltfExportOptions }
 
 class function TGltfExportOptions.Create: TGltfExportOptions;
@@ -387,6 +594,9 @@ begin
   Result.Textures := True;
   Result.WriteRaw := False;
   Result.ApplyUnitScale := False;
+  Result.Skins := True;
+  Result.Animations := True;
+  Result.ThinKeys := True;
 end;
 
 { TGlbBuilder }
@@ -417,6 +627,14 @@ begin
   FImages := TJSONArray.Create;
   FMaterialIndex := TDictionary<TMaterialDef, Integer>.Create;
   FTextureIndex := TDictionary<TTextureDef, TTextureInfo>.Create;
+  FImageBytes := TList<TBytes>.Create;
+  FNodeIndex := TDictionary<TTransformDef, Integer>.Create;
+  FGlobal := TDictionary<TTransformDef, TMatrix3D>.Create;
+  FAnimated := TDictionary<TTransformDef, Boolean>.Create;
+  FMeshSkin := TDictionary<TCustomMeshDef, TSkinDef>.Create;
+  FPendingSkins := TList<TPendingSkin>.Create;
+  FSkins := TJSONArray.Create;
+  FAnimations := TJSONArray.Create;
 end;
 
 destructor TGlbBuilder.Destroy;
@@ -431,6 +649,14 @@ begin
   FImages.Free;
   FMaterialIndex.Free;
   FTextureIndex.Free;
+  FImageBytes.Free;
+  FNodeIndex.Free;
+  FGlobal.Free;
+  FAnimated.Free;
+  FMeshSkin.Free;
+  FPendingSkins.Free;
+  FSkins.Free;
+  FAnimations.Free;
   FBin.Free;
   inherited;
 end;
@@ -519,38 +745,136 @@ begin
     Result.Add(Double(Values[Row]));
 end;
 
-function TGlbBuilder.AddNode(const ADef: TTransformDef): Integer;
+function TGlbBuilder.Conjugated(const AMatrix: TMatrix3D): TMatrix3D;
+var
+  Signs: array[0..3] of Single;
+  Row, Col: Integer;
+begin
+  // Negating axes turns every matrix into S * M * S
+  Signs[0] := FSign[0];
+  Signs[1] := FSign[1];
+  Signs[2] := FSign[2];
+  Signs[3] := 1;
+  Result := AMatrix;
+  for Row := 0 to 3 do
+    for Col := 0 to 3 do
+      Result.M[Row].V[Col] := AMatrix.M[Row].V[Col] * Signs[Row] * Signs[Col];
+end;
+
+function HasDef(const AList: TArray<TTransformDef>; const ADef: TTransformDef): Boolean;
+var
+  Item: TTransformDef;
+begin
+  for Item in AList do
+    if Item = ADef then
+      Exit(True);
+  Result := False;
+end;
+
+function TGlbBuilder.ChildrenOf(const ADef: TTransformDef): TArray<TTransformDef>;
+var
+  Child: TTransformDef;
+  Joints: TArray<TJointDef>;
+  Joint: TJointDef;
+begin
+  Result := nil;
+  if ADef.Children <> nil then
+    for Child in ADef.Children do
+      // A vertex group is drawn as a primitive of the mesh that owns it
+      if not (Child is TVertexGroupDef) then
+        Result := Result + [Child];
+  // A joint's own joints, and an armature's roots, may not be among its
+  // children; in name order, as the map has none
+  if (ADef is TJointDef) and (TJointDef(ADef).Joints <> nil) then
+  begin
+    Joints := TJointDef(ADef).Joints.Values.ToArray;
+    TArray.Sort<TJointDef>(Joints, TComparer<TJointDef>.Construct(
+      function(const A, B: TJointDef): Integer
+      begin
+        Result := CompareStr(A.Id, B.Id);
+      end));
+    for Joint in Joints do
+      if not HasDef(Result, Joint) then
+        Result := Result + [TTransformDef(Joint)];
+  end;
+  if (ADef is TArmatureDef) and (TArmatureDef(ADef).Roots <> nil) then
+    for Joint in TArmatureDef(ADef).Roots do
+      if not HasDef(Result, Joint) then
+        Result := Result + [TTransformDef(Joint)];
+end;
+
+function TGlbBuilder.AddNode(const ADef: TTransformDef; const AParentGlobal: TMatrix3D): Integer;
 var
   Node: TJSONObject;
-  Matrix, Kids: TJSONArray;
+  Matrix, Kids, Values: TJSONArray;
   Child: TTransformDef;
   Mesh: Integer;
+  Global: TMatrix3D;
+  Trs: TTrs;
+  Pending: TPendingSkin;
+  Skin: TSkinDef;
 begin
+  FNodeIndex.Add(ADef, -1);
+  // FMX matrices act on row vectors, so the parent's comes second
+  Global := ADef.Transform * AParentGlobal;
+  FGlobal.AddOrSetValue(ADef, Global);
+  Mesh := -1;
   Node := TJSONObject.Create;
   try
     if ADef.Id <> '' then
       Node.AddPair('name', ADef.Id);
-    Matrix := NodeMatrix(ADef.Transform);
-    if Matrix <> nil then
-      Node.AddPair('matrix', Matrix);
+    if FAnimated.ContainsKey(ADef) then
+    begin
+      // glTF animates only translation, rotation and scale, never a matrix
+      Trs := Decompose(Conjugated(ADef.Transform));
+      if Trs.Sheared then
+        Log('  node ' + DefName(ADef) + ': animated, but its matrix is sheared, so it ' +
+          'cannot be taken apart exactly');
+      if (Trs.T.X <> 0) or (Trs.T.Y <> 0) or (Trs.T.Z <> 0) then
+      begin
+        Values := TJSONArray.Create;
+        Values.Add(Double(Finite(Trs.T.X)));
+        Values.Add(Double(Finite(Trs.T.Y)));
+        Values.Add(Double(Finite(Trs.T.Z)));
+        Node.AddPair('translation', Values);
+      end;
+      if (Trs.R[0] <> 0) or (Trs.R[1] <> 0) or (Trs.R[2] <> 0) then
+      begin
+        Values := TJSONArray.Create;
+        Values.Add(Double(Trs.R[0]));
+        Values.Add(Double(Trs.R[1]));
+        Values.Add(Double(Trs.R[2]));
+        Values.Add(Double(Trs.R[3]));
+        Node.AddPair('rotation', Values);
+      end;
+      if (Abs(Trs.S.X - 1) > MATRIX_TOLERANCE) or (Abs(Trs.S.Y - 1) > MATRIX_TOLERANCE) or
+        (Abs(Trs.S.Z - 1) > MATRIX_TOLERANCE) then
+      begin
+        Values := TJSONArray.Create;
+        Values.Add(Double(Finite(Trs.S.X)));
+        Values.Add(Double(Finite(Trs.S.Y)));
+        Values.Add(Double(Finite(Trs.S.Z)));
+        Node.AddPair('scale', Values);
+      end;
+    end
+    else
+    begin
+      Matrix := NodeMatrix(ADef.Transform);
+      if Matrix <> nil then
+        Node.AddPair('matrix', Matrix);
+    end;
     if ADef is TCustomMeshDef then
     begin
       Mesh := AddMesh(TCustomMeshDef(ADef));
       if Mesh >= 0 then
         Node.AddPair('mesh', JInt(Mesh));
     end;
-    if ADef is TSkinDef then
-      Log('  skin ' + DefName(ADef) + ': written as a plain node; skins are not exported yet');
     Kids := TJSONArray.Create;
     Node.AddPair('children', Kids);
-    if ADef.Children <> nil then
-      for Child in ADef.Children do
-      begin
-        // A vertex group is drawn as a primitive of the mesh that owns it
-        if Child is TVertexGroupDef then
-          Continue;
-        Kids.Add(AddNode(Child));
-      end;
+    for Child in ChildrenOf(ADef) do
+      // A joint can be reached both as a child and through its armature
+      if not FNodeIndex.ContainsKey(Child) then
+        Kids.Add(AddNode(Child, Global));
     if Kids.Count = 0 then
       Node.RemovePair('children').Free;
   except
@@ -560,6 +884,683 @@ begin
   FNodes.AddElement(Node);
   Inc(FStats.Nodes);
   Result := FNodes.Count - 1;
+  FNodeIndex[ADef] := Result;
+  if (Mesh >= 0) and FMeshSkin.TryGetValue(TCustomMeshDef(ADef), Skin) then
+  begin
+    Pending.Node := Result;
+    Pending.Mesh := TCustomMeshDef(ADef);
+    Pending.Skin := Skin;
+    FPendingSkins.Add(Pending);
+  end;
+end;
+
+procedure TGlbBuilder.FindSkinsAndAnimated;
+var
+  Controller: TControllerDef;
+  Skinned: TTransformDef;
+  Key: TCustomMeshDef;
+  Animation: TAnimationDef;
+  Stage: TAnimationStageDef;
+begin
+  if FOptions.Skins and (FModel.Controllers <> nil) then
+    for Controller in FModel.Controllers do
+    begin
+      if Controller.Skin = nil then
+        Continue;
+      for Skinned in Controller.Skin.GetSkinnedMeshes do
+      begin
+        // A vertex group's vertices are its owner's
+        if (Skinned is TVertexGroupDef) and (Skinned.Owner is TCustomMeshDef) then
+          Key := TCustomMeshDef(Skinned.Owner)
+        else if Skinned is TCustomMeshDef then
+          Key := TCustomMeshDef(Skinned)
+        else
+          Continue;
+        if not FMeshSkin.ContainsKey(Key) then
+          FMeshSkin.Add(Key, Controller.Skin);
+      end;
+    end;
+  if FOptions.Animations and (FModel.Animations <> nil) then
+    for Animation in FModel.Animations do
+      if Animation.Stages <> nil then
+        for Stage in Animation.Stages do
+          if Stage.Reference is TTransformDef then
+            FAnimated.AddOrSetValue(TTransformDef(Stage.Reference), True);
+end;
+
+procedure TGlbBuilder.AddArmatures(const ARootNode: Integer);
+var
+  Armature: TArmatureDef;
+  Root: TJSONObject;
+  Kids: TJSONArray;
+  Parent: TMatrix3D;
+begin
+  if not (FOptions.Skins or FOptions.Animations) or (FModel.Armatures = nil) then
+    Exit;
+  // Armatures the tree of children did not reach go under the model's node
+  Root := FNodes.Items[ARootNode] as TJSONObject;
+  if not FGlobal.TryGetValue(FModel, Parent) then
+    Parent := TMatrix3D.Identity;
+  for Armature in FModel.Armatures do
+  begin
+    if FNodeIndex.ContainsKey(Armature) then
+      Continue;
+    Kids := Root.GetValue('children') as TJSONArray;
+    if Kids = nil then
+    begin
+      Kids := TJSONArray.Create;
+      Root.AddPair('children', Kids);
+    end;
+    Kids.Add(AddNode(Armature, Parent));
+    Log('armature ' + DefName(Armature) + ': written under the model''s node');
+  end;
+end;
+
+procedure TGlbBuilder.WriteSkinAttributes(const AMesh: TCustomMeshDef;
+  const ASkin: TSkinDef; const AAttributes: TJSONObject);
+var
+  Count, J, I, K, Slot, View, Dropped, Unweighted, OutOfRange: Integer;
+  Ref: TJointRefDef;
+  Map: TVertexIndexMap;
+  Drawn: TVertexIndices;
+  Joints: TArray<Integer>;
+  Weights: TArray<Single>;
+  JointBytes: TArray<Byte>;
+  JointShorts: TArray<Word>;
+  Sum: Single;
+
+  procedure Put(const AVertex, AJoint: Integer; const AWeight: Single);
+  var
+    S, Least: Integer;
+  begin
+    if (AVertex < 0) or (AVertex >= Count) then
+    begin
+      Inc(OutOfRange);
+      Exit;
+    end;
+    // The same joint twice adds up; otherwise an empty slot, or the lightest
+    // if this one is heavier
+    for S := 0 to 3 do
+      if (Weights[AVertex * 4 + S] > 0) and (Joints[AVertex * 4 + S] = AJoint) then
+      begin
+        Weights[AVertex * 4 + S] := Weights[AVertex * 4 + S] + AWeight;
+        Exit;
+      end;
+    Least := 0;
+    for S := 1 to 3 do
+      if Weights[AVertex * 4 + S] < Weights[AVertex * 4 + Least] then
+        Least := S;
+    if Weights[AVertex * 4 + Least] > 0 then
+    begin
+      Inc(Dropped);
+      if Weights[AVertex * 4 + Least] >= AWeight then
+        Exit;
+    end;
+    Joints[AVertex * 4 + Least] := AJoint;
+    Weights[AVertex * 4 + Least] := AWeight;
+  end;
+
+begin
+  Count := AMesh.VertexSource.Length;
+  SetLength(Joints, Count * 4);
+  SetLength(Weights, Count * 4);
+  Dropped := 0;
+  Unweighted := 0;
+  OutOfRange := 0;
+  Map := AMesh.VertexIndexMap;
+  for J := 0 to ASkin.LinkedJoints.Count - 1 do
+  begin
+    Ref := ASkin.LinkedJoints[J];
+    if Ref = nil then
+      Continue;
+    // A joint that moves several meshes keeps a set of weights for each
+    if Ref.HasMeshWeights then
+      Ref.ApplyMeshWeights(AMesh.Id)
+    else if (Ref.Controller <> nil) and (Ref.Target <> nil) and (Ref.Target <> AMesh) and
+      not ((Ref.Target is TVertexGroupDef) and (Ref.Target.Owner = AMesh)) then
+      Continue;
+    for I := 0 to Min(High(Ref.Indices), High(Ref.Weights)) do
+    begin
+      if Ref.Weights[I] <= 0 then
+        Continue;
+      // Indices are the source file's vertices; the map gives the drawn ones
+      if (Map <> nil) and (Map.Count > 0) then
+      begin
+        if Map.TryGetValue(TIndexType(Ref.Indices[I]), Drawn) then
+          for K := 0 to High(Drawn) do
+            Put(Integer(Drawn[K]), J, Ref.Weights[I]);
+      end
+      else
+        Put(Ref.Indices[I], J, Ref.Weights[I]);
+    end;
+  end;
+  for I := 0 to Count - 1 do
+  begin
+    Sum := 0;
+    for Slot := 0 to 3 do
+      Sum := Sum + Weights[I * 4 + Slot];
+    if Sum > 0 then
+    begin
+      for Slot := 0 to 3 do
+        Weights[I * 4 + Slot] := Weights[I * 4 + Slot] / Sum;
+    end
+    else
+    begin
+      // glTF wants every vertex weighted; an unweighted one follows joint 0
+      Inc(Unweighted);
+      Joints[I * 4] := 0;
+      Weights[I * 4] := 1;
+    end;
+    // Unused slots point at joint 0 with no weight
+    for Slot := 0 to 3 do
+      if Weights[I * 4 + Slot] = 0 then
+        Joints[I * 4 + Slot] := 0;
+  end;
+  if ASkin.LinkedJoints.Count <= 256 then
+  begin
+    SetLength(JointBytes, Count * 4);
+    for I := 0 to Count * 4 - 1 do
+      JointBytes[I] := Joints[I];
+    View := AddView(JointBytes[0], Count * 4, GL_ARRAY_BUFFER);
+    AddAccessor(View, GL_UNSIGNED_BYTE, Count, 'VEC4', False);
+  end
+  else
+  begin
+    SetLength(JointShorts, Count * 4);
+    for I := 0 to Count * 4 - 1 do
+      JointShorts[I] := Joints[I];
+    View := AddView(JointShorts[0], Count * 8, GL_ARRAY_BUFFER);
+    AddAccessor(View, GL_UNSIGNED_SHORT, Count, 'VEC4', False);
+  end;
+  AAttributes.AddPair('JOINTS_0', JInt(FAccessors.Count - 1));
+  View := AddView(Weights[0], Count * 16, GL_ARRAY_BUFFER);
+  AddAccessor(View, GL_FLOAT, Count, 'VEC4', False);
+  AAttributes.AddPair('WEIGHTS_0', JInt(FAccessors.Count - 1));
+  Log(Format('  skin %s on %s: %d joints', [DefName(ASkin), DefName(AMesh),
+    ASkin.LinkedJoints.Count]));
+  if Dropped > 0 then
+    Log(Format('  %d weights beyond the four heaviest of a vertex left out', [Dropped]));
+  if Unweighted > 0 then
+    Log(Format('  %d vertices had no weight; they follow joint 0', [Unweighted]));
+  if OutOfRange > 0 then
+    Log(Format('  %d weights named a vertex the mesh does not have', [OutOfRange]));
+end;
+
+procedure TGlbBuilder.WriteSkins;
+var
+  Pending: TPendingSkin;
+  Count, J, Index: Integer;
+  Ref: TJointRefDef;
+  MeshGlobal, JointGlobal, Inverse: TMatrix3D;
+  Floats: TArray<Single>;
+  JointNodes: TJSONArray;
+  Skin, Node: TJSONObject;
+  Ok: Boolean;
+  Differs: Single;
+  Compared: Integer;
+begin
+  for Pending in FPendingSkins do
+  begin
+    Count := Pending.Skin.LinkedJoints.Count;
+    if Count = 0 then
+      Continue;
+    if not FGlobal.TryGetValue(Pending.Mesh, MeshGlobal) then
+      MeshGlobal := TMatrix3D.Identity;
+    SetLength(Floats, Count * 16);
+    JointNodes := TJSONArray.Create;
+    Ok := True;
+    Differs := 0;
+    Compared := 0;
+    for J := 0 to Count - 1 do
+    begin
+      Ref := Pending.Skin.LinkedJoints[J];
+      if (Ref = nil) or (Ref.Joint = nil) or not FNodeIndex.TryGetValue(Ref.Joint, Index) or
+        (Index < 0) then
+      begin
+        Log(Format('skin %s: joint %d is not among the nodes written; skin left out',
+          [DefName(Pending.Skin), J]));
+        Ok := False;
+        Break;
+      end;
+      JointNodes.Add(Index);
+      if not FGlobal.TryGetValue(Ref.Joint, JointGlobal) then
+        JointGlobal := TMatrix3D.Identity;
+      // From the mesh's space to the joint's, at rest: row vectors, so the
+      // mesh's global first, then the inverse of the joint's
+      Inverse := MeshGlobal * JointGlobal.Inverse;
+      if Ref.IsInvBindMatrixAvailable then
+      begin
+        Differs := Max(Differs, MatrixDifference(Inverse, Ref.InvBindMatrix));
+        Inc(Compared);
+      end;
+      Inverse := Conjugated(Inverse);
+      Move(Inverse, Floats[J * 16], 16 * SizeOf(Single));
+    end;
+    if not Ok then
+    begin
+      JointNodes.Free;
+      Continue;
+    end;
+    Skin := TJSONObject.Create;
+    if Pending.Skin.Id <> '' then
+      Skin.AddPair('name', Pending.Skin.Id);
+    Skin.AddPair('inverseBindMatrices',
+      JInt(AddFloatAccessor(Floats, Count, 'MAT4', False)));
+    Skin.AddPair('joints', JointNodes);
+    FSkins.AddElement(Skin);
+    Inc(FStats.Skins);
+    Inc(FStats.Joints, Count);
+    Node := FNodes.Items[Pending.Node] as TJSONObject;
+    Node.AddPair('skin', JInt(FSkins.Count - 1));
+    if Compared > 0 then
+      Log(Format('skin %s: inverse bind matrices from the rest pose; Gorilla''s own differ ' +
+        'by up to %.4g over %d joints', [DefName(Pending.Skin), Differs, Compared]))
+    else
+      Log('skin ' + DefName(Pending.Skin) + ': inverse bind matrices from the rest pose');
+  end;
+end;
+
+function TGlbBuilder.AddFloatAccessor(const AValues: TArray<Single>; const ACount: Integer;
+  const AType: string; const AMinMax: Boolean): Integer;
+var
+  View, Width, I, C: Integer;
+  Acc: TJSONObject;
+  MinArr, MaxArr: TJSONArray;
+  Lo, Hi: Single;
+begin
+  Width := Length(AValues) div Max(1, ACount);
+  View := AddView(AValues[0], Length(AValues) * SizeOf(Single), 0);
+  Acc := AddAccessor(View, GL_FLOAT, ACount, AType, False);
+  if AMinMax then
+  begin
+    MinArr := TJSONArray.Create;
+    MaxArr := TJSONArray.Create;
+    for C := 0 to Width - 1 do
+    begin
+      Lo := MaxSingle;
+      Hi := -MaxSingle;
+      for I := 0 to ACount - 1 do
+      begin
+        Lo := Min(Lo, AValues[I * Width + C]);
+        Hi := Max(Hi, AValues[I * Width + C]);
+      end;
+      MinArr.Add(Double(Lo));
+      MaxArr.Add(Double(Hi));
+    end;
+    Acc.AddPair('min', MinArr);
+    Acc.AddPair('max', MaxArr);
+  end;
+  Result := FAccessors.Count - 1;
+end;
+
+// Leaves out the keys that interpolating between the kept keys either side
+// gives anyway, to a tolerance; see TGltfExportOptions.ThinKeys
+procedure ThinKeys(const ATimes, AValues: TArray<Single>; const AWidth: Integer;
+  out AKeptTimes, AKeptValues: TArray<Single>);
+var
+  Count, Last, I, K, C: Integer;
+  Tolerance, Biggest, U: Single;
+  Kept: TList<Integer>;
+  Same: Boolean;
+
+  // Whether every key after Last up to ATo lies on the line from Last to ANext
+  function Covered(const ATo, ANext: Integer): Boolean;
+  var
+    J, D: Integer;
+  begin
+    for J := Last + 1 to ATo do
+    begin
+      if ATimes[ANext] <= ATimes[Last] then
+        Exit(False);
+      U := (ATimes[J] - ATimes[Last]) / (ATimes[ANext] - ATimes[Last]);
+      for D := 0 to AWidth - 1 do
+        if Abs(AValues[Last * AWidth + D] +
+          (AValues[ANext * AWidth + D] - AValues[Last * AWidth + D]) * U -
+          AValues[J * AWidth + D]) > Tolerance then
+          Exit(False);
+    end;
+    Result := True;
+  end;
+
+begin
+  Count := Length(ATimes);
+  Biggest := 0;
+  for I := 0 to High(AValues) do
+    Biggest := Max(Biggest, Abs(AValues[I]));
+  Tolerance := 1E-5 * Max(1, Biggest);
+  Kept := TList<Integer>.Create;
+  try
+    if Count > 0 then
+      Kept.Add(0);
+    Last := 0;
+    for I := 1 to Count - 2 do
+      if not Covered(I, I + 1) then
+      begin
+        Kept.Add(I);
+        Last := I;
+      end;
+    if Count > 1 then
+    begin
+      K := Count - 1;
+      Kept.Add(K);
+      // Only the ends kept, and the same: every key lies between equal values,
+      // so the channel never changes and one key is enough
+      if Kept.Count = 2 then
+      begin
+        Same := True;
+        for C := 0 to AWidth - 1 do
+          if Abs(AValues[K * AWidth + C] - AValues[C]) > Tolerance then
+            Same := False;
+        if Same then
+          Kept.Delete(1);
+      end;
+    end;
+    SetLength(AKeptTimes, Kept.Count);
+    SetLength(AKeptValues, Kept.Count * AWidth);
+    for I := 0 to Kept.Count - 1 do
+    begin
+      AKeptTimes[I] := ATimes[Kept[I]];
+      for C := 0 to AWidth - 1 do
+        AKeptValues[I * AWidth + C] := AValues[Kept[I] * AWidth + C];
+    end;
+  finally
+    Kept.Free;
+  end;
+end;
+
+procedure TGlbBuilder.AddChannel(const ANode: Integer; const APath: string;
+  const ATimes, AValues: TArray<Single>; const AType: string;
+  const ASamplers, AChannels: TJSONArray);
+var
+  Sampler, Channel, Target: TJSONObject;
+  Times, Values: TArray<Single>;
+begin
+  if Length(ATimes) = 0 then
+    Exit;
+  Inc(FStats.KeysHeld, Length(ATimes));
+  if FOptions.ThinKeys then
+    ThinKeys(ATimes, AValues, Length(AValues) div Length(ATimes), Times, Values)
+  else
+  begin
+    Times := ATimes;
+    Values := AValues;
+  end;
+  Inc(FStats.KeysWritten, Length(Times));
+  Sampler := TJSONObject.Create;
+  // The spec needs min and max on the times
+  Sampler.AddPair('input', JInt(AddFloatAccessor(Times, Length(Times), 'SCALAR', True)));
+  Sampler.AddPair('output', JInt(AddFloatAccessor(Values, Length(Times), AType, False)));
+  Sampler.AddPair('interpolation', 'LINEAR');
+  ASamplers.AddElement(Sampler);
+  Target := TJSONObject.Create;
+  Target.AddPair('node', JInt(ANode));
+  Target.AddPair('path', APath);
+  Channel := TJSONObject.Create;
+  Channel.AddPair('sampler', JInt(ASamplers.Count - 1));
+  Channel.AddPair('target', Target);
+  AChannels.AddElement(Channel);
+  Inc(FStats.Channels);
+end;
+
+procedure TGlbBuilder.AddInterpolatorChannels(const AInterpolator: TCustomDef;
+  const ANode: Integer; const ADuration: Single; const ASamplers, AChannels: TJSONArray;
+  var ASkipped: string);
+var
+  Keys: TInterpolatorKeyDefList;
+  Duration, Time, Last: Single;
+  Path: string;
+  Times, Moves, Turns, Sizes: TArray<Single>;
+  N, I: Integer;
+  Trs: TTrs;
+  Previous: array[0..3] of Single;
+  Rotation: TMatrix3D;
+  Point: TPoint3D;
+  MatrixKey: TInterpolatorKeyDef<TMatrix3D>;
+  PointKey: TInterpolatorKeyDef<TPoint3D>;
+  TurnKey: TInterpolatorKeyDef<TQuaternion3D>;
+
+  procedure Skip(const AWhat: string);
+  begin
+    if Pos(AWhat, ASkipped) = 0 then
+      ASkipped := ASkipped + ' ' + AWhat;
+  end;
+
+  // The keys' times in seconds; False for a key that does not move time on
+  function KeyTime(const AKey: Single): Boolean;
+  begin
+    Time := AKey * Duration;
+    Result := (N = 0) or (Time > Last);
+    if Result then
+      Last := Time;
+  end;
+
+  procedure AddRotation(const AMatrix: TMatrix3D);
+  var
+    C: Integer;
+  begin
+    Trs := Decompose(Conjugated(AMatrix));
+    if N > 0 then
+      KeepNear(Trs.R, Previous);
+    for C := 0 to 3 do
+    begin
+      Turns[N * 4 + C] := Trs.R[C];
+      Previous[C] := Trs.R[C];
+    end;
+  end;
+
+begin
+  if AInterpolator is TTransformationInterpolatorDef then
+  begin
+    Keys := TTransformationInterpolatorDef(AInterpolator).Keys;
+    Duration := TTransformationInterpolatorDef(AInterpolator).Duration;
+  end
+  else if AInterpolator is TPoint3DInterpolatorDef then
+  begin
+    Keys := TPoint3DInterpolatorDef(AInterpolator).Keys;
+    Duration := TPoint3DInterpolatorDef(AInterpolator).Duration;
+  end
+  else if AInterpolator is TQuaternion3DInterpolatorDef then
+  begin
+    Keys := TQuaternion3DInterpolatorDef(AInterpolator).Keys;
+    Duration := TQuaternion3DInterpolatorDef(AInterpolator).Duration;
+  end
+  else
+  begin
+    Skip(AInterpolator.ClassName);
+    Exit;
+  end;
+  if (Keys = nil) or (Keys.Count = 0) then
+    Exit;
+  if Duration <= 0 then
+    Duration := ADuration;
+  SetLength(Times, Keys.Count);
+  N := 0;
+  Last := 0;
+
+  if AInterpolator is TTransformationInterpolatorDef then
+  begin
+    SetLength(Moves, Keys.Count * 3);
+    SetLength(Turns, Keys.Count * 4);
+    SetLength(Sizes, Keys.Count * 3);
+    for I := 0 to Keys.Count - 1 do
+    begin
+      MatrixKey := TInterpolatorKeyDef<TMatrix3D>(Keys[I]);
+      if not KeyTime(MatrixKey.Key) then
+        Continue;
+      Times[N] := Time;
+      AddRotation(MatrixKey.Value);
+      Moves[N * 3] := Trs.T.X;
+      Moves[N * 3 + 1] := Trs.T.Y;
+      Moves[N * 3 + 2] := Trs.T.Z;
+      Sizes[N * 3] := Trs.S.X;
+      Sizes[N * 3 + 1] := Trs.S.Y;
+      Sizes[N * 3 + 2] := Trs.S.Z;
+      Inc(N);
+    end;
+    SetLength(Times, N);
+    SetLength(Moves, N * 3);
+    SetLength(Turns, N * 4);
+    SetLength(Sizes, N * 3);
+    AddChannel(ANode, 'translation', Times, Moves, 'VEC3', ASamplers, AChannels);
+    AddChannel(ANode, 'rotation', Times, Turns, 'VEC4', ASamplers, AChannels);
+    AddChannel(ANode, 'scale', Times, Sizes, 'VEC3', ASamplers, AChannels);
+  end
+  else if AInterpolator is TPoint3DInterpolatorDef then
+  begin
+    Path := LowerCase(TPoint3DInterpolatorDef(AInterpolator).Path);
+    if not ((Path = 'position.point') or (Path = 'position') or
+      (Path = 'scale.point') or (Path = 'scale')) then
+    begin
+      Skip(TPoint3DInterpolatorDef(AInterpolator).Path);
+      Exit;
+    end;
+    SetLength(Moves, Keys.Count * 3);
+    for I := 0 to Keys.Count - 1 do
+    begin
+      PointKey := TInterpolatorKeyDef<TPoint3D>(Keys[I]);
+      if not KeyTime(PointKey.Key) then
+        Continue;
+      Times[N] := Time;
+      Point := PointKey.Value;
+      // A position is negated with its axes; a scale is not
+      if Path.StartsWith('position') then
+        Point := Point3D(Point.X * FSign[0], Point.Y * FSign[1], Point.Z * FSign[2]);
+      Moves[N * 3] := Point.X;
+      Moves[N * 3 + 1] := Point.Y;
+      Moves[N * 3 + 2] := Point.Z;
+      Inc(N);
+    end;
+    SetLength(Times, N);
+    SetLength(Moves, N * 3);
+    if Path.StartsWith('position') then
+      AddChannel(ANode, 'translation', Times, Moves, 'VEC3', ASamplers, AChannels)
+    else
+      AddChannel(ANode, 'scale', Times, Moves, 'VEC3', ASamplers, AChannels);
+  end
+  else
+  begin
+    Path := LowerCase(TQuaternion3DInterpolatorDef(AInterpolator).Path);
+    if not Path.StartsWith('quaternion') then
+    begin
+      Skip(TQuaternion3DInterpolatorDef(AInterpolator).Path);
+      Exit;
+    end;
+    SetLength(Turns, Keys.Count * 4);
+    for I := 0 to Keys.Count - 1 do
+    begin
+      TurnKey := TInterpolatorKeyDef<TQuaternion3D>(Keys[I]);
+      if not KeyTime(TurnKey.Key) then
+        Continue;
+      Times[N] := Time;
+      // Through FMX's own matrix of the quaternion, so it means what it
+      // means to Gorilla
+      Rotation := TurnKey.Value;
+      AddRotation(Rotation);
+      Inc(N);
+    end;
+    SetLength(Times, N);
+    SetLength(Turns, N * 4);
+    AddChannel(ANode, 'rotation', Times, Turns, 'VEC4', ASamplers, AChannels);
+  end;
+end;
+
+// What an interpolator drives, for the log
+function InterpolatorKind(const AInterpolator: TCustomDef): string;
+begin
+  Result := AInterpolator.ClassName;
+  if AInterpolator is TTransformationInterpolatorDef then
+    Result := Result + ' ' + TTransformationInterpolatorDef(AInterpolator).Path
+  else if AInterpolator is TPoint3DInterpolatorDef then
+    Result := Result + ' ' + TPoint3DInterpolatorDef(AInterpolator).Path
+  else if AInterpolator is TQuaternion3DInterpolatorDef then
+    Result := Result + ' ' + TQuaternion3DInterpolatorDef(AInterpolator).Path
+  else if AInterpolator is TVector3DInterpolatorDef then
+    Result := Result + ' ' + TVector3DInterpolatorDef(AInterpolator).Path;
+end;
+
+procedure TGlbBuilder.WriteAnimations;
+var
+  Animation: TAnimationDef;
+  Stage: TAnimationStageDef;
+  Interpolator: TCustomDef;
+  Samplers, Channels: TJSONArray;
+  Anim: TJSONObject;
+  Node, Missing, Before, Seen: Integer;
+  Skipped, Kinds, Kind: string;
+  Tally: TDictionary<string, Integer>;
+  Names: TArray<string>;
+begin
+  if not FOptions.Animations or (FModel.Animations = nil) then
+    Exit;
+  for Animation in FModel.Animations do
+  begin
+    Samplers := TJSONArray.Create;
+    Channels := TJSONArray.Create;
+    Missing := 0;
+    Skipped := '';
+    Before := FStats.Channels;
+    Tally := TDictionary<string, Integer>.Create;
+    try
+      if Animation.Stages <> nil then
+        for Stage in Animation.Stages do
+        begin
+          if not (Stage.Reference is TTransformDef) or
+            not FNodeIndex.TryGetValue(TTransformDef(Stage.Reference), Node) or (Node < 0) then
+          begin
+            Inc(Missing);
+            Continue;
+          end;
+          if Stage.Interpolators <> nil then
+            for Interpolator in Stage.Interpolators do
+            begin
+              Kind := InterpolatorKind(Interpolator);
+              if not Tally.TryGetValue(Kind, Seen) then
+                Seen := 0;
+              Tally.AddOrSetValue(Kind, Seen + 1);
+              AddInterpolatorChannels(Interpolator, Node, Animation.GetDurationInSeconds,
+                Samplers, Channels, Skipped);
+            end;
+        end;
+      if Channels.Count = 0 then
+      begin
+        Log('animation ' + DefName(Animation) + ': nothing it drives could be written; left out');
+        Samplers.Free;
+        Channels.Free;
+      end
+      else
+      begin
+        Anim := TJSONObject.Create;
+        if Animation.Id <> '' then
+          Anim.AddPair('name', Animation.Id);
+        Anim.AddPair('channels', Channels);
+        Anim.AddPair('samplers', Samplers);
+        FAnimations.AddElement(Anim);
+        Inc(FStats.Animations);
+        Log(Format('animation %s: %.3f s, %d stages, %d channels',
+          [DefName(Animation), Animation.GetDurationInSeconds, Animation.Stages.Count,
+           FStats.Channels - Before]));
+      end;
+      // Which kinds of key it had, so what Gorilla hands over can be seen
+      Names := Tally.Keys.ToArray;
+      TArray.Sort<string>(Names);
+      Kinds := '';
+      for Kind in Names do
+        Kinds := Kinds + Format(' %s x%d,', [Kind, Tally[Kind]]);
+      if Kinds <> '' then
+        Log('  keys:' + Kinds.TrimRight([',']));
+    except
+      Samplers.Free;
+      Channels.Free;
+      Tally.Free;
+      raise;
+    end;
+    Tally.Free;
+    if Missing > 0 then
+      Log(Format('  %d stages drive something that is not a node written; left out',
+        [Missing]));
+    if Skipped <> '' then
+      Log('  keys not exported:' + Skipped);
+  end;
 end;
 
 function TGlbBuilder.WriteAttributes(const ABuffer: TVertexBuffer;
@@ -782,15 +1783,17 @@ var
   Prims: TJSONArray;
   Child: TTransformDef;
   Groups: Integer;
+  Skin: TSkinDef;
 begin
   Result := -1;
-  Mesh := nil;
   Buffer := AMesh.VertexSource;
   if (Buffer = nil) or (Buffer.Length = 0) then
     Exit;
   Name := DefName(AMesh);
   Attributes := WriteAttributes(Buffer, Name);
   try
+    if FMeshSkin.TryGetValue(AMesh, Skin) then
+      WriteSkinAttributes(AMesh, Skin, Attributes);
     Prims := TJSONArray.Create;
     try
       Groups := 0;
@@ -849,9 +1852,6 @@ end;
 function TGlbBuilder.TextureFor(const ATexture: TTextureDef): TTextureInfo;
 var
   Bitmap: TBitmap;
-  Stream: TMemoryStream;
-  Image, Texture: TJSONObject;
-  View: Integer;
 begin
   // TryGetValue clears Result when it finds nothing, so it comes first
   if FTextureIndex.TryGetValue(ATexture, Result) then
@@ -882,34 +1882,160 @@ begin
       FTextureIndex.Add(ATexture, Result);
       Exit;
     end;
-    Result.HasAlpha := BitmapHasAlpha(Bitmap);
-    Stream := TMemoryStream.Create;
-    try
-      // FMX saves a bitmap to a stream as PNG
-      Bitmap.SaveToStream(Stream);
-      View := AddView(Stream.Memory^, Stream.Size, 0);
-    finally
-      Stream.Free;
-    end;
-    Image := TJSONObject.Create;
-    if ATexture.Id <> '' then
-      Image.AddPair('name', ATexture.Id);
-    Image.AddPair('bufferView', JInt(View));
-    Image.AddPair('mimeType', 'image/png');
-    FImages.AddElement(Image);
-    Inc(FStats.Images);
-    Texture := TJSONObject.Create;
-    Texture.AddPair('sampler', JInt(0));
-    Texture.AddPair('source', JInt(FImages.Count - 1));
-    FTextures.AddElement(Texture);
-    Result.Index := FTextures.Count - 1;
-    Log(Format('  texture %s: %d x %d%s%s', [DefName(ATexture), Bitmap.Width, Bitmap.Height,
-      IfThen(Result.HasAlpha, ', has transparency', ''),
-      IfThen(ATexture.Flipping <> [], ', flipped by Gorilla', '')]));
+    Result := AddBitmapTexture(Bitmap, ATexture.Id,
+      IfThen(ATexture.Flipping <> [], ', flipped by Gorilla', ''));
   finally
     Bitmap.Free;
   end;
   FTextureIndex.Add(ATexture, Result);
+end;
+
+function BitmapPng(const ABitmap: TBitmap): TBytes;
+var
+  Stream: TMemoryStream;
+begin
+  Stream := TMemoryStream.Create;
+  try
+    // FMX saves a bitmap to a stream as PNG
+    ABitmap.SaveToStream(Stream);
+    SetLength(Result, Stream.Size);
+    if Stream.Size > 0 then
+      Move(Stream.Memory^, Result[0], Stream.Size);
+  finally
+    Stream.Free;
+  end;
+end;
+
+function SameBytes(const A, B: TBytes): Boolean;
+begin
+  Result := (Length(A) = Length(B)) and (Length(A) > 0) and CompareMem(@A[0], @B[0], Length(A));
+end;
+
+function TGlbBuilder.AddBitmapTexture(const ABitmap: TBitmap;
+  const AName, ANote: string): TTextureInfo;
+var
+  Image, Texture: TJSONObject;
+  View, Source, I: Integer;
+  Png: TBytes;
+  Shared: Boolean;
+begin
+  Result.HasAlpha := BitmapHasAlpha(ABitmap);
+  Png := BitmapPng(ABitmap);
+  begin
+    // The same picture under another texture (a material using one atlas as
+    // both colour and emissive map) shares the image already written
+    Source := -1;
+    for I := 0 to FImageBytes.Count - 1 do
+      if SameBytes(FImageBytes[I], Png) then
+      begin
+        Source := I;
+        Break;
+      end;
+    Shared := Source >= 0;
+    if not Shared then
+    begin
+      View := AddView(Png[0], Length(Png), 0);
+      Image := TJSONObject.Create;
+      if AName <> '' then
+        Image.AddPair('name', AName);
+      Image.AddPair('bufferView', JInt(View));
+      Image.AddPair('mimeType', 'image/png');
+      FImages.AddElement(Image);
+      FImageBytes.Add(Png);
+      Inc(FStats.Images);
+      Source := FImages.Count - 1;
+    end;
+    Texture := TJSONObject.Create;
+    Texture.AddPair('sampler', JInt(0));
+    Texture.AddPair('source', JInt(Source));
+    FTextures.AddElement(Texture);
+    Result.Index := FTextures.Count - 1;
+    Log(Format('  texture %s: %d x %d%s%s%s', [IfThen(AName <> '', AName, '(unnamed)'),
+      ABitmap.Width, ABitmap.Height, IfThen(Result.HasAlpha, ', has transparency', ''), ANote,
+      IfThen(Shared, Format(', same picture as image %d', [Source]), '')]));
+  end;
+end;
+
+function TGlbBuilder.MetallicRoughnessFor(const AMaterial: TMaterialDef): Integer;
+var
+  Rough, Metal: TTextureDef;
+  RoughBmp, MetalBmp, Combined: TBitmap;
+  RoughData, MetalData, CombinedData: TBitmapData;
+  X, Y: Integer;
+  RoughPixel, MetalPixel: TAlphaColorRec;
+  OutPixel: TAlphaColorRec;
+begin
+  Result := -1;
+  Rough := AMaterial.GetTexture(TColorChannelDef.Roughness);
+  Metal := AMaterial.GetTexture(TColorChannelDef.Metalness);
+  if (Rough = nil) and (Metal = nil) then
+    Exit;
+  // glTF wants one picture: roughness in green, metalness in blue. A glTF
+  // source's map comes back as both channels with the same picture
+  if Metal = nil then
+    Exit(TextureFor(Rough).Index);
+  if Rough = nil then
+    Exit(TextureFor(Metal).Index);
+  RoughBmp := nil;
+  MetalBmp := nil;
+  try
+    try
+      RoughBmp := Rough.GetAssetBitmapInstance(True);
+      MetalBmp := Metal.GetAssetBitmapInstance(True);
+    except
+      on E: Exception do
+      begin
+        Log('  metallic-roughness: no bitmap (' + E.Message + ')');
+        Exit;
+      end;
+    end;
+    if (RoughBmp = nil) or (MetalBmp = nil) or RoughBmp.IsEmpty or MetalBmp.IsEmpty then
+      Exit;
+    if SameBytes(BitmapPng(RoughBmp), BitmapPng(MetalBmp)) then
+      Exit(TextureFor(Rough).Index);
+    if (RoughBmp.Width <> MetalBmp.Width) or (RoughBmp.Height <> MetalBmp.Height) then
+    begin
+      Log('  metallic-roughness: the two maps differ in size; the roughness map is used alone');
+      Exit(TextureFor(Rough).Index);
+    end;
+    // Two pictures: green from the roughness map, blue from the metalness map
+    Combined := TBitmap.Create(RoughBmp.Width, RoughBmp.Height);
+    try
+      if RoughBmp.Map(TMapAccess.Read, RoughData) then
+      try
+        if MetalBmp.Map(TMapAccess.Read, MetalData) then
+        try
+          if Combined.Map(TMapAccess.Write, CombinedData) then
+          try
+            for Y := 0 to RoughBmp.Height - 1 do
+              for X := 0 to RoughBmp.Width - 1 do
+              begin
+                RoughPixel := TAlphaColorRec(RoughData.GetPixel(X, Y));
+                MetalPixel := TAlphaColorRec(MetalData.GetPixel(X, Y));
+                OutPixel.A := 255;
+                OutPixel.R := 255;
+                OutPixel.G := RoughPixel.G;
+                OutPixel.B := MetalPixel.B;
+                CombinedData.SetPixel(X, Y, OutPixel.Color);
+              end;
+          finally
+            Combined.Unmap(CombinedData);
+          end;
+        finally
+          MetalBmp.Unmap(MetalData);
+        end;
+      finally
+        RoughBmp.Unmap(RoughData);
+      end;
+      Result := AddBitmapTexture(Combined, 'metallicRoughness',
+        ', packed from the roughness and metalness maps').Index;
+    finally
+      Combined.Free;
+    end;
+  finally
+    RoughBmp.Free;
+    MetalBmp.Free;
+  end;
 end;
 
 procedure TGlbBuilder.AddTextureRef(const AParent: TJSONObject; const AName: string;
@@ -945,6 +2071,8 @@ var
   WhiteBase: Boolean;
   Texture: TTextureDef;
   Skipped: string;
+  MetalRough: Integer;
+  Ref: TJSONObject;
 begin
   Result := -1;
   M := ResolveMaterial(ARef);
@@ -1011,6 +2139,16 @@ begin
     AddTextureRef(Mat, 'normalTexture', M, TColorChannelDef.Normal, NormalTex);
     AddTextureRef(Mat, 'occlusionTexture', M, TColorChannelDef.AO, OcclusionTex);
     AddTextureRef(Mat, 'emissiveTexture', M, TColorChannelDef.Emissive, EmissiveTex);
+    if FOptions.Textures then
+    begin
+      MetalRough := MetallicRoughnessFor(M);
+      if MetalRough >= 0 then
+      begin
+        Ref := TJSONObject.Create;
+        Ref.AddPair('index', JInt(MetalRough));
+        Pbr.AddPair('metallicRoughnessTexture', Ref);
+      end;
+    end;
 
     HasEmissive := (M.Emissive.R > 0) or (M.Emissive.G > 0) or (M.Emissive.B > 0);
     if HasEmissive or (EmissiveTex.Index >= 0) then
@@ -1048,7 +2186,8 @@ begin
     if M.Textures <> nil then
       for Texture in M.Textures do
         if not (Texture.Channel in [TColorChannelDef.Diffuse, TColorChannelDef.Normal,
-          TColorChannelDef.AO, TColorChannelDef.Emissive]) then
+          TColorChannelDef.AO, TColorChannelDef.Emissive, TColorChannelDef.Metalness,
+          TColorChannelDef.Roughness]) then
           Skipped := Skipped + ' ' + ChannelName(Texture.Channel);
   except
     Mat.Free;
@@ -1119,9 +2258,13 @@ var
   Pad: Byte;
   Value: Cardinal;
 begin
-  RootNode := AddNode(FModel);
+  FindSkinsAndAnimated;
+  RootNode := AddNode(FModel, TMatrix3D.Identity);
   if FStats.Primitives = 0 then
     raise Exception.Create('The model holds no mesh data that could be exported.');
+  AddArmatures(RootNode);
+  WriteSkins;
+  WriteAnimations;
   if FOptions.ApplyUnitScale and (FModel.UnitScale > 0) and (FModel.UnitScale <> 1) then
     RootNode := AddScaleNode(RootNode, FModel.UnitScale);
 
@@ -1141,6 +2284,8 @@ begin
     Root.AddPair('scenes', Scenes);
     TakeArray(Root, 'nodes', FNodes);
     TakeArray(Root, 'meshes', FMeshes);
+    TakeArray(Root, 'skins', FSkins);
+    TakeArray(Root, 'animations', FAnimations);
     TakeArray(Root, 'materials', FMaterials);
     TakeArray(Root, 'textures', FTextures);
     TakeArray(Root, 'images', FImages);
@@ -1301,11 +2446,39 @@ begin
   Result.Vertices := 0;
   Result.Triangles := 0;
   Result.Materials := 0;
+  Result.Animations := 0;
+  Result.Skins := 0;
   if AModel = nil then
     Exit;
   CountDef(AModel, Result);
   if AModel.Materials <> nil then
     Result.Materials := AModel.Materials.Count;
+  if AModel.Animations <> nil then
+    Result.Animations := AModel.Animations.Count;
+  if AModel.Controllers <> nil then
+    for var Controller in AModel.Controllers do
+      if Controller.Skin <> nil then
+        Inc(Result.Skins);
+end;
+
+function DescribeAnimations(const AModel: TModelDef): string;
+var
+  Animation: TAnimationDef;
+  Stages: Integer;
+begin
+  Result := '';
+  if (AModel = nil) or (AModel.Animations = nil) then
+    Exit;
+  for Animation in AModel.Animations do
+  begin
+    if Result <> '' then
+      Result := Result + ', ';
+    Stages := 0;
+    if Animation.Stages <> nil then
+      Stages := Animation.Stages.Count;
+    Result := Result + Format('%s %.2f s %d stages', [DefName(Animation),
+      Animation.GetDurationInSeconds, Stages]);
+  end;
 end;
 
 procedure CountClasses(const ADef: TTransformDef; const ACounts: TDictionary<string, Integer>);
