@@ -1,8 +1,8 @@
 # Code review, 9 November 2026
 
 **Fixes applied** (Fixes1, 9 November, 22:45): items 1, 2, 3, 4 and 6;
-(Fixes2, 22:55): item 7. Items 5 and 50 are withdrawn. Items 8 and 9 wait for the Cisco change. The
-rest are open.
+(Fixes2, 22:55): item 7; (Cisco1, 10 November): item 8. Items 5 and 50 are withdrawn. Item 9
+is in part met, as the list's addresses are now all https. The rest are open.
 
 A review of the source at `main` `0d0103f`, against the rules in
 `CLAUDE.md`, by six reviewers each reading whole units, collated and
@@ -94,7 +94,8 @@ In order. Items 1 to 4 are confirmed; 6 to 9 are likely; 5 was wrong.
    the next start downloads the 64 MB again. This is exactly what
    pointing `openh264.json` at Cisco's downloads (same file names, new
    URLs) would trigger. A versioned or URL-derived file name, or a
-   deferred swap, breaks the loop.
+   deferred swap, breaks the loop. *Fixed (Cisco1): each copy's name
+   carries a hash of its address (`InstalledFileName`).*
 
 9. **The downloader trusts what it loads.** `Sprite3DLibraryUpdate.pas`
    306, 591, 721: `http` is accepted alongside `https`, redirects are
@@ -102,7 +103,9 @@ In order. Items 1 to 4 are confirmed; 6 to 9 are likely; 5 was wrong.
    `TFile.Move` is the `MZ`/ELF/Mach-O magic. Anyone who can alter the
    list or the transfer gets a library loaded by `LoadLibraryEx` on the
    next `RecheckH264`. Https only, and a `sha256` in the list checked
-   before the move, would close it. Timely, given the Cisco change.
+   before the move, would close it. *In part: the list's addresses are
+   all Cisco's https ones since 10 November; the client still accepts
+   http and checks no hash.*
 
 ## Sprite3dMain.pas
 

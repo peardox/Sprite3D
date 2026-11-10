@@ -1,0 +1,21 @@
+# Code, Desc, Directions, Files, xspr, yspr, sheetcount, totalrows, totalsprites, totalfree
+"PortraitOct2021","", "Static1", 1, 4,4,1,16,16,0
+# Filename, rows, sprites,free
+"Portraits.png",16,16,0
+# sprite rows start
+"Neutral1",                   1,         "",        1,       1
+"Neutral2",                   1,         "",        1,       1
+"Happy1",                   1,         "",        1,       1
+"Happy2",                   1,         "",        1,       1
+"Sad1",                   1,         "",        1,       1
+"Sad2",                   1,         "",        1,       1
+"Angry1",                   1,         "",        1,       1
+"Angry2",                   1,         "",        1,       1
+"Nervous1",                   1,         "",        1,       1
+"Nervous2",                   1,         "",        1,       1
+"Scared",                   1,         "",        1,       1
+"Injured",                   1,         "",        1,       1
+"Thoughtful1",                   1,         "",        1,       1
+"Thoughtful2",                   1,         "",        1,       1
+"Annoyed1",                   1,         "",        1,       1
+"Annoyed2",                   1,         "",        1,       1

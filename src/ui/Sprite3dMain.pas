@@ -189,7 +189,7 @@
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
 //** hamburger button on a toolbar at the top, which opens a drawer listing every item in
 //** MainMenu1; ticks show the current camera view and which View items are on. Exit is left
-//** out on iOS. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
+//** out on iOS, and File, Debug, Tools on Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
 //** that FMX draws itself, as the native GTK menu bar showed only the first letter of each
 //** item: its items are copied onto the bar and the originals freed, and each copy takes its
 //** original's name, so the form's fields refer to the copies. They must be copied, not
@@ -207,7 +207,7 @@
 //** |           |-- AnimationListBox  the Animated tab's list
 //** |           `-- StaticListBox     the Static tab's list
 //** |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
-//** `-- DebugTab "Debug"
+//** `-- DebugTab "Debug"                 shown only while debugging is on
 //**     `-- DebugMemo
 //**
 //** MainMenu1
@@ -218,6 +218,14 @@
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+//** |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
+//** |   |-- FDebugMenu "Debug"              made only while debugging; see BuildDebugMenu
+//** |   |   |-- ...                         Frame Borders, Compare Images..., Benchmark
+//** |   |   `-- ToolsMenu "Tools"           moved here; desktop only
+//** |   |       |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+//** |   |       |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+//** |   |       `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+//** |   |-- FileSeparatorItem "-"
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** |-- ModelMenu "Models"
 //** |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
@@ -410,9 +418,8 @@ unit Sprite3dMain;
   background, and the latest version for the platform downloaded if it is
   not that copy. No entry, a 404, no network or any other failure leaves the
   copy there, or MP4 files as MPEG-4 Part 2, and DebugMemo says which
-  happened. While debugging is on, from debug_enabled in settings.json or
-  --debug on the command line, none of this is done and OpenH264 is not
-  used.
+  happened. None of this is done, and OpenH264 is not used, while it is
+  turned off in File, Settings.
 
   Models, Animation Settings... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
@@ -467,7 +474,8 @@ unit Sprite3dMain;
   On Android and iOS, where FMX shows no menu bar, the same menus are reached
   through a hamburger button on a toolbar at the top, which opens a drawer
   listing every item in MainMenu1; ticks show the current camera view and
-  which View items are on. Exit is left out on iOS. On Linux MainMenu1 is
+  which View items are on. Exit is left out on iOS, and File, Debug, Tools
+  on Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is
   replaced, first thing in FormCreate, by a TMenuBar that FMX draws itself, as
   the native GTK menu bar showed only the first letter of each item: its items
   are copied onto the bar and the originals freed, and each copy takes its
@@ -485,7 +493,7 @@ unit Sprite3dMain;
     |           |-- AnimationListBox  the Animated tab's list
     |           `-- StaticListBox     the Static tab's list
     |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
-    `-- DebugTab "Debug"
+    `-- DebugTab "Debug"                 shown only while debugging is on
         `-- DebugMemo
 
     MainMenu1
@@ -496,6 +504,14 @@ unit Sprite3dMain;
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+    |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
+    |   |-- FDebugMenu "Debug"              made only while debugging; see BuildDebugMenu
+    |   |   |-- ...                         Frame Borders, Compare Images..., Benchmark
+    |   |   `-- ToolsMenu "Tools"           moved here; desktop only
+    |   |       |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+    |   |       |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+    |   |       `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+    |   |-- FileSeparatorItem "-"
     |   `-- ExitMenuItem "Exit"             closes the application
     |-- ModelMenu "Models"
     |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
@@ -558,7 +574,7 @@ uses
   Sprite3DSpriteSheet, Sprite3DSweep, Sprite3DResample, System.Threading,
   Sprite3DLoadForm, Gorilla.Animation, DisplayData, Sprite3DAxes, Sprite3DGrid,
   Sprite3DExportForm, System.Generics.Collections, FMX.Edit, System.JSON,
-  Sprite3DResultsView, Sprite3DNameClashForm,
+  Sprite3DResultsView, Sprite3DNameClashForm, Sprite3DSpriteScan, Sprite3DSpriteScanForm,
   System.Diagnostics
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
@@ -676,6 +692,10 @@ type
     //** played back; its controls are TSprite3DResultsView's.)
     ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
+    //**
+    //** Shown only while debugging is on (debug_enabled or --debug): BuildDebugMenu hides it
+    //** otherwise, and DisableDebugItemClick when debugging stops. DebugMemo is written to
+    //** either way.
     DebugTab: TTabItem;
     //** @abstract(Log output; SwitchModel writes separator lines here when a model has
     //** animations.)
@@ -748,6 +768,8 @@ type
     //** @abstract(The File menu's "Background Settings..." item; see
     //** BackgroundSettingsMenuItemClick.)
     BackgroundSettingsMenuItem: TMenuItem;
+    //** @abstract(The File menu's "Licences..." item; see LicencesMenuItemClick.)
+    LicencesMenuItem: TMenuItem;
     //** @abstract(The "Settings..." item; see SettingsMenuItemClick.)
     SettingsMenuItem: TMenuItem;
     //** @abstract(Separator line in the File menu, above Exit.)
@@ -772,6 +794,23 @@ type
     ModelActionsSeparatorItem: TMenuItem;
     //** @abstract(The "Directions..." item; see DirectionsItemClick.)
     DirectionsItem: TMenuItem;
+    //** @abstract(The menu captioned "Tools": tools that work on files rather than on the
+    //** model shown, starting with ScanSpritesItem. Found under File, Debug.)
+    //**
+    //** Designed last on the menu bar; BuildDebugMenu moves it into File, Debug, with its
+    //** items. With no Debug menu (debugging off), and always on Android and iOS, whose
+    //** lack of folder dialogs its tools need, it frees it instead, before the drawer is
+    //** built; the field, and its items', are then nil.
+    ToolsMenu: TMenuItem;
+    //** @abstract(The Tools menu's "Scan Sprites..." item; see ScanSpritesItemClick.
+    //** Disabled while a Tools scan runs.)
+    ScanSpritesItem: TMenuItem;
+    //** @abstract(The Tools menu's "Scan Atlas..." item; see ScanAtlasItemClick. Disabled
+    //** while a Tools scan runs.)
+    ScanAtlasItem: TMenuItem;
+    //** @abstract(The Tools menu's "Scan Atlas Folders..." item; see
+    //** ScanAtlasFoldersItemClick. Disabled while a Tools scan runs.)
+    ScanAtlasFoldersItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
@@ -1092,6 +1131,61 @@ type
     //**
     //** @param(Sender OpenDirectoryMenuItem.)
     procedure OpenDirectoryMenuItemClick(Sender: TObject);
+    //** @abstract(Measures the frames of a sprite made elsewhere, to be replaced by one of
+    //** Sprite3D's: one folder of PNG frames per animation.)
+    //**
+    //** The system's folder dialog (SelectFolders, from Sprite3DFolderDialog) asks for the
+    //** folders, several at once on Windows and macOS, opening where the last scan's were.
+    //** A folder with no PNG files of its own stands for those of its sub-folders that have
+    //** some, so choosing a character's folder scans each of its animations, which is also
+    //** how several are scanned on Linux, whose dialog chooses one. The folders are read on
+    //** a worker thread, each with ScanSpriteFolder from Sprite3DSpriteScan: every frame's
+    //** empty border, measured as an export's metadata measures it, combined over the
+    //** folder as @code(sprite_empty) is, the content box left once that is cropped, and each
+    //** frame's coverage of it. CombineSpriteScans then takes the least of each side over
+    //** every folder, and every frame's coverage is worked out again against the content
+    //** box they share. Every frame of every folder must be the same size: if any differs,
+    //** the scan has failed, a message says which two differ, and no grid is shown.
+    //** Otherwise the results go to the Debug tab in full and to
+    //** TSpriteScanForm, a grid with one row per folder named by the folder's own name; if
+    //** a model is loading or an export running when they are ready, the grid waits until it
+    //** has finished. Nothing happens if the dialog is cancelled, or while a scan runs.
+    //** Desktop only.
+    //**
+    //** @param(Sender ScanSpritesItem.)
+    procedure ScanSpritesItemClick(Sender: TObject);
+    //** @abstract(Measures an atlas made elsewhere: one or more sheets, each a grid of frames
+    //** of one size, holding a character's animations.)
+    //**
+    //** TScanAtlasForm asks for the frame size and the sheets, starting with the size and
+    //** folder used last, kept in settings.json. The sheets are read on a worker thread with
+    //** ScanAtlas from Sprite3DSpriteScan: every frame of every sheet measured as Scan
+    //** Sprites measures a folder's, frames with nothing drawn counted as unused padding and
+    //** left out, the border combined over the rest as @code(sprite_empty) is, and each
+    //** frame's coverage of the box left. A sheet that is not a whole number of frames, or
+    //** cannot be read, fails the scan, and a message says which. Otherwise one row for the
+    //** whole atlas goes to TSpriteScanForm and the Debug tab, with the lowest, median and
+    //** highest coverage. The grid waits, as Scan Sprites' does, while a model loads or an
+    //** export runs. Nothing happens if the dialog is cancelled, or while a Tools scan runs.
+    //** Desktop only.
+    //**
+    //** @param(Sender ScanAtlasItem.)
+    procedure ScanAtlasItemClick(Sender: TObject);
+    //** @abstract(Measures every variation of an atlas sheet: one file of the same name in
+    //** each sub-folder of a root.)
+    //**
+    //** TScanAtlasFoldersForm asks for the root, the sheet's file name
+    //** (@code(Spritesheet.png) at first) and the frame size, starting with those used
+    //** last, kept in settings.json (the frame size shared with Scan Atlas). On a worker
+    //** thread, ScanAtlasTree finds every file of that name below the root, however deep,
+    //** and measures each as a one-sheet atlas, as Scan Atlas does. One row per sheet, named
+    //** by its folder relative to the root, goes to TSpriteScanForm and the Debug tab, with
+    //** the packed sheet size added (AtlasPackedSide). A sheet that fails, for instance by
+    //** not being a whole number of frames, says why in its own row; the rest are scanned.
+    //** Desktop only.
+    //**
+    //** @param(Sender ScanAtlasFoldersItem.)
+    procedure ScanAtlasFoldersItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -1189,6 +1283,11 @@ type
     //**
     //** @param(Sender BackgroundSettingsMenuItem.)
     procedure BackgroundSettingsMenuItemClick(Sender: TObject);
+    //** @abstract(Shows the third-party licences and notices the program carries, from its
+    //** own resources: TLicencesForm, by ShowLicences.)
+    //**
+    //** @param(Sender LicencesMenuItem.)
+    procedure LicencesMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Settings dialog and applies what is chosen.)
     //**
     //** The dialog, TGeneralSettingsForm, opens modally, centred on this form, showing the
@@ -1674,7 +1773,7 @@ type
     // Models, Animation Settings...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
     // Keeps the downloaded OpenH264 in step with the list at
-    // OPENH264_LIST_URL; nil while debugging
+    // OPENH264_LIST_URL; nil while it is turned off in Settings
     FOpenH264Update: TSprite3DLibraryUpdate;
     // View, Camera, Lock Camera, and the line above it
     FLockCameraItem: TMenuItem;
@@ -1852,10 +1951,9 @@ type
     // A batch's metadata, measured as each image was saved and written once
     // the batch ends, after every image
     FPendingMetadata: TArray<TSprite3DSheetMetadata>;
-    // File, Debug, the separator above it, and its Frame Borders item, made
-    // only while debugging is on
+    // File, Debug and its Frame Borders item, made only while debugging is
+    // on; Debug sits above File's own separator, so has none of its own
     FDebugMenu: TMenuItem;
-    FDebugSeparator: TMenuItem;
     FFrameBordersItem: TMenuItem;
     FSaveOversampledItem: TMenuItem;
     // The Results tab's player, and whether its tab is the one showing
@@ -2696,6 +2794,143 @@ type
       const AAnimation: String; const ADirections: TArray<Single>;
       const AMeta: TSprite3DSheetMeta; const ABorders, ADeferMetadata: Boolean;
       out APending: TSprite3DSheetMetadata; out AHasPending: Boolean): String;
+  private
+    //** True from the start of a Tools scan (Scan Sprites or Scan Atlas) until its results
+    //** are ready; one runs at a time.
+    FToolScanning: Boolean;
+    //** True while a Tools scan's results are waiting to be shown.
+    FToolResultsWaiting: Boolean;
+    //** The waiting results: the table to show, or, if not empty, why the scan failed or
+    //** stopped, shown in a message instead; see ShowPendingToolResults.
+    FToolResults: TScanTable;
+    FToolFailure: String;
+    //** Made when a Tools scan's results first have to wait; ticks ShowPendingToolResults
+    //** until they can be shown, and is disabled then. Owned by the form.
+    FToolTimer: TTimer;
+    //** @abstract(Enables the Tools menu's scans unless one is running or its results are
+    //** waiting.)
+    procedure UpdateToolItems;
+    //** @abstract(Scans the folders chosen on a worker thread and hands the results to
+    //** FinishSpriteScan.)
+    //**
+    //** SpriteFolders turns the folders chosen into the folders to scan, and each is read
+    //** with ScanSpriteFolder in turn, its name logged as it starts; CombineSpriteScans
+    //** then works out the box every animation shares. The worker stops at the next frame if
+    //** the main form goes.
+    //**
+    //** @param(AFolders The folders chosen, as full paths, already through OSFriendlyPath.)
+    procedure StartSpriteScan(const AFolders: TArray<String>);
+    //** @abstract(Scans an atlas's sheets with ScanAtlas on a worker thread and hands the
+    //** result to FinishAtlasScan.)
+    //**
+    //** @param(AFiles The sheets, as full paths, already through OSFriendlyPath, in order.)
+    //** @param(AFrameWidth The width of every frame, in pixels.)
+    //** @param(AFrameHeight The height of every frame, in pixels.)
+    procedure StartAtlasScan(const AFiles: TArray<String>; const AFrameWidth,
+      AFrameHeight: Integer);
+    //** @abstract(Searches a root for every copy of a sheet and scans each with
+    //** ScanAtlasTree on a worker thread, handing the results to FinishAtlasTreeScan.)
+    //**
+    //** @param(ARoot The folder to search below, already through OSFriendlyPath.)
+    //** @param(AFileName The sheet's file name.)
+    //** @param(AFrameWidth The width of every frame, in pixels.)
+    //** @param(AFrameHeight The height of every frame, in pixels.)
+    procedure StartAtlasTreeScan(const ARoot, AFileName: String; const AFrameWidth,
+      AFrameHeight: Integer);
+    //** @abstract(From Scan Atlas Folders' worker thread: queues FinishAtlasTreeScan on
+    //** the main thread with the scans.)
+    //** @param(AScans The sheets' scans, in order.)
+    //** @param(ARoot The folder searched.)
+    //** @param(AFileName The sheet's file name.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure QueueAtlasTreeResults(const AScans: TArray<TSprite3DSpriteScan>;
+      const ARoot, AFileName, AError: String);
+    //** @abstract(Takes Scan Atlas Folders' results on the main thread: logs a line per
+    //** sheet and shows them with ShowToolResults, or says none were found.)
+    //** @param(AScans The sheets' scans, in order.)
+    //** @param(ARoot The folder searched.)
+    //** @param(AFileName The sheet's file name.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure FinishAtlasTreeScan(const AScans: TArray<TSprite3DSpriteScan>;
+      const ARoot, AFileName, AError: String);
+    //** @abstract(Writes one atlas scan to the Debug tab: every column of the grid, its
+    //** folder, and the active pixel and packing figures.)
+    //** @param(ATool The tool, for the line's start.)
+    //** @param(AAtlas The scan.)
+    procedure LogAtlasScan(const ATool: String; const AAtlas: TSprite3DSpriteScan);
+    //** @abstract(From a Tools scan's worker thread: queues ToolProgress on the main
+    //** thread.)
+    //**
+    //** A method of its own, so the queued call captures these parameters' values, not the
+    //** worker's loop variables.
+    //**
+    //** @param(ATool The tool, such as @code(Scan Sprites), for the log.)
+    //** @param(AName The folder's or sheet's name.)
+    //** @param(AIndex Which it is, from 1.)
+    //** @param(ACount How many there are.)
+    procedure QueueToolProgress(const ATool, AName: String; const AIndex, ACount: Integer);
+    //** @abstract(Logs which folder or sheet a Tools scan has reached, in the Debug tab.)
+    //** @param(ATool The tool, such as @code(Scan Sprites).)
+    //** @param(AName The folder's or sheet's name.)
+    //** @param(AIndex Which it is, from 1.)
+    //** @param(ACount How many there are.)
+    procedure ToolProgress(const ATool, AName: String; const AIndex, ACount: Integer);
+    //** @abstract(From Scan Sprites' worker thread: queues FinishSpriteScan on the main
+    //** thread with the scan's results.)
+    //** @param(AScans The folders' scans, in order.)
+    //** @param(AShared What CombineSpriteScans returned for them.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure QueueSpriteScanResults(const AScans: TArray<TSprite3DSpriteScan>;
+      const AShared: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Takes Scan Sprites' results on the main thread: logs them in full and
+    //** shows them with ShowToolResults, or says why the scan failed.)
+    //**
+    //** Every frame of every folder must be the same size: if any differs, the scan has
+    //** failed, and a message says which two differ instead of the grid.
+    //**
+    //** @param(AScans The folders' scans, in order.)
+    //** @param(AShared What CombineSpriteScans returned for them.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure FinishSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+      const AShared: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Writes Scan Sprites' results to the Debug tab: one line per folder with
+    //** every column of the grid, its full path and active pixel counts, a line for each
+    //** file not read, and the box every animation shares, or why the scan failed.)
+    //** @param(AScans The folders' scans, in order.)
+    //** @param(AShared What CombineSpriteScans returned for them.)
+    procedure LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+      const AShared: TSprite3DSpriteScan);
+    //** @abstract(From Scan Atlas' worker thread: queues FinishAtlasScan on the main
+    //** thread with the scan's result.)
+    //** @param(AAtlas What ScanAtlas returned.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure QueueAtlasScanResult(const AAtlas: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Takes Scan Atlas' result on the main thread: logs it and shows it with
+    //** ShowToolResults, or says why the scan failed.)
+    //**
+    //** A sheet that is not a whole number of frames, or cannot be read, fails the scan,
+    //** and a message says which instead of the grid.
+    //**
+    //** @param(AAtlas What ScanAtlas returned.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure FinishAtlasScan(const AAtlas: TSprite3DSpriteScan; const AError: String);
+    //** @abstract(Hands a Tools scan's results to ShowPendingToolResults, which shows them
+    //** now or once nothing stands in the way.)
+    //** @param(ATable The table to show, if AFailure is empty.)
+    //** @param(AFailure Why the scan failed or stopped, shown in a message instead; empty if
+    //** it did not.)
+    procedure ShowToolResults(const ATable: TScanTable; const AFailure: String);
+    //** @abstract(Whether a Tools scan's results must wait: while a model is loading, a
+    //** folder is being opened, or anything is being captured or exported, each of which
+    //** has a dialog of its own up, and a second dialog must not open over it.)
+    //** @returns(True to wait.)
+    function ToolResultsBlocked: Boolean;
+    //** @abstract(Shows the waiting results in TSpriteScanForm, or the failure in a
+    //** message; or, while ToolResultsBlocked, leaves FToolTimer to try again.)
+    procedure ShowPendingToolResults;
+    //** @abstract(FToolTimer's tick: tries ShowPendingToolResults again.)
+    //** @param(Sender FToolTimer.)
+    procedure ToolTimerTick(Sender: TObject);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -2773,7 +3008,8 @@ uses
   Sprite3DOpenFiles, Sprite3DBackgroundForm,
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
   Sprite3DCreditsForm, System.DateUtils, JsonText, Sprite3DOpenDirectoryForm,
-  Sprite3DFileSearch;
+  Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DScanAtlasForm,
+  Sprite3DScanAtlasFoldersForm, Sprite3DLicencesForm;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -2931,10 +3167,9 @@ begin
   // debug_enabled is only ever set by hand in settings.json; said only when on
   if FSettings.DebugEnabled then
     DebugMemo.Lines.Add('Debug enabled (debug_enabled is true in ' +
-      FSettings.FileName + '); OpenH264 is not fetched or used')
+      FSettings.FileName + ')')
   else if FSettings.DebugSwitch then
-    DebugMemo.Lines.Add('Debug enabled for this run (--debug); OpenH264 is not fetched ' +
-      'or used');
+    DebugMemo.Lines.Add('Debug enabled for this run (--debug)');
   FFrameOverrides := TDictionary<String, Integer>.Create;
   // The files File, Open Directory has found and still has to open
   FLoadQueue := TList<String>.Create;
@@ -3028,7 +3263,8 @@ begin
   // View, Camera, Lock Camera; before the menu is mirrored on mobile. On
   // Linux the menu bar has already been swapped, so it goes straight onto it
   BuildLockCameraItem;
-  // File, Debug, only while debug_enabled; likewise
+  // File, Debug, only while debug_enabled; likewise. It takes in the Tools
+  // menu, or frees it when there is no Debug menu, so before the drawer
   BuildDebugMenu;
   // The Results tab's player, reading where exports last went once shown
   BuildResultsView;
@@ -5104,6 +5340,11 @@ begin
   ApplyViewFps;
 end;
 
+procedure TMainForm.LicencesMenuItemClick(Sender: TObject);
+begin
+  ShowLicences;
+end;
+
 procedure TMainForm.SettingsMenuItemClick(Sender: TObject);
 var
   Dialog: TGeneralSettingsForm;
@@ -5205,6 +5446,30 @@ begin
           'Volume the View menu shows')
       else
         DebugMemo.Lines.Add('Grabs, icons and exports draw no grid, axes or volumes');
+    end;
+
+    // Cisco's OpenH264, which its licence asks the user can turn off and on
+    if ANew.UseOpenH264 <> AOld.UseOpenH264 then
+    begin
+      FSettings.UseOpenH264 := ANew.UseOpenH264;
+      SetOpenH264Enabled(ANew.UseOpenH264);
+      if not ANew.UseOpenH264 then
+        DebugMemo.Lines.Add('OpenH264 turned off: MP4 video is MPEG-4 Part 2, and it is ' +
+          'not fetched or loaded from the next start')
+      else
+      begin
+        DebugMemo.Lines.Add('OpenH264 turned on');
+        // Off at start-up, so nothing was prepared: find the copy there and,
+        // once the video libraries have been looked for, fetch the list now
+        if FOpenH264Update = nil then
+        begin
+          PrepareOpenH264;
+          if FVideoChecked then
+            StartOpenH264Update;
+        end;
+        if FVideoChecked and RecheckH264 then
+          DebugMemo.Lines.Add(OpenH264Status);
+      end;
     end;
 
     // The Results tab's empty border values, explained in a hint or not
@@ -6797,16 +7062,24 @@ begin
 end;
 
 // Finds the OpenH264 downloaded before, without the network, and tells
-// Sprite3DOpenH264 to load it. Nothing at all is done while debugging is on,
-// so OpenH264 is neither fetched nor loaded and MP4 files are MPEG-4 Part 2,
-// nor on iOS, which cannot load downloaded code.
+// Sprite3DOpenH264 to load it. Nothing at all is done on iOS, which cannot
+// load downloaded code, nor while the user has turned it off in Settings, as
+// Cisco's licence asks they can: OpenH264 is then neither fetched nor loaded
+// and MP4 files are MPEG-4 Part 2. Debugging makes no difference.
 procedure TMainForm.PrepareOpenH264;
 begin
   {$IFDEF IOS}
   Exit;
   {$ENDIF}
-  if FSettings.DebugActive then
+  SetOpenH264Enabled(FSettings.UseOpenH264);
+  if FOpenH264Update <> nil then
     Exit;
+  if not FSettings.UseOpenH264 then
+  begin
+    DebugMemo.Lines.Add('OpenH264 is turned off in Settings: it is not fetched or loaded, ' +
+      'so MP4 video is MPEG-4 Part 2');
+    Exit;
+  end;
   FOpenH264Update := TSprite3DLibraryUpdate.Create(OPENH264_LIST_URL, 'OpenH264',
     OpenH264Folder);
   SetPreferredOpenH264(FOpenH264Update.CurrentLibrary);
@@ -10978,14 +11251,21 @@ procedure TMainForm.BuildDebugMenu;
 var
   Item: TMenuItem;
 begin
+  // The Debug tab is shown only while debugging is on. DebugMemo is still
+  // written to while it is hidden, as nearly everything logs there
+  DebugTab.Visible := FSettings.DebugActive;
   if not FSettings.DebugActive then
+  begin
+    // Tools lives in Debug, so goes with it. Freeing it sets ToolsMenu and
+    // its items' fields to nil
+    ToolsMenu.Free;
     Exit;
-  FDebugSeparator := TMenuItem.Create(Self);
-  FDebugSeparator.Text := '-';
-  FileMenu.InsertObject(ExitMenuItem.Index, FDebugSeparator);
+  end;
+  // Above File's own separator, so Exit stays set apart and no second
+  // separator is needed
   FDebugMenu := TMenuItem.Create(Self);
   FDebugMenu.Text := 'Debug';
-  FileMenu.InsertObject(ExitMenuItem.Index, FDebugMenu);
+  FileMenu.InsertObject(FileSeparatorItem.Index, FDebugMenu);
   FFrameBordersItem := TMenuItem.Create(Self);
   FFrameBordersItem.Text := 'Frame Borders';
   FFrameBordersItem.IsChecked := FSettings.DebugFrameBorders;
@@ -11007,6 +11287,13 @@ begin
   Item.Text := 'Benchmark';
   Item.OnClick := BenchmarkItemClick;
   FDebugMenu.AddObject(Item);
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // Tools needs folder dialogs, which Android and iOS lack
+  ToolsMenu.Free;
+  {$ELSE}
+  // Moved from the menu bar, where the form designs it, with its items
+  FDebugMenu.AddObject(ToolsMenu);
+  {$ENDIF}
   // Only debug_enabled can be turned off: --debug lasts for the run
   if FSettings.DebugEnabled then
   begin
@@ -11022,8 +11309,7 @@ end;
 
 // Sets debug_enabled back to false in settings.json straight away. Debugging
 // stops now, frame borders and all, and File, Debug goes, unless --debug is
-// keeping it on for this run; OpenH264 is fetched the next time Sprite3D
-// starts, as it is only looked for at startup
+// keeping it on for this run
 procedure TMainForm.DisableDebugItemClick(Sender: TObject);
 begin
   FSettings.DebugEnabled := False;
@@ -11039,16 +11325,20 @@ begin
     end;
   end;
   DebugMemo.Lines.Add('Debug disabled (debug_enabled is now false in ' +
-    FSettings.FileName + '); OpenH264 is fetched the next time Sprite3D starts');
+    FSettings.FileName + ')');
   if Sender is TMenuItem then
     TMenuItem(Sender).Visible := False;
   if FSettings.DebugActive then
     DebugMemo.Lines.Add('Debugging stays on for this run (--debug)')
   else
   begin
-    // Hidden, not freed: this is still the menu item's click
+    // Hidden, not freed: this is still the menu item's click. Tools goes
+    // with it, and so does the Debug tab, after moving off it if it is the
+    // one showing
     FDebugMenu.Visible := False;
-    FDebugSeparator.Visible := False;
+    if TabControl1.ActiveTab = DebugTab then
+      SelectModelTabOnly(FStaticMode);
+    DebugTab.Visible := False;
   end;
 end;
 
@@ -12313,6 +12603,561 @@ begin
   StartFolderScan(FSettings.OpenDirectoryFolder, FSettings.OpenDirectorySpec);
 end;
 {$ENDIF}
+
+procedure TMainForm.UpdateToolItems;
+begin
+  if ScanSpritesItem <> nil then
+    ScanSpritesItem.Enabled := not FToolScanning and not FToolResultsWaiting;
+  if ScanAtlasItem <> nil then
+    ScanAtlasItem.Enabled := not FToolScanning and not FToolResultsWaiting;
+  if ScanAtlasFoldersItem <> nil then
+    ScanAtlasFoldersItem.Enabled := not FToolScanning and not FToolResultsWaiting;
+end;
+
+procedure TMainForm.ScanSpritesItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+
+  // Where the next scan's dialog opens: the folder above the one chosen, so
+  // its sister folders, the character's other animations, are in view. A
+  // root, which has nothing above it, is kept whole (ExcludeTrailing-
+  // PathDelimiter would turn C:\ into C:, the current folder on drive C)
+  function StartFolderFor(const AFolder: String): String;
+  begin
+    if SameText(IncludeTrailingPathDelimiter(TPath.GetPathRoot(AFolder)),
+      IncludeTrailingPathDelimiter(AFolder)) then
+      Result := AFolder
+    else
+      Result := ExtractFileDir(ExcludeTrailingPathDelimiter(AFolder));
+    if Result = String.Empty then
+      Result := AFolder;
+  end;
+
+var
+  Folders: TArray<String>;
+  Title: String;
+  I: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  if CanSelectSeveralFolders then
+    Title := 'Scan Sprites: choose the folders of frames, one per animation'
+  else
+    Title := 'Scan Sprites: choose a folder of frames, or the folder holding them';
+  if not SelectFolders(Title, FSettings.ScanSpritesFolder, Folders) then
+    Exit;
+  for I := 0 to High(Folders) do
+    Folders[I] := OSFriendlyPath(Folders[I]);
+  FSettings.ScanSpritesFolder := StartFolderFor(Folders[0]);
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  StartSpriteScan(Folders);
+  {$ENDIF}
+end;
+
+// The folders are read on a worker thread, which touches nothing of the
+// form's: it hands its results back through QueueSpriteScanResults, and its
+// progress through QueueToolProgress. MainFormGone stops it at the next
+// frame if the window closes meanwhile.
+procedure TMainForm.StartSpriteScan(const AFolders: TArray<String>);
+var
+  Chosen: TArray<String>;
+begin
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Chosen := AFolders;
+  FToolScanning := True;
+  UpdateToolItems;
+  DebugMemo.Lines.Add(Format('Scan Sprites: %d folders chosen: %s',
+    [Length(Chosen), String.Join('; ', Chosen)]));
+  TTask.Run(
+    procedure
+    var
+      Folders: TArray<String>;
+      Scans: TArray<TSprite3DSpriteScan>;
+      Shared: TSprite3DSpriteScan;
+      Error: String;
+      I: Integer;
+    begin
+      Scans := nil;
+      Shared := EmptySpriteScan;
+      Error := String.Empty;
+      try
+        Folders := SpriteFolders(Chosen);
+        for I := 0 to High(Folders) do
+        begin
+          if MainFormGone then
+            Exit;
+          QueueToolProgress('Scan Sprites', SpriteFolderName(Folders[I]), I + 1,
+            Length(Folders));
+          Scans := Scans + [ScanSpriteFolder(Folders[I],
+            function: Boolean
+            begin
+              Result := MainFormGone;
+            end)];
+        end;
+        // The least of each side over every animation, and every frame's
+        // coverage of the content box they then share; or, if any frames
+        // differ in size, the reason nothing can be worked out
+        Shared := CombineSpriteScans(Scans);
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      if not MainFormGone then
+        QueueSpriteScanResults(Scans, Shared, Error);
+    end);
+end;
+
+procedure TMainForm.ScanAtlasItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TScanAtlasForm;
+  Files: TArray<String>;
+  FrameWidth, FrameHeight, I: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Dialog := TScanAtlasForm.Create(nil);
+  try
+    Dialog.FrameWidth := FSettings.ScanAtlasFrameWidth;
+    Dialog.FrameHeight := FSettings.ScanAtlasFrameHeight;
+    Dialog.Folder := FSettings.ScanAtlasFolder;
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    Files := Dialog.Files;
+    FrameWidth := Dialog.FrameWidth;
+    FrameHeight := Dialog.FrameHeight;
+    FSettings.ScanAtlasFrameWidth := FrameWidth;
+    FSettings.ScanAtlasFrameHeight := FrameHeight;
+    FSettings.ScanAtlasFolder := Dialog.Folder;
+  finally
+    Dialog.Free;
+  end;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  for I := 0 to High(Files) do
+    Files[I] := OSFriendlyPath(Files[I]);
+  StartAtlasScan(Files, FrameWidth, FrameHeight);
+  {$ENDIF}
+end;
+
+// As StartSpriteScan: the sheets are read on a worker thread, which hands its
+// result back through QueueAtlasScanResult
+procedure TMainForm.StartAtlasScan(const AFiles: TArray<String>; const AFrameWidth,
+  AFrameHeight: Integer);
+var
+  Files: TArray<String>;
+  FrameWidth, FrameHeight: Integer;
+begin
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Files := AFiles;
+  FrameWidth := AFrameWidth;
+  FrameHeight := AFrameHeight;
+  FToolScanning := True;
+  UpdateToolItems;
+  DebugMemo.Lines.Add(Format('Scan Atlas: frames of %d x %d, %d sheets: %s',
+    [FrameWidth, FrameHeight, Length(Files), String.Join('; ', Files)]));
+  TTask.Run(
+    procedure
+    var
+      Atlas: TSprite3DSpriteScan;
+      Error: String;
+    begin
+      Atlas := EmptySpriteScan;
+      Error := String.Empty;
+      try
+        Atlas := ScanAtlas(Files, FrameWidth, FrameHeight,
+          function: Boolean
+          begin
+            Result := MainFormGone;
+          end,
+          procedure(const AName: String; const AIndex, ACount: Integer)
+          begin
+            QueueToolProgress('Scan Atlas', AName, AIndex, ACount);
+          end);
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      if not MainFormGone then
+        QueueAtlasScanResult(Atlas, Error);
+    end);
+end;
+
+procedure TMainForm.QueueToolProgress(const ATool, AName: String;
+  const AIndex, ACount: Integer);
+var
+  Tool, Name: String;
+  Index, Count: Integer;
+begin
+  // Copies, captured by the queued call, of this call's values
+  Tool := ATool;
+  Name := AName;
+  Index := AIndex;
+  Count := ACount;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        ToolProgress(Tool, Name, Index, Count);
+    end);
+end;
+
+procedure TMainForm.ToolProgress(const ATool, AName: String; const AIndex, ACount: Integer);
+begin
+  DebugMemo.Lines.Add(Format('%s: reading %s (%d of %d)', [ATool, AName, AIndex, ACount]));
+end;
+
+procedure TMainForm.QueueSpriteScanResults(const AScans: TArray<TSprite3DSpriteScan>;
+  const AShared: TSprite3DSpriteScan; const AError: String);
+var
+  Scans: TArray<TSprite3DSpriteScan>;
+  Shared: TSprite3DSpriteScan;
+  Error: String;
+begin
+  Scans := AScans;
+  Shared := AShared;
+  Error := AError;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        FinishSpriteScan(Scans, Shared, Error);
+    end);
+end;
+
+procedure TMainForm.FinishSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+  const AShared: TSprite3DSpriteScan; const AError: String);
+begin
+  FToolScanning := False;
+  if AError <> String.Empty then
+  begin
+    DebugMemo.Lines.Add('Scan Sprites stopped: ' + AError);
+    ShowToolResults(EmptyScanTable, 'Scan Sprites stopped: ' + AError);
+    Exit;
+  end;
+  LogSpriteScan(AScans, AShared);
+  if Length(AScans) = 0 then
+    ShowToolResults(EmptyScanTable, 'Scan Sprites found no folders to scan.')
+  // Every frame of every folder must be the same size; if not, the scan
+  // has failed, as none of its figures mean anything
+  else if AShared.SizeMismatch then
+    ShowToolResults(EmptyScanTable, 'Scan Sprites failed: every frame must be the ' +
+      'same size, and they are not.' + sLineBreak + sLineBreak + AShared.Error +
+      sLineBreak + sLineBreak + 'Nothing can be worked out until they are. The Debug tab ' +
+      'lists each folder.')
+  else
+    ShowToolResults(SpriteScanTable(AScans, AShared), String.Empty);
+end;
+
+procedure TMainForm.LogSpriteScan(const AScans: TArray<TSprite3DSpriteScan>;
+  const AShared: TSprite3DSpriteScan);
+var
+  Scan: TSprite3DSpriteScan;
+  Headers, Cells, Parts: TArray<String>;
+  Skipped: String;
+  I: Integer;
+begin
+  Headers := SpriteScanHeaders;
+  for Scan in AScans do
+  begin
+    // Every column the grid has, by its heading, then what the grid leaves
+    // out: the full path and the active pixel counts
+    Cells := SpriteScanCells(Scan);
+    Parts := nil;
+    for I := 1 to Min(High(Headers), High(Cells)) do
+      if Cells[I] <> String.Empty then
+        Parts := Parts + [Headers[I] + ' ' + Cells[I]];
+    DebugMemo.Lines.Add(Format('Scan Sprites: %s (%s): %s', [Scan.Name, Scan.Folder,
+      String.Join(', ', Parts)]));
+    // Cover is the most of these over the box every animation shares
+    if Scan.Valid and AShared.Valid then
+      DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, ' +
+        'of %d in the shared box', [Scan.ActiveMin, FormatFloat('0.0', Scan.ActiveMean),
+        Scan.ActiveMax, Int64(AShared.ContentWidth) * AShared.ContentHeight]));
+    for Skipped in Scan.Skipped do
+      DebugMemo.Lines.Add('  not read: ' + Skipped);
+  end;
+  if AShared.SizeMismatch then
+    DebugMemo.Lines.Add('Scan Sprites FAILED: the frames are not all the same size. ' +
+      AShared.Error)
+  else
+    DebugMemo.Lines.Add('Scan Sprites: shared by every animation: ' +
+      SpriteScanSharedText(AShared));
+end;
+
+procedure TMainForm.QueueAtlasScanResult(const AAtlas: TSprite3DSpriteScan;
+  const AError: String);
+var
+  Atlas: TSprite3DSpriteScan;
+  Error: String;
+begin
+  Atlas := AAtlas;
+  Error := AError;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        FinishAtlasScan(Atlas, Error);
+    end);
+end;
+
+procedure TMainForm.FinishAtlasScan(const AAtlas: TSprite3DSpriteScan; const AError: String);
+begin
+  FToolScanning := False;
+  if AError <> String.Empty then
+  begin
+    DebugMemo.Lines.Add('Scan Atlas stopped: ' + AError);
+    ShowToolResults(EmptyScanTable, 'Scan Atlas stopped: ' + AError);
+    Exit;
+  end;
+  if not AAtlas.Valid then
+  begin
+    DebugMemo.Lines.Add(Format('Scan Atlas FAILED: %s: %s', [AAtlas.Name, AAtlas.Error]));
+    ShowToolResults(EmptyScanTable, 'Scan Atlas failed: ' + AAtlas.Error +
+      sLineBreak + sLineBreak + 'Nothing can be worked out until it is put right.');
+    Exit;
+  end;
+  LogAtlasScan('Scan Atlas', AAtlas);
+  ShowToolResults(AtlasScanTable(AAtlas), String.Empty);
+end;
+
+procedure TMainForm.LogAtlasScan(const ATool: String; const AAtlas: TSprite3DSpriteScan);
+var
+  Headers, Cells, Parts: TArray<String>;
+  I: Integer;
+begin
+  // Every column the grid has, by its heading, then the active pixel counts
+  // and the packing totals
+  Headers := AtlasScanHeaders;
+  Cells := AtlasScanCells(AAtlas);
+  Parts := nil;
+  for I := 1 to Min(High(Headers), High(Cells)) do
+    if Cells[I] <> String.Empty then
+      Parts := Parts + [Headers[I] + ' ' + Cells[I]];
+  if AAtlas.Folder <> String.Empty then
+    DebugMemo.Lines.Add(Format('%s: %s (%s): %s', [ATool, AAtlas.Name, AAtlas.Folder,
+      String.Join(', ', Parts)]))
+  else
+    DebugMemo.Lines.Add(Format('%s: %s: %s', [ATool, AAtlas.Name, String.Join(', ', Parts)]));
+  if AAtlas.Valid then
+  begin
+    DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, of %d ' +
+      'in the box', [AAtlas.ActiveMin, FormatFloat('0.0', AAtlas.ActiveMean),
+      AAtlas.ActiveMax, Int64(AAtlas.ContentWidth) * AAtlas.ContentHeight]));
+    DebugMemo.Lines.Add('  ' + AtlasScanPackingText(AAtlas));
+  end;
+end;
+
+procedure TMainForm.ScanAtlasFoldersItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TScanAtlasFoldersForm;
+  Root, FileName: String;
+  FrameWidth, FrameHeight: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Dialog := TScanAtlasFoldersForm.Create(nil);
+  try
+    Dialog.Root := FSettings.ScanAtlasRoot;
+    Dialog.FileName := FSettings.ScanAtlasFileName;
+    Dialog.FrameWidth := FSettings.ScanAtlasFrameWidth;
+    Dialog.FrameHeight := FSettings.ScanAtlasFrameHeight;
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    Root := OSFriendlyPath(Dialog.Root);
+    FileName := Dialog.FileName;
+    FrameWidth := Dialog.FrameWidth;
+    FrameHeight := Dialog.FrameHeight;
+  finally
+    Dialog.Free;
+  end;
+  FSettings.ScanAtlasRoot := Root;
+  FSettings.ScanAtlasFileName := FileName;
+  FSettings.ScanAtlasFrameWidth := FrameWidth;
+  FSettings.ScanAtlasFrameHeight := FrameHeight;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  StartAtlasTreeScan(Root, FileName, FrameWidth, FrameHeight);
+  {$ENDIF}
+end;
+
+// As StartAtlasScan: the tree is searched and the sheets read on a worker
+// thread, which hands its results back through QueueAtlasTreeResults
+procedure TMainForm.StartAtlasTreeScan(const ARoot, AFileName: String; const AFrameWidth,
+  AFrameHeight: Integer);
+var
+  Root, FileName: String;
+  FrameWidth, FrameHeight: Integer;
+begin
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Root := ARoot;
+  FileName := AFileName;
+  FrameWidth := AFrameWidth;
+  FrameHeight := AFrameHeight;
+  FToolScanning := True;
+  UpdateToolItems;
+  DebugMemo.Lines.Add(Format('Scan Atlas Folders: every %s below %s, frames of %d x %d',
+    [FileName, Root, FrameWidth, FrameHeight]));
+  TTask.Run(
+    procedure
+    var
+      Scans: TArray<TSprite3DSpriteScan>;
+      Error: String;
+    begin
+      Scans := nil;
+      Error := String.Empty;
+      try
+        Scans := ScanAtlasTree(Root, FileName, FrameWidth, FrameHeight,
+          function: Boolean
+          begin
+            Result := MainFormGone;
+          end,
+          procedure(const AName: String; const AIndex, ACount: Integer)
+          begin
+            QueueToolProgress('Scan Atlas Folders', AName, AIndex, ACount);
+          end);
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      if not MainFormGone then
+        QueueAtlasTreeResults(Scans, Root, FileName, Error);
+    end);
+end;
+
+procedure TMainForm.QueueAtlasTreeResults(const AScans: TArray<TSprite3DSpriteScan>;
+  const ARoot, AFileName, AError: String);
+var
+  Scans: TArray<TSprite3DSpriteScan>;
+  Root, FileName, Error: String;
+begin
+  Scans := AScans;
+  Root := ARoot;
+  FileName := AFileName;
+  Error := AError;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        FinishAtlasTreeScan(Scans, Root, FileName, Error);
+    end);
+end;
+
+procedure TMainForm.FinishAtlasTreeScan(const AScans: TArray<TSprite3DSpriteScan>;
+  const ARoot, AFileName, AError: String);
+var
+  Scan: TSprite3DSpriteScan;
+begin
+  FToolScanning := False;
+  if AError <> String.Empty then
+  begin
+    DebugMemo.Lines.Add('Scan Atlas Folders stopped: ' + AError);
+    ShowToolResults(EmptyScanTable, 'Scan Atlas Folders stopped: ' + AError);
+    Exit;
+  end;
+  if Length(AScans) = 0 then
+  begin
+    DebugMemo.Lines.Add(Format('Scan Atlas Folders: no %s below %s', [AFileName, ARoot]));
+    ShowToolResults(EmptyScanTable, Format('Scan Atlas Folders found no file named %s ' +
+      'below %s.', [AFileName, ARoot]));
+    Exit;
+  end;
+  for Scan in AScans do
+    LogAtlasScan('Scan Atlas Folders', Scan);
+  ShowToolResults(AtlasTreeTable(AScans, ARoot, AFileName), String.Empty);
+end;
+
+procedure TMainForm.ShowToolResults(const ATable: TScanTable; const AFailure: String);
+begin
+  FToolResults := ATable;
+  FToolFailure := AFailure;
+  FToolResultsWaiting := True;
+  UpdateToolItems;
+  ShowPendingToolResults;
+end;
+
+function TMainForm.ToolResultsBlocked: Boolean;
+begin
+  Result := Capturing or FAtlasSaving or FQueueActive or FScanning or
+    (FLoadStage <> lsNone) or (FLoadDialog <> nil);
+end;
+
+procedure TMainForm.ShowPendingToolResults;
+var
+  Table: TScanTable;
+  Failure: String;
+  Dialog: TSpriteScanForm;
+begin
+  if not FToolResultsWaiting or MainFormGone then
+    Exit;
+  if ToolResultsBlocked then
+  begin
+    // Tried again every half second until nothing has a dialog up
+    if FToolTimer = nil then
+    begin
+      FToolTimer := TTimer.Create(Self);
+      FToolTimer.Interval := 500;
+      FToolTimer.OnTimer := ToolTimerTick;
+    end;
+    if not FToolTimer.Enabled then
+      DebugMemo.Lines.Add('Tools: the results will show once loading or exporting has ' +
+        'finished');
+    FToolTimer.Enabled := True;
+    Exit;
+  end;
+  if FToolTimer <> nil then
+    FToolTimer.Enabled := False;
+  Table := FToolResults;
+  Failure := FToolFailure;
+  FToolResults := EmptyScanTable;
+  FToolFailure := String.Empty;
+  FToolResultsWaiting := False;
+  UpdateToolItems;
+
+  if Failure <> String.Empty then
+  begin
+    ShowMessage(Failure);
+    Exit;
+  end;
+  // The Tools menu is desktop only, so the dialog can block
+  Dialog := TSpriteScanForm.Create(nil);
+  try
+    Dialog.SetTable(Table);
+    Dialog.ShowModal;
+  finally
+    Dialog.Free;
+  end;
+end;
+
+procedure TMainForm.ToolTimerTick(Sender: TObject);
+begin
+  ShowPendingToolResults;
+end;
 
 // The search runs on a worker thread, into a list of its own; the result is
 // handed back to the main thread, which then opens the files. The window

@@ -30,7 +30,10 @@
 //** CurrentLibrary is the copy downloaded before, if it is still there. Start then fetches the
 //** list in the background. If its best entry is the address the copy came from, nothing more
 //** is done; otherwise the new library is downloaded and, once checked, replaces the old copy,
-//** which is deleted then or, if it is still in use, the next time.
+//** which is deleted then or, if it is still in use, the next time. Each copy's file name
+//** carries a short hash of its address, such as @code(openh264-2.7.0-win64-1a2b3c4d.dll), so
+//** a copy from a new address never needs the name of one that is loaded, even when both
+//** addresses end in the same file name.
 //**
 //** Downloads may be plain or compressed with bzip2 (@code(.bz2), as Cisco publishes OpenH264)
 //** or gzip (@code(.gz)), told apart by their first bytes. The compressed file is streamed to
@@ -79,7 +82,9 @@ unit Sprite3DLibraryUpdate;
   still there. Start then fetches the list in the background. If its best
   entry is the address the copy came from, nothing more is done; otherwise
   the new library is downloaded and, once checked, replaces the old copy,
-  which is deleted then or, if it is still in use, the next time.
+  which is deleted then or, if it is still in use, the next time. Each
+  copy's file name carries a short hash of its address, so a copy from a new
+  address never needs the name of one that is loaded.
 
   Downloads may be plain or compressed with bzip2 (.bz2, as Cisco publishes
   OpenH264) or gzip (.gz), told apart by their first bytes. The compressed
@@ -200,7 +205,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, System.ZLib, System.Math, System.Net.HttpClient,
+  System.IOUtils, System.JSON, System.ZLib, System.Math, System.Hash, System.Net.HttpClient,
   System.Net.URLClient, System.RegularExpressions, System.Generics.Collections,
   Sprite3DNativeLibs, Sprite3DBzip2, OSPaths, JsonText;
 
@@ -406,7 +411,7 @@ end;
 
 { Files }
 
-// The file name the library is saved under: the last part of the address,
+// The library's file name as its address gives it: the last part of the address,
 // without a query or a compression extension, made safe for every platform
 function FileNameFromUrl(const AUrl: String): String;
 const
@@ -489,6 +494,22 @@ begin
   finally
     Unzip.Free;
   end;
+end;
+
+// The file name a download from AUrl is saved under: FileNameFromUrl's,
+// with the first 8 hex digits of the address's SHA-256 before its extension,
+// such as openh264-2.7.0-win64-1a2b3c4d.dll. A copy from another address so
+// never has the name of the one installed, which on Windows is loaded and
+// cannot be deleted or replaced; it is left for DeleteStale to clear once
+// it is no longer in use
+function InstalledFileName(const AUrl: String): String;
+var
+  Name, Extension: String;
+begin
+  Name := FileNameFromUrl(AUrl);
+  Extension := ExtractFileExt(Name);
+  Result := ChangeFileExt(Name, String.Empty) + '-' +
+    THashSHA2.GetHashString(AUrl).Substring(0, 8).ToLower + Extension;
 end;
 
 // Deletes every file in AFolder but AKeep and installed.json; files still
@@ -674,7 +695,7 @@ begin
 
   // The library: the download streamed to disk, then unpacked from there,
   // under temporary names, so a half-written file is never taken for it
-  Target := TPath.Combine(FFolder, FileNameFromUrl(Choice.Url));
+  Target := TPath.Combine(FFolder, InstalledFileName(Choice.Url));
   Part := Target + PART_SUFFIX;
   Download := Target + DOWNLOAD_SUFFIX;
   try
@@ -724,8 +745,15 @@ begin
         [FName, Choice.Url]);
       Exit;
     end;
+    // A copy of this name is from this same address, so installed.json was
+    // lost; if it is loaded and cannot go, the new one takes a name of its own
     if TFile.Exists(Target) then
-      TFile.Delete(Target);
+      try
+        TFile.Delete(Target);
+      except
+        Target := TPath.Combine(FFolder, ChangeFileExt(ExtractFileName(Target),
+          String.Empty) + FormatDateTime('-yyyymmddhhnnss', Now) + ExtractFileExt(Target));
+      end;
     TFile.Move(Part, Target);
     Installed := TJSONObject.Create;
     try

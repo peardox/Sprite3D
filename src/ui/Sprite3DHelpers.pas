@@ -288,6 +288,8 @@ type
     //** @abstract(Whether grabs, icons and exports draw the grid, axes and Model Volume the
     //** View menu shows.)
     HelpersInOutput: Boolean;
+    //** @abstract(Whether Cisco's OpenH264 is downloaded and used for H.264 MP4 video.)
+    UseOpenH264: Boolean;
     //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
     //** kept.)
     MaxViewFps: Integer;
@@ -388,6 +390,8 @@ type
     FAnimationFps: Integer;
     FViewFps: Integer;
     FMinifyJson: Boolean;
+    //** Whether OpenH264 may be used; see UseOpenH264.
+    FUseOpenH264: Boolean;
     FDirectionCount: Integer;
     FDirectionStart: Single;
     FDirectionClockwise: Boolean;
@@ -407,6 +411,17 @@ type
     FLastExportFolder: String;
     FOpenDirectoryFolder: String;
     FOpenDirectorySpec: String;
+    //** Tools, Scan Sprites' folder; see ScanSpritesFolder.
+    FScanSpritesFolder: String;
+    //** Tools, Scan Atlas' folder and frame size; see ScanAtlasFolder, ScanAtlasFrameWidth
+    //** and ScanAtlasFrameHeight.
+    FScanAtlasFolder: String;
+    FScanAtlasFrameWidth: Integer;
+    FScanAtlasFrameHeight: Integer;
+    //** Tools, Scan Atlas Folders' root and sheet name; see ScanAtlasRoot and
+    //** ScanAtlasFileName.
+    FScanAtlasRoot: String;
+    FScanAtlasFileName: String;
     FShowOverscanWarning: Boolean;
     FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
@@ -494,8 +509,8 @@ type
     //** @abstract(Whether debugging is on: DebugEnabled from settings.json, or DebugSwitch
     //** from the command line.)
     //**
-    //** While it is, File, Debug is offered, the Debug tab says so at start-up, and OpenH264
-    //** is neither fetched nor loaded.
+    //** While it is, File, Debug and the Debug tab are offered, and the Debug tab says so at
+    //** start-up. It makes no difference to OpenH264, which UseOpenH264 alone turns off.
     //**
     //** @returns(True if either is set.)
     function DebugActive: Boolean;
@@ -754,6 +769,13 @@ type
     //** included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes follows,
     //** settings.json itself among them.
     property MinifyJson: Boolean read FMinifyJson write SetMinifyJson;
+    //** @abstract(Whether Cisco's OpenH264 is downloaded and used for H.264 MP4 video; True by
+    //** default.)
+    //**
+    //** Set in File, Settings, as Cisco's licence for its binary asks that the user can turn
+    //** it off and on again. Off, the list of downloads is not fetched, nothing is downloaded
+    //** or loaded, and MP4 files are MPEG-4 Part 2. Stored as @code(useOpenH264).
+    property UseOpenH264: Boolean read FUseOpenH264 write FUseOpenH264;
     //** @abstract(How many directions Models, Directions has around its compass;
     //** DIRECTION_COUNT_DEFAULT by default.)
     //**
@@ -854,6 +876,36 @@ type
     //** Stored as @code(openDirectorySpec). One or more patterns, such as @code(*.glb) or
     //** @code(*.glb;*.gltf); see SplitFileSpec in Sprite3DFileSearch.
     property OpenDirectorySpec: String read FOpenDirectorySpec write FOpenDirectorySpec;
+    //** @abstract(Where Tools, Scan Sprites' folder dialog opens: the folder above the last
+    //** folders scanned; empty until it has been used.)
+    //**
+    //** Stored as @code(scanSpritesFolder).
+    property ScanSpritesFolder: String read FScanSpritesFolder write FScanSpritesFolder;
+    //** @abstract(Where Tools, Scan Atlas' file dialog opens: the folder the last sheets
+    //** were added from; empty until it has been used.)
+    //**
+    //** Stored as @code(scanAtlasFolder).
+    property ScanAtlasFolder: String read FScanAtlasFolder write FScanAtlasFolder;
+    //** @abstract(The frame width Tools, Scan Atlas last used, in pixels; 64 by default.)
+    //**
+    //** Stored as @code(scanAtlasFrameWidth).
+    property ScanAtlasFrameWidth: Integer read FScanAtlasFrameWidth
+      write FScanAtlasFrameWidth;
+    //** @abstract(The frame height Tools, Scan Atlas last used, in pixels; 64 by default.)
+    //**
+    //** Stored as @code(scanAtlasFrameHeight).
+    property ScanAtlasFrameHeight: Integer read FScanAtlasFrameHeight
+      write FScanAtlasFrameHeight;
+    //** @abstract(The folder Tools, Scan Atlas Folders last searched below; empty until it
+    //** has been used.)
+    //**
+    //** Stored as @code(scanAtlasRoot). The frame size is shared with Scan Atlas.
+    property ScanAtlasRoot: String read FScanAtlasRoot write FScanAtlasRoot;
+    //** @abstract(The sheet's file name Tools, Scan Atlas Folders last searched for;
+    //** @code(Spritesheet.png) by default.)
+    //**
+    //** Stored as @code(scanAtlasFileName).
+    property ScanAtlasFileName: String read FScanAtlasFileName write FScanAtlasFileName;
     //** @abstract(Whether ticking Overscan in Models, Animation Settings first warns how
     //** much longer rendering takes; True by default.)
     //**
@@ -1655,6 +1707,13 @@ begin
   FLastExportFolder := String.Empty;
   FOpenDirectoryFolder := String.Empty;
   FOpenDirectorySpec := '*.glb';
+  FScanSpritesFolder := String.Empty;
+  FScanAtlasFolder := String.Empty;
+  FScanAtlasFrameWidth := 64;
+  FScanAtlasFrameHeight := 64;
+  FScanAtlasRoot := String.Empty;
+  FUseOpenH264 := True;
+  FScanAtlasFileName := 'Spritesheet.png';
   FShowOverscanWarning := True;
   FShowExactWarning := True;
   FResultsShowGrid := True;
@@ -2915,6 +2974,7 @@ begin
   Result.MinifyJson := ASettings.MinifyJson;
   Result.ResultsEdgeHint := ASettings.ResultsEdgeHint;
   Result.HelpersInOutput := ASettings.HelpersInOutput;
+  Result.UseOpenH264 := ASettings.UseOpenH264;
   // The caller knows the display; until it says, at least the rate in use
   Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then

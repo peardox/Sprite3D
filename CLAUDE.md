@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 9 November 2026, 23:00.
+Last updated: 10 November 2026, 10:15.
 
 ## Starting a new conversation
 
@@ -443,12 +443,6 @@ When the owner reports a result, note it here.
   `panZ`, from when they moved the camera along the model's axes) was
   offered with ShiftRise1 and not answered. The README now names the keys
   without the history. If they are renamed, read the old keys too.
-- `notes/cisco.md`: the owner will point `openh264.json`'s entries at
-  Cisco's own downloads, as copies served from sprite3d.com are not under
-  Cisco's patent cover. The note says what the client needs first (the
-  same-name replace, review item 8; optionally a `sha256` check, item 9)
-  and which documents follow (`docs/licences-required.md`, the README's
-  OpenH264 text).
 - Other platforms have not seen the 9 November work: macOS (grabs are
   screenshots there), Linux (the Oblique submenu on the FMX menu bar, the
   Background dialog's file dialog) and mobile (the drawer's "View,
@@ -479,8 +473,8 @@ When the owner reports a result, note it here.
   `AnimationListToJson` saves the first animation's frame override too
   (test: type a count for the first animation, restart, it must still
   be there). Item 5 (GIF LZW) was withdrawn as
-  wrong. Items 8 and 9 (the OpenH264 downloader) wait for the Cisco
-  change. To test Fixes1: start a strip export, close the window, answer
+  wrong. Item 8 (the OpenH264 downloader's same-name replace) was fixed
+  by Cisco1; item 9 is in part met by the list's https addresses. To test Fixes1: start a strip export, close the window, answer
   Yes (it must quit); open a folder of many models and drop a model on
   the window while the count is rising (it must load after the folder);
   open several files at once with one missing (the rest must load); an
@@ -494,9 +488,171 @@ When the owner reports a result, note it here.
   out, though its comments, the README and this file's Gorilla3D notes
   say it is set. Ask whether to turn it on or correct the descriptions.
 
+### In hand: the Tools menu (from 9 November 2026, evening)
+
+**MergeMain1** (23:00): the Tools work, on `external-edges` up to
+`448eb6c` "Tools1" (ScanSprites1 to ScanAtlas3 and the owner's `data/`
+files), merged into `main` `50e4711` "Fixed per code review" (Fixes1 and
+Fixes2). The code merged without conflicts (`Sprite3dMain.pas` and
+`Sprite3DHelpers.pas` were changed on both sides, in different places).
+`notes/code-review.md` is `main`'s, which records the fixes; the Tools
+entries were added to `main`'s README and this file. Work goes on from
+this merge; where it is committed is the owner's choice.
+
+The owner is building a **Tools** menu, last on the menu bar, desktop only
+(freed in `FormCreate` on Android and iOS before the drawer is built, so
+`ToolsMenu` and `ScanSpritesItem` are nil there). Its first item:
+
+- **ScanSprites1** (20:10, not yet tested): Tools, Scan Sprites... measures
+  a sprite made elsewhere, to be replaced by one of Sprite3D's: one folder
+  of PNG frames per animation, the folder's own name as the reference.
+  New units: `lib/Sprite3DPngReader.pas` (pure-Pascal PNG reader, every
+  colour type and depth, Adam7, tRNS; worker-thread safe, as FMX bitmaps
+  are kept to the main thread), `lib/Sprite3DFolderDialog.pas`
+  (`SelectFolders`: `IFileOpenDialog` with `FOS_PICKFOLDERS or
+  FOS_ALLOWMULTISELECT` on Windows, `NSOpenPanel` on macOS, FMX's
+  single-folder dialog on Linux), `lib/Sprite3DSpriteScan.pas`
+  (`SpriteFolders`, `ScanSpriteFolder`: `MeasureFrameEmpty` per frame,
+  `LeastFrameEmpty` over the folder, content box, coverage = active pixels
+  / content box, min, mean, max), `ui/Sprite3DSpriteScanForm.pas` (grid,
+  Copy as TSV). Setting `scanSpritesFolder`. The owner said "a decision will
+  be made later" on what to do with the coverage figures; the next Tools
+  items will build on these scans.
+
+- **ScanSprites2** (20:35, follows ScanSprites1, which the owner pushed as
+  `a60fa93` "Tools1" on the branch `external-edges`, where work now goes;
+  the first scan worked on Windows, 5 animations of 154 x 154):
+  `CombineSpriteScans` takes the least of each side over every folder (the
+  owner: as with our own sprites, each edge's minimum may come from a
+  different animation) and works every frame's coverage out again against
+  that shared content box; a last row, `(all animations)`
+  (`SPRITE_SCAN_COMBINED_NAME`, `Combined` True). Folders of different frame
+  sizes are not combined; the last row says so.
+
+- **ScanSprites3** (21:00, follows ScanSprites2; owner, 20:57): every
+  frame of every folder must be exactly the same size or the scan FAILS
+  (`SizeMismatch`, message naming two frames, no grid). The
+  `(all animations)` row is gone; `CombineSpriteScans` still gives the
+  shared box, shown above the grid and on Copy's last line. Columns:
+  Animation, Frames, Frame size, Left, Top, Right, Bottom, Width, Height
+  (the folder's own content box; Left and Top are its offset), Cover (the
+  highest coverage, of the shared box). The mean and min coverage are no
+  longer shown (still in `TSprite3DSpriteScan`).
+
+- **ScanAtlas1** (21:30, follows ScanSprites4; owner, 21:23): Tools, Scan
+  Atlas... (`ScanAtlasItem`): `TScanAtlasForm` asks for the frame size and
+  the PNG sheets (one atlas, possibly several sheets); `ScanAtlas` in
+  `Sprite3DSpriteScan` cuts each sheet into frames (`MeasureCell`), counts
+  empty cells as `UnusedFrames` and leaves them out, combines the rest with
+  `LeastFrameEmpty`, coverage of that box with min, median
+  (`CoverageMedian`, the owner's "mid") and max. A sheet not a whole number
+  of frames, or unreadable, fails the scan. One row for the atlas; the
+  owner has lists of which frames are which animation, for a later
+  analysis. The results dialog is now generic (`TScanTable`,
+  `SpriteScanTable`, `AtlasScanTable`, `EmptyScanTable`) and the main
+  form's machinery is shared (`FToolScanning`, `ShowToolResults`,
+  `ShowPendingToolResults`, `UpdateToolItems`). Settings
+  `scanAtlasFolder`, `scanAtlasFrameWidth`, `scanAtlasFrameHeight`.
+
+- **ScanAtlas2** (21:45, follows ScanAtlas1; owner, 21:37): Saving column,
+  the perfect-packing limit `1 - ActivePixels / SheetPixels`
+  (`PackingSaving`); `AtlasScanPackingText` gives the totals and the side
+  of a square holding the drawn pixels, on Copy's last line and in Debug.
+
+- **ScanAtlas3** (21:50, follows ScanAtlas2): Trim saving column,
+  `1 - TrimmedPixels / SheetPixels`, every used frame trimmed to its own
+  tight box (`TrimSaving`); its totals join `AtlasScanPackingText`.
+
+- **ScanAtlasFolders1** (23:05, follows MergeMain1, which tested well;
+  owner, 22:59): Tools, Scan Atlas Folders... (`ScanAtlasFoldersItem`,
+  `TScanAtlasFoldersForm`): a root, a sheet file name (default
+  `Spritesheet.png`) and the frame size; `ScanAtlasTree` finds every copy
+  below the root (`FindAtlasSheets`, recursive `FindFiles`) and runs
+  `ScanAtlas` on each as a one-sheet atlas, Name = folder relative to the
+  root (`AtlasRelativeFolder`). One row per sheet (`AtlasTreeTable`); a
+  failing sheet fails only its row. New Packed column on both atlas tables:
+  `AtlasPackedSide` = ceil(sqrt(TrimmedPixels)), the owner's "sqrt(total
+  area)" for a rectangle-packed sheet. The owner: semi-transparent pixels
+  are shadow and count; only alpha 0 is empty, as already. Settings
+  `scanAtlasRoot`, `scanAtlasFileName`. `LogAtlasScan` shared.
+
+- **DebugTools1** (10 November, 09:20; owner, 09:19): the Tools menu now
+  lives in File, Debug (`BuildDebugMenu` moves `ToolsMenu` there, or frees
+  it when debugging is off and always on Android and iOS; the FormCreate
+  mobile free is gone). File, Debug is inserted above `FileSeparatorItem`
+  and has no separator of its own: `FDebugSeparator` is gone, as it put
+  two separators together above Exit. `ToolsMenu` is still designed at the
+  top level of the menu bar in the .fmx.
+
+- **DebugTab1** (10 November, 09:40; owner, 09:37): the Debug tab is
+  shown only while debugging is on (`BuildDebugMenu` sets
+  `DebugTab.Visible`; Disable Debug hides it, moving to the model tab
+  first with `SelectModelTabOnly(FStaticMode)`). DebugMemo is still
+  written to while hidden. The owner also asked to check the OpenH264
+  JSON against Cisco's licence and, if it complies, remove the Cisco
+  items: the JSON could not be fetched from the sandbox (proxy 403), and
+  Cisco's binary licence has three more conditions the program does not
+  meet yet (user enable/disable, the "OpenH264 Video Codec provided by
+  Cisco Systems, Inc." text, the licence text reproduced); see Cisco1.
+
+- **Cisco1** (10 November, 09:55; owner, 09:44): OpenH264 now meets all
+  four conditions of Cisco's binary licence. The list (`openh264.json`,
+  attached by the owner at 09:41) points every entry at
+  `https://ciscobinary.openh264.org/`; the owner was told its `win64arm`
+  entry named the plain ARM64 build, which ARM64EC cannot load; the owner
+  changed it to the win64 file (10 November, 10:06). Settings, MP4 video: `OpenH264Check` ("Use OpenH264
+  for H.264 MP4 video", `useOpenH264`, default on), `OPENH264_NOTICE`
+  beside it, and Cisco Licence... showing `OpenH264BinaryLicence`
+  (`lib/Sprite3DCiscoLicence.pas`, generated from
+  `licences/OpenH264-BINARY_LICENSE.txt`, Cisco's v1.0 text from the
+  openh264.org site's source, `gh-pages` of cisco/openh264; check the
+  generated text against the file if either changes).
+  `SetOpenH264Enabled` in `Sprite3DOpenH264` gates `OpenH264Available` and
+  `OpenH264Retry`; off at start-up, `PrepareOpenH264` fetches nothing.
+  Review item 8 fixed: downloads are saved as `InstalledFileName`, the
+  URL's name with 8 hex digits of its SHA-256 before the extension.
+  `notes/cisco.md` removed, its work done. The BSD notice for the
+  translated OpenH264 headers is a separate, still-open item in
+  `docs/licences-required.md` (Notices still to add).
+
+- **DebugH264** (10 November, 10:00; owner, 09:59): debugging no longer
+  turns OpenH264 off. `PrepareOpenH264` exits only on iOS, when
+  `useOpenH264` is off, or when already prepared; the start-up and
+  Disable Debug lines no longer mention OpenH264.
+
+- **Licences1** (10 November, 10:15; owner, 10:09: "make the licence text
+  files part of the executable so I won't forget to include them"; the
+  owner packages the FFmpeg DLLs and models/uvcube.glb themselves). Every
+  third-party licence or notice is a text file in the root `licences/`
+  folder, named in `licences/Sprite3DLicences.rc` as RCDATA
+  (`LICENCE_OPENH264_BINARY`, `_OPENH264_BSD`, `_FFMPEG`, `_LGPL21`,
+  `_DELPHIFFMPEG`, `_NEON`), compiled by `licences/buildlicences.cmd`,
+  which `src/styles/buildstyles.cmd` now calls at its end (so no
+  PreBuildEvent change), and linked by `{$R '..\licences\Sprite3DLicences.res'}`
+  in the .dpr. A ready-built `Sprite3DLicences.res` was delivered,
+  written to brcc32's layout (flags $0030, language $0809, names upper
+  case) and checked by reading it back. `lib/Sprite3DLicences.pas`
+  (`ThirdPartyLicences`, `LicenceText` via `TResourceStream` with
+  `PChar(10)`, `AllLicencesText`, `OPENH264_NOTICE`) replaces
+  `Sprite3DCiscoLicence.pas`, deleted. `ui/Sprite3DLicencesForm`: File,
+  Licences... (`LicencesMenuItem`), a combo and a memo, Save All... writing
+  `THIRD-PARTY-NOTICES.txt` (UTF-8, no BOM); Settings' Cisco Licence...
+  opens it at Cisco's. `Sprite3DOpenH264.pas` carries Cisco's full 2013
+  BSD text in a comment. Sources of the texts: Cisco's `LICENSE` (master)
+  and `BINARY_LICENSE.txt` (gh-pages), Neon's `LICENSE` at the submodule's
+  commit, FFmpeg `n8.1`'s `COPYING.LGPLv2.1`, `src/ffmpeg/LICENSE.txt`;
+  `FFmpeg-NOTICE.txt` was written here (says LGPL build, version 8.1:
+  the owner is to check the DLL pack's version and configuration).
+  FastMM5's notice waits on the owner's choice of its licence.
+
+To check when the owner reports: the multi-select dialog on Windows and
+macOS (the macOS one uses `setMessage` and `setDirectoryURL` from
+`Macapi.AppKit`, unbuilt); the figures against frames whose borders are
+known; a folder of mixed sizes; the grid waiting while a model loads.
+
 ### Not yet chosen
 
-Nothing is in hand. What the owner has mentioned: the rest of
+What the owner has mentioned: the rest of
 `TSpritelyProjection` in Sprite3D (the dolly zoom; shift and rise are
 done); the background image in animation exports, and scaling it by hand
 (left out of Background1 on purpose); the Variable dialog's placement and
@@ -656,5 +812,10 @@ These cost time once.
   overloaded version of ... that can be called with these arguments"
   (E2250) for every anonymous method later in the unit. Fix the first error
   before looking at those.
+- **`Default(...)` does not compile in `Sprite3dMain.pas`**: Gorilla.DefTypes
+  has an enumeration value named `Default`, which hides the intrinsic
+  (E2066, E2029, "Incompatible types: ... and 'TGorillaOAuthMode'", then
+  spurious E2250s). Set the fields, or use a helper such as
+  `EmptySpriteScan` from a unit that does not use Gorilla (ScanSprites4).
 - Run Linux builds from a terminal when testing: GTK writes its warnings
   there, and the IDE does not show them.

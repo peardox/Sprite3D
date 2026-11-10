@@ -1,8 +1,14 @@
 # Licences required
 
 What the third-party parts of Sprite3D and Spritely ask of anyone who builds
-or distributes them, as of 9 November 2026. This is a map of what to check,
+or distributes them, as of 10 November 2026. This is a map of what to check,
 not legal advice.
+
+The licences and notices a release must carry are text files in
+`licences/`, linked into the program as RCDATA resources
+(`licences/Sprite3DLicences.rc`, compiled by the pre-build step), so every
+build carries them. **File, Licences...** shows them, and its **Save All...**
+writes them to one `THIRD-PARTY-NOTICES.txt` to ship beside the program.
 
 ## FastMM5: GPL v3, or a commercial licence
 
@@ -28,7 +34,8 @@ Neon (the `delphi-neon` submodule, <https://github.com/paolo-rossi/delphi-neon>)
 Copyright (c) 2015 Paolo Rossi, reads and writes `settings.json`.
 
 - Keep its copyright and licence notice with every copy; for a binary, in its
-  documentation or About box.
+  documentation or About box. **Done:** `licences/Neon-LICENSE.txt`, in File,
+  Licences.
 
 ## FFmpeg headers: BSD-style
 
@@ -37,31 +44,39 @@ unchanged and not compiled in; `src/lib/Sprite3DVideo.pas` copies the few
 records and constants it needs from them.
 
 - The notice in `src/ffmpeg/LICENSE.txt` stays with the source.
-- Binaries reproduce it in their documentation.
+- Binaries reproduce it in their documentation. **Done:**
+  `licences/DelphiFFmpeg-LICENSE.txt`, a copy, in File, Licences.
 
 ## OpenH264 declarations: BSD 2-clause
 
 `src/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API
 headers, Copyright (c) 2013, Cisco Systems.
 
-- The notice stays with the source.
-- Binaries reproduce it in their documentation.
+- The notice stays with the source: the unit reproduces it in full.
+- Binaries reproduce it in their documentation. **Done:**
+  `licences/OpenH264-BSD-LICENSE.txt`, from Cisco's `LICENSE`, in File,
+  Licences.
 
 ## OpenH264 library: Cisco's binary licence, and where it comes from
 
-Cisco pays the H.264 patent royalties only for copies of its OpenH264 binary
-downloaded directly from Cisco. Sprite3D never ships the library: it downloads
-it at run time from the addresses in the list at
-`https://sprite3d.com/openh264/openh264.json`.
+Cisco's OpenH264 binary is covered by Cisco's AVC/H.264 patent licence from
+MPEG LA, at no cost, if four conditions are met. Sprite3D never ships the
+library, and meets each one:
 
-- **To change:** the list's entries point at files hosted on sprite3d.com. A
-  copy served from there is not covered by Cisco's patent licence, which would
-  make sprite3d.com the distributor of an H.264 encoder without that cover.
-  Point every entry at Cisco's own downloads
-  (`https://ciscobinary.openh264.org/...`), which publishes the same `.bz2`
-  files; Sprite3D reads any address, so no code changes. (Owner, 9 November
-  2026: the addresses will be changed to Cisco's.)
-- Users receive the library under Cisco's binary licence, from Cisco.
+1. **Downloaded separately, from Cisco, to the user's device.** Every address
+   in the list at `https://sprite3d.com/openh264/openh264.json` is Cisco's own
+   (`https://ciscobinary.openh264.org/...`), and Sprite3D downloads it at run
+   time.
+2. **The user can enable, disable and re-enable it.** File, Settings..., MP4
+   video, **Use OpenH264 for H.264 MP4 video** (`useOpenH264`).
+3. **"OpenH264 Video Codec provided by Cisco Systems, Inc."** is shown beside
+   that tick box.
+4. **The licence text is reproduced** where licensing information is shown:
+   **Cisco Licence...** beside the tick box shows it in full, and
+   [licences/OpenH264-BINARY_LICENSE.txt](../licences/OpenH264-BINARY_LICENSE.txt)
+   holds it, word for word from openh264.org (v1.0).
+
+Users receive the library under Cisco's binary licence, from Cisco.
 
 ## FFmpeg libraries: LGPL
 
@@ -71,12 +86,17 @@ LGPL for the builds used. Sprite3D loads them at run time if present and never
 links against them, which is the simple way to meet the LGPL. Anyone shipping
 them still needs to:
 
-- ship the LGPL text, and say the libraries are FFmpeg's;
-- say where their source is, for the exact version, or offer it;
+- ship the LGPL text, and say the libraries are FFmpeg's (**done:**
+  `licences/LGPL-2.1.txt`, FFmpeg 8.1's `COPYING.LGPLv2.1`, and
+  `licences/FFmpeg-NOTICE.txt`, both in File, Licences);
+- say where their source is, for the exact version, or offer it (**done**
+  in `FFmpeg-NOTICE.txt`, for 8.1: if the DLL pack is a point release such
+  as 8.1.2, change the version and the addresses there);
 - leave users able to replace them with their own builds (separate shared
   libraries already allow this);
 - use builds configured without `--enable-gpl` or `--enable-nonfree`, or the
-  LGPL no longer applies.
+  LGPL no longer applies. `FFmpeg-NOTICE.txt` says they are; check the DLL
+  pack's builds really are (`ffmpeg -version` lists the configuration).
 
 ## Gorilla3D: commercial
 
@@ -105,12 +125,7 @@ the code can be read on GitHub, but nobody has the right to reuse it.
 
 ## Notices still to add
 
-None of these notices is in the program or its documentation yet:
-
-- Neon's MIT notice;
-- the DelphiFFmpeg.com BSD notice;
-- Cisco's BSD notice for the OpenH264 declarations;
-- for builds shipped with the DLL pack, the LGPL text and FFmpeg's source
-  details.
-
-An About box, or a notices file shipped beside the program, would carry them.
+Every notice above is in File, Licences. FastMM5's is not: what it needs
+depends on the licence chosen for it (see FastMM5 above). Under the
+commercial licence nothing is needed; under the GPL v3, Sprite3D's own
+licence and the GPL text would join the list.

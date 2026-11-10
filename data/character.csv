@@ -1,0 +1,74 @@
+# Code, Desc, Directions, Files, xspr, yspr, sheetcount, totalrows, totalsprites, totalfree
+"CharacterNew","", "Direction8", 1,25,25,1,69,2496,4
+# Filename, rows, sprites,free
+"Spritesheet.png",69,2496,4
+# sprite rows start
+"walk",                   64,         "L",        8,       8
+"run",                    64,         "L",        8,       8
+"idle 1",                 40,         "L",        5,       8
+"idle 2",                 40,         "L",        5,       8
+"idle 3",                 40,         "L",        5,       8
+"idle 4",                 40,         "L",        5,       8
+"idle fidget 1",          24,        "SP",        3,       8
+"idle fidget 2",          24,         "S",        3,       8
+"idle fidget 3",          24,        "SP",        3,       8
+"talking 1",              40,         "L",        5,       8
+"talking 2",              40,         "L",        5,       8
+"interact",               40,         "S",        5,       8
+"use item",               24,         "S",        3,       8
+"sitting",                24,         "P",        3,       8
+"use item",               40,         "P",        5,       8
+"praying",                24,         "P",        3,       8
+"jump",                   40,         "S",        5,       8
+"sneaking",               64,         "L",        8,       8
+"crouch",                 24,         "P",        3,       8
+"casting",                24,         "S",        3,       8
+"down forward",           40,         "S",        5,       8
+"down backward",          40,         "S",        5,       8
+"down poses",             32,         "U",        4,       8
+"evade roll",             40,         "S",        5,       8
+"get hit 1",              24,         "S",        3,       8
+"get hit 2",              24,         "S",        3,       8
+"critical idle 1",        24,         "P",        3,       8
+"critical idle 2",        24,         "P",        3,       8
+"block",                  24,         "S",        3,       8
+"drink",                  24,        "SP",        3,       8
+"riding",                 24,        "UE",        3,       8
+"oneHanded walk",         64,         "L",        8,       8
+"oneHanded idle",         40,         "L",        5,       8
+"oneHanded attack 1",     24,         "S",        3,       8
+"oneHanded attack 2",     24,         "S",        3,       8
+"oneHanded attack 3",     24,         "S",        3,       8
+"oneHanded fidget",       24,        "SP",        3,       8
+"twoHanded walk",         64,         "L",        8,       8
+"twoHanded idle",         40,         "L",        5,       8
+"twoHanded run",          64,         "L",        8,       8
+"twoHanded attack 1",     24,         "S",        3,       8
+"twoHanded attack 2",     24,        "SO",        3,       8
+"dual wield walk",        64,         "L",        8,       8
+"dual wield idle",        40,         "L",        5,       8
+"dual wield attack 1",    24,         "S",        3,       8
+"dual wield attack 2",    24,         "S",        3,       8
+"dual wield fidget",      24,         "S",        3,       8
+"bow walk",               64,         "L",        8,       8
+"bow idle",               40,         "L",        5,       8
+"bow attack 1",           40,         "S",        5,       8
+"bow fidget",             24,         "P",        3,       8
+"unarmed idle",           40,         "L",        5,       8
+"unarmed attack 1",       40,         "S",        5,       8
+"unarmed attack 2",       24,        "SP",        3,       8
+"unarmed fidget",         24,         "S",        3,       8
+"polearm Staff walk",     64,         "L",        8,       8
+"polearm Staff run",      64,         "L",        8,       8
+"polearm Staff idle",     40,         "L",        5,       8
+"polearm Staff attack 1", 24,         "S",        3,       8
+"polearm Staff attack 2", 24,         "S",        3,       8
+"pistol walk",            64,         "L",        8,       8
+"pistol idle",            40,         "L",        5,       8
+"pistol attack 1",        24,         "S",        3,       8
+"pistol attack 2",        24,         "S",        3,       8
+"pistol fidget",          24,         "S",        3,       8
+"xbow Rifle walk",        64,         "L",        8,       8
+"xbow Rifle idle",        40,         "L",        5,       8
+"xbow Rifle attack 1",    24,         "S",        3,       8
+"xbow Rifle fidget",      24,         "S",        3,       8

@@ -9,14 +9,17 @@
 //** SetPreferredOpenH264 names the copy; OpenH264Available loads it the first time it is asked,
 //** if it is version 2.0 or later and has the encoder's entry points, and OpenH264Retry tries
 //** again after a download. No other folder, and no copy the system may have, is ever tried.
+//** SetOpenH264Enabled lets the user turn it off and on again, as Cisco's licence for its
+//** binary asks.
 //**
 //** TSprite3DH264Encoder then turns YUV 4:2:0 pictures into H.264 Annex B access units, ready
 //** for an MP4 muxer, with its parameter sets available separately for the MP4's header.
 //**
 //** The declarations used to call the library are translated from OpenH264's
 //** @code(codec_api.h), @code(codec_app_def.h) and @code(codec_def.h), Copyright @(c@) 2013,
-//** Cisco Systems, under the BSD 2-clause licence: redistributions of source must keep that
-//** notice and binaries must reproduce it in their documentation.
+//** Cisco Systems, under the BSD 2-clause licence, reproduced in full below the unit's
+//** heading as redistributions of source must keep it. Binaries reproduce it through File,
+//** Licences, from @code(licences/OpenH264-BSD-LICENSE.txt), linked into the program.
 //**
 //** For the main thread, or any one thread at a time.
 unit Sprite3DOpenH264;
@@ -36,6 +39,8 @@ unit Sprite3DOpenH264;
   time it is asked, if it is version 2.0 or later and has the encoder's
   entry points, and OpenH264Retry tries again after a download. No other
   folder, and no copy the system may have, is ever tried.
+  SetOpenH264Enabled lets the user turn it off and on again, as Cisco's
+  licence for its binary asks.
 
   TSprite3DH264Encoder then turns YUV 4:2:0 pictures into H.264 Annex B
   access units, ready for an MP4 muxer, with its parameter sets available
@@ -43,10 +48,41 @@ unit Sprite3DOpenH264;
 
   The declarations used to call the library are translated from OpenH264's
   codec_api.h, codec_app_def.h and codec_def.h, Copyright (c) 2013, Cisco
-  Systems, under the BSD 2-clause licence: redistributions of source must
-  keep that notice and binaries must reproduce it in their documentation.
+  Systems, under the BSD 2-clause licence, reproduced in full below as
+  redistributions of source must keep it. Binaries reproduce it through
+  File, Licences, from licences/OpenH264-BSD-LICENSE.txt, linked into the
+  program.
 
   For the main thread, or any one thread at a time.
+}
+
+{
+  The licence of OpenH264's codec_api.h, codec_app_def.h and codec_def.h,
+  from which the declarations below are translated:
+
+  Copyright (c) 2013, Cisco Systems
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification,
+  are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice, this
+    list of conditions and the following disclaimer in the documentation and/or
+    other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }
 
 interface
@@ -120,7 +156,8 @@ type
 //**
 //** The first call loads the copy SetPreferredOpenH264 named, if it is version 2.0 or later
 //** and has the encoder; later calls return the same answer at once. With no copy named, the
-//** answer is False. The library stays loaded until the program ends.
+//** answer is False. The library stays loaded until the program ends. While
+//** SetOpenH264Enabled has turned it off, the answer is False, and nothing is loaded.
 //**
 //** @returns(True if TSprite3DH264Encoder can be used.)
 function OpenH264Available: Boolean;
@@ -132,6 +169,21 @@ function OpenH264Available: Boolean;
 //**
 //** @param(APath The library's full path.)
 procedure SetPreferredOpenH264(const APath: String);
+
+//** @abstract(Lets the user's choice turn OpenH264 off and on again.)
+//**
+//** Cisco's licence for its binary asks that the user can enable, disable and re-enable its
+//** use. Turned off, OpenH264Available and OpenH264Retry answer False, so MP4 files are
+//** MPEG-4 Part 2; a copy already loaded stays loaded, as a library cannot be unloaded
+//** safely, but is not used. Turned on again, a loaded copy is used at once. On at first.
+//**
+//** @param(AEnabled False to stop using OpenH264, True to use it again.)
+procedure SetOpenH264Enabled(const AEnabled: Boolean);
+
+//** @abstract(Whether OpenH264 may be used: the last value SetOpenH264Enabled was given,
+//** True until it is called.)
+//** @returns(True if it may be used.)
+function OpenH264Enabled: Boolean;
 
 //** @abstract(Loads the named OpenH264 again unless a copy is already loaded.)
 //**
@@ -292,6 +344,10 @@ var
   // The only copy ever loaded; see SetPreferredOpenH264
   PreferredLibrary: String;
   LoadedLibrary: String;
+  // The user's choice, from SetOpenH264Enabled; and Status as it was when a
+  // copy loaded, to say again when it is turned back on
+  Enabled: Boolean = True;
+  LoadedStatus: String;
 
 { Loading }
 
@@ -393,6 +449,13 @@ var
   Reason: String;
   Version: TOpenH264Version;
 begin
+  // The user's choice comes first, and leaves Tried as it was, so turning
+  // it on again carries on as before
+  if not Enabled then
+  begin
+    Status := 'OpenH264 is turned off in Settings, so MP4 video is MPEG-4 Part 2';
+    Exit(False);
+  end;
   if Tried then
     Exit(Loaded);
   Tried := True;
@@ -420,6 +483,7 @@ begin
     LoadedLibrary := PreferredLibrary;
     Status := Format('OpenH264 %d.%d.%d loaded from %s; MP4 video is H.264',
       [Version.uMajor, Version.uMinor, Version.uRevision, PreferredLibrary]);
+    LoadedStatus := Status;
   end
   else
     Status := 'OpenH264 was downloaded but is not usable, so MP4 video is MPEG-4 Part 2: ' +
@@ -432,6 +496,19 @@ begin
   Result := Status;
 end;
 
+procedure SetOpenH264Enabled(const AEnabled: Boolean);
+begin
+  Enabled := AEnabled;
+  // Back on with a copy loaded: say so again rather than "turned off"
+  if Enabled and Loaded then
+    Status := LoadedStatus;
+end;
+
+function OpenH264Enabled: Boolean;
+begin
+  Result := Enabled;
+end;
+
 procedure SetPreferredOpenH264(const APath: String);
 begin
   PreferredLibrary := APath;
@@ -439,6 +516,8 @@ end;
 
 function OpenH264Retry: Boolean;
 begin
+  if not Enabled then
+    Exit(OpenH264Available);
   if Loaded then
     Exit(True);
   Tried := False;
