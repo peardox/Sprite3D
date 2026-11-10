@@ -100,14 +100,24 @@ type
     //** @param(Sender CancelButton.)
     procedure CancelButtonClick(Sender: TObject);
   private
+    //** The model's glTF tree; the caller's.
     FRoot: TglTF;
+    //** The ranges Split... checked.
     FRanges: TglTFAnimationRanges;
+    //** The folder Import list... opens in.
     FFolder: string;
+    //** AnimationCombo's index, which is the animation's.
     function GetAnimationIndex: Integer;
+    //** RateBox's value.
     function GetFrameRate: Double;
+    //** The chosen animation's length in seconds; 0 when none is chosen.
     function Duration: Double;
+    //** The chosen animation's last frame at the rate.
     function LastFrame: Integer;
+    //** Shows the frames and seconds the animation runs over.
     procedure ShowFrames;
+    //** Reads the grid's rows as ranges, skipping empty rows; False, with AProblem, when a
+    //** frame is not a whole number.
     function ReadRanges(out ARanges: TglTFAnimationRanges; out AProblem: string): Boolean;
   public
     //** @abstract(Lets the grid be edited.)

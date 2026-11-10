@@ -57,7 +57,9 @@ type
     //** @param(Sender CancelButton.)
     procedure CancelButtonClick(Sender: TObject);
   private
+    //** The options the boxes show.
     function GetOptions: TGltfExportOptions;
+    //** Ticks the boxes as AValue says.
     procedure SetOptions(const AValue: TGltfExportOptions);
   public
     //** @abstract(Lets SourceLabel wrap.)

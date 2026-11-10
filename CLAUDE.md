@@ -5,17 +5,19 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 10 November 2026, 11:15.
+Last updated: 10 November 2026, 15:55.
 
 ## Starting a new conversation
 
 1. Clone the repository with its submodules:
    `git clone --recurse-submodules https://github.com/peardox/Sprite3D.git`
-   (branch `main`). The submodules are `delphi-neon` and `FastMM5`.
+   (branch `main`). The submodules are `delphi-neon`, `FastMM5` and
+   `ImportTests/GLTFMerge` (GLTFLib; its own nested `delphi-neon` is not
+   needed, as Sprite3D's is used).
 2. Read the whole of `README.md`, then this file, then `Spritely/README.md`
    and `Spritely/NOTES.md` before touching anything in `Spritely/`. The
    design notes in `notes/` (`viewport.md`, `offscreen.md`, `volumes.md`,
-   `directions.md`, `metadata.md`) explain the harder parts;
+   `directions.md`, `metadata.md`, `imports.md`) explain the harder parts;
    read the one that covers what you are about to change.
 3. The owner's working copy is often ahead of GitHub. If the owner attaches
    or pastes files, build on those, not on GitHub. Anything delivered after
@@ -420,36 +422,40 @@ gone up.
 
 ## Where the work is
 
-### State (10 November 2026, 10:52)
+### State (10 November 2026, 15:55)
 
-**GitHub `main` is at `c2b9f2f`, "Merge branch 'external-edges'"
-(10 November, about 10:45), and is the owner's copy.** It merges
-`external-edges` (`873be04`, "Add some tools + fix licenses/h264": every
-zip from ScanSprites1 to Licences1) into `50e4711`, "Fixed per code
-review" (Fixes1 and Fixes2). The owner built and tested it at 10:51:
-"everything appears correct". There is one line of work again, no zip is
-outstanding, and a new session builds on `main`. `external-edges` is
-merged; nothing depends on it.
+**GitHub `main` is at `fc70295`, "Before ImportTests"** (the owner's push
+of the merged Tools work, `c2b9f2f`, plus USD1 and the
+`ImportTests/GLTFMerge` submodule, `58ac4f0`). Everything after it was
+delivered as zips, newest last, and committed locally in that session only
+(not pushed; a new session starts from GitHub, so ask what has been
+applied and pushed):
 
-How the merge went, for next time: the code-review fixes had reached
-`external-edges` on 9 November only as files unzipped from MergeMain1,
-not as a git merge, so git saw both branches change the `.md` files and
-the merge conflicted in `README.md`, `CLAUDE.md`, `notes/code-review.md`
-and `notes/cisco.md`. The branch's versions were right for the first three
-(they were written on top of `main`'s); `notes/cisco.md` and the unused
-`src/lib/Sprite3DCiscoLicence.pas`, which zips could not delete, were
-removed in the merge. MergeMain1 had also left out `Sprite3DVideo.pas`
-(unchanged from `main` at the time), so the branch lacked Fixes1's
-`av_write_trailer` change until this merge brought it in. Checked at
-10:47: `main` equals `external-edges` but for those three files, with no
-conflict markers, and every unit, form and resource the project names
-exists. When a branch needs another's changes, merge with git rather
-than unzipping files over it.
+| Zip | What | Applied | Tested |
+| --- | --- | --- | --- |
+| ImportTests1-8, 7b, 8b | the ImportTests program, its exporter, skins and animations | yes | yes: GLB, glTF, FBX, USD and the parrot, see below |
+| ImportTests6, Notes2, Notes3 | `notes/imports.md` for Gorilla3D's author | yes | - |
+| USD2, USD3 | `.usda`, `.usd`, `.usdz` opened by Sprite3D | yes | `.usdz` opens in ImportTests; not confirmed in Sprite3D |
+| Assoc1 | file associations brought up to date at start-up (Windows) | yes | not reported |
+| Bear1-4 | held frames and the eyes (superseded) | yes | Bear1-4 failed |
+| Bear5 | the Gorilla3D author's held-frame fix, adopted | yes | **yes**, 15:08 |
+| Gltf1 | File, Debug, glTF: Export as GLB, Merge Animations, Split Long Animation, Add Parts; GLTFLib's licence | delivered 15:40 | **not compiled yet** |
 
-Which of the 9 and 10 November deliveries the owner tested one by one is
-not recorded beyond what each entry under *In hand* says; the "To test"
-lists are in the README's feature text. When the owner reports a result,
-note it here.
+Gltf1 also needs `git rm ImportTests/src/ImportTests.GltfExport.pas` (it
+moved to `src/lib/Sprite3DGltfExport.pas`). After Gltf1 the four new
+dialogs' private members were documented (pasdoc_check clean); that and
+this handover went out as **Handover1**.
+
+**Next:** compile Gltf1 and fix what the compiler finds; then test each
+glTF tool on a GLB (the parrot for Merge and Split) and Export on an FBX.
+Gorilla3D's author has `notes/imports.md`: bugs 1-2 (USD UVs and up axis)
+and 3 (six FBX parrot clips) are his to fix; Sprite3D works round nothing
+for them.
+
+### Done: ImportTests, the glTF tools and held frames (10 November 2026, after `fc70295`)
+
+Oldest first; each is a zip. `notes/imports.md` holds the findings for
+Gorilla3D's author.
 
 **USD1** (10 November, 11:15; owner, 11:11: "we're now on 1.5.4 and
 it's fixed"): `Gorilla.USD.Loader` back in `Sprite3DHelpers`' uses. The
@@ -808,6 +814,36 @@ Not compiled. To test: each tool on a GLB, and Export on an FBX.
 
 ### Done: the Tools menu, OpenH264 and licences (9 and 10 November 2026; merged into `main` as `c2b9f2f`)
 
+**GitHub `main` is at `c2b9f2f`, "Merge branch 'external-edges'"
+(10 November, about 10:45), and is the owner's copy.** It merges
+`external-edges` (`873be04`, "Add some tools + fix licenses/h264": every
+zip from ScanSprites1 to Licences1) into `50e4711`, "Fixed per code
+review" (Fixes1 and Fixes2). The owner built and tested it at 10:51:
+"everything appears correct". There is one line of work again, no zip is
+outstanding, and a new session builds on `main`. `external-edges` is
+merged; nothing depends on it.
+
+How the merge went, for next time: the code-review fixes had reached
+`external-edges` on 9 November only as files unzipped from MergeMain1,
+not as a git merge, so git saw both branches change the `.md` files and
+the merge conflicted in `README.md`, `CLAUDE.md`, `notes/code-review.md`
+and `notes/cisco.md`. The branch's versions were right for the first three
+(they were written on top of `main`'s); `notes/cisco.md` and the unused
+`src/lib/Sprite3DCiscoLicence.pas`, which zips could not delete, were
+removed in the merge. MergeMain1 had also left out `Sprite3DVideo.pas`
+(unchanged from `main` at the time), so the branch lacked Fixes1's
+`av_write_trailer` change until this merge brought it in. Checked at
+10:47: `main` equals `external-edges` but for those three files, with no
+conflict markers, and every unit, form and resource the project names
+exists. When a branch needs another's changes, merge with git rather
+than unzipping files over it.
+
+Which of the 9 and 10 November deliveries the owner tested one by one is
+not recorded beyond what each entry under *In hand* says; the "To test"
+lists are in the README's feature text. When the owner reports a result,
+note it here.
+
+
 **MergeMain1** (23:00): the Tools work, on `external-edges` up to
 `448eb6c` "Tools1" (ScanSprites1 to ScanAtlas3 and the owner's `data/`
 files), merged into `main` `50e4711` "Fixed per code review" (Fixes1 and
@@ -976,6 +1012,14 @@ done); the background image in animation exports, and scaling it by hand
 (left out of Background1 on purpose); the Variable dialog's placement and
 the key rename above.
 
+From the glTF work (10 November): the glTF tools run on the main thread
+and ask one duplicate question for all names (GLTFMerge asks per name, on
+a worker thread); Add Parts uses GLTFLib's default options; JOINTS_1 /
+WEIGHTS_1 for more than four weights (the parrot FBX dropped 376);
+morph targets, lights and cameras are not exported; whether to leave USD
+out of Export as GLB until Gorilla3D fixes bugs 1 and 2 (it is offered,
+with the README saying what goes wrong).
+
 ### Delivered on 9 November 2026 (all in `2b98a73`)
 
 Newest first. Each was a zip of whole files; the detail is now in the
@@ -1083,6 +1127,21 @@ with `--debug`), ticks moving, and the animation pop-up menu working.
 ## Lessons learned
 
 These cost time once.
+
+- **Gorilla3D, from the ImportTests work (10 November 2026):**
+  `TGorillaModel.Def` is a `TCustomDef`, so cast it (`TModelView.Def`);
+  Gorilla.DefTypes enumerations are unscoped (`Default`, `Diffuse`,
+  `None` clash with ours, so qualify them); `TSkeletonKeyAnimation.SeekTo`
+  only sets the time, and a paused clip is not posed until something ticks
+  it (the author's fix: unpause, seek, `ProcessTick(0, 0)`, pause; see
+  `notes/imports.md`). Do not guess at held-frame fixes from outside: ask
+  for his source, as Bear1-3 all failed.
+- `Packed` is a reserved word in Delphi; it cannot name a variable.
+- A loop variable cannot be one of the outer routine's locals used in a
+  nested procedure (E1019).
+- `.res` files: rebuild them with the Python writer used for
+  `LICENCE_GLTFLIB` (RT_RCDATA, flags $0030, language $0809, names in
+  upper case); check it first by reproducing the old `.res` byte for byte.
 
 - **GitHub can be behind the owner's copy by several zips.** Before
   delivering a whole file, make sure it was built on the owner's latest

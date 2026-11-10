@@ -74,11 +74,17 @@ type
     //** @param(Sender PartsList.)
     procedure PartsListChangeCheck(Sender: TObject);
   private
+    //** The parts loaded; owned.
     FLibrary: TglTFPartLibrary;
+    //** The folder Add files... opens in.
     FFolder: string;
+    //** What loading the files said.
     FLog: TStringList;
+    //** The parts ticked that could be read.
     function GetTickedParts: TArray<TglTFPart>;
+    //** Lists every part in the library, unticked.
     procedure ListParts;
+    //** Enables the buttons that have something to act on.
     procedure UpdateButtons;
   public
     //** @abstract(Makes the library and lets InfoLabel wrap.)

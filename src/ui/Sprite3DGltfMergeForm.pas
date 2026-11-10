@@ -76,10 +76,15 @@ type
     //** @param(Sender FilesList.)
     procedure FilesListChange(Sender: TObject);
   private
+    //** The folder Add... opens in; the last file's folder after each add.
     FFolder: string;
+    //** The files listed, as full paths, in order.
     function GetFiles: TArray<string>;
+    //** DuplicatesCombo's choice as GLTFLib's action.
     function GetDuplicateAction: TglTFDuplicateAction;
+    //** Adds a file to the list unless it is there already, ignoring case.
     procedure AddFile(const AFile: string);
+    //** Enables Remove and Clear when there is something for them to take off.
     procedure UpdateButtons;
   public
     //** @abstract(Lets InfoLabel wrap and sets the buttons.)
