@@ -275,6 +275,11 @@ object MainForm: TMainForm
         Text = 'Background Settings...'
         OnClick = BackgroundSettingsMenuItemClick
       end
+      object LicencesMenuItem: TMenuItem
+        Locked = True
+        Text = 'Licences...'
+        OnClick = LicencesMenuItemClick
+      end
       object FileSeparatorItem: TMenuItem
         Locked = True
         Text = '-'
@@ -514,6 +519,11 @@ object MainForm: TMainForm
         Locked = True
         Text = 'Scan Atlas...'
         OnClick = ScanAtlasItemClick
+      end
+      object ScanAtlasFoldersItem: TMenuItem
+        Locked = True
+        Text = 'Scan Atlas Folders...'
+        OnClick = ScanAtlasFoldersItemClick
       end
     end
   end

@@ -15,7 +15,8 @@
 //**     |       |   |-- AssocGroup     OpenWithCheck, AlwaysCheck, AssocNote
 //**     |       |   |-- StartupGroup   None, Load default model, Load last model
 //**     |       |   |-- ThemeGroup     Default @(no theme@), Dark, Aqua, Ruby, Golden Graphite
-//**     |       |   `-- ResultsGroup   ResultsEdgeHintCheck
+//**     |       |   |-- ResultsGroup   ResultsEdgeHintCheck
+//**     |       |   `-- VideoGroup     OpenH264Check, the Cisco notice, OpenH264LicenceButton
 //**     |       `-- RightColumn
 //**     |           |-- GrabGroup      GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
 //**     |           |                  GrabFolderText, GrabFolderResetButton
@@ -37,7 +38,9 @@
 //** frames a second the view is drawn at, from VIEW_FPS_MIN up to the display's refresh rate,
 //** which the caller gives as Values.MaxViewFps; left at the top, a higher rate kept from a
 //** faster display stays as it was. The GPU group is shown on Windows only; a
-//** change there takes effect the next time Sprite3D starts.
+//** change there takes effect the next time Sprite3D starts. MP4 video turns Cisco's OpenH264
+//** on and off, as Cisco's licence for its binary asks, with the notice the licence asks for
+//** beside it and a button that shows the licence itself; not on iOS, which cannot load it.
 //**
 //** The dialog only edits a TSprite3DGeneralSettings: set Values before showing it and read
 //** it back after OK; applying the choices is the caller's job. On the desktop show it with
@@ -63,7 +66,8 @@ unit Sprite3DSettingsForm;
         |       |   |-- AssocGroup     OpenWithCheck, AlwaysCheck, AssocNote
         |       |   |-- StartupGroup   None, Load default model, Load last model
         |       |   |-- ThemeGroup     Default (no theme), Dark, Aqua, Ruby, Golden Graphite
-        |       |   `-- ResultsGroup   ResultsEdgeHintCheck
+        |       |   |-- ResultsGroup   ResultsEdgeHintCheck
+        |       |   `-- VideoGroup     OpenH264Check, the Cisco notice, OpenH264LicenceButton
         |       `-- RightColumn
         |           |-- GrabGroup      GrabSizeCombo; Custom: GrabWidthBox, GrabHeightBox;
         |           |                  GrabFolderText, GrabFolderResetButton
@@ -87,6 +91,9 @@ unit Sprite3DSettingsForm;
   which the caller gives as Values.MaxViewFps; left at the top, a higher
   rate kept from a faster display stays as it was. The GPU group is shown on
   Windows only; a change there takes effect the next time Sprite3D starts.
+  MP4 video turns Cisco's OpenH264 on and off, as Cisco's licence for its
+  binary asks, with the notice the licence asks for and a button that shows
+  the licence; not on iOS, which cannot load it.
 
   The dialog only edits a TSprite3DGeneralSettings: set Values before
   showing it and read it back after OK; applying the choices is the
@@ -115,7 +122,8 @@ type
     ScrollBox: TVertScrollBox;
     //** @abstract(Holds LeftColumn and RightColumn, as tall as the taller of them.)
     ColumnsLayout: TLayout;
-    //** @abstract(The left column: AssocGroup, StartupGroup, ThemeGroup and ResultsGroup.)
+    //** @abstract(The left column: AssocGroup, StartupGroup, ThemeGroup, ResultsGroup and
+    //** VideoGroup.)
     //**
     //** On Android and iOS it holds every group, in one column, and RightColumn is hidden.
     LeftColumn: TLayout;
@@ -153,6 +161,19 @@ type
     ResultsGroup: TGroupBox;
     //** @abstract(Gives the Results tab's empty border values a hint explaining them.)
     ResultsEdgeHintCheck: TCheckBox;
+    //** @abstract(The MP4 video choices: Cisco's OpenH264, on or off. Hidden on iOS, which
+    //** cannot load it.)
+    VideoGroup: TGroupBox;
+    //** @abstract(Ticked, Cisco's OpenH264 is downloaded and used, and MP4 video is H.264;
+    //** unticked, neither, and MP4 video is MPEG-4 Part 2.)
+    OpenH264Check: TCheckBox;
+    //** @abstract(The text Cisco's licence asks to be shown where OpenH264 is turned on and
+    //** off: OPENH264_NOTICE, set again by FormCreate.)
+    OpenH264NoticeLabel: TLabel;
+    //** @abstract(Says what the check box changes.)
+    OpenH264Note: TLabel;
+    //** @abstract(Shows Cisco's licence for its OpenH264 binary.)
+    OpenH264LicenceButton: TButton;
     //** @abstract(The GPU choices; Windows only.)
     GpuGroup: TGroupBox;
     //** @abstract(What grabs, icons and exports draw besides the model.)
@@ -238,6 +259,11 @@ type
     //**
     //** @param(Sender The button.)
     procedure GrabFolderResetButtonClick(Sender: TObject);
+    //** @abstract(Shows Cisco's licence for its OpenH264 binary, word for word: the File,
+    //** Licences dialog, opened at it.)
+    //**
+    //** @param(Sender The button.)
+    procedure OpenH264LicenceButtonClick(Sender: TObject);
   private
     FValues: TSprite3DGeneralSettings;
     FFreeOnClose: Boolean;
@@ -268,7 +294,7 @@ type
 implementation
 
 uses
-  System.Math, Sprite3DFileAssoc;
+  System.Math, Sprite3DFileAssoc, Sprite3DLicences, Sprite3DLicencesForm;
 
 {$R *.fmx}
 
@@ -288,6 +314,12 @@ begin
   end;
   {$IF not DEFINED(MSWINDOWS)}
   GpuGroup.Visible := False;
+  {$ENDIF}
+  // Exactly as Cisco's licence words it, from the one place it is kept
+  OpenH264NoticeLabel.Text := OPENH264_NOTICE;
+  {$IFDEF IOS}
+  // iOS cannot load downloaded code, so OpenH264 is never offered
+  VideoGroup.Visible := False;
   {$ENDIF}
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // A phone is too narrow for two columns
@@ -488,6 +520,7 @@ begin
   MinifyJsonCheck.IsChecked := Value.MinifyJson;
   ResultsEdgeHintCheck.IsChecked := Value.ResultsEdgeHint;
   OutputHelpersCheck.IsChecked := Value.HelpersInOutput;
+  OpenH264Check.IsChecked := Value.UseOpenH264;
 
   case Value.GpuMode of
     gmPowerSaving: GpuLowRadio.IsChecked := True;
@@ -537,6 +570,8 @@ begin
   FValues.MinifyJson := MinifyJsonCheck.IsChecked;
   FValues.ResultsEdgeHint := ResultsEdgeHintCheck.IsChecked;
   FValues.HelpersInOutput := OutputHelpersCheck.IsChecked;
+  if VideoGroup.Visible then
+    FValues.UseOpenH264 := OpenH264Check.IsChecked;
 
   if GpuGroup.Visible then
   begin
@@ -552,6 +587,12 @@ end;
 procedure TGeneralSettingsForm.FrameRateTrackChange(Sender: TObject);
 begin
   FrameRateValueLabel.Text := IntToStr(Round(FrameRateTrack.Value));
+end;
+
+// File, Licences, opened at Cisco's licence for its binary
+procedure TGeneralSettingsForm.OpenH264LicenceButtonClick(Sender: TObject);
+begin
+  ShowLicences(LICENCE_OPENH264_BINARY);
 end;
 
 procedure TGeneralSettingsForm.ShowAndFree;

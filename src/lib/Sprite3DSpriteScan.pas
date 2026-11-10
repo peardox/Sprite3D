@@ -26,7 +26,8 @@
 //**
 //** ScanAtlas measures an atlas instead: one or more sheets, each a grid of frames of a
 //** given size, every frame measured the same way. Frames with nothing drawn are unused
-//** padding, counted but left out of the figures.
+//** padding, counted but left out of the figures. ScanAtlasTree measures every copy of one
+//** sheet in a folder tree, each variation an atlas of its own.
 //**
 //** SpriteFolders turns the folders a user chose into the folders to scan: a folder with no
 //** PNG files of its own stands for those of its sub-folders that have some, so choosing a
@@ -69,7 +70,8 @@ unit Sprite3DSpriteScan;
 
   ScanAtlas measures an atlas instead: one or more sheets, each a grid of
   frames of a given size, measured the same way; frames with nothing drawn
-  are unused padding, counted but left out of the figures.
+  are unused padding, counted but left out of the figures. ScanAtlasTree
+  measures every copy of one sheet in a folder tree, each one an atlas.
 
   SpriteFolders turns the folders chosen into the folders to scan: a folder
   with no PNG files of its own stands for those of its sub-folders that have
@@ -334,6 +336,70 @@ function AtlasScanName(const AFiles: TArray<String>): String;
 function ScanAtlas(const AFiles: TArray<String>; const AFrameWidth, AFrameHeight: Integer;
   const AAborted: TSprite3DScanAborted;
   const AProgress: TSprite3DScanProgress): TSprite3DSpriteScan;
+
+//** @abstract(The side of a square that would hold an atlas's trimmed frames packed with
+//** no gap: the square root of TrimmedPixels, rounded up.)
+//**
+//** An estimate of the sheet a rectangle packer would need, as if the frames, each trimmed
+//** to its own tight box, could fill a square exactly; a real packer needs a little more.
+//**
+//** @param(AAtlas The scan, from ScanAtlas.)
+//**
+//** @returns(The side in pixels; 0 if the scan has no frames.)
+function AtlasPackedSide(const AAtlas: TSprite3DSpriteScan): Integer;
+
+//** @abstract(Finds every copy of one sheet in a folder tree: each variation of an atlas,
+//** one sheet per sub-folder.)
+//**
+//** The root and every sub-folder, however deep (up to MAX_FOLDER_DEPTH of
+//** Sprite3DFileSearch), is searched for files named AFileName, ignoring case, in
+//** FindFiles' order: a folder's own before its sub-folders', sub-folders in name order.
+//**
+//** @param(ARoot The folder to search, as a full path.)
+//**
+//** @param(AFileName The sheet's file name, such as @code(Spritesheet.png), without a
+//** folder.)
+//**
+//** @returns(The sheets found, as full paths; empty if none, or if the root cannot be
+//** read.)
+function FindAtlasSheets(const ARoot, AFileName: String): TArray<String>;
+
+//** @abstract(Where a file is below a root: its folder, relative to the root.)
+//**
+//** @param(ARoot The root, as a full path.)
+//**
+//** @param(AFile The file, as a full path, somewhere below the root.)
+//**
+//** @returns(The file's folder relative to the root, such as @code(hero\red); a single dot
+//** for the root itself.)
+function AtlasRelativeFolder(const ARoot, AFile: String): String;
+
+//** @abstract(Measures every copy of one sheet in a folder tree, each as an atlas of its
+//** own: one variation per sub-folder.)
+//**
+//** FindAtlasSheets finds the sheets, and each is measured with ScanAtlas, as a one-sheet
+//** atlas. Each scan's Name is then the sheet's folder relative to the root
+//** (AtlasRelativeFolder), and its Folder the folder in full, so rows can be told apart.
+//** A sheet that fails, for instance by not being a whole number of frames, fails only
+//** its own scan, whose Error says why; the rest go on.
+//**
+//** @param(ARoot The folder to search, as a full path.)
+//**
+//** @param(AFileName The sheet's file name, without a folder.)
+//**
+//** @param(AFrameWidth The width of every frame, in pixels.)
+//**
+//** @param(AFrameHeight The height of every frame, in pixels.)
+//**
+//** @param(AAborted Asked before each sheet and each row of frames; True stops, leaving
+//** the scans so far. May be nil.)
+//**
+//** @param(AProgress Told as each sheet starts, with its relative folder. May be nil.)
+//**
+//** @returns(One scan per sheet found, in FindAtlasSheets' order; empty if none.)
+function ScanAtlasTree(const ARoot, AFileName: String; const AFrameWidth,
+  AFrameHeight: Integer; const AAborted: TSprite3DScanAborted;
+  const AProgress: TSprite3DScanProgress): TArray<TSprite3DSpriteScan>;
 
 //** @abstract(Reads and measures every PNG in one folder: one animation's frames.)
 //**
@@ -832,6 +898,66 @@ begin
   Result.PackingSaving := 1 - Result.ActivePixels / Result.SheetPixels;
   // What packing each frame trimmed to its own box, with no gap, would save
   Result.TrimSaving := 1 - Result.TrimmedPixels / Result.SheetPixels;
+end;
+
+function AtlasPackedSide(const AAtlas: TSprite3DSpriteScan): Integer;
+begin
+  if AAtlas.TrimmedPixels <= 0 then
+    Exit(0);
+  Result := Ceil(Sqrt(AAtlas.TrimmedPixels));
+end;
+
+function FindAtlasSheets(const ARoot, AFileName: String): TArray<String>;
+var
+  Found: TList<String>;
+begin
+  Result := nil;
+  if (AFileName = String.Empty) or not TDirectory.Exists(ARoot) then
+    Exit;
+  Found := TList<String>.Create;
+  try
+    try
+      FindFiles(ARoot, AFileName, Found, True);
+    except
+      // A root that cannot be read has no sheets
+    end;
+    Result := Found.ToArray;
+  finally
+    Found.Free;
+  end;
+end;
+
+function AtlasRelativeFolder(const ARoot, AFile: String): String;
+begin
+  Result := ExcludeTrailingPathDelimiter(ExtractRelativePath(
+    IncludeTrailingPathDelimiter(ARoot), IncludeTrailingPathDelimiter(ExtractFileDir(AFile))));
+  if Result = String.Empty then
+    Result := '.';
+end;
+
+function ScanAtlasTree(const ARoot, AFileName: String; const AFrameWidth,
+  AFrameHeight: Integer; const AAborted: TSprite3DScanAborted;
+  const AProgress: TSprite3DScanProgress): TArray<TSprite3DSpriteScan>;
+var
+  Sheets: TArray<String>;
+  Scan: TSprite3DSpriteScan;
+  Relative: String;
+  I: Integer;
+begin
+  Result := nil;
+  Sheets := FindAtlasSheets(ARoot, AFileName);
+  for I := 0 to High(Sheets) do
+  begin
+    if Assigned(AAborted) and AAborted then
+      Exit;
+    Relative := AtlasRelativeFolder(ARoot, Sheets[I]);
+    if Assigned(AProgress) then
+      AProgress(Relative, I + 1, Length(Sheets));
+    Scan := ScanAtlas([Sheets[I]], AFrameWidth, AFrameHeight, AAborted, nil);
+    Scan.Name := Relative;
+    Scan.Folder := ExtractFileDir(Sheets[I]);
+    Result := Result + [Scan];
+  end;
 end;
 
 function CombineSpriteScans(var AScans: TArray<TSprite3DSpriteScan>): TSprite3DSpriteScan;

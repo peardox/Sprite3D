@@ -189,7 +189,7 @@
 //** On Android and iOS, where FMX shows no menu bar, the same menus are reached through a
 //** hamburger button on a toolbar at the top, which opens a drawer listing every item in
 //** MainMenu1; ticks show the current camera view and which View items are on. Exit is left
-//** out on iOS, and the Tools menu on Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
+//** out on iOS, and File, Debug, Tools on Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is replaced, first thing in FormCreate, by a TMenuBar
 //** that FMX draws itself, as the native GTK menu bar showed only the first letter of each
 //** item: its items are copied onto the bar and the originals freed, and each copy takes its
 //** original's name, so the form's fields refer to the copies. They must be copied, not
@@ -207,7 +207,7 @@
 //** |           |-- AnimationListBox  the Animated tab's list
 //** |           `-- StaticListBox     the Static tab's list
 //** |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
-//** `-- DebugTab "Debug"
+//** `-- DebugTab "Debug"                 shown only while debugging is on
 //**     `-- DebugMemo
 //**
 //** MainMenu1
@@ -218,6 +218,14 @@
 //** |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
 //** |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+//** |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
+//** |   |-- FDebugMenu "Debug"              made only while debugging; see BuildDebugMenu
+//** |   |   |-- ...                         Frame Borders, Compare Images..., Benchmark
+//** |   |   `-- ToolsMenu "Tools"           moved here; desktop only
+//** |   |       |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+//** |   |       |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+//** |   |       `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+//** |   |-- FileSeparatorItem "-"
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** |-- ModelMenu "Models"
 //** |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
@@ -228,43 +236,40 @@
 //** |   |-- SaveAnimationSettingsItem "Save Animation Settings..."  writes the list
 //** |   |-- ModelActionsSeparatorItem "-"
 //** |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
-//** |-- ViewMenu "View"                   its ticks are kept in settings.json
-//** |   |-- CameraMenu "Camera"             the view, kept in settings.json
-//** |   |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
-//** |   |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-//** |   |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-//** |   |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
-//** |   |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
-//** |   |   |-- ViewRoot2Item "Sqrt@(2@)"       fixed, inclination about 54.736
-//** |   |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
-//** |   |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-//** |   |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-//** |   |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
-//** |   |   |-- FLockSeparatorItem "-"
-//** |   |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
-//** |   |-- LightsMenu "Lights"
-//** |   |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
-//** |   |   `-- OriginalLightItem "Original Light"  the light the form made before
-//** |   |                                       Spritely; not ticked at start-up
-//** |   |-- ProjectionMenu "Projection"      one of six, a radio group
-//** |   |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
-//** |   |   |-- OrthographicItem "Orthographic" the camera's own
-//** |   |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
-//** |   |       |-- CavalierItem "Cavalier"
-//** |   |       |-- CabinetItem "Cabinet"
-//** |   |       |-- MilitaryItem "Military"
-//** |   |       `-- PlanObliqueItem "Plan Oblique"
-//** |   |-- ViewSeparatorItem "-"
-//** |   |-- ShowBoundsItem "Show bounding box"  off at first
-//** |   |-- ShowGridItem "Show grid"        off at first
-//** |   |-- ShowAxesItem "Show axes"        off at first
-//** |   |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
-//** |   |                                      about the up axis
-//** |   `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
-//** |                                          frames
-//** `-- ToolsMenu "Tools"                 desktop only: left out on Android and iOS
-//**     |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
-//**     `-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+//** `-- ViewMenu "View"                   its ticks are kept in settings.json
+//**     |-- CameraMenu "Camera"             the view, kept in settings.json
+//**     |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
+//**     |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+//**     |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+//**     |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
+//**     |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+//**     |   |-- ViewRoot2Item "Sqrt@(2@)"       fixed, inclination about 54.736
+//**     |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
+//**     |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+//**     |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+//**     |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+//**     |   |-- FLockSeparatorItem "-"
+//**     |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
+//**     |-- LightsMenu "Lights"
+//**     |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+//**     |   `-- OriginalLightItem "Original Light"  the light the form made before
+//**     |                                       Spritely; not ticked at start-up
+//**     |-- ProjectionMenu "Projection"      one of six, a radio group
+//**     |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
+//**     |   |-- OrthographicItem "Orthographic" the camera's own
+//**     |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
+//**     |       |-- CavalierItem "Cavalier"
+//**     |       |-- CabinetItem "Cabinet"
+//**     |       |-- MilitaryItem "Military"
+//**     |       `-- PlanObliqueItem "Plan Oblique"
+//**     |-- ViewSeparatorItem "-"
+//**     |-- ShowBoundsItem "Show bounding box"  off at first
+//**     |-- ShowGridItem "Show grid"        off at first
+//**     |-- ShowAxesItem "Show axes"        off at first
+//**     |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
+//**     |                                      about the up axis
+//**     `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+//**                                            frames
 //** )
 unit Sprite3dMain;
 {
@@ -413,9 +418,8 @@ unit Sprite3dMain;
   background, and the latest version for the platform downloaded if it is
   not that copy. No entry, a 404, no network or any other failure leaves the
   copy there, or MP4 files as MPEG-4 Part 2, and DebugMemo says which
-  happened. While debugging is on, from debug_enabled in settings.json or
-  --debug on the command line, none of this is done and OpenH264 is not
-  used.
+  happened. None of this is done, and OpenH264 is not used, while it is
+  turned off in File, Settings.
 
   Models, Animation Settings... sets the frame rate every saved animation uses, 30
   frames a second unless changed, from 1 to 60, kept in settings.json. Each
@@ -470,8 +474,8 @@ unit Sprite3dMain;
   On Android and iOS, where FMX shows no menu bar, the same menus are reached
   through a hamburger button on a toolbar at the top, which opens a drawer
   listing every item in MainMenu1; ticks show the current camera view and
-  which View items are on. Exit is left out on iOS, and the Tools menu on
-  Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is
+  which View items are on. Exit is left out on iOS, and File, Debug, Tools
+  on Android and iOS, as its tools need folder dialogs. On Linux MainMenu1 is
   replaced, first thing in FormCreate, by a TMenuBar that FMX draws itself, as
   the native GTK menu bar showed only the first letter of each item: its items
   are copied onto the bar and the originals freed, and each copy takes its
@@ -489,7 +493,7 @@ unit Sprite3dMain;
     |           |-- AnimationListBox  the Animated tab's list
     |           `-- StaticListBox     the Static tab's list
     |-- ResultsTab "Results"   exports played back; see Sprite3DResultsView
-    `-- DebugTab "Debug"
+    `-- DebugTab "Debug"                 shown only while debugging is on
         `-- DebugMemo
 
     MainMenu1
@@ -500,6 +504,14 @@ unit Sprite3dMain;
     |   |-- SaveAsIconMenuItem "Save As Icon"  saves the view as a Windows .ico file
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
     |   |-- BackgroundSettingsMenuItem "Background Settings..."  opens the background dialog
+    |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
+    |   |-- FDebugMenu "Debug"              made only while debugging; see BuildDebugMenu
+    |   |   |-- ...                         Frame Borders, Compare Images..., Benchmark
+    |   |   `-- ToolsMenu "Tools"           moved here; desktop only
+    |   |       |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
+    |   |       |-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+    |   |       `-- ScanAtlasFoldersItem "Scan Atlas Folders..."  each variation of a sheet
+    |   |-- FileSeparatorItem "-"
     |   `-- ExitMenuItem "Exit"             closes the application
     |-- ModelMenu "Models"
     |   |-- AnimationsUsedItem "Animations Used..."  which animations are listed and swept
@@ -510,43 +522,40 @@ unit Sprite3dMain;
     |   |-- SaveAnimationSettingsItem "Save Animation Settings..."  writes the list
     |   |-- ModelActionsSeparatorItem "-"
     |   `-- DirectionsItem "Directions..."  how many directions, the first and their order
-    |-- ViewMenu "View"                   its ticks are kept in settings.json
-    |   |-- CameraMenu "Camera"             the view, kept in settings.json
-    |   |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
-    |   |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
-    |   |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
-    |   |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
-    |   |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
-    |   |   |-- ViewRoot2Item "Sqrt(2)"         fixed, inclination about 54.736
-    |   |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
-    |   |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
-    |   |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
-    |   |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
-    |   |   |-- FLockSeparatorItem "-"
-    |   |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
-    |   |-- LightsMenu "Lights"
-    |   |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
-    |   |   `-- OriginalLightItem "Original Light"  the light the form made before
-    |   |                                       Spritely; not ticked at start-up
-    |   |-- ProjectionMenu "Projection"      one of six, a radio group
-    |   |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
-    |   |   |-- OrthographicItem "Orthographic" the camera's own
-    |   |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
-    |   |       |-- CavalierItem "Cavalier"
-    |   |       |-- CabinetItem "Cabinet"
-    |   |       |-- MilitaryItem "Military"
-    |   |       `-- PlanObliqueItem "Plan Oblique"
-    |   |-- ViewSeparatorItem "-"
-    |   |-- ShowBoundsItem "Show bounding box"  off at first
-    |   |-- ShowGridItem "Show grid"        off at first
-    |   |-- ShowAxesItem "Show axes"        off at first
-    |   |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
-    |   |                                      about the up axis
-    |   `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
-    |                                          frames
-    `-- ToolsMenu "Tools"                 desktop only: left out on Android and iOS
-        |-- ScanSpritesItem "Scan Sprites..."  measures another sprite's frames
-        `-- ScanAtlasItem "Scan Atlas..."  measures another sprite's atlas sheets
+    `-- ViewMenu "View"                   its ticks are kept in settings.json
+        |-- CameraMenu "Camera"             the view, kept in settings.json
+        |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
+        |   |-- ViewIsometricItem "Isometric"   fixed, inclination about 35.264
+        |   |-- ViewPixel2To1Item "Pixel 2:1"   fixed, inclination about 26.565
+        |   |-- ViewOneQuarterItem "1/4 View"   fixed, inclination 22.5
+        |   |-- ViewThreeQuarterItem "3/4 View" fixed, inclination 45
+        |   |-- ViewRoot2Item "Sqrt(2)"         fixed, inclination about 54.736
+        |   |-- ViewGoldenRatioItem "Golden Ratio" fixed, inclination about 58.283
+        |   |-- ViewHeadOnItem "Head On"        fixed, inclination 0, azimuth 0
+        |   |-- ViewTopDownItem "Top Down"      fixed, inclination 90, azimuth 0
+        |   |-- ViewSideItem "Side View"        fixed, inclination 0, azimuth 90
+        |   |-- FLockSeparatorItem "-"
+        |   `-- FLockCameraItem "Lock Camera"   fixes the camera; not a view
+        |-- LightsMenu "Lights"
+        |   |-- HeadlightItem "Headlight"   OrbitCamera's light; ticked at start-up
+        |   `-- OriginalLightItem "Original Light"  the light the form made before
+        |                                       Spritely; not ticked at start-up
+        |-- ProjectionMenu "Projection"      one of six, a radio group
+        |   |-- PerspectiveItem "Perspective"   the camera's own; at start-up
+        |   |-- OrthographicItem "Orthographic" the camera's own
+        |   `-- ObliqueMenu "Oblique"        drawn by TSpritelyProjection, same radio group
+        |       |-- CavalierItem "Cavalier"
+        |       |-- CabinetItem "Cabinet"
+        |       |-- MilitaryItem "Military"
+        |       `-- PlanObliqueItem "Plan Oblique"
+        |-- ViewSeparatorItem "-"
+        |-- ShowBoundsItem "Show bounding box"  off at first
+        |-- ShowGridItem "Show grid"        off at first
+        |-- ShowAxesItem "Show axes"        off at first
+        |-- ShowSweepItem "Show Model Volume"  off at first; the space swept turning
+        |                                      about the up axis
+        `-- ShowCombinedSweepItem "Show Animation Volume"  the volume the camera
+                                               frames
 }
 
 interface
@@ -683,6 +692,10 @@ type
     //** played back; its controls are TSprite3DResultsView's.)
     ResultsTab: TTabItem;
     //** @abstract(The tab captioned "Debug", holding DebugMemo.)
+    //**
+    //** Shown only while debugging is on (debug_enabled or --debug): BuildDebugMenu hides it
+    //** otherwise, and DisableDebugItemClick when debugging stops. DebugMemo is written to
+    //** either way.
     DebugTab: TTabItem;
     //** @abstract(Log output; SwitchModel writes separator lines here when a model has
     //** animations.)
@@ -755,6 +768,8 @@ type
     //** @abstract(The File menu's "Background Settings..." item; see
     //** BackgroundSettingsMenuItemClick.)
     BackgroundSettingsMenuItem: TMenuItem;
+    //** @abstract(The File menu's "Licences..." item; see LicencesMenuItemClick.)
+    LicencesMenuItem: TMenuItem;
     //** @abstract(The "Settings..." item; see SettingsMenuItemClick.)
     SettingsMenuItem: TMenuItem;
     //** @abstract(Separator line in the File menu, above Exit.)
@@ -779,12 +794,13 @@ type
     ModelActionsSeparatorItem: TMenuItem;
     //** @abstract(The "Directions..." item; see DirectionsItemClick.)
     DirectionsItem: TMenuItem;
-    //** @abstract(The menu captioned "Tools", last on the menu bar: tools that work on files
-    //** rather than on the model shown, starting with ScanSpritesItem.)
+    //** @abstract(The menu captioned "Tools": tools that work on files rather than on the
+    //** model shown, starting with ScanSpritesItem. Found under File, Debug.)
     //**
-    //** Desktop only: FormCreate frees it on Android and iOS, before the drawer is built,
-    //** as its tools need folder dialogs those platforms lack; the field, and its items',
-    //** are then nil.
+    //** Designed last on the menu bar; BuildDebugMenu moves it into File, Debug, with its
+    //** items. With no Debug menu (debugging off), and always on Android and iOS, whose
+    //** lack of folder dialogs its tools need, it frees it instead, before the drawer is
+    //** built; the field, and its items', are then nil.
     ToolsMenu: TMenuItem;
     //** @abstract(The Tools menu's "Scan Sprites..." item; see ScanSpritesItemClick.
     //** Disabled while a Tools scan runs.)
@@ -792,6 +808,9 @@ type
     //** @abstract(The Tools menu's "Scan Atlas..." item; see ScanAtlasItemClick. Disabled
     //** while a Tools scan runs.)
     ScanAtlasItem: TMenuItem;
+    //** @abstract(The Tools menu's "Scan Atlas Folders..." item; see
+    //** ScanAtlasFoldersItemClick. Disabled while a Tools scan runs.)
+    ScanAtlasFoldersItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
@@ -950,9 +969,9 @@ type
     CameraSeparatorItem2: TMenuItem;
     //** @abstract(Sets up the viewport, light and camera, and picks the models folder.)
     //**
-    //** The models folder comes from DefaultModelDir in Sprite3DHelpers: it is the library path
-    //** on macOS, the home folder on Linux and @code('../../../') elsewhere; on Windows it is
-    //** the current folder instead if that has a models subfolder. The handler creates a
+    //** The models folder comes from DefaultModelDir in Sprite3DHelpers: the program's assets
+    //** folder, which is the executable's on Windows (three folders up when started from the
+    //** IDE), the bundle's Resources on macOS and the resource folder on Android. The handler creates a
     //** TGorillaViewport in AspectLayout, which FitViewportToAspect makes as large as fits
     //** there at the aspect ratio of the grab size, centred, and gives it to OrbitCamera,
     //** which builds the camera, with a 45-degree FOV, makes it the viewport's camera, and
@@ -1152,6 +1171,21 @@ type
     //**
     //** @param(Sender ScanAtlasItem.)
     procedure ScanAtlasItemClick(Sender: TObject);
+    //** @abstract(Measures every variation of an atlas sheet: one file of the same name in
+    //** each sub-folder of a root.)
+    //**
+    //** TScanAtlasFoldersForm asks for the root, the sheet's file name
+    //** (@code(Spritesheet.png) at first) and the frame size, starting with those used
+    //** last, kept in settings.json (the frame size shared with Scan Atlas). On a worker
+    //** thread, ScanAtlasTree finds every file of that name below the root, however deep,
+    //** and measures each as a one-sheet atlas, as Scan Atlas does. One row per sheet, named
+    //** by its folder relative to the root, goes to TSpriteScanForm and the Debug tab, with
+    //** the packed sheet size added (AtlasPackedSide). A sheet that fails, for instance by
+    //** not being a whole number of frames, says why in its own row; the rest are scanned.
+    //** Desktop only.
+    //**
+    //** @param(Sender ScanAtlasFoldersItem.)
+    procedure ScanAtlasFoldersItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -1249,6 +1283,11 @@ type
     //**
     //** @param(Sender BackgroundSettingsMenuItem.)
     procedure BackgroundSettingsMenuItemClick(Sender: TObject);
+    //** @abstract(Shows the third-party licences and notices the program carries, from its
+    //** own resources: TLicencesForm, by ShowLicences.)
+    //**
+    //** @param(Sender LicencesMenuItem.)
+    procedure LicencesMenuItemClick(Sender: TObject);
     //** @abstract(Opens the Settings dialog and applies what is chosen.)
     //**
     //** The dialog, TGeneralSettingsForm, opens modally, centred on this form, showing the
@@ -1734,7 +1773,7 @@ type
     // Models, Animation Settings...: the frame rate saved animations use
     FAnimationSettingsItem: TMenuItem;
     // Keeps the downloaded OpenH264 in step with the list at
-    // OPENH264_LIST_URL; nil while debugging
+    // OPENH264_LIST_URL; nil while it is turned off in Settings
     FOpenH264Update: TSprite3DLibraryUpdate;
     // View, Camera, Lock Camera, and the line above it
     FLockCameraItem: TMenuItem;
@@ -1912,10 +1951,9 @@ type
     // A batch's metadata, measured as each image was saved and written once
     // the batch ends, after every image
     FPendingMetadata: TArray<TSprite3DSheetMetadata>;
-    // File, Debug, the separator above it, and its Frame Borders item, made
-    // only while debugging is on
+    // File, Debug and its Frame Borders item, made only while debugging is
+    // on; Debug sits above File's own separator, so has none of its own
     FDebugMenu: TMenuItem;
-    FDebugSeparator: TMenuItem;
     FFrameBordersItem: TMenuItem;
     FSaveOversampledItem: TMenuItem;
     // The Results tab's player, and whether its tab is the one showing
@@ -2790,6 +2828,36 @@ type
     //** @param(AFrameHeight The height of every frame, in pixels.)
     procedure StartAtlasScan(const AFiles: TArray<String>; const AFrameWidth,
       AFrameHeight: Integer);
+    //** @abstract(Searches a root for every copy of a sheet and scans each with
+    //** ScanAtlasTree on a worker thread, handing the results to FinishAtlasTreeScan.)
+    //**
+    //** @param(ARoot The folder to search below, already through OSFriendlyPath.)
+    //** @param(AFileName The sheet's file name.)
+    //** @param(AFrameWidth The width of every frame, in pixels.)
+    //** @param(AFrameHeight The height of every frame, in pixels.)
+    procedure StartAtlasTreeScan(const ARoot, AFileName: String; const AFrameWidth,
+      AFrameHeight: Integer);
+    //** @abstract(From Scan Atlas Folders' worker thread: queues FinishAtlasTreeScan on
+    //** the main thread with the scans.)
+    //** @param(AScans The sheets' scans, in order.)
+    //** @param(ARoot The folder searched.)
+    //** @param(AFileName The sheet's file name.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure QueueAtlasTreeResults(const AScans: TArray<TSprite3DSpriteScan>;
+      const ARoot, AFileName, AError: String);
+    //** @abstract(Takes Scan Atlas Folders' results on the main thread: logs a line per
+    //** sheet and shows them with ShowToolResults, or says none were found.)
+    //** @param(AScans The sheets' scans, in order.)
+    //** @param(ARoot The folder searched.)
+    //** @param(AFileName The sheet's file name.)
+    //** @param(AError Why the scan stopped, or empty.)
+    procedure FinishAtlasTreeScan(const AScans: TArray<TSprite3DSpriteScan>;
+      const ARoot, AFileName, AError: String);
+    //** @abstract(Writes one atlas scan to the Debug tab: every column of the grid, its
+    //** folder, and the active pixel and packing figures.)
+    //** @param(ATool The tool, for the line's start.)
+    //** @param(AAtlas The scan.)
+    procedure LogAtlasScan(const ATool: String; const AAtlas: TSprite3DSpriteScan);
     //** @abstract(From a Tools scan's worker thread: queues ToolProgress on the main
     //** thread.)
     //**
@@ -2940,7 +3008,8 @@ uses
   Sprite3DOpenFiles, Sprite3DBackgroundForm,
   Sprite3DAnimationsUsedForm, Sprite3DDirectionsForm, FMX.DialogService,
   Sprite3DCreditsForm, System.DateUtils, JsonText, Sprite3DOpenDirectoryForm,
-  Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DScanAtlasForm;
+  Sprite3DFileSearch, Sprite3DFolderDialog, Sprite3DScanAtlasForm,
+  Sprite3DScanAtlasFoldersForm, Sprite3DLicencesForm;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -3098,10 +3167,9 @@ begin
   // debug_enabled is only ever set by hand in settings.json; said only when on
   if FSettings.DebugEnabled then
     DebugMemo.Lines.Add('Debug enabled (debug_enabled is true in ' +
-      FSettings.FileName + '); OpenH264 is not fetched or used')
+      FSettings.FileName + ')')
   else if FSettings.DebugSwitch then
-    DebugMemo.Lines.Add('Debug enabled for this run (--debug); OpenH264 is not fetched ' +
-      'or used');
+    DebugMemo.Lines.Add('Debug enabled for this run (--debug)');
   FFrameOverrides := TDictionary<String, Integer>.Create;
   // The files File, Open Directory has found and still has to open
   FLoadQueue := TList<String>.Create;
@@ -3195,16 +3263,13 @@ begin
   // View, Camera, Lock Camera; before the menu is mirrored on mobile. On
   // Linux the menu bar has already been swapped, so it goes straight onto it
   BuildLockCameraItem;
-  // File, Debug, only while debug_enabled; likewise
+  // File, Debug, only while debug_enabled; likewise. It takes in the Tools
+  // menu, or frees it when there is no Debug menu, so before the drawer
   BuildDebugMenu;
   // The Results tab's player, reading where exports last went once shown
   BuildResultsView;
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
-  // Tools needs folder dialogs, which Android and iOS lack: it goes before
-  // the drawer is built from the menus. Freeing it sets ToolsMenu and
-  // ScanSpritesItem to nil
-  ToolsMenu.Free;
   // Built from the finished menus, so it comes after every item is added
   BuildMobileMenu;
   {$ENDIF}
@@ -4418,9 +4483,9 @@ begin
     List.AddElement(Entry);
     Entry.AddPair('name', AnimationListBox.Items[I]);
     Entry.AddPair('checked', TJSONBool.Create(AnimationListBox.ListItems[I].IsChecked));
-    Count := 0;
-    if I > 0 then
-      Count := FrameOverride(AnimationListBox.Items[I]);
+    // Every entry: the "if I > 0" that once skipped the "(None)" first
+    // entry lost the first animation's count after that entry went
+    Count := FrameOverride(AnimationListBox.Items[I]);
     if Count > 0 then
       Entry.AddPair('frames', TJSONNumber.Create(Count));
   end;
@@ -5275,6 +5340,11 @@ begin
   ApplyViewFps;
 end;
 
+procedure TMainForm.LicencesMenuItemClick(Sender: TObject);
+begin
+  ShowLicences;
+end;
+
 procedure TMainForm.SettingsMenuItemClick(Sender: TObject);
 var
   Dialog: TGeneralSettingsForm;
@@ -5376,6 +5446,30 @@ begin
           'Volume the View menu shows')
       else
         DebugMemo.Lines.Add('Grabs, icons and exports draw no grid, axes or volumes');
+    end;
+
+    // Cisco's OpenH264, which its licence asks the user can turn off and on
+    if ANew.UseOpenH264 <> AOld.UseOpenH264 then
+    begin
+      FSettings.UseOpenH264 := ANew.UseOpenH264;
+      SetOpenH264Enabled(ANew.UseOpenH264);
+      if not ANew.UseOpenH264 then
+        DebugMemo.Lines.Add('OpenH264 turned off: MP4 video is MPEG-4 Part 2, and it is ' +
+          'not fetched or loaded from the next start')
+      else
+      begin
+        DebugMemo.Lines.Add('OpenH264 turned on');
+        // Off at start-up, so nothing was prepared: find the copy there and,
+        // once the video libraries have been looked for, fetch the list now
+        if FOpenH264Update = nil then
+        begin
+          PrepareOpenH264;
+          if FVideoChecked then
+            StartOpenH264Update;
+        end;
+        if FVideoChecked and RecheckH264 then
+          DebugMemo.Lines.Add(OpenH264Status);
+      end;
     end;
 
     // The Results tab's empty border values, explained in a hint or not
@@ -6489,10 +6583,15 @@ begin
   if (Model = String.Empty) or (not FileExists(Model)) then
     begin
       ShowMessage('Model Not Found ' + Model);
+      // No load, so no EndLoad: the models waiting behind this one must
+      // still be started, or they waited for ever
+      ContinueLoading;
       Exit;
     end;
-  // A load under way, or a folder being opened, comes first
-  if (FLoadStage <> lsNone) or FQueueActive then
+  // A load under way, or a folder being opened, comes first. A folder
+  // still being searched counts as being opened: a load started then would
+  // meet the folder's own load dialog, and the two dialogs held each other
+  if (FLoadStage <> lsNone) or FQueueActive or FScanning then
   begin
     // Waits its turn, once however often it is asked for meanwhile
     for var Waiting in FPendingModels do
@@ -6504,6 +6603,7 @@ begin
   if Capturing then
     begin
       ShowMessage('An animation is being saved; open the model again when it is done.');
+      ContinueLoading;
       Exit;
     end;
 
@@ -6962,16 +7062,24 @@ begin
 end;
 
 // Finds the OpenH264 downloaded before, without the network, and tells
-// Sprite3DOpenH264 to load it. Nothing at all is done while debugging is on,
-// so OpenH264 is neither fetched nor loaded and MP4 files are MPEG-4 Part 2,
-// nor on iOS, which cannot load downloaded code.
+// Sprite3DOpenH264 to load it. Nothing at all is done on iOS, which cannot
+// load downloaded code, nor while the user has turned it off in Settings, as
+// Cisco's licence asks they can: OpenH264 is then neither fetched nor loaded
+// and MP4 files are MPEG-4 Part 2. Debugging makes no difference.
 procedure TMainForm.PrepareOpenH264;
 begin
   {$IFDEF IOS}
   Exit;
   {$ENDIF}
-  if FSettings.DebugActive then
+  SetOpenH264Enabled(FSettings.UseOpenH264);
+  if FOpenH264Update <> nil then
     Exit;
+  if not FSettings.UseOpenH264 then
+  begin
+    DebugMemo.Lines.Add('OpenH264 is turned off in Settings: it is not fetched or loaded, ' +
+      'so MP4 video is MPEG-4 Part 2');
+    Exit;
+  end;
   FOpenH264Update := TSprite3DLibraryUpdate.Create(OPENH264_LIST_URL, 'OpenH264',
     OpenH264Folder);
   SetPreferredOpenH264(FOpenH264Update.CurrentLibrary);
@@ -10045,7 +10153,10 @@ begin
   FOffscreen.KeepOverscanFile := String.Empty;
   if FQuitConfirmed then
   begin
-    // Quitting: nothing more is saved, and nothing is reported
+    // Quitting: nothing more is saved, and nothing is reported. The
+    // progress dialog is finished all the same: on the desktop it refuses
+    // to close until it is, so without this its ShowModal in StartBatch
+    // never returned and the confirmed quit hung behind it
     FBatchPass := 0;
     FBatchActive := False;
     FAtlasParts := nil;
@@ -10053,6 +10164,9 @@ begin
     FAtlasPending := nil;
     FPendingMetadata := nil;
     PauseViewForExport(False);
+    if FExportDialog <> nil then
+      FExportDialog.Finish('Export abandoned', FBatchErrors);
+    FBatchErrors := nil;
     Exit;
   end;
   if FBatchPass = 1 then
@@ -11137,14 +11251,21 @@ procedure TMainForm.BuildDebugMenu;
 var
   Item: TMenuItem;
 begin
+  // The Debug tab is shown only while debugging is on. DebugMemo is still
+  // written to while it is hidden, as nearly everything logs there
+  DebugTab.Visible := FSettings.DebugActive;
   if not FSettings.DebugActive then
+  begin
+    // Tools lives in Debug, so goes with it. Freeing it sets ToolsMenu and
+    // its items' fields to nil
+    ToolsMenu.Free;
     Exit;
-  FDebugSeparator := TMenuItem.Create(Self);
-  FDebugSeparator.Text := '-';
-  FileMenu.InsertObject(ExitMenuItem.Index, FDebugSeparator);
+  end;
+  // Above File's own separator, so Exit stays set apart and no second
+  // separator is needed
   FDebugMenu := TMenuItem.Create(Self);
   FDebugMenu.Text := 'Debug';
-  FileMenu.InsertObject(ExitMenuItem.Index, FDebugMenu);
+  FileMenu.InsertObject(FileSeparatorItem.Index, FDebugMenu);
   FFrameBordersItem := TMenuItem.Create(Self);
   FFrameBordersItem.Text := 'Frame Borders';
   FFrameBordersItem.IsChecked := FSettings.DebugFrameBorders;
@@ -11166,6 +11287,13 @@ begin
   Item.Text := 'Benchmark';
   Item.OnClick := BenchmarkItemClick;
   FDebugMenu.AddObject(Item);
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // Tools needs folder dialogs, which Android and iOS lack
+  ToolsMenu.Free;
+  {$ELSE}
+  // Moved from the menu bar, where the form designs it, with its items
+  FDebugMenu.AddObject(ToolsMenu);
+  {$ENDIF}
   // Only debug_enabled can be turned off: --debug lasts for the run
   if FSettings.DebugEnabled then
   begin
@@ -11181,8 +11309,7 @@ end;
 
 // Sets debug_enabled back to false in settings.json straight away. Debugging
 // stops now, frame borders and all, and File, Debug goes, unless --debug is
-// keeping it on for this run; OpenH264 is fetched the next time Sprite3D
-// starts, as it is only looked for at startup
+// keeping it on for this run
 procedure TMainForm.DisableDebugItemClick(Sender: TObject);
 begin
   FSettings.DebugEnabled := False;
@@ -11198,16 +11325,20 @@ begin
     end;
   end;
   DebugMemo.Lines.Add('Debug disabled (debug_enabled is now false in ' +
-    FSettings.FileName + '); OpenH264 is fetched the next time Sprite3D starts');
+    FSettings.FileName + ')');
   if Sender is TMenuItem then
     TMenuItem(Sender).Visible := False;
   if FSettings.DebugActive then
     DebugMemo.Lines.Add('Debugging stays on for this run (--debug)')
   else
   begin
-    // Hidden, not freed: this is still the menu item's click
+    // Hidden, not freed: this is still the menu item's click. Tools goes
+    // with it, and so does the Debug tab, after moving off it if it is the
+    // one showing
     FDebugMenu.Visible := False;
-    FDebugSeparator.Visible := False;
+    if TabControl1.ActiveTab = DebugTab then
+      SelectModelTabOnly(FStaticMode);
+    DebugTab.Visible := False;
   end;
 end;
 
@@ -12479,6 +12610,8 @@ begin
     ScanSpritesItem.Enabled := not FToolScanning and not FToolResultsWaiting;
   if ScanAtlasItem <> nil then
     ScanAtlasItem.Enabled := not FToolScanning and not FToolResultsWaiting;
+  if ScanAtlasFoldersItem <> nil then
+    ScanAtlasFoldersItem.Enabled := not FToolScanning and not FToolResultsWaiting;
 end;
 
 procedure TMainForm.ScanSpritesItemClick(Sender: TObject);
@@ -12785,9 +12918,6 @@ begin
 end;
 
 procedure TMainForm.FinishAtlasScan(const AAtlas: TSprite3DSpriteScan; const AError: String);
-var
-  Headers, Cells, Parts: TArray<String>;
-  I: Integer;
 begin
   FToolScanning := False;
   if AError <> String.Empty then
@@ -12803,19 +12933,163 @@ begin
       sLineBreak + sLineBreak + 'Nothing can be worked out until it is put right.');
     Exit;
   end;
+  LogAtlasScan('Scan Atlas', AAtlas);
+  ShowToolResults(AtlasScanTable(AAtlas), String.Empty);
+end;
+
+procedure TMainForm.LogAtlasScan(const ATool: String; const AAtlas: TSprite3DSpriteScan);
+var
+  Headers, Cells, Parts: TArray<String>;
+  I: Integer;
+begin
   // Every column the grid has, by its heading, then the active pixel counts
+  // and the packing totals
   Headers := AtlasScanHeaders;
   Cells := AtlasScanCells(AAtlas);
   Parts := nil;
   for I := 1 to Min(High(Headers), High(Cells)) do
     if Cells[I] <> String.Empty then
       Parts := Parts + [Headers[I] + ' ' + Cells[I]];
-  DebugMemo.Lines.Add(Format('Scan Atlas: %s: %s', [AAtlas.Name, String.Join(', ', Parts)]));
-  DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, of %d ' +
-    'in the box', [AAtlas.ActiveMin, FormatFloat('0.0', AAtlas.ActiveMean), AAtlas.ActiveMax,
-    Int64(AAtlas.ContentWidth) * AAtlas.ContentHeight]));
-  DebugMemo.Lines.Add('  ' + AtlasScanPackingText(AAtlas));
-  ShowToolResults(AtlasScanTable(AAtlas), String.Empty);
+  if AAtlas.Folder <> String.Empty then
+    DebugMemo.Lines.Add(Format('%s: %s (%s): %s', [ATool, AAtlas.Name, AAtlas.Folder,
+      String.Join(', ', Parts)]))
+  else
+    DebugMemo.Lines.Add(Format('%s: %s: %s', [ATool, AAtlas.Name, String.Join(', ', Parts)]));
+  if AAtlas.Valid then
+  begin
+    DebugMemo.Lines.Add(Format('  active pixels per frame: min %d, mean %s, max %d, of %d ' +
+      'in the box', [AAtlas.ActiveMin, FormatFloat('0.0', AAtlas.ActiveMean),
+      AAtlas.ActiveMax, Int64(AAtlas.ContentWidth) * AAtlas.ContentHeight]));
+    DebugMemo.Lines.Add('  ' + AtlasScanPackingText(AAtlas));
+  end;
+end;
+
+procedure TMainForm.ScanAtlasFoldersItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Dialog: TScanAtlasFoldersForm;
+  Root, FileName: String;
+  FrameWidth, FrameHeight: Integer;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Dialog := TScanAtlasFoldersForm.Create(nil);
+  try
+    Dialog.Root := FSettings.ScanAtlasRoot;
+    Dialog.FileName := FSettings.ScanAtlasFileName;
+    Dialog.FrameWidth := FSettings.ScanAtlasFrameWidth;
+    Dialog.FrameHeight := FSettings.ScanAtlasFrameHeight;
+    if Dialog.ShowModal <> mrOk then
+      Exit;
+    Root := OSFriendlyPath(Dialog.Root);
+    FileName := Dialog.FileName;
+    FrameWidth := Dialog.FrameWidth;
+    FrameHeight := Dialog.FrameHeight;
+  finally
+    Dialog.Free;
+  end;
+  FSettings.ScanAtlasRoot := Root;
+  FSettings.ScanAtlasFileName := FileName;
+  FSettings.ScanAtlasFrameWidth := FrameWidth;
+  FSettings.ScanAtlasFrameHeight := FrameHeight;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  StartAtlasTreeScan(Root, FileName, FrameWidth, FrameHeight);
+  {$ENDIF}
+end;
+
+// As StartAtlasScan: the tree is searched and the sheets read on a worker
+// thread, which hands its results back through QueueAtlasTreeResults
+procedure TMainForm.StartAtlasTreeScan(const ARoot, AFileName: String; const AFrameWidth,
+  AFrameHeight: Integer);
+var
+  Root, FileName: String;
+  FrameWidth, FrameHeight: Integer;
+begin
+  if FToolScanning or FToolResultsWaiting then
+    Exit;
+  Root := ARoot;
+  FileName := AFileName;
+  FrameWidth := AFrameWidth;
+  FrameHeight := AFrameHeight;
+  FToolScanning := True;
+  UpdateToolItems;
+  DebugMemo.Lines.Add(Format('Scan Atlas Folders: every %s below %s, frames of %d x %d',
+    [FileName, Root, FrameWidth, FrameHeight]));
+  TTask.Run(
+    procedure
+    var
+      Scans: TArray<TSprite3DSpriteScan>;
+      Error: String;
+    begin
+      Scans := nil;
+      Error := String.Empty;
+      try
+        Scans := ScanAtlasTree(Root, FileName, FrameWidth, FrameHeight,
+          function: Boolean
+          begin
+            Result := MainFormGone;
+          end,
+          procedure(const AName: String; const AIndex, ACount: Integer)
+          begin
+            QueueToolProgress('Scan Atlas Folders', AName, AIndex, ACount);
+          end);
+      except
+        on E: Exception do
+          Error := E.Message;
+      end;
+      if not MainFormGone then
+        QueueAtlasTreeResults(Scans, Root, FileName, Error);
+    end);
+end;
+
+procedure TMainForm.QueueAtlasTreeResults(const AScans: TArray<TSprite3DSpriteScan>;
+  const ARoot, AFileName, AError: String);
+var
+  Scans: TArray<TSprite3DSpriteScan>;
+  Root, FileName, Error: String;
+begin
+  Scans := AScans;
+  Root := ARoot;
+  FileName := AFileName;
+  Error := AError;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        FinishAtlasTreeScan(Scans, Root, FileName, Error);
+    end);
+end;
+
+procedure TMainForm.FinishAtlasTreeScan(const AScans: TArray<TSprite3DSpriteScan>;
+  const ARoot, AFileName, AError: String);
+var
+  Scan: TSprite3DSpriteScan;
+begin
+  FToolScanning := False;
+  if AError <> String.Empty then
+  begin
+    DebugMemo.Lines.Add('Scan Atlas Folders stopped: ' + AError);
+    ShowToolResults(EmptyScanTable, 'Scan Atlas Folders stopped: ' + AError);
+    Exit;
+  end;
+  if Length(AScans) = 0 then
+  begin
+    DebugMemo.Lines.Add(Format('Scan Atlas Folders: no %s below %s', [AFileName, ARoot]));
+    ShowToolResults(EmptyScanTable, Format('Scan Atlas Folders found no file named %s ' +
+      'below %s.', [AFileName, ARoot]));
+    Exit;
+  end;
+  for Scan in AScans do
+    LogAtlasScan('Scan Atlas Folders', Scan);
+  ShowToolResults(AtlasTreeTable(AScans, ARoot, AFileName), String.Empty);
 end;
 
 procedure TMainForm.ShowToolResults(const ATable: TScanTable; const AFailure: String);

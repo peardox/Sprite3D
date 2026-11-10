@@ -7,6 +7,8 @@ rem    RAD Studio's Redist\styles\Fmx; files already here are left alone, so
 rem    a style can be replaced by hand.
 rem 2. Compiles Sprite3DThemes.rc into Sprite3DThemes.res with RAD Studio's
 rem    brcc32, from this folder, so the file names in the .rc resolve here.
+rem 3. Calls licences\buildlicences.cmd, which compiles the third-party
+rem    licences into Sprite3DLicences.res the same way.
 rem
 rem Run by the project's pre-build event, for every platform and
 rem configuration, before anything is compiled:
@@ -46,7 +48,12 @@ if not exist "%BRCC%" (
 if errorlevel 1 (
   echo buildstyles.cmd : error : brcc32 could not compile Sprite3DThemes.rc
   set FAILED=1
+  goto done
 )
+
+rem 3. The licences, which are linked in the same way; see that script
+call "%~dp0..\..\licences\buildlicences.cmd" "%BDSDIR%"
+if errorlevel 1 set FAILED=1
 
 :done
 popd

@@ -1,5 +1,9 @@
 # Code review, 9 November 2026
 
+**Fixes applied** (Fixes1, 9 November, 22:45): items 1, 2, 3, 4 and 6;
+(Fixes2, 22:55): item 7; (Cisco1, 10 November): item 8. Items 5 and 50 are withdrawn. Item 9
+is in part met, as the list's addresses are now all https. The rest are open.
+
 A review of the source at `main` `0d0103f`, against the rules in
 `CLAUDE.md`, by six reviewers each reading whole units, collated and
 spot-checked by a seventh. Every unit was covered. Line numbers are
@@ -22,9 +26,9 @@ no `src/lib` or `src/common` unit uses `src/ui`; no form has a
 
 ## Fix first
 
-In order. Items 1 to 4 are confirmed; 5 to 9 are likely.
+In order. Items 1 to 4 are confirmed; 6 to 9 are likely; 5 was wrong.
 
-1. **Quitting during an export hangs the desktop.** `Sprite3dMain.pas`
+1. **Fixed.** **Quitting during an export hangs the desktop.** `Sprite3dMain.pas`
    9875 to 9886, `FinishBatch`: the `FQuitConfirmed` branch clears the
    batch state and exits without `ReportBatch`, so `FExportDialog.Finish`
    is never called. The progress dialog's `FormCloseQuery` refuses to
@@ -34,20 +38,23 @@ In order. Items 1 to 4 are confirmed; 5 to 9 are likely.
    cancel `FCapture`, so the capture's `Done` is what gets here. To see
    it: start a strip export, close the main window, answer Yes.
 
-2. **A finished MP4 can have `av_write_trailer` called twice.**
+2. **Fixed.** **A finished MP4 can have `av_write_trailer` called twice.**
    `Sprite3DVideo.pas` 1055 to 1059 and 1182 to 1186: `Check(... av_write_trailer ...)`
    then `HeaderWritten := False`. If `Check` raises, the flag is still
    True and the `finally` calls the trailer again on a context FFmpeg
    has already torn down. Clear the flag before the call.
 
-3. **`DefaultModelDir` is dead above its last line.** `Sprite3DHelpers.pas`
+3. **Fixed** (by removing the dead lines and correcting both
+   descriptions, so the behaviour is unchanged: the assets folder on
+   every platform; say if the old per-platform folders were wanted).
+   **`DefaultModelDir` is dead above its last line.** `Sprite3DHelpers.pas`
    2090 to 2105: the `{$IF}` block (library path on macOS, home on Linux)
    and the Windows `DirectoryExists('models')` check are all overwritten
    by `Result := GetAssetsPath('../../../')`. The interface comment
    (1160 to 1164) and `Sprite3dMain.pas` 933 to 935 describe what no
    longer happens; on macOS the default is the bundle's Resources folder.
 
-4. **Deadlock when a model is requested during a folder scan.**
+4. **Fixed.** **Deadlock when a model is requested during a folder scan.**
    `Sprite3dMain.pas` about 6324: the "load later" guard tests
    `FLoadStage <> lsNone` but not `FScanning`. A model dropped after Open
    Directory starts scanning but before `FQueueActive` is set loads at
@@ -57,25 +64,23 @@ In order. Items 1 to 4 are confirmed; 5 to 9 are likely.
    `ShowModal` never returns. `OpenDirectoryMenuItemClick` guards the
    reverse case (about 12250).
 
-5. **GIF LZW code widening is one code late.** `Sprite3DSpriteSheet.pas`
+5. **Withdrawn.** **GIF LZW code widening is one code late.** `Sprite3DSpriteSheet.pas`
    1291 and 1310: the encoder widens when `Next > (1 shl FSize)`; giflib's
    encoder widens when its running code `>= 1 shl bits`, one code
    earlier. If this is right, decoders read one code at the old width
    that was written at the new, and the picture breaks after about 254
-   codes. Not confirmed, because the comment says the lateness is
-   deliberate for the decoder being one entry behind, and the GIFs may
-   well have been tested. Confirm with an exported GIF through
-   `identify -verbose` (ImageMagick) or `giflib`'s `gifbuild -d`, looking
-   for LZW errors; if they are clean, this item is withdrawn. The END
-   code (1307 to 1312) has the same question.
+   codes. Wrong: giflib's check runs inside its output routine before
+   it inserts the new entry, so its `>=` on the count before the insert
+   is the same moment as this code's `>` on the count after it. The END
+   code (1307 to 1312) matches giflib too. The encoder is right.
 
-6. **Pending models stall after a missing file.** `Sprite3dMain.pas`
+6. **Fixed** (`ContinueLoading` on both exits). **Pending models stall after a missing file.** `Sprite3dMain.pas`
    6318 to 6337: when `SwitchModel` exits because the file is not found,
    or a capture is running, `ReportLoadEnd` never runs, so
    `ContinueLoading` never pops the next of `FPendingModels`. Opening
    several files with one missing loads none after it.
 
-7. **The first animation's frame override is never saved.**
+7. **Fixed.** **The first animation's frame override is never saved.**
    `AnimationListToJson`, about 4251: `if I > 0 then Count :=
    FrameOverride(...)` skips entry 0, a leftover from the old `(None)`
    first entry (`OLD_NO_ANIMATION`, 2849). A count typed for the first
@@ -89,7 +94,8 @@ In order. Items 1 to 4 are confirmed; 5 to 9 are likely.
    the next start downloads the 64 MB again. This is exactly what
    pointing `openh264.json` at Cisco's downloads (same file names, new
    URLs) would trigger. A versioned or URL-derived file name, or a
-   deferred swap, breaks the loop.
+   deferred swap, breaks the loop. *Fixed (Cisco1): each copy's name
+   carries a hash of its address (`InstalledFileName`).*
 
 9. **The downloader trusts what it loads.** `Sprite3DLibraryUpdate.pas`
    306, 591, 721: `http` is accepted alongside `https`, redirects are
@@ -97,7 +103,9 @@ In order. Items 1 to 4 are confirmed; 5 to 9 are likely.
    `TFile.Move` is the `MZ`/ELF/Mach-O magic. Anyone who can alter the
    list or the transfer gets a library loaded by `LoadLibraryEx` on the
    next `RecheckH264`. Https only, and a `sha256` in the list checked
-   before the move, would close it. Timely, given the Cisco change.
+   before the move, would close it. *In part: the list's addresses are
+   all Cisco's https ones since 10 November; the client still accepts
+   http and checks no hash.*
 
 ## Sprite3dMain.pas
 
@@ -428,7 +436,7 @@ setters clamp hand-edited values.
 
 ## Spritely
 
-50. **Win32: the memory scan can raise `EInvalidOp`.**
+50. **Withdrawn.** **Win32: the memory scan can raise `EInvalidOp`.**
     `Spritely.Projection.pas` 959, 1371, 1881: `FindSlot` and
     `ScanObject` read arbitrary object bytes as `Single`. Win32 Delphi
     loads `Single` through the x87 FPU with the invalid-operation
@@ -436,7 +444,10 @@ setters clamp hand-edited values.
     `$7F80xxxx` to `$7FBFxxxx`) raises before `IsNan` runs. `ScanObject`
     has a `try/except`; `FindSlot` has none, so it would escape FMX's
     `Render`. Win64's SSE does not signal, which is where this has been
-    tested. Run ProjectionTest or Sprite3D as Win32 with an oblique on.
+    tested. Withdrawn: Win32 is built only for the design-time packages
+    (the IDE is 32-bit) and nothing is released there, and the projection
+    installs no hook under `csDesigning` (1833, 2108), so the scan never
+    runs on Win32 at all.
 
 51. **Slot eviction at the limit** (1885 to 1886): at
     `SPRITELY_PROJECTION_MAX_CONTEXTS` the oldest slot is deleted without

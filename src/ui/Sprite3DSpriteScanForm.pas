@@ -172,6 +172,21 @@ function AtlasScanCells(const AAtlas: TSprite3DSpriteScan): TArray<String>;
 //** @returns(The line, or its Error if it has no figures.)
 function AtlasScanPackingText(const AAtlas: TSprite3DSpriteScan): String;
 
+//** @abstract(Scan Atlas Folders' results as a table: one row per sheet found, named by
+//** its folder relative to the root.)
+//**
+//** The columns are Scan Atlas' less Sheets, as each row is one sheet, with Folder first.
+//**
+//** @param(AScans The sheets' scans, from ScanAtlasTree.)
+//**
+//** @param(ARoot The root that was searched, for the note.)
+//**
+//** @param(AFileName The sheet's file name that was searched for, for the note.)
+//**
+//** @returns(The table.)
+function AtlasTreeTable(const AScans: TArray<TSprite3DSpriteScan>;
+  const ARoot, AFileName: String): TScanTable;
+
 //** @abstract(Scan Atlas' results as a table: one row for the whole atlas.)
 //**
 //** @param(AAtlas The scan, from ScanAtlas.)
@@ -200,7 +215,10 @@ const
     'as a share of that box: the lowest, the median (mid) and the highest. Saving is ' +
     'the share of the sheets a perfect packing would save: every drawn pixel and nothing ' +
     'else, the limit no real packing quite reaches. Trim saving is what packing each ' +
-    'frame trimmed to its own tight box would save, as a rectangle packer could.';
+    'frame trimmed to its own tight box would save, as a rectangle packer could, and ' +
+    'Packed the side of a square sheet that would hold them so: the square root of ' +
+    'their area. A pixel counts as drawn unless it is fully transparent, so shadows ' +
+    'count.';
 
 function EmptyScanTable: TScanTable;
 begin
@@ -275,7 +293,7 @@ function AtlasScanHeaders: TArray<String>;
 begin
   Result := ['Atlas', 'Sheets', 'Frames', 'Unused', 'Frame size', 'Left', 'Top', 'Right',
     'Bottom', 'Width', 'Height', 'Cover min', 'Cover mid', 'Cover max', 'Saving',
-    'Trim saving', 'Note'];
+    'Trim saving', 'Packed', 'Note'];
 end;
 
 function AtlasScanCells(const AAtlas: TSprite3DSpriteScan): TArray<String>;
@@ -288,12 +306,13 @@ begin
       IntToStr(AAtlas.ContentWidth), IntToStr(AAtlas.ContentHeight),
       Percent(AAtlas.CoverageMin), Percent(AAtlas.CoverageMedian),
       Percent(AAtlas.CoverageMax), Percent(AAtlas.PackingSaving),
-      Percent(AAtlas.TrimSaving), String.Empty]
+      Percent(AAtlas.TrimSaving), Format('%0:d x %0:d', [AtlasPackedSide(AAtlas)]),
+      String.Empty]
   else
     Result := [AAtlas.Name, IntToStr(AAtlas.SheetCount), IntToStr(Length(AAtlas.Frames)),
       IntToStr(AAtlas.UnusedFrames), String.Empty, String.Empty, String.Empty, String.Empty,
       String.Empty, String.Empty, String.Empty, String.Empty, String.Empty, String.Empty,
-      String.Empty, String.Empty, AAtlas.Error];
+      String.Empty, String.Empty, String.Empty, AAtlas.Error];
 end;
 
 function AtlasScanPackingText(const AAtlas: TSprite3DSpriteScan): String;
@@ -309,13 +328,43 @@ begin
     Ceil(Sqrt(AAtlas.TrimmedPixels)), Ceil(Sqrt(AAtlas.TrimmedPixels))]);
 end;
 
+function AtlasTreeTable(const AScans: TArray<TSprite3DSpriteScan>;
+  const ARoot, AFileName: String): TScanTable;
+var
+  Scan: TSprite3DSpriteScan;
+  Cells, Headers: TArray<String>;
+begin
+  // The atlas columns less Sheets, as each row is one sheet, with the
+  // relative folder first
+  Headers := AtlasScanHeaders;
+  Delete(Headers, 1, 1);
+  Headers[0] := 'Folder';
+  if Length(AScans) = 1 then
+    Result.Caption := 'Scan Atlas Folders: 1 sheet'
+  else
+    Result.Caption := Format('Scan Atlas Folders: %d sheets', [Length(AScans)]);
+  Result.Note := Format('Each %s found below %s, one row each, by its folder relative to ' +
+    'that. ', [AFileName, ARoot]) + ATLAS_NOTE;
+  Result.Headers := Headers;
+  Result.Widths := [200.0, 60.0, 60.0, 84.0, 48.0, 48.0, 48.0, 56.0, 56.0, 56.0, 80.0, 80.0,
+    80.0, 64.0, 84.0, 90.0, 200.0];
+  Result.Rows := nil;
+  for Scan in AScans do
+  begin
+    Cells := AtlasScanCells(Scan);
+    Delete(Cells, 1, 1);
+    Result.Rows := Result.Rows + [Cells];
+  end;
+  Result.Footer := nil;
+end;
+
 function AtlasScanTable(const AAtlas: TSprite3DSpriteScan): TScanTable;
 begin
   Result.Caption := 'Scan Atlas: ' + AAtlas.Name;
   Result.Note := ATLAS_NOTE;
   Result.Headers := AtlasScanHeaders;
   Result.Widths := [160.0, 56.0, 60.0, 60.0, 84.0, 48.0, 48.0, 48.0, 56.0, 56.0, 56.0, 80.0,
-    80.0, 80.0, 64.0, 84.0, 200.0];
+    80.0, 80.0, 64.0, 84.0, 90.0, 200.0];
   Result.Rows := [AtlasScanCells(AAtlas)];
   Result.Footer := [AtlasScanPackingText(AAtlas)];
 end;

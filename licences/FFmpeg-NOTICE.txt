@@ -1,0 +1,23 @@
+FFmpeg libraries
+================
+
+Sprite3D's MP4 video export uses the FFmpeg libraries avutil, avcodec,
+avformat and, where present, swscale, version 8.1, when they are installed
+beside it. They are not part of Sprite3D itself.
+
+FFmpeg is licensed under the GNU Lesser General Public License, version 2.1
+or later (LGPL v2.1+). The text of the LGPL v2.1 is reproduced in this
+program under "GNU LGPL v2.1". The libraries shipped with Sprite3D are LGPL
+builds of FFmpeg, configured without --enable-gpl and --enable-nonfree.
+
+Sprite3D loads the libraries at run time and is not linked against them. You
+may replace them with your own builds of FFmpeg 8.1 with the same library
+names.
+
+The FFmpeg source code for this version is available from:
+
+  https://ffmpeg.org/releases/ffmpeg-8.1.tar.xz
+  https://git.ffmpeg.org/ffmpeg.git, tag n8.1
+
+FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project.
+For more information, see https://ffmpeg.org/legal.html

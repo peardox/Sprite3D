@@ -86,16 +86,22 @@ uses
   Sprite3DOpenDirectoryForm in 'ui\Sprite3DOpenDirectoryForm.pas' {OpenDirectoryForm},
   Sprite3DNameClashForm in 'ui\Sprite3DNameClashForm.pas' {NameClashForm},
   Sprite3DPngReader in 'lib\Sprite3DPngReader.pas',
+  Sprite3DLicences in 'lib\Sprite3DLicences.pas',
   Sprite3DFolderDialog in 'lib\Sprite3DFolderDialog.pas',
   Sprite3DSpriteScan in 'lib\Sprite3DSpriteScan.pas',
   Sprite3DSpriteScanForm in 'ui\Sprite3DSpriteScanForm.pas' {SpriteScanForm},
-  Sprite3DScanAtlasForm in 'ui\Sprite3DScanAtlasForm.pas' {ScanAtlasForm};
+  Sprite3DScanAtlasForm in 'ui\Sprite3DScanAtlasForm.pas' {ScanAtlasForm},
+  Sprite3DScanAtlasFoldersForm in 'ui\Sprite3DScanAtlasFoldersForm.pas' {ScanAtlasFoldersForm},
+  Sprite3DLicencesForm in 'ui\Sprite3DLicencesForm.pas' {LicencesForm};
 
 {$R *.res}
 // The themes' FMX styles, inside the program on every platform. The .res
 // is built by styles\buildstyles.cmd in the pre-build event; see
 // styles\Sprite3DThemes.rc
 {$R 'styles\Sprite3DThemes.res'}
+// The third-party licences and notices, from licences\Sprite3DLicences.rc,
+// which the pre-build step compiles; File, Licences shows them
+{$R '..\licences\Sprite3DLicences.res'}
 
 begin
   // A model opened from Explorer while Sprite3D is already running goes to

@@ -424,6 +424,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="lib\Sprite3DPngReader.pas"/>
+        <DCCReference Include="lib\Sprite3DLicences.pas"/>
         <DCCReference Include="lib\Sprite3DFolderDialog.pas"/>
         <DCCReference Include="lib\Sprite3DSpriteScan.pas"/>
         <DCCReference Include="ui\Sprite3DSpriteScanForm.pas">
@@ -432,6 +433,14 @@ $(PreBuildEvent)]]></PreBuildEvent>
         </DCCReference>
         <DCCReference Include="ui\Sprite3DScanAtlasForm.pas">
             <Form>ScanAtlasForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DScanAtlasFoldersForm.pas">
+            <Form>ScanAtlasFoldersForm</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="ui\Sprite3DLicencesForm.pas">
+            <Form>LicencesForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
         <None Include="styles\Sprite3DThemes.rc"/>

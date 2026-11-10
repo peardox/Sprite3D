@@ -208,6 +208,60 @@ object GeneralSettingsForm: TGeneralSettingsForm
               Text = 'Explain the empty border values in a hint'
             end
           end
+          object VideoGroup: TGroupBox
+            Align = Top
+            Margins.Left = 8.000000000000000000
+            Margins.Top = 8.000000000000000000
+            Margins.Right = 8.000000000000000000
+            Position.X = 8.000000000000000000
+            Position.Y = 508.000000000000000000
+            Size.Width = 424.000000000000000000
+            Size.Height = 150.000000000000000000
+            Size.PlatformDefault = False
+            Text = 'MP4 video'
+            TabOrder = 4
+            object OpenH264Check: TCheckBox
+              Position.X = 16.000000000000000000
+              Position.Y = 28.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = 'Use OpenH264 for H.264 MP4 video'
+            end
+            object OpenH264NoticeLabel: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 52.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 19.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'OpenH264 Video Codec provided by Cisco Systems, Inc.'
+              TabOrder = 1
+            end
+            object OpenH264Note: TLabel
+              Position.X = 16.000000000000000000
+              Position.Y = 74.000000000000000000
+              Size.Width = 384.000000000000000000
+              Size.Height = 36.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.VertAlign = Leading
+              TextSettings.WordWrap = True
+              Text = 
+                'On, Cisco'#39's library is downloaded from Cisco and MP4 video is H.' +
+                '264, which web browsers play. Off, MP4 video is MPEG-4 Part 2.'
+              TabOrder = 2
+            end
+            object OpenH264LicenceButton: TButton
+              Position.X = 16.000000000000000000
+              Position.Y = 116.000000000000000000
+              Size.Width = 120.000000000000000000
+              Size.Height = 22.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 3
+              Text = 'Cisco Licence...'
+              OnClick = OpenH264LicenceButtonClick
+            end
+          end
         end
         object RightColumn: TLayout
           Align = Client

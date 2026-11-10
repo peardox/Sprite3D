@@ -1,0 +1,16 @@
+// The third-party licences and notices Sprite3D must carry, linked into the
+// program as RCDATA resources so they are inside it on every platform and
+// cannot be left out of a release. Sprite3DLicences reads them by these
+// names; File, Licences... shows them and can save them all as one file.
+//
+// buildlicences.cmd, run from the styles' pre-build step, compiles this file,
+// from this folder, into Sprite3DLicences.res, which Sprite3d.dpr links in.
+// Add a licence here, as a text file in this folder, and to the list in
+// src/lib/Sprite3DLicences.pas.
+
+LICENCE_OPENH264_BINARY  RCDATA "OpenH264-BINARY_LICENSE.txt"
+LICENCE_OPENH264_BSD     RCDATA "OpenH264-BSD-LICENSE.txt"
+LICENCE_FFMPEG           RCDATA "FFmpeg-NOTICE.txt"
+LICENCE_LGPL21           RCDATA "LGPL-2.1.txt"
+LICENCE_DELPHIFFMPEG     RCDATA "DelphiFFmpeg-LICENSE.txt"
+LICENCE_NEON             RCDATA "Neon-LICENSE.txt"

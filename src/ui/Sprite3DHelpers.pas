@@ -288,6 +288,8 @@ type
     //** @abstract(Whether grabs, icons and exports draw the grid, axes and Model Volume the
     //** View menu shows.)
     HelpersInOutput: Boolean;
+    //** @abstract(Whether Cisco's OpenH264 is downloaded and used for H.264 MP4 video.)
+    UseOpenH264: Boolean;
     //** @abstract(The most ViewFps may be: the display's refresh rate, set by the caller; not
     //** kept.)
     MaxViewFps: Integer;
@@ -388,6 +390,8 @@ type
     FAnimationFps: Integer;
     FViewFps: Integer;
     FMinifyJson: Boolean;
+    //** Whether OpenH264 may be used; see UseOpenH264.
+    FUseOpenH264: Boolean;
     FDirectionCount: Integer;
     FDirectionStart: Single;
     FDirectionClockwise: Boolean;
@@ -414,6 +418,10 @@ type
     FScanAtlasFolder: String;
     FScanAtlasFrameWidth: Integer;
     FScanAtlasFrameHeight: Integer;
+    //** Tools, Scan Atlas Folders' root and sheet name; see ScanAtlasRoot and
+    //** ScanAtlasFileName.
+    FScanAtlasRoot: String;
+    FScanAtlasFileName: String;
     FShowOverscanWarning: Boolean;
     FShowExactWarning: Boolean;
     FResultsShowGrid: Boolean;
@@ -501,8 +509,8 @@ type
     //** @abstract(Whether debugging is on: DebugEnabled from settings.json, or DebugSwitch
     //** from the command line.)
     //**
-    //** While it is, File, Debug is offered, the Debug tab says so at start-up, and OpenH264
-    //** is neither fetched nor loaded.
+    //** While it is, File, Debug and the Debug tab are offered, and the Debug tab says so at
+    //** start-up. It makes no difference to OpenH264, which UseOpenH264 alone turns off.
     //**
     //** @returns(True if either is set.)
     function DebugActive: Boolean;
@@ -761,6 +769,13 @@ type
     //** included, sets JsonText.MinifyJson, which every JSON file Sprite3D writes follows,
     //** settings.json itself among them.
     property MinifyJson: Boolean read FMinifyJson write SetMinifyJson;
+    //** @abstract(Whether Cisco's OpenH264 is downloaded and used for H.264 MP4 video; True by
+    //** default.)
+    //**
+    //** Set in File, Settings, as Cisco's licence for its binary asks that the user can turn
+    //** it off and on again. Off, the list of downloads is not fetched, nothing is downloaded
+    //** or loaded, and MP4 files are MPEG-4 Part 2. Stored as @code(useOpenH264).
+    property UseOpenH264: Boolean read FUseOpenH264 write FUseOpenH264;
     //** @abstract(How many directions Models, Directions has around its compass;
     //** DIRECTION_COUNT_DEFAULT by default.)
     //**
@@ -881,6 +896,16 @@ type
     //** Stored as @code(scanAtlasFrameHeight).
     property ScanAtlasFrameHeight: Integer read FScanAtlasFrameHeight
       write FScanAtlasFrameHeight;
+    //** @abstract(The folder Tools, Scan Atlas Folders last searched below; empty until it
+    //** has been used.)
+    //**
+    //** Stored as @code(scanAtlasRoot). The frame size is shared with Scan Atlas.
+    property ScanAtlasRoot: String read FScanAtlasRoot write FScanAtlasRoot;
+    //** @abstract(The sheet's file name Tools, Scan Atlas Folders last searched for;
+    //** @code(Spritesheet.png) by default.)
+    //**
+    //** Stored as @code(scanAtlasFileName).
+    property ScanAtlasFileName: String read FScanAtlasFileName write FScanAtlasFileName;
     //** @abstract(Whether ticking Overscan in Models, Animation Settings first warns how
     //** much longer rendering takes; True by default.)
     //**
@@ -1184,11 +1209,11 @@ function DegreesText(const ADegrees: Single): String;
 
 //** @abstract(The folder that holds the application's models folder, for this platform.)
 //**
-//** The library path on macOS, the home folder on Linux and @code('../../../') elsewhere;
-//** on Windows it is the current folder instead, returned as an empty string, if that has a
-//** models subfolder.
+//** The program's assets folder, from @link(GetAssetsPath): the executable's folder on Windows
+//** (three folders up from it, @code('../../../'), when started from the IDE), the bundle's
+//** Resources folder on macOS, and the application's resource folder on Android.
 //**
-//** @returns(A folder path ending in a path delimiter, or empty for the current folder.)
+//** @returns(A folder path ending in a path delimiter.)
 function DefaultModelDir: String;
 
 //** @abstract(The folder grabs are saved in without asking, or empty where the user should
@@ -1686,6 +1711,9 @@ begin
   FScanAtlasFolder := String.Empty;
   FScanAtlasFrameWidth := 64;
   FScanAtlasFrameHeight := 64;
+  FScanAtlasRoot := String.Empty;
+  FUseOpenH264 := True;
+  FScanAtlasFileName := 'Spritesheet.png';
   FShowOverscanWarning := True;
   FShowExactWarning := True;
   FResultsShowGrid := True;
@@ -2120,20 +2148,10 @@ end;
 
 function DefaultModelDir: String;
 begin
-  {$IF DEFINED(MACOS)}
-  Result := IncludeTrailingPathDelimiter(TPath.GetLibraryPath);
-  {$ELSEIF DEFINED(LINUX)}
-  Result := IncludeTrailingPathDelimiter(TPath.GetHomePath);
-  {$ELSE}
-  Result := '../../../';
-  {$ENDIF}
-
-  {$IF DEFINED(MSWINDOWS)}
-  if DirectoryExists('models') then
-    Result := String.Empty;
-  {$ENDIF}
+  // Once the library path on macOS and the home folder on Linux, with the
+  // current folder on Windows when it had a models subfolder; a later line
+  // overrode all of that with the assets folder, so that is what it is
   Result := GetAssetsPath('../../../');
-
 end;
 
 function PaddingLimit(const AGrabWidth, AGrabHeight: Integer): Integer;
@@ -2956,6 +2974,7 @@ begin
   Result.MinifyJson := ASettings.MinifyJson;
   Result.ResultsEdgeHint := ASettings.ResultsEdgeHint;
   Result.HelpersInOutput := ASettings.HelpersInOutput;
+  Result.UseOpenH264 := ASettings.UseOpenH264;
   // The caller knows the display; until it says, at least the rate in use
   Result.MaxViewFps := Max(ASettings.ViewFps, VIEW_FPS_DEFAULT);
   if GpuModeSupported then
