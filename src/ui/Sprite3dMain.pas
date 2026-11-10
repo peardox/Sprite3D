@@ -3660,6 +3660,10 @@ begin
       if IsAnimationEntry(AnimationListBox.ItemIndex) then
         begin
           ani := AnimationListBox.Items[AnimationListBox.ItemIndex];
+          // Back to the bind pose first, so nothing the last clip moved and
+          // this one does not (an eye node, say) stays where it was left
+          // (Gorilla3D's author, Bear5)
+          GorillaModel.ResetToBindPose();
           var Anim := GorillaModel.AnimationManager.PlayAnimation(ani);
           if Anim <> nil then
           begin

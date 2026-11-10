@@ -702,6 +702,25 @@ the code Sprite3D now runs, and the two Gorilla3D changes that would
 replace it. Item 16 points there, and a question asks whether the
 workaround is safe to rely on.
 
+**Bear5** (15:05; Gorilla3D's author sent his own `Sprite3DAnimCapture.pas`
+and `Sprite3dMain.pas`, based on the pre-Bear unit and pre-Assoc1 main:
+"I'm not sure if it's a good idea to automatically cache those attached
+objects too with the parent mesh, even if they aren't skinned"). Adopted
+as he wrote it, with LF line endings:
+- `SeekTo` clears `Skeleton.Pause`, seeks, `ProcessTick(0, 0)`, sets
+  `Pause` again, on every Delphi version;
+- `ShowFrame` keeps `SetFixedCacheFrame(Baked)` and then
+  `SeekTo(Baked * FDuration / (FCachedFrames - 1))`, Gorilla's bake time;
+- `Finish`, `QueueGrab` and `Cancel` are as before the Bear work (Bear3's
+  `NeedsDrawnFrame`, `POSE_SETTLE_TIME` and `FDelayPending` are gone);
+- `Sprite3dMain`: `GorillaModel.ResetToBindPose()` before
+  `PlayAnimation(ani)` when the selection changes (the only change in his
+  copy; Assoc1's start-up code kept).
+Only the class description was corrected (it still said a seek lags a
+frame on Delphi 13). README's "Poses, not blended images" and
+`notes/imports.md` (item 16, "What Sprite3D does now (the author's fix)",
+"Left for Gorilla3D") describe it.
+
 ### Things to check
 
 - Variable's dialog is placed at the main form's centre, so on a wide

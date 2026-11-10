@@ -163,16 +163,25 @@ type
   //**
   //** Sprite3D loads models with vertex caching, so Gorilla has already baked the animation
   //** into @code(FrameCount) poses at its own rate (60 a second on desktop, 24 on some mobile
-  //** platforms). Each frame is posed by seeking the paused clip to its time, so Gorilla
-  //** poses everything as it does when playing: the skinned vertices from the baked poses,
-  //** and the skeleton, the animated nodes and the meshes hung unskinned from them (a
-  //** character's eyes under its head joint). @code(SetFixedCacheFrame) is not used: it shows
-  //** only the baked skinned vertices, and leaves the rest where the clip was paused. The
-  //** images are never blended, which would leave ghosts in a sprite.
+  //** platforms). Each output time is mapped onto that grid and the nearest baked pose is
+  //** shown with @code(SetFixedCacheFrame), whatever the animation clock is doing; on desktop
+  //** that is within 1/120 of a second of the exact time. The poses themselves are
+  //** interpolated between the file's keyframes when Gorilla bakes them; the images are never
+  //** blended, which would leave ghosts in a sprite. At a rate above the baked rate some poses
+  //** repeat.
   //**
-  //** A seek only moves the clip's play head, and Gorilla's render clock (Delphi 13 and
-  //** later) does not tick a paused clip, so each seek is followed by one tick of no time,
-  //** as the clock itself runs it: the pose is there at once, with no frame to wait for.
+  //** The baked poses hold only the skinned meshes. Meshes hung unskinned on joints or
+  //** animated nodes (a bear's eyes under its head bone) are placed by the live skeleton, so
+  //** it is posed at the baked frame's own time as well, @code(Baked * Duration / (frames -
+  //** 1)), the time Gorilla baked it at.
+  //**
+  //** An animation without baked poses is posed by the skeleton alone, at each exact time,
+  //** which interpolates the keyframes there.
+  //**
+  //** The skeleton is posed at once, whatever the Delphi version: a seek only moves the play
+  //** head, so it is followed by one @code(ProcessTick(0, 0)) with Pause cleared for that
+  //** call, as Gorilla's render clock does around each tick it lets through (on Delphi 13 and
+  //** later the clock skips a paused clip altogether).
   //**
   //** Animations that do not cycle are not treated differently yet: their last pose is left
   //** out, as for a cycle.
@@ -186,6 +195,9 @@ type
     FCachedFrames: Integer;
     FFrames: Integer;
     FDuration: Single;
+    //** @abstract(Poses the live skeleton at ATime at once, and leaves it held there.)
+    //**
+    //** @param(ATime Seconds into the clip; kept just short of Duration.)
     procedure SeekTo(const ATime: Single);
   public
     //** @abstract(Prepares to capture one cycle of AAnimation of AModel at AFrameRate, or in
@@ -295,8 +307,6 @@ type
     FOnDone: TSprite3DFramesProc;
     FOnProgress: TSprite3DCaptureProgress;
     FFrames: TArray<TSprite3DImage>;
-    // A delayed grab is queued; it frees the capture if it was cancelled
-    FDelayPending: Boolean;
     FIndex: Integer;
     FCancelled: Boolean;
     FStarted: Boolean;
@@ -452,7 +462,7 @@ type
 implementation
 
 uses
-  System.Math, FMX.Types;
+  System.Math;
 
 procedure SetAnimationPaused(const AAnimation: TGorillaAnimation; const APaused: Boolean);
 begin
@@ -658,61 +668,63 @@ end;
 procedure TSprite3DAnimationFrames.SeekTo(const ATime: Single);
 var
   Time: Single;
-  Was: Boolean;
 begin
   if not Assigned(FAnimation.Skeleton) then
     Exit;
   // Reaching Duration would end or wrap the clip, so stay just short of it
   Time := EnsureRange(ATime, 0, Max(0, Duration * 0.9999));
-  // SeekTo only moves the play head: the pose is computed by the next
-  // ProcessTick, and Gorilla's render clock (Delphi 13 and later) gives
-  // none to a paused clip. So one tick of no time is run here, as the clock
-  // itself does: Pause, the flag ProcessTick tests, dropped for that one
-  // call only (TGorillaRenderClock.Tick). It poses everything at once: the
-  // baked skinned vertices, picked by the clip's position, and the skeleton
-  // with the nodes and meshes hung from it (Bear4)
-  FAnimation.Skeleton.SeekTo(Time);
-  {$IF CompilerVersion >= 37.0}
-  // Pause put back as it was: the render clock keeps it set on a clip it
-  // runs, and the pause itself is Skeleton.Paused
-  Was := FAnimation.Skeleton.Pause;
-  {$ELSE}
-  // Before Delphi 13 Pause is the pause itself, and it stays set so the clip
-  // holds the pose until Finish
-  Was := True;
-  {$ENDIF}
+  // Pose the skeleton now. ProcessTick only evaluates a clip whose Pause flag
+  // is clear, so clear it for this one call and set it again. On Delphi 13
+  // and later Gorilla's render clock owns that flag and skips a paused
+  // skeleton altogether (TGorillaRenderClock: "if Paused then Continue"),
+  // so a seek alone would never be drawn; the clock itself clears and sets
+  // the flag the same way around each tick it lets through.
   FAnimation.Skeleton.Pause := False;
   try
+    FAnimation.Skeleton.SeekTo(Time);
     FAnimation.Skeleton.ProcessTick(0, 0);
   finally
-    FAnimation.Skeleton.Pause := Was;
+    FAnimation.Skeleton.Pause := True;
   end;
 end;
 
 procedure TSprite3DAnimationFrames.ShowFrame(const AIndex: Integer);
 var
   Phase: Double;
+  Baked: Integer;
 begin
   // How far through the cycle this frame is, 0 up to but not including 1
   Phase := EnsureRange(AIndex, 0, FFrames - 1) / FFrames;
-  // Posed by seeking the clip, baked or not. SetFixedCacheFrame shows only
-  // the baked skinned vertices, and leaves the skeleton, the animated nodes
-  // and what hangs unskinned from the joints (a bear's eyes under its head)
-  // where the clip was paused (Bear1 to Bear4). SeekTo poses everything, the
-  // skinned vertices from the baked poses as when playing.
-  SeekTo(Phase * FDuration);
-  {$IFDEF DEBUG}
-  FMX.Types.Log.d(Format('Sprite3DAnimCapture.ShowFrame: frame %d of %d, seek %.4f s of %.4f s',
-    [AIndex, FFrames, Phase * FDuration, FDuration]));
-  {$ENDIF}
+  if FCached then
+  begin
+    // The nearest baked pose; past the last one is the first again
+    Baked := Round(Phase * FCachedFrames) mod FCachedFrames;
+    FAnimation.SetFixedCacheFrame(Baked);
+    // The baked frames hold only skinned meshes. Rigid meshes hung on
+    // animated nodes (a bear's eyes under its head bone) are placed by the
+    // live skeleton, which a held clip leaves where it stopped: pose it at
+    // the baked frame's own time too, or they lag behind or sit astray.
+    // Gorilla bakes frame f at f * Duration / (frames - 1).
+    if FCachedFrames > 1 then
+      SeekTo(Baked * FDuration / (FCachedFrames - 1))
+    else
+      SeekTo(0);
+  end
+  else
+    SeekTo(Phase * FDuration);
 end;
 
 procedure TSprite3DAnimationFrames.Finish;
 begin
-  {$IF CompilerVersion < 37.0}
-  if Assigned(FAnimation.Skeleton) then
-    FAnimation.Skeleton.Pause := False;
-  {$ENDIF}
+  if FCached then
+    FAnimation.UnsetFixedCacheFrame
+  else
+  begin
+    {$IF CompilerVersion < 37.0}
+    if Assigned(FAnimation.Skeleton) then
+      FAnimation.Skeleton.Pause := False;
+    {$ENDIF}
+  end;
   if not FAnimation.IsRunning then
     FAnimation.Start;
 end;
@@ -822,26 +834,22 @@ end;
 procedure TSprite3DFrameCapture.QueueGrab;
 var
   Me: TSprite3DFrameCapture;
-  Wait: Integer;
 begin
   FOffscreen.Viewport.Invalidate;
-  Wait := FSettleTime;
-  if Wait <= 0 then
+  if FSettleTime <= 0 then
   begin
     GrabFrame;
     Exit;
   end;
   Me := Self;
-  FDelayPending := True;
   TThread.ForceQueue(nil,
     procedure
     begin
-      Me.FDelayPending := False;
       if Me.FCancelled then
         Me.Free
       else
         Me.GrabFrame;
-    end, Wait);
+    end, FSettleTime);
 end;
 
 procedure TSprite3DFrameCapture.GrabFrame;
@@ -931,7 +939,7 @@ begin
   // A grab or a delayed step is pending, and frees the capture when it
   // runs; if the renderer is gone it never will, which only happens as the
   // program closes
-  if not FOffscreen.Busy and not FDelayPending then
+  if not FOffscreen.Busy and (FSettleTime <= 0) then
     Free;
 end;
 

@@ -207,9 +207,9 @@ These may all be intended; they are listed because a converter has to know them.
     `Action` clip beside the 33 `Rig|...` ones, which is probably in the file itself.
 
 16. **`SetFixedCacheFrame` poses only the skinned vertices.** A held frame showed the body
-    at that frame and everything else where the clip was paused. The section *Holding an
-    animation on one frame* below explains it in full, with the workaround Sprite3D now
-    uses.
+    at that frame and everything else where the clip was paused. This is by design: the
+    author prefers not to bake attached unskinned objects with the body. The section
+    *Holding an animation on one frame* below explains it in full, with his fix.
 
 ## Holding an animation on one frame
 
@@ -269,49 +269,50 @@ is posed by the seek itself.
 | `Skeleton.SeekTo(T)`, then `SetFixedCacheFrame(N)` | The same. | The seek only moved the play head. Paused, the clip got no tick to pose it. |
 | `Skeleton.SeekTo(T)` alone | Nothing moved at all, not even the body. | No tick, so `TransitionTime` never changed, and `GetCurrentCachedFrame` kept picking the same baked frame. |
 
-### What Sprite3D does now
+### What Sprite3D does now (the author's fix)
 
-To hold a frame, Sprite3D does what `TGorillaRenderClock.Tick` does, for one call, with no
-time passing:
+The author's answer, 10 November 2026, came as two changed Sprite3D units. On caching the
+attached objects with the body: "I'm not sure if it's a good idea to automatically cache
+those attached objects too with the parent mesh, even if they aren't skinned." So the baked
+frames stay skinned-only, and the application poses the live skeleton to match them. Sprite3D
+now does exactly that:
 
 ```pascal
-// The clip is running (Start was called) and paused (Skeleton.Paused := True)
-Skeleton.SeekTo(Time);              // put the play head at the frame's time
-Was := Skeleton.Pause;              // the flag the render clock keeps set
-Skeleton.Pause := False;            // let ProcessTick through, as Tick does
-try
-  Skeleton.ProcessTick(0, 0);       // no time passes, the clip stays at Time
-finally
-  Skeleton.Pause := Was;            // hand the flag back to the render clock
-end;
+// Holding frame I of N, on a clip that is running and paused
+Phase := I / N;
+Baked := Round(Phase * FCachedFrames) mod FCachedFrames;
+FAnimation.SetFixedCacheFrame(Baked);            // the baked skinned body
+// The skeleton at the baked frame's own time: Gorilla bakes frame f at
+// f * Duration / (frames - 1)
+SeekTo(Baked * FDuration / (FCachedFrames - 1));
+
+procedure SeekTo(Time);                           // every Delphi version
+  Skeleton.Pause := False;                        // let ProcessTick through
+  try
+    Skeleton.SeekTo(Time);
+    Skeleton.ProcessTick(0, 0);                   // poses the joints and nodes now
+  finally
+    Skeleton.Pause := True;
+  end;
 ```
 
-This one `ProcessTick` runs `ProcessAnimation` at the sought time. That sets
-`TransitionTime`, so `GetCurrentCachedFrame` picks the matching baked body, and poses the
-joints and animated nodes, so the eyes follow. `FAutoRepaint` repaints the mesh. The pose is
-there before the call returns, so an off-screen grab made straight after it sees the whole
-frame. There is no frame to wait for, and `SetFixedCacheFrame` is no longer used.
+- **The body** comes from the baked frame, as before.
+- **The joints and animated nodes**, and the eyes hung on them, are posed by one
+  `ProcessTick(0, 0)` at the time that frame was baked at, so the two agree exactly.
+- **The time** is `Baked * Duration / (FCachedFrames - 1)`, matching
+  `GetCurrentCachedFrame`'s "frame f holds the pose at f / (FFrameCount - 1)".
+- **The `Pause` flag** is cleared for that one call on every Delphi version. On Delphi 13
+  the render clock keeps it set and would otherwise never tick the paused clip.
 
-The clip stays paused throughout: `Skeleton.Paused` is never changed, so the render clock
-still skips it, and the next `Tick` does not move it on.
+He also added `GorillaModel.ResetToBindPose()` before `PlayAnimation` when Sprite3D switches
+clip. Without it, a node the new clip does not animate (an eye, say) keeps whatever the last
+clip left it at.
 
-Before Delphi 13 there is no render clock, and `Pause` is the pause itself. There Sprite3D
-clears `Pause`, ticks, and sets it again, leaving the clip held until it is released.
+### Left for Gorilla3D
 
-### Why this should be in Gorilla3D
-
-The workaround depends on how the render clock works inside: that `Pause` is the flag it
-keeps set, and that clearing it for one `ProcessTick` is safe. Any change there would break
-it silently. Two things would make it unnecessary:
-
-- **A public "pose at time T now".** For example `TGorillaAnimation.PoseAt(ATime)`, or a
-  `SeekTo` that evaluates when the clip is paused. It would do the above inside Gorilla3D,
-  where the clock's rules are known.
-- **Or a `SetFixedCacheFrame` that also poses the skeleton** at that frame's time, so the
-  baked body and the joints always agree. As it stands it is right only for models with
-  nothing hung on a joint and no animated nodes.
-
-Frame stepping, sprite capture and thumbnails all need one of these.
+Posing a paused clip still means clearing `Skeleton.Pause` around a `ProcessTick`, which
+relies on how the render clock works inside. A public way to pose a paused clip at a time
+straight away (a `PoseAt(ATime)`, or a `SeekTo` that evaluates when paused) would remove that.
 
 ## Questions
 
@@ -322,7 +323,8 @@ Frame stepping, sprite capture and thumbnails all need one of these.
   Sprite3D keeps its own list (`.usdc`, `.usda`, `.usd`, `.usdz`; `.usdz` loads), and it
   would be better to ask Gorilla3D.
 - Is clearing `Skeleton.Pause` around one `ProcessTick(0, 0)` safe to rely on for posing a
-  paused clip, until a public way exists (see *Holding an animation on one frame*)?
+  paused clip, until a public way exists (see *Holding an animation on one frame*)? This is
+  what the author's own fix does.
 - For an FBX clip, how are the pre-rotation and absolute-key decisions meant to be made,
   and can a loader option force them (for example "keys are relative" or "pre-rotation
   baked") when the heuristics guess wrong?
