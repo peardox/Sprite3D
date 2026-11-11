@@ -17,7 +17,8 @@ Last updated: 10 November 2026, 15:55.
 2. Read the whole of `README.md`, then this file, then `Spritely/README.md`
    and `Spritely/NOTES.md` before touching anything in `Spritely/`. The
    design notes in `notes/` (`viewport.md`, `offscreen.md`, `volumes.md`,
-   `directions.md`, `metadata.md`, `imports.md`) explain the harder parts;
+   `directions.md`, `metadata.md`, `imports.md`, `textures.md`) explain
+   the harder parts;
    read the one that covers what you are about to change.
 3. The owner's working copy is often ahead of GitHub. If the owner attaches
    or pastes files, build on those, not on GitHub. Anything delivered after
@@ -118,7 +119,8 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 - `tools/` holds scripts for working on the source, such as
   `pasdoc_check.py`. They are not part of the program.
 - `notes/` holds the design notes (`viewport.md`, `offscreen.md`,
-  `volumes.md`, `directions.md`, `metadata.md`), moved there from the
+  `volumes.md`, `directions.md`, `metadata.md`, `imports.md`,
+  `textures.md`), moved there from the
   repository root on 9 November 2026. They link to each other by bare
   file name, so keep them together; a new design note goes there and in
   the README's *Further reading*.
@@ -451,6 +453,21 @@ glTF tool on a GLB (the parrot for Merge and Split) and Export on an FBX.
 Gorilla3D's author has `notes/imports.md`: bugs 1-2 (USD UVs and up axis)
 and 3 (six FBX parrot clips) are his to fix; Sprite3D works round nothing
 for them.
+
+### To do: textures, from Sprite3DBuilder (11 November 2026)
+
+Sprite3DBuilder's Library, importing whole artists' packs, found glTF
+models Gorilla3D refuses: textures named as `.psd` (Zerin), textures and
+buffers not where the `uri` says (Quaternius), and Godot's `_png.png`
+names. It fixed them in `src/lib/Sprite3DModelTextures.pas`, which finds
+or converts each file and loads a copy of the glTF with everything beside
+it. Sprite3D loads the same kits and needs the same change:
+**`notes/textures.md`** says what goes wrong, how the unit deals with it,
+and the five steps to take it over (the Vampyre submodule, the project's
+search paths and defines, the unit unchanged, the call in
+`LoadModelFile`, and Vampyre's MPL 2.0 licence). Not started; the note
+was delivered as **Textures1**. Keep `TAnimationCachingFlag.VertexPosition`
+in Sprite3D's `LoadModelFile`.
 
 ### Done: ImportTests, the glTF tools and held frames (10 November 2026, after `fc70295`)
 

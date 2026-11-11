@@ -529,4 +529,5 @@ Every file the application opens or writes, models, settings, the bounds cache, 
 - [Metadata](notes/metadata.md): the JSON saved beside a strip or spritesheet, and how its empty sections and origin are measured.
 - [Directions](notes/directions.md): the Models, Directions dialog, how the order of the directions works, Change Order, and the directions file Export and Import use.
 - [Imports](notes/imports.md): what Gorilla3D's loaders hand over for glTF, FBX and USD, found with ImportTests, written for Gorilla3D's author: two USD loader bugs and the behaviours a converter has to know.
+- [Textures](notes/textures.md): glTF models whose textures Gorilla3D cannot load (Photoshop documents, files not where the model says, names an exporter mangled), how Sprite3DBuilder finds and converts them, and what Sprite3D needs to do the same.
 - [Code review](notes/code-review.md): the findings of the 9 November 2026 review of the whole source, in the order to take them.
