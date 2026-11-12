@@ -3,7 +3,9 @@
 //**
 //** Add files... loads .glb and .gltf files into a GLTFLib TglTFPartLibrary, which lists
 //** every skinned mesh in them as a part, with the bones it covers; each is listed with a box
-//** to tick. Clear empties the list, Tick all ticks every part. Put on... checks one is
+//** to tick. A .gltf whose textures or buffers had to be found or made, as when a model is
+//** opened (a .psd texture, a file not where it says), is loaded from its copy
+//** (GltfFileToRead), and listed under its own name. Clear empties the list, Tick all ticks every part. Put on... checks one is
 //** ticked and closes with mrOk. Putting them on, with TglTFPartApplier, is the caller's
 //** job: each part is bound to the model's bones by name, an earlier part it replaces is
 //** taken off, and the body under it is hidden. The dialog owns the library, so the caller
@@ -14,8 +16,8 @@ unit Sprite3DGltfPartsForm;
 
 {
   The Debug, glTF, Add Parts dialog: parts made for the open model's
-  skeleton to put on it. Add files... loads them into a TglTFPartLibrary,
-  which the dialog owns; Put on... closes with mrOk. Putting them on is the
+  skeleton to put on it. Add files... loads them into a TglTFPartLibrary
+  (a .gltf from its copy, if it needed one), which the dialog owns; Put on... closes with mrOk. Putting them on is the
   caller's job, before freeing the dialog. Desktop only; shown with
   ShowModal. Main thread only.
 }
@@ -25,7 +27,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, FMX.Types,
   FMX.Controls, FMX.Forms, FMX.Graphics, FMX.StdCtrls, FMX.Layouts,
-  FMX.Controls.Presentation, FMX.ListBox,
+  FMX.Controls.Presentation, FMX.ListBox, System.Generics.Collections,
   glTF.Parts;
 
 type
@@ -80,6 +82,15 @@ type
     FFolder: string;
     //** What loading the files said.
     FLog: TStringList;
+    //** The file each file read was chosen as, by the file read: a .gltf's copy, when it
+    //** needed one, maps to the file chosen; owned.
+    FShownNames: TDictionary<string, string>;
+    //** @abstract(The name to show for a file the library read: the file chosen, for a copy.)
+    //**
+    //** @param(AFileName The file read.)
+    //**
+    //** @returns(Its file name, without the folder.)
+    function ShownFileName(const AFileName: string): string;
     //** The parts ticked that could be read.
     function GetTickedParts: TArray<TglTFPart>;
     //** Lists every part in the library, unticked.
@@ -109,7 +120,7 @@ type
 implementation
 
 uses
-  FMX.Dialogs;
+  FMX.Dialogs, Sprite3DHelpers, Sprite3DModelTextures;
 
 {$R *.fmx}
 
@@ -118,6 +129,7 @@ begin
   inherited Create(AOwner);
   FLibrary := TglTFPartLibrary.Create;
   FLog := TStringList.Create;
+  FShownNames := TDictionary<string, string>.Create;
   InfoLabel.StyledSettings := InfoLabel.StyledSettings - [TStyledSetting.Other];
   InfoLabel.TextSettings.WordWrap := True;
   InfoLabel.TextSettings.VertAlign := TTextAlign.Leading;
@@ -128,6 +140,7 @@ destructor TGltfPartsForm.Destroy;
 begin
   FLibrary.Free;
   FLog.Free;
+  FShownNames.Free;
   inherited;
 end;
 
@@ -148,16 +161,26 @@ begin
   begin
     Part := FLibrary[I];
     if Part.Error <> '' then
-      Text := Format('%s (%s): %s', [Part.Name, ExtractFileName(Part.FileName), Part.Error])
+      Text := Format('%s (%s): %s', [Part.Name, ShownFileName(Part.FileName), Part.Error])
     else
       Text := Format('%s (%s): %d triangles, covers %s', [Part.Name,
-        ExtractFileName(Part.FileName), Part.TriangleCount,
+        ShownFileName(Part.FileName), Part.TriangleCount,
         Part.CoveredText(TglTFPartOptions.Default)]);
     PartsList.Items.Add(Text);
     // A part that could not be read cannot be ticked
     PartsList.ListItems[I].Enabled := Part.Error = '';
   end;
   UpdateButtons;
+end;
+
+function TGltfPartsForm.ShownFileName(const AFileName: string): string;
+var
+  Chosen: string;
+begin
+  if FShownNames.TryGetValue(AFileName, Chosen) then
+    Result := ExtractFileName(Chosen)
+  else
+    Result := ExtractFileName(AFileName);
 end;
 
 function TGltfPartsForm.GetTickedParts: TArray<TglTFPart>;
@@ -181,7 +204,8 @@ procedure TGltfPartsForm.AddButtonClick(Sender: TObject);
 var
   Dialog: TOpenDialog;
   Files: TArray<string>;
-  FileName: string;
+  FileName, Chosen: string;
+  Fixes: TArray<TSprite3DTextureFix>;
 begin
   Dialog := TOpenDialog.Create(nil);
   try
@@ -201,6 +225,26 @@ begin
   finally
     Dialog.Free;
   end;
+  // A .gltf from a copy naming what was found or made, if it needs one, as
+  // the open model is: GLTFLib cannot read a .psd or find a file that is
+  // not where the model says; the copy is listed under the file's own name
+  try
+    for var I := 0 to High(Files) do
+    begin
+      Chosen := Files[I];
+      Files[I] := GltfFileToRead(Chosen, Fixes);
+      if Files[I] <> Chosen then
+        FShownNames.AddOrSetValue(Files[I], Chosen);
+      FLog.AddStrings(TextureFixReport(ExtractFileName(Chosen), Fixes));
+    end;
+  except
+    on E: Exception do
+    begin
+      FLog.Add('A part file could not be made ready: ' + E.Message);
+      ShowMessage('A part file could not be made ready: ' + E.Message);
+      Exit;
+    end;
+  end;
   // Loaded here, so the parts can be listed and ticked; small files load
   // quickly, so on the main thread
   FLibrary.Log.Clear;
@@ -217,6 +261,7 @@ end;
 procedure TGltfPartsForm.ClearButtonClick(Sender: TObject);
 begin
   FLibrary.Clear;
+  FShownNames.Clear;
   ListParts;
 end;
 

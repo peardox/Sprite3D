@@ -6829,7 +6829,6 @@ end;
 procedure TMainForm.BuildLoadModel;
 var
   Fixes: TArray<TSprite3DTextureFix>;
-  Line: String;
 begin
   FLoadModel := TGorillaModel.Create(GorillaViewport);
   FLoadModel.Visible := False;
@@ -6837,15 +6836,7 @@ begin
   FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadBox, Fixes);
   // A glTF's textures and buffers that had to be found or made, one line
   // each; nothing for those used as named
-  for var Fix in Fixes do
-  begin
-    Line := TextureFixText(ExtractFileName(FLoadFile), Fix);
-    if Line <> String.Empty then
-      DebugMemo.Lines.Add(Line);
-  end;
-  if LoadedFromCopy(Fixes) then
-    DebugMemo.Lines.Add(ExtractFileName(FLoadFile) + ': loaded from a copy naming what ' +
-      'was found or made, in the settings folder''s models folder');
+  DebugMemo.Lines.AddStrings(TextureFixReport(ExtractFileName(FLoadFile), Fixes));
   // Only one model with animations can be open: while a folder is opened,
   // another one is skipped, and the next file tried
   if FLoadInFolder and (Length(FLoadAnims) > 0) and (FAnimatedSlot.Model <> nil) then
@@ -13121,8 +13112,9 @@ begin
 end;
 
 // The glTF tools (File, Debug, glTF) work on the model shown. A .glb or .gltf
-// model is read from its own file; any other is converted from what
-// Gorilla3D loaded. Each saves a GLB and opens it, so the result is on
+// model is read from its own file (a .gltf from the copy it was loaded from,
+// if its textures or buffers had to be found or made); any other is
+// converted from what Gorilla3D loaded. Each saves a GLB and opens it, so the result is on
 // screen at once and the original file is never changed.
 function TMainForm.GltfToolsReady: Boolean;
 begin
@@ -13144,6 +13136,8 @@ function TMainForm.GltfModelDocument(const AOptions: TGltfExportOptions): TObjec
 var
   Lines: TStringList;
   Def: TModelDef;
+  ReadFile: String;
+  Fixes: TArray<TSprite3DTextureFix>;
 begin
   Result := nil;
   // TGorillaModel.Def is declared as a TCustomDef; a loaded model's is a
@@ -13156,7 +13150,12 @@ begin
   try
     DebugMemo.Lines.Add('glTF: reading ' + FModelFile);
     try
-      Result := LoadModelDocument(FModelFile, Def, AOptions, Lines);
+      // A .gltf from the copy the model was loaded from, if it needed one:
+      // GLTFLib cannot read a .psd or find a file that is not where the
+      // model says, any more than Gorilla3D can
+      ReadFile := GltfFileToRead(FModelFile, Fixes);
+      DebugMemo.Lines.AddStrings(TextureFixReport(ExtractFileName(FModelFile), Fixes));
+      Result := LoadModelDocument(ReadFile, Def, AOptions, Lines);
     except
       on E: Exception do
       begin
@@ -13267,6 +13266,8 @@ var
   Importer: TglTFAnimationImporter;
   Files: TArray<String>;
   Action: TglTFDuplicateAction;
+  Fixes: TArray<TSprite3DTextureFix>;
+  ShownName: String;
 {$ENDIF}
 begin
   {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
@@ -13286,6 +13287,23 @@ begin
       Action := Dialog.DuplicateAction;
     finally
       Dialog.Free;
+    end;
+    // Each .gltf from a copy naming what was found or made, if it needs one,
+    // as the open model is; its animations' buffers may be misplaced too
+    try
+      for var I := 0 to High(Files) do
+      begin
+        ShownName := ExtractFileName(Files[I]);
+        Files[I] := GltfFileToRead(Files[I], Fixes);
+        DebugMemo.Lines.AddStrings(TextureFixReport(ShownName, Fixes));
+      end;
+    except
+      on E: Exception do
+      begin
+        DebugMemo.Lines.Add('glTF: a file to merge could not be made ready: ' + E.Message);
+        ShowMessage('A file to merge could not be made ready: ' + E.Message);
+        Exit;
+      end;
     end;
     Importer := TglTFAnimationImporter.Create(Doc);
     try

@@ -1319,6 +1319,38 @@ function TextureFixText(const AModel: String; const AFix: TSprite3DTextureFix): 
 //** @returns(True if any texture or buffer was replaced, the placeholder included.)
 function LoadedFromCopy(const AFixes: TArray<TSprite3DTextureFix>): Boolean;
 
+//** @abstract(The file to read a model from: for a glTF (@code(.gltf)), its textures and
+//** buffers readied first, as LoadModelFile does.)
+//**
+//** For a @code(.gltf), calls @link(PrepareModelTextures) with the settings folder as the
+//** cache and the SHA-256 of the file as the key, so the copy is the one LoadModelFile
+//** loads; any other file is given back as it is. Used by LoadModelFile and by the glTF
+//** tools, which read the file with GLTFLib, which, like Gorilla3D, cannot read a
+//** @code(.psd) or find a file that is not where the model says. Main thread only, as
+//** PrepareModelTextures is.
+//**
+//** @param(AFileName The model file.)
+//**
+//** @param(AFixes On return, what was done with each texture and buffer; empty for other
+//** formats.)
+//**
+//** @returns(The copy, if anything had to be found or made; else AFileName, OS-friendly.)
+//**
+//** @raises(Exception If the copy, or a file it names, cannot be written.)
+function GltfFileToRead(const AFileName: String;
+  out AFixes: TArray<TSprite3DTextureFix>): String;
+
+//** @abstract(The Debug tab lines for a model's textures and buffers: one for each that
+//** was not used as named, then, if a copy is used, a line saying so.)
+//**
+//** @param(AModel The model's name, to start each line.)
+//**
+//** @param(AFixes The fixes GltfFileToRead or LoadModelFile gave.)
+//**
+//** @returns(The lines; none when everything was used as named.)
+function TextureFixReport(const AModel: String;
+  const AFixes: TArray<TSprite3DTextureFix>): TArray<String>;
+
 //** @abstract(Centres a loaded model on its bounding box and turns it right way up.)
 //**
 //** Moves AModel to the centre of ABox and turns it 180 degrees about X, which the
@@ -2566,23 +2598,12 @@ var
   Names: TStringList;
   I: Integer;
   Ani: TArray<TGorillaAnimation>;
-  FileName, LoadFile, Key: String;
+  LoadFile: String;
 begin
-  AFixes := nil;
-  FileName := OSFriendlyPath(AFileName);
   // A glTF names its textures and buffers by file; any the loader cannot
   // use (a .psd, one not where the model says) fails the whole model, so
-  // they are found or made first. Only a glTF is read for that, so only a
-  // glTF's content is hashed for the copy's name.
-  LoadFile := FileName;
-  if SameText(ExtractFileExt(FileName), '.gltf') then
-  begin
-    Key := THashSHA2.GetHashStringFromFile(FileName);
-    // The copies, and every file they name, go in a models folder in the
-    // settings folder, beside bounds
-    LoadFile := PrepareModelTextures(FileName, TSprite3DAppSettings.SupportFolder, Key,
-      AFixes);
-  end;
+  // they are found or made first
+  LoadFile := GltfFileToRead(AFileName, AFixes);
   AModel.Clear;
   AModel.LoadFromFile(nil, OSFriendlyPath(LoadFile), [TAnimationCachingFlag.VertexPosition]);
 
@@ -2641,6 +2662,39 @@ begin
   for var Fix in AFixes do
     if Fix.Used <> String.Empty then
       Exit(True);
+end;
+
+function GltfFileToRead(const AFileName: String;
+  out AFixes: TArray<TSprite3DTextureFix>): String;
+var
+  FileName: String;
+begin
+  AFixes := nil;
+  FileName := OSFriendlyPath(AFileName);
+  Result := FileName;
+  // Only a glTF is read for its files, so only a glTF's content is hashed
+  // for the copy's name; the copies, and every file they name, go in a
+  // models folder in the settings folder, beside bounds
+  if SameText(ExtractFileExt(FileName), '.gltf') then
+    Result := PrepareModelTextures(FileName, TSprite3DAppSettings.SupportFolder,
+      THashSHA2.GetHashStringFromFile(FileName), AFixes);
+end;
+
+function TextureFixReport(const AModel: String;
+  const AFixes: TArray<TSprite3DTextureFix>): TArray<String>;
+var
+  Line: String;
+begin
+  Result := nil;
+  for var Fix in AFixes do
+  begin
+    Line := TextureFixText(AModel, Fix);
+    if Line <> String.Empty then
+      Result := Result + [Line];
+  end;
+  if LoadedFromCopy(AFixes) then
+    Result := Result + [AModel + ': read from a copy naming what was found or made, in ' +
+      'the settings folder''s models folder'];
 end;
 
 procedure PlaceModel(const AModel: TGorillaModel; const ABox: TBoundingBox);

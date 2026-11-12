@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 12 November 2026, 11:05.
+Last updated: 12 November 2026, 12:25.
 
 ## Starting a new conversation
 
@@ -474,6 +474,37 @@ gone up.
 
 ## Where the work is
 
+### State (12 November 2026, 12:25)
+
+Work is on the branch `duet`, at `037a3ac` plus
+`2026-11-12-1150-duet-tested.zip` (the two handovers). Delivered since:
+**`2026-11-12-1225-gltf-tools-read-copies.zip`**, not yet applied or
+tested (owner, 12:08: "yes fix psd etc"). File, Debug, glTF read a
+`.gltf` straight from its file, so a kit with `.psd` textures or
+misplaced files failed there though it opened. Now:
+- `GltfFileToRead` (Sprite3DHelpers) gives the file to read: for a
+  `.gltf`, `PrepareModelTextures`' result, as before in `LoadModelFile`,
+  which now calls it; `TextureFixReport` gives the Debug tab lines (each
+  fix, then "<model>: read from a copy naming what was found or made, in
+  the settings folder's models folder", which replaces the load's
+  "loaded from a copy ..." line);
+- `GltfModelDocument` reads the model shown through it (so Export as GLB,
+  Merge, Split and Add Parts all work on the copy), and writes its lines
+  to the Debug tab; the names offered for the result still come from the
+  model's own file;
+- Merge Animations reads each file chosen through it;
+- Add Parts (`Sprite3DGltfPartsForm`) reads each file chosen through it,
+  its lines going to the dialog's Log and so the Debug tab, and lists each
+  part under the file chosen, not the copy (`FShownNames`,
+  `ShownFileName`);
+- README, `notes/textures.md`.
+**To test**: open a Zerin `.psd` kit model and a Quaternius MegaKit one;
+Export as GLB of each opens textured, the Debug tab having the fix lines
+and "read from a copy"; Merge Animations and Add Parts with a `.gltf` of
+such a kit read it (the Debug tab says so) and Add Parts lists it under
+its own name; a `.glb` and a plain `.gltf` work as before, with no such
+lines.
+
 ### State (12 November 2026, 11:05)
 
 **One repository, two programs.** GitHub `main` was at `82e7a7e`
@@ -481,8 +512,12 @@ gone up.
 Sprite3D ... Move Sprite3D from src/ to Sprite3D/, move Sprite3DBuilder
 from its src/ to Sprite3DBuilder/, then share libraries ... Add
 Sprite3DBuilder to the group project and change the location of Sprite3D
-in the group". Delivered as `2026-11-12-1105-one-repository.zip`, not yet
-applied or tested. It replaces the two zips of 10:35
+in the group". Delivered as `2026-11-12-1105-one-repository.zip`.
+**Applied by the owner on the branch `duet`, `037a3ac` ("move
+Sprite3DBuilkder in here"), checked here identical to the delivery, file
+for file, with the same submodule commits; tested by the owner (11:45):
+"Everything worked"**: the group builds, and the four tests below pass.
+Work goes on from `duet`. It replaces the two zips of 10:35
 (`...-shared-units-and-textures`, `...-use-sprite3d-shared-units`), which
 put the shared units in Sprite3D for a Sprite3DBuilder clone beside it;
 the owner undid those. Entries below this one name Sprite3D's folder as
@@ -569,7 +604,7 @@ What it holds:
   `Sprite3DBuilder/README.md`, `Sprite3DBuilder/CLAUDE.md`, the licence
   notes and the design notes' paths.
 
-**To test** (Windows first):
+**Tested** (Windows; all passed, 11:45):
 1. The group builds: Spritely, dclSpritely, Sprite3D, Sprite3DBuilder,
    ProjectionTest.
 2. Sprite3D: grabs, exports (strip, atlas, a turn of a static model) and
@@ -583,9 +618,7 @@ What it holds:
    from a copy"; a texture missing everywhere shows the magenta and black
    checker; File, Licences lists Vampyre.
 
-Not done: File, Debug, glTF reads a glTF straight from its own file
-(`LoadModelDocument`), so a kit with `.psd` textures still fails there;
-it could read the copy instead.
+File, Debug, glTF reading the original file: fixed in 12:25, above.
 
 ### State (10 November 2026, 15:55)
 

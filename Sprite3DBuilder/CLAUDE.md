@@ -13,7 +13,7 @@ own `CLAUDE.md`, at its root, holds the rules for the whole repository,
 Sprite3D's and the shared units' included; where this file and that one
 differ on a rule for the repository as a whole, that one wins.
 
-Last updated: 12 November 2026, 11:05.
+Last updated: 12 November 2026, 12:25.
 
 ## Starting a new conversation
 
@@ -405,8 +405,9 @@ and the units that were in `src/lib` and `src/common` but are not in
 `Sprite3DBuilder/lib` are in the repository's `Shared/`.**
 
 - **Moved into the Sprite3D repository** (owner, 12 November 2026, 10:49),
-  as `2026-11-12-1105-one-repository.zip`, not yet applied or tested; the
-  root's `CLAUDE.md` (*State (12 November 2026, 11:05)*) has the git
+  as `2026-11-12-1105-one-repository.zip`, applied by the owner on the
+  Sprite3D repository's branch `duet` (`037a3ac`) and tested (11:45:
+  "Everything worked"; the tests below all pass); the root's `CLAUDE.md` (*State (12 November 2026, 11:05)*) has the git
   commands and the full list. From this repository's GitHub `f6de00d`
   ("Notes"):
   - `src/` is `Sprite3DBuilder/`, without the shared units; this file,
@@ -426,9 +427,12 @@ and the units that were in `src/lib` and `src/common` but are not in
     had `aefe89d`), Neon and Vampyre at the same commits as before;
   - `Sprite3DBuilderGroup.groupproj` is gone: the project is in
     `Sprite3DGroup.groupproj`, after Sprite3D.
-- **To test**: the group builds; the Library opens, finds `assets/` and
+- **Tested** (passed): the group builds; the Library opens, finds `assets/` and
   the group icons, and makes thumbnails as before, the textured kits
   (Zerin, Quaternius) included; File, Licences lists Neon and Vampyre.
+- 12:25: Sprite3D's glTF tools read a `.gltf` through the shared
+  `PrepareModelTextures` too (`GltfFileToRead` in Sprite3D's helpers); no
+  shared unit changed, so nothing here changes.
 - Before this, `Sprite3DOffscreen.pas` differed from Sprite3D's (below, 11
   November): settled, as both use this program's version.
 
