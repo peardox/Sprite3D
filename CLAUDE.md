@@ -5,17 +5,21 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 10 November 2026, 15:55.
+Last updated: 12 November 2026, 12:25.
 
 ## Starting a new conversation
 
 1. Clone the repository with its submodules:
    `git clone --recurse-submodules https://github.com/peardox/Sprite3D.git`
-   (branch `main`). The submodules are `delphi-neon`, `FastMM5` and
-   `ImportTests/GLTFMerge` (GLTFLib; its own nested `delphi-neon` is not
-   needed, as Sprite3D's is used).
+   (branch `main`). The submodules are `delphi-neon`, `FastMM5`,
+   `imaginglib` (Vampyre) and `ImportTests/GLTFMerge` (GLTFLib; its own
+   nested `delphi-neon` is not needed, as Sprite3D's is used). The
+   repository holds both Sprite3D (`Sprite3D/`) and Sprite3DBuilder
+   (`Sprite3DBuilder/`); see *The repository*.
 2. Read the whole of `README.md`, then this file, then `Spritely/README.md`
-   and `Spritely/NOTES.md` before touching anything in `Spritely/`. The
+   and `Spritely/NOTES.md` before touching anything in `Spritely/`, and
+   `Sprite3DBuilder/README.md` and `Sprite3DBuilder/CLAUDE.md` before
+   touching anything in `Sprite3DBuilder/`. The
    design notes in `notes/` (`viewport.md`, `offscreen.md`, `volumes.md`,
    `directions.md`, `metadata.md`, `imports.md`, `textures.md`) explain
    the harder parts;
@@ -65,6 +69,12 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   be unzipped straight over the working copy. Give each zip a name, name
   the files in the reply, and say which earlier zip it follows or
   replaces.
+- **Zip names say what is in them** (owner, 11 November 2026, for
+  Sprite3DBuilder; used here too from 12 November 2026): the date and
+  time, then a few words for the change, lower case with hyphens, such as
+  `2026-11-12-1105-one-repository.zip`, so they sort in order.
+  Each name must sort after the one before it. Older zips here have short
+  names (`Gltf1`, `Bear5`); refer to a new one by its full name.
 - **Files to delete or rename** cannot travel in a zip: list them in the
   reply with the git commands (`git rm ...`, `git mv ...`).
 - **Package rebuilds**: whenever a delivery changes anything a package
@@ -105,12 +115,49 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   `Spritely/README.md` describes it, its packages and its rules. Spritely
   knows nothing of Sprite3D: Sprite3D requires Spritely, never the reverse,
   and no Spritely unit may use a Sprite3D one.
-- `src/ffmpeg` holds third-party FFmpeg headers, kept unchanged for
+- **The repository holds two programs** (owner, 12 November 2026):
+  Sprite3D in `Sprite3D/` (its `src/` until then) and Sprite3DBuilder in
+  `Sprite3DBuilder/` (moved in from its own repository,
+  peardox/Sprite3DBuilder, which the owner is retiring). Both are in
+  `Sprite3DGroup.groupproj`. Sprite3DBuilder has its own `README.md`,
+  `CLAUDE.md` (its rules, which match these, and its history) and
+  `licences-required.md` in its folder: read them before touching
+  `Sprite3DBuilder/`. Its group icons are in the root's `icons/groups`, and
+  its model kits in the root's `assets/` (git-ignored), as it finds them
+  three folders above its executable, which is the repository root from
+  `Sprite3DBuilder/<platform>/<config>`, as Sprite3D finds `models/`.
+- **Units both programs use live in `Shared/`** (owner, 12 November 2026),
+  and in neither program's folder. Both name them in their `.dpr` and
+  `.dproj` as `..\Shared\<unit>.pas`. Never copy a shared unit into a
+  program.
+- A shared unit knows neither program: it may use the RTL, FMX, Gorilla3D,
+  Spritely, the third-party submodules (Neon, Vampyre) and other shared
+  units, never a unit of `Sprite3D/` or `Sprite3DBuilder/`. Both programs
+  take the third-party libraries from the root's submodules (`delphi-neon`,
+  `FastMM5`, `imaginglib`), on their own search paths.
+- **Where the programs need different things of one piece of code, the
+  shared unit holds an abstract base class and each program a subclass of
+  its own** (owner, 12 November 2026), rather than flags or `{$IFDEF}`s for
+  one program in a shared unit. The first: `TSprite3DFrameSource` and
+  `TSprite3DAnimationFrames` in `Shared/Sprite3DAnimFrames.pas`, with
+  Sprite3D's `TSprite3DTurntableFrames` and the off-screen capture in its
+  own `Sprite3D/lib/Sprite3DAnimCapture.pas`.
+- A unit becomes shared once both programs use it; one that only one
+  program uses stays in that program's `lib`. `Sprite3DLicences` stays in
+  each program, as each carries its own list: the licence texts are in the
+  root's `licences/` once, and each program has its own `.rc` and `.res`
+  there (`Sprite3DLicences`, `Sprite3DBuilderLicences`), built by
+  `buildlicences.cmd` with the name its `buildstyles.cmd` passes.
+- **A change to a shared unit changes both programs.** Before delivering
+  one, look for every use of what changed in both, keep both compiling,
+  and note it in both handovers (this file and `Sprite3DBuilder/CLAUDE.md`).
+- `tools/pasdoc_check.py` checks both programs and `Shared/`.
+- `Sprite3D/ffmpeg` holds third-party FFmpeg headers, kept unchanged for
   reference and not compiled in. Leave them alone (see Licences in the
   README).
-- The project is `src/Sprite3d.dproj` in `Sprite3DGroup.groupproj`, which
-  builds `Spritely/packages/Spritely`, `dclSpritely`, Sprite3D, then
-  `Spritely/ProjectionTest`. A new unit of Sprite3D's goes in both the
+- The project is `Sprite3D/Sprite3d.dproj` in `Sprite3DGroup.groupproj`, which
+  builds `Spritely/packages/Spritely`, `dclSpritely`, Sprite3D,
+  `Sprite3DBuilder/Sprite3DBuilder.dproj`, then `Spritely/ProjectionTest`. A new unit of Sprite3D's goes in both the
   `.dpr`'s `uses` and the `.dproj`;
   keep the `.dproj` as it is otherwise (it has a UTF-8 byte order mark;
   keep it, and the `.groupproj`'s). Spritely's units are in neither:
@@ -127,16 +174,19 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 
 ### Layout
 
-- `src/lib`: reusable units, **independent of the application**. They must
-  not use anything in `src/ui`, and must not know about the main form,
+- `Sprite3D/lib`: reusable units, **independent of the application**. They must
+  not use anything in `Sprite3D/ui`, and must not know about the main form,
   `settings.json` keys or menus. Give them properties, events and
   parameters instead.
-- `src/common`: small helpers shared across projects (`OSPaths`,
-  `JsonText`, `GpuPreference`, `DisplayData`).
-- `src/ui`: the forms and the application's own rules. Non-visual
+- `Shared`: the units both programs use (see *The repository*), among
+  them the small helpers `OSPaths`, `JsonText`, `GpuPreference` and
+  `DisplayData`, which were `src/common` until 12 November 2026.
+- `Sprite3DBuilder/`: the other program, laid out as Sprite3D's folder is
+  (`lib`, `ui`, `styles`); its own `CLAUDE.md` has its rules.
+- `Sprite3D/ui`: the forms and the application's own rules. Non-visual
   application logic (settings, model slots, file naming, themes) goes in
   `Sprite3DHelpers.pas`, not in a form.
-- `src/styles`: the theme styles, compiled into a resource by the
+- `Sprite3D/styles`: the theme styles, compiled into a resource by the
   pre-build event `buildstyles.cmd`.
 - `Spritely/lib`, `Spritely/packages`, `Spritely/tools`: the Spritely
   units, their packages and the scripts that write the packages, the
@@ -145,7 +195,7 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   that loads any format Gorilla3D reads and writes it as GLB. Its
   `GLTFMerge` submodule supplies GLTFLib to Sprite3D too
   (`..\ImportTests\GLTFMerge\GLTFLib` on `Sprite3d.dproj`'s search path),
-  and it uses Sprite3D's `src/lib/Sprite3DGltfExport.pas`, which began as
+  and it uses Sprite3D's `Sprite3D/lib/Sprite3DGltfExport.pas`, which began as
   its own exporter. Its own `README.md` describes it.
 - `Spritely/ProjectionTest`, `Spritely/models`: Spritely's test program,
   the test bed for `TSpritelyProjection`, and its models. It finds
@@ -224,7 +274,7 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 ### Files and paths
 
 - **Every path the program opens or writes goes through `OSFriendlyPath`**
-  (`common/OSPaths.pas`) first. Some Windows targets, such as ARM64EC,
+  (`Shared/OSPaths.pas`) first. Some Windows targets, such as ARM64EC,
   reject `/`, and paths kept in `settings.json` may be read on another
   system.
 - Per-user files go in the settings folder (`AppDataFolder` in
@@ -241,7 +291,7 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   settings are more complex). SRDelphiFMX's rule of `System.JSON` and no
   Neon is for Spritely, which must not depend on Neon.
 - `settings.json` is read and written by **Neon**, through
-  `TSprite3DJsonSettings` (`lib/Sprite3DStorage.pas`) and its descendant
+  `TSprite3DJsonSettings` (`Shared/Sprite3DStorage.pas`) and its descendant
   `TSprite3DAppSettings` (`ui/Sprite3DHelpers.pas`). A new setting is a
   published property there, with a default set in the constructor, a
   `[NeonProperty('...')]` attribute where its key differs from what Neon
@@ -250,7 +300,7 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   default.
 - Other JSON (metadata, directions files, animation settings, project
   files, caches) is built with `System.JSON` objects and written through
-  `JsonToText` or `JsonToBytes` (`common/JsonText.pas`), so File,
+  `JsonToText` or `JsonToBytes` (`Shared/JsonText.pas`), so File,
   Settings, Minify JSON applies to every file. Never format JSON by hand.
 - When reading JSON from outside (files the user picks, downloads), check
   every value's type and range; a bad file must give a clear message, not
@@ -304,7 +354,7 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   `TStyleManager` reaches them. Colours a control paints for itself must
   read well on the light default and the dark themes.
 - To add a theme: put the `.style` file name in `buildstyles.cmd`'s list,
-  add an `RCDATA` line to `src/styles/Sprite3DThemes.rc`, then a value to
+  add an `RCDATA` line to `Sprite3D/styles/Sprite3DThemes.rc`, then a value to
   `TSprite3DTheme` and its row in `THEMES` in `Sprite3DHelpers.pas`.
 - FMX lays out controls with the same `Align` (all `Top`, say) in the order
   of their positions. When adding or resizing one, set `Position` so they
@@ -361,7 +411,7 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
   A file that already has a UTF-8 byte order mark (the `.dproj` and
   `.groupproj` files) keeps it.
 - Line endings and indentation as in the file being edited (two spaces).
-- Naming: fields `F`, parameters `A`, types `T`; units in `src/lib`
+- Naming: fields `F`, parameters `A`, types `T`; units in `Sprite3D/lib`
   `Sprite3D*.pas`, forms `Sprite3D*Form.pas` with their `.fmx`; Spritely's
   as above.
 - Delphi requires every field of a class section before its first method
@@ -369,13 +419,13 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 
 ### Checking the source
 
-`tools/pasdoc_check.py` checks the units in `src/lib`, `src/common` and
-`src/ui` and the `.dpr` (not `Spritely/`, whose units SRDelphiFMX's newer
+`tools/pasdoc_check.py` checks the units in `Sprite3D/lib`, `Sprite3D/ui` and
+`Shared` and the `.dpr` (not `Spritely/`, whose units SRDelphiFMX's newer
 checker passed on 8 November 2026):
 
 ```
 python3 tools/pasdoc_check.py                      every unit
-python3 tools/pasdoc_check.py src/ui/Sprite3dMain.pas   just these files
+python3 tools/pasdoc_check.py Sprite3D/ui/Sprite3dMain.pas   just these files
 python3 tools/pasdoc_check.py --summary            counts per file
 ```
 
@@ -424,6 +474,152 @@ gone up.
 
 ## Where the work is
 
+### State (12 November 2026, 12:25)
+
+Work is on the branch `duet`, at `037a3ac` plus
+`2026-11-12-1150-duet-tested.zip` (the two handovers). Delivered since:
+**`2026-11-12-1225-gltf-tools-read-copies.zip`**, not yet applied or
+tested (owner, 12:08: "yes fix psd etc"). File, Debug, glTF read a
+`.gltf` straight from its file, so a kit with `.psd` textures or
+misplaced files failed there though it opened. Now:
+- `GltfFileToRead` (Sprite3DHelpers) gives the file to read: for a
+  `.gltf`, `PrepareModelTextures`' result, as before in `LoadModelFile`,
+  which now calls it; `TextureFixReport` gives the Debug tab lines (each
+  fix, then "<model>: read from a copy naming what was found or made, in
+  the settings folder's models folder", which replaces the load's
+  "loaded from a copy ..." line);
+- `GltfModelDocument` reads the model shown through it (so Export as GLB,
+  Merge, Split and Add Parts all work on the copy), and writes its lines
+  to the Debug tab; the names offered for the result still come from the
+  model's own file;
+- Merge Animations reads each file chosen through it;
+- Add Parts (`Sprite3DGltfPartsForm`) reads each file chosen through it,
+  its lines going to the dialog's Log and so the Debug tab, and lists each
+  part under the file chosen, not the copy (`FShownNames`,
+  `ShownFileName`);
+- README, `notes/textures.md`.
+**To test**: open a Zerin `.psd` kit model and a Quaternius MegaKit one;
+Export as GLB of each opens textured, the Debug tab having the fix lines
+and "read from a copy"; Merge Animations and Add Parts with a `.gltf` of
+such a kit read it (the Debug tab says so) and Add Parts lists it under
+its own name; a `.glb` and a plain `.gltf` work as before, with no such
+lines.
+
+### State (12 November 2026, 11:05)
+
+**One repository, two programs.** GitHub `main` was at `82e7a7e`
+("Notes"), with Gltf1 in it. The owner (10:49): "move Sprite3DBuilder into
+Sprite3D ... Move Sprite3D from src/ to Sprite3D/, move Sprite3DBuilder
+from its src/ to Sprite3DBuilder/, then share libraries ... Add
+Sprite3DBuilder to the group project and change the location of Sprite3D
+in the group". Delivered as `2026-11-12-1105-one-repository.zip`.
+**Applied by the owner on the branch `duet`, `037a3ac` ("move
+Sprite3DBuilkder in here"), checked here identical to the delivery, file
+for file, with the same submodule commits; tested by the owner (11:45):
+"Everything worked"**: the group builds, and the four tests below pass.
+Work goes on from `duet`. It replaces the two zips of 10:35
+(`...-shared-units-and-textures`, `...-use-sprite3d-shared-units`), which
+put the shared units in Sprite3D for a Sprite3DBuilder clone beside it;
+the owner undid those. Entries below this one name Sprite3D's folder as
+`src/`; it is `Sprite3D/` now.
+
+Before unzipping, from the repository root, in PowerShell (the owner's
+shell):
+
+```
+git mv src Sprite3D
+New-Item -ItemType Directory Shared
+git mv Sprite3D/common/OSPaths.pas Sprite3D/common/JsonText.pas Sprite3D/common/GpuPreference.pas Sprite3D/common/DisplayData.pas Shared/
+git mv Sprite3D/lib/Sprite3DBackground.pas Sprite3D/lib/Sprite3DFolderDialog.pas Sprite3D/lib/Sprite3DGrid.pas Sprite3D/lib/Sprite3DResample.pas Sprite3D/lib/Sprite3DStorage.pas Sprite3D/lib/Sprite3DStyles.pas Sprite3D/lib/Sprite3DTitleBar.pas Sprite3D/lib/Sprite3DOffscreen.pas Sprite3D/lib/Sprite3DSweep.pas Shared/
+git submodule add https://github.com/galfar/imaginglib imaginglib
+git -C imaginglib checkout 484feedfec0a03be13b154003416b22b7b89197f
+git add imaginglib
+```
+
+then unzip over the root and `git add -A`.
+
+What it holds:
+- **`Sprite3D/`**: `src/` renamed. Every path relative to the project
+  folder is unchanged (same depth), so the `.dproj`'s search path,
+  deployment and `..\README.md` still hold, and the program still finds
+  `models/` and `dlls/` three folders up. `ImportTests` names
+  `..\Sprite3D\lib\Sprite3DGltfExport.pas`.
+- **`Sprite3DBuilder/`**: Sprite3DBuilder's `src/` at its GitHub `f6de00d`
+  ("Notes"), without its copies of the shared
+  units, plus its `README.md`, `CLAUDE.md` and `licences-required.md`
+  (its `docs/licences-required.md`). Its `.dpr` and `.dproj` name the
+  shared units at `..\Shared\`, its README at `README.md`, and its
+  licences as `..\licences\Sprite3DBuilderLicences.res`/`.rc`. Its search
+  path (`..\delphi-neon`, `..\FastMM5`, `..\imaginglib`) now finds the
+  root's submodules; FastMM5 is the root's (`4bf8480`), where it had its
+  own (`aefe89d`). Its `icons/groups` is the root's `icons/groups`, and
+  `assets/` the root's (ignored by the root's `.gitignore` now), as it
+  looks three folders up. `tools/make_group_icons.py` joins the root's
+  `tools/`. Its `Sprite3DBuilderGroup.groupproj`, `.gitignore`,
+  `.gitmodules` and `tools/pasdoc_check.py` are not brought over.
+- **`Sprite3DGroup.groupproj`**: Sprite3D at `Sprite3D\Sprite3d.dproj`;
+  `Sprite3DBuilder\Sprite3DBuilder.dproj` added after it (depends on
+  Spritely), in Build, Clean and Make too.
+- **`licences/`**: the texts once for both; `Sprite3DBuilderLicences.rc`
+  and `.res` (Sprite3DBuilder's `Sprite3DLicences.rc`/`.res`, renamed;
+  Neon and Vampyre). `buildlicences.cmd` takes the name as a second
+  parameter, `Sprite3DLicences` if none; Sprite3DBuilder's
+  `buildstyles.cmd` passes `Sprite3DBuilderLicences`. `Vampyre-LICENSE.txt`
+  names both programs; both `.res` rebuilt with it (Sprite3D's by
+  appending to the old one, its entries byte for byte, Vampyre's text with
+  CRLF as brcc32 on Windows reads it; Sprite3DBuilder's whole, by the
+  Python writer that reproduced its old one).
+- **`Shared/`**: the 15 units both use. Identical in both: `Sprite3DBackground`,
+  `Sprite3DFolderDialog`, `Sprite3DGrid`, `Sprite3DResample`,
+  `Sprite3DStorage`, `Sprite3DStyles`, `Sprite3DTitleBar`, `OSPaths`,
+  `JsonText`, `GpuPreference`, `DisplayData`. `Sprite3DOffscreen`:
+  Sprite3DBuilder's, which is Sprite3D's plus `Poll`, `StateText` and
+  `PostStep` (every step still queued with `ForceQueue`, so Sprite3D, which
+  never polls, behaves as before). `Sprite3DSweep`: Sprite3D's, which is
+  Sprite3DBuilder's plus the bounding box outline and volumes drawn into
+  grabs (Sprite3DBuilder only measures with it, so its thumbnails are
+  unchanged), using `Sprite3DAnimFrames`. `Sprite3DAnimFrames`:
+  Sprite3DBuilder's, whose two classes were Sprite3D's
+  `TSprite3DFrameSource` and `TSprite3DAnimationFrames` unchanged (checked
+  line by line), now gone from `Sprite3DAnimCapture`, which uses it, as
+  `Sprite3dMain` does. `Sprite3DModelTextures`: Sprite3DBuilder's,
+  unchanged.
+- **The texture fixes in Sprite3D** (the *To do* below): `LoadModelFile`
+  (Sprite3DHelpers) calls `PrepareModelTextures` for a `.gltf`, keyed by
+  the SHA-256 of the model file, with the settings folder as the cache
+  (copies in its `models` folder, beside `bounds`), and gives the fixes
+  back (new `out AFixes`); `TextureFixText` (its `case` labels qualified,
+  as Gorilla.DefTypes is used there) and `LoadedFromCopy` word them, and
+  `BuildLoadModel` writes them to the Debug tab. The slot, the bounds
+  cache and the last model keep the model's own file name.
+  `VertexPosition` caching is kept. `LICENCE_VAMPYRE` in Sprite3D's `.rc`,
+  `.res` and `Sprite3DLicences`; Vampyre's four folders and
+  `DONT_LINK_JPEG2000;DONT_LINK_WEBP` in `Sprite3d.dproj`.
+- **Tools**: `pasdoc_check.py` checks both programs and `Shared/` (counts
+  unchanged for both but `Sprite3DAnimCapture`, one gap fewer);
+  `pasdoc.bat` builds the API from `Sprite3D\lib` and `Shared`, and a
+  reference for each program, Sprite3DBuilder's included, letting
+  `..\Shared\` units into them.
+- **Docs**: README (the second program, the layout), this file's rules,
+  `Sprite3DBuilder/README.md`, `Sprite3DBuilder/CLAUDE.md`, the licence
+  notes and the design notes' paths.
+
+**Tested** (Windows; all passed, 11:45):
+1. The group builds: Spritely, dclSpritely, Sprite3D, Sprite3DBuilder,
+   ProjectionTest.
+2. Sprite3D: grabs, exports (strip, atlas, a turn of a static model) and
+   the volumes as before; `models/uvcube.glb` found at start-up.
+3. Sprite3DBuilder: its Library opens, finds `assets/` and the group
+   icons, and makes thumbnails as before; File, Licences lists Neon and
+   Vampyre.
+4. Sprite3D: a glTF kit with `.psd` textures (Zerin) and one with
+   misplaced files (Quaternius' Modular SciFi MegaKit) open textured; the
+   Debug tab has a line for each texture or buffer replaced and "loaded
+   from a copy"; a texture missing everywhere shows the magenta and black
+   checker; File, Licences lists Vampyre.
+
+File, Debug, glTF reading the original file: fixed in 12:25, above.
+
 ### State (10 November 2026, 15:55)
 
 **GitHub `main` is at `fc70295`, "Before ImportTests"** (the owner's push
@@ -454,7 +650,7 @@ Gorilla3D's author has `notes/imports.md`: bugs 1-2 (USD UVs and up axis)
 and 3 (six FBX parrot clips) are his to fix; Sprite3D works round nothing
 for them.
 
-### To do: textures, from Sprite3DBuilder (11 November 2026)
+### Done: textures, from Sprite3DBuilder (11 November 2026)
 
 Sprite3DBuilder's Library, importing whole artists' packs, found glTF
 models Gorilla3D refuses: textures named as `.psd` (Zerin), textures and
@@ -465,8 +661,9 @@ it. Sprite3D loads the same kits and needs the same change:
 **`notes/textures.md`** says what goes wrong, how the unit deals with it,
 and the five steps to take it over (the Vampyre submodule, the project's
 search paths and defines, the unit unchanged, the call in
-`LoadModelFile`, and Vampyre's MPL 2.0 licence). Not started; the note
-was delivered as **Textures1**. Keep `TAnimationCachingFlag.VertexPosition`
+`LoadModelFile`, and Vampyre's MPL 2.0 licence). The note was delivered
+as **Textures1**; the work is in `2026-11-12-1105-one-repository.zip`
+(above), with the unit in `Shared/`. Keep `TAnimationCachingFlag.VertexPosition`
 in Sprite3D's `LoadModelFile`.
 
 ### Done: ImportTests, the glTF tools and held frames (10 November 2026, after `fc70295`)

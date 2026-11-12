@@ -19,7 +19,7 @@ Mechanical checks over every unit: all sources are ASCII; the `.dpr` and
 `.dproj` unit lists agree (38 each); `tools/pasdoc_check.py` reports 456
 undocumented and 74 plain-commented interface items, all in the older
 gaps `CLAUDE.md` describes (down from about 480 and 80 on 27 October);
-no `src/lib` or `src/common` unit uses `src/ui`; no form has a
+no `Sprite3D/lib` or `Sprite3D/common` unit uses `Sprite3D/ui`; no form has a
 `StyleBook`; the four View Show items no longer carry `IsChecked` in
 `Sprite3dMain.fmx`, and the only ticks left (`HeadlightItem`,
 `PerspectiveItem`) match the constructor.
@@ -188,7 +188,7 @@ refcounting; the save-task chain serialises captures; `TakeOffSlide` and
 and pass 2 ordering; `CopyItem` copies every property the `.fmx` uses;
 `FormDestroy`'s `WaitForAll` cannot deadlock.
 
-## Rendering and export (src/lib)
+## Rendering and export (Sprite3D/lib)
 
 22. **Overscan retry learns an unscaled size.** `Sprite3DOffscreen.pas`
     1661, 1711, `RetryAfter`: the failed size is `Max(W, H) * FScan`
@@ -263,10 +263,10 @@ the measurer's nil `AnimationManager` and start/stop ordering,
 `CombinedModelsSweptVolume`'s pivots, the ICO 256 byte, `DrawOnTop`'s
 z-test restore.
 
-## Video, network and system (src/lib, src/common)
+## Video, network and system (Sprite3D/lib, Sprite3D/common)
 
 The hand-declared FFmpeg 8 ABI was checked field by field against
-`src/ffmpeg` (`libversion.inc`: avutil 60, avcodec 62, avformat 62;
+`Sprite3D/ffmpeg` (`libversion.inc`: avutil 60, avcodec 62, avformat 62;
 `AVCodecContext` to `global_quality`, `AVFrame` to `pts`, `AVPacket` to
 `duration`, `AVCodecParameters` to `height`, `AVStream` to
 `avg_frame_rate`, `AVOutputFormat` to `flags`, `AVFormatContext` to
@@ -364,7 +364,7 @@ offsets; registry work under HKCU only, `HKEY_CLASSES_ROOT` and
 `UserChoice` read only, `DeleteKey` recursive, the backup recording the
 first non-own default.
 
-## Forms, Helpers and the Results tab (src/ui)
+## Forms, Helpers and the Results tab (Sprite3D/ui)
 
 Settings serialisation is sound: every published property has a row in
 the README's table and vice versa (`backgroundSpec`, `themeKind`,
@@ -421,7 +421,7 @@ setters clamp hand-edited values.
 
 48. **Leftovers.** `TOrbitalSettingsForm.AzimuthOnly` (242 to 250, 276,
     477 to 484) is unused (the only reference is a comment at
-    `Sprite3dMain.pas` 5461); `src/Sprite3d.dpr` 118 still auto-creates a
+    `Sprite3dMain.pas` 5461); `Sprite3D/Sprite3d.dpr` 118 still auto-creates a
     global `OrbitalSettingsForm` that nothing references while the main
     form makes its own (5448), so an unused form lives for the session;
     `AutoIconFileName`'s `Number := 1` (2459) is dead if the callee
@@ -514,12 +514,12 @@ dependency, and the camera, light and viewport notification order.
 
 ## Project files and tools
 
-59. **`ReportMemoryLeaksOnShutdown` is commented out.** `src/Sprite3d.dpr`
+59. **`ReportMemoryLeaksOnShutdown` is commented out.** `Sprite3D/Sprite3d.dpr`
     7 to 9 and 98: the comments, the README and `CLAUDE.md` all say it is
     set; `{$DEFINE REPORT_LEAKS}` is commented out too. Turn it on or
     correct the three descriptions.
 
-60. **Deployment.** `src/Sprite3d.dproj` 793 to 845 and 1453 to 1488
+60. **Deployment.** `Sprite3D/Sprite3d.dproj` 793 to 845 and 1453 to 1488
     deploy `styles\buildstyles.cmd` to Linux64, OSXARM64 (under
     `Contents\Resources\StartUp\`, so `System.StartUpCopy` copies it into
     the user's folders), Win64 and WinARM64EC, and `..\README.md` to
@@ -537,8 +537,8 @@ dependency, and the camera, light and viewport notification order.
     undocumented; attributes are skipped only when on one line.
     Implementation items are not checked, as its docstring says.
 
-62. **Tracked generated files.** `src/styles/Sprite3DThemes.res` is
-    rewritten by every pre-build and `src/Sprite3d.deployproj` is
+62. **Tracked generated files.** `Sprite3D/styles/Sprite3DThemes.res` is
+    rewritten by every pre-build and `Sprite3D/Sprite3d.deployproj` is
     machine-specific; both are tracked. Nothing ignored is tracked and
     nothing tracked matches an ignore pattern. `buildstyles.cmd`'s
     failure handling is sound.

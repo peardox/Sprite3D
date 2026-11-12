@@ -142,9 +142,9 @@ OK keeps the choice in `settings.json`:
 
 | Where | What |
 |---|---|
-| `src/ui/Sprite3DDirectionsForm.pas`, `.fmx` | `TDirectionsForm`, the dialog: drawing the compass, Change Order, the dial lock, Export and Import |
-| `src/ui/Sprite3DHelpers.pas` | `DIRECTION_COUNTS`, `NearestDirectionCount`, `PlainDirectionOrder`, `IsDirectionOrder`, `DirectionOrderToText`, `DirectionOrderFromText`, `CompassPointName`, `SaveDirectionsFile`, `LoadDirectionsFile`, `EDirectionsFile`; and in `TSprite3DAppSettings`, the settings above with `DirectionOrderList` and `DirectionBearings` |
-| `src/ui/Sprite3dMain.pas` | `DirectionsItemClick` shows the dialog; `ApplyDirections` keeps and saves the result |
+| `Sprite3D/ui/Sprite3DDirectionsForm.pas`, `.fmx` | `TDirectionsForm`, the dialog: drawing the compass, Change Order, the dial lock, Export and Import |
+| `Sprite3D/ui/Sprite3DHelpers.pas` | `DIRECTION_COUNTS`, `NearestDirectionCount`, `PlainDirectionOrder`, `IsDirectionOrder`, `DirectionOrderToText`, `DirectionOrderFromText`, `CompassPointName`, `SaveDirectionsFile`, `LoadDirectionsFile`, `EDirectionsFile`; and in `TSprite3DAppSettings`, the settings above with `DirectionOrderList` and `DirectionBearings` |
+| `Sprite3D/ui/Sprite3dMain.pas` | `DirectionsItemClick` shows the dialog; `ApplyDirections` keeps and saves the result |
 
 `DirectionBearings` is how the rest of the program reads the result: one bearing per direction, in the order they are taken in.
 

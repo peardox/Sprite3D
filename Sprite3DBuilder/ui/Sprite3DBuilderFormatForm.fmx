@@ -1,0 +1,104 @@
+object FormatForm: TFormatForm
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  Caption = 'Which Format?'
+  ClientHeight = 200
+  ClientWidth = 560
+  Position = OwnerFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object BackPanel: TPanel
+    Align = Contents
+    Size.Width = 560.000000000000000000
+    Size.Height = 200.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object InfoLabel: TLabel
+      Align = Top
+      Margins.Left = 12.000000000000000000
+      Margins.Top = 12.000000000000000000
+      Margins.Right = 12.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 12.000000000000000000
+      Size.Width = 536.000000000000000000
+      Size.Height = 64.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.VertAlign = Leading
+      TextSettings.WordWrap = True
+      Text = ''
+      TabOrder = 0
+    end
+    object FormatCombo: TComboBox
+      Align = Top
+      Margins.Left = 12.000000000000000000
+      Margins.Top = 8.000000000000000000
+      Margins.Right = 12.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 84.000000000000000000
+      Size.Width = 536.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+    end
+    object ButtonLayout: TLayout
+      Align = Bottom
+      Margins.Left = 12.000000000000000000
+      Margins.Right = 12.000000000000000000
+      Margins.Bottom = 12.000000000000000000
+      Position.X = 12.000000000000000000
+      Position.Y = 150.000000000000000000
+      Size.Width = 536.000000000000000000
+      Size.Height = 38.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      object StopButton: TButton
+        Align = Right
+        Cancel = True
+        Position.X = 456.000000000000000000
+        Size.Width = 80.000000000000000000
+        Size.Height = 38.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        Text = 'Stop'
+        OnClick = StopButtonClick
+      end
+      object OnlyDefaultsButton: TButton
+        Align = Right
+        Margins.Right = 8.000000000000000000
+        Position.X = 318.000000000000000000
+        Size.Width = 130.000000000000000000
+        Size.Height = 38.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        Text = 'Only My Defaults'
+        OnClick = OnlyDefaultsButtonClick
+      end
+      object SkipButton: TButton
+        Align = Right
+        Margins.Right = 8.000000000000000000
+        Position.X = 230.000000000000000000
+        Size.Width = 80.000000000000000000
+        Size.Height = 38.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Text = 'Skip'
+        OnClick = SkipButtonClick
+      end
+      object ImportButton: TButton
+        Align = Right
+        Default = True
+        Margins.Right = 8.000000000000000000
+        Position.X = 142.000000000000000000
+        Size.Width = 80.000000000000000000
+        Size.Height = 38.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Import'
+        OnClick = ImportButtonClick
+      end
+    end
+  end
+end

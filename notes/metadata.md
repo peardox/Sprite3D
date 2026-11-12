@@ -294,11 +294,11 @@ Each animation's `frame_count` is the frames of one direction of it, which is ho
 
 | Where | What |
 |---|---|
-| `src/lib/Sprite3DSpriteSheet.pas` | `TSprite3DFrameEmpty`, `MeasureFrameEmpty` (one frame's empty sections) and `SaveSheetMetadata` (the whole file, from a `TSprite3DSheetInfo`), beside `ComposeStrip`, `ComposeSheet`, and `PlanAtlasPages` with `ComposeAtlasPage` for atlas pages |
-| `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.ProjectToView`, where a point falls in a view of a given size, and `ShiftView`, which slides the view by pixels |
-| `src/ui/Sprite3dMain.pas` | `StartCapture` decides whether metadata is written; `MeasureCaptureOrigin` finds the origin; `SaveSheet` writes a strip or spritesheet and then its `.json`; `SaveAtlasBatch` and `SaveAtlas` make and write the atlas pages at the end of a batch; `EndCapture` puts the view back |
-| `src/ui/Sprite3DHelpers.pas` | the `ExportMetadata`, `ExportDirections`, `AtlasPageSize` and `AtlasNonPowerOf2` settings |
-| `src/ui/Sprite3DAnimationForm.pas` | Models, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
+| `Sprite3D/lib/Sprite3DSpriteSheet.pas` | `TSprite3DFrameEmpty`, `MeasureFrameEmpty` (one frame's empty sections) and `SaveSheetMetadata` (the whole file, from a `TSprite3DSheetInfo`), beside `ComposeStrip`, `ComposeSheet`, and `PlanAtlasPages` with `ComposeAtlasPage` for atlas pages |
+| `Sprite3D/lib/Sprite3DCamera.pas` | `TSprite3DCamera.ProjectToView`, where a point falls in a view of a given size, and `ShiftView`, which slides the view by pixels |
+| `Sprite3D/ui/Sprite3dMain.pas` | `StartCapture` decides whether metadata is written; `MeasureCaptureOrigin` finds the origin; `SaveSheet` writes a strip or spritesheet and then its `.json`; `SaveAtlasBatch` and `SaveAtlas` make and write the atlas pages at the end of a batch; `EndCapture` puts the view back |
+| `Sprite3D/ui/Sprite3DHelpers.pas` | the `ExportMetadata`, `ExportDirections`, `AtlasPageSize` and `AtlasNonPowerOf2` settings |
+| `Sprite3D/ui/Sprite3DAnimationForm.pas` | Models, Animation Settings, with the Texture Atlas page size and power-of-2 choice |
 
 Each routine's own documentation comments, in the source, give the details.
 

@@ -1,0 +1,384 @@
+object AssetsForm: TAssetsForm
+  Left = 0
+  Top = 0
+  Caption = 'Library'
+  ClientHeight = 800
+  ClientWidth = 1120
+  Constraints.MinWidth = 960.000000000000000000
+  Constraints.MinHeight = 680.000000000000000000
+  Position = Default
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnClose = FormClose
+  OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
+  DesignerMasterStyle = 0
+  object ArtistBar: TLayout
+    Align = Top
+    Padding.Left = 6.000000000000000000
+    Padding.Top = 4.000000000000000000
+    Padding.Right = 6.000000000000000000
+    Padding.Bottom = 2.000000000000000000
+    Size.Width = 1120.000000000000000000
+    Size.Height = 36.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 11
+    object ArtistLabel: TLabel
+      Align = Left
+      Size.Width = 70.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Artist'
+      TabOrder = 0
+    end
+    object ArtistCombo: TComboBox
+      Align = Left
+      CanFocus = False
+      Position.X = 76.000000000000000000
+      Size.Width = 380.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      OnChange = ArtistComboChange
+    end
+    object ArtistMenuButton: TButton
+      Align = Left
+      CanFocus = False
+      Margins.Left = 4.000000000000000000
+      Position.X = 320.000000000000000000
+      Size.Width = 34.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = '...'
+      OnClick = ArtistMenuButtonClick
+    end
+    object NewArtistButton: TButton
+      Align = Left
+      CanFocus = False
+      Margins.Left = 12.000000000000000000
+      Position.X = 366.000000000000000000
+      Size.Width = 110.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+      Text = 'Add Artist...'
+      OnClick = NewArtistButtonClick
+    end
+    object AddArtistButton: TButton
+      Align = Right
+      CanFocus = False
+      Position.X = 904.000000000000000000
+      Size.Width = 190.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 6
+      Text = 'Add Artist Collections...'
+      OnClick = AddArtistButtonClick
+    end
+  end
+  object CollectionBar: TLayout
+    Align = Top
+    Padding.Left = 6.000000000000000000
+    Padding.Top = 4.000000000000000000
+    Padding.Right = 6.000000000000000000
+    Padding.Bottom = 4.000000000000000000
+    Size.Width = 1120.000000000000000000
+    Size.Height = 38.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 10
+    object CollectionLabel: TLabel
+      Align = Left
+      Size.Width = 70.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Collection'
+      TabOrder = 0
+    end
+    object CollectionCombo: TComboBox
+      Align = Left
+      CanFocus = False
+      Position.X = 76.000000000000000000
+      Size.Width = 380.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      OnChange = CollectionComboChange
+    end
+    object CollectionMenuButton: TButton
+      Align = Left
+      CanFocus = False
+      Margins.Left = 4.000000000000000000
+      Position.X = 320.000000000000000000
+      Size.Width = 34.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = '...'
+      OnClick = CollectionMenuButtonClick
+    end
+    object RescanButton: TButton
+      Align = Left
+      CanFocus = False
+      Margins.Left = 12.000000000000000000
+      Position.X = 470.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 4
+      Text = 'Rescan'
+      OnClick = RescanButtonClick
+    end
+    object AddCollectionButton: TButton
+      Align = Right
+      CanFocus = False
+      Position.X = 904.000000000000000000
+      Size.Width = 210.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 5
+      Text = 'Add New Asset Collection...'
+      OnClick = AddCollectionButtonClick
+    end
+  end
+  object GroupsBox: TVertScrollBox
+    Align = Left
+    Size.Width = 170.000000000000000000
+    Size.Height = 720.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    OnMouseUp = GroupsBoxMouseUp
+    Viewport.Width = 170.000000000000000000
+    Viewport.Height = 720.000000000000000000
+  end
+  object GroupsSplitter: TSplitter
+    Align = Left
+    Cursor = crHSplit
+    MinSize = 100.000000000000000000
+    Position.X = 170.000000000000000000
+    Size.Width = 4.000000000000000000
+    Size.Height = 720.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object TopLayout: TLayout
+    Align = Top
+    Padding.Left = 8.000000000000000000
+    Padding.Top = 8.000000000000000000
+    Padding.Right = 8.000000000000000000
+    Padding.Bottom = 8.000000000000000000
+    Position.X = 174.000000000000000000
+    Size.Width = 706.000000000000000000
+    Size.Height = 272.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object PreviewArea: TRectangle
+      Align = Left
+      Fill.Color = xFF303030
+      Position.X = 8.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 256.000000000000000000
+      Size.Height = 256.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Kind = None
+    end
+    object InfoLayout: TLayout
+      Align = Client
+      Margins.Left = 12.000000000000000000
+      Size.Width = 418.000000000000000000
+      Size.Height = 256.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      object StatusLabel: TLabel
+        Align = Top
+        Size.Width = 418.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.WordWrap = False
+        Text = 'No asset folder open'
+        TabOrder = 0
+      end
+      object Progress: TProgressBar
+        Align = Top
+        Orientation = Horizontal
+        Margins.Top = 4.000000000000000000
+        Position.Y = 26.000000000000000000
+        Size.Width = 418.000000000000000000
+        Size.Height = 12.000000000000000000
+        Size.PlatformDefault = False
+        Max = 100.000000000000000000
+      end
+      object NameLabel: TLabel
+        Align = Top
+        Margins.Top = 16.000000000000000000
+        Position.Y = 54.000000000000000000
+        Size.Width = 418.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.WordWrap = False
+        Text = ''
+        TabOrder = 2
+      end
+      object SizeLabel: TLabel
+        Align = Top
+        Position.Y = 76.000000000000000000
+        Size.Width = 418.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.WordWrap = False
+        Text = ''
+        TabOrder = 3
+      end
+      object FileLabel: TLabel
+        Align = Top
+        Position.Y = 98.000000000000000000
+        Size.Width = 418.000000000000000000
+        Size.Height = 40.000000000000000000
+        Size.PlatformDefault = False
+        ShowHint = True
+        TextSettings.VertAlign = Leading
+        TextSettings.WordWrap = True
+        Text = ''
+        TabOrder = 4
+      end
+      object HelpLabel: TLabel
+        Align = Bottom
+        Position.Y = 176.000000000000000000
+        Size.Width = 418.000000000000000000
+        Size.Height = 96.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.VertAlign = Trailing
+        TextSettings.WordWrap = True
+        Text = 
+          'Preview: drag to turn and tilt, wheel to zoom, right-click to reset.' +
+          ' Thumbnails: click, Ctrl-click and Shift-click to pick, drag onto a' +
+          ' group to move. Groups: Up and Down to choose, drag into another (' +
+          'or the grid), double-click to open, Backspace for up; ' +
+          'right-click to add, rename, change the icon or delete.'
+        TabOrder = 5
+      end
+    end
+  end
+  object TilesPanel: TRectangle
+    Align = Client
+    Fill.Kind = None
+    Size.Width = 706.000000000000000000
+    Size.Height = 448.000000000000000000
+    Size.PlatformDefault = False
+    Stroke.Kind = None
+    object PathBar: TLayout
+      Align = Top
+      Padding.Left = 6.000000000000000000
+      Padding.Top = 2.000000000000000000
+      Padding.Right = 6.000000000000000000
+      Padding.Bottom = 2.000000000000000000
+      Size.Width = 706.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      object UpButton: TButton
+        Align = Left
+        CanFocus = False
+        Enabled = False
+        Size.Width = 56.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Up'
+        OnClick = UpButtonClick
+      end
+      object PathLabel: TLabel
+        Align = Client
+        Margins.Left = 8.000000000000000000
+        Size.Width = 630.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.WordWrap = False
+        Text = ''
+        TabOrder = 1
+      end
+    end
+    object TilesBox: TVertScrollBox
+      Align = Client
+      Size.Width = 706.000000000000000000
+      Size.Height = 418.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      OnMouseUp = TilesBoxMouseUp
+      OnResize = TilesBoxResize
+      Viewport.Width = 706.000000000000000000
+      Viewport.Height = 418.000000000000000000
+    end
+  end
+  object GroupMenu: TPopupMenu
+    Left = 40
+    Top = 400
+    object AddGroupItem: TMenuItem
+      Text = 'Add Group...'
+      OnClick = AddGroupItemClick
+    end
+    object RenameGroupItem: TMenuItem
+      Text = 'Rename Group...'
+      OnClick = RenameGroupItemClick
+    end
+    object IconGroupItem: TMenuItem
+      Text = 'Change Icon...'
+      OnClick = IconGroupItemClick
+    end
+    object GroupMenuSeparator: TMenuItem
+      Text = '-'
+    end
+    object DeleteGroupItem: TMenuItem
+      Text = 'Delete Group'
+      OnClick = DeleteGroupItemClick
+    end
+  end
+  object CollectionMenu: TPopupMenu
+    Left = 40
+    Top = 512
+    object RenameCollectionItem: TMenuItem
+      Text = 'Rename Collection...'
+      OnClick = RenameCollectionItemClick
+    end
+    object MoveCollectionItem: TMenuItem
+      Text = 'Move to Artist'
+    end
+    object RemakeThumbnailsItem: TMenuItem
+      Text = 'Remake Thumbnails'
+      OnClick = RemakeThumbnailsItemClick
+    end
+    object RegroupItem: TMenuItem
+      Text = 'Regroup Collection...'
+      OnClick = RegroupItemClick
+    end
+    object DeleteCollectionItem: TMenuItem
+      Text = 'Delete Collection'
+      OnClick = DeleteCollectionItemClick
+    end
+  end
+  object ArtistMenu: TPopupMenu
+    Left = 40
+    Top = 568
+    object RenameArtistItem: TMenuItem
+      Text = 'Rename Artist...'
+      OnClick = RenameArtistItemClick
+    end
+    object RescanArtistItem: TMenuItem
+      Text = 'Rescan All Collections'
+      OnClick = RescanArtistItemClick
+    end
+    object RemakeArtistItem: TMenuItem
+      Text = 'Remake All Thumbnails'
+      OnClick = RemakeArtistItemClick
+    end
+    object DeleteArtistItem: TMenuItem
+      Text = 'Delete Artist'
+      OnClick = DeleteArtistItemClick
+    end
+  end
+  object IconDialog: TOpenDialog
+    Left = 40
+    Top = 456
+  end
+end

@@ -88,3 +88,7 @@ modules/
 docs/html/
 docs/chm/
 /pasdoc.log
+
+# Model kits used by Sprite3DBuilder, kept locally and never committed
+# (assets/kaykit/dungeon and the like)
+/assets/

@@ -9,7 +9,10 @@
         <Projects Include="Spritely\packages\dclSpritely.dproj">
             <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
         </Projects>
-        <Projects Include="src\Sprite3d.dproj">
+        <Projects Include="Sprite3D\Sprite3d.dproj">
+            <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
+        </Projects>
+        <Projects Include="Sprite3DBuilder\Sprite3DBuilder.dproj">
             <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
         </Projects>
         <Projects Include="Spritely\ProjectionTest\ProjectionTest.dproj">
@@ -42,13 +45,22 @@
         <MSBuild Projects="Spritely\packages\dclSpritely.dproj" Targets="Make"/>
     </Target>
     <Target Name="Sprite3d">
-        <MSBuild Projects="src\Sprite3d.dproj"/>
+        <MSBuild Projects="Sprite3D\Sprite3d.dproj"/>
     </Target>
     <Target Name="Sprite3d:Clean">
-        <MSBuild Projects="src\Sprite3d.dproj" Targets="Clean"/>
+        <MSBuild Projects="Sprite3D\Sprite3d.dproj" Targets="Clean"/>
     </Target>
     <Target Name="Sprite3d:Make">
-        <MSBuild Projects="src\Sprite3d.dproj" Targets="Make"/>
+        <MSBuild Projects="Sprite3D\Sprite3d.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sprite3DBuilder">
+        <MSBuild Projects="Sprite3DBuilder\Sprite3DBuilder.dproj"/>
+    </Target>
+    <Target Name="Sprite3DBuilder:Clean">
+        <MSBuild Projects="Sprite3DBuilder\Sprite3DBuilder.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sprite3DBuilder:Make">
+        <MSBuild Projects="Sprite3DBuilder\Sprite3DBuilder.dproj" Targets="Make"/>
     </Target>
     <Target Name="ProjectionTest">
         <MSBuild Projects="Spritely\ProjectionTest\ProjectionTest.dproj"/>
@@ -60,13 +72,13 @@
         <MSBuild Projects="Spritely\ProjectionTest\ProjectionTest.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="Spritely;dclSpritely;Sprite3d;ProjectionTest"/>
+        <CallTarget Targets="Spritely;dclSpritely;Sprite3d;Sprite3DBuilder;ProjectionTest"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="Spritely:Clean;dclSpritely:Clean;Sprite3d:Clean;ProjectionTest:Clean"/>
+        <CallTarget Targets="Spritely:Clean;dclSpritely:Clean;Sprite3d:Clean;Sprite3DBuilder:Clean;ProjectionTest:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="Spritely:Make;dclSpritely:Make;Sprite3d:Make;ProjectionTest:Make"/>
+        <CallTarget Targets="Spritely:Make;dclSpritely:Make;Sprite3d:Make;Sprite3DBuilder:Make;ProjectionTest:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
