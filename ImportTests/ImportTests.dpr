@@ -21,7 +21,7 @@ uses
   System.StartUpCopy,
   FMX.Forms,
   ImportTests.Main in 'src\ImportTests.Main.pas' {ImportTestsForm},
-  Sprite3DGltfExport in '..\src\lib\Sprite3DGltfExport.pas';
+  Sprite3DGltfExport in '..\Sprite3D\lib\Sprite3DGltfExport.pas';
 
 begin
   {$IFDEF DEBUG}

@@ -1,7 +1,7 @@
 # Licences required
 
 What the third-party parts of Sprite3D and Spritely ask of anyone who builds
-or distributes them, as of 10 November 2026. This is a map of what to check,
+or distributes them, as of 12 November 2026. This is a map of what to check,
 not legal advice.
 
 The licences and notices a release must carry are text files in
@@ -9,6 +9,11 @@ The licences and notices a release must carry are text files in
 (`licences/Sprite3DLicences.rc`, compiled by the pre-build step), so every
 build carries them. **File, Licences...** shows them, and its **Save All...**
 writes them to one `THIRD-PARTY-NOTICES.txt` to ship beside the program.
+
+Sprite3DBuilder, the repository's other program, is covered by its own
+[licences-required.md](../Sprite3DBuilder/licences-required.md). It shares
+the texts in `licences/`, but carries only those its own
+`licences/Sprite3DBuilderLicences.rc` names.
 
 ## FastMM5: GPL v3, or a commercial licence
 
@@ -18,7 +23,7 @@ lets it be used in your own applications royalty free, with no requirement to
 disclose your source code. The commercial licence is perpetual, per developer:
 $99 for one developer, more for teams, $999 for a site.
 
-It is compiled into every Windows build of Sprite3D (`src/Sprite3d.dpr`,
+It is compiled into every Windows build of Sprite3D (`Sprite3D/Sprite3d.dpr`,
 `{$IFDEF MSWINDOWS}`), Release included, and into Spritely's ProjectionTest.
 
 - Under the GPL, distributing a Windows binary of Sprite3D means releasing
@@ -47,19 +52,38 @@ writes glTF for File, Debug, glTF.
   documentation or About box. **Done:** `licences/GLTFLib-LICENSE.txt`, in File,
   Licences.
 
+## Vampyre Imaging Library: Mozilla Public License 2.0
+
+The Vampyre Imaging Library (the `imaginglib` submodule,
+<https://github.com/galfar/imaginglib>), by Marek Mauder, reads textures in
+formats the model loader does not read, such as layered `.psd` files, in
+`Shared/Sprite3DModelTextures.pas`. It is compiled into every build, used
+unmodified.
+
+The MPL 2.0 is a file-level copyleft: it covers Vampyre's own files only,
+not Sprite3D's.
+
+- Distributing a binary: tell its recipients how to get the Source Code Form
+  of the MPL files, and carry the licence. **Done:**
+  `licences/Vampyre-LICENSE.txt` (a notice giving the source's address, then
+  the licence), in File, Licences.
+- Changing any of Vampyre's files would mean making the changed files
+  available under the MPL; so leave the submodule unchanged, as the rules
+  for submodules say.
+
 ## FFmpeg headers: BSD-style
 
-`src/ffmpeg` holds the FFmpeg Delphi/Pascal headers from DelphiFFmpeg.com,
-unchanged and not compiled in; `src/lib/Sprite3DVideo.pas` copies the few
+`Sprite3D/ffmpeg` holds the FFmpeg Delphi/Pascal headers from DelphiFFmpeg.com,
+unchanged and not compiled in; `Sprite3D/lib/Sprite3DVideo.pas` copies the few
 records and constants it needs from them.
 
-- The notice in `src/ffmpeg/LICENSE.txt` stays with the source.
+- The notice in `Sprite3D/ffmpeg/LICENSE.txt` stays with the source.
 - Binaries reproduce it in their documentation. **Done:**
   `licences/DelphiFFmpeg-LICENSE.txt`, a copy, in File, Licences.
 
 ## OpenH264 declarations: BSD 2-clause
 
-`src/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API
+`Sprite3D/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API
 headers, Copyright (c) 2013, Cisco Systems.
 
 - The notice stays with the source: the unit reproduces it in full.

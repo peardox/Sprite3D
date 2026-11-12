@@ -1,0 +1,357 @@
+//** @abstract(The Settings dialog: the theme, the view's frame rate, how JSON files are
+//** written and, on Windows, which GPU to use.)
+//**
+//** A modal form, centred on the main form, laid out in its .fmx file with standard FMX
+//** controls in groups, in two columns so it stays short enough for smaller displays; on
+//** Android and iOS, which are too narrow for that, the groups go in one column that
+//** scrolls:
+//**
+//** @preformatted(
+//** TGeneralSettingsForm
+//** `-- BackPanel                      the form's opaque background
+//**     |-- ScrollBox
+//**     |   `-- ColumnsLayout          as tall as the taller column
+//**     |       |-- LeftColumn
+//**     |       |   `-- ThemeGroup     Default @(no theme@), Dark, Aqua, Ruby, Golden Graphite
+//**     |       `-- RightColumn
+//**     |           |-- FrameRateGroup FrameRateTrack, FrameRateValueLabel, FrameRateNote
+//**     |           |-- FilesGroup     MinifyJsonCheck, MinifyJsonNote
+//**     |           `-- GpuGroup       Windows only: system, low power, high power, GpuNote
+//**     `-- ButtonLayout               OkButton, CancelButton
+//** )
+//**
+//** View frame rate sets how many frames a second the view is drawn at, from VIEW_FPS_MIN up
+//** to the display's refresh rate, which the caller gives as Values.MaxViewFps; left at the
+//** top, a higher rate kept from a faster display stays as it was. The GPU group is shown on
+//** Windows only; a change there takes effect the next time Sprite3DBuilder starts.
+//**
+//** The dialog only edits a TSprite3DGeneralSettings: set Values before showing it and read
+//** it back after OK; applying the choices is the caller's job. On the desktop show it with
+//** ShowModal and free it afterwards; on Android and iOS, which cannot block, show it with
+//** ShowAndFree, which calls OnAccept on OK and frees the form when it closes.
+unit Sprite3DBuilderSettingsForm;
+
+{
+  The Settings dialog: the theme, the view's frame rate, how JSON files are
+  written and, on Windows, which GPU to use.
+
+  A modal form, centred on the main form, laid out in its .fmx file with
+  standard FMX controls in groups, in two columns so it stays short enough
+  for smaller displays; on Android and iOS, which are too narrow for that,
+  the groups go in one column that scrolls:
+
+    TGeneralSettingsForm
+    `-- BackPanel                      the form's opaque background
+        |-- ScrollBox
+        |   `-- ColumnsLayout          as tall as the taller column
+        |       |-- LeftColumn
+        |       |   `-- ThemeGroup     Default (no theme), Dark, Aqua, Ruby, Golden Graphite
+        |       `-- RightColumn
+        |           |-- FrameRateGroup FrameRateTrack, FrameRateValueLabel, FrameRateNote
+        |           |-- FilesGroup     MinifyJsonCheck, MinifyJsonNote
+        |           `-- GpuGroup       Windows only: system, low power, high power, GpuNote
+        `-- ButtonLayout               OkButton, CancelButton
+
+  View frame rate sets how many frames a second the view is drawn at, from
+  VIEW_FPS_MIN up to the display's refresh rate, which the caller gives as
+  Values.MaxViewFps; left at the top, a higher rate kept from a faster
+  display stays as it was. The GPU group is shown on Windows only; a change
+  there takes effect the next time Sprite3DBuilder starts.
+
+  The dialog only edits a TSprite3DGeneralSettings: set Values before
+  showing it and read it back after OK; applying the choices is the
+  caller's job. On the desktop show it with ShowModal and free it
+  afterwards; on Android and iOS, which cannot block, show it with
+  ShowAndFree, which calls OnAccept on OK and frees the form when it
+  closes.
+}
+
+interface
+
+uses
+  System.SysUtils, System.Types, System.UITypes, System.Classes,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.StdCtrls,
+  FMX.Layouts, FMX.Controls.Presentation, Sprite3DBuilderHelpers;
+
+type
+  //** @abstract(The Settings dialog.)
+  //**
+  //** Set Values before showing it, and read Values back after OK.
+  TGeneralSettingsForm = class(TForm)
+    //** @abstract(The form's opaque background.)
+    BackPanel: TPanel;
+    //** @abstract(Scrolls the groups on screens too small for them.)
+    ScrollBox: TVertScrollBox;
+    //** @abstract(Holds LeftColumn and RightColumn, as tall as the taller of them.)
+    ColumnsLayout: TLayout;
+    //** @abstract(The left column: ThemeGroup.)
+    //**
+    //** On Android and iOS it holds every group, in one column, and RightColumn is hidden.
+    LeftColumn: TLayout;
+    //** @abstract(The right column: FrameRateGroup, FilesGroup and GpuGroup.)
+    RightColumn: TLayout;
+    //** @abstract(The theme choices.)
+    ThemeGroup: TGroupBox;
+    //** @abstract(FMX's own platform style.)
+    ThemeDefaultRadio: TRadioButton;
+    //** @abstract(The Dark FMX style.)
+    ThemeDarkRadio: TRadioButton;
+    //** @abstract(The Aqua Graphite FMX style: dark grey with blue.)
+    ThemeAquaRadio: TRadioButton;
+    //** @abstract(The Ruby Graphite FMX style: dark grey with red.)
+    ThemeRubyRadio: TRadioButton;
+    //** @abstract(The Golden Graphite FMX style: dark grey with gold.)
+    ThemeGoldenRadio: TRadioButton;
+    //** @abstract(The GPU choices; Windows only.)
+    GpuGroup: TGroupBox;
+    //** @abstract(How Sprite3DBuilder writes its files.)
+    FilesGroup: TGroupBox;
+    //** @abstract(Writes every JSON file minified, with no indents or line breaks.)
+    MinifyJsonCheck: TCheckBox;
+    //** @abstract(Says which files Minify JSON changes.)
+    MinifyJsonNote: TLabel;
+    //** @abstract(The view's frame rate.)
+    FrameRateGroup: TGroupBox;
+    //** @abstract(Chooses the view's frame rate, VIEW_FPS_MIN to Values.MaxViewFps.)
+    FrameRateTrack: TTrackBar;
+    //** @abstract(The frame rate FrameRateTrack is at.)
+    FrameRateValueLabel: TLabel;
+    //** @abstract(Says how far the slider goes, and why.)
+    FrameRateNote: TLabel;
+    //** @abstract(Let Windows choose the GPU.)
+    GpuSystemRadio: TRadioButton;
+    //** @abstract(Ask for the low-power GPU.)
+    GpuLowRadio: TRadioButton;
+    //** @abstract(Ask for the high-performance GPU.)
+    GpuHighRadio: TRadioButton;
+    //** @abstract(Says that a GPU change needs a restart.)
+    GpuNote: TLabel;
+    //** @abstract(Holds the OK and Cancel buttons.)
+    ButtonLayout: TLayout;
+    //** @abstract(Closes the dialog and keeps the choices.)
+    OkButton: TButton;
+    //** @abstract(Closes the dialog and drops the choices.)
+    CancelButton: TButton;
+    //** @abstract(Sets up the groups for this platform and sizes the form to fit them.)
+    //**
+    //** @param(Sender The form.)
+    procedure FormCreate(Sender: TObject);
+    //** @abstract(Reports OK when shown with ShowAndFree, and frees the form then.)
+    //**
+    //** @param(Sender The form.)
+    //**
+    //** @param(Action Set to caFree when shown with ShowAndFree.)
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    //** @abstract(Reads the controls into Values on OK, then closes the dialog.)
+    //**
+    //** @param(Sender The button clicked.)
+    procedure ButtonClick(Sender: TObject);
+    //** @abstract(Shows the frame rate FrameRateTrack is at.)
+    //**
+    //** @param(Sender FrameRateTrack.)
+    procedure FrameRateTrackChange(Sender: TObject);
+  private
+    //** @abstract(The choices being edited; see Values.)
+    FValues: TSprite3DGeneralSettings;
+    //** @abstract(True when shown with ShowAndFree, so FormClose frees the form.)
+    FFreeOnClose: Boolean;
+    //** @abstract(Backing field for OnAccept.)
+    FOnAccept: TNotifyEvent;
+    //** @abstract(Setter for Values: shows AValue in the controls.)
+    //**
+    //** @param(Value The choices to show.)
+    procedure SetValues(const Value: TSprite3DGeneralSettings);
+    //** @abstract(Reads the controls back into FValues.)
+    procedure ReadControls;
+    //** @abstract(Makes the columns as tall as the taller of them, and the form as tall as
+    //** that and the buttons.)
+    procedure FitHeight;
+    {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+    //** @abstract(Puts every group in the left column and hides the right one, for screens
+    //** too narrow for two columns.)
+    procedure UseOneColumn;
+    {$ENDIF}
+  public
+    //** @abstract(Shows the dialog without blocking, for Android and iOS, and frees it when it
+    //** closes.)
+    //**
+    //** OnAccept is called if it closes with OK.
+    procedure ShowAndFree;
+    //** @abstract(The choices being edited.)
+    //**
+    //** Set it before the dialog is shown; read it after OK.
+    property Values: TSprite3DGeneralSettings read FValues write SetValues;
+    //** @abstract(Called on OK when shown with ShowAndFree.)
+    property OnAccept: TNotifyEvent read FOnAccept write FOnAccept;
+  end;
+
+implementation
+
+uses
+  System.Math;
+
+{$R *.fmx}
+
+procedure TGeneralSettingsForm.FormCreate(Sender: TObject);
+begin
+  {$IF not DEFINED(MSWINDOWS)}
+  GpuGroup.Visible := False;
+  {$ENDIF}
+  {$IF DEFINED(ANDROID) or DEFINED(IOS)}
+  // A phone is too narrow for two columns
+  UseOneColumn;
+  {$ENDIF}
+  FitHeight;
+end;
+
+{$IF DEFINED(ANDROID) or DEFINED(IOS)}
+// Every group in the left column, in the order they were, the right column
+// hidden: for screens too narrow for two columns
+procedure TGeneralSettingsForm.UseOneColumn;
+var
+  Groups: TArray<TControl>;
+  Y: Single;
+begin
+  Groups := nil;
+  for var I := 0 to RightColumn.ChildrenCount - 1 do
+    if RightColumn.Children[I] is TControl then
+      Groups := Groups + [TControl(RightColumn.Children[I])];
+  // Below the left column's own, in order: top-aligned controls are laid
+  // out by their Y
+  Y := 10000;
+  for var Group in Groups do
+  begin
+    Group.Parent := LeftColumn;
+    Group.Position.Y := Y;
+    Y := Y + 1000;
+  end;
+  RightColumn.Visible := False;
+  LeftColumn.Align := TAlignLayout.Client;
+end;
+{$ENDIF}
+
+// The height of the visible groups in AColumn, with their margins
+function ColumnHeight(const AColumn: TControl): Single;
+var
+  Group: TControl;
+begin
+  Result := 0;
+  if not AColumn.Visible then
+    Exit;
+  for var I := 0 to AColumn.ChildrenCount - 1 do
+    if AColumn.Children[I] is TControl then
+    begin
+      Group := TControl(AColumn.Children[I]);
+      if Group.Visible then
+        Result := Result + Group.Height + Group.Margins.Top + Group.Margins.Bottom;
+    end;
+end;
+
+// The columns as tall as the taller of them, and the form as tall as that
+// and the buttons. Mobile forms fill the screen and scroll instead.
+procedure TGeneralSettingsForm.FitHeight;
+var
+  Total: Single;
+begin
+  ColumnsLayout.Height := Max(ColumnHeight(LeftColumn), ColumnHeight(RightColumn)) + 8;
+  Total := ColumnsLayout.Height + ButtonLayout.Height + ButtonLayout.Margins.Top +
+    ButtonLayout.Margins.Bottom;
+  ClientHeight := Round(Total) + 8;
+end;
+
+procedure TGeneralSettingsForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  if not FFreeOnClose then
+    Exit;   // shown with ShowModal: the caller frees it
+  if (ModalResult = mrOk) and Assigned(FOnAccept) then
+    FOnAccept(Self);
+  Action := TCloseAction.caFree;
+end;
+
+procedure TGeneralSettingsForm.ButtonClick(Sender: TObject);
+begin
+  if Sender = OkButton then
+    ReadControls;
+  if not FFreeOnClose then
+    Exit;   // ShowModal closes the dialog itself
+  ModalResult := TButton(Sender).ModalResult;
+  Close;
+end;
+
+procedure TGeneralSettingsForm.SetValues(const Value: TSprite3DGeneralSettings);
+begin
+  FValues := Value;
+
+  case Value.Theme of
+    thDark: ThemeDarkRadio.IsChecked := True;
+    thAquaGraphite: ThemeAquaRadio.IsChecked := True;
+    thRubyGraphite: ThemeRubyRadio.IsChecked := True;
+    thGoldenGraphite: ThemeGoldenRadio.IsChecked := True;
+  else
+    ThemeDefaultRadio.IsChecked := True;
+  end;
+
+  // Up to the display's refresh rate; a rate kept from a faster display is
+  // brought down to it
+  FrameRateTrack.Min := VIEW_FPS_MIN;
+  FrameRateTrack.Max := Max(VIEW_FPS_MIN, Value.MaxViewFps);
+  FrameRateTrack.Value := EnsureRange(Value.ViewFps, VIEW_FPS_MIN, Round(FrameRateTrack.Max));
+  FrameRateNote.Text := Format('From %d up to %d, the display''s refresh rate.',
+    [VIEW_FPS_MIN, Round(FrameRateTrack.Max)]);
+  FrameRateTrackChange(FrameRateTrack);
+
+  MinifyJsonCheck.IsChecked := Value.MinifyJson;
+
+  case Value.GpuMode of
+    gmPowerSaving: GpuLowRadio.IsChecked := True;
+    gmHighPerformance: GpuHighRadio.IsChecked := True;
+  else
+    GpuSystemRadio.IsChecked := True;
+  end;
+end;
+
+procedure TGeneralSettingsForm.ReadControls;
+begin
+  if ThemeDarkRadio.IsChecked then
+    FValues.Theme := thDark
+  else if ThemeAquaRadio.IsChecked then
+    FValues.Theme := thAquaGraphite
+  else if ThemeRubyRadio.IsChecked then
+    FValues.Theme := thRubyGraphite
+  else if ThemeGoldenRadio.IsChecked then
+    FValues.Theme := thGoldenGraphite
+  else
+    FValues.Theme := thDefault;
+
+  // Left at the top, a higher rate asked for on a faster display is kept,
+  // to be used there again; the caller keeps the view within this display
+  if (Round(FrameRateTrack.Value) < Round(FrameRateTrack.Max)) or
+    (FValues.ViewFps < Round(FrameRateTrack.Max)) then
+    FValues.ViewFps := EnsureRange(Round(FrameRateTrack.Value), VIEW_FPS_MIN,
+      Max(VIEW_FPS_MIN, FValues.MaxViewFps));
+
+  FValues.MinifyJson := MinifyJsonCheck.IsChecked;
+
+  if GpuGroup.Visible then
+  begin
+    if GpuLowRadio.IsChecked then
+      FValues.GpuMode := gmPowerSaving
+    else if GpuHighRadio.IsChecked then
+      FValues.GpuMode := gmHighPerformance
+    else
+      FValues.GpuMode := gmSystem;
+  end;
+end;
+
+procedure TGeneralSettingsForm.FrameRateTrackChange(Sender: TObject);
+begin
+  FrameRateValueLabel.Text := IntToStr(Round(FrameRateTrack.Value));
+end;
+
+procedure TGeneralSettingsForm.ShowAndFree;
+begin
+  FFreeOnClose := True;
+  Show;
+end;
+
+end.

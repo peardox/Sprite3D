@@ -1,0 +1,15 @@
+// The third-party licences and notices Sprite3DBuilder must carry, linked
+// into the program as RCDATA resources so they are inside it on every
+// platform and cannot be left out of a release. Sprite3DLicences reads them
+// by these names; File, Licences... shows them and can save them all as one
+// file.
+//
+// buildlicences.cmd, run from Sprite3DBuilder's styles pre-build step with
+// the name Sprite3DBuilderLicences, compiles this file, from this folder,
+// into Sprite3DBuilderLicences.res, which Sprite3DBuilder.dpr links in. The
+// texts are shared with Sprite3D's Sprite3DLicences.rc. Add a licence here,
+// as a text file in this folder, and to the list in
+// Sprite3DBuilder/lib/Sprite3DLicences.pas.
+
+LICENCE_NEON             RCDATA "Neon-LICENSE.txt"
+LICENCE_VAMPYRE          RCDATA "Vampyre-LICENSE.txt"

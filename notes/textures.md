@@ -1,6 +1,6 @@
 # Textures
 
-Some model kits name textures that Gorilla3D cannot load: an image in a format it does not read, or a file that is not where the model says. Sprite3DBuilder met every case below on 11 November 2026, importing the packs of three artists (KayKit, Zerin and Quaternius), and fixed them in one unit, `src/lib/Sprite3DModelTextures.pas`. Sprite3D loads the same kits, so it needs the same unit and the same changes. This page says what goes wrong, why, how Sprite3DBuilder deals with it, and what to carry across.
+Some model kits name textures that Gorilla3D cannot load: an image in a format it does not read, or a file that is not where the model says. Sprite3DBuilder met every case below on 11 November 2026, importing the packs of three artists (KayKit, Zerin and Quaternius), and fixed them in one unit, `Sprite3DModelTextures.pas`. Sprite3D loads the same kits, so since 12 November 2026 both programs use that unit, from the repository's `Shared/` folder. This page says what goes wrong, why, how the unit deals with it, and how Sprite3D calls it.
 
 ## What goes wrong
 
@@ -67,9 +67,9 @@ cannot create texture by TContextOpenGLWindows (Error = 1282)
 
 **Never hand the loader a 24-bit PNG.** Opaque images go through 24 bits (which drops the extra channels) and back to 32 bits with alpha; Vampyre fills alpha with 255 on the way back.
 
-## How Sprite3DBuilder deals with it
+## How the unit deals with it
 
-`PrepareModelTextures(AModelFile, ACacheFolder, AKey, out AFixes)` is called before every load of a glTF (`.gltf`), and returns the file to load. For every image the glTF names, it tries, in this order, the extension asked for always first:
+`PrepareModelTextures(AModelFile, ACacheFolder, AKey, out AFixes)` is called before every load of a glTF (`.gltf`), by both programs, and returns the file to load. For every image the glTF names, it tries, in this order, the extension asked for always first:
 
 1. The file named, if it is PNG or JPEG: used as it is.
 2. The file named, in any other format Vampyre reads: made a PNG.
@@ -92,17 +92,17 @@ The first version took 3 to 9 seconds a model on the Modular SciFi MegaKit, abou
 - **Whether an extension is an image.** Asked of Vampyre (`IsFileFormatSupported`) once per extension, not once per file.
 - **SHA-256 of each file.** Kept for the session (`ContentHash`), and worked out again only if the file's size or write time changes.
 
-## What Sprite3D needs
+## How Sprite3D uses it
 
-1. **The Vampyre Imaging Library as a submodule**, unchanged: `git submodule add https://github.com/galfar/imaginglib imaginglib`. It is pure Pascal and has no run-time libraries, so it builds for every platform Sprite3D targets.
-2. **The project.** Add Vampyre's four folders to the base search path: `..\imaginglib\Source;..\imaginglib\Source\Libs;..\imaginglib\Extensions;..\imaginglib\Extensions\Libs`. Add these defines:
-   - `DONT_LINK_JPEG2000`: its OpenJPEG C objects exist for only some platforms and would break the others.
-   - `DONT_LINK_WEBP`: optional. It leaves out a WebP decoder that gives compiler hints and that model kits rarely need.
-3. **The unit.** Copy `src/lib/Sprite3DModelTextures.pas` from Sprite3DBuilder unchanged. It uses only `OSPaths` and `JsonText` (Sprite3D's own common units), Vampyre, and the RTL. Add it to the `.dpr` and `.dproj`.
-4. **The call.** In `LoadModelFile` (`src/ui/Sprite3DHelpers.pas`), call `PrepareModelTextures` before `AModel.LoadFromFile`, and load the file it returns. It needs a cache folder (a `models` folder is made in it) and a key to name the copy. Sprite3D has no content keys, so the SHA-256 of the model file will do (`THashSHA2.GetHashStringFromFile`). Log each fix that is not `toAsNamed`. Sprite3DBuilder's `TAssetsForm.ReportTextures` shows the wording.
-5. **The licence.** Vampyre is MPL 2.0: file-level copyleft, so Sprite3D's own files are not affected. Carry its licence, and say where its source is, in File, Licences. Sprite3DBuilder's `licences/Vampyre-LICENSE.txt` (the address, "used unmodified", then the MPL text) and its section in `docs/licences-required.md` can be copied as they are.
+1. **Vampyre** is the repository's `imaginglib` submodule, unchanged, used by both programs. It is pure Pascal and has no run-time libraries, so it builds for every platform Sprite3D targets.
+2. **The project** has Vampyre's four folders on its base search path (`..\imaginglib\Source;..\imaginglib\Source\Libs;..\imaginglib\Extensions;..\imaginglib\Extensions\Libs`) and two defines: `DONT_LINK_JPEG2000`, as its OpenJPEG C objects exist for only some platforms and would break the others, and `DONT_LINK_WEBP`, which leaves out a WebP decoder that gives compiler hints and that model kits rarely need.
+3. **The unit** is `Shared/Sprite3DModelTextures.pas`, shared with Sprite3DBuilder. It uses only `OSPaths` and `JsonText`, Vampyre and the RTL.
+4. **The call.** `LoadModelFile` (`Sprite3D/ui/Sprite3DHelpers.pas`) calls `PrepareModelTextures` for a `.gltf` before `AModel.LoadFromFile`, and loads the file it returns. The cache is the settings folder, so the copies are in its `models` folder, beside `bounds`; the key naming a copy is the SHA-256 of the model file (`THashSHA2.GetHashStringFromFile`), worked out only for a `.gltf`. The fixes come back through `LoadModelFile`'s `AFixes`; `BuildLoadModel` writes each one that is not `toAsNamed` to the Debug tab, worded by `TextureFixText` as Sprite3DBuilder's `ReportTextures` words them, and says when the model was loaded from a copy (`LoadedFromCopy`). The model's slot, its bounds cache and the last model remembered all keep the model's own file name.
+5. **The licence.** Vampyre is MPL 2.0: file-level copyleft, so Sprite3D's own files are not affected. `licences/Vampyre-LICENSE.txt` (the address, "used unmodified", then the MPL text) is in File, Licences, and `docs/licences-required.md` has its section.
 
-Sprite3D plays animations, so its `LoadModelFile` should keep `TAnimationCachingFlag.VertexPosition`. Sprite3DBuilder turned it off, as a thumbnail does not need it and it costs 40 to 100 ms for each rigged model.
+`LoadModelFile` keeps `TAnimationCachingFlag.VertexPosition`, as Sprite3D plays animations. Sprite3DBuilder turns it off, as a thumbnail does not need it and it costs 40 to 100 ms for each rigged model.
+
+File, Debug, glTF still reads a glTF from its own file (`LoadModelDocument`), so a kit with `.psd` textures fails there.
 
 ## Pitfalls met on the way
 
@@ -113,7 +113,7 @@ Sprite3D plays animations, so its `LoadModelFile` should keep `TAnimationCaching
 
 ## Where the code is
 
-In Sprite3DBuilder, `src/lib/Sprite3DModelTextures.pas`:
+In `Shared/Sprite3DModelTextures.pas`:
 
 | What | Where |
 |---|---|
@@ -127,4 +127,4 @@ In Sprite3DBuilder, `src/lib/Sprite3DModelTextures.pas`:
 | The copy and its files | `PrepareModelTextures`, `CopyIn`, `ContentHash`, `SetUri` |
 | The placeholder | `PlaceholderTexture`, `PLACEHOLDER_FILE_NAME` |
 
-Sprite3DBuilder's `README.md`, under *Textures*, describes the same for users.
+Sprite3D's `README.md` (*Textures*, under Features) and Sprite3DBuilder's (*Textures*) describe the same for users.

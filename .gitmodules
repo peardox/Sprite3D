@@ -7,3 +7,6 @@
 [submodule "ImportTests/GLTFMerge"]
 	path = ImportTests/GLTFMerge
 	url = https://github.com/G3DGames/GLTFMerge
+[submodule "imaginglib"]
+	path = imaginglib
+	url = https://github.com/galfar/imaginglib

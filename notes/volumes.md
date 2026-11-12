@@ -49,7 +49,7 @@ as long as the box is along the axis, *h*. With the rectangle running from *x*â‚
 
 The volume holds the box, and the box holds the model, so the swept volume holds everything the model can reach as it turns, with room to spare where the model does not fill its box. It is a [bounding volume](https://en.wikipedia.org/wiki/Bounding_volume) for the turning model: always safe, never tight to the mesh itself. For the wider subject of the space a moving solid sweeps, see Abdel-Malek, Blackmore and Joy below.
 
-`CalcSweptVolume` in `src/lib/Sprite3DSweep.pas` does this arithmetic and returns a `TSweptVolume`. It can turn about the model's X or Z axis too; Sprite3D always uses Y.
+`CalcSweptVolume` in `Shared/Sprite3DSweep.pas` does this arithmetic and returns a `TSweptVolume`. It can turn about the model's X or Z axis too; Sprite3D always uses Y.
 
 ## Animations
 
@@ -118,10 +118,10 @@ In orthographic projection the same steps set the orthographic size in place of 
 
 | Where | What |
 |---|---|
-| `src/lib/Sprite3DSweep.pas` | `TSweptVolume`, `CalcSweptVolume`, `UnionSweptVolume`, `CombinedSweptVolume`, `MeasureAnimationBounds`, `SweepOutline`, `FitCameraToSweep`, and the wireframes: `TModelSweep` with `ShowModelSweep`, `TCombinedSweep` with `ShowCombinedSweep` |
-| `src/lib/Sprite3DCamera.pas` | `TSprite3DCamera.FitPointsOnAxis` |
-| `src/ui/Sprite3dMain.pas` | `FitModel`, `GrabFit` and `FrameCaptureFraming` use `FitCameraToSweep`; `SweepFitVolume` joins the volumes of the animations used; `ApplyShowSweep` and `ApplyShowCombinedSweep` draw the two wireframes |
-| `src/ui/Sprite3DAnimationsUsedForm.pas` | the Models, Animations Used dialog |
+| `Shared/Sprite3DSweep.pas` | `TSweptVolume`, `CalcSweptVolume`, `UnionSweptVolume`, `CombinedSweptVolume`, `MeasureAnimationBounds`, `SweepOutline`, `FitCameraToSweep`, and the wireframes: `TModelSweep` with `ShowModelSweep`, `TCombinedSweep` with `ShowCombinedSweep` |
+| `Sprite3D/lib/Sprite3DCamera.pas` | `TSprite3DCamera.FitPointsOnAxis` |
+| `Sprite3D/ui/Sprite3dMain.pas` | `FitModel`, `GrabFit` and `FrameCaptureFraming` use `FitCameraToSweep`; `SweepFitVolume` joins the volumes of the animations used; `ApplyShowSweep` and `ApplyShowCombinedSweep` draw the two wireframes |
+| `Sprite3D/ui/Sprite3DAnimationsUsedForm.pas` | the Models, Animations Used dialog |
 
 Each routine's own documentation comments, in the source, give the details.
 

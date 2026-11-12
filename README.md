@@ -2,7 +2,9 @@
 
 Sprite3D is a Delphi FireMonkey application for viewing 3D models from fixed and free camera angles, and for rendering them to images and icons. It is built on [Gorilla3D](https://www.gorilla3d.de/) and is meant as a tool for making sprites from 3D models: load a model, choose a view such as isometric, and grab it as a transparent PNG or a Windows icon, or export its animations as sprite strips, spritesheets, animated GIFs or MP4 videos.
 
-The code is split so that the 3D parts can be reused: everything in `src/lib` is independent of the application, and `src/ui` holds the forms and the application's own rules.
+The repository holds a second program, **Sprite3DBuilder**, in `Sprite3DBuilder/`: a level builder for 3D model kits that grew out of Sprite3D and keeps its view, camera and model loading. It has its own [README](Sprite3DBuilder/README.md).
+
+The code is split so that the 3D parts can be reused: everything in `Sprite3D/lib` is independent of the application, and `Sprite3D/ui` holds the forms and the application's own rules. The units both programs use are in `Shared/`, and both build them from there.
 
 ![Sprite3D showing a sample animation in the isometric view, over a dark background with all guidelines enabled](img/ScreenShot01.png)
 
@@ -13,6 +15,7 @@ The code is split so that the 3D parts can be reused: everything in `src/lib` is
 - Spritely, the camera components in `Spritely/` (see [Spritely/README.md](Spritely/README.md)): its runtime package built for each platform you compile for, and its design package installed in the IDE. Sprite3D uses its orbital camera, `TSpritelyOrbitalCamera`.
 - [Neon](https://github.com/paolo-rossi/delphi-neon), the JSON serialisation library, included as a Git submodule.
 - GLTFLib, the glTF library of [GLTFMerge](https://github.com/G3DGames/GLTFMerge), from the `ImportTests/GLTFMerge` submodule, for File, Debug, glTF.
+- The [Vampyre Imaging Library](https://github.com/galfar/imaginglib), included as the `imaginglib` submodule, to read glTF textures in formats the model loader does not read (see *Textures* under Features). It is pure Pascal, so it needs nothing deployed on any platform.
 - Optional, for MP4 export only: the FFmpeg 8.1 shared libraries, from the DLL pack described under *FFmpeg libraries* below. Without them everything else works, and MP4 is simply not offered.
 
 Target platforms: Windows (32-bit, 64-bit and ARM64EC), macOS (Intel and Apple silicon), Linux 64-bit, Android (32 and 64-bit) and iOS.
@@ -31,11 +34,12 @@ or, in an existing clone:
 git submodule update --init
 ```
 
-Open `Sprite3DGroup.groupproj` in RAD Studio. It holds the Spritely packages, Sprite3D and Spritely's test program ProjectionTest, built in that order:
+Open `Sprite3DGroup.groupproj` in RAD Studio. It holds the Spritely packages, Sprite3D, Sprite3DBuilder and Spritely's test program ProjectionTest, built in that order:
 
 1. Build **Spritely** for every platform you compile Sprite3D for, and always for **Win32**, which the IDE's design package needs.
 2. Build **dclSpritely** (Win32) and **Install** it (right-click in the Projects window). The Spritely page appears on the palette, and the form designer can open the main form, which holds a `TSpritelyOrbitalCamera`. If Spritely was installed before from another folder, remove that dclSpritely from Component, Install Packages first.
-3. Choose a platform for **Sprite3d** and run. Neon's source folder is already on the project's search path; Spritely needs no path, as its package puts its compiled units in Delphi's Dcp folder.
+3. Choose a platform for **Sprite3d** and run. Neon's and Vampyre's source folders are already on the project's search path; Spritely needs no path, as its package puts its compiled units in Delphi's Dcp folder.
+4. **Sprite3DBuilder** builds the same way, once Spritely is built for its platform; see [Sprite3DBuilder/README.md](Sprite3DBuilder/README.md).
 
 A build failing with *F2613 Unit 'Spritely.OrbitalCamera' not found* has not got Spritely built for the platform it is compiling for. After a change in `Spritely/lib`, rebuild Spritely for each platform used, and reinstall dclSpritely; see [Spritely/README.md](Spritely/README.md).
 
@@ -80,7 +84,7 @@ A build failing with *F2613 Unit 'Spritely.OrbitalCamera' not found* has not got
 - **Dropping files.** Models dragged onto the window from Explorer, Finder or a Linux file manager open as File, Open Model would: a static model is added to the Models list and shown, and a model with animations replaces the Animated tab's. Several dropped together open one after another, in the order dropped. A Sprite3D project file dropped is loaded as File, Load Project would; only one project opens per drop. Folders and other files dropped with them are left out, and the Debug tab says how many. Drops are refused while an animation is being saved. Not on Android and iOS.
 - **File, Save Project... / Load Project...** Save Project opens the Creator Credits dialog, for the creator, modeller and artist, each with a URL for their work, and the day the project started (today unless set). On OK the credits go into the `meta` section of every metadata file exported from then on, and Sprite3D asks where to save them as a **project file**, `<model>.sprite3d` beside the model unless you choose otherwise. Load Project opens one again. A project file is JSON holding the credits, the model's full path (`file`), the directions of Models, Directions, the Animations list (as Save Animation Settings writes it) and the export choices: grab size, animation frame rate, the Metadata and Directions ticks, and the texture atlas page size and power-of-2 choice. Loading one applies all of these; if the model it names exists it is loaded, unless it is open already on either tab, when that tab is shown with it, and the Animations list is applied once it is in, to a model with animations only. A project saved from the Static tab names the model selected there and holds no Animations list. `.sprite3d` files are associated with Sprite3D along with the model formats (see *File associations*), so double-clicking one opens it, and one given at start-up is loaded in place of the start-up model. On Android and iOS, which have no file dialogs, the credits are kept for the session only.
 - **Models, Load / Save Animation Settings...** Save writes the whole Animations list to a JSON file, `<model>_animations.json` in the model's folder unless you choose otherwise: every entry in order, with its tick and any frame count typed in, and the entry selected. Load reads such a file back and applies it: the animations it lists that the model has become the animations used, the ticks and frame counts are set as it says, and its selected entry is selected and played. Animations the model doesn't have are left out and listed; a file that names none of the model's animations changes nothing. Desktop only, on the Animated tab with its model loaded, and with nothing being exported.
-- **File, Licences...** shows the third-party licences and notices Sprite3D carries, chosen from a drop-down: Cisco's licence for its OpenH264 binary, the BSD licence of OpenH264's API declarations, the FFmpeg notice and the LGPL v2.1, the DelphiFFmpeg.com header licence and Neon's MIT licence. They are linked into the program itself, so every build carries them. **Save All...** (desktop only) writes them all to one text file, `THIRD-PARTY-NOTICES.txt` unless renamed, to ship beside the program.
+- **File, Licences...** shows the third-party licences and notices Sprite3D carries, chosen from a drop-down: Cisco's licence for its OpenH264 binary, the BSD licence of OpenH264's API declarations, the FFmpeg notice and the LGPL v2.1, the DelphiFFmpeg.com header licence, Neon's and GLTFLib's MIT licences, and the Vampyre Imaging Library's Mozilla Public License 2.0, with where its source is. They are linked into the program itself, so every build carries them. **Save All...** (desktop only) writes them all to one text file, `THIRD-PARTY-NOTICES.txt` unless renamed, to ship beside the program.
 - **File, Settings...** A dialog, its groups in two columns so it fits smaller displays (one scrolling column on Android and iOS), for:
   - **Open model files.** Offer Sprite3D under Open With for model files and, optionally, make it their default application. Before changing a default, the one in use is recorded; clearing the box puts it back, if that application is still installed, and otherwise just removes Sprite3D's claim. Everything is per user. On Windows a default the user picked in Windows' own dialog can only be changed there, so Settings, Default apps is opened when that happens. On macOS, Open With comes from the app bundle (see below) and only the default can be changed. Android and iOS decide these things when the app is built, so the group is disabled there.
   - **Startup action.** None (no model is loaded), Load default model, or Load last model, which reopens the last model opened on each tab, the Static and the Animated, the one used last loaded last so its tab is the one shown, and falls back to the default model if those remembered have gone. Only a model opened on its own is remembered: the models File, Open Directory opens leave the remembered ones as they were. **Clear** on a tab forgets that tab's last model, at once, so it isn't reopened; with both tabs cleared, Load last model loads nothing. They are kept as `lastStaticModel` and `lastAnimatedModel`, and the one used last as `lastModel`. A file the system asks Sprite3D to open always comes first.
@@ -88,16 +92,16 @@ A build failing with *F2613 Unit 'Spritely.OrbitalCamera' not found* has not got
   - **Theme.** Default (FMX's own platform style), Dark, or one of three coloured styles, Aqua Graphite, Ruby Graphite and Golden Graphite, applied at once. Title bars follow the theme where the system allows. See *Themes* below.
   - **Results.** **Explain the empty border values in a hint**, ticked unless changed: the Results tab's empty border readout gets a hint saying what its four numbers are. Kept as `resultsEdgeHint`.
   - **MP4 video.** **Use OpenH264 for H.264 MP4 video**, ticked unless changed: turns Cisco's OpenH264 off and on again, with Cisco's notice beside it and **Cisco Licence...**, which shows Cisco's licence. See *OpenH264*. Not on iOS.
-  - **View frame rate.** A slider from 1 frame a second up to the display's refresh rate sets how often the view is drawn, applied on OK. The refresh rate comes from `common/DisplayData.pas`: on Windows from the monitor the window is on, on macOS from CoreGraphics for each display, and on Android from the display; where the system doesn't say (iOS, Linux, and some built-in Mac panels), the slider goes up to 60. 60 unless changed; kept as `viewFps`. The rate asked for is kept, but the view is never drawn faster than the display it is on: move the window to a slower monitor and the rate drops to that monitor's refresh rate within a tenth of a second, and moving it back brings the rate asked for back. Leaving the slider at the top on a slower monitor keeps a higher rate chosen on a faster one. Lower rates use less power and leave more of the computer to other work; exports are unaffected.
+  - **View frame rate.** A slider from 1 frame a second up to the display's refresh rate sets how often the view is drawn, applied on OK. The refresh rate comes from `Shared/DisplayData.pas`: on Windows from the monitor the window is on, on macOS from CoreGraphics for each display, and on Android from the display; where the system doesn't say (iOS, Linux, and some built-in Mac panels), the slider goes up to 60. 60 unless changed; kept as `viewFps`. The rate asked for is kept, but the view is never drawn faster than the display it is on: move the window to a slower monitor and the rate drops to that monitor's refresh rate within a tenth of a second, and moving it back brings the rate asked for back. Leaving the slider at the top on a slower monitor keeps a higher rate chosen on a faster one. Lower rates use less power and leave more of the computer to other work; exports are unaffected.
   - **Render.** **Grid, Axes and Model Volume in Render**, off by default: ticked, grabs, icons and animation exports draw whichever of the grid, axes and Model Volume the View menu shows; see *What is saved*. Kept as `helpersInOutput`.
   - **Minify JSON.** Off by default. Ticked, every JSON file Sprite3D writes from then on is minified, with no indents or line breaks: exported metadata, directions files, animation settings, project files, `settings.json` itself and the caches. Unticked, they are indented two spaces for people to read. Kept as `minifyJson`.
-  - **Graphics processor**, Windows only: let Windows decide, low power or high power, through `common/GpuPreference.pas`. It takes effect the next time Sprite3D starts.
+  - **Graphics processor**, Windows only: let Windows decide, low power or high power, through `Shared/GpuPreference.pas`. It takes effect the next time Sprite3D starts.
 - **Models, Animation Settings...** A slider sets the frame rate animations are exported at, from 1 to 60 frames a second, 30 unless changed. Kept as `animationFps`. The same dialog has:
   - **Overscan.** Ticked, every grab, icon and animation export is drawn 2 to 8 times larger each way, 4 unless changed, and scaled back down to its size, which smooths edges and fine detail far better than the renderer's own anti-aliasing. As much of the factor as the GPU can draw in one go is drawn in one go, never more than 8192 pixels across, which keeps a grab's memory under about 1 GB. On many systems that is little more than the size of the view itself. The rest is made up with shifted drawings: the image is drawn several times at that size, each time with the view slid by a different fraction of a pixel, each drawing scaled down, and the results averaged, so 8x at 256 × 256 on a GPU that can only draw 512 pixels across is sixteen drawings at 2x. That takes longer, but any factor works anywhere. Each drawing is scaled down as soon as it has been made, so only one enlarged image exists at a time, and what is saved is always the size asked for. If an enlarged drawing comes back smaller than asked for, or completely transparent, that size is not tried again that session, the grab is made again with smaller drawings and more of them, and the Debug tab says so. Animation exports throw away a few warm-up grabs first; those are made without overscan. Ticking it first shows a warning that each frame is then rendered at the grab size times the factor each way and resampled back down, which takes far longer, so it is best kept for the final, production-ready frames: **OK** keeps the tick and **Cancel** takes it back. **Do not show this again**, between them, stops the warning appearing in future, kept in `settings.json` as `showOverscanWarning`. The tick is not kept: overscan starts off each session. The factor is kept as `overscan`.
   - **Resampling.** The filter overscanned images are scaled down with: Box (area average), the default and exact for a whole-number scale; Bilinear; Bicubic (Catmull-Rom); Bicubic (Mitchell); or Lanczos 3, the sharpest. Kept as `resampleFilter`.
   - **Padding.** A slider sets the padding, the number of empty pixels every export aims to leave round the sprite on the axis with least room, from 0, the default, to a quarter of the grab size's smaller side. Kept as `padding`. See *Two passes* under Batch export.
   - **Texture Atlas.** **Page size** is the largest a texture atlas page may be each way: 1k, 2k, 4k (the default), 8k or 16k pixels. Kept as `atlasPageSize`. **Pages need not be a power of 2**, off by default, lets each page be exactly as large as its frames need; otherwise each side is the smallest power of 2 that holds them. Kept as `atlasNonPowerOf2`. See *Texture atlas* below.
-- **Settings kept between sessions** in `settings.json`, by the key written there (the keys are the property names in `TSprite3DAppSettings`, `src/ui/Sprite3DHelpers.pas`, with a lower-case first letter unless shown otherwise); the animations used are chosen afresh for each model, and overscan and Exact start off each session:
+- **Settings kept between sessions** in `settings.json`, by the key written there (the keys are the property names in `TSprite3DAppSettings`, `Sprite3D/ui/Sprite3DHelpers.pas`, with a lower-case first letter unless shown otherwise); the animations used are chosen afresh for each model, and overscan and Exact start off each session:
 
   | Where it is set | Keys |
   |---|---|
@@ -118,6 +122,8 @@ A build failing with *F2613 Unit 'Spritely.OrbitalCamera' not found* has not got
 - **Quick start-up, responsive window.** The window appears before the first model loads. The FFmpeg libraries are looked for only once that load has ended, so MP4 is offered a moment later. Overscanned grabs are matted and scaled down, and strips, spritesheets, GIFs and MP4s are composed and encoded, on a worker thread, so the window keeps responding while that is done; closing the window waits for a file being written.
 
 Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`, `.usda`, `.usd`, `.usdz`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
+
+**Textures.** A glTF (`.gltf`) names its textures and buffers as files beside it, and model kits often get them wrong: a texture saved as a Photoshop document (`.psd`), which Gorilla3D will not load; a file in another folder of the kit than the one the model names; or a name an exporter changed, such as `T_Wall_png.png` for `T_Wall.png`, or `Wall_001.bin` for `Wall.bin`. Any of these makes Gorilla3D refuse the whole model. So before a glTF is loaded, every file it names is checked. A texture in PNG or JPEG is used as it is; one in any other format the Vampyre library reads is made a PNG, its transparency taken from a `.psd` only where the file says it has some. A file that is not there is looked for by the same name, case ignored, in the model's folder and up to three folders above it with every folder below them, then under another image extension, then without an image extension left in its name; a buffer must also be exactly the length the model gives it. A texture found nowhere is replaced by a small magenta and black checker, so the model still loads and shows where it is missing. If anything was found or made, the model is loaded from a copy, in the settings folder's `models` folder, that names what was used; the kit's own files are never written. The Debug tab gives one line for each texture or buffer that was not used as named, saying what was used instead and why. `.glb` files hold their textures inside them, and the other formats are loaded as they are. See [Textures](notes/textures.md).
 
 ### FFmpeg libraries (optional, for MP4 export)
 
@@ -162,7 +168,7 @@ The project's deployment entries copy each platform's libraries from `dlls/<plat
 | Android | the APK's `lib/armeabi-v7a` or `lib/arm64-v8a`, unpacked by the system |
 | iOS | `Sprite3d.app/Frameworks` |
 
-After that it looks beside the executable, in `dlls/<platform>` beside it, and in `dlls/<platform>` in each of the six folders above it, so a build run from `src/Win64/Debug` finds the repository's `dlls/win64` without deploying; and last wherever the system looks for shared libraries.
+After that it looks beside the executable, in `dlls/<platform>` beside it, and in `dlls/<platform>` in each of the six folders above it, so a build run from `Sprite3D/Win64/Debug` finds the repository's `dlls/win64` without deploying; and last wherever the system looks for shared libraries.
 
 An ARM64EC build (Windows on ARM) can load x64 and ARM64EC libraries but not plain ARM64 ones, so `dlls/win64arm` normally holds a copy of the x64 libraries in `dlls/win64`. Run from the source tree, it also looks in `dlls/win64` after `dlls/win64arm`, so the copy is only needed for deploying.
 
@@ -204,7 +210,7 @@ Only a copy Sprite3D downloaded itself is ever loaded: an OpenH264 placed in `dl
 
 ### First run
 
-On start-up the application loads `models/uvcube.glb`, a cube with its faces labelled, from the repository's `models` folder. On Windows it looks for `models` in the current folder first, then three levels up, which is the repository root when run from `src/<platform>/<config>`. On macOS the folder is expected in the user's Library folder and on Linux in the home folder.
+On start-up the application loads `models/uvcube.glb`, a cube with its faces labelled, from the repository's `models` folder. On Windows it looks for `models` in the current folder first, then three levels up, which is the repository root when run from `Sprite3D/<platform>/<config>`. On macOS the folder is expected in the user's Library folder and on Linux in the home folder.
 
 ## Project layout
 
@@ -213,7 +219,23 @@ Sprite3D/
 |-- Sprite3DGroup.groupproj
 |-- README.md
 |-- CLAUDE.md                 handover notes and working rules for Claude
-|-- notes/                    design notes: viewport, offscreen, volumes, directions, metadata
+|-- notes/                    design notes: viewport, offscreen, volumes, directions, metadata, imports, textures
+|-- Shared/                   units both programs use, built from here by both (see CLAUDE.md)
+|   |-- Sprite3DGrid.pas         floor grid drawn by a GLSL shader
+|   |-- Sprite3DSweep.pas        swept volumes: measuring, wireframes, camera fit
+|   |-- Sprite3DOffscreen.pas    off-screen rendering with transparency and overscan
+|   |-- Sprite3DResample.pas     resampling filters for scaling overscanned grabs down
+|   |-- Sprite3DBackground.pas   none, checker, colour, gradient or image background
+|   |-- Sprite3DStyles.pas       switching FMX styles at run time
+|   |-- Sprite3DTitleBar.pas     title bars coloured to match the style
+|   |-- Sprite3DStorage.pas      per-user app folder and JSON settings
+|   |-- Sprite3DFolderDialog.pas the system's folder dialog, several folders where it can
+|   |-- Sprite3DAnimFrames.pas   an animation shown frame by frame: the frame sources' base
+|   |-- Sprite3DModelTextures.pas a glTF's textures and buffers found, or made PNGs, before loading
+|   |-- OSPaths.pas              where the program and its assets are; OS-friendly paths
+|   |-- JsonText.pas             writes JSON indented or minified, as File, Settings says
+|   |-- GpuPreference.pas        Windows' per-program GPU preference
+|   `-- DisplayData.pas          the displays, their modes and refresh rates, per platform
 |-- Spritely/                 the Spritely camera components (see Spritely/README.md)
 |   |-- lib/                     Spritely.OrbitalCamera, Spritely.Projection, Spritely.Reg (+ .dcr), icons/
 |   |-- packages/                Spritely (runtime) and dclSpritely (design time)
@@ -221,21 +243,28 @@ Sprite3D/
 |   |-- models/                  ProjectionTest's test models
 |   `-- tools/                   the packages', icons' and test models' generators
 |-- delphi-neon/              Neon JSON library (submodule)
+|-- imaginglib/               Vampyre Imaging Library (submodule), for Sprite3DModelTextures
 |-- ImportTests/              the import test program; its GLTFMerge/ submodule supplies GLTFLib
 |-- FastMM5/                  FastMM5 memory manager, used on Windows (submodule)
 |-- docs/                     generated API help (PasDoc); html/ and chm/ from tools/pasdoc.bat, not in Git
 |-- models/                   sample model: uvcube.glb
+|-- icons/groups/             Sprite3DBuilder's group icons for its Library (placeholders, from tools/make_group_icons.py)
+|-- assets/                   Sprite3DBuilder's model kits, kept locally; not in Git
 |-- dlls/                     FFmpeg libraries, from the DLL pack; not in Git
 |-- tools/                    scripts for working on the source
 |   |-- pasdoc.bat               builds the PasDoc reference in docs/html and docs/chm (Windows)
 |   |-- pasdoc-dark.css, pasdoc-chm-dark.css  dark colours pasdoc.bat adds to it
-|   `-- pasdoc_check.py          checks the PasDoc comments and that sources are ASCII
+|   |-- pasdoc_check.py          checks the PasDoc comments and that sources are ASCII, in both programs
+|   `-- make_group_icons.py      draws Sprite3DBuilder's placeholder group icons (needs Pillow)
 |-- licences/                 third-party licences and notices, linked into the program
 |   |-- *.txt                    one per licence or notice; see File, Licences...
-|   |-- Sprite3DLicences.rc      names them as RCDATA resources
-|   `-- buildlicences.cmd        compiles it into Sprite3DLicences.res; run by the pre-build step
+|   |-- Sprite3DLicences.rc      names Sprite3D's as RCDATA resources
+|   |-- Sprite3DBuilderLicences.rc  names Sprite3DBuilder's
+|   `-- buildlicences.cmd        compiles one program's .rc into its .res; run by its pre-build step
 |-- openh264.json             no longer read; the list is fetched from sprite3d.com
-`-- src/
+|-- Sprite3DBuilder/          the level builder: its .dpr and .dproj, lib/, ui/, styles/, README.md,
+|                             CLAUDE.md and licences-required.md (see Sprite3DBuilder/README.md)
+`-- Sprite3D/
     |-- Sprite3d.dpr, .dproj, .res, Sprite3d_Icon.ico
     |-- ffmpeg/               DelphiFFmpeg.com FFmpeg 8.1 headers, unchanged, for reference
     |-- styles/               the themes' FMX styles, linked into the program
@@ -243,17 +272,9 @@ Sprite3D/
     |   `-- buildstyles.cmd          pre-build: copies the .style files, builds the .res, then the licences' .res
     |-- lib/                  reusable units, no application code
     |   |-- Sprite3DAxes.pas         a model's X, Y and Z axes
-    |   |-- Sprite3DGrid.pas         floor grid drawn by a GLSL shader
-    |   |-- Sprite3DSweep.pas        swept volumes: measuring, wireframes, camera fit
-    |   |-- Sprite3DOffscreen.pas    off-screen rendering with transparency and overscan
-    |   |-- Sprite3DResample.pas     resampling filters for scaling overscanned grabs down
-    |   |-- Sprite3DBackground.pas   none, checker, colour, gradient or image background
     |   |-- Sprite3DIconWriter.pas   icon file writers (Windows .ico)
     |   |-- Sprite3DOpenFiles.pas    files the system asks the app to open
     |   |-- Sprite3DFileAssoc.pas    Open With and default-application registration
-    |   |-- Sprite3DStyles.pas       switching FMX styles at run time
-    |   |-- Sprite3DTitleBar.pas     title bars coloured to match the style
-    |   |-- Sprite3DStorage.pas      per-user app folder and JSON settings
     |   |-- Sprite3DAnimCapture.pas  grabs every frame of an animation, or of a turn
     |   |-- Sprite3DSpriteSheet.pas  strips, spritesheets, PNG and animated GIF writers
     |   |-- Sprite3DVideo.pas        MP4 writer, loading FFmpeg only when present
@@ -263,16 +284,10 @@ Sprite3D/
     |   |-- Sprite3DLicences.pas     the licences linked into the program, read from its resources
     |   |-- Sprite3DFileSearch.pas   finds files matching a spec in a folder tree
     |   |-- Sprite3DPngReader.pas    PNG reader, plain Pascal, safe on any thread
-    |   |-- Sprite3DFolderDialog.pas the system's folder dialog, several folders where it can
     |   |-- Sprite3DSpriteScan.pas   measures PNG frames and atlas sheets: empty borders, coverage
     |   |-- Sprite3DGltfExport.pas   Gorilla3D's definitions written as GLB: meshes, materials, skins, animations
     |   |-- Sprite3DGltfDocument.pas the open model as a GLTFLib document, and saving it as GLB
     |   `-- Sprite3DNativeLibs.pas   each platform's folders for an app's own libraries
-    |-- common/               small cross-project helpers
-    |   |-- OSPaths.pas              where the program and its assets are; OS-friendly paths
-    |   |-- JsonText.pas             writes JSON indented or minified, as File, Settings says
-    |   |-- GpuPreference.pas        Windows' per-program GPU preference
-    |   `-- DisplayData.pas          the displays, their modes and refresh rates, per platform
     `-- ui/                   the application
         |-- Sprite3dMain.pas, .fmx           main form
         |-- Sprite3DBackgroundForm.pas, .fmx Background Settings dialog
@@ -421,6 +436,8 @@ The file is plain JSON and can be edited by hand. Colours are written as `#AARRG
 
 The same folder has a `bounds` folder: the measured bounds of each model's animations, one small JSON file per model, named from a hash of the model's full path, size and time of last change. A model that is edited, replaced or moved is simply measured again, and its old file is no longer used. The folder can be deleted at any time; nothing is lost but the time it takes to measure again.
 
+It also has a `models` folder: the copies of glTF models whose textures or buffers had to be found or made (see *Textures*), each named from a hash of the model file's content, with every file they name beside them under a hash of its own content, so a texture many models share is there once. It too can be deleted at any time; the copies are made again as the models are opened.
+
 ## Themes
 
 The themes other than Default are FMX styles that come with RAD Studio, in its `Redist\styles\Fmx` folder:
@@ -432,10 +449,10 @@ The themes other than Default are FMX styles that come with RAD Studio, in its `
 | Ruby Graphite | `RubyGraphite.style` | dark grey with red |
 | Golden Graphite | `GoldenGraphite.style` | dark grey with gold |
 
-The four styles are linked into the program as RCDATA resources, so every build, Debug or Release, on every platform, carries them inside it and there is nothing to deploy. The project's pre-build event runs `src/styles/buildstyles.cmd`, which:
+The four styles are linked into the program as RCDATA resources, so every build, Debug or Release, on every platform, carries them inside it and there is nothing to deploy. The project's pre-build event runs `Sprite3D/styles/buildstyles.cmd`, which:
 
-1. copies any style missing from `src/styles` out of `$(BDS)\Redist\styles\Fmx`; files already there are left alone, so a style can be swapped by hand;
-2. compiles `src/styles/Sprite3DThemes.rc` with RAD Studio's `brcc32`, from that folder, into `Sprite3DThemes.res`, which `Sprite3d.dpr` links in.
+1. copies any style missing from `Sprite3D/styles` out of `$(BDS)\Redist\styles\Fmx`; files already there are left alone, so a style can be swapped by hand;
+2. compiles `Sprite3D/styles/Sprite3DThemes.rc` with RAD Studio's `brcc32`, from that folder, into `Sprite3DThemes.res`, which `Sprite3d.dpr` links in.
 
 The `.rc` is compiled there rather than by the IDE because the IDE resolves its file names from the project folder and may compile it before the pre-build event has run. If a style or `brcc32` can't be found, or the compile fails, the build stops with an error saying which.
 
@@ -463,7 +480,7 @@ Title bars follow the theme, using the style's own form background colour and th
 |---|---|---|
 | Windows | `HKCU\Software\Classes`: a `Sprite3D.Model` ProgID, `Applications\Sprite3d.exe` and each extension's `OpenWithProgids`; also listed in Settings, Default apps | the extension's per-user default; a default chosen in Windows' own dialog can only be changed there |
 | Linux | `~/.local/share/applications/sprite3d.desktop` and a shared-mime-info package in `~/.local/share/mime/packages` | `[Default Applications]` in `~/.config/mimeapps.list` |
-| macOS | `CFBundleDocumentTypes` in `src/info.plist.TemplateOSX.xml` | Launch Services |
+| macOS | `CFBundleDocumentTypes` in `Sprite3D/info.plist.TemplateOSX.xml` | Launch Services |
 | Android, iOS | not available | not available |
 
 Sprite3D's own project files, `.sprite3d`, are associated each time Sprite3D starts, whatever is chosen for model files: on Windows they get a ProgID of their own, `Sprite3D.Project`, made the extension's default in `HKCU\Software\Classes\.sprite3d`; on Linux the MIME type `application/x-sprite3d` goes into the desktop entry and is made its default in `mimeapps.list`; on macOS they are a second document type in the bundle, with Sprite3D as their owner. If you once picked another program for them with *Always* in Windows' own *How do you want to open this file?* dialog, that choice still wins; pick Sprite3D there once, or in Settings, Default apps.
@@ -475,7 +492,7 @@ The previous defaults are kept in `settings.json` as `associationBackup` until t
 Every public item in the source is documented with `//**` comments for [PasDoc](https://pasdoc.github.io/). The HTML help is in `docs/lib` and `docs/ui`, one set for each source folder, built from within that folder with, for example:
 
 ```
-cd src/lib
+cd Sprite3D/lib
 pasdoc --staronly --auto-abstract --format html --output ../../docs/lib *.pas
 ```
 
@@ -483,9 +500,9 @@ Spritely's units, in `Spritely/lib`, are documented the same way.
 
 On Windows, `tools\pasdoc.bat` (run from anywhere) builds the whole reference in one go, as HTML in `docs\html\` and as HTML Help in `docs\chm\`, with the same options. Git ignores both folders, and the script deletes them before each run; `docs/lib` and `docs/ui` are left alone. Each holds:
 
-- `api`: Sprite3D's reusable units, `src/lib` and `src/common`;
+- `api`: Sprite3D's reusable units, `Sprite3D/lib` and `Shared`;
 - `spritely`: the Spritely components, `Spritely/lib` (without the design-time `Spritely.Reg`);
-- `Sprite3d`: the program, `src/Sprite3d.dpr` with every unit its `uses` clause names, forms included;
+- `Sprite3d`: the program, `Sprite3D/Sprite3d.dpr` with every unit its `uses` clause names, forms included;
 - `ProjectionTest`: Spritely's test program and its own units.
 
 It needs `pasdoc` on the PATH, or `set PASDOC=` to the full path of `pasdoc.exe`. The `.chm` files also need Microsoft HTML Help Workshop's `hhc.exe`, in its default folder or named by `set HHC=`; without it the HTML Help projects are written but not compiled. After each run, dark colours are appended to the `pasdoc.css` PasDoc wrote, so PasDoc's own stylesheet is used as it is and no copy of it is kept here. `tools/pasdoc-dark.css` is for the HTML, which is dark only when the browser or system asks for it. `tools/pasdoc-chm-dark.css` is for the `.chm` files, which are always dark, as the HTML Help viewer cannot ask. `set PASDOC_DARK=0` leaves both out.
@@ -494,15 +511,16 @@ It needs `pasdoc` on the PATH, or `set PASDOC=` to the full path of `pasdoc.exe`
 
 ## Licences
 
-What each third-party part asks of anyone who builds or distributes Sprite3D, FastMM5's GPL v3 or commercial licence included, is set out in [docs/licences-required.md](docs/licences-required.md). The licences and notices a release must carry are text files in `licences/`, linked into the program as resources by `licences/Sprite3DLicences.rc` (compiled by the pre-build step) and shown by **File, Licences...**: add any new one there and to `src/lib/Sprite3DLicences.pas`.
+What each third-party part asks of anyone who builds or distributes Sprite3D, FastMM5's GPL v3 or commercial licence included, is set out in [docs/licences-required.md](docs/licences-required.md). The licences and notices a release must carry are text files in `licences/`, linked into the program as resources by `licences/Sprite3DLicences.rc` (compiled by the pre-build step) and shown by **File, Licences...**: add any new one there and to `Sprite3D/lib/Sprite3DLicences.pas`.
 
-- `src/ffmpeg` holds the FFmpeg Delphi/Pascal headers from [DelphiFFmpeg.com](http://www.delphiffmpeg.com/headers/), unchanged. They are not compiled into Sprite3D: they bind FFmpeg statically, and define some error codes only for Windows and macOS, so `Sprite3DVideo.pas` instead declares the few records and constants it needs, copied from them, and loads the libraries itself. The headers and those declarations are under DelphiFFmpeg.com's BSD-style licence, in `src/ffmpeg/LICENSE.txt`: the notice must stay with the source, and binaries must reproduce it in their documentation.
+- `Sprite3D/ffmpeg` holds the FFmpeg Delphi/Pascal headers from [DelphiFFmpeg.com](http://www.delphiffmpeg.com/headers/), unchanged. They are not compiled into Sprite3D: they bind FFmpeg statically, and define some error codes only for Windows and macOS, so `Sprite3DVideo.pas` instead declares the few records and constants it needs, copied from them, and loads the libraries itself. The headers and those declarations are under DelphiFFmpeg.com's BSD-style licence, in `Sprite3D/ffmpeg/LICENSE.txt`: the notice must stay with the source, and binaries must reproduce it in their documentation.
 - The FFmpeg libraries in the DLL pack are under FFmpeg's own licence, the LGPL for the builds used. Shipping them with Sprite3D brings the LGPL's conditions for those libraries.
-- `src/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API headers, Copyright (c) 2013, Cisco Systems, under the BSD 2-clause licence, which the unit reproduces in full and File, Licences shows. The OpenH264 library itself is not distributed with Sprite3D: each user's copy is downloaded from Cisco, under Cisco's binary licence, which [licences/OpenH264-BINARY_LICENSE.txt](licences/OpenH264-BINARY_LICENSE.txt) reproduces and **File, Settings..., Cisco Licence...** shows in the application, as the licence asks.
+- The Vampyre Imaging Library, the `imaginglib` submodule, is under the Mozilla Public License 2.0, a file-level copyleft that covers its own files only. It is used unmodified; File, Licences carries its licence and where its source is.
+- `Sprite3D/lib/Sprite3DOpenH264.pas` translates declarations from OpenH264's API headers, Copyright (c) 2013, Cisco Systems, under the BSD 2-clause licence, which the unit reproduces in full and File, Licences shows. The OpenH264 library itself is not distributed with Sprite3D: each user's copy is downloaded from Cisco, under Cisco's binary licence, which [licences/OpenH264-BINARY_LICENSE.txt](licences/OpenH264-BINARY_LICENSE.txt) reproduces and **File, Settings..., Cisco Licence...** shows in the application, as the licence asks.
 
 ## Paths
 
-Every file the application opens or writes, models, settings, the bounds cache, grabs, icons, exports and the video libraries, goes through `OSFriendlyPath` in `common/OSPaths.pas` first, which gives it the platform's own delimiters: only `\` on Windows and only `/` elsewhere, with doubled delimiters inside the path made single. Some Windows targets, such as Win64 on ARM (ARM64EC), don't accept `/` in every path, and a model path kept in `settings.json` on one system may be read on another.
+Every file the application opens or writes, models, settings, the bounds cache, grabs, icons, exports and the video libraries, goes through `OSFriendlyPath` in `Shared/OSPaths.pas` first, which gives it the platform's own delimiters: only `\` on Windows and only `/` elsewhere, with doubled delimiters inside the path made single. Some Windows targets, such as Win64 on ARM (ARM64EC), don't accept `/` in every path, and a model path kept in `settings.json` on one system may be read on another.
 
 ## Known issues
 
@@ -529,5 +547,5 @@ Every file the application opens or writes, models, settings, the bounds cache, 
 - [Metadata](notes/metadata.md): the JSON saved beside a strip or spritesheet, and how its empty sections and origin are measured.
 - [Directions](notes/directions.md): the Models, Directions dialog, how the order of the directions works, Change Order, and the directions file Export and Import use.
 - [Imports](notes/imports.md): what Gorilla3D's loaders hand over for glTF, FBX and USD, found with ImportTests, written for Gorilla3D's author: two USD loader bugs and the behaviours a converter has to know.
-- [Textures](notes/textures.md): glTF models whose textures Gorilla3D cannot load (Photoshop documents, files not where the model says, names an exporter mangled), how Sprite3DBuilder finds and converts them, and what Sprite3D needs to do the same.
+- [Textures](notes/textures.md): glTF models whose textures Gorilla3D cannot load (Photoshop documents, files not where the model says, names an exporter mangled), how the shared `Sprite3DModelTextures` finds and converts them, and how Sprite3D calls it.
 - [Code review](notes/code-review.md): the findings of the 9 November 2026 review of the whole source, in the order to take them.

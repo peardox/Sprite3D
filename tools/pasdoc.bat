@@ -1,12 +1,16 @@
 @echo off
-rem PasDoc reference of Sprite3D and Spritely, as HTML and as HTML Help
+rem PasDoc reference of Sprite3D, Sprite3DBuilder and Spritely, as HTML and as HTML Help
 rem (.chm), one set for each part:
-rem   docs\html\api            HTML: Sprite3D's reusable units, src\lib and
-rem                            src\common (the API)
+rem   docs\html\api            HTML: Sprite3D's reusable units, Sprite3D\lib
+rem                            and Shared (the API; Shared is used by
+rem                            Sprite3DBuilder too)
 rem   docs\html\spritely       HTML: the Spritely components (Spritely\lib),
 rem                            without the design-time registration unit
-rem   docs\html\Sprite3d       HTML: the program: src\Sprite3d.dpr, its forms
-rem                            (src\ui) and the lib and common units it uses
+rem   docs\html\Sprite3d       HTML: the program: Sprite3D\Sprite3d.dpr, its
+rem                            forms (Sprite3D\ui) and the lib and Shared
+rem                            units it uses
+rem   docs\html\Sprite3DBuilder HTML: the other program, the same way, from
+rem                            Sprite3DBuilder\Sprite3DBuilder.dpr
 rem   docs\html\ProjectionTest HTML: Spritely's test program, its .dpr and its
 rem                            own units (it takes Spritely from the package)
 rem   docs\chm\<each>          HTML Help as docs\html\<each>, as a .chm
@@ -14,7 +18,8 @@ rem
 rem What each program's reference holds is read from its .dpr's uses clause
 rem (the units named "in '...'", relative to the .dpr), so a new form or unit
 rem is picked up without changing this script. Units from outside the
-rem program's folder (named "..\...") are left out. The programs themselves
+rem program's folder (named "..\...") are left out, but for ..\Shared\, the
+rem units shared with Sprite3DBuilder. The programs themselves
 rem are listed below (PROGRAMS), as folder and name, since they are not all
 rem in the root.
 rem
@@ -40,7 +45,7 @@ rem Defines: PasDoc defines no platform symbols itself, so the Win64 view is
 rem chosen here; code for the other platforms, inside {$IF} blocks, is left
 rem out of the reference. FastMM_FullDebugModeWhenDLLAvailable is left
 rem undefined, the Release view of the .dpr files. The FFmpeg headers in
-rem src\ffmpeg are not compiled in, and are never parsed.
+rem Sprite3D\ffmpeg are not compiled in, and are never parsed.
 
 setlocal
 cd /d "%~dp0.."
@@ -67,9 +72,9 @@ set SUBTITLE=sprites from 3D models
 set FAILED=0
 set RUNS=0
 
-rem The API: every unit in src\lib and src\common
+rem The API: every unit in Sprite3D\lib and Shared
 set APISRC=
-for %%F in (src\lib\*.pas src\common\*.pas) do call :addapi "%%F"
+for %%F in (Sprite3D\lib\*.pas Shared\*.pas) do call :addapi "%%F"
 
 rem Spritely: every unit in Spritely\lib but the registration (*.Reg)
 set SPRSRC=
@@ -83,12 +88,14 @@ call :run html api docs\html\api --name Sprite3D --title "Sprite3D API - %SUBTIT
 call :run htmlhelp api docs\chm\api --name Sprite3D --title "Sprite3D API - %SUBTITLE%" %APISRC%
 call :run html spritely docs\html\spritely --name Spritely --title "Spritely - camera components for Gorilla3D" %SPRSRC%
 call :run htmlhelp spritely docs\chm\spritely --name Spritely --title "Spritely - camera components for Gorilla3D" %SPRSRC%
-call :program src Sprite3d "Sprite3D - %SUBTITLE%"
+call :program Sprite3D Sprite3d "Sprite3D - %SUBTITLE%"
+call :program Sprite3DBuilder Sprite3DBuilder "Sprite3DBuilder - a level builder for 3D model kits"
 call :program Spritely\ProjectionTest ProjectionTest "ProjectionTest - Spritely's projection test"
 
 call :chm docs\chm\api
 call :chm docs\chm\spritely
 call :chm docs\chm\Sprite3d
+call :chm docs\chm\Sprite3DBuilder
 call :chm docs\chm\ProjectionTest
 
 echo.
@@ -128,10 +135,13 @@ call :run htmlhelp %APP% docs\chm\%APP% --name %APP% --title "%APPTITLE%" %SRCS%
 exit /b 0
 
 rem ---- :addsrc <folder> <path from the .dpr> - adds one unit of a program
-rem      as <folder>\<path>; a path outside the folder (..\) is left out
+rem      as <folder>\<path>; a path outside the folder (..\) is left out,
+rem      but for the shared units (..\Shared\)
 :addsrc
 set "SRC=%~2"
+if /i "%SRC:~0,10%"=="..\Shared\" goto addsrckeep
 if "%SRC:~0,3%"=="..\" exit /b 0
+:addsrckeep
 set SRCS=%SRCS% "%~1\%SRC%"
 exit /b 0
 

@@ -1,15 +1,16 @@
-"""Heuristic PasDoc and source checker for Sprite3D.
+"""Heuristic PasDoc and source checker for Sprite3D and Sprite3DBuilder.
 
 Usage, from the repository root:
 
-    python3 tools/pasdoc_check.py            check every unit under src
+    python3 tools/pasdoc_check.py            check every unit of both programs and Shared
     python3 tools/pasdoc_check.py FILE ...   check only these files
 
-Sprite3D's documentation is built with `pasdoc --staronly`, so only `//**`
+The documentation is built with `pasdoc --staronly`, so only `//**`
 comments reach PasDoc; a plain `//` comment is for people reading the
-source. This script reads every .pas file in src/lib, src/common and src/ui,
-and src/Sprite3d.dpr (src/ffmpeg is third-party and left alone), and
-reports:
+source. This script reads every .pas file in Sprite3D/lib, Sprite3D/ui,
+Sprite3DBuilder/lib, Sprite3DBuilder/ui and Shared (the units both programs
+use), and each program's .dpr (Sprite3D/ffmpeg is third-party and left
+alone), and reports:
 
   - a file that is not ASCII (a UTF-8 byte order mark alone is allowed);
   - a unit or program with no `//**` comment holding @abstract before it;
@@ -38,7 +39,9 @@ import sys
 from collections import Counter
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = ROOT / 'src'
+# The programs' folders, each with lib and ui, and the units they share
+PROGRAMS = (ROOT / 'Sprite3D', ROOT / 'Sprite3DBuilder')
+SHARED = ROOT / 'Shared'
 
 DECL_KW = re.compile(r'^(class\s+)?(procedure|function|constructor|destructor|property|operator)\b', re.I)
 TYPE_DECL = re.compile(r'^([A-Za-z_]\w*)(<[^>]*>)?\s*=\s*\S', re.I)
@@ -59,18 +62,18 @@ def strip_strings(line):
 def files_to_check(args):
     if args:
         return [pathlib.Path(a).resolve() for a in args]
-    result = []
-    for folder in ('lib', 'common', 'ui'):
-        result += sorted((SRC / folder).glob('*.pas'))
-    result += sorted(SRC.glob('*.dpr'))
-    return result
+    return project_files()
 
 
 def project_files():
     result = []
-    for folder in ('lib', 'common', 'ui'):
-        result += sorted((SRC / folder).glob('*.pas'))
-    return result + sorted(SRC.glob('*.dpr'))
+    for program in PROGRAMS:
+        for folder in ('lib', 'ui'):
+            result += sorted((program / folder).glob('*.pas'))
+    result += sorted(SHARED.glob('*.pas'))
+    for program in PROGRAMS:
+        result += sorted(program.glob('*.dpr'))
+    return result
 
 
 def declared_names(texts):

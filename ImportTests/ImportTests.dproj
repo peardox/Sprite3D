@@ -83,7 +83,7 @@
             <Form>ImportTestsForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
-        <DCCReference Include="..\src\lib\Sprite3DGltfExport.pas"/>
+        <DCCReference Include="..\Sprite3D\lib\Sprite3DGltfExport.pas"/>
         <None Include="README.md"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
