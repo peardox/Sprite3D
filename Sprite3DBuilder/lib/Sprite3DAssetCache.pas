@@ -105,7 +105,7 @@ const
   //** @abstract(The database, in the settings folder; see AssetDatabaseFile.)
   ASSET_DATABASE_FILE_NAME = 'library.db';
   //** @abstract(The database's schema version, kept in its @code(user_version).)
-  ASSET_DATABASE_VERSION = 3;
+  ASSET_DATABASE_VERSION = 5;
 
 type
   //** @abstract(What the cache keeps about one model.)
@@ -147,6 +147,10 @@ type
     //** @abstract(The kind of model the caller made of those counts, by its key, such as
     //** @code(static); empty when they have not been counted.)
     Kind: String;
+    //** @abstract(The TEXTURE_RULES_VERSION its thumbnail was made with; 0 if not known, as
+    //** for one made before it was kept. A model whose textures are readied
+    //** (PreparesTextures) and whose thumbnail is older is made again.)
+    Textures: Integer;
     //** @abstract(The bounding box's size: BoxMax less BoxMin.)
     //**
     //** @returns(Width, height and depth, in the model's own units.)
@@ -1146,6 +1150,14 @@ begin
           ' INTEGER NOT NULL DEFAULT 0');
       AConnection.ExecSQL('ALTER TABLE meta ADD COLUMN kind TEXT NOT NULL DEFAULT ''''');
     end;
+    // 4: animations are counted only if they move something, so every kind
+    // that hung on a count of animations is forgotten, to be counted again
+    // when the model is next loaded (previewed, or its thumbnail remade)
+    if Version < 4 then
+      AConnection.ExecSQL('UPDATE meta SET kind = '''', animations = 0 WHERE animations > 0');
+    // 5: the version of the texture rules each thumbnail was made with
+    if Version < 5 then
+      AConnection.ExecSQL('ALTER TABLE meta ADD COLUMN textures INTEGER NOT NULL DEFAULT 0');
     AConnection.ExecSQL('PRAGMA user_version = ' + IntToStr(ASSET_DATABASE_VERSION));
     AConnection.Commit;
   except
@@ -1229,15 +1241,15 @@ procedure WriteMeta(const AConnection: TFDConnection; const AMeta: TSprite3DAsse
 begin
   AConnection.ExecSQL('INSERT OR REPLACE INTO meta (model_key, name, grp, file, files, min_x, ' +
     'min_y, min_z, max_x, max_y, max_z, thumb_width, thumb_height, thumb_view, created, ' +
-    'meshes, vertices, animations, skins, joints, kind) ' +
+    'meshes, vertices, animations, skins, joints, kind, textures) ' +
     'VALUES (:model_key, :name, :grp, :file, :files, :min_x, :min_y, :min_z, :max_x, :max_y, ' +
     ':max_z, :thumb_width, :thumb_height, :thumb_view, :created, :meshes, :vertices, ' +
-    ':animations, :skins, :joints, :kind)',
+    ':animations, :skins, :joints, :kind, :textures)',
     [LowerCase(AMeta.Hash), AMeta.Name, AMeta.Group, AMeta.FileName,
     String.Join(#10, AMeta.Files), AMeta.BoxMin.X, AMeta.BoxMin.Y, AMeta.BoxMin.Z,
     AMeta.BoxMax.X, AMeta.BoxMax.Y, AMeta.BoxMax.Z, AMeta.ThumbWidth, AMeta.ThumbHeight,
     AMeta.View, AMeta.Created, AMeta.Meshes, AMeta.Vertices, AMeta.Animations, AMeta.Skins,
-    AMeta.Joints, AMeta.Kind]);
+    AMeta.Joints, AMeta.Kind, AMeta.Textures]);
 end;
 
 procedure SaveAssetMeta(const ACacheFolder: String; const AMeta: TSprite3DAssetMeta);
@@ -1282,6 +1294,7 @@ begin
         AMeta.Skins := Query.FieldByName('skins').AsInteger;
         AMeta.Joints := Query.FieldByName('joints').AsInteger;
         AMeta.Kind := Query.FieldByName('kind').AsString;
+        AMeta.Textures := Query.FieldByName('textures').AsInteger;
         Exit(True);
       end;
     finally

@@ -71,7 +71,8 @@ type
     Meshes: Integer;
     //** @abstract(Their vertices, all together.)
     Vertices: Integer;
-    //** @abstract(Animations.)
+    //** @abstract(Animations that move something; a take whose keys all hold still, or that
+    //** has none, as Maya leaves in every FBX it exports, is not counted.)
     Animations: Integer;
     //** @abstract(Skins: the controllers that have one.)
     Skins: Integer;
@@ -92,6 +93,19 @@ function ModelContent(const AModel: TGorillaModel): TSprite3DModelContent;
 //**
 //** @returns(The kind; never mkUnknown.)
 function GuessModelKind(const AContent: TSprite3DModelContent): TSprite3DModelKind;
+
+//** @abstract(Marks every mesh of a model's definition static, so the model keeps its
+//** vertices on the GPU instead of having them sent every frame.)
+//**
+//** Gorilla's @code(IsStatic) on a mesh definition: only for a model whose meshes never
+//** move, one GuessModelKind calls static, never one with a skin or animations. Call it
+//** once the model is loaded and before it is first drawn, when its buffers are made.
+//**
+//** @param(AModel The loaded model whose definition is marked; nil, or one with no
+//** definition, marks nothing.)
+//**
+//** @returns(How many mesh definitions were marked.)
+function MarkMeshesStatic(const AModel: TGorillaModel): Integer;
 
 //** @abstract(A kind's key, as the library database keeps it: @code(static),
 //** @code(animated), @code(rigged), @code(rigged-animated), @code(animation-library),
@@ -135,7 +149,7 @@ function ModelContentText(const AContent: TSprite3DModelContent): String;
 implementation
 
 uses
-  Gorilla.DefTypes;
+  Gorilla.DefTypes, Sprite3DModelAnimations;
 
 const
   //** @abstract(The kinds' keys, in TSprite3DModelKind's order.)
@@ -197,8 +211,12 @@ begin
   if Def <> nil then
   begin
     CountMeshes(Def, Result);
-    if Def.Animations <> nil then
-      Result.Animations := Def.Animations.Count;
+    // Only animations that move something (Sprite3DModelAnimations): an FBX
+    // from Maya carries a take, "Take 001", whether or not anything was
+    // animated, and a static prop counted it (PolygonDungeon, 12 November
+    // 2026: 812 of 814 models)
+    var Listed: Integer;
+    Result.Animations := MovingAnimations(AModel, Listed);
     if Def.Controllers <> nil then
       for var Controller in Def.Controllers do
         if Controller.Skin <> nil then
@@ -208,10 +226,40 @@ begin
             Inc(Result.Joints, Controller.Skin.LinkedJoints.Count);
         end;
   end;
-  // Animations loaded apart from the definitions count too
-  if (AModel.AnimationManager <> nil) and (AModel.AnimationManager.Animations <> nil) and
+  // Animations loaded apart from the definitions count too, but only where
+  // the definitions have none: the manager holds the still takes as well
+  if ((Def = nil) or (Def.Animations = nil) or (Def.Animations.Count = 0)) and
+    (AModel.AnimationManager <> nil) and (AModel.AnimationManager.Animations <> nil) and
     (AModel.AnimationManager.Animations.Count > Result.Animations) then
     Result.Animations := AModel.AnimationManager.Animations.Count;
+end;
+
+//** @abstract(Marks ADef and every mesh definition under it static; see MarkMeshesStatic.)
+//**
+//** @param(ADef The definition.)
+//**
+//** @param(ACount Counts the meshes marked.)
+procedure MarkStatic(const ADef: TTransformDef; var ACount: Integer);
+begin
+  if ADef = nil then
+    Exit;
+  if ADef is TMeshDef then
+  begin
+    TMeshDef(ADef).IsStatic := True;
+    Inc(ACount);
+  end;
+  if ADef.Children <> nil then
+    for var Child in ADef.Children do
+      MarkStatic(Child, ACount);
+end;
+
+function MarkMeshesStatic(const AModel: TGorillaModel): Integer;
+begin
+  Result := 0;
+  // TGorillaModel.Def is declared as a TCustomDef; a loaded model's is a
+  // TModelDef
+  if (AModel <> nil) and (AModel.Def is TModelDef) then
+    MarkStatic(TModelDef(AModel.Def), Result);
 end;
 
 function GuessModelKind(const AContent: TSprite3DModelContent): TSprite3DModelKind;

@@ -123,7 +123,7 @@ A build failing with *F2613 Unit 'Spritely.OrbitalCamera' not found* has not got
 
 Model formats: glTF (`.gltf`, `.glb`), FBX, OBJ, USD (`.usdc`, `.usda`, `.usd`, `.usdz`), Collada (`.dae`), STL and PLY, as Gorilla3D loads them.
 
-**Textures.** A glTF (`.gltf`) names its textures and buffers as files beside it, and model kits often get them wrong: a texture saved as a Photoshop document (`.psd`), which Gorilla3D will not load; a file in another folder of the kit than the one the model names; or a name an exporter changed, such as `T_Wall_png.png` for `T_Wall.png`, or `Wall_001.bin` for `Wall.bin`. Any of these makes Gorilla3D refuse the whole model. So before a glTF is loaded, every file it names is checked. A texture in PNG or JPEG is used as it is; one in any other format the Vampyre library reads is made a PNG, its transparency taken from a `.psd` only where the file says it has some. A file that is not there is looked for by the same name, case ignored, in the model's folder and up to three folders above it with every folder below them, then under another image extension, then without an image extension left in its name; a buffer must also be exactly the length the model gives it. A texture found nowhere is replaced by a small magenta and black checker, so the model still loads and shows where it is missing. If anything was found or made, the model is loaded from a copy, in the settings folder's `models` folder, that names what was used; the kit's own files are never written. The Debug tab gives one line for each texture or buffer that was not used as named, saying what was used instead and why, and one saying the model was read from a copy. File, Debug, glTF reads the same copies, for the model shown and for the files Merge Animations and Add Parts read. `.glb` files hold their textures inside them, and the other formats are loaded as they are. See [Textures](notes/textures.md).
+**Textures.** A glTF (`.gltf`) names its textures and buffers as files beside it, and model kits often get them wrong: a texture saved as a Photoshop document (`.psd`), which Gorilla3D will not load; a file in another folder of the kit than the one the model names; or a name an exporter changed, such as `T_Wall_png.png` for `T_Wall.png`, or `Wall_001.bin` for `Wall.bin`. Any of these makes Gorilla3D refuse the whole model. So before a glTF is loaded, every file it names is checked. A texture in PNG or JPEG is used as it is; one in any other format the Vampyre library reads is made a PNG, its transparency taken from a `.psd` only where the file says it has some. A file that is not there is looked for by the same name, case ignored, in the model's folder and up to three folders above it with every folder below them, then under another image extension, then without an image extension left in its name, then as the name followed by a number (`Atlas_01.png` for `Atlas.psd`, the lowest number first, not `Atlas_01_A.png`); a buffer must also be exactly the length the model gives it. A texture found nowhere is replaced by a small magenta and black checker, so the model still loads and shows where it is missing. If anything was found or made, the model is loaded from a copy, in the settings folder's `models` folder, that names what was used; the kit's own files are never written. The Debug tab gives one line for each texture or buffer that was not used as named, saying what was used instead and why, and one saying the model was read from a copy. File, Debug, glTF reads the same copies, for the model shown and for the files Merge Animations and Add Parts read. **FBX** (`.fbx`, binary or ASCII) gets the same: it names each texture by the full path it had on the machine it was exported on and by a path relative to where it was exported, seldom right where the kit is now, so only the file's name is relied on, and a copy of the FBX names the files found, with everything else in it as it was; a texture held inside the FBX is left alone. `.glb` files hold their textures inside them, and the other formats are loaded as they are. See [Textures](notes/textures.md).
 
 ### FFmpeg libraries (optional, for MP4 export)
 
@@ -234,6 +234,8 @@ Sprite3D/
 |   |-- Sprite3DModelTextures.pas a glTF's textures and buffers found, or made PNGs, before loading
 |   |-- OSPaths.pas              where the program and its assets are; OS-friendly paths
 |   |-- JsonText.pas             writes JSON indented or minified, as File, Settings says
+|   |-- Sprite3DOpenFiles.pas    files the system asks the app to open, and handing them to a copy running
+|   |-- Sprite3DFileAssoc.pas    Open With and default-application registration
 |   |-- GpuPreference.pas        Windows' per-program GPU preference
 |   `-- DisplayData.pas          the displays, their modes and refresh rates, per platform
 |-- Spritely/                 the Spritely camera components (see Spritely/README.md)
@@ -255,7 +257,9 @@ Sprite3D/
 |   |-- pasdoc.bat               builds the PasDoc reference in docs/html and docs/chm (Windows)
 |   |-- pasdoc-dark.css, pasdoc-chm-dark.css  dark colours pasdoc.bat adds to it
 |   |-- pasdoc_check.py          checks the PasDoc comments and that sources are ASCII, in both programs
-|   `-- make_group_icons.py      draws Sprite3DBuilder's placeholder group icons (needs Pillow)
+|   |-- make_group_icons.py      draws Sprite3DBuilder's placeholder group icons (needs Pillow)
+|   |-- fbx_inspect.py           what an FBX holds: version, units, texture names, takes and whether they move; checks the texture rewrite
+|   `-- make_builder_icon.py     draws Sprite3DBuilder's program icon into its .ico and .res (needs Pillow)
 |-- licences/                 third-party licences and notices, linked into the program
 |   |-- *.txt                    one per licence or notice; see File, Licences...
 |   |-- Sprite3DLicences.rc      names Sprite3D's as RCDATA resources
@@ -273,8 +277,6 @@ Sprite3D/
     |-- lib/                  reusable units, no application code
     |   |-- Sprite3DAxes.pas         a model's X, Y and Z axes
     |   |-- Sprite3DIconWriter.pas   icon file writers (Windows .ico)
-    |   |-- Sprite3DOpenFiles.pas    files the system asks the app to open
-    |   |-- Sprite3DFileAssoc.pas    Open With and default-application registration
     |   |-- Sprite3DAnimCapture.pas  grabs every frame of an animation, or of a turn
     |   |-- Sprite3DSpriteSheet.pas  strips, spritesheets, PNG and animated GIF writers
     |   |-- Sprite3DVideo.pas        MP4 writer, loading FFmpeg only when present

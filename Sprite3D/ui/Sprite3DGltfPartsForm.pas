@@ -5,7 +5,7 @@
 //** every skinned mesh in them as a part, with the bones it covers; each is listed with a box
 //** to tick. A .gltf whose textures or buffers had to be found or made, as when a model is
 //** opened (a .psd texture, a file not where it says), is loaded from its copy
-//** (GltfFileToRead), and listed under its own name. Clear empties the list, Tick all ticks every part. Put on... checks one is
+//** (ModelFileToRead), and listed under its own name. Clear empties the list, Tick all ticks every part. Put on... checks one is
 //** ticked and closes with mrOk. Putting them on, with TglTFPartApplier, is the caller's
 //** job: each part is bound to the model's bones by name, an earlier part it replaces is
 //** taken off, and the body under it is hidden. The dialog owns the library, so the caller
@@ -232,7 +232,7 @@ begin
     for var I := 0 to High(Files) do
     begin
       Chosen := Files[I];
-      Files[I] := GltfFileToRead(Chosen, Fixes);
+      Files[I] := ModelFileToRead(Chosen, Fixes);
       if Files[I] <> Chosen then
         FShownNames.AddOrSetValue(Files[I], Chosen);
       FLog.AddStrings(TextureFixReport(ExtractFileName(Chosen), Fixes));

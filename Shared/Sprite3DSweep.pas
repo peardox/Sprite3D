@@ -42,6 +42,8 @@
 //** ShowModelBoundsOutline adds a TModelBoundsOutline, which draws the model's bounding box
 //** into TSprite3DOffscreen grabs while its ShowBoundingBox is on, as Gorilla draws that box on
 //** screen only; the wireframes here draw into grabs too, so a grab shows what the view shows.
+//** TModelBoundsOutline is one kind of TSprite3DBoxOutline, the abstract base that draws a
+//** box's 12 edges; a program can make its own kind, for a box with no model behind it.
 //**
 //** The swept box is larger than the model's own box, and Gorilla counts a model's children in
 //** its bounding box, so the TModelSweep is not a child of the model: it sits beside it, owned
@@ -121,7 +123,9 @@ unit Sprite3DSweep;
   ShowModelBoundsOutline adds a TModelBoundsOutline, which draws the model's
   bounding box into TSprite3DOffscreen grabs while its ShowBoundingBox is on,
   as Gorilla draws that box on screen only; the wireframes here draw into
-  grabs too, so a grab shows what the view shows.
+  grabs too, so a grab shows what the view shows. TModelBoundsOutline is one
+  kind of TSprite3DBoxOutline, the abstract base that draws a box's 12
+  edges; a program can make its own kind, for a box with no model behind it.
 
   The swept box is larger than the model's own box, and Gorilla counts a
   model's children in its bounding box, so the TModelSweep is not a child of
@@ -799,6 +803,52 @@ procedure HideCombinedSweep(const AModel: TGorillaModel);
 function FindCombinedSweep(const AModel: TGorillaModel): TCombinedSweep;
 
 type
+  //** @abstract(Draws a box's 12 edges as lines: the base of TModelBoundsOutline and of any
+  //** other box a program draws.)
+  //**
+  //** A descendant says, each frame, which box to draw and with what matrix (GetOutline);
+  //** this draws it with the context's DrawLines, in Color, depth tested as usual, one pixel
+  //** wide. It never counts in any model's bounds, as it is not a model's child unless a
+  //** descendant puts it there. Main thread only.
+  TSprite3DBoxOutline = class abstract(TControl3D)
+  private
+    //** @abstract(The lines' colour.)
+    FColor: TAlphaColor;
+    //** @abstract(The material the lines are drawn with, in FColor; owned.)
+    FMaterial: TColorMaterial;
+    //** @abstract(The 12 edges as 24 line ends, filled in as drawn; owned.)
+    FVertices: TVertexBuffer;
+    //** @abstract(The line ends' indices, 0 to 23; owned.)
+    FIndices: TIndexBuffer;
+    //** @abstract(Sets Color and the material's colour.)
+    //**
+    //** @param(Value The colour.)
+    procedure SetColor(const Value: TAlphaColor);
+  protected
+    //** @abstract(The box to draw now, and the matrix to draw it with.)
+    //**
+    //** Called from Render every frame; answering False draws nothing this frame.
+    //**
+    //** @param(ABox Set to the box, in the coordinates AMatrix takes to the scene's.)
+    //**
+    //** @param(AMatrix Set to the matrix to draw with, such as a model's AbsoluteMatrix.)
+    //**
+    //** @returns(True to draw the box.)
+    function GetOutline(out ABox: TBoundingBox; out AMatrix: TMatrix3D): Boolean;
+      virtual; abstract;
+    //** @abstract(Draws the box GetOutline gives, if it gives one.)
+    procedure Render; override;
+  public
+    //** @abstract(Creates the outline, orange, as Gorilla's box is.)
+    //**
+    //** @param(AOwner The owner.)
+    constructor Create(AOwner: TComponent); override;
+    //** @abstract(Frees the outline and its line buffers.)
+    destructor Destroy; override;
+    //** @abstract(The lines' colour; orange by default, as Gorilla's.)
+    property Color: TAlphaColor read FColor write SetColor;
+  end;
+
   //** @abstract(Draws a model's bounding box into grabs, as Gorilla's own ShowBoundingBox draws
   //** it on screen.)
   //**
@@ -809,18 +859,24 @@ type
   //** twice. It sits beside the model, not inside it, so it never counts in the model's
   //** bounds, and draws with the model's matrix. Made with ShowModelBoundsOutline; owned by
   //** the model. Main thread only.
-  TModelBoundsOutline = class(TControl3D)
+  TModelBoundsOutline = class(TSprite3DBoxOutline)
   private
+    //** @abstract(The model whose box is drawn; nil draws nothing.)
     FModel: TGorillaModel;
-    FColor: TAlphaColor;
-    FMaterial: TColorMaterial;
-    FVertices: TVertexBuffer;
-    FIndices: TIndexBuffer;
+    //** @abstract(Sets Model, keeping a free notification on it.)
+    //**
+    //** @param(Value The model, or nil.)
     procedure SetModel(const Value: TGorillaModel);
-    procedure SetColor(const Value: TAlphaColor);
   protected
-    //** @abstract(Draws the box, into a grab only.)
-    procedure Render; override;
+    //** @abstract(The model's current animated bounds, with its matrix, into a grab only, and
+    //** only while it is shown with ShowBoundingBox on.)
+    //**
+    //** @param(ABox Set to the box, in the model's own coordinates.)
+    //**
+    //** @param(AMatrix Set to the model's AbsoluteMatrix.)
+    //**
+    //** @returns(True to draw it.)
+    function GetOutline(out ABox: TBoundingBox; out AMatrix: TMatrix3D): Boolean; override;
     //** @abstract(Lets go of the model when it is freed.)
     //**
     //** @param(AComponent The component being inserted or removed.)
@@ -828,16 +884,8 @@ type
     //** @param(Operation Whether it is being inserted or removed.)
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
-    //** @abstract(Creates the outline, orange, with no model.)
-    //**
-    //** @param(AOwner The owner, normally the model.)
-    constructor Create(AOwner: TComponent); override;
-    //** @abstract(Frees the outline and its line buffers.)
-    destructor Destroy; override;
     //** @abstract(The model whose box is drawn; nil draws nothing.)
     property Model: TGorillaModel read FModel write SetModel;
-    //** @abstract(The box's colour; orange by default, as Gorilla's.)
-    property Color: TAlphaColor read FColor write SetColor;
   end;
 
 //** @abstract(Adds a TModelBoundsOutline to AModel, so grabs show its bounding box when
@@ -1837,9 +1885,9 @@ begin
 end;
 
 
-{ TModelBoundsOutline }
+{ TSprite3DBoxOutline }
 
-constructor TModelBoundsOutline.Create(AOwner: TComponent);
+constructor TSprite3DBoxOutline.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   Stored := False;
@@ -1855,7 +1903,7 @@ begin
     FIndices.Indices[I] := I;
 end;
 
-destructor TModelBoundsOutline.Destroy;
+destructor TSprite3DBoxOutline.Destroy;
 begin
   FVertices.Free;
   FIndices.Free;
@@ -1863,49 +1911,21 @@ begin
   inherited;
 end;
 
-procedure TModelBoundsOutline.Notification(AComponent: TComponent; Operation: TOperation);
-begin
-  inherited;
-  if (Operation = opRemove) and (AComponent = FModel) then
-    FModel := nil;
-end;
-
-procedure TModelBoundsOutline.SetModel(const Value: TGorillaModel);
-begin
-  if FModel = Value then
-    Exit;
-  if FModel <> nil then
-    FModel.RemoveFreeNotification(Self);
-  FModel := Value;
-  if FModel <> nil then
-    FModel.FreeNotification(Self);
-end;
-
-procedure TModelBoundsOutline.SetColor(const Value: TAlphaColor);
+procedure TSprite3DBoxOutline.SetColor(const Value: TAlphaColor);
 begin
   FColor := Value;
   FMaterial.Color := Value;
 end;
 
-procedure TModelBoundsOutline.Render;
+procedure TSprite3DBoxOutline.Render;
 var
-  Ctx: TGorillaContext;
   B: TBoundingBox;
+  M, PrevMat: TMatrix3D;
   Corners: array[0..7] of TPoint3D;
   I, Bit, K, N: Integer;
-  PrevMat: TMatrix3D;
 begin
   inherited;
-  if (FModel = nil) or not FModel.Visible or not FModel.ShowBoundingBox then
-    Exit;
-  // Into a grab only: on screen, Gorilla draws its own box
-  if not (Context is TGorillaContext) then
-    Exit;
-  Ctx := TGorillaContext(Context);
-  if not IsOffscreenPass(Ctx.CurrentPass) then
-    Exit;
-  B := FModel.GetAnimatedBoundingBox();
-  if IsEmptyBox(B) then
+  if not GetOutline(B, M) or IsEmptyBox(B) then
     Exit;
 
   // The 12 edges join each corner to the three that differ from it on one
@@ -1931,14 +1951,51 @@ begin
     end;
   end;
 
-  // The box is in the model's own coordinates
   PrevMat := Context.CurrentMatrix;
-  Context.SetMatrix(FModel.AbsoluteMatrix);
+  Context.SetMatrix(M);
   try
     Context.DrawLines(FVertices, FIndices, FMaterial, AbsoluteOpacity);
   finally
     Context.SetMatrix(PrevMat);
   end;
+end;
+
+{ TModelBoundsOutline }
+
+procedure TModelBoundsOutline.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited;
+  if (Operation = opRemove) and (AComponent = FModel) then
+    FModel := nil;
+end;
+
+procedure TModelBoundsOutline.SetModel(const Value: TGorillaModel);
+begin
+  if FModel = Value then
+    Exit;
+  if FModel <> nil then
+    FModel.RemoveFreeNotification(Self);
+  FModel := Value;
+  if FModel <> nil then
+    FModel.FreeNotification(Self);
+end;
+
+function TModelBoundsOutline.GetOutline(out ABox: TBoundingBox; out AMatrix: TMatrix3D): Boolean;
+begin
+  Result := False;
+  ABox := Default(TBoundingBox);
+  AMatrix := TMatrix3D.Identity;
+  if (FModel = nil) or not FModel.Visible or not FModel.ShowBoundingBox then
+    Exit;
+  // Into a grab only: on screen, Gorilla draws its own box
+  if not (Context is TGorillaContext) then
+    Exit;
+  if not IsOffscreenPass(TGorillaContext(Context).CurrentPass) then
+    Exit;
+  // The box is in the model's own coordinates
+  ABox := FModel.GetAnimatedBoundingBox();
+  AMatrix := FModel.AbsoluteMatrix;
+  Result := True;
 end;
 
 function FindModelBoundsOutline(const AModel: TGorillaModel): TModelBoundsOutline;

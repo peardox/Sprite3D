@@ -4,7 +4,7 @@
         <ProjectVersion>20.5</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>2790531</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -381,7 +381,12 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="..\Shared\Sprite3DOffscreen.pas"/>
         <DCCReference Include="lib\Sprite3DAssetCache.pas"/>
         <DCCReference Include="..\Shared\Sprite3DModelTextures.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DModelAnimations.pas"/>
         <DCCReference Include="lib\Sprite3DModelContent.pas"/>
+        <DCCReference Include="lib\Sprite3DLevelPlacement.pas"/>
+        <DCCReference Include="ui\Sprite3DBuilderRotationForm.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DOpenFiles.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DFileAssoc.pas"/>
         <DCCReference Include="lib\Sprite3DGroupIcons.pas"/>
         <DCCReference Include="ui\Sprite3DBuilderImportForm.pas">
             <Form>ImportForm</Form>

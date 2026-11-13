@@ -63,7 +63,12 @@ uses
   Sprite3DOffscreen in '..\Shared\Sprite3DOffscreen.pas',
   Sprite3DAssetCache in 'lib\Sprite3DAssetCache.pas',
   Sprite3DModelTextures in '..\Shared\Sprite3DModelTextures.pas',
+  Sprite3DModelAnimations in '..\Shared\Sprite3DModelAnimations.pas',
   Sprite3DModelContent in 'lib\Sprite3DModelContent.pas',
+  Sprite3DLevelPlacement in 'lib\Sprite3DLevelPlacement.pas',
+  Sprite3DBuilderRotationForm in 'ui\Sprite3DBuilderRotationForm.pas',
+  Sprite3DOpenFiles in '..\Shared\Sprite3DOpenFiles.pas',
+  Sprite3DFileAssoc in '..\Shared\Sprite3DFileAssoc.pas',
   Sprite3DGroupIcons in 'lib\Sprite3DGroupIcons.pas',
   Sprite3DBuilderImportForm in 'ui\Sprite3DBuilderImportForm.pas' {ImportForm},
   Sprite3DBuilderFormatForm in 'ui\Sprite3DBuilderFormatForm.pas' {FormatForm},
@@ -80,6 +85,12 @@ uses
 {$R '..\licences\Sprite3DBuilderLicences.res'}
 
 begin
+  // A level opened from Explorer while Sprite3DBuilder is already running
+  // goes to the copy running, which loads it, rather than opening a second
+  // window; this copy then ends at once. See HandOffToRunningInstance.
+  if HandOffToRunningInstance('Sprite3DBuilder') then
+    Exit;
+
   {$IF DEFINED(MSWINDOWS)}
   // FastMM5 also writes every leak, in full, to
   // Sprite3DBuilder_MemoryManager_EventLog.txt in the executable's folder,

@@ -13153,7 +13153,7 @@ begin
       // A .gltf from the copy the model was loaded from, if it needed one:
       // GLTFLib cannot read a .psd or find a file that is not where the
       // model says, any more than Gorilla3D can
-      ReadFile := GltfFileToRead(FModelFile, Fixes);
+      ReadFile := ModelFileToRead(FModelFile, Fixes);
       DebugMemo.Lines.AddStrings(TextureFixReport(ExtractFileName(FModelFile), Fixes));
       Result := LoadModelDocument(ReadFile, Def, AOptions, Lines);
     except
@@ -13294,7 +13294,7 @@ begin
       for var I := 0 to High(Files) do
       begin
         ShownName := ExtractFileName(Files[I]);
-        Files[I] := GltfFileToRead(Files[I], Fixes);
+        Files[I] := ModelFileToRead(Files[I], Fixes);
         DebugMemo.Lines.AddStrings(TextureFixReport(ShownName, Fixes));
       end;
     except

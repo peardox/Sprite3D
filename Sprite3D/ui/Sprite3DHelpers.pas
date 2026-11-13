@@ -1278,7 +1278,7 @@ function SaveGrab(const ABitmap: TBitmap; const AFolder: String;
 //** Clears AModel, loads AFileName into it, and, if the file has animations, plays the one
 //** whose name sorts last. Blocks while the file loads.
 //**
-//** A glTF (@code(.gltf)) first has its textures and buffers readied by
+//** A glTF (@code(.gltf)) or an FBX (@code(.fbx)) first has its textures readied by
 //** @link(PrepareModelTextures): each one found, made a PNG where the loader cannot read its
 //** format, and the model loaded from a copy in the settings folder's @code(models) folder
 //** if anything had to be found or made; see Sprite3DModelTextures.
@@ -1319,10 +1319,12 @@ function TextureFixText(const AModel: String; const AFix: TSprite3DTextureFix): 
 //** @returns(True if any texture or buffer was replaced, the placeholder included.)
 function LoadedFromCopy(const AFixes: TArray<TSprite3DTextureFix>): Boolean;
 
-//** @abstract(The file to read a model from: for a glTF (@code(.gltf)), its textures and
-//** buffers readied first, as LoadModelFile does.)
+//** @abstract(The file to read a model from: for a glTF (@code(.gltf)) or an FBX
+//** (@code(.fbx)), its textures (and a glTF's buffers) readied first, as LoadModelFile
+//** does.)
 //**
-//** For a @code(.gltf), calls @link(PrepareModelTextures) with the settings folder as the
+//** For a model PreparesTextures takes, calls @link(PrepareModelTextures) with the settings
+//** folder as the
 //** cache and the SHA-256 of the file as the key, so the copy is the one LoadModelFile
 //** loads; any other file is given back as it is. Used by LoadModelFile and by the glTF
 //** tools, which read the file with GLTFLib, which, like Gorilla3D, cannot read a
@@ -1337,7 +1339,7 @@ function LoadedFromCopy(const AFixes: TArray<TSprite3DTextureFix>): Boolean;
 //** @returns(The copy, if anything had to be found or made; else AFileName, OS-friendly.)
 //**
 //** @raises(Exception If the copy, or a file it names, cannot be written.)
-function GltfFileToRead(const AFileName: String;
+function ModelFileToRead(const AFileName: String;
   out AFixes: TArray<TSprite3DTextureFix>): String;
 
 //** @abstract(The Debug tab lines for a model's textures and buffers: one for each that
@@ -1345,7 +1347,7 @@ function GltfFileToRead(const AFileName: String;
 //**
 //** @param(AModel The model's name, to start each line.)
 //**
-//** @param(AFixes The fixes GltfFileToRead or LoadModelFile gave.)
+//** @param(AFixes The fixes ModelFileToRead or LoadModelFile gave.)
 //**
 //** @returns(The lines; none when everything was used as named.)
 function TextureFixReport(const AModel: String;
@@ -1702,6 +1704,7 @@ uses
   System.Classes, System.Math, System.IOUtils, System.Hash, System.StrUtils,
   System.Threading, System.SyncObjs, System.Generics.Collections,
   OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar, Sprite3DAxes, Sprite3DGrid,
+  Sprite3DModelAnimations,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
   {$ENDIF}
@@ -2603,7 +2606,7 @@ begin
   // A glTF names its textures and buffers by file; any the loader cannot
   // use (a .psd, one not where the model says) fails the whole model, so
   // they are found or made first
-  LoadFile := GltfFileToRead(AFileName, AFixes);
+  LoadFile := ModelFileToRead(AFileName, AFixes);
   AModel.Clear;
   AModel.LoadFromFile(nil, OSFriendlyPath(LoadFile), [TAnimationCachingFlag.VertexPosition]);
 
@@ -2612,7 +2615,10 @@ begin
     Ani := AModel.AnimationManager.GetSortedAnimations();
     for I := 0 to Length(Ani) - 1 do
       Names.Add(Ani[I].Id);
-    Result := Names.ToStringArray;
+    // Without the takes that move nothing (Sprite3DModelAnimations): an FBX
+    // from Maya carries one, "Take 001", animated or not, and a static prop
+    // was played as an animation of that length
+    Result := StillAnimationsLeftOut(AModel, Names.ToStringArray);
   finally
     Names.Free;
   end;
@@ -2664,7 +2670,7 @@ begin
       Exit(True);
 end;
 
-function GltfFileToRead(const AFileName: String;
+function ModelFileToRead(const AFileName: String;
   out AFixes: TArray<TSprite3DTextureFix>): String;
 var
   FileName: String;
@@ -2672,10 +2678,11 @@ begin
   AFixes := nil;
   FileName := OSFriendlyPath(AFileName);
   Result := FileName;
-  // Only a glTF is read for its files, so only a glTF's content is hashed
-  // for the copy's name; the copies, and every file they name, go in a
-  // models folder in the settings folder, beside bounds
-  if SameText(ExtractFileExt(FileName), '.gltf') then
+  // Only a model whose textures are readied (glTF and FBX, as
+  // Sprite3DModelTextures says) is hashed for the copy's name; the copies,
+  // and every file they name, go in a models folder in the settings folder,
+  // beside bounds
+  if PreparesTextures(FileName) then
     Result := PrepareModelTextures(FileName, TSprite3DAppSettings.SupportFolder,
       THashSHA2.GetHashStringFromFile(FileName), AFixes);
 end;

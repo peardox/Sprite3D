@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 12 November 2026, 12:25.
+Last updated: 12 November 2026, 18:10.
 
 ## Starting a new conversation
 
@@ -474,6 +474,40 @@ gone up.
 
 ## Where the work is
 
+### State (12 November 2026, 18:10)
+
+**`2026-11-12-1810-drag-pieces-onto-level.zip`**, for Sprite3DBuilder (dragging a piece
+from its Library onto its level; `Sprite3DBuilder/CLAUDE.md` has it all),
+**changes a shared unit**: in `Shared/Sprite3DSweep.pas`,
+`TModelBoundsOutline`'s drawing of a box's 12 edges is now the new
+abstract base `TSprite3DBoxOutline`, whose `GetOutline` a subclass answers
+with the box and matrix to draw; `TModelBoundsOutline` is its subclass and
+answers as it drew before (the model's animated box, its matrix, into a
+grab only, while `ShowBoundingBox` is on); Sprite3DBuilder's
+`TSprite3DPlacementBox` is the other. Sprite3D's only use,
+`ShowModelBoundsOutline` in `Sprite3dMain`, is unchanged. **To test in
+Sprite3D**: with View, Show bounding box on, a grab (or an export) still
+shows the orange box, and with it off shows none, as before. Follows
+`2026-11-12-1245-builder-icon.zip` (and Sprite3DBuilder's
+`2026-11-12-1250-library-gl-message.zip`).
+
+### State (12 November 2026, 12:45)
+
+**`2026-11-12-1245-builder-icon.zip`**, after
+`2026-11-12-1225-gltf-tools-read-copies.zip`, not yet applied (owner,
+12:29: "The icons for the two apps are the same - change the builder
+one"). Sprite3DBuilder's `Sprite3DBuilder_Icon.ico` was Sprite3D's axis
+cube. Its new icon is stone blocks and an amber block being placed on a
+tiled teal floor, isometric, drawn by the new `tools/make_builder_icon.py`
+(Pillow): the `.ico` at Sprite3D's sizes and layout (16 to 64 as 32-bit
+bitmaps, 256 as PNG), and the same images in the main icon of
+`Sprite3DBuilder.res` (its other resources unchanged; the script checks
+the `.res` reads back byte for byte before writing). 24 pixels and under
+draw one stack and the amber block, with thicker edges. Android, iOS and
+macOS still use RAD Studio's stock icons in both programs, as before.
+**To test**: Sprite3DBuilder's executable, taskbar button and window
+show the blocks; Sprite3D's still show the cube.
+
 ### State (12 November 2026, 12:25)
 
 Work is on the branch `duet`, at `037a3ac` plus
@@ -569,6 +603,31 @@ What it holds:
   appending to the old one, its entries byte for byte, Vampyre's text with
   CRLF as brcc32 on Windows reads it; Sprite3DBuilder's whole, by the
   Python writer that reproduced its old one).
+- **`tools/fbx_inspect.py`** (13 November 2026): Python 3 alone; prints an FBX's
+  version, units, objects, every texture name as given, its takes and how many of
+  their curves move, and checks that the binary rewrite in Sprite3DModelTextures
+  reproduces the file byte for byte. Run it on any FBX before guessing at it.
+- **`tools/pasdoc_check.py` checks the tree it is in**, not the current folder: to
+  see only new findings, run the committed copy's own script in a worktree of it
+  and compare, line numbers left out.
+- **`Shared/Sprite3DModelAnimations`** (13 November 2026): which of a model's
+  animations move anything (`AnimationMoves`: a key differing from its interpolator's
+  first). Maya's FBX export leaves a take, "Take 001", in every file, often with no
+  keys, or a held bind pose; Gorilla loads it as an animation. Builder counts kinds
+  with it (`MovingAnimations`); both programs' `LoadModelFile` drop still takes from
+  the names they give (`StillAnimationsLeftOut`), so Sprite3D no longer plays a static
+  prop as an animation. In both `.dpr` and `.dproj`.
+- **`Shared/Sprite3DModelTextures` does FBX too** (12 November 2026): an FBX's texture
+  paths (the exporting machine's, full and relative) are replaced in a copy by the
+  files found by name, as glTF's are; and a name with no match also matches the name
+  plus a number (`Atlas.psd` finds `Atlas_01.png`). Both programs load FBX through
+  it. See Sprite3DBuilder's handover (23:45) for the details and how it was checked.
+- **`Shared/Sprite3DOpenFiles` and `Shared/Sprite3DFileAssoc`** (12 November 2026, for
+  Sprite3DBuilder's level files): moved from `Sprite3D/lib`, unchanged, as both
+  programs now use them; Sprite3D's `.dpr` and `.dproj` name the new paths.
+  Sprite3DBuilder registers `.s3d` with `TSprite3DFileAssociations`, as Sprite3D
+  registers `.sprite3d`, and hands files to a copy running with
+  `HandOffToRunningInstance('Sprite3DBuilder')`.
 - **`Shared/`**: the 15 units both use. Identical in both: `Sprite3DBackground`,
   `Sprite3DFolderDialog`, `Sprite3DGrid`, `Sprite3DResample`,
   `Sprite3DStorage`, `Sprite3DStyles`, `Sprite3DTitleBar`, `OSPaths`,

@@ -42,9 +42,15 @@
 //** |   |-- ClearLibraryItem "Clear Library..."  deletes the library; desktop only
 //** |   |-- CheckThumbnailsItem "Check Thumbnails"  reports empty thumbnails; desktop only
 //** |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
+//** |   |-- FRotationSnapItem "Rotation Snap..."  the step Rotate and Bend turn by; made in
+//** |   |                                code with the palette, desktop only
 //** |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
 //** |   |-- FileSeparatorItem "-"
 //** |   `-- ExitMenuItem "Exit"             closes the application
+//** |-- FEditMenu "Edit"                  made in code with the history, desktop only
+//** |   |-- FUndoItem "Undo"                Ctrl+Z: takes out the last addition
+//** |   |-- "-"
+//** |   `-- FResetLevelItem "Reset Level..."  asks, then empties the level
 //** `-- ViewMenu "View"                   its ticks are kept in settings.json
 //**     |-- CameraMenu "Camera"             the view, kept in settings.json
 //**     |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
@@ -124,9 +130,15 @@ unit Sprite3DBuilderMain;
     |   |-- ClearLibraryItem "Clear Library..."  deletes the library; desktop only
     |   |-- CheckThumbnailsItem "Check Thumbnails"  reports empty thumbnails; desktop only
     |   |-- SettingsMenuItem "Settings..."  opens the general settings dialog
+    |   |-- FRotationSnapItem "Rotation Snap..."  the step Rotate and Bend turn by; made in
+    |   |                                code with the palette, desktop only
     |   |-- LicencesMenuItem "Licences..."  the third-party licences, from the program's resources
     |   |-- FileSeparatorItem "-"
     |   `-- ExitMenuItem "Exit"             closes the application
+    |-- FEditMenu "Edit"                  made in code with the history, desktop only
+    |   |-- FUndoItem "Undo"                Ctrl+Z: takes out the last addition
+    |   |-- "-"
+    |   `-- FResetLevelItem "Reset Level..."  asks, then empties the level
     `-- ViewMenu "View"                   its ticks are kept in settings.json
         |-- CameraMenu "Camera"             the view, kept in settings.json
         |   |-- ViewVariableItem "Variable"     dials set the angles; also shift and rise
@@ -169,13 +181,88 @@ uses
   FMX.StdCtrls, FMX.Objects, FMX.Objects3D, Gorilla.Camera, Spritely.OrbitalCamera, Spritely.Projection, FMX.Menus,
   Sprite3DBuilderHelpers, Sprite3DBuilderOrbitalForm, Sprite3DBuilderSettingsForm,
   FMX.ListBox, Sprite3DSweep, System.Threading, Gorilla.Animation, DisplayData, Sprite3DGrid,
-  System.Generics.Collections, Sprite3DBuilderAssetsForm, Sprite3DAssetCache
+  System.Generics.Collections, Sprite3DBuilderAssetsForm, Sprite3DAssetCache,
+  System.Diagnostics, Sprite3DLevelPlacement
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   , FMX.MultiView   // FMX.ListBox, also needed there, is listed above
   {$ENDIF}
   ;
 
 type
+  //** @abstract(A piece placed on the level: its model, where it lands, and its fall.)
+  TLevelPiece = record
+    //** @abstract(Its number, unique for the session, which the history knows it by.)
+    Id: Integer;
+    //** @abstract(The model that draws it, the template, a child of the level's root owned
+    //** by the viewport and parked out of sight; the piece is a GPU instance of it.)
+    Model: TGorillaModel;
+    //** @abstract(Its instance of Model, whose Position and RotationAngle are in the
+    //** viewport's coordinates, not the level's.)
+    Instance: TGorillaMeshInstance;
+    //** @abstract(What was dragged to make it.)
+    Spec: TSprite3DPieceSpec;
+    //** @abstract(Where its origin is once it has landed, in the level's coordinates.)
+    Landed: TPoint3D;
+    //** @abstract(How far it is turned about the up axis, through its origin, in degrees,
+    //** 0 up to 360; 0 as placed. Set by the Rotate and Bend tools.)
+    Turn: Single;
+    //** @abstract(Its model's box turned by Turn, and then squared up to the level's axes,
+    //** about its origin: what it takes up, for landing and joining.)
+    Turned: TBoundingBox;
+    //** @abstract(True while it is still falling.)
+    Falling: Boolean;
+    //** @abstract(The height of its origin when it was let go.)
+    FromY: Single;
+    //** @abstract(When it was let go, in seconds on TMainForm's FClock.)
+    Started: Double;
+    //** @abstract(Its box where it lands, in the level's coordinates.)
+    //**
+    //** @returns(The box, which pieces dropped later land on.)
+    function Box: TBoundingBox;
+  end;
+
+  //** @abstract(The palette's tools that change the level, one of which is on while Mouse
+  //** View is off.)
+  TLevelEditTool = (
+    //** Places the model chosen in the Library.
+    etPlace,
+    //** Removes the piece clicked.
+    etErase,
+    //** Drags the piece under the pointer across the level, X and Z.
+    etMove,
+    //** Turns the piece under the pointer about its middle.
+    etRotate,
+    //** Turns the piece under the pointer and those joined to it on one side about its join
+    //** with the piece on the other side.
+    etBend,
+    //** Move Camera: drags the view across the level, X and Z.
+    etPan);
+
+  //** @abstract(One line of the history: the pieces one click or area placed.)
+  THistoryEntry = record
+    //** @abstract(The model placed.)
+    Name: String;
+    //** @abstract(How many were placed.)
+    Placed: Integer;
+    //** @abstract(The TLevelPiece.Id of those still in the level.)
+    Ids: TArray<Integer>;
+  end;
+
+  //** @abstract(What placing a model has made once, for every piece of it: the template the
+  //** pieces are drawn by, the file it was loaded from and whether it is static.)
+  TPieceSource = record
+    //** @abstract(The model loaded once, a child of the level's root, parked far below the
+    //** floor (TEMPLATE_PARK_Y): every piece of it is drawn by the GPU as an instance of it.)
+    Template: TGorillaModel;
+    //** @abstract(The file the template was loaded from: the model's own, or its copy with
+    //** the
+    //** textures and buffers found or made, from PrepareModelTextures.)
+    LoadFile: String;
+    //** @abstract(True if the model is static (meshes only, no skin, no animations), so the
+    //** template's meshes are made static.)
+    IsStatic: Boolean;
+  end;
+
   //** @abstract(The main form: a Gorilla3D view of the level, a floor grid for now, with the
   //** camera driven by View, Camera.)
   //**
@@ -382,8 +469,8 @@ type
     //**
     //** @param(Sender The TGorillaViewport.)
     procedure GorillaViewportResize(Sender: TObject);
-    //** @abstract(Places the Mouse View readout again when AspectLayout changes size; the
-    //** viewport fills AspectLayout, and refits itself.)
+    //** @abstract(Keeps the palette and the history inside the view when AspectLayout
+    //** changes size; the viewport fills AspectLayout, and refits itself.)
     //**
     //** @param(Sender AspectLayout.)
     procedure AspectLayoutResize(Sender: TObject);
@@ -665,19 +752,6 @@ type
     //** @abstract(View, Camera, Mouse View, between the line and Lock Camera;
     //** desktop only, so nil on Android and iOS.) See MouseViewItemClick.
     FMouseViewItem: TMenuItem;
-    //** @abstract(The mouse view readout, top right over the view, shown while
-    //** FMouseViewItem is ticked.) A dark FMouseViewBack, as the frame rate readout has at
-    //** the top left, holding the centred title "Mouseview On", FMouseViewLabel, and under it
-    //** FMouseViewDetails, shown while the view is turned or zoomed: the azimuth and the
-    //** distance (or the orthographic size, named in FMouseDistanceName) as they differ from
-    //** the normal view, in FMouseAzimuthValue and FMouseDistanceValue, and "Right Click to
-    //** Reset". See UpdateMouseViewReadout.
-    FMouseViewBack: TRectangle;
-    FMouseViewLabel: TLabel;
-    FMouseViewDetails: TLayout;
-    FMouseAzimuthValue: TLabel;
-    FMouseDistanceName: TLabel;
-    FMouseDistanceValue: TLabel;
     //** @abstract(The mouse view's turn and zoom, on top of the normal view.)
     //** FMouseYaw is in degrees of the camera's own Azimuth, wrapped into 0 to 360, and
     //** FMouseZoom a factor on the distance, or on the orthographic size; 0 and 1 while the
@@ -701,7 +775,7 @@ type
     FMouseDragging: Boolean;
     FMouseLastX: Single;
     // The frame rate the viewport draws at, top left of the view, and the
-    // timer that refreshes it, and the Mouse View readout
+    // timer that refreshes it
     FFpsLabel: TLabel;
     FFpsBack: TRectangle;   // dark, so the label reads on any background
     FReadoutTimer: TTimer;
@@ -710,6 +784,143 @@ type
     // another, so the frame rate follows that display's refresh rate
     FDisplays: TPeardoxDisplays;
     FDisplayIndex: Integer;
+    //** @abstract(The box shown where a piece dragged from the Library would come to rest,
+    //** a
+    //** child of FLevel; hidden but while one is over the floor. Made by BuildLevel.)
+    FPlaceBox: TSprite3DPlacementBox;
+    //** @abstract(True while FPlaceBox is shown, round FPlaceSpots.)
+    FPlaceShown: Boolean;
+    //** @abstract(The height the origin of each piece shown would rest at, in the level's
+    //** coordinates.)
+    FPlaceLand: Single;
+    //** @abstract(Where each piece shown would go across the floor: its origin's X and Z,
+    //** in
+    //** X and Y. One while hovering; the area's while dragging.)
+    FPlaceSpots: TArray<TPointF>;
+    //** @abstract(The model Place Model places: the one last chosen in the Library that can
+    //** be
+    //** placed.)
+    FBrush: TSprite3DPieceSpec;
+    //** Every model picked in the Library, FBrush first: each piece placed is
+    //** one of them at random; FBrush alone sets the spacing and the box shown
+    FBrushSet: TArray<TSprite3DPieceSpec>;
+    //** @abstract(True once a model has been chosen to place.)
+    FHasBrush: Boolean;
+    //** @abstract(True while the left button, pressed over the floor with Place Model on,
+    //** is
+    //** held: the area from FPlaceAnchor to the pointer is shown.)
+    FPlaceDown: Boolean;
+    //** @abstract(Where the area started: the spot under the pointer as the button went
+    //** down.)
+    FPlaceAnchor: TPointF;
+    //** @abstract(True once the Debug tab has said this area was cut to MAX_AREA_PIECES.)
+    FPlaceCapLogged: Boolean;
+    //** @abstract(The time PlacePiece has spent, since PlaceShown began, loading pieces,
+    //** and
+    //** putting them in the level, in stopwatch ticks: for the Debug tab, to see where an
+    //** area's time goes.)
+    FMakeTicks, FSetupTicks: Int64;
+    //** Numbers the instances, which are named
+    FInstanceSerial: Integer;
+    //** Rotate and Bend. FEditTool is the palette's tool while Mouse View is
+    //** off. FPoser, a hidden child of FLevel, gives an instance its whole
+    //** transform the way FMX gives the template its own; FTurnSign is the
+    //** way FMX turns for a positive angle about the level's up axis.
+    //** FPickBox outlines FPicked, the piece under the pointer (-1 for none).
+    //** While FTurnDown, the pieces FTurnSet are being turned by FTurnBy
+    //** degrees about FTurnHinge, from where they were (FTurnSaved, every
+    //** piece as it was when FTurnButton was pressed, at FTurnStartX)
+    FEditTool: TLevelEditTool;
+    FPoser: TDummy;
+    FTurnSign: Single;
+    FPickBox: TSprite3DPlacementBox;
+    FPicked: Integer;
+    FTurnDown: Boolean;
+    FTurnButton: TMouseButton;
+    FTurnStartX: Single;
+    FTurnBy: Single;
+    FTurnHinge: TPointF;
+    FTurnSet: TArray<Integer>;
+    //** How many of FTurnSet are carried: stacked on the pieces turned
+    FTurnCarried: Integer;
+    FTurnSaved: TArray<TLevelPiece>;
+    FRotateButton, FBendButton: TRectangle;
+    FRotationSnapItem: TMenuItem;
+    //** Erase, Move Object and Move Camera. FNextPieceId numbers the pieces.
+    //** Move Object: while FMoveDown, piece FMoveIndex follows the pointer,
+    //** its middle FMoveOffset from the floor point under it; FMoveRiders, the
+    //** pieces resting on it, are left behind and fall when it is let go.
+    //** Move Camera: while FPanDown, the floor point FPanGrab stays under the
+    //** pointer; FViewCentre is the middle of the floor the view is fitted to
+    FNextPieceId: Integer;
+    FEraseButton, FMoveButton, FPanButton: TRectangle;
+    FMoveDown: Boolean;
+    FMoveIndex: Integer;
+    FMoveOffset: TPointF;
+    FMoveStart: TPoint3D;
+    FMoveRiders: TArray<Integer>;
+    FPanDown: Boolean;
+    FPanGrab: TPointF;
+    FViewCentre: TPointF;
+    //** The history panel: on the left, below the palette, newest first; at
+    //** most HISTORY_MAX entries. FMovingPanel is the panel whose grip is held
+    FHistory: TList<THistoryEntry>;
+    FHistoryBack, FHistoryGrip: TRectangle;
+    FHistoryBox: TVertScrollBox;
+    FMovingPanel: TControl;
+    //** Edit, Undo: takes out the newest history line's pieces, the last
+    //** addition; made with the history, desktop only
+    FEditMenu, FUndoItem, FResetLevelItem: TMenuItem;
+    //** Level files: FLevelFile, the file the level was last saved to or
+    //** loaded from (empty for a new one); FLevelDirty, changed since;
+    //** FCloseAsked, the user has said what to do with the changes, so the
+    //** window may close. File, Load Level, Save Level and Save Level As
+    FLevelFile: String;
+    FLevelDirty: Boolean;
+    FCloseAsked: Boolean;
+    FLoadLevelItem, FSaveLevelItem, FSaveLevelAsItem: TMenuItem;
+    //** View, History: shows or hides the history panel. FPanelsPlaced: the
+    //** palette and the history have been put where settings.json says, once
+    //** the window had its size; until then their places are not kept
+    FHistoryItem: TMenuItem;
+    FPanelsPlaced: Boolean;
+    //** The view's size the panels were last kept for: as it changes, each
+    //** panel keeps its distance from the edges it is nearer
+    FViewSize: TSizeF;
+    //** @abstract(How many pieces across X and Z the box shown holds: 1 and 1 but while an
+    //** area is dragged.)
+    FPlaceCountX, FPlaceCountZ: Integer;
+    //** The area's first spot and the signed step to the next, each way, so
+    //** the rest height is found without testing every spot (AreaSpots)
+    FAreaOrigin, FAreaStep: TPointF;
+    //** @abstract(For each model placed, by its key, the file its pieces load and whether
+    //** it
+    //** is static, found when its first piece is placed. Made by BuildLevel.)
+    FSources: TDictionary<String, TPieceSource>;
+    //** @abstract(The palette: a floating toolbar over the view, on a dark backing,
+    //** upright,
+    //** with a grip across its top to move it and the Place Model and Mouse View tools under
+    //** it. Made by BuildPalette; desktop only.)
+    FPaletteBack: TRectangle;
+    //** @abstract(The palette's grip, across its top: dragging it moves the palette.)
+    FPaletteGrip: TRectangle;
+    //** @abstract(The palette's Place Model and Mouse View buttons.)
+    FPlaceButton, FCameraButton: TRectangle;
+    //** @abstract(The status bar along the bottom of the form: the tool on, the model it
+    //** places and what the mouse does. Made by BuildStatusBar; desktop only.)
+    FStatusBar: TStatusBar;
+    //** @abstract(The status bar's text.)
+    FStatusLabel: TLabel;
+    //** @abstract(True while the grip is dragged.)
+    FPaletteMoving: Boolean;
+    //** @abstract(Where the grip was taken, in the palette's own coordinates.)
+    FPaletteGrab: TPointF;
+    //** @abstract(Every piece placed, in the order placed. Made by BuildLevel.)
+    FPieces: TList<TLevelPiece>;
+    //** @abstract(Moves the falling pieces, while any fall.)
+    FFallTimer: TTimer;
+    //** @abstract(The clock the falls are timed by, started by BuildLevel.)
+    FClock: TStopwatch;
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
     // The Settings dialog's starting values, for comparing on OK
     FSettingsBefore: TSprite3DGeneralSettings;
@@ -915,27 +1126,15 @@ type
     function CameraLocked: Boolean;
     function IsCameraViewItem(const AItem: TMenuItem): Boolean;
     procedure UpdateCameraLockControls;
-    //** @abstract(Adds View, Camera, Mouse View and the "Mouseview On" readout,
-    //** and hooks the mouse on the view.) Desktop only; called by BuildLockCameraItem, just
-    //** before Lock Camera is added.
+    //** @abstract(Adds View, Camera, Mouse View, and hooks the mouse on the view.) Desktop
+    //** only; called by BuildLockCameraItem, just before Lock Camera is added.
     procedure BuildMouseViewItem;
-    //** @abstract(Puts the "Mouseview On" readout at the top right of the view.) Called as
-    //** the view is resized.
-    procedure PlaceMouseViewReadout;
-    //** @abstract(Shows the mouse view's turn and zoom in the readout.)
-    //** The azimuth, as the dials show it, as + or - its normal value, and the distance, or in
-    //** orthographic projection the orthographic size, as a factor on its normal value, as
-    //** Variable's Distance slider gives its own, each to 3 decimal places, with "Right Click
-    //** to Reset" under them; shown only while either differs from normal, the readout
-    //** shrinking back to its title when the turn is 0 and the factor 1.
-    procedure UpdateMouseViewReadout;
     //** @abstract(Ticks or unticks Mouse View, and keeps the tick in
     //** settings.json.) Unticking it puts the normal view back. The view takes the mouse
     //** only while it is ticked.
     procedure MouseViewItemClick(Sender: TObject);
     //** @abstract(Ticks or unticks Mouse View, without saving it.)
-    //** Unticked, the normal view is put back; the view takes the mouse and shows the
-    //** readout only while it is ticked.
+    //** Unticked, the normal view is put back.
     //** @param(AOn True to tick it.)
     procedure ApplyMouseViewTick(const AOn: Boolean);
     //** @abstract(True while View, Camera, Mouse View is ticked.)
@@ -993,7 +1192,7 @@ type
     procedure BuildLevel;
     //** @abstract(Makes the frame rate readout, top left over the view, and its timer.)
     procedure BuildFpsReadout;
-    //** @abstract(Refreshes the frame rate and Mouse View readouts, and checks the display.)
+    //** @abstract(Refreshes the frame rate readout, and checks the display.)
     //**
     //** @param(Sender FReadoutTimer.)
     procedure ReadoutTimerTimer(Sender: TObject);
@@ -1003,6 +1202,375 @@ type
     //**
     //** @returns(The volume.)
     function ViewVolume: TSweptVolume;
+    //** @abstract(The floor point under a point of the screen, if it is over the view and
+    //** shows the floor.)
+    //**
+    //** Four floor points, LEVEL_FRAME_CELLS cells apart, are shown through the camera
+    //** (ProjectToView) and the map of the view onto the floor solved from them
+    //** (TSprite3DFloorMap), so it holds for every projection. The point found is shown again
+    //** and must land within FLOOR_MAP_TOLERANCE pixels of the pointer, which rules out the
+    //** sky in perspective, whose map points behind the camera.
+    //**
+    //** @param(AScreen The point, in screen coordinates.)
+    //**
+    //** @param(AOverView Set to True if it is over the view at all.)
+    //**
+    //** @param(AFloor Set to the floor's X and Z there, in its X and Y.)
+    //**
+    //** @returns(True if the floor is there.)
+    function LevelFloorAt(const AScreen: TPointF; out AOverView: Boolean;
+      out AFloor: TPointF): Boolean;
+    //** @abstract(The boxes of every piece placed, where each lands.)
+    //**
+    //** @returns(The boxes, in the level's coordinates.)
+    function PlacedBoxes: TArray<TBoundingBox>;
+    //** @abstract(The model chosen in the Library: the one Place Model places, if it can be
+    //** placed.)
+    //**
+    //** @param(ASpecs The models picked that can be placed, the one clicked first.)
+    //**
+    //** @param(ALeftOut The names of those picked that cannot be placed yet.)
+    procedure ChooseModel(const ASpecs: TArray<TSprite3DPieceSpec>;
+      const ALeftOut: TArray<String>);
+    //** @abstract(What Place Model places, for the status bar and the Debug tab: the
+    //** model's name, or the first's and how many more it picks among.)
+    function BrushName: String;
+    //** @abstract(True while Place Model is the palette's tool and Mouse View is off.)
+    //**
+    //** @returns(Whether the left button places.)
+    function PlaceToolOn: Boolean;
+    //** @abstract(True while Rotate is the palette's tool.)
+    function RotateToolOn: Boolean;
+    //** @abstract(True while Bend is the palette's tool.)
+    function BendToolOn: Boolean;
+    //** @abstract(Turns a vector across the level about its up axis, as FMX turns a child
+    //** of
+    //** the level by RotationAngle.Y.)
+    //**
+    //** @param(AVector The vector, in the level's coordinates; its Y is kept.)
+    //**
+    //** @param(ADegrees The turn.)
+    //**
+    //** @returns(The vector turned.)
+    function TurnVector(const AVector: TPoint3D; const ADegrees: Single): TPoint3D;
+    //** @abstract(A box turned about the up axis through its origin, squared up to the
+    //** axes.)
+    function TurnedBox(const ABox: TBoundingBox; const ADegrees: Single): TBoundingBox;
+    //** @abstract(The middle of a piece's footprint, in the level, as X and Z.)
+    function PieceMiddle(const APiece: TLevelPiece): TPointF;
+    //** @abstract(The floor point, or the point at a height above it, under a point of the
+    //** screen; LevelFloorAt at height 0.)
+    function LevelPlaneAt(const AScreen: TPointF; const AHeight: Single;
+      out AOverView: Boolean; out APoint: TPointF): Boolean;
+    //** @abstract(The piece under a point of the screen: the nearest whose turned box the
+    //** line of sight meets.)
+    //**
+    //** @returns(Its index in FPieces, or -1 for none.)
+    function PieceAt(const AScreen: TPointF): Integer;
+    //** @abstract(Gives an outline's control the size of the box it draws, so it is not
+    //** passed over as out of sight while its box is in sight.)
+    procedure FitOutline(const AOutline: TSprite3DPlacementBox);
+    //** @abstract(Outlines a piece, the one under the pointer, or hides the outline.)
+    //**
+    //** @param(AIndex The piece's index in FPieces; -1 to hide it.)
+    procedure ShowPick(const AIndex: Integer);
+    //** @abstract(Starts turning a piece, with Rotate, or bending at it, with Bend.)
+    //**
+    //** @param(AIndex The piece pressed on, -1 for none.)
+    //**
+    //** @param(AReversed With Bend, True for the right button: the piece and those to its
+    //** left turn, about its join with the piece to its right.)
+    //**
+    //** @param(AX Where the pointer is, across the view.)
+    //**
+    //** @param(AButton The button pressed, which must stay held.)
+    //**
+    //** @returns(True if a turn started.)
+    function StartTurn(const AIndex: Integer; const AReversed: Boolean; const AX: Single;
+      const AButton: TMouseButton): Boolean;
+    //** @abstract(Turns the pieces being turned by ADegrees from where they were.)
+    procedure ApplyTurn(const ADegrees: Single);
+    //** @abstract(Ends a turn: Rotate puts a piece left square to the grid back on it.)
+    procedure EndTurn;
+    //** @abstract(Begins (True) or ends (False) editing every template's instances, so they
+    //** go to the GPU once.)
+    procedure EditInstances(const ABegin: Boolean);
+    //** @abstract(Chooses one of the palette's tools that change the level, turning Mouse
+    //** View off.)
+    procedure ChooseEditTool(const ATool: TLevelEditTool);
+    //** @abstract(Says in the Debug tab what the tool now on does.)
+    procedure LogEditTool;
+    //** @abstract(The status bar's text for Rotate and Bend.)
+    function TurnStatus: String;
+    //** @abstract(Shows the Rotation Snap dialog and keeps the step chosen.)
+    procedure ShowRotationSnap;
+    //** @abstract(Chooses Rotate.)
+    procedure RotateButtonClick(Sender: TObject);
+    //** @abstract(Chooses Bend.)
+    procedure BendButtonClick(Sender: TObject);
+    //** @abstract(A double-click on Rotate or Bend: chooses it and shows Rotation Snap.)
+    procedure TurnButtonDblClick(Sender: TObject);
+    //** @abstract(File, Rotation Snap...: shows the Rotation Snap dialog.)
+    procedure RotationSnapItemClick(Sender: TObject);
+    //** @abstract(True while Erase is the palette's tool.)
+    function EraseToolOn: Boolean;
+    //** @abstract(True while Move Object is the palette's tool.)
+    function MoveToolOn: Boolean;
+    //** @abstract(True while Move Camera is the palette's tool.)
+    function PanToolOn: Boolean;
+    //** @abstract(True while a tool that points at pieces is on: Erase, Move Object, Rotate
+    //** or Bend.)
+    function PickToolOn: Boolean;
+    //** @abstract(Chooses Erase.)
+    procedure EraseButtonClick(Sender: TObject);
+    //** @abstract(Chooses Move Object.)
+    procedure MoveButtonClick(Sender: TObject);
+    //** @abstract(Chooses Move Camera.)
+    procedure PanButtonClick(Sender: TObject);
+    //** @abstract(The index in FPieces of the piece numbered AId, or -1.)
+    function PieceIndexOf(const AId: Integer): Integer;
+    //** @abstract(The indices in FPieces of the pieces numbered AIds that are still there.)
+    function IndicesOf(const AIds: TArray<Integer>): TArray<Integer>;
+    //** @abstract(Takes pieces out of the level, then lets whatever rested on them fall.)
+    //**
+    //** @param(AIndices Their indices in FPieces, in any order.)
+    procedure RemovePieces(const AIndices: TArray<Integer>);
+    //** @abstract(Lets a piece go, before RemovePieces drops it from FPieces: its instance
+    //** is freed; the model's template stays, parked and loaded. AGone, the pieces going, is
+    //** not needed now that no piece is a template, and kept for the caller's sake.)
+    procedure ReleasePiece(const AIndex: Integer; const AGone: TArray<Boolean>);
+    //** @abstract(Lets every piece over a part of the floor, with nothing under it now,
+    //** fall onto what is, lowest first; a piece that falls adds its footprint to the part,
+    //** so what rested on it falls too.)
+    //**
+    //** @param(ARegion The part of the floor, X and Z, where something was taken away.)
+    procedure SettlePieces(const ARegion: TRectF);
+    //** @abstract(The pieces resting on a piece, on those, and so on up.)
+    function RidersOf(const AIndex: Integer): TArray<Integer>;
+    //** @abstract(Starts Move Object on a piece.)
+    function StartMove(const AIndex: Integer; const AScreen: TPointF): Boolean;
+    //** @abstract(Moves the piece being moved under a point of the screen.)
+    procedure TrackMove(const AScreen: TPointF; const AFree: Boolean);
+    //** @abstract(Ends Move Object: what rested on the piece falls.)
+    procedure EndMove;
+    //** @abstract(Move Camera: slides the view so the floor point grabbed comes back under
+    //** a point of the screen.)
+    procedure TrackPan(const AScreen: TPointF);
+    //** @abstract(Moves FViewCentre, and the camera with it, across the level.)
+    procedure MoveViewCentre(const ADelta: TPointF);
+    //** @abstract(Puts the view's centre back on the level's middle and refits.)
+    procedure ResetViewCentre;
+    //** @abstract(Makes the history panel.)
+    procedure BuildHistory;
+    //** @abstract(Adds a line to the history for pieces just placed.)
+    procedure AddHistory(const AName: String; const AIds: TArray<Integer>);
+    //** @abstract(Takes pieces gone from the level off the history, and drops empty lines.)
+    procedure PruneHistory;
+    //** @abstract(Lays out the history panel's lines again.)
+    procedure ShowHistory;
+    //** @abstract(A history line's remove button: takes its pieces out of the level.)
+    procedure HistoryRemoveClick(Sender: TObject);
+    //** @abstract(Keeps one floating panel inside the view.)
+    procedure KeepPanelInView(const APanel: TControl);
+    //** @abstract(Edit, Undo: takes out the pieces of the last addition, the newest history
+    //** line.)
+    procedure UndoItemClick(Sender: TObject);
+    //** @abstract(Edit, Reset Level: asks, then takes every piece out, leaving the empty
+    //** grid.)
+    procedure ResetLevelItemClick(Sender: TObject);
+    //** @abstract(Adds File, Load Level..., Save Level and Save Level As... at the top of
+    //** the File menu.)
+    procedure BuildLevelFileItems;
+    //** @abstract(Notes the level has changed since it was saved or loaded.)
+    procedure MarkLevelChanged;
+    //** @abstract(The window's title: the level's name, with * while it has changes not
+    //** saved, then the projection.)
+    procedure UpdateCaption;
+    //** @abstract(The level's file name, or Untitled.)
+    function LevelName: String;
+    //** @abstract(Writes the level, every piece and the history, to a level file.)
+    //**
+    //** @returns(True if it was written.)
+    function SaveLevelTo(const AFileName: String): Boolean;
+    //** @abstract(Saves to the level's file, asking for one if it has none.)
+    function SaveLevel: Boolean;
+    //** @abstract(Asks for a file and saves the level to it.)
+    function SaveLevelAs: Boolean;
+    //** @abstract(Replaces the level with one read from a level file: its pieces where they
+    //** were, turned as they were, and its history.)
+    //**
+    //** @returns(True if it was read; a piece whose model cannot be loaded is left out, and
+    //** the Debug tab says so.)
+    function LoadLevelFile(const AFileName: String): Boolean;
+    //** @abstract(Does AThen once the level's changes, if any, have been saved or let go:
+    //** asks
+    //** Save, Don't Save or Cancel; Cancel does nothing.)
+    procedure AskToKeepLevel(const AThen: TProc);
+    //** @abstract(File, Load Level...: the level's changes seen to, then a level file
+    //** chosen and loaded.)
+    procedure LoadLevelItemClick(Sender: TObject);
+    //** @abstract(File, Save Level: SaveLevel.)
+    procedure SaveLevelItemClick(Sender: TObject);
+    //** @abstract(File, Save Level As...: SaveLevelAs.)
+    procedure SaveLevelAsItemClick(Sender: TObject);
+    //** @abstract(A file the system asks Sprite3DBuilder to open, as by Open With or a
+    //** double-click on a level file: loads it, once the level's changes are seen to.)
+    procedure OpenRequestedFile(const AFileName: String);
+    //** @abstract(View, History: shows or hides the history panel.)
+    procedure HistoryItemClick(Sender: TObject);
+    //** @abstract(Puts the palette and the history where settings.json says, or where they
+    //** start the first time: the palette top left, the history top right. Queued from
+    //** FormCreate, so the view has its size.)
+    procedure PlacePanels;
+    //** @abstract(Keeps the windows' places, the panels' and whether the history is shown
+    //** in FSettings, for SaveViewState to save.)
+    procedure KeepPlaces;
+    //** @abstract(Moves a panel with the view's right or bottom edge, if it is nearer that
+    //** edge, as the view changes size.)
+    procedure AnchorPanel(const APanel: TControl; const AOld, ANew: TSizeF);
+    //** @abstract(Where the model chosen would go for a point of the screen: the floor
+    //** point
+    //** under it, snapped to the grid for the model's footprint.)
+    //**
+    //** @param(AScreen The point, in screen coordinates.)
+    //**
+    //** @param(ASpot Set to the model's origin's X and Z, in X and Y.)
+    //**
+    //** @returns(False if no model is chosen or the floor is not there.)
+    function PlaceSpotAt(const AScreen: TPointF; out ASpot: TPointF): Boolean;
+    //** @abstract(The spots of an area of the model chosen, repeated from one spot to
+    //** another.)
+    //**
+    //** Each step is the model's footprint in whole cells (its size over the grid's,
+    //** rounded, at least 1), so the copies lie edge to edge. At most MAX_AREA_PIECES: past
+    //** that the longer side is cut, and the Debug tab says so once.
+    //**
+    //** @param(AFrom The spot the area started at.)
+    //**
+    //** @param(ATo The spot under the pointer.)
+    //**
+    //** @returns(The spots, row by row.)
+    function AreaSpots(const AFrom, ATo: TPointF): TArray<TPointF>;
+    //** @abstract(Shows where the model chosen would rest at each of ASpots: one box round
+    //** them all, at the height of the highest piece under any of them, or the floor.)
+    //**
+    //** @param(ASpots The spots, as AreaSpots or PlaceSpotAt give them.)
+    procedure ShowPlacement(const ASpots: TArray<TPointF>);
+    //** @abstract(Hides the box.)
+    procedure HidePlacement;
+    //** @abstract(Shows the box for the pointer as it is, with the button up or held.)
+    //**
+    //** @param(AScreen The pointer, in screen coordinates.)
+    procedure TrackPlacement(const AScreen: TPointF);
+    //** @abstract(Places the model chosen at every spot shown, and lets them fall into the
+    //** box.)
+    procedure PlaceShown;
+    //** @abstract(Adds a piece of a model to the level, loaded as the Library loads a
+    //** model,
+    //** and lets it fall.)
+    //**
+    //** Each piece is a model of its own, made with @code(TGorillaModel.Create) and loaded
+    //** with its own @code(LoadFromFile), so it owns its definition and can be freed alone:
+    //** never with the @code(LoadNewModelFrom...) class functions (see the handover's Gorilla3D
+    //** notes).
+    //**
+    //** @param(ASpec The model.)
+    //**
+    //** @param(ASource What PieceSourceFor found for it.)
+    //**
+    //** @param(AFrom Where its origin starts, in the level's coordinates.)
+    //**
+    //** @param(ALand The height its origin lands at.)
+    //**
+    //** @returns(False, the Debug tab saying why, if it could not be made.)
+    procedure MovePiece(const APiece: TLevelPiece; const AY: Single);
+    //** @abstract(Places one piece of ASpec: a GPU instance of ASource's template, at
+    //** AFrom, to fall to height ALand; False if it could not be added.)
+    function PlacePiece(const ASpec: TSprite3DPieceSpec; var ASource: TPieceSource;
+      const AFrom: TPoint3D; const ALand: Single): Boolean;
+    //** @abstract(Frees every piece placed, before the form frees its children, with the
+    //** fall
+    //** timer stopped.)
+    procedure FreeLevelPieces;
+    //** @abstract(Makes the palette: the floating toolbar over the view.)
+    procedure BuildPalette;
+    //** @abstract(Makes the status bar along the bottom of the form.)
+    procedure BuildStatusBar;
+    //** @abstract(Says in the status bar which tool is on, the model it places, and what
+    //** the mouse does: while an area is dragged, its size.)
+    procedure UpdateStatus;
+    //** @abstract(What placing a model needs, found once: its textures fixed (the file to
+    //** load) and whether it is static, from loading it once as the Library does.)
+    //**
+    //** @param(ASpec The model.)
+    //**
+    //** @param(ASource Set to what was found.)
+    //**
+    //** @returns(False, the Debug tab saying why, if it could not be loaded.)
+    function PieceSourceFor(const ASpec: TSprite3DPieceSpec;
+      out ASource: TPieceSource): Boolean;
+    //** @abstract(Shows which tool is on and the model chosen, on the palette.)
+    procedure UpdatePalette;
+    //** @abstract(Keeps the palette inside the view, as the view is resized.)
+    procedure KeepPaletteInView;
+    //** @abstract(Chooses the palette's tool: Mouse View, or Place Model; ticks View, Mouse
+    //** View to match, keeps it in settings.json and says so in the Debug tab.)
+    //**
+    //** @param(AMouseView True for Mouse View, False for Place Model.)
+    procedure ChooseTool(const AMouseView: Boolean);
+    //** @abstract(Chooses Place Model.)
+    //**
+    //** @param(Sender FPlaceButton.)
+    procedure PlaceButtonClick(Sender: TObject);
+    //** @abstract(Chooses Mouse View.)
+    //**
+    //** @param(Sender FCameraButton.)
+    procedure CameraButtonClick(Sender: TObject);
+    //** @abstract(Starts moving the palette.)
+    //**
+    //** @param(Sender FPaletteGrip.)
+    //**
+    //** @param(Button The button pressed.)
+    //**
+    //** @param(Shift The keys and buttons held.)
+    //**
+    //** @param(X Where, across the grip.)
+    //**
+    //** @param(Y Where, down the grip.)
+    procedure PaletteGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
+      X, Y: Single);
+    //** @abstract(Moves the palette with the pointer, inside the view.)
+    //**
+    //** @param(Sender FPaletteGrip.)
+    //**
+    //** @param(Shift The keys and buttons held.)
+    //**
+    //** @param(X Where, across the grip.)
+    //**
+    //** @param(Y Where, down the grip.)
+    procedure PaletteGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single);
+    //** @abstract(Stops moving the palette.)
+    //**
+    //** @param(Sender FPaletteGrip.)
+    //**
+    //** @param(Button The button let go.)
+    //**
+    //** @param(Shift The keys and buttons held.)
+    //**
+    //** @param(X Where, across the grip.)
+    //**
+    //** @param(Y Where, down the grip.)
+    procedure PaletteGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
+      X, Y: Single);
+    //** @abstract(Hides the box as the pointer leaves the view, unless an area is being
+    //** dragged.)
+    //**
+    //** @param(Sender AspectLayout.)
+    procedure ViewMouseLeave(Sender: TObject);
+    //** @abstract(Moves each falling piece down, under gravity, until it lands.)
+    //**
+    //** @param(Sender FFallTimer.)
+    procedure FallTimerTimer(Sender: TObject);
     {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   private
     // Mobile only: FMX shows no TMainMenu there, so MainMenu1 is offered
@@ -1042,7 +1610,9 @@ implementation
 
 uses
   FMX.Platform, System.IOUtils, OSPaths, Gorilla.DefTypes, System.Math,
-  FMX.DialogService, Sprite3DBuilderLicencesForm;
+  FMX.DialogService, Sprite3DBuilderLicencesForm, System.StrUtils, Sprite3DModelTextures,
+  Sprite3DModelContent, Sprite3DBuilderRotationForm, System.Generics.Defaults, System.JSON,
+  JsonText, Sprite3DOpenFiles;
 
 const
   //** @abstract(Mouse View: degrees the view turns for each pixel the pointer
@@ -1057,15 +1627,6 @@ const
   //** @abstract(Mouse View: the furthest the wheel takes the camera, as a factor
   //** of the normal view's distance or orthographic size.)
   MOUSE_VIEW_ZOOM_MAX = 10.0;
-  //** @abstract(Mouse View: the readout's width, its title's height, the height
-  //** of each line under the title, and the width of the values' column, in pixels.)
-  MOUSE_VIEW_READOUT_WIDTH = 160;
-  MOUSE_VIEW_TITLE_HEIGHT = 20;
-  MOUSE_VIEW_ROW_HEIGHT = 17;
-  MOUSE_VIEW_VALUE_WIDTH = 72;
-  //** @abstract(Mouse View: a difference from the normal view smaller than this
-  //** shows as 0.000, and counts as none.)
-  MOUSE_VIEW_SHOWN_ZERO = 0.0005;
 
 {$R *.fmx}
 
@@ -1082,6 +1643,76 @@ const
   // in a kit whose walls are two cells tall
   LEVEL_FRAME_CELLS = 10;
   LEVEL_FRAME_CELLS_HIGH = 2;
+  //** @abstract(How far above where it rests a piece let go starts its fall, in grid cells:
+  //** just enough to see it settle. The box shown while dragging is where it rests.)
+  PLACE_LIFT_CELLS = 0.25;
+  //** @abstract(Gravity, in grid cells per second per second, so a fall looks the same at
+  //** any grid spacing; the fall of PLACE_LIFT_CELLS takes about a tenth of a second.)
+  FALL_GRAVITY_CELLS = 40;
+  //** @abstract(How often the falling pieces are moved, in milliseconds.)
+  FALL_STEP_MS = 15;
+  //** @abstract(How near, in pixels, the floor point found must show to the pointer.)
+  FLOOR_MAP_TOLERANCE = 1.5;
+  //** @abstract(The colour of the box shown where a piece would go: light cyan, apart from
+  //** Gorilla's orange bounding boxes. Also the edge of the palette's tool that is on.)
+  PLACE_BOX_COLOUR = $FF40E0F0;
+  //** @abstract(The most pieces one click and drag places: 100 by 100. Once every piece
+  //** loaded its model, at about 170 ms a piece, and an area held 256; GPU instances cost
+  //** almost nothing each.)
+  MAX_AREA_PIECES = 10000;
+  //** @abstract(The palette's buttons, square, in pixels; its grip's height; and the gap
+  //** between its parts.)
+  PALETTE_BUTTON = 32;
+  PALETTE_GRIP = 10;
+  PALETTE_GAP = 4;
+  //** @abstract(The Place Model icon, as FMX path data in a 24 by 24 square: an arrow
+  //** coming
+  //** down onto a cube.)
+  PLACE_MODEL_ICON = 'M12,1 L12,9 M8.5,5.5 L12,9 L15.5,5.5 ' +
+    'M12,11 L20,15 L12,19 L4,15 Z M4,15 L4,20 L12,24 L20,20 L20,15 M12,19 L12,24';
+  //** @abstract(The Mouse View icon, as path data in a 24 by 24 square: a small camera with
+  //** an arrow circling round it, as Mouse View turns the view about the level.)
+  MOUSE_VIEW_ICON = 'M8,10.5 L10,10.5 L11,9 L13,9 L14,10.5 L16,10.5 L16,15 L8,15 Z ' +
+    'M2.5,13 C2.5,7.5 6.8,4 12,4 C17.2,4 21.5,7.5 21.5,13 M19.3,11 L21.5,13.6 L23.6,11 ' +
+    'M21.5,15.5 C20.5,18.6 16.6,21 12,21 C7.4,21 3.5,18.6 2.5,15.5';
+  //** @abstract(The Rotate icon, as path data in a 24 by 24 square: a circling arrow round
+  //** a
+  //** square seen from above.)
+  ROTATE_ICON = 'M20,12 C20,16.42 16.42,20 12,20 C7.58,20 4,16.42 4,12 ' +
+    'C4,7.58 7.58,4 12,4 C14.5,4 16.7,5.1 18.2,6.9 M18.6,2.5 L18.4,7.2 L13.8,7.0 ' +
+    'M9,9 L15,9 L15,15 L9,15 Z';
+  //** @abstract(The Bend icon, as path data in a 24 by 24 square: a run of wall bent at a
+  //** hinge, with an arc for the turn.)
+  BEND_ICON = 'M1,17 L11,17 L11,21 L1,21 Z M11,17 L18,10 L21,13 L13.8,20.2 ' +
+    'M13,19 C13,20.1 12.1,21 11,21 C9.9,21 9,20.1 9,19 C9,17.9 9.9,17 11,17 ' +
+    'C12.1,17 13,17.9 13,19 Z M17,17 C17,15.6 16.5,14.3 15.6,13.3';
+  //** @abstract(The colour of the outline round the piece Move Object, Rotate or Bend would
+  //** take: amber.)
+  PICK_BOX_COLOUR = $FFFFB020;
+  //** @abstract(The colour of the outline round the piece Erase would remove: red.)
+  ERASE_BOX_COLOUR = $FFFF4040;
+  //** @abstract(The Erase icon, as path data in a 24 by 24 square: an eraser on a line.)
+  ERASE_ICON = 'M3,15 L13,5 L21,13 L13,21 L9,21 Z M8,10 L16,18 M2,23 L22,23';
+  //** @abstract(The Move Object icon: a cube with arrows out to the four sides.)
+  MOVE_OBJECT_ICON = 'M12,8 L16,10 L12,12 L8,10 Z M8,10 L8,14 L12,16 L16,14 L16,10 ' +
+    'M12,12 L12,16 M12,6 L12,1 M10,3 L12,1 L14,3 M12,18 L12,23 M10,21 L12,23 L14,21 ' +
+    'M6,12 L1,12 M3,10 L1,12 L3,14 M18,12 L23,12 M21,10 L23,12 L21,14';
+  //** @abstract(The Move Camera icon: a small camera with arrows out to the four sides.)
+  MOVE_CAMERA_ICON = 'M7,10 L9,10 L10,8.5 L14,8.5 L15,10 L17,10 L17,16 L7,16 Z ' +
+    'M12,6 L12,1 M10,3 L12,1 L14,3 M12,18 L12,23 M10,21 L12,23 L14,21 ' +
+    'M5,13 L1,13 M3,11 L1,13 L3,15 M19,13 L23,13 M21,11 L23,13 L21,15';
+  //** @abstract(The most lines the history keeps.)
+  HISTORY_MAX = 50;
+  //** @abstract(The history panel's width, and the height of a line, in pixels.)
+  HISTORY_WIDTH = 210;
+  HISTORY_LINE = 24;
+  //** @abstract(Where a model's template is kept, in the level, far below the floor, out of
+  //** sight: every piece is a GPU instance of it, and Gorilla draws it too, as instance #0.)
+  TEMPLATE_PARK_Y = -100000;
+  //** @abstract(Rotate and Bend: degrees a piece turns for each pixel the pointer moves
+  //** left
+  //** or right, as Mouse View turns the view.)
+  TURN_DEGREES_PER_PIXEL = 0.5;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
@@ -1141,6 +1772,12 @@ begin
   // Settings from earlier sessions; on the first run, the defaults
   FSettings := TSprite3DAppSettings.Create;
   FSettings.Load;
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  // Where it was last session, on the monitor it was on, kept on a monitor
+  // that is there and within its work area
+  PlaceFormOnScreen(Self, FSettings.MainLeft, FSettings.MainTop, FSettings.MainWidth,
+    FSettings.MainHeight, FSettings.MainMaximized);
+  {$ENDIF}
   // The normal view: no mouse view turn or zoom
   FMouseZoom := 1;
   // The frame rate the view is drawn at, as chosen in File, Settings, within
@@ -1192,6 +1829,48 @@ begin
   // View, Camera, Lock Camera; before the menu is mirrored on mobile. On
   // Linux the menu bar has already been swapped, so it goes straight onto it
   BuildLockCameraItem;
+
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  // The palette, over the view, once Mouse View, one of its tools, is made;
+  // desktop only, as the Library its models come from is
+  BuildPalette;
+  BuildHistory;
+  BuildStatusBar;
+  BuildLevelFileItems;
+  // Once the window is shown at its size, so places kept for a larger view
+  // are not pulled in first; then a level the system asked to open, as by a
+  // double-click on it, and later ones as they come
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      PlacePanels;
+      if MainFormGone then
+        Exit;
+      for var Request in FileOpenRequests.TakePending do
+        if IsLevelFile(Request) then
+        begin
+          LoadLevelFile(Request);
+          Break;
+        end;
+      FileOpenRequests.OnOpenFile := OpenRequestedFile;
+    end);
+  // Level files open with this copy of the program; off the main thread,
+  // as on Linux it runs the system's database updates
+  TTask.Run(
+    procedure
+    var
+      Note: String;
+    begin
+      if not RegisterLevelFiles(Note) then
+        TThread.Queue(nil,
+          procedure
+          begin
+            if not MainFormGone then
+              DebugMemo.Lines.Add('Can''t associate ' + LEVEL_FILE_EXTENSION +
+                ' files with Sprite3DBuilder: ' + Note);
+          end);
+    end);
+  {$ENDIF}
 
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   // There is no folder dialog there to add collections with, so no
@@ -1574,7 +2253,7 @@ var
 begin
   if CameraLocked then
   begin
-    Caption := ProjectionCaption;
+    UpdateCaption;
     Exit;
   end;
   Kind := CheckedProjection;
@@ -1604,7 +2283,7 @@ begin
       DebugMemo.Lines.Add('Projection: ' + ProjectionInfo(Kind).Caption +
         ', drawn by TSpritelyProjection over the camera''s perspective');
   end;
-  Caption := ProjectionCaption;
+  UpdateCaption;
   FitModel;
 end;
 
@@ -1618,7 +2297,7 @@ begin
   if FStarted then
     Exit;   // the form can be shown again; the level stays as it is
   FStarted := True;
-  Caption := ProjectionCaption;
+  UpdateCaption;
   DebugMemo.Lines.Add(Format('Empty level: grid of %s units', [FormatFloat('0.###',
     FSettings.GridSize)]));
   // Once the main window is up: the palette, if there is one, on the last
@@ -1628,15 +2307,28 @@ end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  // Nothing is ever being written that a close could leave half done: the
-  // window always closes. Kept as the place to ask before throwing away an
-  // unsaved level, once there are levels.
-  CanClose := True;
+  // A level with changes not saved: asked first, then closed again once the
+  // answer is in, as the dialog may answer after this returns
+  CanClose := FCloseAsked or not FLevelDirty;
+  if CanClose then
+    Exit;
+  AskToKeepLevel(
+    procedure
+    begin
+      FCloseAsked := True;
+      TThread.ForceQueue(nil,
+        procedure
+        begin
+          if not MainFormGone then
+            Close;
+        end);
+    end);
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   MainFormGone := True;   // queued work arriving from here on does nothing
+  FileOpenRequests.OnOpenFile := nil;
   // The projection let go of and freed while the viewport, its hook's owner,
   // and the camera are whole: freed later, with the form's other components,
   // it could meet them half destroyed (ProjectionTest's exit fault in
@@ -1646,6 +2338,13 @@ begin
   FreeAndNil(FProjection);
   if Assigned(FReadoutTimer) then
     FReadoutTimer.Enabled := False;
+  if Assigned(FFallTimer) then
+    FFallTimer.Enabled := False;
+  // The pieces, while the form and the viewport are whole
+  FreeLevelPieces;
+  FreeAndNil(FHistory);
+  FreeAndNil(FPieces);
+  FreeAndNil(FSources);
   FreeAndNil(FDisplays);
   SaveViewState;
   FreeAndNil(FSettings);
@@ -1755,6 +2454,9 @@ begin
   FSettings.Headlight := HeadlightItem.IsChecked;
   FSettings.OriginalLight := OriginalLightItem.IsChecked;
   KeepShiftSettings;
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  KeepPlaces;
+  {$ENDIF}
   try
     FSettings.Save;
   except
@@ -1763,10 +2465,35 @@ begin
 end;
 
 procedure TMainForm.AspectLayoutResize(Sender: TObject);
+var
+  NewSize: TSizeF;
 begin
   // AspectLayout fills ViewportLayout, so this is its resize too; the
-  // viewport fills AspectLayout, and its own OnResize refits the view
-  PlaceMouseViewReadout;
+  // viewport fills AspectLayout, and its own OnResize refits the view.
+  // The panels keep to their nearer edges, then inside the view
+  NewSize := TSizeF.Create(ViewportLayout.Width, ViewportLayout.Height);
+  if FPanelsPlaced and (FViewSize.Width > 0) and (FViewSize.Height > 0) then
+  begin
+    AnchorPanel(FPaletteBack, FViewSize, NewSize);
+    AnchorPanel(FHistoryBack, FViewSize, NewSize);
+  end;
+  FViewSize := NewSize;
+  KeepPaletteInView;
+end;
+
+procedure TMainForm.AnchorPanel(const APanel: TControl; const AOld, ANew: TSizeF);
+var
+  At: TPointF;
+begin
+  if APanel = nil then
+    Exit;
+  At := APanel.Position.Point;
+  // Its middle in the right half: as far from the right edge as it was
+  if At.X + APanel.Width / 2 > AOld.Width / 2 then
+    At.X := At.X + ANew.Width - AOld.Width;
+  if At.Y + APanel.Height / 2 > AOld.Height / 2 then
+    At.Y := At.Y + ANew.Height - AOld.Height;
+  APanel.Position.Point := At;
 end;
 
 procedure TMainForm.GorillaViewportResize(Sender: TObject);
@@ -1839,6 +2566,9 @@ begin
   if FAssetsForm = nil then
   begin
     FAssetsForm := TAssetsForm.Create(Self);
+    // Where it was last session, as the main window is put back
+    PlaceFormOnScreen(FAssetsForm, FSettings.LibraryLeft, FSettings.LibraryTop,
+      FSettings.LibraryWidth, FSettings.LibraryHeight, FSettings.LibraryMaximized);
     FAssetsForm.OnLog :=
       procedure(const AText: String)
       begin
@@ -1846,6 +2576,13 @@ begin
           DebugMemo.Lines.Add(AText);
       end;
     FAssetsForm.MigrationFolder := OSFriendlyPath(FSettings.AssetFolder);
+    // The model selected in the Library is the one Place Model places
+    FAssetsForm.OnModelChosen :=
+      procedure(const ASpecs: TArray<TSprite3DPieceSpec>; const ALeftOut: TArray<String>)
+      begin
+        if not MainFormGone then
+          ChooseModel(ASpecs, ALeftOut);
+      end;
     FAssetsForm.PreviewBackground := FSettings.PreviewBackground;
     // Kept as soon as it is chosen
     FAssetsForm.OnPreviewBackground :=
@@ -2170,7 +2907,7 @@ begin
   FPanZ := EnsureRange(ASpec.PanZ, -PAN_LIMIT, PAN_LIMIT);
   FPanKeep := ASpec.PanKeep;
   RestoreCamera;
-  Caption := ProjectionCaption;
+  UpdateCaption;
   // Kept straight away; SaveViewState writes them again on the way out
   KeepShiftSettings;
   try
@@ -2287,7 +3024,7 @@ begin
   FPanX := 0;
   FPanZ := 0;
   // The caption drops "(shifted)"
-  Caption := ProjectionCaption;
+  UpdateCaption;
 end;
 
 // Sets a fixed view: the given inclination and azimuth (45 unless given)
@@ -2561,9 +3298,1025 @@ begin
   Half := LEVEL_FRAME_CELLS * FSettings.GridSize / 2;
   // In the level's own coordinates, Y up: the floor, and the height of a
   // wall above it
-  Box := TBoundingBox.Create(Point3D(-Half, 0, -Half),
-    Point3D(Half, LEVEL_FRAME_CELLS_HIGH * FSettings.GridSize, Half));
-  Result := CalcSweptVolume(Box, TPoint3D.Zero, saY);
+  // Centred on FViewCentre, which Move Camera moves, so a refit keeps the
+  // view where it was moved to, and the view turns about it
+  Box := TBoundingBox.Create(Point3D(FViewCentre.X - Half, 0, FViewCentre.Y - Half),
+    Point3D(FViewCentre.X + Half, LEVEL_FRAME_CELLS_HIGH * FSettings.GridSize,
+    FViewCentre.Y + Half));
+  Result := CalcSweptVolume(Box, Point3D(FViewCentre.X, 0, FViewCentre.Y), saY);
+end;
+
+{ TLevelPiece }
+
+function TLevelPiece.Box: TBoundingBox;
+begin
+  Result := TBoundingBox.Create(Turned.TopLeftNear + Landed, Turned.BottomRightFar + Landed);
+end;
+
+{ Placing pieces }
+
+function TMainForm.LevelFloorAt(const AScreen: TPointF; out AOverView: Boolean;
+  out AFloor: TPointF): Boolean;
+begin
+  Result := LevelPlaneAt(AScreen, 0, AOverView, AFloor);
+end;
+
+// As the floor, any level plane is a homography of the screen: its four
+// points are taken at AHeight
+function TMainForm.LevelPlaneAt(const AScreen: TPointF; const AHeight: Single;
+  out AOverView: Boolean; out APoint: TPointF): Boolean;
+var
+  Local: TPointF;
+  W, H, Half, SX, SY: Single;
+  Screen, Floor: array[0..3] of TPointF;
+  Map: TSprite3DFloorMap;
+begin
+  Result := False;
+  AOverView := False;
+  APoint := TPointF.Zero;
+  if (FLevel = nil) or (GorillaCamera = nil) or (GorillaViewport = nil) or
+    (WindowState = TWindowState.wsMinimized) or (TabControl1.ActiveTab <> LevelTab) then
+    Exit;
+  W := GorillaViewport.Width;
+  H := GorillaViewport.Height;
+  Local := GorillaViewport.AbsoluteToLocal(ScreenToClient(AScreen));
+  AOverView := (W > 0) and (H > 0) and TRectF.Create(0, 0, W, H).Contains(Local);
+  if not AOverView then
+    Exit;
+  // Four floor points about the middle of the view, and where the view
+  // shows them
+  Half := LEVEL_FRAME_CELLS * FSettings.GridSize / 2;
+  Floor[0] := FViewCentre + TPointF.Create(-Half, -Half);
+  Floor[1] := FViewCentre + TPointF.Create(Half, -Half);
+  Floor[2] := FViewCentre + TPointF.Create(Half, Half);
+  Floor[3] := FViewCentre + TPointF.Create(-Half, Half);
+  for var I := 0 to 3 do
+  begin
+    if not GorillaCamera.ProjectToView(Point3D(Floor[I].X, AHeight, Floor[I].Y), FLevel, W, H,
+      SX, SY) then
+      Exit;
+    Screen[I] := TPointF.Create(SX, SY);
+  end;
+  if not TSprite3DFloorMap.Solve(Screen, Floor, Map) or not Map.Map(Local, APoint) then
+    Exit;
+  // Shown again, it must be where the pointer is: above the horizon, the
+  // map gives a point behind the camera, which shows elsewhere or not at all
+  if not GorillaCamera.ProjectToView(Point3D(APoint.X, AHeight, APoint.Y), FLevel, W, H, SX, SY) then
+    Exit;
+  Result := TPointF.Create(SX, SY).Distance(Local) <= FLOOR_MAP_TOLERANCE;
+end;
+
+function TMainForm.PlacedBoxes: TArray<TBoundingBox>;
+begin
+  Result := nil;
+  if FPieces = nil then
+    Exit;
+  SetLength(Result, FPieces.Count);
+  for var I := 0 to FPieces.Count - 1 do
+    Result[I] := FPieces[I].Box;
+end;
+
+procedure TMainForm.ChooseModel(const ASpecs: TArray<TSprite3DPieceSpec>;
+  const ALeftOut: TArray<String>);
+var
+  Size: TPoint3D;
+  Same: Boolean;
+begin
+  if Length(ALeftOut) > 0 then
+    DebugMemo.Lines.Add('Level: ' + String.Join(', ', ALeftOut) + ' can''t be placed until ' +
+      'their thumbnails are made, as their boxes come with them');
+  if Length(ASpecs) = 0 then
+    Exit;
+  Same := FHasBrush and (Length(ASpecs) = Length(FBrushSet));
+  if Same then
+    for var I := 0 to High(ASpecs) do
+      if ASpecs[I].Key <> FBrushSet[I].Key then
+        Same := False;
+  if Same then
+    Exit;
+  FBrush := ASpecs[0];
+  FBrushSet := ASpecs;
+  FHasBrush := True;
+  if not FPlaceDown then
+    HidePlacement;   // the next move shows the new one
+  UpdatePalette;
+  Size := FBrush.BoxMax - FBrush.BoxMin;
+  if Length(FBrushSet) = 1 then
+    DebugMemo.Lines.Add(Format('Level: Place Model places %s, its box %.3g x %.3g x %.3g ' +
+      '(width, height, depth)', [FBrush.Name, Size.X, Size.Y, Size.Z]))
+  else
+  begin
+    var Names: TArray<String> := nil;
+    for var Spec in FBrushSet do
+      Names := Names + [Spec.Name];
+    DebugMemo.Lines.Add(Format('Level: Place Model places one of %d models at random for ' +
+      'each piece: %s; spaced by the first''s box, %.3g x %.3g x %.3g (width, height, depth)',
+      [Length(FBrushSet), String.Join(', ', Names), Size.X, Size.Y, Size.Z]));
+  end;
+end;
+
+function TMainForm.BrushName: String;
+begin
+  if Length(FBrushSet) <= 1 then
+    Result := FBrush.Name
+  else
+    Result := Format('%s and %d more, at random', [FBrush.Name, Length(FBrushSet) - 1]);
+end;
+
+function TMainForm.PlaceToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etPlace);
+end;
+
+function TMainForm.RotateToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etRotate);
+end;
+
+function TMainForm.BendToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etBend);
+end;
+
+function TMainForm.PlaceSpotAt(const AScreen: TPointF; out ASpot: TPointF): Boolean;
+var
+  Over: Boolean;
+  Floor: TPointF;
+begin
+  ASpot := TPointF.Zero;
+  Result := FHasBrush and LevelFloorAt(AScreen, Over, Floor);
+  if Result then
+    ASpot := SnapPiecePosition(Floor, FBrush.Box, FSettings.GridSize);
+end;
+
+function TMainForm.AreaSpots(const AFrom, ATo: TPointF): TArray<TPointF>;
+var
+  Size: TPoint3D;
+  Grid, StepX, StepZ: Single;
+  CountX, CountZ, DirX, DirZ: Integer;
+begin
+  Grid := FSettings.GridSize;
+  Size := FBrush.BoxMax - FBrush.BoxMin;
+  // The footprint in whole cells, so the copies lie edge to edge
+  if Grid > 0 then
+  begin
+    StepX := Max(1, Round(Size.X / Grid)) * Grid;
+    StepZ := Max(1, Round(Size.Z / Grid)) * Grid;
+  end
+  else
+  begin
+    StepX := Max(Size.X, 1E-3);
+    StepZ := Max(Size.Z, 1E-3);
+  end;
+  CountX := Round(Abs(ATo.X - AFrom.X) / StepX) + 1;
+  CountZ := Round(Abs(ATo.Y - AFrom.Y) / StepZ) + 1;
+  DirX := IfThen(ATo.X < AFrom.X, -1, 1);
+  DirZ := IfThen(ATo.Y < AFrom.Y, -1, 1);
+  if CountX * CountZ > MAX_AREA_PIECES then
+  begin
+    while CountX * CountZ > MAX_AREA_PIECES do
+      if CountX >= CountZ then
+        Dec(CountX)
+      else
+        Dec(CountZ);
+    if not FPlaceCapLogged then
+    begin
+      FPlaceCapLogged := True;
+      DebugMemo.Lines.Add(Format('Level: an area holds at most %d pieces; cut to %d by %d',
+        [MAX_AREA_PIECES, CountX, CountZ]));
+    end;
+  end;
+  FPlaceCountX := CountX;
+  FPlaceCountZ := CountZ;
+  FAreaOrigin := AFrom;
+  FAreaStep := TPointF.Create(DirX * StepX, DirZ * StepZ);
+  SetLength(Result, CountX * CountZ);
+  for var Z := 0 to CountZ - 1 do
+    for var X := 0 to CountX - 1 do
+      Result[Z * CountX + X] := TPointF.Create(AFrom.X + DirX * X * StepX,
+        AFrom.Y + DirZ * Z * StepZ);
+end;
+
+procedure TMainForm.ShowPlacement(const ASpots: TArray<TPointF>);
+
+  // Whether a spot's position along one axis, AOrigin + I * AStep for I
+  // from 0 to ACount - 1, falls strictly between ALo and AHi
+  function AnySpotIn(const AOrigin, AStep: Single; const ACount: Integer;
+    const ALo, AHi: Single): Boolean;
+  var
+    A, B, T: Single;
+  begin
+    if (ACount <= 1) or (Abs(AStep) < 1E-9) then
+      Exit((AOrigin > ALo) and (AOrigin < AHi));
+    A := (ALo - AOrigin) / AStep;
+    B := (AHi - AOrigin) / AStep;
+    if A > B then
+    begin
+      T := A;
+      A := B;
+      B := T;
+    end;
+    // The first whole I above A, and the last below B
+    Result := Max(0, Floor(A) + 1) <= Min(ACount - 1, Ceil(B) - 1);
+  end;
+
+var
+  Box: TBoundingBox;
+  Others: TArray<TBoundingBox>;
+  Grid, Rest, MinX, MaxX, MinZ, MaxZ, Inset: Single;
+  Origin, Step: TPointF;
+  Middle: TPoint3D;
+  CountX, CountZ: Integer;
+begin
+  if (Length(ASpots) = 0) or not FHasBrush then
+  begin
+    HidePlacement;
+    Exit;
+  end;
+  Grid := FSettings.GridSize;
+  Box := FBrush.Box;
+  Others := PlacedBoxes;
+  // All of them rest at one height, the highest any of them would land at,
+  // so the box round them is where they all go: the highest top of a box
+  // under any spot's footprint, by more than a hundredth of a cell each
+  // way, as LandingHeight has it. The spots are a regular grid, so for each
+  // box placed it is worked out which spots it is under, rather than
+  // testing every spot against every box
+  if Length(ASpots) = 1 then
+  begin
+    Origin := ASpots[0];
+    Step := TPointF.Zero;
+    CountX := 1;
+    CountZ := 1;
+  end
+  else
+  begin
+    Origin := FAreaOrigin;
+    Step := FAreaStep;
+    CountX := FPlaceCountX;
+    CountZ := FPlaceCountZ;
+  end;
+  Inset := Max(Grid, 0) * 0.01;
+  Rest := 0;
+  for var B in Others do
+    if (B.Bottom > Rest) and
+      AnySpotIn(Origin.X, Step.X, CountX, B.Left + Inset - Box.Right, B.Right - Inset - Box.Left) and
+      AnySpotIn(Origin.Y, Step.Y, CountZ, B.Near + Inset - Box.Far, B.Far - Inset - Box.Near) then
+      Rest := B.Bottom;
+  MinX := MaxSingle;
+  MaxX := -MaxSingle;
+  MinZ := MaxSingle;
+  MaxZ := -MaxSingle;
+  for var Spot in ASpots do
+  begin
+    MinX := Min(MinX, Spot.X + Box.Left);
+    MaxX := Max(MaxX, Spot.X + Box.Right);
+    MinZ := Min(MinZ, Spot.Y + Box.Near);
+    MaxZ := Max(MaxZ, Spot.Y + Box.Far);
+  end;
+  // Rest is where their bottoms go; their origins are their own floors
+  // above or below that. TBoundingBox: Top is the low Y, Bottom the high
+  FPlaceLand := Rest - Box.Top;
+  FPlaceSpots := ASpots;
+  // The outline's control is put in the middle of what it outlines, and
+  // made its size: left at the level's origin, it was not drawn once the
+  // view had been moved (Move Camera, or a level loaded) so far that the
+  // origin was out of sight, the renderer passing it over as not seen
+  Middle := Point3D((MinX + MaxX) / 2, Rest + (Box.Bottom - Box.Top) / 2, (MinZ + MaxZ) / 2);
+  FPlaceBox.Position.Point := Middle;
+  FPlaceBox.Box := TBoundingBox.Create(
+    Point3D(MinX - Middle.X, -(Box.Bottom - Box.Top) / 2, MinZ - Middle.Z),
+    Point3D(MaxX - Middle.X, (Box.Bottom - Box.Top) / 2, MaxZ - Middle.Z));
+  FitOutline(FPlaceBox);
+  FPlaceBox.Visible := True;
+  FPlaceShown := True;
+  UpdateStatus;
+end;
+
+procedure TMainForm.HidePlacement;
+begin
+  if FPlaceBox <> nil then
+    FPlaceBox.Visible := False;
+  FPlaceShown := False;
+  FPlaceSpots := nil;
+  UpdateStatus;
+end;
+
+procedure TMainForm.TrackPlacement(const AScreen: TPointF);
+var
+  Spot: TPointF;
+begin
+  // Off the floor, as above the horizon: an area keeps its last spot; a
+  // hover shows nothing
+  if not PlaceSpotAt(AScreen, Spot) then
+  begin
+    if not FPlaceDown then
+      HidePlacement;
+    Exit;
+  end;
+  if FPlaceDown then
+    ShowPlacement(AreaSpots(FPlaceAnchor, Spot))
+  else
+  begin
+    FPlaceCountX := 1;
+    FPlaceCountZ := 1;
+    ShowPlacement([Spot]);
+  end;
+end;
+
+// Each spot is the first model's place; a piece of another model of the set
+// is put with its footprint's middle where the first's would be, and its
+// own floor where the first's would rest
+procedure TMainForm.PlaceShown;
+var
+  Spots: TArray<TPointF>;
+  Rest, Lift: Single;
+  Placed, Pick: Integer;
+  Watch: TStopwatch;
+  Onto: String;
+  Specs: TArray<TSprite3DPieceSpec>;
+  Sources: TArray<TPieceSource>;
+  Source: TPieceSource;
+  First: Integer;
+  Started: Double;
+  Piece: TLevelPiece;
+  Ids: TArray<Integer>;
+  Shift: TPointF;
+  Spec: TSprite3DPieceSpec;
+begin
+  if not FPlaceShown or not FHasBrush or (Length(FPlaceSpots) = 0) then
+    Exit;
+  Spots := FPlaceSpots;
+  // Where their bottoms go: the first's origin rests at FPlaceLand
+  Rest := FPlaceLand + FBrush.Box.Top;
+  Lift := PLACE_LIFT_CELLS * FSettings.GridSize;
+  Watch := TStopwatch.StartNew;
+  FMakeTicks := 0;
+  FSetupTicks := 0;
+  // Each model's template, loaded the first time it is placed; one that
+  // will not load is left out
+  Specs := nil;
+  Sources := nil;
+  for var Each in FBrushSet do
+    if PieceSourceFor(Each, Source) then
+    begin
+      Specs := Specs + [Each];
+      Sources := Sources + [Source];
+    end;
+  if Length(Specs) = 0 then
+    Exit;
+  Placed := 0;
+  First := FPieces.Count;
+  EditInstances(True);
+  try
+    for var I := 0 to High(Spots) do
+    begin
+      Pick := Random(Length(Specs));
+      Spec := Specs[Pick];
+      Shift := TPointF.Create(
+        (FBrush.Box.Left + FBrush.Box.Right - Spec.Box.Left - Spec.Box.Right) / 2,
+        (FBrush.Box.Near + FBrush.Box.Far - Spec.Box.Near - Spec.Box.Far) / 2);
+      if PlacePiece(Spec, Sources[Pick], Point3D(Spots[I].X + Shift.X,
+        Rest - Spec.Box.Top + Lift, Spots[I].Y + Shift.Y), Rest - Spec.Box.Top) then
+        Inc(Placed)
+      else
+        Break;   // one could not be made: nor will the rest
+    end;
+  finally
+    EditInstances(False);
+  end;
+  if Placed = 0 then
+    Exit;
+  // Nothing is drawn while they are made, so they all start to fall now,
+  // together; timed from when each was made, the first would have landed
+  // before it was ever seen
+  Started := FClock.Elapsed.TotalSeconds;
+  SetLength(Ids, FPieces.Count - First);
+  for var I := First to FPieces.Count - 1 do
+  begin
+    Piece := FPieces[I];
+    Piece.Started := Started;
+    FPieces[I] := Piece;
+    Ids[I - First] := Piece.Id;
+  end;
+  if Length(Specs) = 1 then
+    AddHistory(Specs[0].Name, Ids)
+  else
+    AddHistory(Format('%s +%d', [Specs[0].Name, Length(Specs) - 1]), Ids);
+  MarkLevelChanged;
+  FFallTimer.Enabled := True;
+  if SameValue(Rest, 0, 1E-4) then
+    Onto := 'the floor'
+  else
+    Onto := Format('pieces, their bases at %.3g', [Rest]);
+  DebugMemo.Lines.Add(Format('Level: placed %d x %s in %d ms (%d ms loading the model(s), ' +
+    '%d ms adding instances), onto %s', [Placed, BrushName,
+    Watch.ElapsedMilliseconds, FMakeTicks * 1000 div TStopwatch.Frequency,
+    FSetupTicks * 1000 div TStopwatch.Frequency, Onto]));
+end;
+
+function TMainForm.PieceSourceFor(const ASpec: TSprite3DPieceSpec;
+  out ASource: TPieceSource): Boolean;
+var
+  Fixes: TArray<TSprite3DTextureFix>;
+  Box: TBoundingBox;
+  Watch: TStopwatch;
+  Kind: TSprite3DModelKind;
+  Template: TGorillaModel;
+begin
+  Result := FSources.TryGetValue(ASpec.Key, ASource);
+  if Result then
+    Exit;
+  // Not Default(): Gorilla.DefTypes' unscoped value Default hides it here
+  ASource.Template := nil;
+  ASource.LoadFile := String.Empty;
+  ASource.IsStatic := False;
+  Kind := mkUnknown;
+  Watch := TStopwatch.StartNew;
+  // Made and loaded with its own LoadFromFile, as the Library loads a
+  // model; never a TGorillaModel.LoadNewModelFrom... class function (an
+  // access violation on closing, 12 November 2026). Every later piece of
+  // it is a GPU instance of it, as Gorilla3D's author advised (12 November
+  // 2026), so it is loaded once
+  Template := TGorillaModel.Create(GorillaViewport);
+  try
+    // Its textures found, or made PNGs, and loaded from the copy in the
+    // cache if any were, as the Library loads it
+    Template.Parent := FLevel;
+    Template.HitTest := False;
+    ASource.LoadFile := PrepareModelTextures(ASpec.FileName,
+      TSprite3DAppSettings.ThumbnailFolder, ASpec.Key, Fixes);
+    for var Fix in Fixes do
+      // Qualified, as Gorilla.DefTypes, used here, has unscoped values
+      if Fix.Outcome <> TSprite3DTextureOutcome.toAsNamed then
+        DebugMemo.Lines.Add(Format('Level: %s: %s %s: %s', [ASpec.Name,
+          IfThen(Fix.IsBuffer, 'buffer', 'texture'), Fix.Named,
+          IfThen(Fix.Used <> '', 'used ' + ExtractFileName(Fix.Used), 'not found')]));
+    LoadModelFile(Template, ASource.LoadFile, Box);
+    // Meshes only, no skin, no animations: its meshes can be made static,
+    // before it is first drawn, so its buffers are made static ones
+    Kind := GuessModelKind(ModelContent(Template));
+    ASource.IsStatic := Kind = mkStatic;
+    if ASource.IsStatic then
+      MarkMeshesStatic(Template);
+    // Gorilla culls every instance by the template's own bounds: with
+    // culling on, all its pieces would vanish whenever the template, parked
+    // below the floor, was out of view, which it always is
+    Template.FrustumCullingCheck := False;
+    Template.ResetToBindPose();
+    // Never a piece: an FBX of PolygonDungeon placed as the template itself
+    // was not drawn, while its instances were (owner, 12 November 2026,
+    // 23:56); so every piece is an instance, the same way for every model,
+    // and the template, which Gorilla draws as instance #0, is kept out of
+    // sight far below the floor
+    Template.Position.Point := Point3D(0, TEMPLATE_PARK_Y, 0);
+  except
+    on E: Exception do
+    begin
+      Template.Free;
+      DebugMemo.Lines.Add('Level: can''t load ' + ASpec.FileName + ': ' + E.Message);
+      Exit(False);
+    end;
+  end;
+  ASource.Template := Template;
+  Inc(FMakeTicks, Watch.ElapsedTicks);
+  // Pieces land by the box the model was chosen with, which pieces placed
+  // later land on; say if the model loaded has another
+  if not (SameValue(Box.Left, ASpec.BoxMin.X, 1E-3) and
+    SameValue(Box.Top, ASpec.BoxMin.Y, 1E-3) and SameValue(Box.Near, ASpec.BoxMin.Z, 1E-3) and
+    SameValue(Box.Right, ASpec.BoxMax.X, 1E-3) and SameValue(Box.Bottom, ASpec.BoxMax.Y, 1E-3) and
+    SameValue(Box.Far, ASpec.BoxMax.Z, 1E-3)) then
+    DebugMemo.Lines.Add(Format('Level: %s loaded with a box of (%.3g, %.3g, %.3g) to ' +
+      '(%.3g, %.3g, %.3g), not the Library''s; placed by the Library''s', [ASpec.Name,
+      Box.Left, Box.Top, Box.Near, Box.Right, Box.Bottom, Box.Far]));
+  FSources.Add(ASpec.Key, ASource);
+  DebugMemo.Lines.Add(Format('Level: %s loaded in %d ms, its pieces drawn as GPU instances ' +
+    'of it; %s', [ASpec.Name, Watch.ElapsedMilliseconds, IfThen(ASource.IsStatic,
+    'static, so its meshes are made static',
+    LowerCase(ModelKindName(Kind)) + ', so its meshes are not made static')]));
+  Result := True;
+end;
+
+// Every piece is a GPU instance of its model's template, posed by MovePiece.
+function TMainForm.PlacePiece(const ASpec: TSprite3DPieceSpec; var ASource: TPieceSource;
+  const AFrom: TPoint3D; const ALand: Single): Boolean;
+var
+  Piece: TLevelPiece;
+  Ticks: Int64;
+begin
+  Result := False;
+  Ticks := TStopwatch.GetTimeStamp;
+  Piece.Model := ASource.Template;
+  Piece.Instance := nil;
+  Inc(FNextPieceId);
+  Piece.Id := FNextPieceId;
+  // Every field set here: Default() cannot be used in this unit, as
+  // Gorilla.DefTypes' unscoped enumeration value Default hides it
+  Piece.Spec := ASpec;
+  Piece.Landed := Point3D(AFrom.X, ALand, AFrom.Z);
+  Piece.Turn := 0;
+  Piece.Turned := ASpec.Box;
+  Piece.Falling := True;
+  Piece.FromY := AFrom.Y;
+  Piece.Started := FClock.Elapsed.TotalSeconds;
+  try
+    Inc(FInstanceSerial);
+    Piece.Instance := ASource.Template.AddInstanceItem(Format('Piece%d', [FInstanceSerial]));
+  except
+    on E: Exception do
+    begin
+      DebugMemo.Lines.Add('Level: can''t add a piece of ' + ASpec.Name + ': ' + E.Message);
+      Exit;
+    end;
+  end;
+  MovePiece(Piece, AFrom.Y);
+  Inc(FSetupTicks, TStopwatch.GetTimeStamp - Ticks);
+  FPieces.Add(Piece);
+  Result := True;
+end;
+
+// Puts a piece's origin at height AY in the level, above where it lands,
+// turned by its Turn. An instance's transform is absolute, in the viewport's
+// coordinates, replacing the template's, and RotationAngle on an instance
+// adds to its turn (Gorilla's v1.5 documentation): so FPoser, a child of the
+// level, is given the position and turn the piece has, and the instance its
+// whole matrix with SetTransform.
+procedure TMainForm.MovePiece(const APiece: TLevelPiece; const AY: Single);
+begin
+  FPoser.Position.Point := Point3D(APiece.Landed.X, AY, APiece.Landed.Z);
+  FPoser.ResetRotationAngle;
+  FPoser.RotationAngle.Y := APiece.Turn;
+  APiece.Instance.SetTransform(FPoser.AbsoluteMatrix);
+end;
+
+{ Rotate and Bend }
+
+function TMainForm.TurnVector(const AVector: TPoint3D; const ADegrees: Single): TPoint3D;
+var
+  S, C: Single;
+begin
+  // FTurnSign says which way FMX turns: (1, 0, 0) turned by 90 is
+  // (0, 0, FTurnSign)
+  SinCos(DegToRad(ADegrees), S, C);
+  S := S * FTurnSign;
+  Result := Point3D(AVector.X * C - AVector.Z * S, AVector.Y, AVector.X * S + AVector.Z * C);
+end;
+
+function TMainForm.TurnedBox(const ABox: TBoundingBox; const ADegrees: Single): TBoundingBox;
+var
+  P: TPoint3D;
+  MinX, MaxX, MinZ, MaxZ: Single;
+begin
+  if ADegrees = 0 then
+    Exit(ABox);
+  MinX := MaxSingle;
+  MaxX := -MaxSingle;
+  MinZ := MaxSingle;
+  MaxZ := -MaxSingle;
+  for var I := 0 to 3 do
+  begin
+    // System.Math's: System.StrUtils, also used here, has IfThen for strings
+    P := TurnVector(Point3D(System.Math.IfThen(Odd(I), ABox.Right, ABox.Left), 0,
+      System.Math.IfThen(I >= 2, ABox.Far, ABox.Near)), ADegrees);
+    MinX := Min(MinX, P.X);
+    MaxX := Max(MaxX, P.X);
+    MinZ := Min(MinZ, P.Z);
+    MaxZ := Max(MaxZ, P.Z);
+  end;
+  Result := TBoundingBox.Create(Point3D(MinX, ABox.Top, MinZ), Point3D(MaxX, ABox.Bottom, MaxZ));
+end;
+
+function TMainForm.PieceMiddle(const APiece: TLevelPiece): TPointF;
+var
+  V: TPoint3D;
+begin
+  V := TurnVector(Point3D((APiece.Spec.BoxMin.X + APiece.Spec.BoxMax.X) / 2, 0,
+    (APiece.Spec.BoxMin.Z + APiece.Spec.BoxMax.Z) / 2), APiece.Turn);
+  Result := TPointF.Create(APiece.Landed.X + V.X, APiece.Landed.Z + V.Z);
+end;
+
+// The line of sight under the pointer is found from the floor point and the
+// point over it at the height of the tallest piece; each piece's own box,
+// in its own turn, is tested against it. The view looks down on the level,
+// so the nearest piece is the one the line meets highest up the line.
+function TMainForm.PieceAt(const AScreen: TPointF): Integer;
+var
+  Over: Boolean;
+  OnFloor, OnTop: TPointF;
+  Top, Best, TNear, TFar: Single;
+  A, B: TPoint3D;
+  Piece: TLevelPiece;
+begin
+  Result := -1;
+  if (FPieces = nil) or (FPieces.Count = 0) then
+    Exit;
+  Top := FSettings.GridSize;
+  for var I := 0 to FPieces.Count - 1 do
+    Top := Max(Top, FPieces[I].Box.Bottom);
+  if not LevelPlaneAt(AScreen, 0, Over, OnFloor) or not LevelPlaneAt(AScreen, Top, Over, OnTop) then
+    Exit;
+  A := Point3D(OnFloor.X, 0, OnFloor.Y);
+  B := Point3D(OnTop.X, Top, OnTop.Y);
+  Best := -MaxSingle;
+  for var I := 0 to FPieces.Count - 1 do
+  begin
+    Piece := FPieces[I];
+    // Into the piece's own coordinates: a turn and a shift keep where
+    // along the line each point is
+    if LineThroughBox(TurnVector(A - Piece.Landed, -Piece.Turn),
+      TurnVector(B - Piece.Landed, -Piece.Turn), Piece.Spec.Box, TNear, TFar) and
+      (TFar > Best) then
+    begin
+      Best := TFar;
+      Result := I;
+    end;
+  end;
+end;
+
+// A control's size is taken as centred on its position, so it is made
+// large enough each way to reach the box's farthest side from there
+procedure TMainForm.FitOutline(const AOutline: TSprite3DPlacementBox);
+var
+  B: TBoundingBox;
+begin
+  B := AOutline.Box;
+  AOutline.Width := Max(2 * Max(Abs(B.Left), Abs(B.Right)), 0.01);
+  AOutline.Height := Max(2 * Max(Abs(B.Top), Abs(B.Bottom)), 0.01);
+  AOutline.Depth := Max(2 * Max(Abs(B.Near), Abs(B.Far)), 0.01);
+end;
+
+procedure TMainForm.ShowPick(const AIndex: Integer);
+var
+  Piece: TLevelPiece;
+begin
+  FPicked := -1;
+  if (FPickBox <> nil) and (FPieces <> nil) and (AIndex >= 0) and (AIndex < FPieces.Count) then
+  begin
+    FPicked := AIndex;
+    Piece := FPieces[AIndex];
+    FPickBox.Box := Piece.Spec.Box;
+    if EraseToolOn then
+      FPickBox.Color := ERASE_BOX_COLOUR
+    else
+      FPickBox.Color := PICK_BOX_COLOUR;
+    FPickBox.Position.Point := Piece.Landed;
+    FPickBox.ResetRotationAngle;
+    FPickBox.RotationAngle.Y := Piece.Turn;
+    FitOutline(FPickBox);
+    FPickBox.Visible := True;
+  end
+  else if FPickBox <> nil then
+    FPickBox.Visible := False;
+  UpdateStatus;
+end;
+
+procedure TMainForm.EditInstances(const ABegin: Boolean);
+begin
+  if FSources = nil then
+    Exit;
+  for var Source in FSources.Values do
+    if ABegin then
+      Source.Template.BeginInstancesEditing
+    else
+      Source.Template.EndInstancesEditing;
+end;
+
+// Bend: pieces are joined when they stand on the same base, share most of
+// their height, and their footprints touch or overlap. Pressed with the
+// left button, the piece pressed on is hinged to the joined piece nearest
+// it on its left, as the view shows them, and it and every piece joined to
+// it, short of crossing that hinge, turn about the hinge: the point halfway
+// between the two pieces' middles. The right button is the same with left
+// and right swapped.
+function TMainForm.StartTurn(const AIndex: Integer; const AReversed: Boolean;
+  const AX: Single; const AButton: TMouseButton): Boolean;
+var
+  Saved: TArray<TLevelPiece>;
+  Gap: Single;
+
+  function Joined(const A, B: TLevelPiece): Boolean;
+  var
+    BoxA, BoxB: TBoundingBox;
+  begin
+    BoxA := A.Box;
+    BoxB := B.Box;
+    // TBoundingBox: Top is the low Y, the base; Bottom the high Y
+    Result := (Abs(BoxA.Top - BoxB.Top) <= Gap) and
+      (Min(BoxA.Bottom, BoxB.Bottom) - BoxA.Top >=
+        0.5 * Max(BoxA.Bottom - BoxA.Top, BoxB.Bottom - BoxB.Top)) and
+      (BoxA.Left <= BoxB.Right + Gap) and (BoxB.Left <= BoxA.Right + Gap) and
+      (BoxA.Near <= BoxB.Far + Gap) and (BoxB.Near <= BoxA.Far + Gap);
+  end;
+
+  // Across the view, in pixels, where a piece's middle shows
+  function ScreenX(const APiece: TLevelPiece; out ASX: Single): Boolean;
+  var
+    Mid: TPointF;
+    Box: TBoundingBox;
+    SY: Single;
+  begin
+    Mid := PieceMiddle(APiece);
+    Box := APiece.Box;
+    Result := GorillaCamera.ProjectToView(Point3D(Mid.X, (Box.Top + Box.Bottom) / 2, Mid.Y),
+      FLevel, GorillaViewport.Width, GorillaViewport.Height, ASX, SY);
+  end;
+
+var
+  Hinge: Integer;
+  Here, There, BestX: Single;
+  Taken: TArray<Boolean>;
+  Queue: TList<Integer>;
+  Mid, HingeMid: TPointF;
+  Side: String;
+begin
+  Result := False;
+  if (AIndex < 0) or (FPieces = nil) or (AIndex >= FPieces.Count) then
+    Exit;
+  Saved := FPieces.ToArray;
+  if RotateToolOn then
+  begin
+    FTurnSet := [AIndex];
+    FTurnHinge := PieceMiddle(Saved[AIndex]);
+  end
+  else
+  begin
+    Gap := 0.05 * FSettings.GridSize;
+    if not ScreenX(Saved[AIndex], Here) then
+      Exit;
+    // The joined piece nearest on the side bent at
+    Hinge := -1;
+    BestX := 0;
+    for var I := 0 to High(Saved) do
+      if (I <> AIndex) and Joined(Saved[AIndex], Saved[I]) and ScreenX(Saved[I], There) then
+        if (not AReversed and (There < Here) and ((Hinge < 0) or (There > BestX))) or
+          (AReversed and (There > Here) and ((Hinge < 0) or (There < BestX))) then
+        begin
+          Hinge := I;
+          BestX := There;
+        end;
+    Side := IfThen(AReversed, 'right', 'left');
+    if Hinge < 0 then
+    begin
+      DebugMemo.Lines.Add(Format('Level: Bend: nothing is joined to %s on its %s to bend ' +
+        'at', [Saved[AIndex].Spec.Name, Side]));
+      Exit;
+    end;
+    Mid := PieceMiddle(Saved[AIndex]);
+    HingeMid := PieceMiddle(Saved[Hinge]);
+    FTurnHinge := TPointF.Create((Mid.X + HingeMid.X) / 2, (Mid.Y + HingeMid.Y) / 2);
+    // The piece pressed on and all joined to it, never through the hinge
+    // piece: a run closed in a ring comes back to the hinge piece, which
+    // stays
+    SetLength(Taken, Length(Saved));
+    Taken[Hinge] := True;
+    Taken[AIndex] := True;
+    // Breadth first; the list read from the front is the set turned
+    Queue := TList<Integer>.Create;
+    try
+      Queue.Add(AIndex);
+      var Next := 0;
+      while Next < Queue.Count do
+      begin
+        var At := Queue[Next];
+        Inc(Next);
+        for var I := 0 to High(Saved) do
+          if not Taken[I] and Joined(Saved[At], Saved[I]) then
+          begin
+            Taken[I] := True;
+            Queue.Add(I);
+          end;
+      end;
+      FTurnSet := Queue.ToArray;
+    finally
+      Queue.Free;
+    end;
+  end;
+  // What is stacked on the pieces turned goes round with them: the pieces
+  // resting on them, and on those, as Move Object finds them; never what
+  // they rest on. With Bend, what rests on the hinge piece alone stays
+  FTurnCarried := 0;
+  begin
+    var InSet: TArray<Boolean>;
+    SetLength(InSet, Length(Saved));
+    for var M in FTurnSet do
+      InSet[M] := True;
+    var Turned := TList<Integer>.Create;
+    try
+      Turned.AddRange(FTurnSet);
+      for var M in FTurnSet do
+        for var R in RidersOf(M) do
+          if not InSet[R] then
+          begin
+            InSet[R] := True;
+            Turned.Add(R);
+            Inc(FTurnCarried);
+          end;
+      FTurnSet := Turned.ToArray;
+    finally
+      Turned.Free;
+    end;
+  end;
+  FTurnSaved := Saved;
+  FTurnDown := True;
+  FTurnButton := AButton;
+  FTurnStartX := AX;
+  FTurnBy := 0;
+  ShowPick(AIndex);
+  Result := True;
+end;
+
+procedure TMainForm.ApplyTurn(const ADegrees: Single);
+var
+  Piece, Live: TLevelPiece;
+  Mid: TPointF;
+  V, Offset: TPoint3D;
+begin
+  FTurnBy := ADegrees;
+  EditInstances(True);
+  try
+    for var K in FTurnSet do
+    begin
+      Piece := FTurnSaved[K];
+      // Its middle swung about the hinge, and it turned with it
+      Mid := PieceMiddle(Piece);
+      V := TurnVector(Point3D(Mid.X - FTurnHinge.X, 0, Mid.Y - FTurnHinge.Y), ADegrees);
+      Piece.Turn := Piece.Turn + ADegrees;
+      Piece.Turn := Piece.Turn - 360 * Floor(Piece.Turn / 360);
+      Offset := TurnVector(Point3D((Piece.Spec.BoxMin.X + Piece.Spec.BoxMax.X) / 2, 0,
+        (Piece.Spec.BoxMin.Z + Piece.Spec.BoxMax.Z) / 2), Piece.Turn);
+      Piece.Landed.X := FTurnHinge.X + V.X - Offset.X;
+      Piece.Landed.Z := FTurnHinge.Y + V.Z - Offset.Z;
+      Piece.Turned := TurnedBox(Piece.Spec.Box, Piece.Turn);
+      // A piece still falling goes on falling, and the fall poses it
+      Live := FPieces[K];
+      Piece.Falling := Live.Falling;
+      Piece.FromY := Live.FromY;
+      Piece.Started := Live.Started;
+      FPieces[K] := Piece;
+      if not Piece.Falling then
+        MovePiece(Piece, Piece.Landed.Y);
+    end;
+  finally
+    EditInstances(False);
+  end;
+  if FTurnSet <> nil then
+    ShowPick(FTurnSet[0]);
+end;
+
+procedure TMainForm.EndTurn;
+var
+  Piece, Other: TLevelPiece;
+  Spot, Shift: TPointF;
+  Square: Boolean;
+begin
+  if not FTurnDown then
+    Exit;
+  FTurnDown := False;
+  if (FTurnSet = nil) or (FTurnBy = 0) then
+  begin
+    UpdateStatus;
+    Exit;
+  end;
+  MarkLevelChanged;
+  Piece := FPieces[FTurnSet[0]];
+  Square := Abs(Piece.Turn / 90 - Round(Piece.Turn / 90)) < 1E-4;
+  if RotateToolOn and Square then
+  begin
+    // Square to the grid again: snapped as placing snaps, by its turned
+    // box; what it carries moves with it
+    Spot := SnapPiecePosition(PieceMiddle(Piece), Piece.Turned, FSettings.GridSize);
+    Shift := TPointF.Create(Spot.X - Piece.Landed.X, Spot.Y - Piece.Landed.Z);
+    EditInstances(True);
+    try
+      for var K in FTurnSet do
+      begin
+        Other := FPieces[K];
+        Other.Landed.X := Other.Landed.X + Shift.X;
+        Other.Landed.Z := Other.Landed.Z + Shift.Y;
+        FPieces[K] := Other;
+        if not Other.Falling then
+          MovePiece(Other, Other.Landed.Y);
+      end;
+    finally
+      EditInstances(False);
+    end;
+    Piece := FPieces[FTurnSet[0]];
+  end;
+  if RotateToolOn then
+    DebugMemo.Lines.Add(Format('Level: turned %s by %.4g, to %.4g degrees%s%s',
+      [Piece.Spec.Name, FTurnBy, Piece.Turn, IfThen(FTurnCarried > 0,
+      Format(', with the %d piece(s) stacked on it', [FTurnCarried]), ''),
+      IfThen(Square, ', snapped to the grid', '')]))
+  else
+    DebugMemo.Lines.Add(Format('Level: bent %d piece(s) from %s by %.4g degrees about ' +
+      '(%.3g, %.3g)%s', [Length(FTurnSet) - FTurnCarried, Piece.Spec.Name, FTurnBy,
+      FTurnHinge.X, FTurnHinge.Y, IfThen(FTurnCarried > 0,
+      Format(', with the %d piece(s) stacked on them', [FTurnCarried]), '')]));
+  ShowPick(FTurnSet[0]);
+end;
+
+function TMainForm.TurnStatus: String;
+var
+  Step, What: String;
+begin
+  Step := Format('Drag left or right: turn it in steps of %.4g'#176' (hold Shift: freely).',
+    [FSettings.RotateSnap]);
+  if RotateToolOn then
+  begin
+    if FTurnDown and (FTurnSet <> nil) then
+      Exit(Format('Rotate: %s, turned by %.4g'#176'.  Let go: leave it there.  Shift: turn ' +
+        'freely.', [FPieces[FTurnSet[0]].Spec.Name, FTurnBy]));
+    if (FPicked >= 0) and (FPicked < FPieces.Count) then
+      What := 'Rotate: ' + FPieces[FPicked].Spec.Name + '.  '
+    else
+      What := 'Rotate: point at a piece.  ';
+    Result := What + Step + '  Double-click the tool: the step.  Wheel: zoom.  ' +
+      'Right-click: normal view.';
+  end
+  else
+  begin
+    if FTurnDown and (FTurnSet <> nil) then
+      Exit(Format('Bend: %d piece(s) turned by %.4g'#176' about the join.  Let go: leave them ' +
+        'there.  Shift: turn freely.', [Length(FTurnSet) - FTurnCarried, FTurnBy]));
+    if (FPicked >= 0) and (FPicked < FPieces.Count) then
+      What := 'Bend: ' + FPieces[FPicked].Spec.Name + '.  '
+    else
+      What := 'Bend: point at a piece of a run.  ';
+    Result := What + 'Left-drag left or right: it and the pieces to its right turn about its ' +
+      'join with the piece to its left.  Right-drag: it and those to its left, about the join ' +
+      'on its right.  Up and down do nothing.  ' +
+      Format('Steps of %.4g'#176' (Shift: freely).  Wheel: zoom.', [FSettings.RotateSnap]);
+  end;
+end;
+
+// Frees the templates, from FSources, and with each its instances, so
+// every piece, and the templates kept with no pieces left
+procedure TMainForm.FreeLevelPieces;
+begin
+  if FFallTimer <> nil then
+    FFallTimer.Enabled := False;
+  if FPieces = nil then
+    Exit;
+  FTurnDown := False;
+  FTurnSet := nil;
+  FTurnSaved := nil;
+  ShowPick(-1);
+  FMoveDown := False;
+  FPanDown := False;
+  if FSources <> nil then
+  begin
+    for var Source in FSources.Values do
+      Source.Template.Free;
+    FSources.Clear;
+  end;
+  FPieces.Clear;
+end;
+
+procedure TMainForm.FallTimerTimer(Sender: TObject);
+var
+  Elapsed, Longest: Double;
+  Gravity, Y: Single;
+  Piece: TLevelPiece;
+  AnyFalling: Boolean;
+begin
+  Longest := 0;
+  if MainFormGone or (FPieces = nil) then
+  begin
+    FFallTimer.Enabled := False;
+    Exit;
+  end;
+  Elapsed := FClock.Elapsed.TotalSeconds;
+  Gravity := FALL_GRAVITY_CELLS * FSettings.GridSize;
+  AnyFalling := False;
+  // Each template's instances sent to the GPU once a step, not once a piece
+  for var Source in FSources.Values do
+    Source.Template.BeginInstancesEditing;
+  try
+    for var I := 0 to FPieces.Count - 1 do
+    begin
+      Piece := FPieces[I];
+      if not Piece.Falling then
+        Continue;
+      if FallHeight(Piece.FromY, Piece.Landed.Y, Gravity, Elapsed - Piece.Started, Y) then
+      begin
+        Piece.Falling := False;
+        Longest := Max(Longest, Elapsed - Piece.Started);
+      end
+      else
+        AnyFalling := True;
+      MovePiece(Piece, Y);
+      FPieces[I] := Piece;
+    end;
+  finally
+    for var Source in FSources.Values do
+      Source.Template.EndInstancesEditing;
+  end;
+  if not AnyFalling then
+  begin
+    FFallTimer.Enabled := False;
+    DebugMemo.Lines.Add(Format('Level: landed, %d ms after being let go',
+      [Round(Longest * 1000)]));
+  end;
 end;
 
 procedure TMainForm.ShowBoundsItemClick(Sender: TObject);
@@ -2648,6 +4401,44 @@ begin
   FLevel.HitTest := False;
   FLevel.RotationAngle.X := 180;
 
+  // Where a piece dragged from the Library would go, and the pieces placed
+  FPlaceBox := TSprite3DPlacementBox.Create(nil);
+  FPlaceBox.Parent := FLevel;   // freed with it
+  FPlaceBox.Color := PLACE_BOX_COLOUR;
+  FPlaceBox.Visible := False;
+  FPieces := TList<TLevelPiece>.Create;
+  FSources := TDictionary<String, TPieceSource>.Create;
+  // Place Model picks among several models at random
+  Randomize;
+
+  // Rotate and Bend: the outline round the piece under the pointer, and the
+  // hidden poser that gives an instance its transform
+  FPickBox := TSprite3DPlacementBox.Create(nil);
+  FPickBox.Parent := FLevel;   // freed with it
+  FPickBox.Color := PICK_BOX_COLOUR;
+  FPickBox.Visible := False;
+  FPicked := -1;
+  FPoser := TDummy.Create(nil);
+  FPoser.Parent := FLevel;     // freed with it
+  FPoser.Visible := False;
+  FPoser.HitTest := False;
+  // Which way FMX turns a child of the level for a positive angle, so the
+  // sums here turn as the models do
+  FPoser.RotationAngle.Y := 90;
+  begin
+    var Probe := FLevel.AbsoluteToLocal3D(FPoser.LocalToAbsolute3D(Point3D(1, 0, 0)));
+    if Probe.Z < 0 then
+      FTurnSign := -1
+    else
+      FTurnSign := 1;
+  end;
+  FPoser.ResetRotationAngle;
+  FFallTimer := TTimer.Create(Self);
+  FFallTimer.Enabled := False;
+  FFallTimer.Interval := FALL_STEP_MS;
+  FFallTimer.OnTimer := FallTimerTimer;
+  FClock := TStopwatch.StartNew;
+
   FGrid := TModelGrid.Create(nil);
   FGrid.Parent := FLevel;   // freed with it
   FGrid.GridSize := FSettings.GridSize;
@@ -2694,7 +4485,7 @@ begin
   FReadoutTimer.Enabled := True;
 end;
 
-// The frames per second Gorilla's viewport reports, and the Mouse View readout
+// The frames per second Gorilla's viewport reports
 procedure TMainForm.ReadoutTimerTimer(Sender: TObject);
 var
   Text: String;
@@ -2709,7 +4500,6 @@ begin
   // A new model shows the normal view, refitted or not; the
   // distance's difference follows a refit of the same one
   CheckMouseViewSubject;
-  UpdateMouseViewReadout;
 end;
 
 // View, Camera, Lock Camera, below the views and a line. It is not one of
@@ -2756,7 +4546,7 @@ procedure TMainForm.LockCameraItemClick(Sender: TObject);
 begin
   FLockCameraItem.IsChecked := not FLockCameraItem.IsChecked;
   UpdateCameraLockControls;
-  Caption := ProjectionCaption;
+  UpdateCaption;
   if CameraLocked then
     DebugMemo.Lines.Add('Camera locked')
   else
@@ -2809,50 +4599,6 @@ end;
 // under the viewport and its surround, is otherwise left with HitTest off,
 // as before, so nothing else changes.
 procedure TMainForm.BuildMouseViewItem;
-
-  //** @abstract(A white label in the readout, letting clicks through.)
-  //** @param(AParent The control it goes in.)
-  //** @param(AText Its text.)
-  //** @param(AAlign Where in its width the text sits.)
-  //** @returns(The label, owned by the form.)
-  function MouseViewText(const AParent: TFmxObject; const AText: String;
-    const AAlign: TTextAlign): TLabel;
-  begin
-    Result := TLabel.Create(Self);
-    Result.Parent := AParent;
-    Result.StyledSettings := Result.StyledSettings - [TStyledSetting.FontColor];
-    Result.TextSettings.FontColor := TAlphaColors.White;
-    Result.TextSettings.HorzAlign := AAlign;
-    Result.TextSettings.WordWrap := False;
-    Result.HitTest := False;
-    Result.Text := AText;
-  end;
-
-  //** @abstract(One row of the readout's details: a name at the left and a value at the
-  //** right.)
-  //** @param(ARow The row, from 0 at the top, which sets its place.)
-  //** @param(AName The name.)
-  //** @param(AValue Set to the value's label, which starts empty.)
-  //** @returns(The name's label.)
-  function MouseViewRow(const ARow: Integer; const AName: String;
-    out AValue: TLabel): TLabel;
-  var
-    Row: TLayout;
-  begin
-    Row := TLayout.Create(Self);
-    Row.Parent := FMouseViewDetails;
-    // Top-aligned controls are laid out in the order of their positions
-    Row.Position.Y := ARow * MOUSE_VIEW_ROW_HEIGHT;
-    Row.Align := TAlignLayout.Top;
-    Row.Height := MOUSE_VIEW_ROW_HEIGHT;
-    Row.HitTest := False;
-    AValue := MouseViewText(Row, String.Empty, TTextAlign.Trailing);
-    AValue.Align := TAlignLayout.Right;
-    AValue.Width := MOUSE_VIEW_VALUE_WIDTH;
-    Result := MouseViewText(Row, AName, TTextAlign.Leading);
-    Result.Align := TAlignLayout.Client;
-  end;
-
 begin
   FMouseViewItem := TMenuItem.Create(Self);
   FMouseViewItem.Text := 'Mouse View';
@@ -2860,135 +4606,36 @@ begin
   FMouseViewItem.OnClick := MouseViewItemClick;
   CameraMenu.AddObject(FMouseViewItem);
 
-  // As the frame rate readout, but top right, and only while ticked
-  FMouseViewBack := TRectangle.Create(Self);
-  FMouseViewBack.Parent := ViewportLayout;
-  FMouseViewBack.Align := TAlignLayout.None;
-  FMouseViewBack.Width := MOUSE_VIEW_READOUT_WIDTH;
-  FMouseViewBack.Height := MOUSE_VIEW_TITLE_HEIGHT;
-  FMouseViewBack.XRadius := 4;
-  FMouseViewBack.YRadius := 4;
-  FMouseViewBack.Fill.Kind := TBrushKind.Solid;
-  FMouseViewBack.Fill.Color := $C0000000;
-  FMouseViewBack.Stroke.Kind := TBrushKind.None;
-  FMouseViewBack.HitTest := False;
-  FMouseViewBack.Visible := False;
-
-  // The title, centred
-  FMouseViewLabel := MouseViewText(FMouseViewBack, 'Mouseview On', TTextAlign.Center);
-  FMouseViewLabel.Align := TAlignLayout.Top;
-  FMouseViewLabel.Height := MOUSE_VIEW_TITLE_HEIGHT;
-
-  // Under it, while turned or zoomed: two rows of a name at the left and a
-  // value at the right, and the reset hint, centred
-  FMouseViewDetails := TLayout.Create(Self);
-  FMouseViewDetails.Parent := FMouseViewBack;
-  FMouseViewDetails.Position.Y := MOUSE_VIEW_TITLE_HEIGHT;
-  FMouseViewDetails.Align := TAlignLayout.Top;
-  FMouseViewDetails.Height := 3 * MOUSE_VIEW_ROW_HEIGHT;
-  FMouseViewDetails.Padding.Left := 8;
-  FMouseViewDetails.Padding.Right := 8;
-  FMouseViewDetails.HitTest := False;
-  FMouseViewDetails.Visible := False;
-  MouseViewRow(0, 'Azimuth', FMouseAzimuthValue);
-  FMouseDistanceName := MouseViewRow(1, 'Distance', FMouseDistanceValue);
-  var ResetHint := MouseViewText(FMouseViewDetails, 'Right Click to Reset',
-    TTextAlign.Center);
-  ResetHint.Position.Y := 2 * MOUSE_VIEW_ROW_HEIGHT;
-  ResetHint.Align := TAlignLayout.Top;
-  ResetHint.Height := MOUSE_VIEW_ROW_HEIGHT;
-
-  FMouseViewBack.BringToFront;
-  PlaceMouseViewReadout;
-
   AspectLayout.OnMouseDown := ViewMouseDown;
   AspectLayout.OnMouseMove := ViewMouseMove;
   AspectLayout.OnMouseUp := ViewMouseUp;
   AspectLayout.OnMouseWheel := ViewMouseWheel;
+  AspectLayout.OnMouseLeave := ViewMouseLeave;
+  // A turn or an area goes on while the pointer is outside the view
+  AspectLayout.AutoCapture := True;
 
   // Ticked as it was left last session, from the normal view
   ApplyMouseViewTick(FSettings.MouseView);
 end;
 
-procedure TMainForm.PlaceMouseViewReadout;
-var
-  Left: Single;
-begin
-  if not Assigned(FMouseViewBack) then
-    Exit;
-  // 8 pixels in from the right, as the frame rate is from the left, but
-  // never past the left edge in a very narrow view
-  Left := ViewportLayout.Width - FMouseViewBack.Width - 8;
-  if Left < 8 then
-    Left := 8;
-  FMouseViewBack.Position.Point := TPointF.Create(Left, 6);
-end;
-
-//** @abstract(A value with its sign, + or -, to 3 decimal places; a value that would show
-//** as 0.000 shows as +0.000.)
-//** @param(AValue The value.)
-//** @returns(Such as +12.500 or -0.250.)
-function SignedText(const AValue: Single): String;
-begin
-  if Abs(AValue) < MOUSE_VIEW_SHOWN_ZERO then
-    Result := '+' + FormatFloat('0.000', 0)
-  else if AValue < 0 then
-    Result := '-' + FormatFloat('0.000', -AValue)
-  else
-    Result := '+' + FormatFloat('0.000', AValue);
-end;
-
-procedure TMainForm.UpdateMouseViewReadout;
-var
-  Turn, Zoom: Single;
-  Shown: Boolean;
-begin
-  if not Assigned(FMouseViewBack) then
-    Exit;
-  Turn := 0;
-  Zoom := 1;
-  if FMouseApplied and Assigned(GorillaCamera) then
-  begin
-    // As the dials show the azimuth, which runs the other way to the
-    // camera's own, from -180 to +180
-    Turn := -FMouseYaw;
-    if Turn <= -180 then
-      Turn := Turn + 360;
-    // A factor on the normal view's distance, or size, as Variable's
-    // Distance slider gives its own; opening Variable multiplies the two
-    Zoom := FMouseZoom;
-  end;
-  Shown := (Abs(Turn) >= MOUSE_VIEW_SHOWN_ZERO) or
-    (Abs(Zoom - 1) >= MOUSE_VIEW_SHOWN_ZERO);
-  if Shown then
-  begin
-    FMouseAzimuthValue.Text := SignedText(Turn);
-    FMouseDistanceValue.Text := 'x' + FormatFloat('0.000', Zoom);
-    // In orthographic projection the wheel changes the view's size
-    if FMouseZoomOrtho then
-      FMouseDistanceName.Text := 'Size'
-    else
-      FMouseDistanceName.Text := 'Distance';
-  end;
-  if FMouseViewDetails.Visible <> Shown then
-  begin
-    FMouseViewDetails.Visible := Shown;
-    if Shown then
-      FMouseViewBack.Height := MOUSE_VIEW_TITLE_HEIGHT + 3 * MOUSE_VIEW_ROW_HEIGHT + 3
-    else
-      FMouseViewBack.Height := MOUSE_VIEW_TITLE_HEIGHT;
-  end;
-end;
-
+// Mouse View is one of the palette's two tools; off, Place Model is on. The
+// view takes the mouse either way: left-drag turns it or places, a right
+// click puts the normal view back and the wheel zooms, with either tool.
+// Choosing Place Model does not put the normal view back, so a view turned
+// to place pieces in stays turned
 procedure TMainForm.ApplyMouseViewTick(const AOn: Boolean);
 begin
   FMouseViewItem.IsChecked := AOn;
   FMouseDragging := False;
-  if not AOn then
-    ResetMouseView;
-  AspectLayout.HitTest := AOn;
-  FMouseViewBack.Visible := AOn;
-  UpdateMouseViewReadout;
+  FPlaceDown := False;
+  FTurnDown := False;
+  if FMoveDown then
+    EndMove;
+  FPanDown := False;
+  HidePlacement;
+  ShowPick(-1);
+  AspectLayout.HitTest := True;
+  UpdatePalette;
 end;
 
 function TMainForm.MouseViewOn: Boolean;
@@ -2998,7 +4645,14 @@ end;
 
 procedure TMainForm.MouseViewItemClick(Sender: TObject);
 begin
-  ApplyMouseViewTick(not FMouseViewItem.IsChecked);
+  ChooseTool(not FMouseViewItem.IsChecked);
+end;
+
+procedure TMainForm.ChooseTool(const AMouseView: Boolean);
+begin
+  if Assigned(FMouseViewItem) and (MouseViewOn = AMouseView) then
+    Exit;
+  ApplyMouseViewTick(AMouseView);
   // Kept at once, as only the tick is kept
   FSettings.MouseView := MouseViewOn;
   try
@@ -3009,10 +4663,95 @@ begin
         E.Message);
   end;
   if MouseViewOn then
-    DebugMemo.Lines.Add('Mouse view on: left-drag turns the view, the wheel ' +
-      'zooms, a right click puts the normal view back')
+    DebugMemo.Lines.Add('Mouse View: left-drag turns the view, the wheel zooms, a right ' +
+      'click puts the normal view back')
   else
-    DebugMemo.Lines.Add('Mouse view off');
+    LogEditTool;
+end;
+
+procedure TMainForm.LogEditTool;
+begin
+  case FEditTool of
+    etPlace:
+      DebugMemo.Lines.Add('Place Model: a click places the model chosen in the Library, a ' +
+        'drag an area of it; the wheel zooms, a right click puts the normal view back');
+    etErase:
+      DebugMemo.Lines.Add('Erase: a click takes the piece out of the level; what rested on ' +
+        'it falls');
+    etMove:
+      DebugMemo.Lines.Add('Move Object: drag a piece across the level, snapped to the grid, ' +
+        'freely with Shift held; it rests on what is under it, and what rested on it falls');
+    etPan:
+      DebugMemo.Lines.Add('Move Camera: drag the level to slide the view across it; a right ' +
+        'click puts the normal view back');
+    etRotate:
+      DebugMemo.Lines.Add(Format('Rotate: drag a piece left or right to turn it about its ' +
+        'middle, in steps of %.4g degrees, freely with Shift held; a right click puts the ' +
+        'normal view back', [FSettings.RotateSnap]));
+    etBend:
+      DebugMemo.Lines.Add(Format('Bend: left-drag a piece of a run to turn it and the pieces ' +
+        'to its right about its join with the piece to its left; right-drag for the other ' +
+        'way; in steps of %.4g degrees, freely with Shift held', [FSettings.RotateSnap]));
+  end;
+end;
+
+procedure TMainForm.ChooseEditTool(const ATool: TLevelEditTool);
+begin
+  if (FEditTool = ATool) and not MouseViewOn then
+    Exit;
+  FEditTool := ATool;
+  if MouseViewOn then
+    // Turns Mouse View off, which logs the tool
+    ChooseTool(False)
+  else
+  begin
+    ApplyMouseViewTick(False);
+    LogEditTool;
+  end;
+end;
+
+procedure TMainForm.RotateButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etRotate);
+end;
+
+procedure TMainForm.BendButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etBend);
+end;
+
+procedure TMainForm.TurnButtonDblClick(Sender: TObject);
+begin
+  if Sender = FBendButton then
+    ChooseEditTool(etBend)
+  else
+    ChooseEditTool(etRotate);
+  ShowRotationSnap;
+end;
+
+procedure TMainForm.RotationSnapItemClick(Sender: TObject);
+begin
+  ShowRotationSnap;
+end;
+
+procedure TMainForm.ShowRotationSnap;
+var
+  Step: Single;
+begin
+  Step := FSettings.RotateSnap;
+  if not TRotationSnapForm.Execute(Step, ROTATE_SNAP_MIN, ROTATE_SNAP_MAX) then
+    Exit;
+  FSettings.RotateSnap := Step;
+  try
+    FSettings.Save;
+  except
+    on E: Exception do
+      DebugMemo.Lines.Add('Can''t save the settings to ' + FSettings.FileName + ': ' +
+        E.Message);
+  end;
+  DebugMemo.Lines.Add(Format('Rotate and Bend turn in steps of %.4g degrees',
+    [FSettings.RotateSnap]));
+  UpdateStatus;
 end;
 
 function TMainForm.MouseViewSubject: String;
@@ -3108,7 +4847,6 @@ begin
   FMouseYaw := FMouseYaw - 360 * Floor(FMouseYaw / 360);
   FMouseZoom := Zoom;
   FMouseApplied := True;
-  UpdateMouseViewReadout;
 end;
 
 procedure TMainForm.SuspendMouseView;
@@ -3134,7 +4872,6 @@ begin
   FMouseZoomOrtho := GorillaCamera.IsOrthographic;
   ShiftCamera(FMouseYaw, FMouseZoom, FMouseZoomOrtho);
   FMouseApplied := True;
-  UpdateMouseViewReadout;
 end;
 
 procedure TMainForm.CheckMouseViewSubject;
@@ -3155,20 +4892,82 @@ begin
   FMouseZoom := 1;
   FMouseSubject := String.Empty;
   FMouseDragging := False;
-  UpdateMouseViewReadout;
 end;
 
 procedure TMainForm.ViewMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
+var
+  Spot: TPointF;
+  IsRight, Over: Boolean;
+  Index: Integer;
 begin
-  if not MouseViewOn then
-    Exit;
   // A Control-click counts as a right-click, as it does on the lists, for a
   // Mac with one button
-  if (Button = TMouseButton.mbRight) or
-    ((Button = TMouseButton.mbLeft) and (ssCtrl in Shift)) then
-    ResetMouseView
-  else if Button = TMouseButton.mbLeft then
+  IsRight := (Button = TMouseButton.mbRight) or
+    ((Button = TMouseButton.mbLeft) and (ssCtrl in Shift));
+  // Rotate turns with the left button; Bend with either, the right bending
+  // the other way. Over no piece, Bend's right button does nothing
+  if (RotateToolOn and (Button = TMouseButton.mbLeft) and not IsRight) or
+    (BendToolOn and ((Button = TMouseButton.mbLeft) or (Button = TMouseButton.mbRight))) then
+  begin
+    StartTurn(PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y))), IsRight, X, Button);
+    UpdateStatus;
+    Exit;
+  end;
+  // Otherwise the right button puts the normal view back, with any tool:
+  // the turn and zoom, and Move Camera's move
+  if IsRight then
+  begin
+    FPlaceDown := False;
+    ResetMouseView;
+    ResetViewCentre;
+    Exit;
+  end;
+  if Button <> TMouseButton.mbLeft then
+    Exit;
+  if EraseToolOn then
+  begin
+    Index := PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    if Index >= 0 then
+    begin
+      DebugMemo.Lines.Add('Level: took out ' + FPieces[Index].Spec.Name);
+      RemovePieces([Index]);
+      // The next piece under the pointer, if any
+      ShowPick(PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y))));
+    end;
+    Exit;
+  end;
+  if MoveToolOn then
+  begin
+    StartMove(PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y))),
+      AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    UpdateStatus;
+    Exit;
+  end;
+  if PanToolOn then
+  begin
+    FPanDown := LevelFloorAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y)), Over, FPanGrab);
+    Exit;
+  end;
+  if PlaceToolOn then
+  begin
+    if not FHasBrush then
+    begin
+      DebugMemo.Lines.Add('Level: choose a model in the Library first (File, Library...)');
+      Exit;
+    end;
+    // The area starts here; a click without a drag is an area of one
+    if PlaceSpotAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y)), Spot) then
+    begin
+      FPlaceDown := True;
+      FPlaceAnchor := Spot;
+      FPlaceCapLogged := False;
+      FPlaceCountX := 1;
+      FPlaceCountZ := 1;
+      ShowPlacement([Spot]);
+    end;
+  end
+  else if MouseViewOn then
   begin
     FMouseDragging := True;
     FMouseLastX := X;
@@ -3177,8 +4976,64 @@ end;
 
 procedure TMainForm.ViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single);
 var
-  Moved: Single;
+  Moved, Degrees, Step: Single;
+  Held: Boolean;
+  Index: Integer;
 begin
+  if PanToolOn then
+  begin
+    if FPanDown and not (ssLeft in Shift) then
+      FPanDown := False;
+    if FPanDown then
+      TrackPan(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    Exit;
+  end;
+  if MoveToolOn and FMoveDown then
+  begin
+    // Let go where the view could not see it: ends there
+    if not (ssLeft in Shift) then
+      EndMove
+    else
+      TrackMove(AspectLayout.LocalToScreen(TPointF.Create(X, Y)), ssShift in Shift);
+    Exit;
+  end;
+  if PickToolOn then
+  begin
+    if FTurnDown then
+    begin
+      // The button let go where the view could not see it ends the turn, as
+      // it ends Mouse View's
+      if FTurnButton = TMouseButton.mbRight then
+        Held := ssRight in Shift
+      else
+        Held := ssLeft in Shift;
+      if not Held then
+      begin
+        EndTurn;
+        Exit;
+      end;
+      Degrees := (X - FTurnStartX) * TURN_DEGREES_PER_PIXEL;
+      Step := FSettings.RotateSnap;
+      if not (ssShift in Shift) and (Step > 0) then
+        Degrees := Round(Degrees / Step) * Step;
+      if not SameValue(Degrees, FTurnBy, 1E-4) then
+        ApplyTurn(Degrees);
+      Exit;
+    end;
+    Index := PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    if Index <> FPicked then
+      ShowPick(Index);
+    Exit;
+  end;
+  if PlaceToolOn then
+  begin
+    // The left button let go where the view could not see it: the area is
+    // dropped, not placed, and the pointer hovers again
+    if FPlaceDown and not (ssLeft in Shift) then
+      FPlaceDown := False;
+    TrackPlacement(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    Exit;
+  end;
   if not FMouseDragging then
     Exit;
   // The left button let go where the view could not see it, outside the
@@ -3201,19 +5056,1559 @@ end;
 procedure TMainForm.ViewMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
-  if Button = TMouseButton.mbLeft then
-    FMouseDragging := False;
+  if FTurnDown then
+  begin
+    if Button = FTurnButton then
+      EndTurn;
+    Exit;
+  end;
+  if Button <> TMouseButton.mbLeft then
+    Exit;
+  if FMoveDown then
+  begin
+    EndMove;
+    Exit;
+  end;
+  if FPanDown then
+  begin
+    FPanDown := False;
+    DebugMemo.Lines.Add(Format('Level: Move Camera: the view''s middle is at (%.3g, %.3g)',
+      [FViewCentre.X, FViewCentre.Y]));
+    Exit;
+  end;
+  FMouseDragging := False;
+  if FPlaceDown then
+  begin
+    FPlaceDown := False;
+    PlaceShown;
+    // Hovering again: on top of what was just placed
+    TrackPlacement(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+  end;
+end;
+
+procedure TMainForm.ViewMouseLeave(Sender: TObject);
+begin
+  if not FPlaceDown then
+    HidePlacement;
+  if not FTurnDown and not FMoveDown and (FPicked >= 0) then
+    ShowPick(-1);
 end;
 
 procedure TMainForm.ViewMouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; var Handled: Boolean);
 begin
-  if not MouseViewOn then
+  // With either tool
+  if not Assigned(FMouseViewItem) then
     Exit;
   Handled := True;
   // A notch is 120; rolling the wheel away brings the camera nearer, towards
   // you takes it further away
   MoveMouseView(0, Power(MOUSE_VIEW_ZOOM_STEP, -WheelDelta / 120));
+end;
+
+{ Erase, Move Object and Move Camera }
+
+function TMainForm.EraseToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etErase);
+end;
+
+function TMainForm.MoveToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etMove);
+end;
+
+function TMainForm.PanToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etPan);
+end;
+
+function TMainForm.PickToolOn: Boolean;
+begin
+  Result := EraseToolOn or MoveToolOn or RotateToolOn or BendToolOn;
+end;
+
+procedure TMainForm.EraseButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etErase);
+end;
+
+procedure TMainForm.MoveButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etMove);
+end;
+
+procedure TMainForm.PanButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etPan);
+end;
+
+function TMainForm.PieceIndexOf(const AId: Integer): Integer;
+begin
+  if FPieces <> nil then
+    for var I := 0 to FPieces.Count - 1 do
+      if FPieces[I].Id = AId then
+        Exit(I);
+  Result := -1;
+end;
+
+procedure TMainForm.ReleasePiece(const AIndex: Integer; const AGone: TArray<Boolean>);
+begin
+  // Gorilla's v1.5 documentation: an instance item can be freed directly.
+  // The template stays, parked and loaded, for the next piece of it
+  FPieces[AIndex].Instance.Free;
+end;
+
+// In one pass over the pieces, as a history line can name thousands
+function TMainForm.IndicesOf(const AIds: TArray<Integer>): TArray<Integer>;
+var
+  Wanted: TDictionary<Integer, Boolean>;
+  Count: Integer;
+begin
+  Result := nil;
+  if (FPieces = nil) or (Length(AIds) = 0) then
+    Exit;
+  Wanted := TDictionary<Integer, Boolean>.Create;
+  try
+    for var Id in AIds do
+      Wanted.AddOrSetValue(Id, True);
+    SetLength(Result, Length(AIds));
+    Count := 0;
+    for var I := 0 to FPieces.Count - 1 do
+      if Wanted.ContainsKey(FPieces[I].Id) and (Count < Length(Result)) then
+      begin
+        Result[Count] := I;
+        Inc(Count);
+      end;
+    SetLength(Result, Count);
+  finally
+    Wanted.Free;
+  end;
+end;
+
+procedure TMainForm.RemovePieces(const AIndices: TArray<Integer>);
+var
+  Gone: TArray<Boolean>;
+  Region: TRectF;
+  Box: TBoundingBox;
+  Any: Boolean;
+  Kept: Integer;
+begin
+  if (FPieces = nil) or (Length(AIndices) = 0) then
+    Exit;
+  // Whatever was going on with the pieces stops: indices are about to move
+  FTurnDown := False;
+  FMoveDown := False;
+  ShowPick(-1);
+  SetLength(Gone, FPieces.Count);
+  Any := False;
+  Region := TRectF.Empty;
+  for var I in AIndices do
+    if (I >= 0) and (I < FPieces.Count) and not Gone[I] then
+    begin
+      Gone[I] := True;
+      // Where they stood, for what rested on them to fall
+      Box := FPieces[I].Box;
+      if Any then
+        Region := TRectF.Union(Region, TRectF.Create(Box.Left, Box.Near, Box.Right, Box.Far))
+      else
+        Region := TRectF.Create(Box.Left, Box.Near, Box.Right, Box.Far);
+      Any := True;
+    end;
+  if not Any then
+    Exit;
+  EditInstances(True);
+  try
+    for var I := 0 to FPieces.Count - 1 do
+      if Gone[I] then
+        ReleasePiece(I, Gone);
+  finally
+    EditInstances(False);
+  end;
+  // The rest, in order, in one pass: deleting one at a time moves the list
+  // down for each, which an area of thousands makes slow
+  Kept := 0;
+  for var I := 0 to FPieces.Count - 1 do
+    if not Gone[I] then
+    begin
+      if Kept <> I then
+        FPieces[Kept] := FPieces[I];
+      Inc(Kept);
+    end;
+  FPieces.Count := Kept;
+  PruneHistory;
+  SettlePieces(Region);
+  MarkLevelChanged;
+end;
+
+// Lowest first, so a piece falls onto where those under it have already
+// fallen to. A piece rests on the pieces whose tops are at or below its
+// base, as placing lands it; one with nothing left at its base falls
+procedure TMainForm.SettlePieces(const ARegion: TRectF);
+var
+  Order: TArray<Integer>;
+  Piece: TLevelPiece;
+  Box, Other: TBoundingBox;
+  Below: TList<TBoundingBox>;
+  Region: TRectF;
+  Rest, Eps, Started: Double;
+  Any: Boolean;
+begin
+  if (FPieces = nil) or (FPieces.Count = 0) then
+    Exit;
+  Eps := 0.01 * FSettings.GridSize;
+  Region := ARegion;
+  SetLength(Order, FPieces.Count);
+  for var I := 0 to High(Order) do
+    Order[I] := I;
+  TArray.Sort<Integer>(Order, TComparer<Integer>.Construct(
+    function(const A, B: Integer): Integer
+    begin
+      Result := CompareValue(FPieces[A].Box.Top, FPieces[B].Box.Top);
+    end));
+  Started := FClock.Elapsed.TotalSeconds;
+  Any := False;
+  Below := TList<TBoundingBox>.Create;
+  try
+    for var K in Order do
+    begin
+      Piece := FPieces[K];
+      if Piece.Falling then
+        Continue;
+      Box := Piece.Box;
+      // Only over where something went, or fell from
+      if not ((Box.Left < Region.Right - Eps) and (Box.Right > Region.Left + Eps) and
+        (Box.Near < Region.Bottom - Eps) and (Box.Far > Region.Top + Eps)) then
+        Continue;
+      Below.Clear;
+      for var J := 0 to FPieces.Count - 1 do
+        if J <> K then
+        begin
+          Other := FPieces[J].Box;
+          if Other.Bottom <= Box.Top + Eps then
+            Below.Add(Other);
+        end;
+      Rest := LandingHeight(TRectF.Create(Box.Left, Box.Near, Box.Right, Box.Far),
+        Below.ToArray, FSettings.GridSize);
+      if Rest < Box.Top - Eps then
+      begin
+        Piece.FromY := Piece.Landed.Y;
+        Piece.Landed.Y := Piece.Landed.Y - (Box.Top - Rest);
+        Piece.Falling := True;
+        Piece.Started := Started;
+        FPieces[K] := Piece;
+        Any := True;
+        // What rests on it falls too
+        Region := TRectF.Union(Region, TRectF.Create(Box.Left, Box.Near, Box.Right,
+          Box.Far));
+      end;
+    end;
+  finally
+    Below.Free;
+  end;
+  if Any then
+    FFallTimer.Enabled := True;
+end;
+
+// Resting on a piece: based at its top, give or take a hundredth of a
+// cell, and over it by more than a hundredth of a cell, as landing counts
+// it; then those resting on them, and so on
+function TMainForm.RidersOf(const AIndex: Integer): TArray<Integer>;
+var
+  Taken: TArray<Boolean>;
+  Queue: TList<Integer>;
+  Eps: Single;
+  Under, Over: TBoundingBox;
+begin
+  Result := nil;
+  Eps := 0.01 * FSettings.GridSize;
+  SetLength(Taken, FPieces.Count);
+  Taken[AIndex] := True;
+  Queue := TList<Integer>.Create;
+  try
+    Queue.Add(AIndex);
+    var Next := 0;
+    while Next < Queue.Count do
+    begin
+      Under := FPieces[Queue[Next]].Box;
+      Inc(Next);
+      for var I := 0 to FPieces.Count - 1 do
+        if not Taken[I] then
+        begin
+          Over := FPieces[I].Box;
+          if (Abs(Over.Top - Under.Bottom) <= Eps) and
+            (Over.Left < Under.Right - Eps) and (Over.Right > Under.Left + Eps) and
+            (Over.Near < Under.Far - Eps) and (Over.Far > Under.Near + Eps) then
+          begin
+            Taken[I] := True;
+            Queue.Add(I);
+          end;
+        end;
+    end;
+    // All but the piece itself, first
+    Queue.Delete(0);
+    Result := Queue.ToArray;
+  finally
+    Queue.Free;
+  end;
+end;
+
+function TMainForm.StartMove(const AIndex: Integer; const AScreen: TPointF): Boolean;
+var
+  Over: Boolean;
+  Floor, Mid: TPointF;
+begin
+  Result := (AIndex >= 0) and (FPieces <> nil) and (AIndex < FPieces.Count) and
+    LevelFloorAt(AScreen, Over, Floor);
+  if not Result then
+    Exit;
+  Mid := PieceMiddle(FPieces[AIndex]);
+  FMoveIndex := AIndex;
+  FMoveOffset := Mid - Floor;
+  FMoveStart := FPieces[AIndex].Landed;
+  FMoveRiders := RidersOf(AIndex);
+  FMoveDown := True;
+  ShowPick(AIndex);
+end;
+
+// Snapped as placing snaps, by its turned box, unless AFree; resting on
+// what is under it there, leaving out what rested on it
+procedure TMainForm.TrackMove(const AScreen: TPointF; const AFree: Boolean);
+var
+  Over: Boolean;
+  Floor, Spot: TPointF;
+  Piece: TLevelPiece;
+  Others: TList<TBoundingBox>;
+  Grid, Rest: Single;
+  Skip: Boolean;
+begin
+  if not FMoveDown or not LevelFloorAt(AScreen, Over, Floor) then
+    Exit;
+  Piece := FPieces[FMoveIndex];
+  Grid := FSettings.GridSize;
+  Spot := SnapPiecePosition(Floor + FMoveOffset, Piece.Turned,
+    System.Math.IfThen(AFree, 0, Grid));
+  Others := TList<TBoundingBox>.Create;
+  try
+    for var I := 0 to FPieces.Count - 1 do
+    begin
+      Skip := I = FMoveIndex;
+      for var R in FMoveRiders do
+        if R = I then
+          Skip := True;
+      if not Skip then
+        Others.Add(FPieces[I].Box);
+    end;
+    Rest := LandingHeight(BoxFootprint(Piece.Turned, Point3D(Spot.X, 0, Spot.Y)),
+      Others.ToArray, Grid);
+  finally
+    Others.Free;
+  end;
+  Piece.Landed := Point3D(Spot.X, Rest - Piece.Turned.Top, Spot.Y);
+  Piece.Falling := False;
+  FPieces[FMoveIndex] := Piece;
+  EditInstances(True);
+  try
+    MovePiece(Piece, Piece.Landed.Y);
+  finally
+    EditInstances(False);
+  end;
+  ShowPick(FMoveIndex);
+end;
+
+procedure TMainForm.EndMove;
+var
+  Piece: TLevelPiece;
+  Box: TBoundingBox;
+begin
+  if not FMoveDown then
+    Exit;
+  FMoveDown := False;
+  Piece := FPieces[FMoveIndex];
+  if not ((Piece.Landed - FMoveStart).Length > 1E-5) then
+  begin
+    UpdateStatus;
+    Exit;
+  end;
+  DebugMemo.Lines.Add(Format('Level: moved %s to (%.3g, %.3g, %.3g)%s', [Piece.Spec.Name,
+    Piece.Landed.X, Piece.Landed.Y, Piece.Landed.Z, IfThen(Length(FMoveRiders) > 0,
+    Format('; the %d piece(s) on it fall', [Length(FMoveRiders)]), '')]));
+  FMoveRiders := nil;
+  // What rested on it, where it was
+  Box := TBoundingBox.Create(Piece.Turned.TopLeftNear + FMoveStart,
+    Piece.Turned.BottomRightFar + FMoveStart);
+  SettlePieces(TRectF.Create(Box.Left, Box.Near, Box.Right, Box.Far));
+  MarkLevelChanged;
+  ShowPick(FMoveIndex);
+end;
+
+procedure TMainForm.TrackPan(const AScreen: TPointF);
+var
+  Over: Boolean;
+  Floor: TPointF;
+begin
+  if not FPanDown or not LevelFloorAt(AScreen, Over, Floor) then
+    Exit;
+  if FPanGrab.Distance(Floor) > 1E-5 then
+    MoveViewCentre(FPanGrab - Floor);
+end;
+
+// The camera's orbit centre is in the viewport's coordinates, the level's
+// in its own (turned over), so the move is taken across
+procedure TMainForm.MoveViewCentre(const ADelta: TPointF);
+var
+  World: TPoint3D;
+begin
+  if (GorillaCamera = nil) or (FLevel = nil) then
+    Exit;
+  FViewCentre := FViewCentre + ADelta;
+  World := FLevel.LocalToAbsolute3D(Point3D(ADelta.X, 0, ADelta.Y)) -
+    FLevel.LocalToAbsolute3D(TPoint3D.Zero);
+  GorillaCamera.OrbitCenter.Point := GorillaCamera.OrbitCenter.Point + World;
+  UpdateStatus;
+end;
+
+procedure TMainForm.ResetViewCentre;
+begin
+  if FViewCentre.IsZero then
+    Exit;
+  FViewCentre := TPointF.Zero;
+  FitModel;
+end;
+
+{ Level files }
+
+procedure TMainForm.BuildLevelFileItems;
+
+  function Item(const AIndex: Integer; const AText: String; const AShortCut: TShortCut;
+    const AClick: TNotifyEvent): TMenuItem;
+  begin
+    Result := TMenuItem.Create(Self);
+    Result.Text := AText;
+    Result.ShortCut := AShortCut;
+    Result.OnClick := AClick;
+    FileMenu.InsertObject(AIndex, Result);
+  end;
+
+begin
+  FLoadLevelItem := Item(0, 'Load Level...', scCtrl or Ord('O'), LoadLevelItemClick);
+  FSaveLevelItem := Item(1, 'Save Level', scCtrl or Ord('S'), SaveLevelItemClick);
+  FSaveLevelAsItem := Item(2, 'Save Level As...', scCtrl or scShift or Ord('S'),
+    SaveLevelAsItemClick);
+  Item(3, '-', 0, nil);
+end;
+
+procedure TMainForm.MarkLevelChanged;
+begin
+  if FLevelDirty then
+    Exit;
+  FLevelDirty := True;
+  UpdateCaption;
+end;
+
+function TMainForm.LevelName: String;
+begin
+  if FLevelFile = String.Empty then
+    Result := 'Untitled'
+  else
+    Result := ExtractFileName(FLevelFile);
+end;
+
+procedure TMainForm.UpdateCaption;
+begin
+  if (FLevelFile = String.Empty) and not FLevelDirty then
+    Caption := ProjectionCaption
+  else
+    Caption := LevelName + IfThen(FLevelDirty, '*', '') + ' - ' + ProjectionCaption;
+end;
+
+// As JSON: the models used, once each; the pieces, each by its model, where
+// it rests and its turn; the history, by piece; and the view's middle
+function TMainForm.SaveLevelTo(const AFileName: String): Boolean;
+
+  function Point(const AValue: TPoint3D): TJSONArray;
+  begin
+    Result := TJSONArray.Create;
+    Result.Add(SimpleRoundTo(AValue.X, -5));
+    Result.Add(SimpleRoundTo(AValue.Y, -5));
+    Result.Add(SimpleRoundTo(AValue.Z, -5));
+  end;
+
+var
+  Root, Obj: TJSONObject;
+  Models, Pieces, Lines, Ids: TJSONArray;
+  ModelOf: TDictionary<String, Integer>;
+  PieceOf: TDictionary<Integer, Integer>;
+  Piece: TLevelPiece;
+  At: Integer;
+  Temp, Target: String;
+begin
+  Result := False;
+  Target := OSFriendlyPath(AFileName);
+  Root := TJSONObject.Create;
+  ModelOf := TDictionary<String, Integer>.Create;
+  PieceOf := TDictionary<Integer, Integer>.Create;
+  try
+    Root.AddPair('format', LEVEL_FILE_FORMAT);
+    Root.AddPair('version', TJSONNumber.Create(LEVEL_FILE_VERSION));
+    Root.AddPair('gridSize', TJSONNumber.Create(SimpleRoundTo(FSettings.GridSize, -5)));
+    Obj := TJSONObject.Create;
+    Obj.AddPair('x', TJSONNumber.Create(SimpleRoundTo(FViewCentre.X, -5)));
+    Obj.AddPair('z', TJSONNumber.Create(SimpleRoundTo(FViewCentre.Y, -5)));
+    Root.AddPair('viewCentre', Obj);
+    Models := TJSONArray.Create;
+    Root.AddPair('models', Models);
+    Pieces := TJSONArray.Create;
+    Root.AddPair('pieces', Pieces);
+    for var I := 0 to FPieces.Count - 1 do
+    begin
+      Piece := FPieces[I];
+      if not ModelOf.TryGetValue(Piece.Spec.Key, At) then
+      begin
+        At := Models.Count;
+        ModelOf.Add(Piece.Spec.Key, At);
+        Obj := TJSONObject.Create;
+        Obj.AddPair('name', Piece.Spec.Name);
+        Obj.AddPair('file', Piece.Spec.FileName);
+        Obj.AddPair('key', Piece.Spec.Key);
+        Obj.AddPair('boxMin', Point(Piece.Spec.BoxMin));
+        Obj.AddPair('boxMax', Point(Piece.Spec.BoxMax));
+        Models.AddElement(Obj);
+      end;
+      PieceOf.Add(Piece.Id, I);
+      Obj := TJSONObject.Create;
+      Obj.AddPair('model', TJSONNumber.Create(At));
+      // Where it rests: one still falling is saved landed
+      Obj.AddPair('at', Point(Piece.Landed));
+      Obj.AddPair('turn', TJSONNumber.Create(SimpleRoundTo(Piece.Turn, -4)));
+      Pieces.AddElement(Obj);
+    end;
+    Lines := TJSONArray.Create;
+    Root.AddPair('history', Lines);
+    if FHistory <> nil then
+      for var Entry in FHistory do
+      begin
+        Obj := TJSONObject.Create;
+        Obj.AddPair('name', Entry.Name);
+        Obj.AddPair('placed', TJSONNumber.Create(Entry.Placed));
+        Ids := TJSONArray.Create;
+        for var Id in Entry.Ids do
+          if PieceOf.TryGetValue(Id, At) then
+            Ids.Add(At);
+        Obj.AddPair('pieces', Ids);
+        Lines.AddElement(Obj);
+      end;
+    // Written beside it first, so a failed write leaves the old file whole
+    Temp := Target + '.tmp';
+    try
+      TFile.WriteAllText(Temp, JsonToText(Root), TEncoding.UTF8);
+      if TFile.Exists(Target) then
+        TFile.Delete(Target);
+      TFile.Move(Temp, Target);
+    except
+      on E: Exception do
+      begin
+        DebugMemo.Lines.Add('Level: can''t save ' + Target + ': ' + E.Message);
+        TDialogService.ShowMessage('The level could not be saved: ' + E.Message);
+        Exit;
+      end;
+    end;
+  finally
+    PieceOf.Free;
+    ModelOf.Free;
+    Root.Free;
+  end;
+  FLevelFile := Target;
+  FLevelDirty := False;
+  FSettings.LevelFolder := ExtractFilePath(Target);
+  UpdateCaption;
+  DebugMemo.Lines.Add(Format('Level: saved %d pieces to %s', [FPieces.Count, Target]));
+  Result := True;
+end;
+
+function TMainForm.SaveLevel: Boolean;
+begin
+  if FLevelFile = String.Empty then
+    Result := SaveLevelAs
+  else
+    Result := SaveLevelTo(FLevelFile);
+end;
+
+function TMainForm.SaveLevelAs: Boolean;
+var
+  Dialog: TSaveDialog;
+begin
+  Result := False;
+  Dialog := TSaveDialog.Create(nil);
+  try
+    Dialog.Title := 'Save Level';
+    Dialog.Filter := 'Sprite3DBuilder levels (*' + LEVEL_FILE_EXTENSION + ')|*' +
+      LEVEL_FILE_EXTENSION;
+    Dialog.DefaultExt := Copy(LEVEL_FILE_EXTENSION, 2, MaxInt);
+    Dialog.Options := Dialog.Options + [TOpenOption.ofOverwritePrompt];
+    if FLevelFile <> String.Empty then
+    begin
+      Dialog.InitialDir := ExtractFilePath(FLevelFile);
+      Dialog.FileName := ExtractFileName(FLevelFile);
+    end
+    else if FSettings.LevelFolder <> String.Empty then
+      Dialog.InitialDir := FSettings.LevelFolder;
+    if not Dialog.Execute then
+      Exit;
+    Result := SaveLevelTo(ChangeFileExt(Dialog.FileName, LEVEL_FILE_EXTENSION));
+  finally
+    Dialog.Free;
+  end;
+end;
+
+function TMainForm.LoadLevelFile(const AFileName: String): Boolean;
+
+  function ReadPoint(const AValue: TJSONValue): TPoint3D;
+  begin
+    Result := TPoint3D.Zero;
+    if (AValue is TJSONArray) and (TJSONArray(AValue).Count >= 3) then
+      Result := Point3D(TJSONArray(AValue).Items[0].GetValue<Single>,
+        TJSONArray(AValue).Items[1].GetValue<Single>,
+        TJSONArray(AValue).Items[2].GetValue<Single>);
+  end;
+
+var
+  Source: String;
+  Value, Found: TJSONValue;
+  Root, Obj: TJSONObject;
+  Models, Pieces, Lines: TJSONArray;
+  Specs: TArray<TSprite3DPieceSpec>;
+  Sources: TArray<TPieceSource>;
+  Usable: TArray<Boolean>;
+  NewIds: TArray<Integer>;
+  Model, Missing, Version: Integer;
+  At: TPoint3D;
+  Piece: TLevelPiece;
+  Entry: THistoryEntry;
+  Watch: TStopwatch;
+  Centre: TPointF;
+begin
+  Result := False;
+  Source := OSFriendlyPath(AFileName);
+  Watch := TStopwatch.StartNew;
+  try
+    Value := TJSONObject.ParseJSONValue(TFile.ReadAllText(Source, TEncoding.UTF8));
+  except
+    on E: Exception do
+    begin
+      DebugMemo.Lines.Add('Level: can''t read ' + Source + ': ' + E.Message);
+      TDialogService.ShowMessage('The level could not be read: ' + E.Message);
+      Exit;
+    end;
+  end;
+  try
+    if not (Value is TJSONObject) or
+      (TJSONObject(Value).GetValue<String>('format', '') <> LEVEL_FILE_FORMAT) then
+    begin
+      DebugMemo.Lines.Add('Level: ' + Source + ' is not a Sprite3DBuilder level');
+      TDialogService.ShowMessage(ExtractFileName(Source) + ' is not a Sprite3DBuilder level.');
+      Exit;
+    end;
+    Root := TJSONObject(Value);
+    Version := Root.GetValue<Integer>('version', 0);
+    if Version > LEVEL_FILE_VERSION then
+    begin
+      DebugMemo.Lines.Add(Format('Level: %s is from a newer Sprite3DBuilder (layout %d; ' +
+        'this one reads up to %d)', [Source, Version, LEVEL_FILE_VERSION]));
+      TDialogService.ShowMessage(ExtractFileName(Source) + ' was saved by a newer ' +
+        'Sprite3DBuilder; update this one to open it.');
+      Exit;
+    end;
+    if not SameValue(Root.GetValue<Single>('gridSize', FSettings.GridSize),
+      FSettings.GridSize, 1E-4) then
+      DebugMemo.Lines.Add(Format('Level: %s was built on a grid of %.3g; the grid now is ' +
+        '%.3g', [Source, Root.GetValue<Single>('gridSize', 0), FSettings.GridSize]));
+
+    // The level as it is goes
+    FPlaceDown := False;
+    HidePlacement;
+    FreeLevelPieces;
+    if FHistory <> nil then
+      FHistory.Clear;
+
+    // The models, each loaded once, as placing loads it; one that cannot be
+    // is left out, with its pieces
+    Found := Root.FindValue('models');
+    if Found is TJSONArray then
+      Models := TJSONArray(Found)
+    else
+      Models := nil;
+    if Models <> nil then
+    begin
+      SetLength(Specs, Models.Count);
+      SetLength(Sources, Models.Count);
+      SetLength(Usable, Models.Count);
+      for var I := 0 to Models.Count - 1 do
+      begin
+        Usable[I] := False;
+        if not (Models.Items[I] is TJSONObject) then
+          Continue;
+        Obj := TJSONObject(Models.Items[I]);
+        Specs[I].Name := Obj.GetValue<String>('name', '');
+        Specs[I].FileName := Obj.GetValue<String>('file', '');
+        Specs[I].Key := Obj.GetValue<String>('key', '');
+        Specs[I].BoxMin := ReadPoint(Obj.FindValue('boxMin'));
+        Specs[I].BoxMax := ReadPoint(Obj.FindValue('boxMax'));
+        Usable[I] := (Specs[I].Key <> String.Empty) and PieceSourceFor(Specs[I], Sources[I]);
+      end;
+    end;
+
+    // The pieces, where they rested, turned as they were, not falling
+    Missing := 0;
+    Found := Root.FindValue('pieces');
+    if Found is TJSONArray then
+      Pieces := TJSONArray(Found)
+    else
+      Pieces := nil;
+    if Pieces <> nil then
+    begin
+      SetLength(NewIds, Pieces.Count);
+      EditInstances(True);
+      try
+        for var I := 0 to Pieces.Count - 1 do
+        begin
+          NewIds[I] := -1;
+          if not (Pieces.Items[I] is TJSONObject) then
+            Continue;
+          Obj := TJSONObject(Pieces.Items[I]);
+          Model := Obj.GetValue<Integer>('model', -1);
+          if (Model < 0) or (Model > High(Specs)) or not Usable[Model] then
+          begin
+            Inc(Missing);
+            Continue;
+          end;
+          At := ReadPoint(Obj.FindValue('at'));
+          if not PlacePiece(Specs[Model], Sources[Model], At, At.Y) then
+          begin
+            Inc(Missing);
+            Continue;
+          end;
+          Piece := FPieces[FPieces.Count - 1];
+          Piece.Turn := Obj.GetValue<Single>('turn', 0);
+          Piece.Turned := TurnedBox(Piece.Spec.Box, Piece.Turn);
+          Piece.Falling := False;
+          FPieces[FPieces.Count - 1] := Piece;
+          MovePiece(Piece, At.Y);
+          NewIds[I] := Piece.Id;
+        end;
+      finally
+        EditInstances(False);
+      end;
+    end;
+
+    // The history, by the pieces read
+    Found := Root.FindValue('history');
+    if (Found is TJSONArray) and (FHistory <> nil) then
+    begin
+      Lines := TJSONArray(Found);
+      for var I := 0 to Lines.Count - 1 do
+      begin
+        if not (Lines.Items[I] is TJSONObject) then
+          Continue;
+        Obj := TJSONObject(Lines.Items[I]);
+        Entry.Name := Obj.GetValue<String>('name', '');
+        Entry.Placed := Obj.GetValue<Integer>('placed', 0);
+        Entry.Ids := nil;
+        Found := Obj.FindValue('pieces');
+        if Found is TJSONArray then
+        begin
+          SetLength(Entry.Ids, TJSONArray(Found).Count);
+          var Count := 0;
+          for var J := 0 to TJSONArray(Found).Count - 1 do
+          begin
+            var Index := TJSONArray(Found).Items[J].GetValue<Integer>;
+            if (Index >= 0) and (Index <= High(NewIds)) and (NewIds[Index] >= 0) then
+            begin
+              Entry.Ids[Count] := NewIds[Index];
+              Inc(Count);
+            end;
+          end;
+          SetLength(Entry.Ids, Count);
+        end;
+        if Entry.Ids <> nil then
+          FHistory.Add(Entry);
+      end;
+    end;
+    ShowHistory;
+
+    // The view's middle, where Move Camera left it
+    Found := Root.FindValue('viewCentre');
+    if Found is TJSONObject then
+    begin
+      Centre := TPointF.Create(TJSONObject(Found).GetValue<Single>('x', 0),
+        TJSONObject(Found).GetValue<Single>('z', 0));
+      ResetViewCentre;
+      if not Centre.IsZero then
+        MoveViewCentre(Centre);
+    end;
+  finally
+    Value.Free;
+  end;
+  FLevelFile := Source;
+  FLevelDirty := False;
+  FSettings.LevelFolder := ExtractFilePath(Source);
+  UpdateCaption;
+  UpdateStatus;
+  DebugMemo.Lines.Add(Format('Level: loaded %d pieces from %s in %d ms%s', [FPieces.Count,
+    Source, Watch.ElapsedMilliseconds, IfThen(Missing > 0, Format('; %d left out, as ' +
+    'their models could not be loaded (see above)', [Missing]), '')]));
+  if Missing > 0 then
+    TDialogService.ShowMessage(Format('%d pieces were left out, as their models could not ' +
+      'be loaded; the Debug tab says which.', [Missing]));
+  Result := True;
+end;
+
+procedure TMainForm.AskToKeepLevel(const AThen: TProc);
+begin
+  if not FLevelDirty then
+  begin
+    AThen();
+    Exit;
+  end;
+  TDialogService.MessageDialog(Format('Save the changes to %s first?', [LevelName]),
+    TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo, TMsgDlgBtn.mbCancel],
+    TMsgDlgBtn.mbYes, 0,
+    procedure(const AResult: TModalResult)
+    begin
+      if MainFormGone then
+        Exit;
+      case AResult of
+        mrYes:
+          if SaveLevel then
+            AThen();
+        mrNo:
+          AThen();
+      end;
+    end);
+end;
+
+procedure TMainForm.LoadLevelItemClick(Sender: TObject);
+begin
+  AskToKeepLevel(
+    procedure
+    var
+      Dialog: TOpenDialog;
+    begin
+      Dialog := TOpenDialog.Create(nil);
+      try
+        Dialog.Title := 'Load Level';
+        Dialog.Filter := 'Sprite3DBuilder levels (*' + LEVEL_FILE_EXTENSION + ')|*' +
+          LEVEL_FILE_EXTENSION;
+        Dialog.Options := Dialog.Options + [TOpenOption.ofFileMustExist];
+        if FSettings.LevelFolder <> String.Empty then
+          Dialog.InitialDir := FSettings.LevelFolder;
+        if Dialog.Execute then
+          LoadLevelFile(Dialog.FileName);
+      finally
+        Dialog.Free;
+      end;
+    end);
+end;
+
+procedure TMainForm.SaveLevelItemClick(Sender: TObject);
+begin
+  SaveLevel;
+end;
+
+procedure TMainForm.SaveLevelAsItemClick(Sender: TObject);
+begin
+  SaveLevelAs;
+end;
+
+procedure TMainForm.OpenRequestedFile(const AFileName: String);
+var
+  FileName: String;
+begin
+  if MainFormGone then
+    Exit;
+  if not IsLevelFile(AFileName) then
+  begin
+    DebugMemo.Lines.Add('Asked to open ' + AFileName + ', which is not a level file');
+    Exit;
+  end;
+  FileName := AFileName;
+  BringToFront;
+  AskToKeepLevel(
+    procedure
+    begin
+      LoadLevelFile(FileName);
+    end);
+end;
+
+{ The history }
+
+// Over the view, top right at first, on the palette's dark backing: a grip
+// with its title, and a line for each click or area placed, oldest first,
+// newest at the bottom, with a button that takes those pieces out again
+procedure TMainForm.BuildHistory;
+var
+  Title: TText;
+begin
+  FHistory := TList<THistoryEntry>.Create;
+  FHistoryBack := TRectangle.Create(Self);
+  FHistoryBack.Parent := ViewportLayout;
+  FHistoryBack.XRadius := 4;
+  FHistoryBack.YRadius := 4;
+  FHistoryBack.Fill.Kind := TBrushKind.Solid;
+  FHistoryBack.Fill.Color := $C0000000;
+  FHistoryBack.Stroke.Kind := TBrushKind.None;
+  FHistoryBack.HitTest := True;
+  FHistoryBack.Width := HISTORY_WIDTH;
+
+  FHistoryGrip := TRectangle.Create(Self);
+  FHistoryGrip.Parent := FHistoryBack;
+  FHistoryGrip.SetBounds(PALETTE_GAP, PALETTE_GAP, HISTORY_WIDTH - 2 * PALETTE_GAP, 18);
+  FHistoryGrip.XRadius := 2;
+  FHistoryGrip.YRadius := 2;
+  FHistoryGrip.Fill.Kind := TBrushKind.Solid;
+  FHistoryGrip.Fill.Color := $40FFFFFF;
+  FHistoryGrip.Stroke.Kind := TBrushKind.None;
+  FHistoryGrip.Cursor := crSizeAll;
+  FHistoryGrip.Hint := 'Drag to move the history';
+  FHistoryGrip.ShowHint := True;
+  FHistoryGrip.AutoCapture := True;
+  FHistoryGrip.OnMouseDown := PaletteGripMouseDown;
+  FHistoryGrip.OnMouseMove := PaletteGripMouseMove;
+  FHistoryGrip.OnMouseUp := PaletteGripMouseUp;
+  Title := TText.Create(Self);
+  Title.Parent := FHistoryGrip;
+  Title.Align := TAlignLayout.Client;
+  Title.Margins.Left := 6;
+  Title.Text := 'History';
+  Title.TextSettings.FontColor := TAlphaColors.White;
+  Title.TextSettings.HorzAlign := TTextAlign.Leading;
+  Title.HitTest := False;
+
+  FHistoryBox := TVertScrollBox.Create(Self);
+  FHistoryBox.Parent := FHistoryBack;
+  FHistoryBox.SetBounds(PALETTE_GAP, 2 * PALETTE_GAP + 18, HISTORY_WIDTH - 2 * PALETTE_GAP,
+    HISTORY_LINE);
+  FHistoryBox.ShowScrollBars := True;
+
+  // Top right, as PlacePanels puts it the first time; shown as View,
+  // History says
+  FHistoryBack.Position.Point := TPointF.Create(
+    Max(8, ViewportLayout.Width - HISTORY_WIDTH - 8), 32);
+  FHistoryBack.Visible := FSettings.HistoryVisible;
+  FHistoryBack.BringToFront;
+  FHistoryItem := TMenuItem.Create(Self);
+  FHistoryItem.Text := 'History';
+  FHistoryItem.IsChecked := FSettings.HistoryVisible;
+  FHistoryItem.OnClick := HistoryItemClick;
+  ViewMenu.AddObject(FHistoryItem);
+
+  // Edit, after File, on the menu bar as it is (on Linux, FMX's own, which
+  // FileMenu has already been copied onto), with Undo, Ctrl+Z
+  FEditMenu := TMenuItem.Create(Self);
+  FEditMenu.Text := 'Edit';
+  FileMenu.Parent.InsertObject(FileMenu.Index + 1, FEditMenu);
+  FUndoItem := TMenuItem.Create(Self);
+  FUndoItem.Text := 'Undo';
+  FUndoItem.ShortCut := scCtrl or Ord('Z');
+  FUndoItem.OnClick := UndoItemClick;
+  FEditMenu.AddObject(FUndoItem);
+  var Line := TMenuItem.Create(Self);
+  Line.Text := '-';
+  FEditMenu.AddObject(Line);
+  FResetLevelItem := TMenuItem.Create(Self);
+  FResetLevelItem.Text := 'Reset Level...';
+  FResetLevelItem.OnClick := ResetLevelItemClick;
+  FEditMenu.AddObject(FResetLevelItem);
+  ShowHistory;
+end;
+
+procedure TMainForm.ResetLevelItemClick(Sender: TObject);
+begin
+  if (FPieces = nil) or (FPieces.Count = 0) then
+  begin
+    DebugMemo.Lines.Add('Edit, Reset Level: the level is empty already');
+    Exit;
+  end;
+  // Asked, as Undo cannot bring it back
+  TDialogService.MessageDialog(Format('Take all %d pieces out of the level, leaving the ' +
+    'empty grid? This cannot be undone.', [FPieces.Count]),
+    TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0,
+    procedure(const AResult: TModalResult)
+    var
+      Count: Integer;
+    begin
+      if (AResult <> mrYes) or MainFormGone then
+        Exit;
+      Count := FPieces.Count;
+      FPlaceDown := False;
+      HidePlacement;
+      // Every piece and every model loaded for them; the next placed loads
+      // its model again
+      FreeLevelPieces;
+      if FHistory <> nil then
+        FHistory.Clear;
+      ShowHistory;
+      // A new, empty level, with no file yet
+      FLevelFile := String.Empty;
+      FLevelDirty := False;
+      UpdateCaption;
+      UpdateStatus;
+      DebugMemo.Lines.Add(Format('Edit, Reset Level: took out %d pieces; the level is empty',
+        [Count]));
+    end);
+end;
+
+procedure TMainForm.UndoItemClick(Sender: TObject);
+var
+  Entry: THistoryEntry;
+  Indices: TArray<Integer>;
+begin
+  if (FHistory = nil) or (FHistory.Count = 0) then
+  begin
+    DebugMemo.Lines.Add('Edit, Undo: nothing placed to undo');
+    Exit;
+  end;
+  Entry := FHistory[FHistory.Count - 1];
+  Indices := IndicesOf(Entry.Ids);
+  DebugMemo.Lines.Add(Format('Edit, Undo: took out %d x %s', [Length(Indices), Entry.Name]));
+  // Its line goes with its pieces (PruneHistory)
+  RemovePieces(Indices);
+end;
+
+procedure TMainForm.AddHistory(const AName: String; const AIds: TArray<Integer>);
+var
+  Entry: THistoryEntry;
+begin
+  if (FHistory = nil) or (Length(AIds) = 0) then
+    Exit;
+  Entry.Name := AName;
+  Entry.Placed := Length(AIds);
+  Entry.Ids := AIds;
+  // Newest at the bottom; the oldest go first
+  FHistory.Add(Entry);
+  while FHistory.Count > HISTORY_MAX do
+    FHistory.Delete(0);
+  ShowHistory;
+end;
+
+procedure TMainForm.PruneHistory;
+var
+  Entry: THistoryEntry;
+  Kept: TArray<Integer>;
+  Live: TDictionary<Integer, Boolean>;
+begin
+  if (FHistory = nil) or (FPieces = nil) then
+    Exit;
+  Live := TDictionary<Integer, Boolean>.Create;
+  try
+    for var I := 0 to FPieces.Count - 1 do
+      Live.AddOrSetValue(FPieces[I].Id, True);
+    for var I := FHistory.Count - 1 downto 0 do
+    begin
+      Entry := FHistory[I];
+      SetLength(Kept, Length(Entry.Ids));
+      var Count := 0;
+      for var Id in Entry.Ids do
+        if Live.ContainsKey(Id) then
+        begin
+          Kept[Count] := Id;
+          Inc(Count);
+        end;
+      SetLength(Kept, Count);
+      if Kept = nil then
+        FHistory.Delete(I)
+      else if Length(Kept) <> Length(Entry.Ids) then
+      begin
+        Entry.Ids := Kept;
+        FHistory[I] := Entry;
+      end;
+    end;
+  finally
+    Live.Free;
+  end;
+  ShowHistory;
+end;
+
+procedure TMainForm.ShowHistory;
+var
+  Line, Remove: TRectangle;
+  Text: TText;
+  Entry: THistoryEntry;
+  Lines, Room: Single;
+begin
+  if (FHistoryBack = nil) or (FHistory = nil) then
+    Exit;
+  FHistoryBox.BeginUpdate;
+  try
+    FHistoryBox.Content.DeleteChildren;
+    if FHistory.Count = 0 then
+    begin
+      Text := TText.Create(FHistoryBox);
+      Text.Parent := FHistoryBox;
+      Text.SetBounds(0, 0, FHistoryBox.Width - 4, HISTORY_LINE);
+      Text.Text := 'Nothing placed yet';
+      Text.TextSettings.FontColor := $A0FFFFFF;
+      Text.TextSettings.HorzAlign := TTextAlign.Leading;
+      Text.Margins.Left := 6;
+      Text.HitTest := False;
+    end;
+    for var I := 0 to FHistory.Count - 1 do
+    begin
+      Entry := FHistory[I];
+      Line := TRectangle.Create(FHistoryBox);
+      Line.Parent := FHistoryBox;
+      Line.SetBounds(0, I * HISTORY_LINE, FHistoryBox.Width - 14, HISTORY_LINE - 2);
+      Line.Fill.Kind := TBrushKind.Solid;
+      if Odd(I) then
+        Line.Fill.Color := $18FFFFFF
+      else
+        Line.Fill.Color := TAlphaColors.Null;
+      Line.Stroke.Kind := TBrushKind.None;
+      Line.HitTest := False;
+      Text := TText.Create(Line);
+      Text.Parent := Line;
+      Text.SetBounds(6, 0, Line.Width - 32, Line.Height);
+      if Length(Entry.Ids) = Entry.Placed then
+        Text.Text := Format('%d x %s', [Entry.Placed, Entry.Name])
+      else
+        Text.Text := Format('%d of %d x %s', [Length(Entry.Ids), Entry.Placed, Entry.Name]);
+      Text.TextSettings.FontColor := TAlphaColors.White;
+      Text.TextSettings.HorzAlign := TTextAlign.Leading;
+      Text.TextSettings.Trimming := TTextTrimming.Character;
+      Text.TextSettings.WordWrap := False;
+      Text.HitTest := False;
+      // The remove button, a cross, drawn as the palette's icons are
+      Remove := TRectangle.Create(Line);
+      Remove.Parent := Line;
+      Remove.SetBounds(Line.Width - 22, 2, 18, 18);
+      Remove.XRadius := 3;
+      Remove.YRadius := 3;
+      Remove.Fill.Kind := TBrushKind.Solid;
+      Remove.Fill.Color := $30FFFFFF;
+      Remove.Stroke.Kind := TBrushKind.None;
+      Remove.Cursor := crHandPoint;
+      Remove.Hint := 'Take these pieces out of the level';
+      Remove.ShowHint := True;
+      Remove.Tag := I;
+      Remove.OnClick := HistoryRemoveClick;
+      Line.HitTest := True;   // so its button gets the click
+      Text := TText.Create(Remove);
+      Text.Parent := Remove;
+      Text.Align := TAlignLayout.Client;
+      Text.Text := 'X';
+      Text.TextSettings.FontColor := ERASE_BOX_COLOUR;
+      Text.TextSettings.Font.Style := [TFontStyle.fsBold];
+      Text.HitTest := False;
+    end;
+  finally
+    FHistoryBox.EndUpdate;
+  end;
+  // Undo has something to undo while there is a line
+  if FUndoItem <> nil then
+  begin
+    FUndoItem.Enabled := FHistory.Count > 0;
+    if FHistory.Count > 0 then
+      FUndoItem.Text := Format('Undo %d x %s', [Length(FHistory[FHistory.Count - 1].Ids),
+        FHistory[FHistory.Count - 1].Name])
+    else
+      FUndoItem.Text := 'Undo';
+  end;
+  // As tall as its lines, as far as the view below it allows
+  Lines := Max(1, FHistory.Count) * HISTORY_LINE;
+  Room := Max(HISTORY_LINE, ViewportLayout.Height - FHistoryBack.Position.Y -
+    FHistoryBox.Position.Y - PALETTE_GAP - 8);
+  FHistoryBox.Height := Min(Lines, Room);
+  FHistoryBack.Height := FHistoryBox.Position.Y + FHistoryBox.Height + PALETTE_GAP;
+  KeepPanelInView(FHistoryBack);
+  // The newest, at the bottom, in sight, once the box has laid its lines out
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      if not MainFormGone and (FHistoryBox <> nil) then
+        FHistoryBox.ViewportPosition := TPointF.Create(0,
+          Max(0, FHistory.Count * HISTORY_LINE - FHistoryBox.Height));
+    end);
+end;
+
+procedure TMainForm.HistoryRemoveClick(Sender: TObject);
+var
+  Entry: THistoryEntry;
+  Indices: TArray<Integer>;
+  At: Integer;
+begin
+  At := TControl(Sender).Tag;
+  if (FHistory = nil) or (At < 0) or (At >= FHistory.Count) then
+    Exit;
+  Entry := FHistory[At];
+  Indices := IndicesOf(Entry.Ids);
+  DebugMemo.Lines.Add(Format('Level: took out %d x %s, from the history',
+    [Length(Indices), Entry.Name]));
+  // The click came from a button the new list will free: after this event
+  TThread.ForceQueue(nil,
+    procedure
+    begin
+      if not MainFormGone then
+        RemovePieces(Indices);
+    end);
+end;
+
+{ The palette }
+
+// A floating toolbar over the view, on a dark, mostly opaque backing, as the
+// frame rate readout is, so it reads over the level whatever the theme:
+// a grip to move it, and the Place Model, Erase, Move Object, Rotate,
+// Bend, Move Camera and Mouse View tools. Made in code, as the readouts are, so the form
+// designer's .fmx is left alone.
+procedure TMainForm.BuildPalette;
+
+  function MakeButton(const AIcon, AHint: String; const AColumn: Integer; const AY: Single;
+    const AClick: TNotifyEvent): TRectangle;
+  var
+    // Qualified: System.IOUtils, used here, has a TPath of its own, for file
+    // paths, which would be taken otherwise
+    Icon: FMX.Objects.TPath;
+  begin
+    Result := TRectangle.Create(Self);
+    Result.Parent := FPaletteBack;
+    Result.SetBounds(PALETTE_GAP + AColumn * (PALETTE_BUTTON + PALETTE_GAP), AY,
+      PALETTE_BUTTON, PALETTE_BUTTON);
+    Result.XRadius := 4;
+    Result.YRadius := 4;
+    Result.Fill.Kind := TBrushKind.Solid;
+    Result.Fill.Color := TAlphaColors.Null;
+    Result.Stroke.Kind := TBrushKind.None;
+    Result.Stroke.Color := PLACE_BOX_COLOUR;
+    Result.Stroke.Thickness := 1.5;
+    Result.Hint := AHint;
+    Result.ShowHint := True;
+    Result.Cursor := crHandPoint;
+    Result.OnClick := AClick;
+    // Drawn as lines, in white, so it needs no image and suits any theme
+    Icon := FMX.Objects.TPath.Create(Self);
+    Icon.Parent := Result;
+    Icon.Align := TAlignLayout.Client;
+    Icon.Margins.Rect := TRectF.Create(5, 5, 5, 5);
+    Icon.Data.Data := AIcon;
+    Icon.WrapMode := TPathWrapMode.Fit;
+    Icon.Fill.Kind := TBrushKind.None;
+    Icon.Stroke.Kind := TBrushKind.Solid;
+    Icon.Stroke.Color := TAlphaColors.White;
+    Icon.Stroke.Thickness := 1.6;
+    Icon.HitTest := False;
+  end;
+
+var
+  Y: Single;
+begin
+  // Upright, two columns: the grip across the top; the camera's tools, Move
+  // Camera and Mouse View; then the tools that change the level, in pairs.
+  // A place with no tool is left empty
+  FPaletteBack := TRectangle.Create(Self);
+  FPaletteBack.Parent := ViewportLayout;
+  FPaletteBack.Align := TAlignLayout.None;
+  FPaletteBack.XRadius := 4;
+  FPaletteBack.YRadius := 4;
+  FPaletteBack.Fill.Kind := TBrushKind.Solid;
+  FPaletteBack.Fill.Color := $C0000000;
+  FPaletteBack.Stroke.Kind := TBrushKind.None;
+  // It takes the clicks it gets, so none reaches the view under it
+  FPaletteBack.HitTest := True;
+  FPaletteBack.Width := 2 * PALETTE_BUTTON + 3 * PALETTE_GAP;
+
+  FPaletteGrip := TRectangle.Create(Self);
+  FPaletteGrip.Parent := FPaletteBack;
+  FPaletteGrip.SetBounds(PALETTE_GAP, PALETTE_GAP, 2 * PALETTE_BUTTON + PALETTE_GAP,
+    PALETTE_GRIP);
+  FPaletteGrip.XRadius := 2;
+  FPaletteGrip.YRadius := 2;
+  FPaletteGrip.Fill.Kind := TBrushKind.Solid;
+  FPaletteGrip.Fill.Color := $40FFFFFF;
+  FPaletteGrip.Stroke.Kind := TBrushKind.None;
+  FPaletteGrip.Cursor := crSizeAll;
+  FPaletteGrip.Hint := 'Drag to move the palette';
+  FPaletteGrip.ShowHint := True;
+  FPaletteGrip.AutoCapture := True;
+  FPaletteGrip.OnMouseDown := PaletteGripMouseDown;
+  FPaletteGrip.OnMouseMove := PaletteGripMouseMove;
+  FPaletteGrip.OnMouseUp := PaletteGripMouseUp;
+
+  Y := 2 * PALETTE_GAP + PALETTE_GRIP;
+  FPanButton := MakeButton(MOVE_CAMERA_ICON, 'Move Camera', 0, Y, PanButtonClick);
+  FCameraButton := MakeButton(MOUSE_VIEW_ICON, 'Mouse View: turn the view', 1, Y,
+    CameraButtonClick);
+  // A little more room between the camera's tools and the level's
+  Y := Y + PALETTE_BUTTON + 3 * PALETTE_GAP;
+  FPlaceButton := MakeButton(PLACE_MODEL_ICON, 'Place Model', 0, Y, PlaceButtonClick);
+  FEraseButton := MakeButton(ERASE_ICON, 'Erase', 1, Y, EraseButtonClick);
+  Y := Y + PALETTE_BUTTON + PALETTE_GAP;
+  FMoveButton := MakeButton(MOVE_OBJECT_ICON, 'Move Object', 0, Y, MoveButtonClick);
+  FRotateButton := MakeButton(ROTATE_ICON, 'Rotate (double-click: the step)', 1, Y,
+    RotateButtonClick);
+  FRotateButton.OnDblClick := TurnButtonDblClick;
+  Y := Y + PALETTE_BUTTON + PALETTE_GAP;
+  FBendButton := MakeButton(BEND_ICON, 'Bend (double-click: the step)', 0, Y,
+    BendButtonClick);
+  FBendButton.OnDblClick := TurnButtonDblClick;
+  // Its pair, column 1, is empty
+  Y := Y + PALETTE_BUTTON + PALETTE_GAP;
+  FPaletteBack.Height := Y;
+
+  // File, Rotation Snap..., under Settings..., with the palette as it is for
+  // its tools
+  FRotationSnapItem := TMenuItem.Create(Self);
+  FRotationSnapItem.Text := 'Rotation Snap...';
+  FRotationSnapItem.OnClick := RotationSnapItemClick;
+  FileMenu.InsertObject(SettingsMenuItem.Index + 1, FRotationSnapItem);
+
+  // Under the frame rate, top left, until PlacePanels puts it where it was
+  FPaletteBack.Position.Point := TPointF.Create(8, 32);
+  FPaletteBack.BringToFront;
+  UpdatePalette;
+  KeepPaletteInView;
+end;
+
+procedure TMainForm.PlacePanels;
+begin
+  if MainFormGone or (FPaletteBack = nil) then
+    Exit;
+  if (FSettings.PaletteLeft >= 0) and (FSettings.PaletteTop >= 0) then
+    FPaletteBack.Position.Point := TPointF.Create(FSettings.PaletteLeft,
+      FSettings.PaletteTop);
+  KeepPanelInView(FPaletteBack);
+  if FHistoryBack <> nil then
+  begin
+    if (FSettings.HistoryLeft >= 0) and (FSettings.HistoryTop >= 0) then
+      FHistoryBack.Position.Point := TPointF.Create(FSettings.HistoryLeft,
+        FSettings.HistoryTop)
+    else
+      // The first time: top right
+      FHistoryBack.Position.Point := TPointF.Create(
+        ViewportLayout.Width - FHistoryBack.Width - 8, 32);
+    ShowHistory;
+  end;
+  FViewSize := TSizeF.Create(ViewportLayout.Width, ViewportLayout.Height);
+  FPanelsPlaced := True;
+end;
+
+procedure TMainForm.KeepPlaces;
+var
+  L, T, W, H: Integer;
+  Maxed: Boolean;
+begin
+  L := FSettings.MainLeft;
+  T := FSettings.MainTop;
+  W := FSettings.MainWidth;
+  H := FSettings.MainHeight;
+  ReadFormPlace(Self, L, T, W, H, Maxed);
+  FSettings.MainLeft := L;
+  FSettings.MainTop := T;
+  FSettings.MainWidth := W;
+  FSettings.MainHeight := H;
+  FSettings.MainMaximized := Maxed;
+  if FAssetsForm <> nil then
+  begin
+    L := FSettings.LibraryLeft;
+    T := FSettings.LibraryTop;
+    W := FSettings.LibraryWidth;
+    H := FSettings.LibraryHeight;
+    ReadFormPlace(FAssetsForm, L, T, W, H, Maxed);
+    FSettings.LibraryLeft := L;
+    FSettings.LibraryTop := T;
+    FSettings.LibraryWidth := W;
+    FSettings.LibraryHeight := H;
+    FSettings.LibraryMaximized := Maxed;
+  end;
+  if FPanelsPlaced then
+  begin
+    FSettings.PaletteLeft := FPaletteBack.Position.X;
+    FSettings.PaletteTop := FPaletteBack.Position.Y;
+    if FHistoryBack <> nil then
+    begin
+      FSettings.HistoryLeft := FHistoryBack.Position.X;
+      FSettings.HistoryTop := FHistoryBack.Position.Y;
+    end;
+  end;
+  if FHistoryItem <> nil then
+    FSettings.HistoryVisible := FHistoryItem.IsChecked;
+end;
+
+procedure TMainForm.HistoryItemClick(Sender: TObject);
+begin
+  FHistoryItem.IsChecked := not FHistoryItem.IsChecked;
+  FHistoryBack.Visible := FHistoryItem.IsChecked;
+  if FHistoryBack.Visible then
+  begin
+    FHistoryBack.BringToFront;
+    ShowHistory;
+  end;
+end;
+
+procedure TMainForm.UpdatePalette;
+
+  procedure Mark(const AButton: TRectangle; const AOn: Boolean);
+  begin
+    if AOn then
+    begin
+      AButton.Fill.Color := $40FFFFFF;
+      AButton.Stroke.Kind := TBrushKind.Solid;
+    end
+    else
+    begin
+      AButton.Fill.Color := TAlphaColors.Null;
+      AButton.Stroke.Kind := TBrushKind.None;
+    end;
+  end;
+
+begin
+  if FPaletteBack = nil then
+    Exit;
+  Mark(FPlaceButton, PlaceToolOn);
+  Mark(FEraseButton, EraseToolOn);
+  Mark(FMoveButton, MoveToolOn);
+  Mark(FRotateButton, RotateToolOn);
+  Mark(FBendButton, BendToolOn);
+  Mark(FPanButton, PanToolOn);
+  Mark(FCameraButton, MouseViewOn);
+  UpdateStatus;
+end;
+
+// Along the bottom of the form, under the tabs, on both of them
+procedure TMainForm.BuildStatusBar;
+begin
+  FStatusBar := TStatusBar.Create(Self);
+  FStatusBar.Parent := Self;
+  FStatusBar.Align := TAlignLayout.Bottom;
+  FStatusBar.ShowSizeGrip := True;
+  FStatusLabel := TLabel.Create(Self);
+  FStatusLabel.Parent := FStatusBar;
+  FStatusLabel.Align := TAlignLayout.Client;
+  FStatusLabel.Margins.Left := 8;
+  FStatusLabel.Margins.Right := 8;
+  FStatusLabel.TextSettings.WordWrap := False;
+  FStatusLabel.TextSettings.Trimming := TTextTrimming.Character;
+  FStatusLabel.HitTest := False;
+  UpdateStatus;
+end;
+
+procedure TMainForm.UpdateStatus;
+const
+  VIEW_KEYS = 'Wheel: zoom.  Right-click: normal view.';
+var
+  Text: String;
+  Size: TPoint3D;
+begin
+  if FStatusLabel = nil then
+    Exit;
+  if MouseViewOn then
+    Text := 'Mouse View.  Drag: turn the view.  ' + VIEW_KEYS
+  else if RotateToolOn or BendToolOn then
+    Text := TurnStatus
+  else if EraseToolOn then
+  begin
+    if (FPicked >= 0) and (FPieces <> nil) and (FPicked < FPieces.Count) then
+      Text := 'Erase: ' + FPieces[FPicked].Spec.Name + '.  Click: take it out.  ' + VIEW_KEYS
+    else
+      Text := 'Erase: point at a piece.  Click: take it out; what rested on it falls.  ' +
+        VIEW_KEYS;
+  end
+  else if MoveToolOn then
+  begin
+    if FMoveDown then
+      Text := 'Move Object: ' + FPieces[FMoveIndex].Spec.Name + '.  Let go: leave it there.  ' +
+        'Shift: off the grid.'
+    else if (FPicked >= 0) and (FPieces <> nil) and (FPicked < FPieces.Count) then
+      Text := 'Move Object: ' + FPieces[FPicked].Spec.Name + '.  Drag: move it, on the grid ' +
+        '(hold Shift: freely).  ' + VIEW_KEYS
+    else
+      Text := 'Move Object: point at a piece, then drag it.  ' + VIEW_KEYS;
+  end
+  else if PanToolOn then
+    Text := Format('Move Camera.  Drag: slide the view across the level (its middle at ' +
+      '%.3g, %.3g).  ', [FViewCentre.X, FViewCentre.Y]) + VIEW_KEYS
+  else if not FHasBrush then
+    Text := 'Place Model: choose a model in the Library (File, Library...) to place it.  ' +
+      VIEW_KEYS
+  else if FPlaceDown and (FPlaceCountX * FPlaceCountZ = 1) then
+    Text := Format('Place Model: %s.  Let go: place it.  Drag on: fill an area with it.',
+      [BrushName])
+  else if FPlaceDown then
+    Text := Format('Place Model: %s, an area of %d x %d (%d pieces).  Let go: place them.',
+      [BrushName, FPlaceCountX, FPlaceCountZ, FPlaceCountX * FPlaceCountZ])
+  else
+  begin
+    Size := FBrush.BoxMax - FBrush.BoxMin;
+    Text := Format('Place Model: %s (%.3g x %.3g x %.3g).  Click: place it.  Drag: fill an ' +
+      'area with it.  ', [BrushName, Size.X, Size.Y, Size.Z]) + VIEW_KEYS;
+  end;
+  FStatusLabel.Text := Text;
+  FStatusLabel.Hint := Text;
+end;
+
+procedure TMainForm.KeepPaletteInView;
+begin
+  KeepPanelInView(FPaletteBack);
+  // Its height follows the room below it
+  if FHistoryBack <> nil then
+    ShowHistory;
+end;
+
+procedure TMainForm.KeepPanelInView(const APanel: TControl);
+var
+  NewLeft, NewTop: Single;
+begin
+  if APanel = nil then
+    Exit;
+  NewLeft := EnsureRange(APanel.Position.X, 0, Max(0, ViewportLayout.Width - APanel.Width));
+  NewTop := EnsureRange(APanel.Position.Y, 0, Max(0, ViewportLayout.Height - APanel.Height));
+  APanel.Position.Point := TPointF.Create(NewLeft, NewTop);
+end;
+
+procedure TMainForm.PlaceButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etPlace);
+end;
+
+procedure TMainForm.CameraButtonClick(Sender: TObject);
+begin
+  ChooseTool(True);
+end;
+
+procedure TMainForm.PaletteGripMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  if Button <> TMouseButton.mbLeft then
+    Exit;
+  // The palette's grip or the history's: either moves its own panel
+  FMovingPanel := TControl(TControl(Sender).ParentControl);
+  FPaletteMoving := True;
+  FPaletteGrab := FMovingPanel.AbsoluteToLocal(TControl(Sender).LocalToAbsolute(
+    TPointF.Create(X, Y)));
+end;
+
+procedure TMainForm.PaletteGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Single);
+var
+  At: TPointF;
+begin
+  if not FPaletteMoving then
+    Exit;
+  if not (ssLeft in Shift) then
+  begin
+    FPaletteMoving := False;
+    Exit;
+  end;
+  // Where the pointer is, in the view's layout, less where the grip was
+  // taken
+  At := ViewportLayout.AbsoluteToLocal(TControl(Sender).LocalToAbsolute(
+    TPointF.Create(X, Y)));
+  FMovingPanel.Position.Point := At - FPaletteGrab;
+  KeepPanelInView(FMovingPanel);
+end;
+
+procedure TMainForm.PaletteGripMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  if Button = TMouseButton.mbLeft then
+    FPaletteMoving := False;
 end;
 
 {$IF DEFINED(ANDROID) or DEFINED(IOS)}

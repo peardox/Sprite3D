@@ -13,7 +13,7 @@ own `CLAUDE.md`, at its root, holds the rules for the whole repository,
 Sprite3D's and the shared units' included; where this file and that one
 differ on a rule for the repository as a whole, that one wins.
 
-Last updated: 12 November 2026, 12:25.
+Last updated: 13 November 2026, 00:30.
 
 ## Starting a new conversation
 
@@ -138,8 +138,8 @@ line with peardox/SRDelphiFMX's on 8 November 2026).
 
 - `Sprite3DBuilder/lib`: this program's own reusable units,
   **independent of the application**: `Sprite3DAssetCache`,
-  `Sprite3DModelContent`, `Sprite3DGroupIcons` and `Sprite3DLicences` (its
-  own list). They must not use anything in `Sprite3DBuilder/ui`, and must
+  `Sprite3DModelContent`, `Sprite3DGroupIcons`, `Sprite3DLevelPlacement`
+  (placing pieces) and `Sprite3DLicences` (its own list). They must not use anything in `Sprite3DBuilder/ui`, and must
   not know about the main form, `settings.json` keys or menus.
 - `Shared/`, at the repository's root: **the units both programs use**
   (owner, 12 November 2026), named in the `.dpr` and `.dproj` as
@@ -363,6 +363,49 @@ gone up.
 
 ## Gorilla3D and FMX notes
 
+- **Read the documentation for the Gorilla3D version installed, 1.5,
+  before designing anything on Gorilla**:
+  https://docs.gorilla3d.de/version/v1.5/page/Core/Models.md (models,
+  instancing, cloning, static meshes, bounding boxes) and the pages beside
+  it. Older versions' pages (docs.gorilla3d.de/1.0.0 to 1.2.0) are a last
+  resort. The area fill took three wrong rounds (a shared definition that
+  crashed on closing, a load per piece at 171 ms each, an assets package
+  not applied) that the v1.5 instancing section would have skipped (owner,
+  12 November 2026, 20:08).
+- **GPU instancing (v1.5)**: `Model.AddInstanceItem(Name)` returns a
+  `TGorillaMeshInstance`; add instances to the model, not a sub-mesh. The
+  model itself is always drawn, as instance #0, and hiding it hides them
+  all (visibility, material and pose are shared). An instance's transform
+  is absolute, in the viewport's coordinates, replacing the model's.
+  `RotationAngle` on an instance **adds** to its turn (an internal
+  quaternion): set a whole transform with `SetTransform(Matrix)`, or
+  `ResetRotationAngle` first. `FrustumCullingCheck` False on the model, or
+  every instance vanishes when it is out of view. `BeginInstancesEditing`/
+  `EndInstancesEditing` on the model round many changes; `DeleteInstance`
+  (collection index) or freeing the item removes one; the `Instances`
+  collection does not hold the model itself. Picking and bounding boxes
+  are not documented to know of instances: Builder picks pieces itself.
+- **`TPath` in `Sprite3DBuilderMain` is `System.IOUtils.TPath`** (the file
+  path record), as `System.IOUtils` is in the implementation's `uses`,
+  after `FMX.Objects`: write the shape as `FMX.Objects.TPath` (owner, 12
+  November 2026, 19:01: E2003 on `Create`, `Parent` and the rest).
+- **`Default(...)` does not compile in a unit that uses `Gorilla.DefTypes`**
+  (as `Sprite3DBuilderMain` does): its unscoped enumeration value
+  `Default` hides the intrinsic (E2066, then E2010 against
+  `TGorillaOAuthMode`; owner, 12 November 2026, 18:23). Set each field
+  instead, or build the value in a unit without it.
+- **Known and harmless: opening the Library writes `cannot create texture
+  by TContextOpenGLWindows (Error = 1282)`** to the IDE's event log (Debug
+  Output), once, with nothing drawn wrong (owner, 12 November 2026,
+  12:34). It was there before the move into the Sprite3D repository too:
+  the build from Sprite3DBuilder's own repository at `f6de00d` gives the
+  same line (owner, 12:41). It comes as the Library's own
+  `TGorillaViewport`, a second OpenGL view beside the main form's, is set
+  up in `TAssetsForm.FormCreate`, most likely a texture made before that
+  view's OpenGL context is ready and made again after; 1282 is OpenGL's
+  general "invalid operation". Not the 24-bit PNG case of 11 November,
+  which had the same text but failed a model's textures. Leave it unless
+  something is seen to go wrong with it.
 - Gorilla3D renders through OpenGL on Windows, Linux and Android, and
   Metal on macOS and iOS. On Metal a material's SurfaceShader is not
   supported, so `Sprite3DGrid` draws the grid there as one thin plane per
@@ -383,7 +426,11 @@ gone up.
   making it (`TGorillaModel.Create(Viewport)`) and calling its
   `LoadFromFile`, as Sprite3DBuilder does, never the class function
   `TGorillaModel.LoadNewModelFromFile`, which in 1.5.3 never frees the FBX
-  loader's parse tree; the viewport sends its free notification before it
+  loader's parse tree. **Nor any `LoadNewModelFrom...` class function**:
+  `LoadNewModelFromDef` gave every model made from one definition that
+  same definition, which each freed as it was destroyed, the second
+  faulting in `TGorillaModel.Destroy` (`_AsClass` to `TModelDef`; owner,
+  12 November 2026, 19:20-19:29); the viewport sends its free notification before it
   frees its children, so a component must let go of the camera and light
   on that notice and never touch them again (`TSpritelyOrbitalCamera`
   does); `MakeScreenshot` shows the `RenderManual` before the last, so
@@ -396,6 +443,887 @@ gone up.
   the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
+
+### Where things stand (13 November 2026, 00:30): read this first
+
+The session of 12-13 November 2026 built level editing on top of the
+Library. Its dated entries follow, newest first; this is their summary.
+
+**Zips.** The last is `2026-11-13-0030-handover.zip`. Their names ran
+ahead of the clock during the session (this one was made at about 00:10):
+carry on from the last name rather than the clock, so they stay in order.
+The owner applies them in order; each says which it follows.
+
+**Built and working on the owner's machine:**
+- Placing: click, area fill (as GPU instances; 100 tiles in about 162 ms),
+  landing on what is below, the box showing where it rests.
+- The palette, two columns: Move Camera, Mouse View; Place Model, Erase;
+  Move Object, Rotate; Bend. The status bar. The history panel (View,
+  History), Edit, Undo and Reset Level. Window, palette and history places
+  kept. Random placing from several models picked in the Library.
+- Rotate (Rotation Snap dialog), Move Camera, Erase, history removal.
+- Level files: Save, Save As, Load (`.s3d`, JSON): "work perfectly".
+- Still takes (Maya's "Take 001") left out in both programs
+  (`Shared/Sprite3DModelAnimations`): Sprite3D, "all pass".
+- FBX textures found by name (`Shared/Sprite3DModelTextures`): previews and
+  the characters' loads textured in the owner's log.
+
+**Delivered, not yet reported on** (each entry below has its test list):
+- `2026-11-13-0005-all-instances.zip`: every piece an instance, the
+  template parked below the floor, so FBX first pieces are drawn
+  (`invisible.s3d`).
+- `2026-11-12-2355-fbx-textures.zip`: thumbnails remade by Rescan when the
+  texture rules change (`TEXTURE_RULES_VERSION`); Sprite3D's FBX textured.
+- `2026-11-12-2215-outline-culling.zip` (placement box after Move Camera),
+  `2210` (stacks turn with Rotate and Bend), `2205` (areas of 10,000),
+  Bend itself, and the `.s3d` file association (the owner was about to try
+  it).
+
+**Offered or asked, no answer yet:**
+- Move Object: carry what is stacked on a piece, as Rotate now does? (It
+  leaves it to fall.)
+- View, Show Bounding Box shows nothing on instances: an outline per piece,
+  like the pick box?
+- A random quarter turn for each floor tile placed, so one tile model does
+  not look repeated?
+- Pieces of mixed heights (a floor of tiles 0.138 to 0.209 high): rest an
+  area at one height across pieces, or snap heights to a step?
+- macOS: `.s3d` needs the bundle's document types (CFBundleDocumentTypes).
+- A level file names models by full path: it loads only where they are.
+
+**Gorilla3D, not understood, worked round:**
+- An FBX model's template (instance #0) is not drawn while its instances
+  are; glTF's is. So no piece is a template.
+- Which of an FBX's texture names its loader uses: every one is set right.
+- Its FBX loader's debug output (`Version: 7400`, `unknown property type
+  "visibility inheritance"`) is its own and harmless.
+
+**Rules learned this session** (details in the entries and the Gorilla
+notes): read Gorilla's v1.5 documentation before designing on it; fixes
+are general, never for one vendor or exporter; a control that draws away
+from its own position must be placed and sized over what it draws; check
+`tools/pasdoc_check.py` against the committed copy's own run (it reads the
+tree it sits in), and leave the owner's lines as they are.
+
+**Tools added:** `tools/fbx_inspect.py` (Python 3, nothing else): an FBX's
+version, units, objects, every texture name, its takes and whether their
+curves move, and that Sprite3DModelTextures' rewriting reproduces it byte
+for byte. Use it on any FBX the owner sends before guessing.
+
+### Handover (13 November 2026, 00:15)
+
+The summary above comes first; the entries from here on are the history.
+
+- **Still takes, in both programs**, `2026-11-13-0015-still-takes-shared.zip`,
+  not yet tested; follows `2026-11-13-0005-all-instances.zip`. The owner
+  (00:01): Sprite3D takes `SM_Prop_Neon_Sleigh_01.fbx` (FBX 7.7) for an
+  8-frame animation. Parsed: one mesh, an AnimationStack "Take 001"
+  (LocalStop 230930790000 ticks, 5 s) and a BaseLayer, and **no
+  AnimationCurve at all**. The 2320 rule lived in Builder's
+  `Sprite3DModelContent`; Sprite3D lists every animation Gorilla loads
+  (`LoadModelFile`, `GetSortedAnimations`) and plays the last.
+  - New `Shared/Sprite3DModelAnimations` (in both `.dpr`/`.dproj`):
+    `AnimationMoves` (moved from `Sprite3DModelContent`, unchanged),
+    `MovingAnimations` (count of the definitions that move, and how many
+    there are), `StillAnimationsLeftOut` (a list of names without the
+    still ones, matched to definitions by `Id`; a name matching none is
+    kept if any definition moves, dropped if none does).
+    `Sprite3DModelContent` uses `MovingAnimations`; both programs'
+    `LoadModelFile` filter their names with `StillAnimationsLeftOut`.
+  - Not known: whether Gorilla makes a definition for a take with no
+    curves at all. If it does not (the animation manager has it, the
+    definitions do not), the sleigh still plays in Sprite3D and counts in
+    Builder through the manager fallback; then `TGorillaAnimation` must be
+    looked at (its definition, or its stages) to tell it is empty.
+  - **To test**: Sprite3D opening the sleigh: no animation, no frames;
+    a PolygonDungeon character: no animation either (bind pose); an
+    animated model (a KayKit character): its animations as before.
+  - **Result** (owner, 00:06): "all Sprite3D pass": the sleigh, a
+    PolygonDungeon character and an animated model as above. So Gorilla
+    does make a definition for a take with no curves, and the open
+    question above is answered: `StillAnimationsLeftOut` sees it.
+
+- **Every piece an instance**, `2026-11-13-0005-all-instances.zip`, not
+  yet tested; follows `2026-11-12-2355-fbx-textures.zip` (applied: the
+  owner's rescans run on it). The owner (23:48-23:56): FBX pieces "look
+  like they drop but don't, repeat the drop and they do"; glTF fine. With
+  a save (`invisible.s3d`: two `SM_Env_BonePile_01`, the second on the
+  first) and the log: the first piece of a model, the template itself, is
+  in the level (Erase outlines it, it is saved) but not drawn; its
+  instances are. Why Gorilla does not draw that FBX's model itself (its
+  instance #0) while drawing its instances is not known; glTF templates
+  draw.
+  - So no piece is a template now: `PieceSourceFor` parks the template at
+    `TEMPLATE_PARK_Y` (-100000, far below the floor, out of sight;
+    `FrustumCullingCheck` stays False, so its instances are drawn),
+    `PlacePiece` always adds an instance, `MovePiece` poses instances only
+    (`FPoser`, `SetTransform`), `ReleasePiece` frees the instance (the
+    template stays, loaded, for the next piece; no heir, no hiding).
+    `TPieceSource.Taken` is gone. One drawing path for every piece of
+    every format.
+  - The template's `ShowBoundingBox` is no longer set (it showed only the
+    template's own box, which is now out of sight); View, Show Bounding
+    Box still acts on the level's models through `ApplyShowBounds`, but no
+    instance shows a box: an outline per piece, like the pick box, would
+    be the way, if the owner wants it.
+  - Gorilla's FBX loader writes, to the debugger's output, `"Kaydara FBX
+    Binary  ", Version: 7400` and `TFBXNode.GetPropertyValue() : unknown
+    property type "visibility inheritance"` for every FBX 7.4 it loads
+    (owner, 23:41, during a rescan of 814): its own notes, harmless, in
+    the original files too; nothing of ours.
+  - **To test**: load `invisible.s3d`: both bone piles drawn. Place an
+    FBX and a glTF model once each: drawn at once, and fall. Erase every
+    piece of a model, place it again. Rotate, Bend, Move Object, Undo,
+    Save and Load, as before.
+
+- **FBX textures, general**, `2026-11-12-2355-fbx-textures.zip`, not yet
+  tested; follows `2026-11-12-2320-still-takes.zip`. The owner (23:19):
+  "remember - these fixes must be generalized", and the listing of
+  PolygonDungeon's `Textures` (numbered `Dungeons_Texture_01.png` to
+  `_04` with `_A` to `_D` variants beside them, `FloorTiles_*`,
+  `WallTiles_*`, `.tif` and `.tga` too). Nothing is Synty-specific: the
+  still-take rule counts any animation whose keys never change; the FBX
+  fix reads whatever any FBX names.
+  - `Shared/Sprite3DModelTextures` (both programs): `ResolveTexture` has
+    a last step, `PlaceNumberedMatches`: the name, a separator (`_`, `-`,
+    `.`, space) and digits alone (so `Atlas_01`, never `Atlas_01_A`),
+    nearest first, lowest number first, then PNG, JPEG, the rest. And
+    `ADecode` (default True, for glTF's uris): FBX names are plain paths,
+    not decoded (a `+` or `%` stays).
+  - `PrepareFbxTextures`, from `PrepareModelTextures` for `.fbx`: reads a
+    binary FBX (`ReadFbxNode`: 32-bit records below 7500, 64-bit from;
+    each property's bytes kept as read; `Nested` keeps whether a node had
+    a nested list) or an ASCII one (a `;` comment first; lines in
+    `Texture:`/`Video:` blocks). Every Texture and Video object's names
+    (`Filename`, `FileName`, `RelativeFilename`, Properties70 `Path` and
+    `RelPath`); one with `Content` data is embedded, left alone. A texture
+    usable as named by some name is used; otherwise `ResolveTexture` on
+    each name until one is found, or the placeholder. If any name of any
+    texture is not a file where the model is, a copy is written to
+    `models/<key>.fbx`: every name of every texture set to the file found
+    (`CopyIn`, beside the copy): its full path where the name was full
+    (rooted, or with a drive's colon), its name alone where relative; the
+    binary written node for node (`WriteFbxNode`, offsets and lengths
+    afresh), then the null record and `WriteFbxFooter`: the 16-byte id,
+    zeros to make the file's length a multiple of 16 (5 to 20 of them, as
+    the FBX SDK does), the 140-byte tail (version, 120 zeros, magic).
+  - Checked with a Python mirror of the Pascal reader and writer on the
+    owner's four files (FBX 7.4, 7.5, 7.5, 7.7): written back unchanged
+    they are byte-identical; with every name changed they read back with
+    the new names, geometry unchanged; the footer rule rebuilds all four
+    footers byte for byte. The search, mirrored on a copy of
+    PolygonDungeon's layout and names: `FX_CubePivot` (`...Textures/
+    Dungeons_Texture.psd`) gets `Textures/Dungeons_Texture_01.png` by the
+    number step; `Character_Ghost_01` in `FBX/Characters` (`U:/.../
+    Dungeons_Texture_01.png`) gets it by name, two folders up. The beard
+    and the plate name other packs' textures: placeholder.
+  - Not known: which name Gorilla's FBX loader uses; every one is right
+    in the copy, so it should not matter.
+  - Owner (23:26): another artist keeps textures in a folder inside the
+    model's. `SearchPlaces` took the model's folder alone and reached its
+    subfolders only through its parent's tree, which is never searched
+    when the parent is a disk's root or a folder directly in it
+    (`E:\Artist\Model\model.fbx`, textures in `Model\Textures`: not
+    found). The model's folder is now searched with every folder below it
+    (unless it is a disk's root), straight after the folder named, so a
+    folder inside it comes before one beside it. Mirrored: both layouts
+    found, the inner one first.
+  - Owner (23:32): after a rescan the preview was textured but the
+    thumbnails were not made again, and Sprite3D still showed no texture.
+    (1) A thumbnail is kept by the model's key, a hash of its files, which
+    the new rules do not change, and Rescan makes only missing ones. Now
+    `Sprite3DModelTextures.TEXTURE_RULES_VERSION` (2; raise it whenever the
+    finding changes) is kept with each thumbnail (`TSprite3DAssetMeta.
+    Textures`, column `textures`, database version 5, 0 for older ones);
+    a cached thumbnail of a model `PreparesTextures` takes (`.gltf`,
+    `.fbx`), made with an older version, counts as missing, so Rescan, or
+    opening the collection, makes it again. (2) Sprite3D's
+    `GltfFileToRead` (now `ModelFileToRead`) called
+    `PrepareModelTextures` for `.gltf` only; it now asks the unit's
+    `PreparesTextures`, so a format added there reaches both programs.
+  - The owner's log (23:34), on the 2350 zip: the characters' texture
+    found (`Textures\Dungeons_Texture_01.png` for `U:/.../Dungeons_
+    Texture_01.png`) and the copy loaded; each texture reported twice (the
+    Texture and the Video object): `PrepareFbxTextures` now reports a
+    texture once (`Report`). The ghost went from "Rigged and animated" to
+    "Rigged, 0 animations": right, as its take's 480 curves all hold still
+    (1 or 2 keys, none changing): a bind pose, not an animation (Synty's
+    characters take their animations from separate packs).
+  - **To test**: open or Rescan PolygonDungeon: the FBX thumbnails are
+    made again, textured; KayKit's glTF ones too, once (they were made by
+    version 1). Sprite3D opening a PolygonDungeon FBX: textured, and the
+    Debug tab's texture lines.
+  - **To test**: Remake Thumbnails on PolygonDungeon: textured props and
+    characters; the Debug tab and import log say "texture ... used
+    Dungeons_Texture_01.png"; a placed FBX piece textured. Sprite3D opening
+    an FBX of the pack: textured too. A glTF kit (KayKit) unchanged.
+
+- **FBX textures, and still takes counted as animations**,
+  `2026-11-12-2320-still-takes.zip`, not yet tested; follows
+  `2026-11-12-2215-outline-culling.zip`.
+  - The owner (22:36-23:06) sent four Synty FBX files and (23:09) the
+    import log of PolygonDungeon (`E:\3DModels\Synty\PolygonDungeon`:
+    `FBX`, `FBX\Characters`, `Textures` holding the PNGs). Parsed
+    (binary FBX 7.4-7.7, a Python reader written for it): texture paths are
+    the artists' (`U:/Dropbox/SyntyStudios/.../_Working/...`, absolute,
+    and relative to where each was exported, up to six folders up to the
+    drive root, or absolute again); names are `.psd` or `.png`, sometimes
+    of another product (`PolygonGeneric_Texture_01_A.psd`). The PNGs are
+    in `..\Textures` (`..\..\Textures` from `Characters`). Only the file
+    name can be used. **FBX texture fixing not built yet**: planned as
+    glTF's (find by name, PNG then JPEG first, nearest first, three
+    folders up; a corrected copy of the FBX in the cache, the textures
+    beside it); the owner was asked for the `Textures` folder's listing,
+    to know whether `Dungeons_Texture.psd` must also match
+    `Dungeons_Texture_01.png` (a number after the name).
+  - The import log showed 746 Animated, 49 Animation library, 17 Rigged
+    and animated and 2 Static, of 814: Maya's FBX export always writes a
+    take ("Take 001"), and Gorilla gives it as an animation, keys or none.
+    `ModelContent` now counts only animations that move something
+    (`AnimationMoves`: a key of one of its interpolators differs from that
+    interpolator's first by more than 1E-5 in any number, by
+    `TKeyCheck.Differ<T>` over `TMatrix3D`, `TPoint3D`, `TQuaternion3D`;
+    an interpolator of another kind counts as moving), and takes the
+    animation manager's count only when the definitions have no
+    animations (it holds the still takes too). So props are Static again:
+    tagged so, and made static when placed.
+  - `Sprite3DAssetCache`: database version 4 forgets every kind with
+    animations above 0 (`kind = ''`, `animations = 0`), to be counted
+    again on the next load. `TAssetsForm`'s preview now saves what a model
+    holds whenever the kind or the count changed, not only when none was
+    known.
+  - **To test**: open the PolygonDungeon collection: the tags are gone
+    from the props (not known yet, then Static); Remake Thumbnails on it:
+    the Debug tab's "N models: K static..." and the import log's kinds;
+    the 17 characters still Rigged and animated; the 4-vertex
+    `SM_Env_Tiles_Texture_*` Static, not Animation library. KayKit's
+    glTF models unchanged.
+
+- **Placement box not drawn**, `2026-11-12-2215-outline-culling.zip`,
+  follows `2026-11-12-2210-stacks-turn.zip`. The owner (22:03): after a
+  Reset Level, Place Model no longer shows the box. Reset does nothing to
+  it; the view did: the level loaded before had moved the view's middle
+  (Move Camera, -29.5, -1.32), and `FPlaceBox` sat at the level's origin
+  (`Position` zero, its 1-unit default size), drawing its outline from
+  there by its `Box`. Out of sight, the control is passed over by what
+  culls by an object's own place and size (as `TModelSweep` in
+  `Sprite3DSweep` already allows for), outline and all. Not confirmed:
+  the owner was asked whether a right click (the view's middle back)
+  brings it back.
+  - `ShowPlacement` puts `FPlaceBox` at the middle of the area's box,
+    the box relative to it; `FitOutline` sets an outline's `Width`,
+    `Height` and `Depth` to reach its box's farthest side each way from
+    its position (sizes are taken as centred on it). `ShowPick` fits
+    `FPickBox` the same way (it sits at the piece's origin, turned).
+  - Rule: **a control that draws away from its own position must be
+    placed and sized to cover what it draws**, or it vanishes when its
+    position is out of sight.
+
+- **Stacks turn together**, `2026-11-12-2210-stacks-turn.zip`, not yet
+  tested; follows `2026-11-12-2205-large-areas.zip`. The owner had
+  `2026-11-12-2155-level-files.zip` running (21:56-21:57): Save, Reset
+  Level and Load Level "work perfectly"; the Windows file dialog's own
+  debug output (shlwapi, SHELL32, explorerframe HRESULTs) is noise, not
+  ours. Trying the file association next. The owner (22:01): rotating
+  a model in a stack should turn the ones above it too, not below.
+  - `StartTurn`, once the set turned is known (Rotate: the piece; Bend:
+    the run past the hinge), adds `RidersOf` each of them not already in
+    it (pieces resting on them, transitively, as Move Object finds them),
+    counted in `FTurnCarried`. `ApplyTurn` swings every one about the same
+    hinge (Rotate: the bottom piece's middle), so a stack turns as one.
+    Bend: what rests on the hinge piece alone stays; a piece resting on
+    both a turned piece and one staying is carried.
+  - `EndTurn`, Rotate square to the grid: the snap's shift of the bottom
+    piece is given to the whole set, so the stack stays on it.
+  - The logs and the Bend status count the pieces turned without those
+    carried, and say how many were carried.
+  - Move Object still leaves what rested on a piece behind, to fall:
+    ask the owner whether it should carry its stack too, for the same
+    reason.
+  - **To test**: stack three foundations, Rotate the bottom one by 45 and
+    90: all three turn as one, about its middle, and stay on it; Rotate
+    the middle one: it and the top turn, the bottom stays. Bend a wall
+    with pieces on top of the part that swings.
+
+- **Areas of up to 10,000 pieces**, `2026-11-12-2205-large-areas.zip`,
+  not yet tested; follows `2026-11-12-2155-level-files.zip`. The owner
+  (21:52): why can Place not handle more than 256 tiles at once? It was
+  set when every piece loaded its own model (about 170 ms each); with
+  GPU instances it was only a limit. `MAX_AREA_PIECES` is 10,000 (100 by
+  100), and what grew with the square of the pieces was made to grow with
+  them:
+  - `ShowPlacement`, on every move while dragging an area, tested every
+    spot against every box placed (`LandingHeight` per spot). Now each box
+    placed is tested once: `AnySpotIn` works out, from the area's first
+    spot and step (`FAreaOrigin`, `FAreaStep`, set by `AreaSpots`), whether
+    any spot's footprint is over it by more than a hundredth of a cell
+    each way, as `LandingHeight` counts it.
+  - `RemovePieces`: marks the pieces going (`Gone`), lets each go
+    (`ReleasePiece`, was `RemovePieceAt`, which now picks the template's
+    heir among the pieces staying), then keeps the rest in one pass and
+    sets `FPieces.Count`, rather than a `Delete` each.
+  - `SettlePieces(ARegion)`: only pieces over the part of the floor where
+    something went (the removed pieces' footprints, or where a moved piece
+    was) are looked at, the part growing by each piece that falls, so what
+    rested on it falls too; Undo of an area over bare floor looks at none.
+  - Lists built one item at a time (`X := X + [Y]`, a copy each time):
+    the placed ids, Bend's set and Move Object's riders (a `TList` read
+    from the front, not `Delete(0)`), the history's pruned ids, the ids
+    read from a level file, and the pieces of a history line
+    (`IndicesOf`, one pass with a dictionary, for Undo and the history's
+    X).
+  - **To test**: fill 100 x 100 (the cap message past it); drag the area
+    over existing pieces (smooth, and it rests on the highest); Undo it;
+    erase a tile under a wall in a big floor (the wall falls); save and
+    load the big level.
+
+- **Level files**, `2026-11-12-2155-level-files.zip`, not yet applied or
+  tested; follows `2026-11-12-2145-random-tiles-panels-reset.zip`. The
+  owner (21:41): File, Save Level and File, Load Level; JSON for now, but
+  holding all that is needed to reload the level; extension `.s3d`,
+  associated with the application for Open and Open With, as Sprite3D
+  does for its types.
+  - **Moved to `Shared/`**: `Sprite3DOpenFiles` and `Sprite3DFileAssoc`,
+    from `Sprite3D/lib`, unchanged (`git mv`); Sprite3D's `.dpr` and
+    `.dproj` name the new paths. The owner must delete the old copies
+    (the zip cannot): see the delivery message.
+  - Builder's `.dpr`: both units, and `HandOffToRunningInstance(
+    'Sprite3DBuilder')` first thing, as Sprite3D's.
+  - Helpers: `LEVEL_FILE_EXTENSION` (`.s3d`), `LEVEL_FILE_FORMAT`,
+    `LEVEL_FILE_VERSION` (1), `IsLevelFile`, `RegisterLevelFiles` (ProgID
+    `Sprite3DBuilder.Level`, MIME `application/x-sprite3dbuilder-level`,
+    `Register` and `Claim`, Windows and Linux; run at start-up in a
+    `TTask`, as Sprite3D's `RegisterProjectFiles`), setting `LevelFolder`.
+  - The file (`SaveLevelTo`, written to `.tmp` then moved): `format`,
+    `version`, `gridSize`, `viewCentre` {x, z}, `models` [{name, file,
+    key, boxMin, boxMax}], `pieces` [{model, at [x, y, z] (where it
+    rests), turn}], `history` [{name, placed, pieces [indices]}]. JSON
+    through `JsonToText`, so Minify JSON counts. Model files are kept as
+    full paths.
+  - `LoadLevelFile`: checks format and version; `FreeLevelPieces`, the
+    history cleared; each model loaded once (`PieceSourceFor`, which
+    fixes textures as placing does); the pieces placed with
+    `PlacePiece`, then set not falling, turned (`Turn`, `Turned`), posed
+    (`MovePiece`), in one `EditInstances` round; the history mapped to the
+    new ids; the view's centre put back (`ResetViewCentre`,
+    `MoveViewCentre`). Pieces of models that cannot load are left out and
+    counted. A different grid size is only logged.
+  - File menu, top: Load Level... (Ctrl+O), Save Level (Ctrl+S), Save
+    Level As... (Ctrl+Shift+S), a line (`BuildLevelFileItems`). TOpenDialog
+    and TSaveDialog, starting in `LevelFolder`.
+  - Unsaved changes: `FLevelDirty` (`MarkLevelChanged` after placing,
+    removing (Erase, history X, Undo), Move Object and Rotate or Bend);
+    `UpdateCaption` (every `Caption := ProjectionCaption` now calls it):
+    "name* - projection". `AskToKeepLevel` (Save, Don't Save, Cancel)
+    before Load Level, a file opened from outside, and closing
+    (`FormCloseQuery` asks, then closes again from a queued `Close`,
+    `FCloseAsked`). Reset Level makes a new, untitled level.
+  - Files from the system: `FileOpenRequests.TakePending` once the panels
+    are placed (the first `.s3d` among them loads), then `OnOpenFile :=
+    OpenRequestedFile` (nil in `FormDestroy`).
+  - Not done: macOS's bundle document types for `.s3d`.
+  - **To test** (Windows): build something (areas, turns, a moved
+    piece, Move Camera), Save Level, Reset Level, Load Level: the same.
+    The title's *. Close with changes: asked. Double-click a `.s3d` in
+    Explorer, with Sprite3DBuilder closed and running. Rename a model
+    file a level uses and load it: those pieces left out, said. Sprite3D
+    still builds and opens its files (the moved units).
+
+- **Random placing from several models; panels follow the edges**,
+  `2026-11-12-2145-random-tiles-panels-reset.zip`, not yet tested;
+  follows `2026-11-12-2120-layout-and-places.zip`, which the owner has
+  running (21:36: the history "just stays where it is" when the window is
+  expanded).
+  - Owner (21:35): select several icons in the Library, and placing picks
+    which is used at random, for covering large areas with floor. The
+    Library already picked several (Ctrl, Shift; for dragging to groups):
+    `TAssetsModelChosenEvent` now gives `ASpecs` (the picked models that
+    can be placed, the one clicked, `FSelected`, first) and `ALeftOut`
+    (names without thumbnails); `NotifyModelChosen` fires it from
+    `SelectEntry` and after a plain click on a picked tile picks it alone
+    (mouse up). Main: `FBrushSet`, `FBrush` its first; `ChooseModel`
+    takes the set; `BrushName` for the status bar and log. `PlaceShown`
+    loads each model's template (`PieceSourceFor`, one that fails is left
+    out), then for each spot `Random` picks one; it goes with its
+    footprint's middle where `FBrush`'s would be and its floor at the rest
+    height (`FPlaceLand + FBrush.Box.Top`). Spacing, preview and landing
+    are `FBrush`'s, so same-size tiles are best. `EditInstances` rounds
+    the adds for every template. History line: "Name +N". `Randomize` in
+    `BuildLevel`.
+  - Owner (21:36): the history panel should stay aligned when the window
+    is expanded. `AspectLayoutResize` now moves each panel by the change
+    in the view's size along any axis on which its middle is past the
+    view's middle (`AnchorPanel`, `FViewSize`, set by `PlacePanels`), so
+    the history keeps its distance from the right edge; then it is kept
+    inside as before. Kept places are still from the top left.
+  - Owner (21:38): Edit, Reset Level, wiping all content to a clean,
+    empty grid. `FResetLevelItem`, under Undo and a line; asks first
+    (`TDialogService.MessageDialog`, as Clear Library does), as it cannot
+    be undone; then `FreeLevelPieces`, and the history cleared. The view
+    is left as it is. `FreeLevelPieces` now frees every template from
+    `FSources` (its instances with it), not only the pieces' templates: a
+    template hidden when all its pieces were erased was otherwise left in
+    the level, forgotten, once `FSources` was cleared.
+  - **To test** Reset Level: everything goes, the history empties, and
+    placing again works (each model loads again).
+  - **To test**: pick 3 floor tiles (Ctrl-click), fill 10 x 10: a mix;
+    the history says "Floor_Brick +2"; Undo takes them all. Widen and
+    narrow the window: the history stays at the right, the palette at the
+    left.
+
+- **Layout, places, history order**,
+  `2026-11-12-2120-layout-and-places.zip`, not yet applied or tested;
+  follows `2026-11-12-2100-erase-history-move-undo.zip`. The owner
+  (21:10): history adds to the bottom; the panel on the right; History in
+  the View menu; the history's and toolbar's places kept; the main windows
+  keep their places and sizes between sessions, made to fit the monitor
+  they start on, on different monitors too; the Mouse View stats readout
+  removed ("meaningless for this app"); a more suitable icon for Mouse
+  View, as it rotates the view; the toolbar in two columns, an empty place
+  left blank with no action; the camera icons at the top, Move Camera
+  left, Mouse View right. "This is starting to take shape."
+  - Palette: `MakeButton` takes a column; rows: Move Camera | Mouse View;
+    (a wider gap); Place Model | Erase; Move Object | Rotate; Bend | none.
+    `MOUSE_VIEW_ICON` (was `CAMERA_ICON`): a small camera with an arrow
+    circling it.
+  - Readout removed: `FMouseViewBack` and its labels,
+    `PlaceMouseViewReadout`, `UpdateMouseViewReadout`, `SignedText`, the
+    `MOUSE_VIEW_READOUT_WIDTH`, `_TITLE_HEIGHT`, `_ROW_HEIGHT`,
+    `_VALUE_WIDTH` and `_SHOWN_ZERO` constants and their calls.
+  - History: added at the end (`FHistory.Add`), the oldest dropped past
+    50; Undo and its caption take the last line; `ShowHistory` scrolls to
+    the bottom, queued, once the lines are laid out. Top right at first;
+    `FHistoryItem`, View, History, ticked as `historyVisible`.
+  - Places: `TSprite3DAppSettings` has `MainLeft`/`Top`/`Width`/`Height`/
+    `Maximized`, the same for `Library`, `PaletteLeft`/`Top`,
+    `HistoryLeft`/`Top` (-1 until kept) and `HistoryVisible`.
+    `Sprite3DBuilderHelpers` has `PlaceFormOnScreen` (FMX desktop
+    coordinates, which span every monitor; the monitor overlapped most, by
+    `Screen.Displays[I].WorkareaRect`, or the primary,
+    `Screen.WorkAreaRect`; sized to fit and moved inside; then maximised
+    if it was) and `ReadFormPlace` (normal place; a maximised window keeps
+    its kept size, centred on the monitor it is maximised on; a minimised
+    one keeps what it had). Main is placed in `FormCreate` straight after
+    `FSettings.Load`, the Library when it is made (`EnsureAssetsForm`).
+    `KeepPlaces`, from `SaveViewState`, reads them all back. The panels
+    are put back by `PlacePanels`, queued from `FormCreate` so the view has
+    its size first; their places are kept only once that has run
+    (`FPanelsPlaced`). Desktop only. FMX's `TDisplay` (FMX.Types) and
+    `TScreen.WorkAreaRect` are from the Athens docwiki.
+  - **To test** (Windows): as 2100's list, then: move and resize both
+    windows, put the Library on a second monitor, close and start again;
+    maximise the main window on the second monitor and restart; unplug or
+    turn off a monitor a window was on and start: it comes back on the
+    primary. Move the palette and history, restart. View, History off,
+    restart.
+
+- **Erase, history, Move Camera, Move Object**,
+  `2026-11-12-2055-erase-history-move.zip`, not yet applied or tested;
+  follows `2026-11-12-2040-rotate-and-bend.zip` and
+  `2026-11-12-2045-rotation-form-fix.zip` (the owner compiled up to the
+  dialog's E2003, fixed there; nothing of 2040 tested yet). The owner
+  (20:45): an eraser icon, a click removes the model (instance); a
+  floating history panel to remove recent additions, on the left of the
+  screen; a Move Camera icon, moving the scene in X/Z; a Move Object icon,
+  moving the selected object in X/Z. (20:46): Bend should respond only to
+  left/right mouse movement: it already did (`FTurnStartX`, X only); the
+  status bar and README now say so.
+  - Palette, top to bottom: Place Model, Erase, Move Object, Rotate,
+    Bend, Move Camera, Mouse View. `TLevelEditTool` adds `etErase`,
+    `etMove`, `etPan`; `PickToolOn` is Erase, Move Object, Rotate or
+    Bend, which outline the piece under the pointer (red for Erase).
+  - Removing (`RemovePieces`, `RemovePieceAt`): an instance is freed
+    (`Instance.Free`, as the v1.5 docs allow). The template is instance #0
+    and cannot be hidden alone: if its model has another piece, the
+    template takes that piece's place (`MovePiece`) and that piece's
+    instance is freed; the model's last piece hides the template and sets
+    `Taken` False, so the next piece placed reuses it, loaded
+    (`PlacePiece` shows it again). Then `PruneHistory` and `SettlePieces`.
+  - `SettlePieces`: lowest base first, each piece not falling lands
+    (`LandingHeight`) on the boxes whose tops are at or below its base;
+    one with less under it than before falls (the fall timer). Used after
+    Erase, the history's remove, and Move Object.
+  - Move Object (`StartMove`, `TrackMove`, `EndMove`): the piece follows
+    the pointer, its middle kept at the offset it was taken at, snapped by
+    `SnapPiecePosition` with its turned box (Shift: grid 0, free), resting
+    at `LandingHeight` there, leaving out itself and `RidersOf` it (pieces
+    resting on it, and on them, found at the press); let go, the riders
+    fall (`SettlePieces`). They are not carried with it: tell the owner if
+    carrying is wanted.
+  - Move Camera (`TrackPan`, `MoveViewCentre`, `ResetViewCentre`):
+    `FViewCentre`, the middle of the floor the view is fitted to, in level
+    X and Z. `ViewVolume` is centred on it (so `FitModel` keeps it, and the
+    view turns about it) and `LevelPlaneAt`'s four points are taken about
+    it. Dragging keeps the floor point grabbed under the pointer, moving
+    `FViewCentre` and `GorillaCamera.OrbitCenter` by the same amount (the
+    level's delta taken into the viewport's coordinates through
+    `FLevel.LocalToAbsolute3D`). A right click (any tool but Bend) resets
+    it with the mouse view's turn and zoom, and refits. Not kept in
+    settings.json.
+  - History (`BuildHistory`, `AddHistory`, `PruneHistory`, `ShowHistory`,
+    `HistoryRemoveClick`): a panel on the palette's dark backing, below
+    it on the left; a grip with "History" (the palette's grip handlers,
+    now moving `FMovingPanel`, whichever panel's grip it is; positions
+    kept by `KeepPanelInView`); a `TVertScrollBox` of lines, newest first,
+    "N x Name" or "K of N x Name", each with a red X that takes those
+    pieces out (queued, as the button is freed by the new list).
+    `THistoryEntry` keeps the ids (`TLevelPiece.Id`, from
+    `FNextPieceId`); at most `HISTORY_MAX` (50). Additions only: erasing,
+    moving and turning are not in it, and there is no undo of them.
+  - Edit, Undo (owner, 20:51: "Add a new Menu Edit -> Undo (Undoes last
+    addition to scene)"): `FEditMenu`, made in `BuildHistory` and
+    inserted after `FileMenu` in its parent (MainMenu1, or on Linux the
+    TMenuBar it was copied to), with `FUndoItem`, Ctrl+Z
+    (`scCtrl or Ord('Z')`); `UndoItemClick` takes out the newest history
+    line's pieces (`RemovePieces`, which prunes the line). `ShowHistory`
+    enables it and names the line ("Undo 100 x Floor_Brick").
+  - Not checked against the source: `TControl.ParentControl`,
+    `TThread.ForceQueue`, `TVertScrollBox.Content.DeleteChildren`.
+  - **To test** (Windows): first the 2040 list (Rotate, Bend). Erase a
+    piece of an area, its first piece (the template), and the last piece
+    of a model, then place that model again. Stack a wall on a tile and
+    erase the tile: the wall falls. Move a tile with a wall on it: the
+    wall falls when the tile is let go. History: place three areas, remove
+    the middle one with its X. Move Camera: drag; turn with Mouse View;
+    resize the window (the view stays moved); right-click (back).
+
+- **Rotate and Bend**, `2026-11-12-2040-rotate-and-bend.zip`, not yet
+  applied or tested; follows `2026-11-12-2030-gpu-instancing.zip` (the
+  instancing result was recorded in
+  `2026-11-12-2035-instancing-result-notes.zip`, whose `CLAUDE.md` this
+  one replaces). The owner (20:21): placed pieces drop in their natural
+  orientation; add a rotation tool, 45-degree snap, free with Shift held,
+  a modal settings form for the snap (default 45); the model under the
+  pointer highlighted, a click and drag turns it as Mouse View turns the
+  view. And "Move by join", renamed **Bend** (20:21): lay down a wall,
+  point at a piece; left mouse: it and all to its right turn about its
+  joint with the one to its left; right mouse: the same reversed; to lay a
+  long wall and bend it into a rectangle. The owner does not know if Bend
+  will work: "worth a go".
+  - `TLevelPiece` has `Turn` (degrees about the up axis through its
+    origin) and `Turned` (its box turned and squared up, about its
+    origin); `Box` now uses `Turned`, so landing on turned pieces uses
+    their turned footprints.
+  - Posing: `MovePiece` gives the template its position and
+    `ResetRotationAngle` + `RotationAngle.Y`, and an instance the matrix
+    of `FPoser` (a hidden `TDummy` child of `FLevel` posed the same way)
+    with `SetTransform`, as the v1.5 docs say. `TurnVector` turns a vector
+    about the level's up axis with `FTurnSign`, found once in `BuildLevel`
+    by turning `FPoser` 90 degrees, so the sums turn the way FMX does.
+  - Picking (`PieceAt`): `LevelPlaneAt` (the floor map at any height;
+    `LevelFloorAt` is it at 0) gives the line of sight from the floor to
+    the height of the tallest piece; each piece's own box, in its turn, is
+    tested with `LineThroughBox` (new in `Sprite3DLevelPlacement`); the
+    piece met highest up the line wins (the view looks down). The pointer
+    must be over the floor (below the horizon). `FPickBox`, an amber
+    `TSprite3DPlacementBox`, outlines it (`ShowPick`).
+  - Turning (`StartTurn`, `ApplyTurn`, `EndTurn`): drag left or right,
+    `TURN_DEGREES_PER_PIXEL` 0.5, rounded to `FSettings.RotateSnap`
+    unless Shift is held; each piece's middle swings about `FTurnHinge`
+    and its `Turn` adds the same, from where it was at the press
+    (`FTurnSaved`). Rotate: the hinge is the piece's own middle; let go
+    at a multiple of 90 it is snapped again (`SnapPiecePosition` with its
+    turned box). Bend: pieces are joined when on the same base (within 5%
+    of a cell), sharing at least half the taller's height, and their
+    turned boxes touch (within 5% of a cell); the hinge piece is the
+    joined piece nearest on screen on the left (left button) or right
+    (right button, or Control and left); the hinge is halfway between the
+    two middles; the set turned is everything joined to the piece pressed
+    on without passing the hinge piece (breadth first). Heights are kept;
+    nothing is dropped again; pieces resting on turned ones stay put.
+  - Palette: Place Model, Rotate, Bend, Mouse View (`FEditTool`,
+    `TLevelEditTool`, `ChooseEditTool`, `LogEditTool`; `PlaceToolOn` now
+    also needs `etPlace`). Only Mouse View is kept in settings.json; the
+    edit tool starts as Place Model. Right-click resets the view in Place
+    Model and Rotate; in Bend it bends. Status bar: `TurnStatus`.
+  - Snap: `TSprite3DAppSettings.RotateSnap` (`rotateSnap`, 1 to 180,
+    default 45; `ROTATE_SNAP_*`). `Sprite3DBuilderRotationForm` (new, in
+    the `.dpr` and `.dproj`): `TRotationSnapForm.Execute`, a modal form
+    made in code (no `.fmx`): an edit box (digits, point or comma, read
+    with the invariant format, kept within 1 to 180), presets 15, 22.5, 30,
+    45, 90, OK, Cancel. Not a `TNumberBox`: its `ValueType` needs
+    `TNumValueType`, undeclared with the units used in Delphi 13 (owner,
+    20:33: E2003), and without it the box takes whole numbers only. Opened by File, Rotation Snap... (`FRotationSnapItem`,
+    inserted under Settings... with the palette) or a double-click on
+    Rotate or Bend.
+  - Not checked against the source: FMX's `ResetRotationAngle` on
+    `TControl3D`; Gorilla's `SetTransform`. Neither is new to the
+    documentation, but if either does not compile, match it.
+  - **To test** (Windows): Rotate a wall: amber outline on hover; drag
+    turns it in 45s, Shift freely; at 90 it sits on the grid. Rotate an
+    instanced piece (not the first placed) and the first: both turn the
+    same way, about their middles. Bend a 6-piece wall at its third piece,
+    left then right. Set the step to 90 and back.
+
+### Handover (12 November 2026, 19:40)
+
+The entry above follows on from this one.
+
+- **Upright palette, status bar, quick areas**,
+  `2026-11-12-1940-status-bar-instanced-pieces.zip`, not yet applied or
+  tested; follows `2026-11-12-1915-palette-tpath-fix.zip`. The owner
+  (19:11-19:12): the palette upright; the action in a status bar at the
+  bottom, saying the model placed and what can be done (drag = area
+  fill), and Mouse View with its options when the camera is chosen; the
+  area fill "astonishingly slow"; "model clone?", "This is instancing";
+  static models have `IsStatic`, which makes things faster.
+  - Palette: the grip across the top, the two buttons under it
+    (`BuildPalette`); its label is gone (`FPaletteLabel`,
+    `PALETTE_LABEL_WIDTH`).
+  - Status bar: `BuildStatusBar` (desktop, with the palette), a
+    `TStatusBar` aligned to the bottom of the form, under the tabs, with
+    `FStatusLabel`; `UpdateStatus` from `UpdatePalette`, `ShowPlacement`
+    and `HidePlacement`: Mouse View's controls; Place Model with no model;
+    the model, its size, click and drag; pressed, "let go: place it, drag
+    on: fill an area"; an area's size and count (`FPlaceCountX`,
+    `FPlaceCountZ`, kept by `AreaSpots` and `TrackPlacement`).
+  - Speed: an area loaded every piece from its file. Now `TemplateFor`
+    loads each model once (textures fixed, `LoadModelFile`), hidden in the
+    viewport, kept in `FTemplates` by key for the session (never freed
+    before the form, as the pieces are built from its definition), and
+    `PlacePiece` makes each piece with
+    `TGorillaModel.LoadNewModelFromDef(GorillaViewport, TModelDef(Template.Def), [])`,
+    as Gorilla's documentation gives it (the signature is not checked
+    against 1.5.4's source: if it does not compile, match it). A template
+    whose kind (`GuessModelKind(ModelContent(...))`) is `mkStatic` has its
+    mesh definitions marked `IsStatic` (`MarkMeshesStatic`, new in
+    `Sprite3DModelContent`, walking `TMeshDef`s as `CountMeshes` does)
+    before any piece is made: Gorilla then keeps the vertices on the GPU
+    instead of FMX sending them every frame; never for skins or
+    animations (Gorilla's warning). The Debug tab gives the load time and
+    whether it was made static, and "placed N x name in T ms".
+  - First result (owner, 19:19, a debug build): 100 floor tiles (2 meshes,
+    static) placed in 3693 ms, 37 ms each, after a 164 ms first load:
+    better, still slow; "landed 4156 ms after being let go" showed each
+    piece's fall timed from when it was made, while nothing is drawn
+    until all are made. `2026-11-12-1950-place-timing.zip`: an area's
+    falls start together once all are made, and the "placed" line splits
+    the time between `LoadNewModelFromDef` and putting each piece in the
+    level (`FMakeTicks`, `FSetupTicks`), to find where it goes. The owner
+    is trying a release build. Likely suspects: materials and textures
+    made again for every piece from the definition (Gorilla's
+    documentation says textures are duplicated unless the definition has
+    an assets package), and FastMM5's checks in debug builds. Next, by
+    what the split shows: share the template's materials, give the
+    definitions a package, or Gorilla's assembler for large areas.
+  - **Access violation on closing** (owner, 19:20-19:22, call stack:
+    `TGorillaModel.Destroy` -> `_AsClass` -> `InheritsFrom(TModelDef)`,
+    under `TDummy.Destroy` under `TGorillaViewport.Destroy`): the
+    viewport frees its children newest first, so a template (added after
+    `FLevel`) went first, its definition with it, and then each piece,
+    freed with `FLevel`, read that definition. Fixed in
+    `2026-11-12-1955-free-pieces-first.zip`: `FormDestroy` calls
+    `FreeLevelPieces` (pieces newest first, then templates) before the
+    form frees its children. `PlacePiece` says once a template whether
+    the piece holds the template's own definition or a copy, to know
+    whether one piece can be freed alone (removing pieces, to come). Rule:
+    **a piece must be freed before the template it was made from.**
+  - Freeing pieces first was not enough (owner, 19:29: the same fault,
+    now under `FreeLevelPieces`): each piece freed the one definition.
+    The owner pointed to the StereoModel lesson (SRDelphiFMX's
+    `Sprite3D-SpritelyNotes1.md`): it was applied, but only
+    `LoadNewModelFromFile` was named, and `LoadNewModelFromDef` is the
+    same kind of class function. `2026-11-12-2005-own-load-per-piece.zip`:
+    no templates and no shared definitions. `PieceSourceFor` loads a
+    model once (a probe, freed at once) to fix its textures
+    (`PrepareModelTextures`) and judge it static, and keeps the file to
+    load and the flag in `FSources` (`TPieceSource`); `PlacePiece` makes
+    each piece with `TGorillaModel.Create` and its own `LoadFromFile`
+    (`LoadModelFile`), then `MarkMeshesStatic` on its own definition
+    before it is drawn. `FreeLevelPieces` stays (pieces freed before the
+    form's children), but order no longer matters. The "placed" line
+    splits loading from putting in the level. Slower than sharing a
+    definition: the release build's numbers decide what next (Gorilla's
+    documented sharing is a definition held by an assets package).
+  - Owner (debug build, the 20:05 zip): no fault on closing; 100 floor
+    tiles in 17321 ms, 17145 of it loading, about 171 ms a piece.
+    `2026-11-12-2020-assets-package.zip` (pieces loaded through a Gorilla
+    assets package) was **not applied**: the owner asked Gorilla3D's
+    author, who said: load the model once, then use GPU mesh instancing,
+    `AddInstanceItem`, whose result has `Position`, `RotationAngle` and
+    `Scale`; the template model must have `FrustumCullingCheck` False, or
+    the instances disappear too. `2026-11-12-2030-gpu-instancing.zip`,
+    following the 20:05 zip (the package changes taken out again):
+    - `PieceSourceFor` loads the model once, the **template**, as the
+      probe was loaded (textures fixed, `LoadModelFile`), but keeps it, a
+      child of `FLevel`: marked static if static, `FrustumCullingCheck`
+      False, kept in `FSources` (`TPieceSource.Template`, `Taken`).
+    - The first piece placed is the template itself, moved into place
+      (Gorilla's v1.5 docs: the mesh itself is always instance #0, so it
+      is drawn, and hiding it hides every instance). Every later piece is
+      `Template.AddInstanceItem('PieceN')` (`TLevelPiece.Instance`, nil
+      for the template). An instance's transform is absolute, in the
+      viewport's coordinates, replacing the template's, so `MovePiece`
+      gives an instance `FLevel.LocalToAbsolute3D` of its position, and
+      `PlacePiece` its `RotationAngle` that of `FLevel` (180 about X).
+    - `BeginInstancesEditing`/`EndInstancesEditing` on the template around
+      an area's adds, and on every template around each fall step.
+    - `FreeLevelPieces` frees only the templates (their instances go with
+      them), then clears `FSources`.
+    - The Debug tab: "loaded in T ms, its later pieces drawn as GPU
+      instances of it"; "placed N x name in T ms (L ms loading the model,
+      A ms adding instances of it)".
+    - Not checked against 1.5.4's source: `TGorillaMeshInstance` (taken
+      to be in `Gorilla.Mesh`), `AddInstanceItem(String)`,
+      `BeginInstancesEditing`, `EndInstancesEditing`. If they do not
+      compile, match them.
+    - To come: removing a piece is `DeleteInstance` (or freeing its item);
+      removing the template while it has instances needs one of them made
+      the template's own position first. Instances share the template's
+      material, pose and visibility; a piece that must differ needs a
+      model of its own (cloning).
+    - **Result** (owner, 19:55, debug build): "That's more like it". It
+      compiled as written. 100 x Floor_Brick placed in 162 ms, all of it
+      the one load, 0 ms adding the instances, landed 115 ms after being
+      let go (from 17321 ms with a load per piece). Instancing is the way
+      pieces are placed from here on.
+  - **To test** (Windows): the palette upright, its grip on top. The
+    status bar's text as above, following the tool, the model chosen and
+    the area while dragging. Fill a 10 x 10 area of a floor tile: the
+    Debug tab's "placed 100 x ... in T ms" should now be well under a
+    second after the first load; the template line says static for a
+    floor tile. Place an animated or rigged model: not made static, and
+    it still draws.
+
+- **The palette, and placing by clicking**, `2026-11-12-1910-palette-place-model.zip`,
+  not yet applied or tested; follows `2026-11-12-1845-quicker-drop.zip`.
+  The owner (18:53): drag and drop won't work; instead select an icon, the
+  box shows over the grid, a left click places it; a floating toolbar, the
+  palette, its first tool Place Model with a suitable icon; a click puts
+  the model down, a click and drag covers a larger area with repeats of
+  it, the box showing the area they will take. (18:54): Mouse View goes on
+  another icon, a camera.
+  - **Library**: the drag out of the form (18:10) is taken out again
+    (`TrackLevelDrag`, `FOverLevel`, the three level events and types);
+    moving models between groups is as it was. `SelectEntry` now calls
+    `OnModelChosen` (`TAssetsModelChosenEvent`) with `LevelSpec` and
+    `LevelTakes` (has a thumbnail, and so a box).
+  - **Main form**: `ChooseModel` keeps it as `FBrush` (not if it cannot
+    be placed; the Debug tab says why). The palette (`BuildPalette`,
+    desktop only, after `BuildLockCameraItem`): `FPaletteBack` on
+    `ViewportLayout`, dark as the frame rate readout, at (8, 32); a grip
+    (`FPaletteGrip`, `AutoCapture`) that moves it, kept in the view
+    (`KeepPaletteInView`, also from `AspectLayoutResize`); `FPlaceButton`
+    and `FCameraButton`, `TRectangle`s with a white `TPath` icon
+    (`PLACE_MODEL_ICON`, an arrow onto a cube; `CAMERA_ICON`), the one on
+    filled lighter and edged in `PLACE_BOX_COLOUR`; `FPaletteLabel`, the
+    model chosen. **The two tools are Mouse View on or off**:
+    `PlaceToolOn` is `not MouseViewOn`; `ChooseTool` (palette or View,
+    Camera, Mouse View) ticks the menu, keeps `mouseView` and logs.
+    `ApplyMouseViewTick` no longer resets the view when Mouse View goes
+    off (a view turned to place in stays turned) and always leaves
+    `AspectLayout.HitTest` on; the readout shows while Mouse View is on or
+    the view is turned or zoomed. Right click resets and the wheel zooms
+    with either tool. `AspectLayout.AutoCapture` is on, and
+    `ViewMouseLeave` hides the box. With Place Model: a move shows the box
+    (`TrackPlacement`: `PlaceSpotAt`, `ShowPlacement`); left down starts an
+    area at `FPlaceAnchor` (`FPlaceDown`); moves grow it (`AreaSpots`: the
+    footprint in whole cells per step, at most `MAX_AREA_PIECES` (256),
+    the longer side cut); left up places them (`PlaceShown`, each through
+    `PlacePiece`, which now reports textures and a differing box for the
+    first only, returns whether it loaded, and stops the area if the first
+    does not load). All of an area rest at one height, the highest any
+    would land at, and `FPlaceBox` is one box round them (in the level's
+    coordinates, at position zero). `FallTimerTimer` gives one line when
+    all have landed. Debug tab lines start `Level:`, and one says which
+    tool is on.
+  - Fixed in `2026-11-12-1915-palette-tpath-fix.zip`: the icon's `TPath`
+    was taken as `System.IOUtils.TPath`; now `FMX.Objects.TPath`.
+  - **To test** (Windows): the palette at the top left under the frame
+    rate, its grip moving it, kept in the view as the window shrinks;
+    Place Model edged in cyan unless `mouseView` was on. Select a
+    thumbnail: the palette names it and the Debug tab gives its size.
+    Hover over the floor: the box rests there, snapped; click: the model
+    drops into it; hover over it: the box rests on top. Click and drag
+    over several cells: the box covers the area; let go: the copies fill
+    it, at one height. Over 256: the Debug tab says it was cut. Click the
+    camera: left-drag turns the view, the readout shows; click Place
+    Model: the view stays turned, and placing works in it; a right click
+    puts the normal view back with either tool. View, Camera, Mouse View
+    follows the palette and the other way round. Moving models between
+    groups in the Library works as before.
+
+- 18:45, `2026-11-12-1845-quicker-drop.zip`: the owner (18:35): "why start
+  so far above? the drop can be much faster". `PLACE_LIFT_CELLS` 1 to 0.25
+  and `FALL_GRAVITY_CELLS` 20 to 40: the drop takes about a tenth of a
+  second (sqrt(2 x 0.25 / 40) = 0.11 s) where it took a third.
+- 18:40, `2026-11-12-1840-box-shows-resting-place.zip`: the owner (18:32:
+  "Not a bad start"): the box while hovering should show where the model
+  will rest, not some way above. `FPlaceBox` is now at the resting place
+  (`FPlaceLand`); the piece still starts `PLACE_LIFT_CELLS` above it
+  (`FPlaceAt`) and falls into the box.
+- **Dragging a piece from the Library onto the level** (owner, 17:58: drag
+  an icon from the Library over the builder form, shown there as the
+  model's bounding box; the grid is the ground for now; let go, the model
+  joins the scene and gravity makes it fall into place; grid snap the
+  grid's size for now; "extremely simple ATM", to be refined as the
+  design goes on). `2026-11-12-1810-drag-pieces-onto-level.zip`, not yet applied or
+  tested. Follows `2026-11-12-1250-library-gl-message.zip`.
+  - **The Library** (`Sprite3DBuilderAssetsForm`): the tile drag it had
+    (moving models between groups) goes on outside the form, as the tile
+    keeps the mouse (`AutoCapture`). `TrackLevelDrag`, from
+    `TileMouseMove`, offers the pressed tile's model (`LevelSpec`: name,
+    file, key, box; only one with a thumbnail, `LevelTakes`) to
+    `OnLevelDragOver` with the pointer in screen coordinates, when the
+    pointer is outside the form's client area; while the level says it is
+    over it, the ghost is hidden and no group is marked. `TileMouseUp`
+    over the level calls `OnLevelDrop` (and logs that the others picked
+    were not taken); `EndDrag` calls `OnLevelDragLeave` for a drag that
+    leaves or ends anywhere else. New types `TAssetsLevelDragEvent`,
+    `TAssetsLevelDropEvent`, `TAssetsLevelLeaveEvent`. Fixed in
+    `2026-11-12-1825-drag-pieces-compile-fix.zip`: `PlacePiece` used
+    `Default(TLevelPiece)`, which `Gorilla.DefTypes` hides (see *Gorilla3D
+    and FMX notes*); it sets every field instead.
+  - **The main form**: `EnsureAssetsForm` sets the three events.
+    `LevelFloorAt` finds the floor point under the pointer: four floor
+    points `LEVEL_FRAME_CELLS` cells apart shown through
+    `GorillaCamera.ProjectToView` (Spritely, which accounts for every
+    projection, oblique, shift and rise included), the homography solved
+    from them (`TSprite3DFloorMap`), the point found shown again and kept
+    only within `FLOOR_MAP_TOLERANCE` (1.5) pixels of the pointer, which
+    rules out the sky in perspective; only on the Level tab, not
+    minimised. `LevelDragOver` snaps (`SnapPiecePosition`), finds where it
+    lands (`LandingHeight` over `PlacedBoxes`) and shows `FPlaceBox`, a
+    `TSprite3DPlacementBox` in `FLevel`, in `PLACE_BOX_COLOUR` (light
+    cyan): at first `PLACE_LIFT_CELLS` (1) above that; from 18:40 where
+    it rests. `LevelDrop` queues `PlacePiece`
+    (`ForceQueue`, so the Library's mouse-up ends first), which loads the
+    model into `FLevel` as the Library does (`PrepareModelTextures` with
+    the thumbnail folder and the key, Builder's `LoadModelFile`,
+    `ResetToBindPose`; not turned, as `FLevel` is), and adds a
+    `TLevelPiece` to `FPieces`; `FFallTimer` (`FALL_STEP_MS`, 15) moves
+    the falling ones (`FallHeight`, gravity `FALL_GRAVITY_CELLS` (20, 40
+    from 18:45) cells per second per second, timed on `FClock`). Debug tab lines
+    start `Level:`.
+  - **`Sprite3DLevelPlacement`** (new, `lib`): `TSprite3DPieceSpec`,
+    `TSprite3DFloorMap` (8 by 8 Gaussian elimination; checked in Python
+    against random perspective cameras: within 1E-13), `SnapPiecePosition`
+    (per axis: a piece N cells across, N = its size over the grid's,
+    rounded, at least 1, has its middle at a cell's middle for N odd, on
+    a grid line for N even), `LandingHeight` (the highest box overlapping
+    the footprint by more than a hundredth of a cell, or 0),
+    `FallHeight`, `BoxFootprint`, and `TSprite3DPlacementBox`.
+  - **Shared, `Sprite3DSweep`**: the 12-edge drawing of
+    `TModelBoundsOutline` moved into a new abstract base,
+    `TSprite3DBoxOutline` (`GetOutline` gives the box and matrix; `Render`
+    draws); `TModelBoundsOutline` is now its subclass, drawing as before
+    (into Sprite3D's grabs only, while `ShowBoundingBox` is on), and
+    `TSprite3DPlacementBox` is this program's (owner's rule: a base class
+    shared, a subclass in each program). Sprite3D's only use,
+    `ShowModelBoundsOutline`, is unchanged; noted in the root's handover.
+  - **To test** (Windows): open the Library beside the level and drag a
+    thumbnail (a floor tile, a wall, a small prop) over the view: the
+    ghost goes as the pointer leaves the Library and the cyan box follows
+    the pointer, snapped cell by cell, a cell up; back over the Library
+    the ghost returns. Let go: the model appears in the box and falls,
+    landing on the floor; drop another over it: it lands on top. Try the
+    views and projections (Isometric, Top Down, perspective, an oblique):
+    the box stays under the pointer. Let go over the sky in perspective,
+    or back over the Library: nothing is placed. The Debug tab has the
+    `Level:` lines. Moving models between groups works as before.
+  - Not done, by design for this first step: moving, turning or removing
+    pieces, saving the level, landing on shapes rather than boxes, any
+    snap but the grid's.
 
 ### Handover (12 November 2026, 11:05)
 
@@ -430,6 +1358,14 @@ and the units that were in `src/lib` and `src/common` but are not in
 - **Tested** (passed): the group builds; the Library opens, finds `assets/` and
   the group icons, and makes thumbnails as before, the textured kits
   (Zerin, Quaternius) included; File, Licences lists Neon and Vampyre.
+- 12:50: the Library's `Error = 1282` line on opening is known and
+  harmless (*Gorilla3D and FMX notes*). Zip
+  `2026-11-12-1250-library-gl-message.zip`.
+- 12:45: **a program icon of its own** (owner, 12:29: the two programs'
+  icons were the same): blocks on a tiled teal floor, drawn by
+  `tools/make_builder_icon.py` into `Sprite3DBuilder_Icon.ico` and the main
+  icon of `Sprite3DBuilder.res`; run it again to redraw. Zip
+  `2026-11-12-1245-builder-icon.zip`, in the root's handover.
 - 12:25: Sprite3D's glTF tools read a `.gltf` through the shared
   `PrepareModelTextures` too (`GltfFileToRead` in Sprite3D's helpers); no
   shared unit changed, so nothing here changes.

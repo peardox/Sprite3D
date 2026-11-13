@@ -45,7 +45,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Math.Vectors,
-  FMX.Graphics, FMX.Types3D, FMX.Controls3D,
+  FMX.Graphics, FMX.Types3D, FMX.Controls3D, FMX.Forms,
   System.JSON, Gorilla.Model, Sprite3DStorage, Neon.Core.Attributes;
 
 const
@@ -70,6 +70,20 @@ const
   //** @abstract(The level grid's spacing until settings.json says otherwise: a small floor
   //** tile of the dungeon kit, 2 units across.)
   GRID_SIZE_DEFAULT = 2.0;
+  //** @abstract(The extension of a level file, which File, Save Level writes and File,
+  //** Load Level reads, and which opens with Sprite3DBuilder.)
+  LEVEL_FILE_EXTENSION = '.s3d';
+  //** @abstract(The @code(format) a level file names itself with.)
+  LEVEL_FILE_FORMAT = 'Sprite3DBuilder level';
+  //** @abstract(The newest level file layout this version writes and reads.)
+  LEVEL_FILE_VERSION = 1;
+  //** @abstract(The step the Rotate and Bend tools turn pieces by until the user sets
+  //** another, in degrees.)
+  ROTATE_SNAP_DEFAULT = 45.0;
+  //** @abstract(The smallest step Rotate and Bend may turn by, in degrees.)
+  ROTATE_SNAP_MIN = 1.0;
+  //** @abstract(The largest step Rotate and Bend may turn by, in degrees.)
+  ROTATE_SNAP_MAX = 180.0;
   //** @abstract(The smallest grid spacing settings.json may give.)
   GRID_SIZE_MIN = 0.01;
   //** @abstract(The largest grid spacing settings.json may give.)
@@ -193,6 +207,14 @@ type
     FViewFps: Integer;
     FMinifyJson: Boolean;
     FMouseView: Boolean;
+    FRotateSnap: Single;
+    FMainLeft, FMainTop, FMainWidth, FMainHeight: Integer;
+    FMainMaximized: Boolean;
+    FLibraryLeft, FLibraryTop, FLibraryWidth, FLibraryHeight: Integer;
+    FLibraryMaximized: Boolean;
+    FPaletteLeft, FPaletteTop, FHistoryLeft, FHistoryTop: Single;
+    FHistoryVisible: Boolean;
+    FLevelFolder: String;
     //** @abstract(Backing fields for GridSize, AssetFolder and PreviewBackground.)
     FGridSize: Single;
     FAssetFolder: String;
@@ -203,6 +225,11 @@ type
     //**
     //** @param(Value The spacing wanted.)
     procedure SetGridSize(const Value: Single);
+    //** @abstract(Setter for RotateSnap: keeps it within ROTATE_SNAP_MIN to
+    //** ROTATE_SNAP_MAX.)
+    //**
+    //** @param(Value The step wanted, in degrees.)
+    procedure SetRotateSnap(const Value: Single);
     function GetThemeKind: TSprite3DTheme;
     procedure SetThemeKind(const Value: TSprite3DTheme);
     //** @abstract(Getter for ProjectionKind.)
@@ -355,12 +382,72 @@ type
     //** included, sets JsonText.MinifyJson, which every JSON file Sprite3DBuilder writes follows,
     //** settings.json itself among them.
     property MinifyJson: Boolean read FMinifyJson write SetMinifyJson;
-    //** @abstract(Whether View, Camera, Temporary Mouse View is ticked; False by default.)
+    //** @abstract(Whether Mouse View is the palette's tool, and View, Camera, Mouse View
+    //** ticked; False by default, for Place Model.)
     //**
-    //** Stored as @code(mouseView); set by the menu item, and saved as soon as it changes.
-    //** Only the tick is kept: the turn and zoom the mouse gives the view never are, and
-    //** each session starts from the normal view. Desktop only; ignored on Android and iOS.
+    //** Stored as @code(mouseView); set by the menu item or the palette, and saved as soon as
+    //** it changes. Only the tool is kept: the turn and zoom the mouse gives the view never
+    //** are, and each session starts from the normal view. Desktop only; ignored on Android
+    //** and iOS.
     property MouseView: Boolean read FMouseView write FMouseView;
+    //** @abstract(The step, in degrees, the palette's Rotate and Bend tools turn pieces by;
+    //** ROTATE_SNAP_DEFAULT, 45, by default.)
+    //**
+    //** Stored as @code(rotateSnap); set in the Rotation Snap dialog (File, Rotation Snap...,
+    //** or a double-click on either tool), and saved as soon as it changes. Holding Shift
+    //** while turning turns freely instead. A value outside ROTATE_SNAP_MIN to
+    //** ROTATE_SNAP_MAX reads as the default.
+    property RotateSnap: Single read FRotateSnap write SetRotateSnap;
+    //** @abstract(The main window's place when it was last closed, its normal (not
+    //** maximised) left, top, width and height, in FMX's desktop coordinates, which run
+    //** across every monitor, so they say which monitor too; and whether it was maximised.)
+    //**
+    //** Stored as @code(mainLeft), @code(mainTop), @code(mainWidth), @code(mainHeight) and
+    //** @code(mainMaximized). A width of 0, the default, means none is kept yet. Put back by
+    //** PlaceFormOnScreen, which keeps the window on a monitor that is there.
+    property MainLeft: Integer read FMainLeft write FMainLeft;
+    //** @abstract(See MainLeft.)
+    property MainTop: Integer read FMainTop write FMainTop;
+    //** @abstract(See MainLeft.)
+    property MainWidth: Integer read FMainWidth write FMainWidth;
+    //** @abstract(See MainLeft.)
+    property MainHeight: Integer read FMainHeight write FMainHeight;
+    //** @abstract(See MainLeft.)
+    property MainMaximized: Boolean read FMainMaximized write FMainMaximized;
+    //** @abstract(The Library window's place, as MainLeft and the rest are the main
+    //** window's.)
+    //**
+    //** Stored as @code(libraryLeft), @code(libraryTop), @code(libraryWidth),
+    //** @code(libraryHeight) and @code(libraryMaximized).
+    property LibraryLeft: Integer read FLibraryLeft write FLibraryLeft;
+    //** @abstract(See LibraryLeft.)
+    property LibraryTop: Integer read FLibraryTop write FLibraryTop;
+    //** @abstract(See LibraryLeft.)
+    property LibraryWidth: Integer read FLibraryWidth write FLibraryWidth;
+    //** @abstract(See LibraryLeft.)
+    property LibraryHeight: Integer read FLibraryHeight write FLibraryHeight;
+    //** @abstract(See LibraryLeft.)
+    property LibraryMaximized: Boolean read FLibraryMaximized write FLibraryMaximized;
+    //** @abstract(Where the palette and the history float over the view, from its top
+    //** left, in pixels; -1, the default, for where they start the first time.)
+    //**
+    //** Stored as @code(paletteLeft), @code(paletteTop), @code(historyLeft) and
+    //** @code(historyTop). Each is kept inside the view as it is.
+    property PaletteLeft: Single read FPaletteLeft write FPaletteLeft;
+    //** @abstract(See PaletteLeft.)
+    property PaletteTop: Single read FPaletteTop write FPaletteTop;
+    //** @abstract(See PaletteLeft.)
+    property HistoryLeft: Single read FHistoryLeft write FHistoryLeft;
+    //** @abstract(See PaletteLeft.)
+    property HistoryTop: Single read FHistoryTop write FHistoryTop;
+    //** @abstract(Whether the history is shown, View, History; True by default.)
+    //**
+    //** Stored as @code(historyVisible).
+    property HistoryVisible: Boolean read FHistoryVisible write FHistoryVisible;
+    //** @abstract(The folder a level was last saved to or loaded from; empty until one is.)
+    //**
+    //** Stored as @code(levelFolder). File, Save Level and Load Level start there.
+    property LevelFolder: String read FLevelFolder write FLevelFolder;
     //** @abstract(The level grid's spacing, in the kit's own units; GRID_SIZE_DEFAULT, 2, by
     //** default, a floor tile of the dungeon kit.)
     //**
@@ -689,12 +776,80 @@ function WriteGpuMode(const AMode: TSprite3DGpuMode): Boolean;
 //** @returns(The choices.)
 function ReadGeneralSettings(const ASettings: TSprite3DAppSettings): TSprite3DGeneralSettings;
 
+
+//** @abstract(Puts a window where it was, kept wholly on a monitor that is there.)
+//**
+//** The place is in FMX's desktop coordinates, which run across every monitor, so a window
+//** goes back to the monitor it was on. It is put on the monitor whose work area (less the
+//** taskbar) it overlaps most, or the primary monitor if it overlaps none, as when that
+//** monitor has gone; made no larger than that work area, and moved inside it. With no
+//** place kept (AWidth or AHeight 0), the window keeps its designed size, made to fit, and
+//** is centred on the primary monitor.
+//**
+//** @param(AForm The window, before it is shown.)
+//**
+//** @param(ALeft Its left, as kept.)
+//**
+//** @param(ATop Its top, as kept.)
+//**
+//** @param(AWidth Its width, as kept; 0 for none.)
+//**
+//** @param(AHeight Its height, as kept; 0 for none.)
+//**
+//** @param(AMaximized True to maximise it, on that monitor, once placed.)
+procedure PlaceFormOnScreen(const AForm: TCommonCustomForm; const ALeft, ATop, AWidth,
+  AHeight: Integer; const AMaximized: Boolean);
+
+//** @abstract(Where a window is, to keep: its normal place and whether it is maximised.)
+//**
+//** A maximised window's normal place is not its place on the screen, so it keeps the
+//** width and height kept before, centred on the monitor it is maximised on; a minimised
+//** window keeps all it had.
+//**
+//** @param(AForm The window.)
+//**
+//** @param(ALeft In: its left as kept before; out: its left to keep.)
+//**
+//** @param(ATop In and out, as ALeft.)
+//**
+//** @param(AWidth In and out, as ALeft.)
+//**
+//** @param(AHeight In and out, as ALeft.)
+//**
+//** @param(AMaximized Set to whether it is maximised.)
+procedure ReadFormPlace(const AForm: TCommonCustomForm; var ALeft, ATop, AWidth,
+  AHeight: Integer; out AMaximized: Boolean);
+
+
+//** @abstract(True if a file is a level file, by its extension, LEVEL_FILE_EXTENSION.)
+//**
+//** @param(AFileName The file.)
+//**
+//** @returns(Whether it ends in .s3d, case ignored.)
+function IsLevelFile(const AFileName: String): Boolean;
+
+//** @abstract(Makes level files open with this copy of Sprite3DBuilder, as Sprite3D does
+//** for its project files.)
+//**
+//** On Windows the extension gets a ProgID of its own, @code(Sprite3DBuilder.Level), is
+//** offered under Open With, and is made to open with it; a choice made with Always in
+//** Windows' own How do you want to open dialog still wins. On Linux the MIME type
+//** @code(application/x-sprite3dbuilder-level) goes into the application's desktop entry
+//** and is made to open with it. On macOS the bundle's document types would do this, and
+//** elsewhere there are no associations, so it does nothing. Uses Sprite3DFileAssoc.
+//**
+//** @param(AMessage Set to what went wrong; empty if nothing did.)
+//**
+//** @returns(True on success, or where there is nothing to do.)
+function RegisterLevelFiles(out AMessage: String): Boolean;
+
 implementation
 
 uses
   System.Classes, System.Math, System.IOUtils, System.Hash, System.StrUtils,
   System.Threading, System.SyncObjs, System.Generics.Collections, System.Generics.Defaults,
-  OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar,
+  OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar, Sprite3DFileAssoc,
+  Sprite3DModelAnimations,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
   {$ENDIF}
@@ -739,6 +894,23 @@ begin
   FViewFps := VIEW_FPS_DEFAULT;
   SetMinifyJson(False);
   FMouseView := False;
+  FRotateSnap := ROTATE_SNAP_DEFAULT;
+  FMainLeft := 0;
+  FMainTop := 0;
+  FMainWidth := 0;
+  FMainHeight := 0;
+  FMainMaximized := False;
+  FLibraryLeft := 0;
+  FLibraryTop := 0;
+  FLibraryWidth := 0;
+  FLibraryHeight := 0;
+  FLibraryMaximized := False;
+  FPaletteLeft := -1;
+  FPaletteTop := -1;
+  FHistoryLeft := -1;
+  FHistoryTop := -1;
+  FHistoryVisible := True;
+  FLevelFolder := String.Empty;
   FGridSize := GRID_SIZE_DEFAULT;
   FAssetFolder := String.Empty;
   FPreviewBackground := 'checker';
@@ -752,6 +924,16 @@ begin
     FGridSize := Value
   else
     FGridSize := GRID_SIZE_DEFAULT;
+end;
+
+procedure TSprite3DAppSettings.SetRotateSnap(const Value: Single);
+begin
+  // As SetGridSize: a bad value from a settings.json edited by hand reads
+  // as the default
+  if (Value >= ROTATE_SNAP_MIN) and (Value <= ROTATE_SNAP_MAX) then
+    FRotateSnap := Value
+  else
+    FRotateSnap := ROTATE_SNAP_DEFAULT;
 end;
 
 procedure TSprite3DAppSettings.SetViewFps(const Value: Integer);
@@ -1253,7 +1435,9 @@ begin
     Ani := AModel.AnimationManager.GetSortedAnimations();
     for I := 0 to Length(Ani) - 1 do
       Names.Add(Ani[I].Id);
-    Result := Names.ToStringArray;
+    // Without the takes that move nothing, which an FBX from Maya carries
+    // whether or not anything was animated
+    Result := StillAnimationsLeftOut(AModel, Names.ToStringArray);
   finally
     Names.Free;
   end;
@@ -1430,6 +1614,135 @@ begin
     Result.GpuMode := ReadGpuMode
   else
     Result.GpuMode := ASettings.GpuMode;
+end;
+
+{ Window places }
+
+// The work area of the monitor a rectangle overlaps most: FMX's displays,
+// in its desktop coordinates; the primary monitor's if it overlaps none
+function BestWorkArea(const ARect: TRectF): TRectF;
+var
+  Area, Cut: TRectF;
+  Best: Single;
+begin
+  Result := Screen.WorkAreaRect;
+  Best := 0;
+  for var I := 0 to Screen.DisplayCount - 1 do
+  begin
+    Area := Screen.Displays[I].WorkareaRect;
+    Cut := TRectF.Intersect(Area, ARect);
+    if not Cut.IsEmpty and (Cut.Width * Cut.Height > Best) then
+    begin
+      Best := Cut.Width * Cut.Height;
+      Result := Area;
+    end;
+  end;
+end;
+
+procedure PlaceFormOnScreen(const AForm: TCommonCustomForm; const ALeft, ATop, AWidth,
+  AHeight: Integer; const AMaximized: Boolean);
+var
+  Area: TRectF;
+  L, T, W, H: Single;
+  Kept: Boolean;
+begin
+  Kept := (AWidth > 0) and (AHeight > 0);
+  if Kept then
+  begin
+    L := ALeft;
+    T := ATop;
+    W := AWidth;
+    H := AHeight;
+    Area := BestWorkArea(TRectF.Create(L, T, L + W, T + H));
+  end
+  else
+  begin
+    L := 0;
+    T := 0;
+    W := AForm.Width;
+    H := AForm.Height;
+    Area := Screen.WorkAreaRect;
+  end;
+  W := Min(W, Area.Width);
+  H := Min(H, Area.Height);
+  if Kept then
+  begin
+    L := EnsureRange(L, Area.Left, Area.Right - W);
+    T := EnsureRange(T, Area.Top, Area.Bottom - H);
+  end
+  else
+  begin
+    L := Area.Left + (Area.Width - W) / 2;
+    T := Area.Top + (Area.Height - H) / 2;
+  end;
+  AForm.Position := TFormPosition.Designed;
+  AForm.SetBounds(Round(L), Round(T), Round(W), Round(H));
+  if AMaximized then
+    AForm.WindowState := TWindowState.wsMaximized;
+end;
+
+procedure ReadFormPlace(const AForm: TCommonCustomForm; var ALeft, ATop, AWidth,
+  AHeight: Integer; out AMaximized: Boolean);
+var
+  Area: TRectF;
+begin
+  AMaximized := AForm.WindowState = TWindowState.wsMaximized;
+  case AForm.WindowState of
+    TWindowState.wsNormal:
+    begin
+      ALeft := AForm.Left;
+      ATop := AForm.Top;
+      AWidth := AForm.Width;
+      AHeight := AForm.Height;
+    end;
+    TWindowState.wsMaximized:
+    begin
+      // Back to its kept size when unmaximised next time, on the monitor it
+      // is maximised on now
+      Area := BestWorkArea(TRectF.Create(AForm.Left, AForm.Top, AForm.Left + AForm.Width,
+        AForm.Top + AForm.Height));
+      if (AWidth <= 0) or (AHeight <= 0) then
+      begin
+        AWidth := Round(Area.Width * 0.8);
+        AHeight := Round(Area.Height * 0.8);
+      end;
+      AWidth := Min(AWidth, Round(Area.Width));
+      AHeight := Min(AHeight, Round(Area.Height));
+      ALeft := Round(Area.Left + (Area.Width - AWidth) / 2);
+      ATop := Round(Area.Top + (Area.Height - AHeight) / 2);
+    end;
+  end;
+end;
+
+{ Level files }
+
+function IsLevelFile(const AFileName: String): Boolean;
+begin
+  Result := SameText(ExtractFileExt(AFileName), LEVEL_FILE_EXTENSION);
+end;
+
+function RegisterLevelFiles(out AMessage: String): Boolean;
+{$IF DEFINED(MSWINDOWS) or (DEFINED(LINUX) and not DEFINED(ANDROID))}
+var
+  Levels: TSprite3DFileAssociations;
+{$ENDIF}
+begin
+  AMessage := String.Empty;
+  {$IF DEFINED(MSWINDOWS) or (DEFINED(LINUX) and not DEFINED(ANDROID))}
+  Levels := TSprite3DFileAssociations.Create(APP_NAME, APP_NAME + '.Level',
+    'Sprite3DBuilder level', [TSprite3DFileType.Create(LEVEL_FILE_EXTENSION,
+    'application/x-sprite3dbuilder-level', 'Sprite3DBuilder level')]);
+  try
+    Result := Levels.Register and Levels.Claim;
+    if not Result then
+      AMessage := Levels.LastError;
+  finally
+    Levels.Free;
+  end;
+  {$ELSE}
+  // Nothing to register here
+  Result := True;
+  {$ENDIF}
 end;
 
 end.

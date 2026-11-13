@@ -163,7 +163,7 @@ uses
   FMX.Objects, FMX.Controls.Presentation, FMX.Types3D, FMX.Menus, FMX.Dialogs, FMX.ListBox,
   Gorilla.Viewport, Gorilla.Model, Gorilla.Camera, Spritely.OrbitalCamera,
   Sprite3DOffscreen, Sprite3DAssetCache, Sprite3DBackground, Sprite3DGrid,
-  Sprite3DModelTextures;
+  Sprite3DModelTextures, Sprite3DLevelPlacement;
 
 type
   //** @abstract(Receives a line for the log; see TAssetsForm.OnLog.)
@@ -175,6 +175,18 @@ type
   //**
   //** @param(AKey Its key: @code(checker), @code(black), @code(grey) or @code(white).)
   TAssetsBackgroundEvent = reference to procedure(const AKey: String);
+
+  //** @abstract(Tells the level which models are chosen in the Library, to place; see
+  //** TAssetsForm.OnModelChosen.)
+  //**
+  //** @param(ASpecs The models picked that can be placed (each has a thumbnail, and so a
+  //** box): their names, files, keys and boxes, the one clicked first. Placing more than
+  //** one picks among them at random for each piece.)
+  //**
+  //** @param(ALeftOut The names of the models picked that cannot be placed yet, as their
+  //** thumbnails are still to be made.)
+  TAssetsModelChosenEvent = reference to procedure(const ASpecs: TArray<TSprite3DPieceSpec>;
+    const ALeftOut: TArray<String>);
 
   //** @abstract(One model's key, the files it names, and why it has none, as the hashing
   //** worker hands them back.)
@@ -625,6 +637,8 @@ type
     FPreviewBackground: String;
     //** @abstract(Backing field for OnPreviewBackground.)
     FOnPreviewBackground: TAssetsBackgroundEvent;
+    //** @abstract(Backing field for OnModelChosen.)
+    FOnModelChosen: TAssetsModelChosenEvent;
     //** @abstract(True while CheckThumbnails runs.)
     FChecking: Boolean;
     //** @abstract(Behind the viewport: a checker, standing for transparency. Never in a
@@ -1160,6 +1174,18 @@ type
     procedure ScrollTimerTimer(Sender: TObject);
     //** @abstract(Starts a drag: FScrollTimer on, the ghost shown.)
     procedure BeginDrag;
+    //** @abstract(Whether the level can place an entry: one with a thumbnail, and so a box.)
+    //**
+    //** @param(AIndex The entry.)
+    //**
+    //** @returns(True if it can be placed.)
+    function LevelTakes(const AIndex: Integer): Boolean;
+    //** @abstract(An entry as the level is given it: its name, file, key and box.)
+    //**
+    //** @param(AIndex The entry.)
+    //**
+    //** @returns(The model, for OnModelChosen.)
+    function LevelSpec(const AIndex: Integer): TSprite3DPieceSpec;
     //** @abstract(Ends a group's drag at a point: moves it before another at the top,
     //** inside another, or to the top, as TrackGroupDrag marked.)
     //**
@@ -1381,6 +1407,9 @@ type
     //**
     //** @param(AIndex An entry of FEntries; -1 for none.)
     procedure SelectEntry(const AIndex: Integer);
+    //** @abstract(Tells OnModelChosen the models to place: every one picked, the one shown
+    //** (FSelected) first; or the one shown alone, if it is not picked.)
+    procedure NotifyModelChosen;
     //** @abstract(Loads entry AIndex into the viewport, in the thumbnails' view, unless
     //** thumbnails are being made.)
     //**
@@ -1602,6 +1631,11 @@ type
     //** @abstract(Called with the key of the background chosen over the preview, to keep it.)
     property OnPreviewBackground: TAssetsBackgroundEvent read FOnPreviewBackground
       write FOnPreviewBackground;
+    //** @abstract(Called each time a model is selected, with the models picked that can be
+    //** placed, so the level's Place Model tool places them.)
+    //** Fired as a thumbnail is clicked, with every model picked (Ctrl and Shift pick more
+    //** than one), the one clicked first; Place Model picks among them at random.
+    property OnModelChosen: TAssetsModelChosenEvent read FOnModelChosen write FOnModelChosen;
   end;
 
 
@@ -3896,6 +3930,10 @@ begin
       Entry := Default(TAssetEntry);
       Entry.HasThumbnail := LoadAssetMeta(FCacheFolder, R.Hash, Entry.Meta) and
         MadeSinceRemake(Entry.Meta.Created) and
+        // Made by the texture rules there are now, or naming no textures
+        // they ready: one made before textures could be found is made again
+        ((Entry.Meta.Textures >= TEXTURE_RULES_VERSION) or
+        not PreparesTextures(R.FileName)) and
         (Entry.Meta.ThumbWidth = THUMBNAIL_SIZE) and
         (Entry.Meta.ThumbHeight = THUMBNAIL_SIZE) and
         TFile.Exists(AssetThumbnailFile(FCacheFolder, R.Hash));
@@ -5183,6 +5221,26 @@ begin
   TrackTileDrag(At);
 end;
 
+function TAssetsForm.LevelTakes(const AIndex: Integer): Boolean;
+begin
+  Result := (AIndex >= 0) and (AIndex <= High(FEntries)) and FEntries[AIndex].HasThumbnail and
+    LevelSpec(AIndex).HasBox;
+end;
+
+function TAssetsForm.LevelSpec(const AIndex: Integer): TSprite3DPieceSpec;
+begin
+  Result := Default(TSprite3DPieceSpec);
+  if (AIndex < 0) or (AIndex > High(FEntries)) then
+    Exit;
+  Result.Name := FEntries[AIndex].Meta.Name;
+  Result.FileName := FEntries[AIndex].Meta.FileName;
+  Result.Key := FEntries[AIndex].Meta.Hash;
+  Result.BoxMin := FEntries[AIndex].Meta.BoxMin;
+  Result.BoxMax := FEntries[AIndex].Meta.BoxMax;
+end;
+
+
+
 procedure TAssetsForm.TrackTileDrag(const At: TPointF);
 var
   Index: Integer;
@@ -5263,6 +5321,8 @@ begin
     begin
       PickEntry(Index, []);
       UpdateTileMarks;
+      // That one alone is placed now
+      NotifyModelChosen;
     end;
     FPickOnUp := False;
     Exit;
@@ -5376,6 +5436,34 @@ begin
   FileLabel.Text := FEntries[AIndex].Meta.FileName;
   FileLabel.Hint := FileLabel.Text;
   ShowPreview(AIndex);
+  // The models the level's Place Model tool places
+  NotifyModelChosen;
+end;
+
+procedure TAssetsForm.NotifyModelChosen;
+var
+  Specs: TArray<TSprite3DPieceSpec>;
+  LeftOut: TArray<String>;
+
+  procedure Take(const AIndex: Integer);
+  begin
+    if LevelTakes(AIndex) then
+      Specs := Specs + [LevelSpec(AIndex)]
+    else
+      LeftOut := LeftOut + [FEntries[AIndex].Meta.Name];
+  end;
+
+begin
+  if not Assigned(FOnModelChosen) or (FSelected < 0) or (FSelected > High(FEntries)) then
+    Exit;
+  Specs := nil;
+  LeftOut := nil;
+  Take(FSelected);
+  if FEntries[FSelected].Picked then
+    for var I := 0 to High(FEntries) do
+      if (I <> FSelected) and FEntries[I].Picked then
+        Take(I);
+  FOnModelChosen(Specs, LeftOut);
 end;
 
 procedure TAssetsForm.BuildTiles;
@@ -5566,6 +5654,8 @@ var
   Content: TSprite3DModelContent;
   Kind: TSprite3DModelKind;
   KnownBefore: Boolean;
+  KindBefore: String;
+  AnimationsBefore: Integer;
 begin
   FileName := FEntries[AIndex].Meta.FileName;
   if IsSkipped(FileName) then
@@ -5606,6 +5696,8 @@ begin
     Content := ModelContent(FModel);
     Kind := GuessModelKind(Content);
     KnownBefore := FEntries[AIndex].Meta.Kind <> String.Empty;
+    KindBefore := FEntries[AIndex].Meta.Kind;
+    AnimationsBefore := FEntries[AIndex].Meta.Animations;
     FEntries[AIndex].Meta.Meshes := Content.Meshes;
     FEntries[AIndex].Meta.Vertices := Content.Vertices;
     FEntries[AIndex].Meta.Animations := Content.Animations;
@@ -5615,8 +5707,12 @@ begin
     DebugLog(Format('%s: %s: %s', [FEntries[AIndex].Meta.Name, ModelKindName(Kind),
       ModelContentText(Content)]));
     UpdateBadge(AIndex);
-    // One with a thumbnail made before kinds were kept: kept now
-    if FEntries[AIndex].HasThumbnail and not KnownBefore then
+    // One with a thumbnail made before kinds were kept, or counted otherwise
+    // before (still takes counted as animations, before 12 November 2026):
+    // kept now
+    if FEntries[AIndex].HasThumbnail and (not KnownBefore or
+      (KindBefore <> FEntries[AIndex].Meta.Kind) or
+      (AnimationsBefore <> FEntries[AIndex].Meta.Animations)) then
       try
         SaveAssetMeta(FCacheFolder, FEntries[AIndex].Meta);
       except
@@ -5971,6 +6067,7 @@ begin
       FEntries[AIndex].Meta.ThumbHeight := ABitmap.Height;
       FEntries[AIndex].Meta.View := THUMBNAIL_VIEW;
       FEntries[AIndex].Meta.Created := DateToISO8601(Now, False);
+      FEntries[AIndex].Meta.Textures := TEXTURE_RULES_VERSION;
       SaveAssetMeta(FCacheFolder, FEntries[AIndex].Meta);
       FEntries[AIndex].HasThumbnail := True;
       Inc(FMadeCount);

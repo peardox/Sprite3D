@@ -7,16 +7,16 @@
             <Dependencies/>
         </Projects>
         <Projects Include="Spritely\packages\dclSpritely.dproj">
-            <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
+            <Dependencies/>
         </Projects>
         <Projects Include="Sprite3D\Sprite3d.dproj">
-            <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
+            <Dependencies/>
         </Projects>
         <Projects Include="Sprite3DBuilder\Sprite3DBuilder.dproj">
-            <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
+            <Dependencies/>
         </Projects>
         <Projects Include="Spritely\ProjectionTest\ProjectionTest.dproj">
-            <Dependencies>Spritely\packages\Spritely.dproj</Dependencies>
+            <Dependencies/>
         </Projects>
     </ItemGroup>
     <ProjectExtensions>

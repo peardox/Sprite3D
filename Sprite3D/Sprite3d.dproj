@@ -362,7 +362,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="..\Shared\Sprite3DOffscreen.pas"/>
         <DCCReference Include="..\Shared\Sprite3DStorage.pas"/>
         <DCCReference Include="lib\Sprite3DIconWriter.pas"/>
-        <DCCReference Include="lib\Sprite3DOpenFiles.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DOpenFiles.pas"/>
         <DCCReference Include="..\Shared\Sprite3DBackground.pas"/>
         <DCCReference Include="ui\Sprite3DBackgroundForm.pas">
             <Form>BackgroundSettingsForm</Form>
@@ -376,7 +376,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="..\Shared\JsonText.pas"/>
         <DCCReference Include="..\Shared\GpuPreference.pas"/>
         <DCCReference Include="..\Shared\DisplayData.pas"/>
-        <DCCReference Include="lib\Sprite3DFileAssoc.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DFileAssoc.pas"/>
         <DCCReference Include="..\Shared\Sprite3DStyles.pas"/>
         <DCCReference Include="..\Shared\Sprite3DTitleBar.pas"/>
         <DCCReference Include="ui\Sprite3DSettingsForm.pas">
@@ -432,6 +432,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DGltfExport.pas"/>
         <DCCReference Include="lib\Sprite3DGltfDocument.pas"/>
         <DCCReference Include="..\Shared\Sprite3DModelTextures.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DModelAnimations.pas"/>
         <DCCReference Include="ui\Sprite3DGltfExportForm.pas">
             <Form>GltfExportForm</Form>
             <FormType>fmx</FormType>
