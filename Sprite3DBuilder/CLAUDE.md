@@ -13,7 +13,7 @@ own `CLAUDE.md`, at its root, holds the rules for the whole repository,
 Sprite3D's and the shared units' included; where this file and that one
 differ on a rule for the repository as a whole, that one wins.
 
-Last updated: 13 November 2026, 00:30.
+Last updated: 13 November 2026, 14:20.
 
 ## Starting a new conversation
 
@@ -449,7 +449,7 @@ gone up.
 The session of 12-13 November 2026 built level editing on top of the
 Library. Its dated entries follow, newest first; this is their summary.
 
-**Zips.** The last is `2026-11-13-0030-handover.zip`. Their names ran
+**Zips.** The last is `2026-11-13-1425-variants-hints.zip` (Sprite3D's material variants, phase 1; see the root `CLAUDE.md`). Their names ran
 ahead of the clock during the session (this one was made at about 00:10):
 carry on from the last name rather than the clock, so they stay in order.
 The owner applies them in order; each says which it follows.
@@ -509,6 +509,307 @@ tree it sits in), and leave the owner's lines as they are.
 version, units, objects, every texture name, its takes and whether their
 curves move, and that Sprite3DModelTextures' rewriting reproduces it byte
 for byte. Use it on any FBX the owner sends before guessing.
+
+### Material variants in Builder, phase 2 (13 November 2026, 14:20)
+
+- **`2026-11-13-1420-variants-builder.zip`**, not compiled or tested yet;
+  follows `2026-11-13-1345-variant-menu.zip` (phase 1 worked in Sprite3D,
+  owner 13:32). The owner (13:42) found Builder not knowing variants, as
+  phase 2 had not been done; asked for it now (13:43).
+- **Shared `Sprite3DModelVariants`**: `ModelVariantNames` now reads only a
+  GLB's header and JSON chunk (`GltfJsonBytes`, internal), not the whole
+  file (a 77 MB GLB with eight 2k textures was made in testing).
+- **`Sprite3DAssetCache`, database version 8**: `meta.variants` TEXT,
+  NULL until read; `TSprite3DAssetMeta.Variants`, `.VariantsRead`;
+  `WriteMeta` writes NULL while not read; `LoadAssetMeta` reads it.
+- **`Sprite3DLevelPlacement`**: `TSprite3DPieceSpec.VariantName` (empty:
+  the base). By name, not index, so a record left zeroed (`SetLength`, a
+  level from before) is the base.
+- **Library** (`Sprite3DBuilderAssetsForm`): `TAssetEntry.Variant`
+  (BASE_VARIANT; session only, not saved) and `.VariantText` (a label on
+  the badge strip's left: "N var" or the variant chosen; `UpdateBadge`
+  shows the strip for either, and sets the tile's hint with the names).
+  `HashesDone` reads each entry's names once (`ModelVariantNames`) and
+  saves the metadata if it has a thumbnail (one being made saves it with
+  the thumbnail). `TileMouseDown` right button: `SelectEntry`, then
+  `ShowVariantMenu` (a new `TPopupMenu` each time, **Parent := Self**,
+  as Sprite3D's needed); `VariantItemClick` sets it, `UpdateBadge`,
+  `ShowPreview` (reloads when the variant differs, `FPreviewVariant`) and
+  `NotifyModelChosen`. `LoadEntryModel(AIndex, AVariant)`: thumbnails
+  `BASE_VARIANT`, the preview the entry's; `PrepareModelVariant` after
+  `PrepareModelTextures`. `LevelSpec` sets `VariantName`.
+- **Level** (`Sprite3DBuilderMain`): `SourceKey` (key, `|variant` in
+  lower case) keys `FSources`, so each variant is its own template;
+  `PieceSourceFor` loads the variant's copy (by name through
+  `VariantNamesOf`, cached per key in `FVariantNames`; a name the model no
+  longer has is the base, logged). Level files: a model entry per key and
+  variant, `variant` written when not the base, read back (absent: the
+  base); format version unchanged (older Builders show the base). New
+  tool **`etVariant`** (palette, beside Bend, `VARIANT_ICON`):
+  `RefreshVariantMarks` puts a `TSprite3DPlacementBox` (dark green) round
+  each piece with variants, up to `MAX_VARIANT_MARKS` (500), from
+  `UpdatePalette`, `MarkLevelChanged` (before its early exit) and the end
+  of `LoadLevelFile`; cleared by `FreeLevelPieces`. `ShowPick` points only
+  at pieces with variants for it, bright green. A click:
+  `ShowPieceVariantMenu` (header item, base, variants, ticked; Shift for
+  every piece of the model); `SetPiecesVariant`: the variant's template,
+  then for each piece not falling, its instance freed and one added to the
+  new template, `Model`/`Spec.VariantName` set, `MovePiece` at its
+  `Landed.Y`; `MarkLevelChanged`. **Not in the history** (Undo does not
+  undo it).
+- README: *Material variants*, the Variants tool, level files.
+- Compiler hints (owner, 14:14), `2026-11-13-1425-variants-hints.zip`:
+  `Sprite3DModelVariants` uses `System.Generics.Collections` (H2443, so
+  `TJSONArray.GetValue` inlines); `PieceSourceFor`'s `Kind := mkUnknown`
+  removed (H2077: set on load, unused on failure); the unused private
+  `PieceIndexOf` removed (H2219; unused before this work too).
+- **To test** (Windows): rescan the collection with `spider_variants.glb`:
+  its tile shows "1 var"; right-click: Base, sp02; choose sp02: the
+  preview shows it and the tile says sp02; place one: it is sp02; set the
+  tile back to Base, place another. Variants tool: both outlined; click one,
+  choose Base/sp02: it changes in place; Shift-click: every spider. Save
+  the level, load it: each as it was. A level saved before loads as before.
+
+### Material variants: phase 2 is Builder's (13 November 2026, 13:20)
+
+- The owner (12:48): models with material variants (glTF's
+  `KHR_materials_variants`, added by Sprite3D's glTF, Add Variants); the
+  Library's tile gets an extra label for a model with variants, and
+  right-clicking it chooses the variant to use; placed pieces can be given
+  another variant through a new tool icon that highlights every piece with
+  variants, a click in that mode popping up the variant menu.
+- **Phase 1 is Sprite3D's** (root `CLAUDE.md`, *State (13 November 2026,
+  13:20)*), with a **new shared unit, `Shared/Sprite3DModelVariants.pas`**:
+  `ModelVariantNames` and `PrepareModelVariant(LoadFile, CacheFolder, Key,
+  Variant)`, the copy to load after `PrepareModelTextures`. Not in
+  Builder's `.dpr` yet; nothing here uses it yet.
+- 13:35 (`2026-11-13-1335-variants-formats.zip`): **shared
+  `Sprite3DModelTextures` gains `ReadableImageFile` and `ImageForLoader`**
+  (public wrappers of `IsImageFile` and `MakePng`), for Sprite3D's Add
+  Variants; nothing Builder calls changed.
+- Phase 2, to do: the Library reads `ModelVariantNames` (into the
+  metadata, as the counts are), a tile label, a right-click menu
+  choosing the variant pieces are placed as; the level file records each
+  piece's variant; a piece's template is per model **and variant** (the
+  instanced templates share one material); the variant tool. The level
+  model and its history must carry the variant.
+
+### The cache tidied after every scan too (13 November 2026, 10:40)
+
+- The owner (10:28): rescans, used a lot to fix thumbnails, left the old
+  ones (a model whose files changed gets a new key; its old thumbnail and
+  metadata stayed). Asked (10:31) to tidy as each rescan finishes.
+  **`2026-11-13-1040-tidy-after-scan.zip`**, follows
+  `2026-11-13-1035-tidy-cache.zip`: `HashesDone`, when its results are from
+  a scan (`FromScan`, read before `FScanning` is cleared), calls
+  `StartPurge` after `SavePalette` has saved the models found. The
+  thumbnails the collection then makes are written after the sweep starts
+  and are its models', so they stay. A bulk rescan sweeps once per
+  collection (a walk of the cache folder each; overlapping calls chain
+  through `FPurgeAgain`). README: the tidy paragraph.
+  - **To test**: change a texture of a `.gltf` in a collection (so its key
+    changes), Rescan: the Debug tab's "N thumbnails in the cache: N in use,
+    1 deleted" and "cache tidied: ... the metadata of 1 models"; the new
+    thumbnail made and kept. A Rescan with nothing changed: 0 deleted.
+
+### The cache tidied, the database compacted (13 November 2026, 10:35)
+
+- The owner (10:24): after deleting every artist, 2,500 thumbnails and a
+  7.5 MB `library.db` were left. Two causes: SQLite never shrinks its
+  file (deleted records' pages are kept for reuse; VACUUM rewrites it), and
+  only the deleted collections' thumbnails went, never one orphaned
+  otherwise (a model whose files changed, so a new key; one a rescan no
+  longer finds; an earlier library's).
+  **`2026-11-13-1035-tidy-cache.zip`**, follows
+  `2026-11-13-1015-why-rescan-log.zip` (which the owner may skip; this zip
+  carries the whole form, its lines included).
+  - `Sprite3DAssetCache`: `DeletedAssetKeys` and `DELETED_KEYS_SQL` replaced
+    by `UsedAssetKeys` (`USED_KEYS_SQL`: keys in the models or groups of
+    every unmarked collection there is). `PurgeDeletedAssets` deletes `meta`
+    NOT IN those, the marked collections, then every row of the five
+    collection tables (verdicts included) whose collection is not there,
+    then the marked artists. New `AssetThumbnailFiles` (PNGs named for a
+    key in their key folder or at the top, as `ClearCacheFiles` takes them;
+    file work only, any thread) and `CompactAssetDatabase` (`PRAGMA
+    freelist_count`; if any, `VACUUM`, then `PRAGMA
+    wal_checkpoint(TRUNCATE)`; sizes of the file and `-wal` before and
+    after).
+  - Form: `StartPurge` is now the sweep: used keys read on the main thread,
+    then a `TTask` deletes every key PNG not used **and written before it
+    started** (a thumbnail being made meanwhile stays; key folders kept).
+    `PurgeFilesDone` always purges the records (a file that failed is
+    tried at the next sweep), then compacts. `LoadLibrary` runs the sweep
+    on every open of the Library (and says so if a delete was unfinished).
+    Debug tab: "tidying the cache: the collections have N models", "N
+    thumbnails in the cache: N in use, N deleted", "cache tidied: ...",
+    "database compacted from X to Y".
+  - Checked in SQLite (Python) on the schema as `CreateSchema` makes it:
+    used keys kept (either case, models or groups), the rest's metadata
+    deleted, stray rows of a missing collection deleted; a 10 MB WAL
+    database emptied compacts to 8 KB.
+  - A collection listed but not yet scanned (an import still queued) has no
+    models saved, so a sweep then takes its old thumbnails, to be made
+    again: accepted.
+  - **To test**: open the Library with no artists: the Debug tab's counts,
+    every thumbnail deleted, the database compacted to a few KB. Then add a
+    collection; close and open the Library: "N in use, 0 deleted" and its
+    thumbnails from the cache.
+
+### Collections rescanned on every switch? (13 November 2026, 10:15)
+
+- The owner (10:06): the Library appears to rescan every time the
+  collection is switched. Not found by reading: `OpenCollection` reads the
+  folders only for a rescan or remake asked for, a collection never
+  scanned to the end, or one with no models saved; `HashesDone` remakes a
+  thumbnail with no metadata, made before a remake, made by older texture
+  rules (for `.gltf`/`.fbx`), not `THUMBNAIL_SIZE` square, or with no
+  PNG. The metadata's `textures` is saved with each thumbnail and read
+  back. **`2026-11-13-1015-why-rescan-log.zip`** (follows
+  `2026-11-13-1000-suspect-order.zip`) logs which: "reading its folders:
+  <why>" or "N models as last scanned; folders not read", and, when any are
+  to make, "to make because: N never made, N made before the remake, N by
+  older texture rules, N not 128 x 128 (such as W x H), N with no image
+  file". Asked the owner for those lines from one switch. A suspect, if it
+  is the size: a grab of another size than 128 square (a scaled display)
+  saved as such would be made again on every open.
+
+### Scan for Suspect Models (13 November 2026, 09:50)
+
+- **`2026-11-13-0950-suspect-models.zip`**, not yet tested; follows
+  `2026-11-13-0930-delete-with-thumbnails.zip` (also not yet reported on).
+  The owner (09:37-09:40): a collection menu item that finds the median
+  model size and the outliers, a factor X (default 5) smaller or larger
+  than the median ("5 = x smaller or larger"); the median shown in the
+  Preview; a slider for X; player controls as Sprite3D's to step through
+  them; Tick and Cross for good and bad, not on the median, **recorded in
+  the database, Tick (good) the default**. Auto-scaling a collection was
+  floated ("We MAY offer"): not built; see below.
+  - New `ui/Sprite3DBuilderSuspectForm.pas`, made in code as the Rotation
+    Snap dialog (in the `.dpr` and `.dproj`): `TSuspectModelsForm.Execute`
+    takes `TSuspectModel` records (the caller's index, name, size, bad),
+    `OnShowModel` and `OnVerdict`, and gives back a summary for the log.
+    Size: the largest of the box's three sides (`FMeasures`), from the
+    metadata, nothing loaded. Median: the smaller middle model of the sort
+    (a real model). Outliers: under median/X or over median*X (`Distance`, a factor
+    of 1 or more either way, for the readout; size 0 is infinite).
+    A median of no size gives no outliers. Slider 1.5 to 20, step 0.5.
+    **Order** (owner, 09:51, `2026-11-13-1000-suspect-order.zip`): by size,
+    smallest first, largest last (was most extreme first); ties in entry
+    order. The owner noted that size 0 (a flat or empty box) is handled:
+    it is an outlier, the smallest, labelled "no size".
+    Player: Sprite3D's icon paths (copied, as Builder cannot use Sprite3D's
+    `Sprite3DHelpers`) and its icon-button styling; Play steps every 1.5 s,
+    stopping at the last; any button stops it. Tick and Cross
+    (`StaysPressed`, Tick down for good) call `OnVerdict`, then step on to
+    the next outlier. Placed over the right of the Library, its top 72 down,
+    clear of the preview.
+  - `Sprite3DAssetCache`, **database version 7**: table `model_verdicts`
+    (`collection_id`, `model_key`, `verdict` 'good' or 'bad', `checked`
+    ISO 8601; key the pair); `TSprite3DModelVerdict`, `LoadModelVerdicts`,
+    `SaveModelVerdict`. Deleted with the collection (`DeleteAssetCollection`
+    and `PurgeDeletedAssets`), not by `SaveAssetCollection`. A model whose
+    files change gets a new key and so no verdict.
+  - Form: `ScanSuspectItem` (`.fmx`, after Regroup), `ScanSuspectItemClick`
+    (entries with a thumbnail, verdicts from the database),
+    `SuspectShow` (`ShowGroup` if the model is in another group,
+    `SelectEntry`, the tile scrolled into sight), `SuspectVerdict` (saves,
+    logs "marked good/bad"). Selecting also hands the model to the level's
+    Place Model tool, as any selection does. While thumbnails are being
+    made the preview shows nothing (`ShowPreview` waits for `Making`).
+  - Verdicts are only recorded and shown in the dialog so far; nothing else
+    reads them (a mark on the tile, or leaving bad models out of placing,
+    would be next, if wanted).
+  - **Auto-scale, not built**: a collection-wide scale factor (kept with the
+    collection, applied as models are loaded and placed, and to their
+    thumbnails and sizes) is the natural next step; the dialog's median is
+    the figure to scale from. Offered to the owner.
+  - **To test** (Windows): on a collection with thumbnails, Scan for Suspect
+    Models: the median's line and its preview; the slider changes the
+    count and the factor line; First/Next/Previous/Last/Play step through
+    the outliers, each in the preview with its group opened; Cross on one,
+    close, open again: it is still bad (and the Debug tab's "marked bad");
+    Tick back: good. A collection whose thumbnails are not all made: the
+    note gives how many are left out.
+
+### Deleting collections and artists with their thumbnails (13 November 2026, 09:30)
+
+- **`2026-11-13-0930-delete-with-thumbnails.zip`**, not yet tested; follows
+  `2026-11-13-0850-collection-menu-hang.zip`, which worked (owner, 09:06).
+  The owner: Delete Collection should delete its thumbnails, mark the
+  records for deletion, then on completion delete them; model files left
+  alone. The same for Delete Artist, with their collections. Afterwards the
+  nearest valid artist or collection is shown.
+  - `Sprite3DAssetCache`, **database version 6**: `deleting` (INTEGER, 0)
+    on `collections` and `artists`. `MarkAssetCollectionDeleted`,
+    `MarkAssetArtistDeleted` (the artist and every collection under them,
+    one transaction), `AssetDeletionsPending`, `DeletedAssetKeys`
+    (replaced at 10:35 by `UsedAssetKeys`; see *The cache tidied*), `PurgeDeletedAssets`
+    (one transaction: `meta` of those keys, then the four collection tables,
+    the marked collections and artists). `LoadAssetLibrary` and
+    `LoadAssetCollection` leave marked rows out; `SaveAssetLibrary`'s
+    rewrite of `artists` spares marked ones. `DeleteAssetCollection` is
+    kept, unused by the form now. The SQL was checked in SQLite (Python)
+    on the schema as `CreateSchema` makes it: shared keys (another
+    collection's model or group, either case) kept.
+  - Form: `DeleteCollectionClosed` and `DeleteArtistClosed` mark first (and
+    stop, logging, if that fails), take the entries out of `FLibrary`, show
+    the nearest (collection: the artist's next in list order, else the one
+    before, else none with the artist kept; artist: the next, else the one
+    before, with `ArtistCollection`), then `StartPurge`. `StartPurge`
+    deletes the PNGs of `DeletedAssetKeys` in a `TTask` (key folders kept,
+    as a thumbnail being made may be going into one), `PurgeFilesDone`
+    purges the records only if none failed; a delete during a purge sets
+    `FPurgeAgain`, and the purge starts over rather than taking records whose
+    thumbnails are not done. `LoadLibrary` finishes an unfinished delete
+    (`AssetDeletionsPending`). The dialogs' wording says thumbnails go.
+  - README: *Deleting*, in the Library's section.
+  - **The Library's title** (owner, 09:11): `Library (N models) - Artist /
+    Collection`, N the sum of the collections' counts (`FLibrary.Collections[].Models`,
+    as `ArtistText` sums an artist's; a model in two counts twice), set in
+    `FillCollections`, which runs whenever a count changes. To test: the
+    title's count goes up as a scan finds models, and down after a delete.
+  - **To test** (Windows):
+    1. A collection whose models are in no other: Delete; the Debug tab says
+       "deleting the thumbnails of N models", then "delete finished: N
+       thumbnails, and the records of 1 collections and N models"; the
+       next collection of the artist opens (the one before, if it was the
+       last).
+    2. Two collections over the same folder: delete one; the other still
+       shows every thumbnail, none remade, and the log's count is 0 models.
+    3. An artist with several collections: Delete; the next artist (or the
+       one before) is shown with a collection open; the log's counts.
+    4. Delete an artist's only collection: the artist stays shown, "No
+       collections for this artist yet".
+    5. Stop the program from the IDE straight after a big delete; start
+       it and open the Library: "a delete was left unfinished last time;
+       finishing it", then "delete finished".
+
+### Collection menu hang (13 November 2026, 08:50)
+
+- **Worked** (owner, 09:06).
+- **Library, the collection's `...` button hung the program**, which had to
+  be stopped from the IDE (owner, 08:44). `2026-11-13-0850-collection-menu-hang.zip`,
+  not yet tested; follows `2026-11-13-0030-handover.zip`. The artist's
+  `...` menu, built the same way but with no sub-menu, was not reported.
+  - `CollectionMenuButtonClick` emptied the Move to Artist sub-menu with
+    `MoveCollectionItem.DeleteChildren`, the only `DeleteChildren` on a
+    styled control in either program. It frees every child, and once the
+    menu has been shown a menu item's children include the style objects
+    FMX gave it, which it still points at: the likely cause, not
+    confirmed. Now only its menu items are freed (`Items[I].Free`, last
+    first).
+  - Two log lines, to the Debug tab and the import log
+    (`library-import.log` in the settings folder, readable after a forced
+    stop): "collection menu: removing N Move to Artist item(s)" and
+    "collection menu: showing, N artist(s) to move to", then "Popup
+    returned".
+  - If it still hangs: the last line in the import log says whether it was
+    before or inside `Popup`; then the next step is Move to Artist as a
+    dialog rather than a run-time sub-menu.
+  - **To test** (Windows): open the collection's `...` menu several times,
+    with one artist and with several; Move to Artist lists the other
+    artists and moves the collection; Rename, Remake Thumbnails, Regroup
+    and Delete still work.
 
 ### Handover (13 November 2026, 00:15)
 

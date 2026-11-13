@@ -22,6 +22,18 @@
 //** is written in one transaction. ClearAssetCache deletes the thumbnails and the metadata and
 //** leaves the library, so the user's arrangement outlives the thumbnails.
 //**
+//** A collection or artist is deleted in three steps, so one cut short is finished later:
+//** marked (MarkAssetCollectionDeleted, MarkAssetArtistDeleted), when the library no longer
+//** lists it; the thumbnails of models no collection left has deleted (UsedAssetKeys,
+//** AssetThumbnailFiles); then its records, and those models' metadata, deleted
+//** (PurgeDeletedAssets). The same tidies the cache at any time: every thumbnail and metadata
+//** no collection uses goes, such as those of a model since changed. AssetDeletionsPending
+//** says whether a delete is unfinished. CompactAssetDatabase makes the database's file
+//** smaller afterwards. The model files are never touched.
+//**
+//** The user's verdicts on a collection's models, good or bad, from Scan for Suspect Models,
+//** are kept too (LoadModelVerdicts, SaveModelVerdict), and go with the collection.
+//**
 //** The JSON files of before the database are moved into it as they are come upon:
 //** @code(library.json) and @code(collection-<id>.json) the first time the library is read,
 //** then renamed @code(.moved); a model's @code(<key>.json) as its metadata is first read,
@@ -59,7 +71,13 @@ unit Sprite3DAssetCache;
   SQLite database, library.db in the settings folder, through FireDAC: each
   model's metadata, the library, and each collection with its sources,
   models and palette. ClearAssetCache deletes thumbnails and metadata and
-  leaves the library. The JSON files of before the database are moved into
+  leaves the library. A collection or artist is deleted in three steps, so
+  one cut short is finished later: marked, the thumbnails of the models no
+  collection left has deleted, then its records and those models' metadata
+  deleted. The same tidies the cache of every thumbnail and metadata no
+  collection uses, and CompactAssetDatabase makes the file smaller
+  afterwards. The model files are never touched. The user's verdicts on a
+  collection's models, good or bad, are kept too, and go with it. The JSON files of before the database are moved into
   it as they are come upon. palette.json, of before the library, is only
   read, for the application to make a collection of.
 
@@ -105,7 +123,7 @@ const
   //** @abstract(The database, in the settings folder; see AssetDatabaseFile.)
   ASSET_DATABASE_FILE_NAME = 'library.db';
   //** @abstract(The database's schema version, kept in its @code(user_version).)
-  ASSET_DATABASE_VERSION = 5;
+  ASSET_DATABASE_VERSION = 8;
 
 type
   //** @abstract(What the cache keeps about one model.)
@@ -151,6 +169,12 @@ type
     //** for one made before it was kept. A model whose textures are readied
     //** (PreparesTextures) and whose thumbnail is older is made again.)
     Textures: Integer;
+    //** @abstract(The names of its material variants (Sprite3DModelVariants), in its order;
+    //** empty for none, or if not read yet.)
+    Variants: TArray<String>;
+    //** @abstract(True once Variants has been read from its file; False for metadata from
+    //** before they were kept.)
+    VariantsRead: Boolean;
     //** @abstract(The bounding box's size: BoxMax less BoxMin.)
     //**
     //** @returns(Width, height and depth, in the model's own units.)
@@ -207,6 +231,17 @@ type
     Scanned: Boolean;
     //** @abstract(The id of the artist it is under; see TSprite3DArtist.)
     ArtistId: String;
+  end;
+
+  //** @abstract(The user's verdict on one model of a collection, from Scan for Suspect
+  //** Models: whether it is bad, and when it was given. A model with none is good.)
+  TSprite3DModelVerdict = record
+    //** @abstract(The model's key, in lower case.)
+    Key: String;
+    //** @abstract(True if the user marked it bad; False if they marked it good.)
+    Bad: Boolean;
+    //** @abstract(When the verdict was given, as ISO 8601 text.)
+    Checked: String;
   end;
 
   //** @abstract(A collection as the library lists it.)
@@ -406,7 +441,8 @@ function LoadAssetLibrary(const ACacheFolder: String;
 //** artist and place in the list.)
 //**
 //** The artists are written as listed, so one left out is deleted; delete its collections
-//** with DeleteAssetCollection first.
+//** with DeleteAssetCollection first. One marked as being deleted (MarkAssetArtistDeleted)
+//** is left for PurgeDeletedAssets.
 //**
 //** A collection the list has that the database has not is added, with nothing in it.
 //**
@@ -440,7 +476,11 @@ function LoadAssetCollection(const ACacheFolder, AId: String;
 procedure SaveAssetCollection(const ACacheFolder: String;
   const ACollection: TSprite3DAssetCollection);
 
-//** @abstract(Deletes collection AId from the database; its thumbnails stay.)
+//** @abstract(Deletes collection AId from the database at once; its thumbnails and its
+//** models' metadata stay.)
+//**
+//** To delete a collection with its thumbnails, so that a delete cut short is finished
+//** later, use MarkAssetCollectionDeleted.
 //**
 //** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
 //**
@@ -449,11 +489,139 @@ procedure SaveAssetCollection(const ACacheFolder: String;
 //** @returns(True if it is gone, or was never there.)
 function DeleteAssetCollection(const ACacheFolder, AId: String): Boolean;
 
+//** @abstract(Marks collection AId as being deleted, the first of the three steps of
+//** deleting it with its thumbnails.)
+//**
+//** Deleting a collection is: mark it (this); delete every thumbnail
+//** (AssetThumbnailFiles) not of a model in UsedAssetKeys; then PurgeDeletedAssets deletes
+//** its records. A marked
+//** collection is left out by LoadAssetLibrary and LoadAssetCollection at once, so it is
+//** gone as far as the application is concerned; if the program stops before the purge,
+//** AssetDeletionsPending says so the next time, and the last two steps are done again.
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(AId The collection's id.)
+//**
+//** @returns(True if it is marked, or was never there; False otherwise, never an exception.)
+function MarkAssetCollectionDeleted(const ACacheFolder, AId: String): Boolean;
+
+//** @abstract(Marks artist AId, and every collection under them, as being deleted, in one
+//** transaction; see MarkAssetCollectionDeleted for the steps that follow.)
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(AId The artist's id.)
+//**
+//** @returns(True if they are marked, or were never there; False otherwise, never an
+//** exception.)
+function MarkAssetArtistDeleted(const ACacheFolder, AId: String): Boolean;
+
+//** @abstract(Whether any collection or artist is marked as being deleted, its purge not yet
+//** done.)
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @returns(True if there is one; False if not, or the database cannot be read.)
+function AssetDeletionsPending(const ACacheFolder: String): Boolean;
+
+//** @abstract(The keys of every model a collection has, in its models or its groups, but for
+//** the collections marked as being deleted: the thumbnails and metadata to keep.)
+//**
+//** Every other thumbnail and metadata is of no use: a deleted collection's, or a model's
+//** whose files have changed since (a new key), or that a rescan no longer finds.
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(AKeys On return, the keys, in lower case; empty if there are none.)
+//**
+//** @returns(True if the database was read; False otherwise, never an exception.)
+function UsedAssetKeys(const ACacheFolder: String; out AKeys: TArray<String>): Boolean;
+
+//** @abstract(Every thumbnail file in the cache folder: a PNG named for a key, in its key
+//** folder (AssetKeyFolder) or at the top, as before them.)
+//**
+//** Only reads the folder, so it may run on a worker thread.
+//**
+//** @param(ACacheFolder The cache folder.)
+//**
+//** @returns(The files' full paths; empty if there are none or the folder cannot be read.)
+function AssetThumbnailFiles(const ACacheFolder: String): TArray<String>;
+
+//** @abstract(Compacts the database, if it has free space in it: SQLite keeps the space of
+//** deleted records for reuse and never makes its file smaller by itself.)
+//**
+//** VACUUM rewrites the file without its free pages; the write-ahead log is then written back
+//** and emptied, so it is small too.
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(ABefore On return, the size of the database and its log before, in bytes.)
+//**
+//** @param(AAfter On return, their size after, in bytes; ABefore if nothing was done.)
+//**
+//** @param(AError On return, why it could not be compacted; empty if it was, or needed not
+//** be.)
+//**
+//** @returns(True if it was compacted; False if it had no free space, or on an error, never
+//** an exception.)
+function CompactAssetDatabase(const ACacheFolder: String; out ABefore, AAfter: Int64;
+  out AError: String): Boolean;
+
+//** @abstract(The last step of deleting, and of tidying the cache: deletes, in one
+//** transaction, the records of every collection and artist marked as being deleted, any
+//** record of a collection that is not there, and the metadata of every model not in
+//** UsedAssetKeys.)
+//**
+//** Call it once the thumbnails no collection uses are deleted. The keys used are worked out
+//** again inside the transaction, so a model a collection has gained meanwhile keeps its
+//** metadata.
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(ACollections On return, how many collections' records were deleted.)
+//**
+//** @param(AModels On return, how many models' metadata were deleted.)
+//**
+//** @returns(True if it was done; False if not, when the marks stay, never an exception.)
+function PurgeDeletedAssets(const ACacheFolder: String; out ACollections,
+  AModels: Integer): Boolean;
+
+//** @abstract(Reads the verdicts given on collection AId's models.)
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(AId The collection's id.)
+//**
+//** @param(AVerdicts On return, a verdict for each model that has one; a model without one
+//** is good.)
+//**
+//** @returns(True if the database was read; False otherwise, never an exception.)
+function LoadModelVerdicts(const ACacheFolder, AId: String;
+  out AVerdicts: TArray<TSprite3DModelVerdict>): Boolean;
+
+//** @abstract(Records the user's verdict on model AKey of collection AId, in place of any
+//** before, with the time now.)
+//**
+//** Kept until the collection is deleted. A model whose files change gets a new key, and
+//** so no verdict.
+//**
+//** @param(ACacheFolder The cache folder; see AssetDatabaseFile.)
+//**
+//** @param(AId The collection's id.)
+//**
+//** @param(AKey The model's key.)
+//**
+//** @param(ABad True for bad (a Cross), False for good (a Tick).)
+//**
+//** @raises(Exception If the id or key is not one, or the database cannot be written.)
+procedure SaveModelVerdict(const ACacheFolder, AId, AKey: String; const ABad: Boolean);
+
 implementation
 
 uses
   System.IOUtils, System.Hash, System.JSON, System.NetEncoding, System.Variants, System.Math,
-  Data.DB,
+  System.DateUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.UI.Intf,
   FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys,
   FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs, FireDAC.Stan.Param,
@@ -1158,6 +1326,25 @@ begin
     // 5: the version of the texture rules each thumbnail was made with
     if Version < 5 then
       AConnection.ExecSQL('ALTER TABLE meta ADD COLUMN textures INTEGER NOT NULL DEFAULT 0');
+    // 6: collections and artists marked as being deleted, so a delete cut
+    // short (the program stopped while thumbnails were going) is finished
+    // later; see MarkAssetCollectionDeleted and PurgeDeletedAssets
+    if Version < 6 then
+    begin
+      AConnection.ExecSQL('ALTER TABLE collections ADD COLUMN deleting INTEGER NOT NULL ' +
+        'DEFAULT 0');
+      AConnection.ExecSQL('ALTER TABLE artists ADD COLUMN deleting INTEGER NOT NULL ' +
+        'DEFAULT 0');
+    end;
+    // 7: the user's verdict on a model of a collection, from Scan for Suspect
+    // Models; a model with none is good
+    AConnection.ExecSQL('CREATE TABLE IF NOT EXISTS model_verdicts (collection_id TEXT NOT ' +
+      'NULL, model_key TEXT NOT NULL, verdict TEXT NOT NULL, checked TEXT NOT NULL, ' +
+      'PRIMARY KEY (collection_id, model_key))');
+    // 8: a model's material variants' names, joined by line feeds; NULL
+    // until they have been read from its file
+    if Version < 8 then
+      AConnection.ExecSQL('ALTER TABLE meta ADD COLUMN variants TEXT');
     AConnection.ExecSQL('PRAGMA user_version = ' + IntToStr(ASSET_DATABASE_VERSION));
     AConnection.Commit;
   except
@@ -1238,18 +1425,25 @@ end;
 //**
 //** @param(AMeta The metadata.)
 procedure WriteMeta(const AConnection: TFDConnection; const AMeta: TSprite3DAssetMeta);
+var
+  Variants: Variant;
 begin
+  // NULL until read, so a model's are read once from its file
+  if AMeta.VariantsRead then
+    Variants := String.Join(#10, AMeta.Variants)
+  else
+    Variants := Null;
   AConnection.ExecSQL('INSERT OR REPLACE INTO meta (model_key, name, grp, file, files, min_x, ' +
     'min_y, min_z, max_x, max_y, max_z, thumb_width, thumb_height, thumb_view, created, ' +
-    'meshes, vertices, animations, skins, joints, kind, textures) ' +
+    'meshes, vertices, animations, skins, joints, kind, textures, variants) ' +
     'VALUES (:model_key, :name, :grp, :file, :files, :min_x, :min_y, :min_z, :max_x, :max_y, ' +
     ':max_z, :thumb_width, :thumb_height, :thumb_view, :created, :meshes, :vertices, ' +
-    ':animations, :skins, :joints, :kind, :textures)',
+    ':animations, :skins, :joints, :kind, :textures, :variants)',
     [LowerCase(AMeta.Hash), AMeta.Name, AMeta.Group, AMeta.FileName,
     String.Join(#10, AMeta.Files), AMeta.BoxMin.X, AMeta.BoxMin.Y, AMeta.BoxMin.Z,
     AMeta.BoxMax.X, AMeta.BoxMax.Y, AMeta.BoxMax.Z, AMeta.ThumbWidth, AMeta.ThumbHeight,
     AMeta.View, AMeta.Created, AMeta.Meshes, AMeta.Vertices, AMeta.Animations, AMeta.Skins,
-    AMeta.Joints, AMeta.Kind, AMeta.Textures]);
+    AMeta.Joints, AMeta.Kind, AMeta.Textures, Variants]);
 end;
 
 procedure SaveAssetMeta(const ACacheFolder: String; const AMeta: TSprite3DAssetMeta);
@@ -1295,6 +1489,9 @@ begin
         AMeta.Joints := Query.FieldByName('joints').AsInteger;
         AMeta.Kind := Query.FieldByName('kind').AsString;
         AMeta.Textures := Query.FieldByName('textures').AsInteger;
+        AMeta.VariantsRead := not Query.FieldByName('variants').IsNull;
+        if AMeta.VariantsRead and (Query.FieldByName('variants').AsString <> String.Empty) then
+          AMeta.Variants := Query.FieldByName('variants').AsString.Split([#10]);
         Exit(True);
       end;
     finally
@@ -1401,7 +1598,8 @@ begin
     finally
       Query.Free;
     end;
-    Query := OpenQuery(Connection, 'SELECT id, name FROM artists ORDER BY position', []);
+    Query := OpenQuery(Connection, 'SELECT id, name FROM artists WHERE deleting = 0 ' +
+      'ORDER BY position', []);
     try
       while not Query.Eof do
       begin
@@ -1416,7 +1614,7 @@ begin
     // Each with how many models it has, for the counts the Library shows
     Query := OpenQuery(Connection, 'SELECT c.id, c.name, c.artist_id, c.scanned, ' +
       '(SELECT COUNT(*) FROM models m WHERE m.collection_id = c.id) AS model_count ' +
-      'FROM collections c ORDER BY c.position', []);
+      'FROM collections c WHERE c.deleting = 0 ORDER BY c.position', []);
     try
       while not Query.Eof do
       begin
@@ -1450,8 +1648,10 @@ begin
       ':preferred_format, :last_artist)', [ALibrary.Last, ALibrary.LastFolder,
       ALibrary.PreferredFormat, ALibrary.LastArtist]);
     // The artists as listed: those gone are deleted, their collections with
-    // them by DeleteAssetCollection, which the application calls first
-    Connection.ExecSQL('DELETE FROM artists');
+    // them by DeleteAssetCollection, which the application calls first. One
+    // marked as being deleted is left for PurgeDeletedAssets, which deletes
+    // it once its collections' thumbnails are gone
+    Connection.ExecSQL('DELETE FROM artists WHERE deleting = 0');
     for var I := 0 to High(ALibrary.Artists) do
       Connection.ExecSQL('INSERT INTO artists (id, name, position) VALUES (:id, :name, ' +
         ':position)', [LowerCase(ALibrary.Artists[I].Id), ALibrary.Artists[I].Name, I]);
@@ -1484,8 +1684,9 @@ begin
     Exit;
   try
     Connection := Database(ACacheFolder);
-    Query := OpenQuery(Connection, 'SELECT * FROM collections WHERE id = :id',
-      [LowerCase(AId)]);
+    // One being deleted is gone as far as the caller is concerned
+    Query := OpenQuery(Connection, 'SELECT * FROM collections WHERE id = :id AND ' +
+      'deleting = 0', [LowerCase(AId)]);
     try
       if Query.Eof then
         Exit;
@@ -1621,7 +1822,7 @@ begin
     Connection.StartTransaction;
     try
       for var Table in TArray<String>.Create('sources', 'palette_groups', 'group_models',
-        'models') do
+        'models', 'model_verdicts') do
         Connection.ExecSQL('DELETE FROM ' + Table + ' WHERE collection_id = :id',
           [LowerCase(AId)]);
       Connection.ExecSQL('DELETE FROM collections WHERE id = :id', [LowerCase(AId)]);
@@ -1634,6 +1835,240 @@ begin
   except
     Result := False;
   end;
+end;
+
+function MarkAssetCollectionDeleted(const ACacheFolder, AId: String): Boolean;
+begin
+  Result := False;
+  if not IsCollectionId(AId) then
+    Exit;
+  try
+    Database(ACacheFolder).ExecSQL('UPDATE collections SET deleting = 1 WHERE id = :id',
+      [LowerCase(AId)]);
+    Result := True;
+  except
+    Result := False;
+  end;
+end;
+
+function MarkAssetArtistDeleted(const ACacheFolder, AId: String): Boolean;
+var
+  Connection: TFDConnection;
+begin
+  Result := False;
+  if not IsCollectionId(AId) then
+    Exit;
+  try
+    Connection := Database(ACacheFolder);
+    Connection.StartTransaction;
+    try
+      Connection.ExecSQL('UPDATE artists SET deleting = 1 WHERE id = :id', [LowerCase(AId)]);
+      Connection.ExecSQL('UPDATE collections SET deleting = 1 WHERE artist_id = :id',
+        [LowerCase(AId)]);
+      Connection.Commit;
+    except
+      Connection.Rollback;
+      raise;
+    end;
+    Result := True;
+  except
+    Result := False;
+  end;
+end;
+
+function AssetDeletionsPending(const ACacheFolder: String): Boolean;
+var
+  Connection: TFDConnection;
+begin
+  try
+    Connection := Database(ACacheFolder);
+    Result := (Connection.ExecSQLScalar('SELECT COUNT(*) FROM collections WHERE ' +
+      'deleting <> 0') > 0) or (Connection.ExecSQLScalar('SELECT COUNT(*) FROM artists ' +
+      'WHERE deleting <> 0') > 0);
+  except
+    Result := False;
+  end;
+end;
+
+const
+  //** @abstract(The SELECT of UsedAssetKeys: the keys, in lower case, in the models or groups
+  //** of every collection there is but those marked as being deleted.)
+  USED_KEYS_SQL =
+    'SELECT LOWER(model_key) AS model_key FROM models WHERE collection_id IN ' +
+    '(SELECT id FROM collections WHERE deleting = 0) UNION ' +
+    'SELECT LOWER(model_key) FROM group_models WHERE collection_id IN ' +
+    '(SELECT id FROM collections WHERE deleting = 0)';
+
+function UsedAssetKeys(const ACacheFolder: String; out AKeys: TArray<String>): Boolean;
+var
+  Query: TFDQuery;
+begin
+  AKeys := nil;
+  try
+    Query := OpenQuery(Database(ACacheFolder), USED_KEYS_SQL, []);
+    try
+      while not Query.Eof do
+      begin
+        AKeys := AKeys + [Query.Fields[0].AsString];
+        Query.Next;
+      end;
+    finally
+      Query.Free;
+    end;
+    Result := True;
+  except
+    AKeys := nil;
+    Result := False;
+  end;
+end;
+
+function AssetThumbnailFiles(const ACacheFolder: String): TArray<String>;
+var
+  Folder, Name, Place: String;
+  Files: TArray<String>;
+begin
+  Result := nil;
+  Folder := OSFriendlyPath(ACacheFolder);
+  if (Folder = String.Empty) or not TDirectory.Exists(Folder) then
+    Exit;
+  try
+    Files := TDirectory.GetFiles(Folder, '*.png', TSearchOption.soAllDirectories);
+  except
+    Exit;
+  end;
+  for var FileName in Files do
+  begin
+    Name := TPath.GetFileNameWithoutExtension(FileName);
+    if not IsAssetKey(Name) then
+      Continue;
+    // Only in its own key folder, or at the top as before them, as
+    // ClearCacheFiles takes them: nothing else in the folder is touched
+    Place := ExcludeTrailingPathDelimiter(ExtractFilePath(FileName));
+    if SameText(Place, ExcludeTrailingPathDelimiter(Folder)) or
+      SameText(Place, AssetKeyFolder(Folder, Name)) then
+      Result := Result + [FileName];
+  end;
+end;
+
+function CompactAssetDatabase(const ACacheFolder: String; out ABefore, AAfter: Int64;
+  out AError: String): Boolean;
+var
+  Connection: TFDConnection;
+  FileName: String;
+
+  //** @abstract(The database's size with its write-ahead log, in bytes.)
+  function SizeNow: Int64;
+  begin
+    Result := 0;
+    for var Ext in TArray<String>.Create('', '-wal') do
+      if TFile.Exists(FileName + Ext) then
+        Inc(Result, TFile.GetSize(FileName + Ext));
+  end;
+
+begin
+  Result := False;
+  ABefore := 0;
+  AAfter := 0;
+  AError := String.Empty;
+  try
+    FileName := OSFriendlyPath(AssetDatabaseFile(ACacheFolder));
+    Connection := Database(ACacheFolder);
+    ABefore := SizeNow;
+    AAfter := ABefore;
+    if Connection.ExecSQLScalar('PRAGMA freelist_count') = 0 then
+      Exit;
+    // Not in a transaction: VACUUM cannot be
+    Connection.ExecSQL('VACUUM');
+    // The log, which VACUUM wrote the whole file to, written back and emptied
+    Connection.ExecSQLScalar('PRAGMA wal_checkpoint(TRUNCATE)');
+    AAfter := SizeNow;
+    Result := True;
+  except
+    on E: Exception do
+    begin
+      AError := E.Message;
+      Result := False;
+    end;
+  end;
+end;
+
+function PurgeDeletedAssets(const ACacheFolder: String; out ACollections,
+  AModels: Integer): Boolean;
+var
+  Connection: TFDConnection;
+begin
+  ACollections := 0;
+  AModels := 0;
+  try
+    Connection := Database(ACacheFolder);
+    Connection.StartTransaction;
+    try
+      // The metadata of every model no collection left has
+      AModels := Connection.ExecSQL('DELETE FROM meta WHERE LOWER(model_key) NOT IN (' +
+        USED_KEYS_SQL + ')');
+      ACollections := Connection.ExecSQL('DELETE FROM collections WHERE deleting <> 0');
+      // Their records, and any of a collection not there at all, left by
+      // something cut short before
+      for var Table in TArray<String>.Create('sources', 'palette_groups', 'group_models',
+        'models', 'model_verdicts') do
+        Connection.ExecSQL('DELETE FROM ' + Table + ' WHERE collection_id NOT IN ' +
+          '(SELECT id FROM collections)');
+      Connection.ExecSQL('DELETE FROM artists WHERE deleting <> 0');
+      Connection.Commit;
+    except
+      Connection.Rollback;
+      raise;
+    end;
+    Result := True;
+  except
+    ACollections := 0;
+    AModels := 0;
+    Result := False;
+  end;
+end;
+
+function LoadModelVerdicts(const ACacheFolder, AId: String;
+  out AVerdicts: TArray<TSprite3DModelVerdict>): Boolean;
+var
+  Query: TFDQuery;
+  Verdict: TSprite3DModelVerdict;
+begin
+  AVerdicts := nil;
+  if not IsCollectionId(AId) then
+    Exit(False);
+  try
+    Query := OpenQuery(Database(ACacheFolder), 'SELECT model_key, verdict, checked FROM ' +
+      'model_verdicts WHERE collection_id = :id', [LowerCase(AId)]);
+    try
+      while not Query.Eof do
+      begin
+        Verdict.Key := LowerCase(Query.FieldByName('model_key').AsString);
+        Verdict.Bad := SameText(Query.FieldByName('verdict').AsString, 'bad');
+        Verdict.Checked := Query.FieldByName('checked').AsString;
+        AVerdicts := AVerdicts + [Verdict];
+        Query.Next;
+      end;
+    finally
+      Query.Free;
+    end;
+    Result := True;
+  except
+    AVerdicts := nil;
+    Result := False;
+  end;
+end;
+
+procedure SaveModelVerdict(const ACacheFolder, AId, AKey: String; const ABad: Boolean);
+const
+  VERDICTS: array[Boolean] of String = ('good', 'bad');
+begin
+  if not IsCollectionId(AId) then
+    raise EArgumentException.Create('Not a collection id: ' + AId);
+  if not IsAssetKey(AKey) then
+    raise EArgumentException.Create('Not a model key: ' + AKey);
+  Database(ACacheFolder).ExecSQL('INSERT OR REPLACE INTO model_verdicts (collection_id, ' +
+    'model_key, verdict, checked) VALUES (:id, :model_key, :verdict, :checked)',
+    [LowerCase(AId), LowerCase(AKey), VERDICTS[ABad], DateToISO8601(Now, False)]);
 end;
 
 function ClearAssetLibrary(const ACacheFolder: String; out AError: String): Boolean;

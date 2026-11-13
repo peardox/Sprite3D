@@ -431,7 +431,9 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="lib\Sprite3DSpriteScan.pas"/>
         <DCCReference Include="lib\Sprite3DGltfExport.pas"/>
         <DCCReference Include="lib\Sprite3DGltfDocument.pas"/>
+        <DCCReference Include="lib\Sprite3DGltfVariants.pas"/>
         <DCCReference Include="..\Shared\Sprite3DModelTextures.pas"/>
+        <DCCReference Include="..\Shared\Sprite3DModelVariants.pas"/>
         <DCCReference Include="..\Shared\Sprite3DModelAnimations.pas"/>
         <DCCReference Include="ui\Sprite3DGltfExportForm.pas">
             <Form>GltfExportForm</Form>
@@ -449,6 +451,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
             <Form>GltfPartsForm</Form>
             <FormType>fmx</FormType>
         </DCCReference>
+        <DCCReference Include="ui\Sprite3DGltfVariantsForm.pas"/>
         <DCCReference Include="ui\Sprite3DSpriteScanForm.pas">
             <Form>SpriteScanForm</Form>
             <FormType>fmx</FormType>

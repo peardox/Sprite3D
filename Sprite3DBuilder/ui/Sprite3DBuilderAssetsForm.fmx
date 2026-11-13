@@ -352,6 +352,10 @@ object AssetsForm: TAssetsForm
       Text = 'Regroup Collection...'
       OnClick = RegroupItemClick
     end
+    object ScanSuspectItem: TMenuItem
+      Text = 'Scan for Suspect Models...'
+      OnClick = ScanSuspectItemClick
+    end
     object DeleteCollectionItem: TMenuItem
       Text = 'Delete Collection'
       OnClick = DeleteCollectionItemClick

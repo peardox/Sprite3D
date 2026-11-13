@@ -59,6 +59,9 @@ type
     BoxMin: TPoint3D;
     //** @abstract(The high corner of its bounding box; see BoxMin.)
     BoxMax: TPoint3D;
+    //** @abstract(The name of the material variant it is placed as (Sprite3DModelVariants);
+    //** empty for the model as made, its base.)
+    VariantName: String;
     //** @abstract(Its bounding box, from BoxMin and BoxMax.)
     //**
     //** @returns(The box, in its own coordinates.)

@@ -86,7 +86,8 @@
 //** |-- GroupMenu         TPopupMenu: AddGroupItem, RenameGroupItem, IconGroupItem,
 //** |                     DeleteGroupItem
 //** |-- CollectionMenu    TPopupMenu: RenameCollectionItem, MoveCollectionItem,
-//** |                     RemakeThumbnailsItem, RegroupItem, DeleteCollectionItem
+//** |                     RemakeThumbnailsItem, RegroupItem, ScanSuspectItem,
+//** |                     DeleteCollectionItem
 //** |-- ArtistMenu        TPopupMenu: RenameArtistItem, RescanArtistItem,
 //** |                     RemakeArtistItem, DeleteArtistItem
 //** `-- IconDialog        TOpenDialog, for Change Icon
@@ -150,7 +151,9 @@ unit Sprite3DBuilderAssetsForm;
     |       `-- FTilesLayout  made in code: the inner groups' tiles, then the models'
     |-- GroupMenu         TPopupMenu: AddGroupItem, RenameGroupItem, IconGroupItem,
     |                     DeleteGroupItem
-    |-- CollectionMenu    TPopupMenu: RenameCollectionItem, DeleteCollectionItem
+    |-- CollectionMenu    TPopupMenu: RenameCollectionItem, MoveCollectionItem,
+    |                     RemakeThumbnailsItem, RegroupItem, ScanSuspectItem,
+    |                     DeleteCollectionItem
     `-- IconDialog        TOpenDialog, for Change Icon
 }
 
@@ -215,6 +218,13 @@ type
     Badge: TRectangle;
     //** @abstract(The text on Badge.)
     BadgeText: TLabel;
+    //** @abstract(On Badge's left: the model's material variants, as how many it has, or
+    //** the one chosen; empty for a model without.)
+    VariantText: TLabel;
+    //** @abstract(The material variant pieces of it are placed as, and the preview shows: an
+    //** index into Meta.Variants, or BASE_VARIANT (-1) for the model as made. Chosen by
+    //** right-clicking its tile; for this session only.)
+    Variant: Integer;
     //** @abstract(True once the thumbnail is in the cache and on Tile.)
     HasThumbnail: Boolean;
     //** @abstract(True if Meta.Group came from the palette, so it is not merged with
@@ -305,6 +315,9 @@ type
     //** @abstract(Regroup Collection...: its groups thrown away, after asking, and every
     //** model grouped again from its name.)
     RegroupItem: TMenuItem;
+    //** @abstract(Scan for Suspect Models...: the median model size, and the models far
+    //** smaller or larger, to look at and mark good or bad.)
+    ScanSuspectItem: TMenuItem;
     //** @abstract(Move to Artist: a sub-menu of the other artists, made as CollectionMenu
     //** opens; choosing one puts the collection under them.)
     MoveCollectionItem: TMenuItem;
@@ -485,6 +498,11 @@ type
     //**
     //** @param(Sender RegroupItem.)
     procedure RegroupItemClick(Sender: TObject);
+    //** @abstract(Opens the Scan for Suspect Models dialog on the collection open: every
+    //** model with a size (a thumbnail), with its verdict from the database.)
+    //**
+    //** @param(Sender ScanSuspectItem.)
+    procedure ScanSuspectItemClick(Sender: TObject);
     //** @abstract(Regroups the collection, if the user said Yes; the regroup dialog's answer.)
     //**
     //** @param(Sender The dialog's context; not used.)
@@ -581,6 +599,12 @@ type
     FModelBox: TBoundingBox;
     //** @abstract(The entry FModel is the preview of; -1 if it is none, or is a thumbnail's.)
     FPreviewIndex: Integer;
+    //** @abstract(The variant the preview shows, as TAssetEntry.Variant.)
+    FPreviewVariant: Integer;
+    //** @abstract(The tile right-click menu of variants, made afresh for each right-click.)
+    FVariantMenu: TPopupMenu;
+    //** @abstract(The entry the variant menu is for.)
+    FVariantEntry: Integer;
     //** @abstract(The thumbnail cache, TSprite3DAppSettings.ThumbnailFolder, where the
     //** library and its collections are kept too.)
     FCacheFolder: String;
@@ -782,6 +806,13 @@ type
     //** @abstract(Shared with the hashing worker, which hands back nothing once the form is
     //** gone.)
     FAlive: IAssetsAlive;
+    //** @abstract(True while the worker deleting the thumbnails of deleted collections runs;
+    //** see StartPurge.)
+    FPurging: Boolean;
+    //** @abstract(True if another collection or artist was deleted while FPurging, so
+    //** PurgeFilesDone starts again rather than deleting records whose thumbnails are not
+    //** done.)
+    FPurgeAgain: Boolean;
     //** @abstract(Backing field for OnLog.)
     FOnLog: TAssetsLogEvent;
     //** @abstract(Reads the library, once; if there is none but there is a palette of
@@ -790,7 +821,8 @@ type
     //** @abstract(Writes the library, logging a failure.)
     procedure SaveLibrary;
     //** @abstract(Fills CollectionCombo with the library's collections, chooses the one open,
-    //** and enables what can be done.)
+    //** enables what can be done, and sets the title: @code(Library @(N models@) - Artist /
+    //** Collection).)
     procedure FillCollections;
     //** @abstract(Opens collection AId: from its saved models if its folders have been
     //** scanned, else by scanning them.)
@@ -960,6 +992,11 @@ type
     //** @abstract(Deletes the artist shown and their collections, if the user said Yes; the
     //** delete dialog's answer.)
     //**
+    //** They are marked as being deleted (MarkAssetArtistDeleted) and taken out of the
+    //** library; the artist now in the same place in the list, or the one before if it was
+    //** the last, is shown, with its last or first collection; then StartPurge deletes the
+    //** thumbnails and the records.
+    //**
     //** @param(Sender The dialog's context; not used.)
     //**
     //** @param(AResult How the dialog was closed.)
@@ -983,10 +1020,52 @@ type
     //** @abstract(Deletes the open collection, if the user said Yes; the delete dialog's
     //** answer.)
     //**
+    //** It is marked as being deleted (MarkAssetCollectionDeleted) and taken out of the
+    //** library; the artist's collection now in the same place in their list, or the one
+    //** before if it was the last, is opened, or none if it was their only one; then
+    //** StartPurge deletes the thumbnails and the records.
+    //**
     //** @param(Sender The dialog's context; not used.)
     //**
     //** @param(AResult How the dialog was closed.)
     procedure DeleteCollectionClosed(Sender: TObject; const AResult: TModalResult);
+    //** @abstract(Tidies the cache: deletes, on a worker thread, every thumbnail of a model
+    //** no collection has (not in UsedAssetKeys), the deleted collections' among them;
+    //** PurgeFilesDone follows.)
+    //**
+    //** Only a thumbnail file written before it started is deleted, so one being made
+    //** meanwhile, for a collection opened or imported since, stays. The model files are
+    //** never touched. Called after a delete, and by LoadLibrary each time the Library opens,
+    //** which finishes a delete left unfinished too. While one runs, another call only sets
+    //** FPurgeAgain. HashesDone calls it too, after a scan has saved the models it found,
+    //** so a rescan's replaced thumbnails go at once.
+    procedure StartPurge;
+    //** @abstract(StartPurge's worker is done: deletes the records of the collections and
+    //** artists marked, and the metadata of models no collection has (PurgeDeletedAssets),
+    //** then compacts the database if that left space in it (CompactAssetDatabase).)
+    //**
+    //** A thumbnail that could not be deleted is tried again the next time.
+    //**
+    //** @param(ADeleted How many thumbnail files were deleted.)
+    //**
+    //** @param(AFailed How many could not be.)
+    //**
+    //** @param(AFirstError The first that could not be, and why; empty if none.)
+    procedure PurgeFilesDone(const ADeleted, AFailed: Integer; const AFirstError: String);
+    //** @abstract(The suspect models dialog's OnShowModel: selects entry AIndex, showing it
+    //** in the preview, its group shown and its tile scrolled into sight.)
+    //**
+    //** @param(AIndex An index into FEntries.)
+    procedure SuspectShow(const AIndex: Integer);
+    //** @abstract(The suspect models dialog's OnVerdict: records entry AIndex's verdict in
+    //** the database, logging it.)
+    //**
+    //** @param(AIndex An index into FEntries.)
+    //**
+    //** @param(ABad True for bad, False for good.)
+    //**
+    //** @returns(True if it was recorded.)
+    function SuspectVerdict(const AIndex: Integer; const ABad: Boolean): Boolean;
     //** @abstract(Hands AText to OnLog, if it is set, and writes it to the import log.)
     //**
     //** @param(AText The line.)
@@ -1252,8 +1331,8 @@ type
     procedure ShowGroup(const AGroup: String);
     //** @abstract(Frees the tiles and makes one for every entry of FEntries.)
     procedure BuildTiles;
-    //** @abstract(Shows entry AIndex's kind on its tile's badge, or hides the badge if the
-    //** kind has no tag.)
+    //** @abstract(Shows entry AIndex's kind on its tile's badge, and its variants, or hides the
+    //** badge if it has neither.)
     //**
     //** @param(AIndex The entry.)
     procedure UpdateBadge(const AIndex: Integer);
@@ -1420,8 +1499,23 @@ type
     //**
     //** @param(AIndex The entry.)
     //**
+    //** @param(AVariant The material variant to load (PrepareModelVariant); BASE_VARIANT for
+    //** the model as made, as a thumbnail always is.)
+    //**
     //** @returns(True if it loaded; False, with the reason logged and FModel nil, if not.)
-    function LoadEntryModel(const AIndex: Integer): Boolean;
+    function LoadEntryModel(const AIndex, AVariant: Integer): Boolean;
+    //** @abstract(Shows the menu of entry AIndex's material variants at a tile: the base and
+    //** each variant, the one chosen ticked.)
+    //**
+    //** @param(AIndex The entry; one without variants says so in the Debug tab.)
+    //**
+    //** @param(AScreen Where, in screen coordinates.)
+    procedure ShowVariantMenu(const AIndex: Integer; const AScreen: TPointF);
+    //** @abstract(The variant menu's choice: pieces of the entry are placed as it from now on,
+    //** and the preview shows it.)
+    //**
+    //** @param(Sender A menu item; its Tag is the variant, BASE_VARIANT for the base.)
+    procedure VariantItemClick(Sender: TObject);
     //** @abstract(Says what was done with each texture of a model that was not used as it
     //** is: a PNG made, or another file of the same name used, on the Debug tab and in the
     //** import log; one that could not be found or read goes to the error log too.)
@@ -1645,7 +1739,8 @@ uses
   System.Threading, System.Math, System.DateUtils, System.IOUtils, System.JSON, JsonText,
   System.Generics.Defaults, System.StrUtils, FMX.DialogService, OSPaths, Sprite3DSweep,
   Sprite3DGroupIcons, Sprite3DFolderDialog, Sprite3DBuilderHelpers,
-  Sprite3DBuilderImportForm, Sprite3DBuilderFormatForm, Sprite3DModelContent;
+  Sprite3DBuilderImportForm, Sprite3DBuilderFormatForm, Sprite3DModelContent,
+  Sprite3DBuilderSuspectForm, Sprite3DModelVariants;
 
 {$R *.fmx}
 
@@ -1921,6 +2016,8 @@ begin
   FSelected := -1;
   FAnchor := -1;
   FPreviewIndex := -1;
+  FPreviewVariant := BASE_VARIANT;
+  FVariantEntry := -1;
   FTileDown := -1;
   FDropIndex := -1;
   FCacheFolder := TSprite3DAppSettings.ThumbnailFolder;
@@ -2183,6 +2280,12 @@ begin
   begin
     // Collections of before artists: under one, to be renamed
     AssignOrphans;
+    // The cache tidied each time the Library opens: a delete cut short last
+    // time finished, and the thumbnails and metadata of models no collection
+    // has (changed since, or no longer found) deleted
+    if AssetDeletionsPending(FCacheFolder) then
+      Log('Assets: a delete was left unfinished last time; finishing it');
+    StartPurge;
     Exit;
   end;
   // No library yet. The one palette of before it, if there is one, becomes
@@ -2241,7 +2344,7 @@ end;
 
 procedure TAssetsForm.FillCollections;
 var
-  Chosen, ArtistAt: Integer;
+  Chosen, ArtistAt, LibraryModels: Integer;
 begin
   // The artists first, the one shown chosen
   ArtistAt := ArtistIndex(FArtistId);
@@ -2290,12 +2393,17 @@ begin
   CollectionCombo.Enabled := Length(FShownCollections) > 0;
   RescanButton.Enabled := FCollection.Id <> String.Empty;
   CollectionMenuButton.Enabled := FCollection.Id <> String.Empty;
+  // The title: the library's model count, summed over its collections as
+  // the artist bar sums an artist's (a model in two collections counts
+  // twice), then the artist and collection shown
+  LibraryModels := 0;
+  for var Entry in FLibrary.Collections do
+    Inc(LibraryModels, Entry.Models);
+  Caption := 'Library (' + CountText(LibraryModels, 'model') + ')';
   if (FCollection.Id <> String.Empty) and (ArtistAt >= 0) then
-    Caption := 'Library - ' + FLibrary.Artists[ArtistAt].Name + ' / ' + FCollection.Name
+    Caption := Caption + ' - ' + FLibrary.Artists[ArtistAt].Name + ' / ' + FCollection.Name
   else if ArtistAt >= 0 then
-    Caption := 'Library - ' + FLibrary.Artists[ArtistAt].Name
-  else
-    Caption := 'Library';
+    Caption := Caption + ' - ' + FLibrary.Artists[ArtistAt].Name;
 end;
 
 procedure TAssetsForm.OpenCollection(const AId: String; const ARescan: Boolean;
@@ -2351,9 +2459,20 @@ begin
   if ARescan or (ARemakeBefore > 0) or not FCollection.Scanned or
     (Length(FCollection.Models) = 0) then
   begin
+    // Why its folders are read again, for the Debug tab (owner, 13 November
+    // 2026: collections seemed to be rescanned every time they were opened)
+    if ARescan then
+      Log('Assets: reading its folders: a rescan was asked for')
+    else if ARemakeBefore > 0 then
+      Log('Assets: reading its folders: its thumbnails are being made again')
+    else if not FCollection.Scanned then
+      Log('Assets: reading its folders: never scanned to the end')
+    else
+      Log('Assets: reading its folders: no models saved for it');
     ScanCollection;
     Exit;
   end;
+  Log(Format('Assets: %d models as last scanned; folders not read', [Length(FCollection.Models)]));
   // As it was saved: no files read but each thumbnail's
   SetLength(Results, Length(FCollection.Models));
   for var I := 0 to High(FCollection.Models) do
@@ -2528,8 +2647,16 @@ var
 begin
   if FCollection.Id = String.Empty then
     Exit;
-  // Move to Artist: every other artist, as they are now
-  MoveCollectionItem.DeleteChildren;
+  Log('Assets: collection menu: removing ' + MoveCollectionItem.ItemsCount.ToString +
+    ' Move to Artist item(s)');
+  // Move to Artist: every other artist, as they are now. Only the menu items
+  // made here are freed, through Items. DeleteChildren must not be used: it
+  // frees every child of the item, and once the menu has been shown a menu
+  // item's children include the style objects FMX gave it, which it still
+  // points at. Freeing those is the likely cause of the menu hanging the
+  // program (owner, 13 November 2026).
+  for var I := MoveCollectionItem.ItemsCount - 1 downto 0 do
+    MoveCollectionItem.Items[I].Free;
   for var I := 0 to High(FLibrary.Artists) do
   begin
     if SameText(FLibrary.Artists[I].Id, FArtistId) then
@@ -2543,7 +2670,12 @@ begin
   MoveCollectionItem.Enabled := MoveCollectionItem.ItemsCount > 0;
   At := ClientToScreen(CollectionMenuButton.LocalToAbsolute(
     TPointF.Create(0, CollectionMenuButton.Height)));
+  // Written to the import log as well as the Debug tab, so it can be read
+  // even if the program has to be stopped
+  Log('Assets: collection menu: showing, ' + MoveCollectionItem.ItemsCount.ToString +
+    ' artist(s) to move to');
   CollectionMenu.Popup(At.X, At.Y);
+  Log('Assets: collection menu: Popup returned');
 end;
 
 procedure TAssetsForm.MoveToArtistClick(Sender: TObject);
@@ -2858,7 +2990,8 @@ begin
     if SameText(Entry.ArtistId, FArtistId) then
       Inc(Count);
   TDialogService.MessageDialog(Format('Delete the artist %s and their %d collections from ' +
-    'the library? Their groups go with them; the model files and thumbnails stay.',
+    'the library? Their groups go with them, and the thumbnails of models no other ' +
+    'collection has. The model files and folders are not touched.',
     [FLibrary.Artists[At].Name, Count]), TMsgDlgType.mtConfirmation,
     [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0, DeleteArtistClosed);
 end;
@@ -2866,30 +2999,40 @@ end;
 procedure TAssetsForm.DeleteArtistClosed(Sender: TObject; const AResult: TModalResult);
 var
   At: Integer;
+  Name: String;
 begin
   At := ArtistIndex(FArtistId);
   if (AResult <> mrYes) or (At < 0) then
     Exit;
+  Name := FLibrary.Artists[At].Name;
+  // Marked first: from here on the library no longer lists them, and if the
+  // program stops before the thumbnails are gone, the delete is finished the
+  // next time the Library opens
+  if not MarkAssetArtistDeleted(FCacheFolder, FArtistId) then
+  begin
+    LogError('Assets: can''t delete the artist ' + Name + ': the library could not be ' +
+      'written');
+    Exit;
+  end;
   StopBulk('the artist deleted');
   StopMaking;
-  Log('Assets: artist ' + FLibrary.Artists[At].Name + ' deleted, with their collections');
+  Log('Assets: artist ' + Name + ' deleted, with their collections');
   for var I := High(FLibrary.Collections) downto 0 do
     if SameText(FLibrary.Collections[I].ArtistId, FArtistId) then
-    begin
-      if not DeleteAssetCollection(FCacheFolder, FLibrary.Collections[I].Id) then
-        LogError('Assets: can''t delete the collection ' + FLibrary.Collections[I].Name);
       Delete(FLibrary.Collections, I, 1);
-    end;
   Delete(FLibrary.Artists, At, 1);
   FCollection := Default(TSprite3DAssetCollection);
   FLibrary.Last := String.Empty;
+  // The nearest artist left: the one now in its place, or the one before it
+  // if it was the last
   if Length(FLibrary.Artists) > 0 then
-    FArtistId := FLibrary.Artists[0].Id
+    FArtistId := FLibrary.Artists[Min(At, High(FLibrary.Artists))].Id
   else
     FArtistId := String.Empty;
   FLibrary.LastArtist := FArtistId;
   SaveLibrary;
   OpenCollection(ArtistCollection(FArtistId));
+  StartPurge;
 end;
 
 function TAssetsForm.BulkArtist: String;
@@ -3481,30 +3624,272 @@ begin
   if FCollection.Id = String.Empty then
     Exit;
   TDialogService.MessageDialog('Delete the collection ' + FCollection.Name +
-    ' from the library? Its groups go with it; its models, folders and thumbnails stay.',
+    ' from the library? Its groups go with it, and the thumbnails of models no other ' +
+    'collection has. The model files and folders are not touched.',
     TMsgDlgType.mtConfirmation, [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbNo, 0,
     DeleteCollectionClosed);
 end;
 
 procedure TAssetsForm.DeleteCollectionClosed(Sender: TObject; const AResult: TModalResult);
 var
-  Id: String;
+  Id, NextId: String;
+  ShownAt: Integer;
+  Left: TArray<String>;
 begin
   if (AResult <> mrYes) or (FCollection.Id = String.Empty) then
     Exit;
   Id := FCollection.Id;
+  // Marked first: from here on the library no longer lists it, and if the
+  // program stops before its thumbnails are gone, the delete is finished the
+  // next time the Library opens
+  if not MarkAssetCollectionDeleted(FCacheFolder, Id) then
+  begin
+    LogError('Assets: can''t delete the collection ' + FCollection.Name + ': the library ' +
+      'could not be written');
+    Exit;
+  end;
   LeaveJob('a collection deleted');
   Log('Assets: collection ' + FCollection.Name + ' deleted');
+  // Where it was among its artist's collections, as CollectionCombo lists
+  // them, and the ones left, in the same order
+  ShownAt := -1;
+  Left := nil;
+  for var I := 0 to High(FLibrary.Collections) do
+    if SameText(FLibrary.Collections[I].ArtistId, FArtistId) then
+    begin
+      if SameText(FLibrary.Collections[I].Id, Id) then
+        ShownAt := Length(Left)
+      else
+        Left := Left + [FLibrary.Collections[I].Id];
+    end;
   for var I := High(FLibrary.Collections) downto 0 do
     if SameText(FLibrary.Collections[I].Id, Id) then
       Delete(FLibrary.Collections, I, 1);
-  if not DeleteAssetCollection(FCacheFolder, Id) then
-    LogError('Assets: can''t delete the file of collection ' + Id);
   FCollection := Default(TSprite3DAssetCollection);
   FLibrary.Last := String.Empty;
   SaveLibrary;
-  // Another of the same artist's, if they have one
-  OpenCollection(ArtistCollection(FArtistId));
+  // The nearest of the artist's left: the one now in its place, or the one
+  // before it if it was the last; none if it was their only one, the artist
+  // still shown
+  if Length(Left) = 0 then
+    NextId := String.Empty
+  else
+    NextId := Left[Min(Max(ShownAt, 0), High(Left))];
+  OpenCollection(NextId);
+  StartPurge;
+end;
+
+procedure TAssetsForm.StartPurge;
+var
+  Keys: TArray<String>;
+  Alive: IAssetsAlive;
+  CacheFolder: String;
+  Started: TDateTime;
+begin
+  if FPurging then
+  begin
+    FPurgeAgain := True;
+    Exit;
+  end;
+  if not UsedAssetKeys(FCacheFolder, Keys) then
+  begin
+    LogError('Assets: can''t read which models the collections have; the cache is tidied ' +
+      'the next time the Library opens');
+    Exit;
+  end;
+  FPurging := True;
+  FPurgeAgain := False;
+  Log(Format('Assets: tidying the cache: the collections have %d models; every other ' +
+    'thumbnail goes', [Length(Keys)]));
+  // Only reading and deleting files: off the main thread. A thumbnail
+  // written since this started, for a collection being opened or imported,
+  // is left; so are the key folders, as one may be about to hold one
+  Alive := FAlive;
+  CacheFolder := FCacheFolder;
+  Started := Now;
+  TTask.Run(
+    procedure
+    var
+      Used: TDictionary<String, Boolean>;
+      Files: TArray<String>;
+      Deleted, Failed, Kept: Integer;
+      FirstError: String;
+    begin
+      Deleted := 0;
+      Failed := 0;
+      Kept := 0;
+      FirstError := String.Empty;
+      Used := TDictionary<String, Boolean>.Create;
+      try
+        for var Key in Keys do
+          Used.AddOrSetValue(LowerCase(Key), True);
+        Files := AssetThumbnailFiles(CacheFolder);
+        for var FileName in Files do
+          try
+            if Used.ContainsKey(LowerCase(TPath.GetFileNameWithoutExtension(FileName))) then
+              Inc(Kept)
+            else if TFile.GetLastWriteTime(FileName) < Started then
+            begin
+              TFile.Delete(FileName);
+              Inc(Deleted);
+            end;
+          except
+            on E: Exception do
+            begin
+              Inc(Failed);
+              if FirstError = String.Empty then
+                FirstError := FileName + ': ' + E.Message;
+            end;
+          end;
+      finally
+        Used.Free;
+      end;
+      TThread.Queue(nil,
+        procedure
+        begin
+          if Alive.Alive then
+          begin
+            Log(Format('Assets: %d thumbnails in the cache: %d in use, %d deleted',
+              [Length(Files), Kept, Deleted]));
+            PurgeFilesDone(Deleted, Failed, FirstError);
+          end;
+        end);
+    end);
+end;
+
+procedure TAssetsForm.PurgeFilesDone(const ADeleted, AFailed: Integer;
+  const AFirstError: String);
+var
+  Collections, Models: Integer;
+  Before, After: Int64;
+  Error: String;
+
+  //** @abstract(A size in bytes as the log gives it: KB or MB.)
+  function SizeText(const ABytes: Int64): String;
+  begin
+    if ABytes >= 1024 * 1024 then
+      Result := FormatFloat('0.0', ABytes / (1024 * 1024)) + ' MB'
+    else
+      Result := FormatFloat('0', ABytes / 1024) + ' KB';
+  end;
+
+begin
+  FPurging := False;
+  if FPurgeAgain then
+  begin
+    // Another delete came while this one ran: started again, so its
+    // collections' thumbnails go before their records do
+    Log('Assets: tidying again, for the delete since');
+    StartPurge;
+    Exit;
+  end;
+  if AFailed > 0 then
+    LogError(Format('Assets: %d thumbnails could not be deleted (first: %s); tried again ' +
+      'the next time the Library opens', [AFailed, AFirstError]));
+  if PurgeDeletedAssets(FCacheFolder, Collections, Models) then
+    Log(Format('Assets: cache tidied: %d thumbnails deleted, the records of %d deleted ' +
+      'collections, and the metadata of %d models no collection has', [ADeleted,
+      Collections, Models]))
+  else
+  begin
+    LogError(Format('Assets: %d thumbnails deleted, but the records could not be; tried ' +
+      'again the next time the Library opens', [ADeleted]));
+    Exit;
+  end;
+  // SQLite keeps the space deleted records leave, for reuse: given back
+  if CompactAssetDatabase(FCacheFolder, Before, After, Error) then
+    Log(Format('Assets: database compacted from %s to %s', [SizeText(Before),
+      SizeText(After)]))
+  else if Error <> String.Empty then
+    LogError('Assets: can''t compact the database: ' + Error);
+end;
+
+procedure TAssetsForm.ScanSuspectItemClick(Sender: TObject);
+var
+  Verdicts: TArray<TSprite3DModelVerdict>;
+  BadKeys: TDictionary<String, Boolean>;
+  Models: TArray<TSuspectModel>;
+  Model: TSuspectModel;
+  Unsized: Integer;
+  Summary: String;
+begin
+  if FCollection.Id = String.Empty then
+    Exit;
+  if not LoadModelVerdicts(FCacheFolder, FCollection.Id, Verdicts) then
+    LogError('Assets: can''t read the verdicts on ' + FCollection.Name + '; every model ' +
+      'is shown as good');
+  BadKeys := TDictionary<String, Boolean>.Create;
+  try
+    for var Verdict in Verdicts do
+      BadKeys.AddOrSetValue(Verdict.Key, Verdict.Bad);
+    // Only a model with a thumbnail has its size in its metadata
+    Models := nil;
+    Unsized := 0;
+    for var I := 0 to High(FEntries) do
+    begin
+      if not FEntries[I].HasThumbnail then
+      begin
+        Inc(Unsized);
+        Continue;
+      end;
+      Model.Index := I;
+      Model.Name := FEntries[I].Meta.Name;
+      Model.Size := FEntries[I].Meta.Size;
+      if not BadKeys.TryGetValue(LowerCase(FEntries[I].Meta.Hash), Model.Bad) then
+        Model.Bad := False;
+      Models := Models + [Model];
+    end;
+  finally
+    BadKeys.Free;
+  end;
+  Log(Format('Assets: scanning %s for suspect models: %d with a size, %d without (no ' +
+    'thumbnail yet)', [FCollection.Name, Length(Models), Unsized]));
+  TSuspectModelsForm.Execute(Self, FCollection.Name, Models, Unsized, SuspectShow,
+    SuspectVerdict, Summary);
+  Log('Assets: suspect models of ' + FCollection.Name + ': ' + Summary);
+end;
+
+procedure TAssetsForm.SuspectShow(const AIndex: Integer);
+var
+  Tile: TRectangle;
+  Top, Limit: Single;
+begin
+  if (AIndex < 0) or (AIndex > High(FEntries)) then
+    Exit;
+  // Its group shown, so its tile is there to be seen picked
+  if not SameText(FEntries[AIndex].Meta.Group, FGroup) then
+    ShowGroup(FEntries[AIndex].Meta.Group);
+  SelectEntry(AIndex);
+  Tile := FEntries[AIndex].Tile;
+  if (Tile <> nil) and Tile.Visible then
+  begin
+    Top := TilesBox.Content.AbsoluteToLocal(Tile.LocalToAbsolute(TPointF.Zero)).Y;
+    if (Top < TilesBox.ViewportPosition.Y) or
+      (Top + Tile.Height > TilesBox.ViewportPosition.Y + TilesBox.Height) then
+    begin
+      Limit := Max(0, TilesBox.ContentBounds.Height - TilesBox.Height);
+      TilesBox.ViewportPosition := TPointF.Create(TilesBox.ViewportPosition.X,
+        EnsureRange(Top - 8, 0, Limit));
+    end;
+  end;
+end;
+
+function TAssetsForm.SuspectVerdict(const AIndex: Integer; const ABad: Boolean): Boolean;
+const
+  WORDS: array[Boolean] of String = ('good', 'bad');
+begin
+  Result := False;
+  if (AIndex < 0) or (AIndex > High(FEntries)) or (FCollection.Id = String.Empty) then
+    Exit;
+  try
+    SaveModelVerdict(FCacheFolder, FCollection.Id, FEntries[AIndex].Meta.Hash, ABad);
+    Log('Assets: ' + FEntries[AIndex].Meta.Name + ' marked ' + WORDS[ABad]);
+    Result := True;
+  except
+    on E: Exception do
+      LogError('Assets: can''t record ' + FEntries[AIndex].Meta.Name + ' as ' +
+        WORDS[ABad] + ': ' + E.Message);
+  end;
 end;
 
 
@@ -3886,6 +4271,11 @@ var
   First, Chosen: String;
   Cached: Integer;
   NewGroups: TArray<String>;
+  // Why the thumbnails not taken from the cache are made, for the Debug tab
+  NoMeta, Remade, OldRules, OtherSize, NoFile: Integer;
+  SizeSeen: String;
+  // True if these results are from reading the collection's folders
+  FromScan: Boolean;
 begin
   if AScanId <> FScanId then
     Exit;   // another folder has been opened since
@@ -3912,6 +4302,12 @@ begin
   for var Key in FGroupParents.Keys.ToArray do
     if (GroupIndex(FGroupParents[Key]) < 0) or Holds(Key, FGroupParents[Key]) then
       FGroupParents.Remove(Key);
+  NoMeta := 0;
+  Remade := 0;
+  OldRules := 0;
+  OtherSize := 0;
+  NoFile := 0;
+  SizeSeen := String.Empty;
   Seen := TDictionary<String, String>.Create;
   try
     for var R in AResults do
@@ -3939,6 +4335,23 @@ begin
         TFile.Exists(AssetThumbnailFile(FCacheFolder, R.Hash));
       if not Entry.HasThumbnail then
       begin
+        // Why, for the Debug tab: the first reason that holds
+        if not LoadAssetMeta(FCacheFolder, R.Hash, Entry.Meta) then
+          Inc(NoMeta)
+        else if not MadeSinceRemake(Entry.Meta.Created) then
+          Inc(Remade)
+        else if (Entry.Meta.Textures < TEXTURE_RULES_VERSION) and
+          PreparesTextures(R.FileName) then
+          Inc(OldRules)
+        else if (Entry.Meta.ThumbWidth <> THUMBNAIL_SIZE) or
+          (Entry.Meta.ThumbHeight <> THUMBNAIL_SIZE) then
+        begin
+          Inc(OtherSize);
+          if SizeSeen = String.Empty then
+            SizeSeen := Format('%d x %d', [Entry.Meta.ThumbWidth, Entry.Meta.ThumbHeight]);
+        end
+        else
+          Inc(NoFile);
         Entry.Meta := Default(TSprite3DAssetMeta);
         Entry.Meta.Hash := R.Hash;
       end
@@ -3956,6 +4369,22 @@ begin
       // A collection opened from its saved models knows only each file
       if R.Files <> nil then
         Entry.Meta.Files := R.Files;
+      // Its material variants: read from its file once, then kept with its
+      // metadata; placed as the base until its tile chooses another
+      Entry.Variant := BASE_VARIANT;
+      if not Entry.Meta.VariantsRead then
+      begin
+        Entry.Meta.Variants := ModelVariantNames(R.FileName);
+        Entry.Meta.VariantsRead := True;
+        if Entry.HasThumbnail then
+          try
+            SaveAssetMeta(FCacheFolder, Entry.Meta);
+          except
+            on E: Exception do
+              LogError('Assets: can''t save the variants of ' + Entry.Meta.Name + ': ' +
+                E.Message);
+          end;
+      end;
       FEntries := FEntries + [Entry];
     end;
   finally
@@ -3995,12 +4424,21 @@ begin
     end));
   FGroupOrder := FGroupOrder + NewGroups;
   // From a scan, the models are now the folders' as they are
+  FromScan := FScanning;
   if FScanning then
     FCollection.Scanned := True;
   FScanning := False;
   RemakeBefore := FRemakeBefore;
   FRemakeBefore := 0;
   SavePalette;
+  // A scan saves the models as found now: a model whose files changed has a
+  // new key, so the thumbnail and metadata of its old one are no
+  // collection's any more. Tidied now, rather than left until the Library
+  // next opens (owner, 13 November 2026: rescans had left 2,500). The
+  // thumbnails this collection is about to make are written after the
+  // tidy starts, and are its models', so they stay
+  if FromScan then
+    StartPurge;
 
   // Name order throughout, whatever the group: a move to another group
   // leaves every entry where it is
@@ -4024,6 +4462,12 @@ begin
   BuildGroups;
   Log(Format('Assets: %d models shown, %d thumbnails from the cache, %d to make',
     [Length(FEntries), Cached, FQueueTotal]));
+  if FQueueTotal > 0 then
+    Log(Format('Assets: to make because: %d never made, %d made before the remake, %d made ' +
+      'by older texture rules (now %d), %d not %d x %d%s, %d with no image file',
+      [NoMeta, Remade, OldRules, TEXTURE_RULES_VERSION, OtherSize, THUMBNAIL_SIZE,
+      THUMBNAIL_SIZE, IfThen(SizeSeen <> String.Empty, ' (such as ' + SizeSeen + ')', ''),
+      NoFile]));
   // A job paused: nothing is made, the collection is only shown
   if FJobPaused then
   begin
@@ -5167,10 +5611,19 @@ procedure TAssetsForm.TileMouseDown(Sender: TObject; Button: TMouseButton;
 var
   Index: Integer;
 begin
-  if not (Sender is TRectangle) or (Button <> TMouseButton.mbLeft) then
+  if not (Sender is TRectangle) then
     Exit;
   Index := TRectangle(Sender).Tag;
   if (Index < 0) or (Index > High(FEntries)) then
+    Exit;
+  // A right-click chooses the model's variant
+  if Button = TMouseButton.mbRight then
+  begin
+    SelectEntry(Index);
+    ShowVariantMenu(Index, TRectangle(Sender).LocalToScreen(TPointF.Create(X, Y)));
+    Exit;
+  end;
+  if Button <> TMouseButton.mbLeft then
     Exit;
   // A plain click on one already picked keeps the others until the button
   // comes up, so they can all be dragged
@@ -5237,6 +5690,64 @@ begin
   Result.Key := FEntries[AIndex].Meta.Hash;
   Result.BoxMin := FEntries[AIndex].Meta.BoxMin;
   Result.BoxMax := FEntries[AIndex].Meta.BoxMax;
+  // Placed as the variant its tile chose; the base otherwise
+  if (FEntries[AIndex].Variant >= 0) and
+    (FEntries[AIndex].Variant <= High(FEntries[AIndex].Meta.Variants)) then
+    Result.VariantName := FEntries[AIndex].Meta.Variants[FEntries[AIndex].Variant];
+end;
+
+procedure TAssetsForm.ShowVariantMenu(const AIndex: Integer; const AScreen: TPointF);
+var
+  Item: TMenuItem;
+begin
+  if (AIndex < 0) or (AIndex > High(FEntries)) then
+    Exit;
+  if Length(FEntries[AIndex].Meta.Variants) = 0 then
+  begin
+    Log('Assets: ' + FEntries[AIndex].Meta.Name + ' has no material variants');
+    Exit;
+  end;
+  FVariantEntry := AIndex;
+  // A new menu each time, parented to the form, as FMX shows a popup
+  // menu's items only then; not items taken out of the old one, which once
+  // hung the collection menu
+  FreeAndNil(FVariantMenu);
+  FVariantMenu := TPopupMenu.Create(Self);
+  FVariantMenu.Parent := Self;
+  for var I := BASE_VARIANT to High(FEntries[AIndex].Meta.Variants) do
+  begin
+    Item := TMenuItem.Create(Self);
+    if I = BASE_VARIANT then
+      Item.Text := 'Base (as made)'
+    else
+      Item.Text := FEntries[AIndex].Meta.Variants[I];
+    Item.Tag := I;
+    Item.IsChecked := I = FEntries[AIndex].Variant;
+    Item.OnClick := VariantItemClick;
+    FVariantMenu.AddObject(Item);
+  end;
+  FVariantMenu.Popup(AScreen.X, AScreen.Y);
+end;
+
+procedure TAssetsForm.VariantItemClick(Sender: TObject);
+var
+  Index, Variant: Integer;
+begin
+  Index := FVariantEntry;
+  Variant := TMenuItem(Sender).Tag;
+  if (Index < 0) or (Index > High(FEntries)) or (FEntries[Index].Variant = Variant) then
+    Exit;
+  FEntries[Index].Variant := Variant;
+  UpdateBadge(Index);
+  if Variant = BASE_VARIANT then
+    Log('Assets: ' + FEntries[Index].Meta.Name + ' placed as made')
+  else
+    Log('Assets: ' + FEntries[Index].Meta.Name + ' placed as variant ' +
+      FEntries[Index].Meta.Variants[Variant]);
+  // Shown as it, and placed as it from now on
+  SelectEntry(Index);
+  ShowPreview(Index);
+  NotifyModelChosen;
 end;
 
 
@@ -5383,13 +5894,30 @@ end;
 
 procedure TAssetsForm.UpdateBadge(const AIndex: Integer);
 var
-  Tag: String;
+  Tag, Variants: String;
+  Entry: TAssetEntry;
 begin
   if (AIndex < 0) or (AIndex > High(FEntries)) or (FEntries[AIndex].Badge = nil) then
     Exit;
-  Tag := ModelKindTag(ModelKindFromKey(FEntries[AIndex].Meta.Kind));
-  FEntries[AIndex].BadgeText.Text := Tag;
-  FEntries[AIndex].Badge.Visible := Tag <> String.Empty;
+  Entry := FEntries[AIndex];
+  Tag := ModelKindTag(ModelKindFromKey(Entry.Meta.Kind));
+  Entry.BadgeText.Text := Tag;
+  // How many variants it has, or the one chosen
+  Variants := String.Empty;
+  if Length(Entry.Meta.Variants) > 0 then
+  begin
+    if (Entry.Variant >= 0) and (Entry.Variant <= High(Entry.Meta.Variants)) then
+      Variants := Entry.Meta.Variants[Entry.Variant]
+    else
+      Variants := Format('%d var', [Length(Entry.Meta.Variants)]);
+    Entry.Tile.Hint := Format('%s: material variants %s (right-click to choose)',
+      [Entry.Meta.Name, String.Join(', ', Entry.Meta.Variants)]);
+  end
+  else
+    Entry.Tile.Hint := Entry.Meta.Name;
+  if Entry.VariantText <> nil then
+    Entry.VariantText.Text := Variants;
+  Entry.Badge.Visible := (Tag <> String.Empty) or (Variants <> String.Empty);
 end;
 
 function TAssetsForm.EntryContentText(const AIndex: Integer): String;
@@ -5470,7 +5998,7 @@ procedure TAssetsForm.BuildTiles;
 var
   Tile, Badge: TRectangle;
   Image: TImage;
-  Caption, BadgeText: TLabel;
+  Caption, BadgeText, VariantText: TLabel;
   Bitmap: TBitmap;
 begin
   TilesBox.BeginUpdate;
@@ -5555,11 +6083,24 @@ begin
       BadgeText.TextSettings.Font.Style := [TFontStyle.fsBold];
       BadgeText.TextSettings.FontColor := BADGE_TEXT_COLOUR;
       BadgeText.TextSettings.WordWrap := False;
+      // Its variants, over the top left corner
+      VariantText := TLabel.Create(Badge);
+      VariantText.Parent := Badge;
+      VariantText.Align := TAlignLayout.Left;
+      VariantText.AutoSize := True;
+      VariantText.HitTest := False;
+      VariantText.StyledSettings := VariantText.StyledSettings - [TStyledSetting.Size,
+        TStyledSetting.Style, TStyledSetting.FontColor];
+      VariantText.TextSettings.Font.Size := 9;
+      VariantText.TextSettings.Font.Style := [TFontStyle.fsBold];
+      VariantText.TextSettings.FontColor := BADGE_TEXT_COLOUR;
+      VariantText.TextSettings.WordWrap := False;
 
       FEntries[I].Tile := Tile;
       FEntries[I].Image := Image;
       FEntries[I].Badge := Badge;
       FEntries[I].BadgeText := BadgeText;
+      FEntries[I].VariantText := VariantText;
       UpdateBadge(I);
     end;
   finally
@@ -5621,16 +6162,19 @@ procedure TAssetsForm.ShowPreview(const AIndex: Integer);
 begin
   if Making then
     Exit;   // the viewport is the thumbnails'; MakeNext previews when done
-  if (AIndex = FPreviewIndex) and (FModel <> nil) then
+  // Shown already, as the same variant
+  if (AIndex = FPreviewIndex) and (FModel <> nil) and (AIndex >= 0) and
+    (AIndex <= High(FEntries)) and (FEntries[AIndex].Variant = FPreviewVariant) then
     Exit;
   FreeModel;
   FTurning := False;
   ResetCameraAngles;
   if (AIndex < 0) or (AIndex > High(FEntries)) then
     Exit;
-  if not LoadEntryModel(AIndex) then
+  if not LoadEntryModel(AIndex, FEntries[AIndex].Variant) then
     Exit;
   FPreviewIndex := AIndex;
+  FPreviewVariant := FEntries[AIndex].Variant;
   // The floor, Y = 0 in the model's own space, where it will stand on the
   // level's grid: lines at the level's spacing, one through its centre of
   // rotation, so a model off the floor, or off the grid, shows
@@ -5644,7 +6188,7 @@ begin
   FrameModel(FViewport.Width, FViewport.Height);
 end;
 
-function TAssetsForm.LoadEntryModel(const AIndex: Integer): Boolean;
+function TAssetsForm.LoadEntryModel(const AIndex, AVariant: Integer): Boolean;
 var
   Box: TBoundingBox;
   FileName, LoadFile: String;
@@ -5687,6 +6231,13 @@ begin
     LoadFile := PrepareModelTextures(FileName, FCacheFolder, FEntries[AIndex].Meta.Hash,
       Fixes);
     ReportTextures(FEntries[AIndex].Meta.Name, Fixes);
+    // A variant: from a copy whose meshes take its materials
+    if AVariant >= 0 then
+    begin
+      LoadFile := PrepareModelVariant(LoadFile, FCacheFolder, FEntries[AIndex].Meta.Hash,
+        AVariant);
+      DebugLog('as variant ' + IntToStr(AVariant));
+    end;
     if LoadFile <> FileName then
       DebugLog('loading it from ' + LoadFile);
     LoadModelFile(FModel, LoadFile, Box);
@@ -5929,7 +6480,8 @@ begin
 
   FTurning := False;
   ResetCameraAngles;
-  if not LoadEntryModel(Index) then
+  // A thumbnail is always of the model as made
+  if not LoadEntryModel(Index, BASE_VARIANT) then
   begin
     MakeNextLater;
     Exit;

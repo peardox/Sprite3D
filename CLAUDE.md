@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 12 November 2026, 18:10.
+Last updated: 13 November 2026, 14:20.
 
 ## Starting a new conversation
 
@@ -473,6 +473,128 @@ gone up.
   beside the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
+
+### State (13 November 2026, 14:20): material variants, Builder (phase 2)
+
+**`2026-11-13-1420-variants-builder.zip`** is Sprite3DBuilder's
+(`Sprite3DBuilder/CLAUDE.md`, *Material variants in Builder, phase 2*),
+and **changes the shared `Shared/Sprite3DModelVariants.pas`**:
+`ModelVariantNames` reads only a GLB's header and JSON chunk now
+(internal `GltfJsonBytes`), not the whole file. Nothing else Sprite3D
+calls changed. **To test in Sprite3D**: opening a model with variants
+still lists them (the Debug tab's "N material variants" line) and the
+Variant button still works. Phase 1 worked (owner, 13:32).
+
+### State (13 November 2026, 13:20): material variants, Sprite3D first
+
+**`2026-11-13-1320-variants-sprite3d.zip`**, not compiled or tested yet.
+The owner (12:48-12:53): Sprite3D's glTF tools get a way to add other
+textures to a model as named **material variants** (glTF's
+`KHR_materials_variants`); both programs swap them; Builder labels tiles
+with variants, chooses one by right-click, and gets a mode to change
+placed pieces' variants. Asked: the tool's output is "3 via a switch
+(embed texture)", **Embed (GLB) the default**; a kit sharing one texture
+across its models, with variant textures, will use it cleared (glTF,
+textures left where they are). Phasing not answered: **Sprite3D first**
+(this zip), Builder next. Also: **Add Parts renamed Add Attachments**
+(menu text, its dialog's caption and save title; unit names kept).
+
+- **New shared unit `Shared/Sprite3DModelVariants.pas`** (pure JSON and
+  file work): `ModelVariantNames`, `PrepareModelVariant` (the file to load
+  for a variant: a copy in `<cache>/models`, `<key>.variant<N>.glb/.gltf`,
+  each primitive's `material` replaced by its mapping's for the variant;
+  for a `.gltf` not already a copy in that folder, every buffer and image
+  file it names is copied there named `<sha256><ext>`, as the loader looks
+  in the glTF's own folder only; rewritten on each load), and the pieces
+  `GltfVariantNamesOf`, `ReadGltfJson`, `GlbBytes` (GLB chunks, padded).
+  Only Sprite3D uses it so far; Sprite3DBuilder will (phase 2).
+- **New `Sprite3D/lib/Sprite3DGltfVariants.pas`** (GLTFLib):
+  `VariantTextureSlots` (each texture a used material has, by use: base
+  colour, metal/roughness, normal, occlusion, emissive, with its image's
+  file, through a namer), `ExistingVariantNames`, `SaveWithVariants`. For
+  each variant and material it changes: one image per file (Embed per the
+  switch; `Shared` and a relative `uri` when not embedded), a texture with
+  the replaced one's sampler, a copy of the material named `<material>
+  (<variant>)`. Then `TglTFEdit.AddExtensionUsed` **before saving**, as
+  GLTFLib keeps every material (and so their images) only while the
+  extension is listed (`ImagesInUse`). GLTFLib has no setter for an
+  object's extensions, so the extension itself is written into the JSON
+  saved: the GLB's JSON chunk (`ReadGltfJson`/`GlbBytes`, BIN kept) or the
+  `.gltf` text (no BOM); it first checks each new material is still at
+  its index with its name. Not embedded: `rmExternal` buffers,
+  `ismPerImage`, and the model's own images that are files outside the
+  cache made `Shared` with their path from the glTF; those in the cache, or
+  inside the model, are written beside it.
+- **New `Sprite3D/ui/Sprite3DGltfVariantsForm.pas`**, made in code (no
+  `.fmx`), desktop only: the slots listed as "<use> of <material>
+  (<file>)", a panel per variant (name, a read-only box, `...` and `x` per
+  slot), Embed textures (ticked), Add Variant, Save... (checks: a name,
+  unique against existing and new, not "Base", at least one file, files
+  there). `SuggestVariantFile`: the common prefix/suffix of the model's
+  file and the one chosen gives the change, made to each other slot's
+  file (sp01->sp02: sp01_NRM -> sp02_NRM; Spider->Spider_Red; Wood_Albedo
+  -> Stone_Albedo makes Stone_Normal), looked for in the chosen file's
+  folder then the other's; the first file names the variant. Checked in
+  Python on five cases.
+- **Sprite3dMain**: `GltfVariantsItem` "Add Variants..." after Add
+  Attachments; `GltfVariantsItemClick` (`GltfModelDocument`, then the
+  slots, named through `ModelFileToRead`'s fixes: a copy's file is matched
+  to the fix whose `Used` has its SHA-256 as its name, else the image's
+  name; the dialog; a save dialog for `.glb` or `.gltf`;
+  `SaveWithVariants`; `SwitchModel` on the result).
+  **The Metadata box is gone**, metadata always saved for strips and
+  spritesheets (`Metadata := AKind in [skStrip, skSheet]`); projects no
+  longer write or read `metadata`; `TSprite3DAppSettings.ExportMetadata`
+  is kept but unused (old settings files still load). In its place,
+  `FVariantButton` (84 wide, first in the second batch row): the variant
+  shown, "Base", or "Variant" greyed for none; a click builds a new
+  `TPopupMenu` each time (not `DeleteChildren`, after the Library's hang)
+  of "Base (as made)" and each variant, radio-ticked;
+  `VariantItemClick` sets `FLoadVariant` and `SwitchModel(FModelFile)`,
+  which loads the same file afresh in its own slot. `FLoadVariant` goes to
+  `LoadModelFile` (new `AVariant` argument, which calls
+  `PrepareModelVariant` after `ModelFileToRead`), is stored in the slot
+  by `CommitLoad` (`TSprite3DModelSlot.Variants`, `.Variant`; set in
+  `EmptyModelSlot`), and reset to `BASE_VARIANT` by `EndLoad`;
+  `ActivateSlot` sets `FModelVariants`, `FModelVariant`.
+- README: Add Attachments, Add Variants, Metadata always, the Variant
+  button; the file tree.
+- **Formats** (owner, 13:12: the spider's textures are TGA; PSDs will
+  come): `2026-11-13-1335-variants-formats.zip`, follows
+  `2026-11-13-1320-variants-sprite3d.zip`. **Shared
+  `Sprite3DModelTextures` gains two public functions**, nothing else
+  changed: `ReadableImageFile` (its `IsImageFile`) and `ImageForLoader`
+  (the file itself for PNG/JPEG, else `MakePng` into `<cache>/models`).
+  `SaveWithVariants` makes any other format a PNG through it (embedded:
+  inside; not: written beside the glTF as `<texture's name>.png`,
+  `Shared` False so a different file there is not reused); a model image
+  in the cache, not embedded, is written as its slot's file name with the
+  PNG's extension (`sp01.png` for a PNG made from `sp01.tga`). The slots'
+  namer matches a cache file to the fix whose `Used` it is and shows the
+  fix's `Source` (the `.tga`), so suggestions look for `sp02_NRM.tga`
+  beside it. The dialog offers TGA, PSD, BMP, TIFF, GIF, DDS and All files,
+  and refuses a file `ReadableImageFile` says no to.
+- **Variant menu showed only Base** (owner, 13:28):
+  `2026-11-13-1345-variant-menu.zip`. `FVariantMenu` had no parent; FMX
+  needs a popup menu parented to the form (`FAnimationPopup.Parent :=
+  Self`) to show its items. Now parented, items owned by the form,
+  `RadioItem` dropped (a tick shows the one shown). `CommitLoad` logs
+  "<file>: N material variants (names); showing ..." for a model with
+  any. If it still shows Base only, that line says what the file holds.
+- **Not done yet**: a variant isn't in a project file; exports don't put
+  the variant in their names or metadata; an FBX or other format with no
+  glTF file has no variants until saved with them (the tool reads it
+  through GLTFLib's conversion, as the other glTF tools do).
+- Checked here: the extension JSON written for the spider (one variant,
+  base colour and normal replaced) matches the spec's layout, and the swap
+  gives its primitive the copied material.
+- **To test** (Windows): the spider: Add Variants, Add Variant, `...` on
+  Base colour, choose `sp02.png`: the name becomes sp02 and the normal map
+  `sp02_NRM.png` if it is there; Save..., `spider_variants.glb`: it opens;
+  the Variant button says Base; choose sp02: the model reloads with the
+  new textures; Base again. Then Embed cleared: a `.gltf` and `.bin`
+  beside it naming `sp02.png` where it is. Exports still write their
+  `.json`. A model without variants: the button greyed.
 
 ### State (12 November 2026, 18:10)
 

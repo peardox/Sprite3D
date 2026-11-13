@@ -229,7 +229,8 @@
 //** |   |       |-- GltfExportItem "Export as GLB..."  the open model as GLB
 //** |   |       |-- GltfMergeItem "Merge Animations..."  adds other files' animations
 //** |   |       |-- GltfSplitItem "Split Long Animation..."  cuts one into named ranges
-//** |   |       `-- GltfPartsItem "Add Parts..."  puts on parts rigged to the skeleton
+//** |   |       |-- GltfPartsItem "Add Attachments..."  puts on parts rigged to the skeleton
+//** |   |       `-- GltfVariantsItem "Add Variants..."  other textures, as named variants
 //** |   |-- FileSeparatorItem "-"
 //** |   `-- ExitMenuItem "Exit"             closes the application
 //** |-- ModelMenu "Models"
@@ -520,7 +521,8 @@ unit Sprite3dMain;
     |   |       |-- GltfExportItem "Export as GLB..."  the open model as GLB
     |   |       |-- GltfMergeItem "Merge Animations..."  adds other files' animations
     |   |       |-- GltfSplitItem "Split Long Animation..."  cuts one into named ranges
-    |   |       `-- GltfPartsItem "Add Parts..."  puts on parts rigged to the skeleton
+    |   |       |-- GltfPartsItem "Add Attachments..."  puts on parts rigged to the skeleton
+    |   |       `-- GltfVariantsItem "Add Variants..."  other textures, as named variants
     |   |-- FileSeparatorItem "-"
     |   `-- ExitMenuItem "Exit"             closes the application
     |-- ModelMenu "Models"
@@ -833,8 +835,11 @@ type
     GltfMergeItem: TMenuItem;
     //** @abstract(The glTF menu's "Split Long Animation..." item; see GltfSplitItemClick.)
     GltfSplitItem: TMenuItem;
-    //** @abstract(The glTF menu's "Add Parts..." item; see GltfPartsItemClick.)
+    //** @abstract(The glTF menu's "Add Attachments..." item (it was Add Parts); see
+    //** GltfPartsItemClick.)
     GltfPartsItem: TMenuItem;
+    //** @abstract(The glTF menu's "Add Variants..." item; see GltfVariantsItemClick.)
+    GltfVariantsItem: TMenuItem;
     //** @abstract(The "View" menu; holds CameraMenu.)
     ViewMenu: TMenuItem;
     //** @abstract(The "Camera" submenu of View, choosing how the camera angles are set.)
@@ -1244,6 +1249,16 @@ type
     //**
     //** @param(Sender GltfPartsItem.)
     procedure GltfPartsItemClick(Sender: TObject);
+    //** @abstract(Adds material variants to the open model: other textures, each set named,
+    //** saved with it as KHR_materials_variants, then opens the result.)
+    //**
+    //** TGltfVariantsForm lists the textures the model's materials use, with the file each
+    //** came from, and takes the variants; SaveWithVariants (Sprite3DGltfVariants) adds them
+    //** and saves a GLB, or with Embed textures cleared a glTF naming its texture files where
+    //** they are. Desktop only.
+    //**
+    //** @param(Sender GltfVariantsItem.)
+    procedure GltfVariantsItemClick(Sender: TObject);
     //** @abstract(Saves the Animations list as it stands to a JSON file.)
     //**
     //** Asks where, in a save dialog opening in the model's folder, with the name
@@ -1621,6 +1636,14 @@ type
     FLoadTimer: TTimer;
     FLoadDialog: TModelLoadForm;
     FLoadFile: String;
+    //** @abstract(The material variant the load under way shows: BASE_VARIANT but when the
+    //** Variant button reloads the model shown as another.)
+    FLoadVariant: Integer;
+    //** @abstract(The model shown's variants' names, from its slot; empty for none.)
+    FModelVariants: TArray<String>;
+    //** @abstract(The variant the model shown shows, from its slot; BASE_VARIANT for the
+    //** model as made.)
+    FModelVariant: Integer;
     FLoadRead: IModelFileRead;
     FLoadModel: TGorillaModel;
     FLoadAnims: TArray<String>;
@@ -1968,7 +1991,12 @@ type
     // measuring pass is exact. Every export runs in two passes: a measuring
     // pass, then the export reframed from what it measured. Exact is not
     // kept: it starts clear each session and is in no project file.
-    FBatchMetadata: TCheckBox;
+    //** @abstract(In the place the Metadata box had (metadata is always saved now): the
+    //** model shown's variant, and a menu of them on a click; enabled only for a model that
+    //** has variants.)
+    FVariantButton: TButton;
+    //** @abstract(The Variant button's menu, made afresh for each click.)
+    FVariantMenu: TPopupMenu;
     FBatchDirections: TCheckBox;
     FBatchExact: TCheckBox;
     // Set by WriteBatchMetadata when an export measured at 1x missed the
@@ -2783,7 +2811,18 @@ type
     {$ENDIF}
     function Exporting: Boolean;
     procedure QuitAfterConfirm;
-    procedure BatchMetadataChange(Sender: TObject);
+    //** @abstract(Shows a menu of the base and the model shown's variants, the one shown
+    //** ticked.)
+    //**
+    //** @param(Sender FVariantButton.)
+    procedure VariantButtonClick(Sender: TObject);
+    //** @abstract(Loads the model shown again as the variant chosen, in its own place.)
+    //**
+    //** @param(Sender A menu item; its Tag is the variant, BASE_VARIANT for the base.)
+    procedure VariantItemClick(Sender: TObject);
+    //** @abstract(Sets the Variant button's text, hint and whether it can be used, for the
+    //** model shown.)
+    procedure UpdateVariantButton;
     procedure BatchDirectionsChange(Sender: TObject);
     procedure BatchExactChange(Sender: TObject);
     procedure SetExactCheck(const AChecked: Boolean);
@@ -3092,7 +3131,8 @@ uses
   Sprite3DScanAtlasFoldersForm, Sprite3DLicencesForm,
   glTF.Document, glTF.Animations, glTF.AnimationSplit, glTF.Parts,
   Sprite3DGltfDocument, Sprite3DGltfExportForm, Sprite3DGltfMergeForm, Sprite3DGltfSplitForm,
-  Sprite3DGltfPartsForm;
+  Sprite3DGltfPartsForm, Sprite3DGltfVariants, Sprite3DGltfVariantsForm,
+  Sprite3DModelVariants, System.Hash;
 
 const
   // Where a 2-pass export aims the edge on the axis with least room, in
@@ -3196,6 +3236,8 @@ begin
   FRoll := 0;
   FPolarAngle := 0;
   FFactor := 1.0;
+  FLoadVariant := BASE_VARIANT;
+  FModelVariant := BASE_VARIANT;
 
   GorillaViewport := TGorillaViewport.Create(AspectLayout);
   GorillaViewport.Parent := AspectLayout;
@@ -4974,7 +5016,6 @@ begin
     Item.AddPair('grab_width', TJSONNumber.Create(FSettings.GrabWidth));
     Item.AddPair('grab_height', TJSONNumber.Create(FSettings.GrabHeight));
     Item.AddPair('animation_fps', TJSONNumber.Create(FSettings.AnimationFps));
-    Item.AddPair('metadata', TJSONBool.Create(FSettings.ExportMetadata));
     Item.AddPair('directions', TJSONBool.Create(FSettings.ExportDirections));
     Item.AddPair('atlas_page_size', TJSONNumber.Create(FSettings.AtlasPageSize));
     Item.AddPair('atlas_non_power_of_2', TJSONBool.Create(FSettings.AtlasNonPowerOf2));
@@ -5087,8 +5128,8 @@ begin
       FitViewportToAspect;
       if Choices.TryGetValue<Integer>('animation_fps', Number) then
         ApplyAnimationFps(Number);
-      if Choices.TryGetValue<Boolean>('metadata', Flag) then
-        FSettings.ExportMetadata := Flag;
+      // A project's "metadata" choice, from before metadata was always
+      // saved, is passed over
       if Choices.TryGetValue<Boolean>('directions', Flag) then
       begin
         FSettings.ExportDirections := Flag;
@@ -6833,7 +6874,7 @@ begin
   FLoadModel := TGorillaModel.Create(GorillaViewport);
   FLoadModel.Visible := False;
   FLoadModel.Parent := GorillaViewport;
-  FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadBox, Fixes);
+  FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadVariant, FLoadBox, Fixes);
   // A glTF's textures and buffers that had to be found or made, one line
   // each; nothing for those used as named
   DebugMemo.Lines.AddStrings(TextureFixReport(ExtractFileName(FLoadFile), Fixes));
@@ -6910,10 +6951,25 @@ procedure TMainForm.CommitLoad;
 var
   Slot: TSprite3DModelSlot;
   Index, NameIndex, UnusedIndex: Integer;
+  Shown: String;
 begin
   // Every animation is used until Models, Animations Used says otherwise
   Slot := NewModelSlot(FLoadModel, FLoadFile, FLoadBox, FLoadBounds, FLoadAnims);
   FLoadModel := nil;
+  // Its material variants, and the one it was loaded as
+  Slot.Variants := ModelVariantNames(FLoadFile);
+  if (FLoadVariant >= 0) and (FLoadVariant <= High(Slot.Variants)) then
+    Slot.Variant := FLoadVariant;
+  if Length(Slot.Variants) > 0 then
+  begin
+    if Slot.Variant >= 0 then
+      Shown := 'variant ' + Slot.Variants[Slot.Variant]
+    else
+      Shown := 'the base';
+    DebugMemo.Lines.Add(Format('%s: %d material variants (%s); showing %s',
+      [ExtractFileName(FLoadFile), Length(Slot.Variants), String.Join(', ', Slot.Variants),
+      Shown]));
+  end;
   // Measuring stepped the animations through their poses and left the
   // model however the last of them did; put it in its bind pose, exactly as
   // showing a static model does, so it shows, and its bounding box measures, the
@@ -7020,6 +7076,8 @@ var
 begin
   FLoadTimer.Enabled := False;
   FLoadStage := lsNone;
+  // The next load is of the model as made, unless the Variant button asks
+  FLoadVariant := BASE_VARIANT;
   FreeAndNil(FMeasurer);
   if FLoadRead <> nil then
     FLoadRead.Cancel;
@@ -8820,7 +8878,8 @@ begin
   // the whole capture and the model never moves, so once is enough. It is
   // measured where it falls, to a fraction of a pixel; the view is not
   // moved to put it on a pixel.
-  Metadata := FSettings.ExportMetadata and (AKind in [skStrip, skSheet]);
+  // Always, for a strip or spritesheet (owner, 13 November 2026)
+  Metadata := AKind in [skStrip, skSheet];
   Origin := TPointF.Zero;
   // A measuring pass saves nothing, so has no origin to give
   OriginKnown := not Measuring and (AKind in [skStrip, skSheet, skAtlas]) and
@@ -9408,7 +9467,7 @@ begin
   // As it was left last session; MP4 waits for StartVideo to offer it
   RestoreBatchKind;
 
-  // Second row, above Export: the metadata, directions and exact choices
+  // Second row, above Export: the variant, directions and exact choices
   Row := TLayout.Create(Self);
   Row.Parent := FBatchLayout;
   Row.Align := TAlignLayout.Top;
@@ -9416,16 +9475,18 @@ begin
   Row.Height := 26;
   Row.Position.Y := 100;   // below the first row
 
-  FBatchMetadata := TCheckBox.Create(Self);
-  FBatchMetadata.Parent := Row;
-  FBatchMetadata.Align := TAlignLayout.Left;
-  FBatchMetadata.Width := 84;
-  FBatchMetadata.Text := 'Metadata';
-  FBatchMetadata.Hint := 'Save a .json file of the same name beside each strip or ' +
-    'spritesheet, with its layout, origin and each frame''s empty border';
-  FBatchMetadata.ShowHint := True;
-  FBatchMetadata.IsChecked := FSettings.ExportMetadata;
-  FBatchMetadata.OnChange := BatchMetadataChange;
+  // Where the Metadata box was: a strip or spritesheet always has its .json
+  // now (owner, 13 November 2026)
+  FVariantButton := TButton.Create(Self);
+  FVariantButton.Parent := Row;
+  FVariantButton.Align := TAlignLayout.Left;
+  FVariantButton.Width := 84;
+  FVariantButton.Margins.Right := 4;
+  FVariantButton.ShowHint := True;
+  FVariantButton.OnClick := VariantButtonClick;
+  FVariantMenu := TPopupMenu.Create(Self);
+  FVariantMenu.Parent := Self;
+  UpdateVariantButton;
 
   FBatchDirections := TCheckBox.Create(Self);
   FBatchDirections.Parent := Row;
@@ -9557,14 +9618,87 @@ begin
   end;
 end;
 
-// Kept in settings.json, and used by every strip or spritesheet saved from now on,
-// from Export or the pop-up menu
-procedure TMainForm.BatchMetadataChange(Sender: TObject);
+// The Variant button: the variant shown, or Base; enabled only for a model
+// that has variants, while nothing is being saved (a click checks nothing
+// is loading)
+procedure TMainForm.UpdateVariantButton;
 begin
-  // Ticked by UpdateBatchControls for a texture atlas: not the user's choice
-  if FSyncingChecks then
+  if FVariantButton = nil then
     Exit;
-  FSettings.ExportMetadata := FBatchMetadata.IsChecked;
+  FVariantButton.Enabled := (Length(FModelVariants) > 0) and not Capturing;
+  if Length(FModelVariants) = 0 then
+  begin
+    FVariantButton.Text := 'Variant';
+    FVariantButton.Hint := 'The model shown has no material variants (Debug, glTF, Add ' +
+      'Variants adds them)';
+  end
+  else if (FModelVariant >= 0) and (FModelVariant <= High(FModelVariants)) then
+  begin
+    FVariantButton.Text := FModelVariants[FModelVariant];
+    FVariantButton.Hint := Format('Showing variant %s, of %d; click to choose another',
+      [FModelVariants[FModelVariant], Length(FModelVariants)]);
+  end
+  else
+  begin
+    FVariantButton.Text := 'Base';
+    FVariantButton.Hint := Format('Showing the model as made; click to choose one of its ' +
+      '%d variants', [Length(FModelVariants)]);
+  end;
+end;
+
+// A menu of the base and every variant, made afresh each time: a new menu
+// rather than items taken out of the old one, as freeing a menu item's
+// children once shown hung the Library's menu in Sprite3DBuilder. Parented
+// to the form, as FAnimationPopup is: without a parent FMX does not show a
+// popup menu's items properly (owner, 13 November 2026: only Base showed)
+procedure TMainForm.VariantButtonClick(Sender: TObject);
+var
+  Item: TMenuItem;
+  At: TPointF;
+begin
+  if Length(FModelVariants) = 0 then
+    Exit;
+  FreeAndNil(FVariantMenu);
+  FVariantMenu := TPopupMenu.Create(Self);
+  FVariantMenu.Parent := Self;
+  for var I := BASE_VARIANT to High(FModelVariants) do
+  begin
+    Item := TMenuItem.Create(Self);
+    if I = BASE_VARIANT then
+      Item.Text := 'Base (as made)'
+    else
+      Item.Text := FModelVariants[I];
+    Item.Tag := I;
+    // Ticked: the one shown
+    Item.IsChecked := I = FModelVariant;
+    Item.OnClick := VariantItemClick;
+    FVariantMenu.AddObject(Item);
+  end;
+  At := FVariantButton.LocalToScreen(TPointF.Create(0, FVariantButton.Height));
+  FVariantMenu.Popup(At.X, At.Y);
+end;
+
+// The model shown loaded again as the variant chosen, in its own place, as
+// opening the same file again does
+procedure TMainForm.VariantItemClick(Sender: TObject);
+var
+  Variant: Integer;
+begin
+  Variant := TMenuItem(Sender).Tag;
+  if (Variant = FModelVariant) or (FModelFile = String.Empty) then
+    Exit;
+  if (FLoadStage <> lsNone) or FQueueActive or FScanning or Capturing then
+  begin
+    ShowMessage('Wait until nothing is loading or being saved.');
+    Exit;
+  end;
+  if Variant = BASE_VARIANT then
+    DebugMemo.Lines.Add(ExtractFileName(FModelFile) + ': showing the model as made')
+  else
+    DebugMemo.Lines.Add(ExtractFileName(FModelFile) + ': showing variant ' +
+      FModelVariants[Variant]);
+  FLoadVariant := Variant;
+  SwitchModel(FModelFile);
 end;
 
 // Kept in settings.json; ticked, every animation is exported in each
@@ -9792,22 +9926,7 @@ begin
       (FAnimatedSlot.Model <> nil);
   FBatchKindBox.Enabled := not Capturing;
   FBatchAll.Enabled := not Capturing;
-  // Only strips, spritesheets and atlases have metadata. An atlas always
-  // has it, as without it there is no telling its animations apart: the box
-  // shows ticked and cannot be changed while Texture Atlas is chosen, and
-  // shows the choice kept for strips and spritesheets again after
-  var WasSyncing := FSyncingChecks;
-  FSyncingChecks := True;
-  try
-    if FBatchKindBox.ItemIndex = Ord(skAtlas) then
-      FBatchMetadata.IsChecked := True
-    else
-      FBatchMetadata.IsChecked := FSettings.ExportMetadata;
-  finally
-    FSyncingChecks := WasSyncing;
-  end;
-  FBatchMetadata.Enabled := not Capturing and
-    (FBatchKindBox.ItemIndex in [Ord(skStrip), Ord(skSheet)]);
+  UpdateVariantButton;
   FBatchDirections.Enabled := not Capturing;
   FBatchExact.Enabled := not Capturing;
   UpdateListFileItems;
@@ -11979,6 +12098,9 @@ begin
   FAnimationBoundsMeasured := ASlot.Model <> nil;
   FAnimationNames := ASlot.Names;
   FUsedAnimations := Copy(ASlot.Used);
+  FModelVariants := ASlot.Variants;
+  FModelVariant := ASlot.Variant;
+  UpdateVariantButton;
   if GorillaModel <> nil then
   begin
     ShowModelWithHelpers(GorillaModel, True);
@@ -13446,7 +13568,135 @@ begin
     finally
       Dialog.Free;
     end;
-    SaveGltfResult(Doc, '_parts', 'Add Parts: save as GLB');
+    SaveGltfResult(Doc, '_parts', 'Add Attachments: save as GLB');
+  finally
+    Doc.Free;
+  end;
+  {$ENDIF}
+end;
+
+procedure TMainForm.GltfVariantsItemClick(Sender: TObject);
+{$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+var
+  Doc: TglTFDocument;
+  Fixes: TArray<TSprite3DTextureFix>;
+  Slots: TArray<TGltfTextureSlot>;
+  Variants: TArray<TGltfNewVariant>;
+  Embed: Boolean;
+  Dialog: TSaveDialog;
+  FileName, Ext, ModelsFolder: String;
+  Lines: TStringList;
+{$ENDIF}
+begin
+  {$IF not (DEFINED(ANDROID) or DEFINED(IOS))}
+  if not GltfToolsReady then
+    Exit;
+  Doc := GltfModelDocument(TGltfExportOptions.Create) as TglTFDocument;
+  if Doc = nil then
+    Exit;
+  try
+    // What was found or made for each texture, so a texture read from the
+    // program's copy is shown by the file the model names
+    ModelFileToRead(FModelFile, Fixes);
+    ModelsFolder := IncludeTrailingPathDelimiter(TPath.Combine(
+      TSprite3DAppSettings.SupportFolder, 'models'));
+    Slots := VariantTextureSlots(Doc,
+      function(const AImageFile: String): String
+      var
+        Hash: String;
+      begin
+        Result := AImageFile;
+        if not AImageFile.StartsWith(ModelsFolder, True) or not TFile.Exists(AImageFile) then
+          Exit;
+        // A PNG made for the model (from a .tga or .psd, say) is the fix's
+        // Used: shown as the file it was made from, so a variant's files are
+        // suggested beside it
+        for var Fix in Fixes do
+          if (Fix.Used <> String.Empty) and SameFileName(ExpandFileName(Fix.Used),
+            ExpandFileName(AImageFile)) then
+          begin
+            if Fix.Source <> String.Empty then
+              Exit(Fix.Source);
+            Exit(Fix.Used);
+          end;
+        // A file used as it was is copied in named after its content: the
+        // fix's Used with that content
+        Hash := TPath.GetFileNameWithoutExtension(AImageFile);
+        for var Fix in Fixes do
+          if (Fix.Used <> String.Empty) and TFile.Exists(Fix.Used) and
+            SameText(THashSHA2.GetHashStringFromFile(Fix.Used), Hash) then
+          begin
+            if Fix.Source <> String.Empty then
+              Exit(Fix.Source);
+            Exit(Fix.Used);
+          end;
+        // Not known (a PNG made from a .psd, say): the image's own name is
+        // shown instead
+        Result := String.Empty;
+      end);
+    if Length(Slots) = 0 then
+    begin
+      ShowMessage('The model''s materials have no textures to give variants of.');
+      Exit;
+    end;
+    if not TGltfVariantsForm.Execute(ExtractFileName(FModelFile), Slots,
+      ExistingVariantNames(Doc), ExtractFileDir(FModelFile), Variants, Embed) then
+      Exit;
+
+    // A GLB with every texture inside, or a glTF naming its textures' files
+    if Embed then
+      Ext := '.glb'
+    else
+      Ext := '.gltf';
+    Dialog := TSaveDialog.Create(nil);
+    try
+      if Embed then
+      begin
+        Dialog.Title := 'Add Variants: save as GLB';
+        Dialog.Filter := 'GLB (*.glb)|*.glb';
+      end
+      else
+      begin
+        Dialog.Title := 'Add Variants: save as glTF';
+        Dialog.Filter := 'glTF (*.gltf)|*.gltf';
+      end;
+      Dialog.DefaultExt := Ext.Substring(1);
+      Dialog.InitialDir := ExtractFileDir(FModelFile);
+      Dialog.FileName := TPath.GetFileNameWithoutExtension(FModelFile) + '_variants' + Ext;
+      Dialog.Options := Dialog.Options + [TOpenOption.ofOverwritePrompt];
+      if not Dialog.Execute then
+        Exit;
+      FileName := TPath.ChangeExtension(Dialog.FileName, Ext);
+    finally
+      Dialog.Free;
+    end;
+    // The model shown is never written over, as for the other glTF tools
+    if SameFileName(ExpandFileName(FileName), ExpandFileName(FModelFile)) then
+    begin
+      ShowMessage('Choose another name: that is the model being worked on.');
+      Exit;
+    end;
+    Lines := TStringList.Create;
+    try
+      try
+        SaveWithVariants(Doc, Slots, Variants, FileName, Embed,
+          TSprite3DAppSettings.SupportFolder, Lines);
+      except
+        on E: Exception do
+        begin
+          DebugMemo.Lines.AddStrings(Lines);
+          DebugMemo.Lines.Add('glTF: could not save ' + FileName + ': ' + E.Message);
+          ShowMessage('The model could not be saved with its variants: ' + E.Message);
+          Exit;
+        end;
+      end;
+      DebugMemo.Lines.AddStrings(Lines);
+    finally
+      Lines.Free;
+    end;
+    DebugMemo.Lines.Add(Format('glTF: saved %s with %d variants; opening it', [FileName,
+      Length(Variants)]));
+    SwitchModel(FileName);
   finally
     Doc.Free;
   end;

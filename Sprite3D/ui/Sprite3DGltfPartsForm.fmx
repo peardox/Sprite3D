@@ -3,7 +3,7 @@ object GltfPartsForm: TGltfPartsForm
   Top = 0
   BorderIcons = [biSystemMenu]
   BorderStyle = Single
-  Caption = 'Add Parts'
+  Caption = 'Add Attachments'
   ClientHeight = 420
   ClientWidth = 600
   Position = MainFormCenter

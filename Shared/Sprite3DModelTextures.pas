@@ -183,6 +183,31 @@ function PreparesTextures(const AModelFile: String): Boolean;
 function PrepareModelTextures(const AModelFile, ACacheFolder, AKey: String;
   out AFixes: TArray<TSprite3DTextureFix>): String;
 
+//** @abstract(Whether the image library can read image file AFileName, so it can be made a
+//** PNG if the loader does not read it as it is: TGA, a layered image file (PSD), BMP, TIFF
+//** and the rest, as well as PNG and JPEG. Judged by its extension.)
+//**
+//** @param(AFileName The file.)
+//**
+//** @returns(True if so.)
+function ReadableImageFile(const AFileName: String): Boolean;
+
+//** @abstract(Image file AFile as one the loader and glTF take: the file itself if it is a
+//** PNG or a JPEG (LoaderReadsImage); otherwise a PNG made from it in the cache's
+//** @code(models) folder, as PrepareModelTextures makes them (a layered image file's
+//** transparency taken only where the file says it has some), made once.)
+//**
+//** @param(AFile The image file, a full path.)
+//**
+//** @param(ACacheFolder The cache.)
+//**
+//** @param(APng On return, the PNG or JPEG to use; empty if none could be made.)
+//**
+//** @param(AReason On return, why not; empty if it could.)
+//**
+//** @returns(True if APng is there.)
+function ImageForLoader(const AFile, ACacheFolder: String; out APng, AReason: String): Boolean;
+
 implementation
 
 uses
@@ -1874,6 +1899,23 @@ begin
     Lines.Free;
     Nodes.Free;
   end;
+end;
+
+function ReadableImageFile(const AFileName: String): Boolean;
+begin
+  Result := IsImageFile(AFileName);
+end;
+
+function ImageForLoader(const AFile, ACacheFolder: String; out APng, AReason: String): Boolean;
+begin
+  APng := String.Empty;
+  AReason := String.Empty;
+  if LoaderReadsImage(AFile) then
+  begin
+    APng := AFile;
+    Exit(True);
+  end;
+  Result := MakePng(AFile, TPath.Combine(ACacheFolder, MODEL_FOLDER_NAME), APng, AReason);
 end;
 
 function PreparesTextures(const AModelFile: String): Boolean;

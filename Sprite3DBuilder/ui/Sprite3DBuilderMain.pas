@@ -235,6 +235,9 @@ type
     //** Turns the piece under the pointer and those joined to it on one side about its join
     //** with the piece on the other side.
     etBend,
+    //** Variants: outlines every piece whose model has material variants; a click on one
+    //** chooses its variant from a menu (with Shift, for every piece of that model).
+    etVariant,
     //** Move Camera: drags the view across the level, X and Z.
     etPan);
 
@@ -255,8 +258,8 @@ type
     //** floor (TEMPLATE_PARK_Y): every piece of it is drawn by the GPU as an instance of it.)
     Template: TGorillaModel;
     //** @abstract(The file the template was loaded from: the model's own, or its copy with
-    //** the
-    //** textures and buffers found or made, from PrepareModelTextures.)
+    //** the textures and buffers found or made, from PrepareModelTextures, or a copy showing
+    //** a material variant, from PrepareModelVariant.)
     LoadFile: String;
     //** @abstract(True if the model is static (meshes only, no skin, no animations), so the
     //** template's meshes are made static.)
@@ -845,6 +848,8 @@ type
     FTurnCarried: Integer;
     FTurnSaved: TArray<TLevelPiece>;
     FRotateButton, FBendButton: TRectangle;
+    //** @abstract(The palette's Variants button, beside Bend.)
+    FVariantButton: TRectangle;
     FRotationSnapItem: TMenuItem;
     //** Erase, Move Object and Move Camera. FNextPieceId numbers the pieces.
     //** Move Object: while FMoveDown, piece FMoveIndex follows the pointer,
@@ -897,6 +902,19 @@ type
     //** it
     //** is static, found when its first piece is placed. Made by BuildLevel.)
     FSources: TDictionary<String, TPieceSource>;
+    //** @abstract(Each model's material variants' names, by its key in lower case, read once
+    //** from its file (ModelVariantNames); empty for a model without.)
+    FVariantNames: TDictionary<String, TArray<String>>;
+    //** @abstract(While Variants is the tool: an outline round each piece whose model has
+    //** variants, up to MAX_VARIANT_MARKS; owned.)
+    FVariantMarks: TObjectList<TSprite3DPlacementBox>;
+    //** @abstract(The Variants tool's menu, made afresh for each click.)
+    FPieceVariantMenu: TPopupMenu;
+    //** @abstract(The piece the Variants tool's menu is for, an index into FPieces.)
+    FVariantTarget: Integer;
+    //** @abstract(True if the menu's choice is for every piece of the target's model (Shift
+    //** was held).)
+    FVariantAll: Boolean;
     //** @abstract(The palette: a floating toolbar over the view, on a dark backing,
     //** upright,
     //** with a grip across its top to move it and the Place Model and Mouse View tools under
@@ -1318,17 +1336,60 @@ type
     function MoveToolOn: Boolean;
     //** @abstract(True while Move Camera is the palette's tool.)
     function PanToolOn: Boolean;
-    //** @abstract(True while a tool that points at pieces is on: Erase, Move Object, Rotate
-    //** or Bend.)
+    //** @abstract(True while a tool that points at pieces is on: Erase, Move Object, Rotate,
+    //** Bend or Variants.)
     function PickToolOn: Boolean;
+    //** @abstract(True while Variants is the palette's tool.)
+    function VariantToolOn: Boolean;
+    //** @abstract(Chooses Variants.)
+    //**
+    //** @param(Sender FVariantButton.)
+    procedure VariantButtonClick(Sender: TObject);
+    //** @abstract(The names of the material variants of a piece's model, read from its file
+    //** once and kept in FVariantNames.)
+    //**
+    //** @param(ASpec The piece's spec.)
+    //**
+    //** @returns(The names; empty for a model without.)
+    function VariantNamesOf(const ASpec: TSprite3DPieceSpec): TArray<String>;
+    //** @abstract(The key FSources keeps a template by: the model's key, and its variant's
+    //** name if it has one, as each variant is a template of its own.)
+    //**
+    //** @param(ASpec The spec.)
+    //**
+    //** @returns(The key.)
+    function SourceKey(const ASpec: TSprite3DPieceSpec): String;
+    //** @abstract(Puts an outline round every piece whose model has variants while Variants is
+    //** the tool, and takes them away otherwise.)
+    procedure RefreshVariantMarks;
+    //** @abstract(Shows the Variants tool's menu for a piece: the base and its model's
+    //** variants, the one it is ticked.)
+    //**
+    //** @param(AIndex The piece, an index into FPieces.)
+    //**
+    //** @param(AAll True to change every piece of its model.)
+    //**
+    //** @param(AScreen Where the menu goes, in screen coordinates.)
+    procedure ShowPieceVariantMenu(const AIndex: Integer; const AAll: Boolean;
+      const AScreen: TPointF);
+    //** @abstract(The Variants tool's menu's choice: the piece, or every piece of its model,
+    //** made that variant.)
+    //**
+    //** @param(Sender A menu item; its TagString is the variant's name, empty for the base.)
+    procedure PieceVariantItemClick(Sender: TObject);
+    //** @abstract(Makes pieces a variant: each is drawn by that variant's template from now
+    //** on, where it is, turned as it is. A piece still falling is left as it is.)
+    //**
+    //** @param(AIndices The pieces, indices into FPieces, all of one model.)
+    //**
+    //** @param(AVariantName The variant's name; empty for the base.)
+    procedure SetPiecesVariant(const AIndices: TArray<Integer>; const AVariantName: String);
     //** @abstract(Chooses Erase.)
     procedure EraseButtonClick(Sender: TObject);
     //** @abstract(Chooses Move Object.)
     procedure MoveButtonClick(Sender: TObject);
     //** @abstract(Chooses Move Camera.)
     procedure PanButtonClick(Sender: TObject);
-    //** @abstract(The index in FPieces of the piece numbered AId, or -1.)
-    function PieceIndexOf(const AId: Integer): Integer;
     //** @abstract(The indices in FPieces of the pieces numbered AIds that are still there.)
     function IndicesOf(const AIds: TArray<Integer>): TArray<Integer>;
     //** @abstract(Takes pieces out of the level, then lets whatever rested on them fall.)
@@ -1612,7 +1673,7 @@ uses
   FMX.Platform, System.IOUtils, OSPaths, Gorilla.DefTypes, System.Math,
   FMX.DialogService, Sprite3DBuilderLicencesForm, System.StrUtils, Sprite3DModelTextures,
   Sprite3DModelContent, Sprite3DBuilderRotationForm, System.Generics.Defaults, System.JSON,
-  JsonText, Sprite3DOpenFiles;
+  JsonText, Sprite3DOpenFiles, Sprite3DModelVariants;
 
 const
   //** @abstract(Mouse View: degrees the view turns for each pixel the pointer
@@ -1691,6 +1752,19 @@ const
   PICK_BOX_COLOUR = $FFFFB020;
   //** @abstract(The colour of the outline round the piece Erase would remove: red.)
   ERASE_BOX_COLOUR = $FFFF4040;
+  //** @abstract(The colour of the outline round the piece the Variants tool would change:
+  //** green.)
+  VARIANT_PICK_COLOUR = $FF40F070;
+  //** @abstract(The colour of the outlines round every piece with variants while Variants is
+  //** the tool: a darker green.)
+  VARIANT_MARK_COLOUR = $FF208048;
+  //** @abstract(How many pieces with variants are outlined at most, so a level of thousands
+  //** stays quick; the rest are still found by pointing at them.)
+  MAX_VARIANT_MARKS = 500;
+  //** @abstract(The Variants icon, as path data in a 24 by 24 square: two overlapping
+  //** swatches.)
+  VARIANT_ICON = 'M2,2 L14,2 L14,14 L2,14 Z M10,10 L22,10 L22,22 L10,22 Z M10,14 L14,14 ' +
+    'L14,10';
   //** @abstract(The Erase icon, as path data in a 24 by 24 square: an eraser on a line.)
   ERASE_ICON = 'M3,15 L13,5 L21,13 L13,21 L9,21 Z M8,10 L16,18 M2,23 L22,23';
   //** @abstract(The Move Object icon: a cube with arrows out to the four sides.)
@@ -2345,6 +2419,8 @@ begin
   FreeAndNil(FHistory);
   FreeAndNil(FPieces);
   FreeAndNil(FSources);
+  FreeAndNil(FVariantMarks);
+  FreeAndNil(FVariantNames);
   FreeAndNil(FDisplays);
   SaveViewState;
   FreeAndNil(FSettings);
@@ -3718,20 +3794,23 @@ end;
 function TMainForm.PieceSourceFor(const ASpec: TSprite3DPieceSpec;
   out ASource: TPieceSource): Boolean;
 var
+  Names: TArray<String>;
+  VariantIndex: Integer;
   Fixes: TArray<TSprite3DTextureFix>;
   Box: TBoundingBox;
   Watch: TStopwatch;
   Kind: TSprite3DModelKind;
   Template: TGorillaModel;
 begin
-  Result := FSources.TryGetValue(ASpec.Key, ASource);
+  Result := FSources.TryGetValue(SourceKey(ASpec), ASource);
   if Result then
     Exit;
   // Not Default(): Gorilla.DefTypes' unscoped value Default hides it here
   ASource.Template := nil;
   ASource.LoadFile := String.Empty;
   ASource.IsStatic := False;
-  Kind := mkUnknown;
+  // Kind is set once the template has loaded; a failure exits before it is
+  // used
   Watch := TStopwatch.StartNew;
   // Made and loaded with its own LoadFromFile, as the Library loads a
   // model; never a TGorillaModel.LoadNewModelFrom... class function (an
@@ -3752,6 +3831,22 @@ begin
         DebugMemo.Lines.Add(Format('Level: %s: %s %s: %s', [ASpec.Name,
           IfThen(Fix.IsBuffer, 'buffer', 'texture'), Fix.Named,
           IfThen(Fix.Used <> '', 'used ' + ExtractFileName(Fix.Used), 'not found')]));
+    // A variant: from a copy whose meshes take its materials; one the model
+    // no longer has is placed as the base, said so
+    if ASpec.VariantName <> String.Empty then
+    begin
+      VariantIndex := -1;
+      Names := VariantNamesOf(ASpec);
+      for var I := 0 to High(Names) do
+        if SameText(Names[I], ASpec.VariantName) then
+          VariantIndex := I;
+      if VariantIndex >= 0 then
+        ASource.LoadFile := PrepareModelVariant(ASource.LoadFile,
+          TSprite3DAppSettings.ThumbnailFolder, ASpec.Key, VariantIndex)
+      else
+        DebugMemo.Lines.Add(Format('Level: %s has no variant %s now; shown as made',
+          [ASpec.Name, ASpec.VariantName]));
+    end;
     LoadModelFile(Template, ASource.LoadFile, Box);
     // Meshes only, no skin, no animations: its meshes can be made static,
     // before it is first drawn, so its buffers are made static ones
@@ -3789,9 +3884,10 @@ begin
     DebugMemo.Lines.Add(Format('Level: %s loaded with a box of (%.3g, %.3g, %.3g) to ' +
       '(%.3g, %.3g, %.3g), not the Library''s; placed by the Library''s', [ASpec.Name,
       Box.Left, Box.Top, Box.Near, Box.Right, Box.Bottom, Box.Far]));
-  FSources.Add(ASpec.Key, ASource);
-  DebugMemo.Lines.Add(Format('Level: %s loaded in %d ms, its pieces drawn as GPU instances ' +
-    'of it; %s', [ASpec.Name, Watch.ElapsedMilliseconds, IfThen(ASource.IsStatic,
+  FSources.Add(SourceKey(ASpec), ASource);
+  DebugMemo.Lines.Add(Format('Level: %s%s loaded in %d ms, its pieces drawn as GPU instances ' +
+    'of it; %s', [ASpec.Name, IfThen(ASpec.VariantName <> String.Empty, ' (' +
+    ASpec.VariantName + ')', ''), Watch.ElapsedMilliseconds, IfThen(ASource.IsStatic,
     'static, so its meshes are made static',
     LowerCase(ModelKindName(Kind)) + ', so its meshes are not made static')]));
   Result := True;
@@ -3948,15 +4044,23 @@ end;
 procedure TMainForm.ShowPick(const AIndex: Integer);
 var
   Piece: TLevelPiece;
+  Index: Integer;
 begin
   FPicked := -1;
-  if (FPickBox <> nil) and (FPieces <> nil) and (AIndex >= 0) and (AIndex < FPieces.Count) then
+  Index := AIndex;
+  // Variants points at pieces with variants only
+  if VariantToolOn and (Index >= 0) and (FPieces <> nil) and (Index < FPieces.Count) and
+    (Length(VariantNamesOf(FPieces[Index].Spec)) = 0) then
+    Index := -1;
+  if (FPickBox <> nil) and (FPieces <> nil) and (Index >= 0) and (Index < FPieces.Count) then
   begin
-    FPicked := AIndex;
-    Piece := FPieces[AIndex];
+    FPicked := Index;
+    Piece := FPieces[Index];
     FPickBox.Box := Piece.Spec.Box;
     if EraseToolOn then
       FPickBox.Color := ERASE_BOX_COLOUR
+    else if VariantToolOn then
+      FPickBox.Color := VARIANT_PICK_COLOUR
     else
       FPickBox.Color := PICK_BOX_COLOUR;
     FPickBox.Position.Point := Piece.Landed;
@@ -4263,6 +4367,8 @@ begin
   ShowPick(-1);
   FMoveDown := False;
   FPanDown := False;
+  if FVariantMarks <> nil then
+    FVariantMarks.Clear;
   if FSources <> nil then
   begin
     for var Source in FSources.Values do
@@ -4408,6 +4514,9 @@ begin
   FPlaceBox.Visible := False;
   FPieces := TList<TLevelPiece>.Create;
   FSources := TDictionary<String, TPieceSource>.Create;
+  FVariantNames := TDictionary<String, TArray<String>>.Create;
+  FVariantMarks := TObjectList<TSprite3DPlacementBox>.Create(True);
+  FVariantTarget := -1;
   // Place Model picks among several models at random
   Randomize;
 
@@ -4692,6 +4801,10 @@ begin
       DebugMemo.Lines.Add(Format('Bend: left-drag a piece of a run to turn it and the pieces ' +
         'to its right about its join with the piece to its left; right-drag for the other ' +
         'way; in steps of %.4g degrees, freely with Shift held', [FSettings.RotateSnap]));
+    etVariant:
+      DebugMemo.Lines.Add('Variants: the pieces whose models have material variants are ' +
+        'outlined; a click on one chooses its variant, Shift-click for every piece of its ' +
+        'model');
   end;
 end;
 
@@ -4925,6 +5038,14 @@ begin
   end;
   if Button <> TMouseButton.mbLeft then
     Exit;
+  if VariantToolOn then
+  begin
+    Index := PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    if Index >= 0 then
+      ShowPieceVariantMenu(Index, ssShift in Shift,
+        AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
+    Exit;
+  end;
   if EraseToolOn then
   begin
     Index := PieceAt(AspectLayout.LocalToScreen(TPointF.Create(X, Y)));
@@ -5125,12 +5246,208 @@ end;
 
 function TMainForm.PickToolOn: Boolean;
 begin
-  Result := EraseToolOn or MoveToolOn or RotateToolOn or BendToolOn;
+  Result := EraseToolOn or MoveToolOn or RotateToolOn or BendToolOn or VariantToolOn;
 end;
 
 procedure TMainForm.EraseButtonClick(Sender: TObject);
 begin
   ChooseEditTool(etErase);
+end;
+
+{ Variants }
+
+function TMainForm.VariantToolOn: Boolean;
+begin
+  Result := (FPaletteBack <> nil) and not MouseViewOn and (FEditTool = etVariant);
+end;
+
+procedure TMainForm.VariantButtonClick(Sender: TObject);
+begin
+  ChooseEditTool(etVariant);
+end;
+
+function TMainForm.VariantNamesOf(const ASpec: TSprite3DPieceSpec): TArray<String>;
+begin
+  if FVariantNames = nil then
+    Exit(nil);
+  if not FVariantNames.TryGetValue(LowerCase(ASpec.Key), Result) then
+  begin
+    Result := ModelVariantNames(ASpec.FileName);
+    FVariantNames.Add(LowerCase(ASpec.Key), Result);
+  end;
+end;
+
+function TMainForm.SourceKey(const ASpec: TSprite3DPieceSpec): String;
+begin
+  Result := LowerCase(ASpec.Key);
+  if ASpec.VariantName <> String.Empty then
+    Result := Result + '|' + LowerCase(ASpec.VariantName);
+end;
+
+procedure TMainForm.RefreshVariantMarks;
+var
+  Mark: TSprite3DPlacementBox;
+  Piece: TLevelPiece;
+  Count, Skipped: Integer;
+begin
+  if FVariantMarks = nil then
+    Exit;
+  FVariantMarks.Clear;
+  if not VariantToolOn or (FPieces = nil) then
+    Exit;
+  Count := 0;
+  Skipped := 0;
+  for var I := 0 to FPieces.Count - 1 do
+  begin
+    Piece := FPieces[I];
+    if Length(VariantNamesOf(Piece.Spec)) = 0 then
+      Continue;
+    if Count >= MAX_VARIANT_MARKS then
+    begin
+      Inc(Skipped);
+      Continue;
+    end;
+    // As the pick's outline is drawn, round the piece's own box, turned
+    Mark := TSprite3DPlacementBox.Create(nil);
+    Mark.Parent := FLevel;
+    Mark.Color := VARIANT_MARK_COLOUR;
+    Mark.Box := Piece.Spec.Box;
+    Mark.Position.Point := Piece.Landed;
+    Mark.RotationAngle.Y := Piece.Turn;
+    FitOutline(Mark);
+    Mark.Visible := True;
+    FVariantMarks.Add(Mark);
+    Inc(Count);
+  end;
+  if Skipped > 0 then
+    DebugMemo.Lines.Add(Format('Variants: %d pieces with variants outlined; %d more are not, ' +
+      'to keep the view quick, but can still be pointed at', [Count, Skipped]));
+end;
+
+procedure TMainForm.ShowPieceVariantMenu(const AIndex: Integer; const AAll: Boolean;
+  const AScreen: TPointF);
+var
+  Names: TArray<String>;
+  Item: TMenuItem;
+  Spec: TSprite3DPieceSpec;
+begin
+  if (FPieces = nil) or (AIndex < 0) or (AIndex >= FPieces.Count) then
+    Exit;
+  Spec := FPieces[AIndex].Spec;
+  Names := VariantNamesOf(Spec);
+  if Length(Names) = 0 then
+  begin
+    DebugMemo.Lines.Add('Variants: ' + Spec.Name + ' has no material variants');
+    Exit;
+  end;
+  FVariantTarget := AIndex;
+  FVariantAll := AAll;
+  // A new menu each time, parented to the form, as FMX shows a popup
+  // menu's items only then; not items taken out of the old one, which once
+  // hung the Library's menu
+  FreeAndNil(FPieceVariantMenu);
+  FPieceVariantMenu := TPopupMenu.Create(Self);
+  FPieceVariantMenu.Parent := Self;
+  Item := TMenuItem.Create(Self);
+  if AAll then
+    Item.Text := 'Every piece of ' + Spec.Name + ':'
+  else
+    Item.Text := Spec.Name + ':';
+  Item.Enabled := False;
+  FPieceVariantMenu.AddObject(Item);
+  for var I := -1 to High(Names) do
+  begin
+    Item := TMenuItem.Create(Self);
+    if I < 0 then
+    begin
+      Item.Text := 'Base (as made)';
+      Item.TagString := String.Empty;
+    end
+    else
+    begin
+      Item.Text := Names[I];
+      Item.TagString := Names[I];
+    end;
+    Item.IsChecked := SameText(Item.TagString, Spec.VariantName);
+    Item.OnClick := PieceVariantItemClick;
+    FPieceVariantMenu.AddObject(Item);
+  end;
+  FPieceVariantMenu.Popup(AScreen.X, AScreen.Y);
+end;
+
+procedure TMainForm.PieceVariantItemClick(Sender: TObject);
+var
+  Indices: TArray<Integer>;
+  Key: String;
+begin
+  if (FPieces = nil) or (FVariantTarget < 0) or (FVariantTarget >= FPieces.Count) then
+    Exit;
+  Indices := [FVariantTarget];
+  if FVariantAll then
+  begin
+    // Every piece of the model, whichever variant it is
+    Key := LowerCase(FPieces[FVariantTarget].Spec.Key);
+    Indices := nil;
+    for var I := 0 to FPieces.Count - 1 do
+      if SameText(FPieces[I].Spec.Key, Key) then
+        Indices := Indices + [I];
+  end;
+  SetPiecesVariant(Indices, TMenuItem(Sender).TagString);
+end;
+
+procedure TMainForm.SetPiecesVariant(const AIndices: TArray<Integer>;
+  const AVariantName: String);
+var
+  Spec: TSprite3DPieceSpec;
+  Source: TPieceSource;
+  Piece: TLevelPiece;
+  Changed, Falling: Integer;
+begin
+  if (FPieces = nil) or (Length(AIndices) = 0) or (AIndices[0] < 0) or
+    (AIndices[0] >= FPieces.Count) then
+    Exit;
+  Spec := FPieces[AIndices[0]].Spec;
+  Spec.VariantName := AVariantName;
+  // The variant's template, loaded the first time it is wanted
+  if not PieceSourceFor(Spec, Source) then
+    Exit;
+  Changed := 0;
+  Falling := 0;
+  ShowPick(-1);
+  EditInstances(True);
+  try
+    for var I in AIndices do
+    begin
+      if (I < 0) or (I >= FPieces.Count) then
+        Continue;
+      Piece := FPieces[I];
+      if SameText(Piece.Spec.VariantName, AVariantName) then
+        Continue;
+      if Piece.Falling then
+      begin
+        Inc(Falling);
+        Continue;
+      end;
+      // Drawn by the other template from now on, where it is, as it is
+      // turned: the old instance freed, as taking a piece out does
+      Piece.Instance.Free;
+      Piece.Instance := nil;
+      Inc(FInstanceSerial);
+      Piece.Instance := Source.Template.AddInstanceItem(Format('Piece%d', [FInstanceSerial]));
+      Piece.Model := Source.Template;
+      Piece.Spec.VariantName := AVariantName;
+      FPieces[I] := Piece;
+      MovePiece(Piece, Piece.Landed.Y);
+      Inc(Changed);
+    end;
+  finally
+    EditInstances(False);
+  end;
+  if Changed > 0 then
+    MarkLevelChanged;
+  DebugMemo.Lines.Add(Format('Variants: %d pieces of %s made %s%s', [Changed, Spec.Name,
+    IfThen(AVariantName = String.Empty, 'the base', AVariantName),
+    IfThen(Falling > 0, Format('; %d still falling were left as they were', [Falling]), '')]));
 end;
 
 procedure TMainForm.MoveButtonClick(Sender: TObject);
@@ -5141,15 +5458,6 @@ end;
 procedure TMainForm.PanButtonClick(Sender: TObject);
 begin
   ChooseEditTool(etPan);
-end;
-
-function TMainForm.PieceIndexOf(const AId: Integer): Integer;
-begin
-  if FPieces <> nil then
-    for var I := 0 to FPieces.Count - 1 do
-      if FPieces[I].Id = AId then
-        Exit(I);
-  Result := -1;
 end;
 
 procedure TMainForm.ReleasePiece(const AIndex: Integer; const AGone: TArray<Boolean>);
@@ -5500,6 +5808,8 @@ end;
 
 procedure TMainForm.MarkLevelChanged;
 begin
+  // Pieces placed, moved, taken out or changed: the outlines follow
+  RefreshVariantMarks;
   if FLevelDirty then
     Exit;
   FLevelDirty := True;
@@ -5563,14 +5873,17 @@ begin
     for var I := 0 to FPieces.Count - 1 do
     begin
       Piece := FPieces[I];
-      if not ModelOf.TryGetValue(Piece.Spec.Key, At) then
+      // A model once for each variant its pieces are
+      if not ModelOf.TryGetValue(SourceKey(Piece.Spec), At) then
       begin
         At := Models.Count;
-        ModelOf.Add(Piece.Spec.Key, At);
+        ModelOf.Add(SourceKey(Piece.Spec), At);
         Obj := TJSONObject.Create;
         Obj.AddPair('name', Piece.Spec.Name);
         Obj.AddPair('file', Piece.Spec.FileName);
         Obj.AddPair('key', Piece.Spec.Key);
+        if Piece.Spec.VariantName <> String.Empty then
+          Obj.AddPair('variant', Piece.Spec.VariantName);
         Obj.AddPair('boxMin', Point(Piece.Spec.BoxMin));
         Obj.AddPair('boxMax', Point(Piece.Spec.BoxMax));
         Models.AddElement(Obj);
@@ -5752,6 +6065,8 @@ begin
         Specs[I].Name := Obj.GetValue<String>('name', '');
         Specs[I].FileName := Obj.GetValue<String>('file', '');
         Specs[I].Key := Obj.GetValue<String>('key', '');
+        // The base if none is given, as in a level from before variants
+        Specs[I].VariantName := Obj.GetValue<String>('variant', '');
         Specs[I].BoxMin := ReadPoint(Obj.FindValue('boxMin'));
         Specs[I].BoxMax := ReadPoint(Obj.FindValue('boxMax'));
         Usable[I] := (Specs[I].Key <> String.Empty) and PieceSourceFor(Specs[I], Sources[I]);
@@ -5854,6 +6169,7 @@ begin
   FSettings.LevelFolder := ExtractFilePath(Source);
   UpdateCaption;
   UpdateStatus;
+  RefreshVariantMarks;
   DebugMemo.Lines.Add(Format('Level: loaded %d pieces from %s in %d ms%s', [FPieces.Count,
     Source, Watch.ElapsedMilliseconds, IfThen(Missing > 0, Format('; %d left out, as ' +
     'their models could not be loaded (see above)', [Missing]), '')]));
@@ -6349,7 +6665,9 @@ begin
   FBendButton := MakeButton(BEND_ICON, 'Bend (double-click: the step)', 0, Y,
     BendButtonClick);
   FBendButton.OnDblClick := TurnButtonDblClick;
-  // Its pair, column 1, is empty
+  // Its pair: a piece's material variant
+  FVariantButton := MakeButton(VARIANT_ICON, 'Variants: pieces with material variants ' +
+    '(Shift-click: every piece of the model)', 1, Y, VariantButtonClick);
   Y := Y + PALETTE_BUTTON + PALETTE_GAP;
   FPaletteBack.Height := Y;
 
@@ -6467,9 +6785,11 @@ begin
   Mark(FMoveButton, MoveToolOn);
   Mark(FRotateButton, RotateToolOn);
   Mark(FBendButton, BendToolOn);
+  Mark(FVariantButton, VariantToolOn);
   Mark(FPanButton, PanToolOn);
   Mark(FCameraButton, MouseViewOn);
   UpdateStatus;
+  RefreshVariantMarks;
 end;
 
 // Along the bottom of the form, under the tabs, on both of them
@@ -6503,6 +6823,17 @@ begin
     Text := 'Mouse View.  Drag: turn the view.  ' + VIEW_KEYS
   else if RotateToolOn or BendToolOn then
     Text := TurnStatus
+  else if VariantToolOn then
+  begin
+    if (FPicked >= 0) and (FPieces <> nil) and (FPicked < FPieces.Count) then
+      Text := Format('Variants: %s, %s.  Click: choose its variant.  Shift-click: every ' +
+        'piece of it.  ', [FPieces[FPicked].Spec.Name,
+        IfThen(FPieces[FPicked].Spec.VariantName = String.Empty, 'the base',
+        FPieces[FPicked].Spec.VariantName)]) + VIEW_KEYS
+    else
+      Text := 'Variants: the pieces outlined have material variants; point at one.  ' +
+        VIEW_KEYS;
+  end
   else if EraseToolOn then
   begin
     if (FPicked >= 0) and (FPieces <> nil) and (FPicked < FPieces.Count) then

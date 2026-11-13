@@ -546,8 +546,13 @@ object MainForm: TMainForm
       end
       object GltfPartsItem: TMenuItem
         Locked = True
-        Text = 'Add Parts...'
+        Text = 'Add Attachments...'
         OnClick = GltfPartsItemClick
+      end
+      object GltfVariantsItem: TMenuItem
+        Locked = True
+        Text = 'Add Variants...'
+        OnClick = GltfVariantsItemClick
       end
     end
   end
