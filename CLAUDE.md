@@ -5,7 +5,7 @@ the owner works, the rules for the code, where the work has got to, and
 what has been learned along the way. `README.md` describes the program for
 its users and developers; this file is for Claude. Read both.
 
-Last updated: 13 November 2026, 14:20.
+Last updated: 13 November 2026, 16:30.
 
 ## Starting a new conversation
 
@@ -473,6 +473,37 @@ gone up.
   beside the executable. A leak introduced by a change shows up there.
 
 ## Where the work is
+
+### State (13 November 2026, 16:30): Gorilla3D's own material variants
+
+The owner (16:19) found Gorilla3D 1.5 supports `KHR_materials_variants`
+itself, newly documented (docs.gorilla3d.de, Core, Models, *Material
+Variants*): `TGorillaModel.MaterialVariants` (TStrings, read-only; nil
+with no model), `MaterialVariant` (Integer, -1 the base, out of range is
+-1), `MaterialVariantName` (case ignored; unknown is the base),
+`TGorillaMesh.ApplyMaterialVariant`. GPU instances share material state.
+Its GLB exporter does not write the extension (ours is GLTFLib's, which
+does). **`2026-11-13-1630-gorilla-variants.zip`**, follows
+`2026-11-13-1425-variants-hints.zip`:
+- **The copy-and-reload is gone.** Shared `Sprite3DModelVariants` keeps
+  `ModelVariantNames`, `GltfVariantNamesOf`, `ReadGltfJson`, `GlbBytes`,
+  the constants; `PrepareModelVariant` and its helpers are removed.
+- **Sprite3D**: `LoadModelFile` has no variant argument again;
+  `FLoadVariant` is gone. `CommitLoad` takes the slot's `Variants` from
+  `Slot.Model.MaterialVariants`, `Variant` the base. `VariantItemClick`
+  sets `GorillaModel.MaterialVariant` in place (reads it back: out of range
+  is the base), `SaveCurrentSlot` stores it in the shown model's slot
+  (animated or static; the model keeps its materials itself), then
+  `UpdateVariantButton`. Only Capturing stops it.
+- **Builder**: `PieceSourceFor` sets `Template.MaterialVariantName` after
+  `LoadModelFile` (still a template per variant, `SourceKey`, as instances
+  share materials); `LoadEntryModel` sets `FModel.MaterialVariantName` from
+  the entry's `Meta.Variants`. The Library's names still come from
+  `ModelVariantNames` (no load needed for tiles).
+- **To test**: Sprite3D: the Variant button swaps at once, no reload, the
+  animation not restarted; two static models each keep their own. Builder:
+  as for `1420` (tile, right-click, preview, place, the Variants tool,
+  save and load).
 
 ### State (13 November 2026, 14:20): material variants, Builder (phase 2)
 

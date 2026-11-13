@@ -13,7 +13,7 @@ own `CLAUDE.md`, at its root, holds the rules for the whole repository,
 Sprite3D's and the shared units' included; where this file and that one
 differ on a rule for the repository as a whole, that one wins.
 
-Last updated: 13 November 2026, 14:20.
+Last updated: 13 November 2026, 16:30.
 
 ## Starting a new conversation
 
@@ -449,7 +449,7 @@ gone up.
 The session of 12-13 November 2026 built level editing on top of the
 Library. Its dated entries follow, newest first; this is their summary.
 
-**Zips.** The last is `2026-11-13-1425-variants-hints.zip` (Sprite3D's material variants, phase 1; see the root `CLAUDE.md`). Their names ran
+**Zips.** The last is `2026-11-13-1630-gorilla-variants.zip` (Sprite3D's material variants, phase 1; see the root `CLAUDE.md`). Their names ran
 ahead of the clock during the session (this one was made at about 00:10):
 carry on from the last name rather than the clock, so they stay in order.
 The owner applies them in order; each says which it follows.
@@ -509,6 +509,18 @@ tree it sits in), and leave the owner's lines as they are.
 version, units, objects, every texture name, its takes and whether their
 curves move, and that Sprite3DModelTextures' rewriting reproduces it byte
 for byte. Use it on any FBX the owner sends before guessing.
+
+### Gorilla3D's own material variants (13 November 2026, 16:30)
+
+- Gorilla3D 1.5 reads `KHR_materials_variants` itself (owner, 16:19; root
+  `CLAUDE.md`, *State (13 November 2026, 16:30)*).
+  **`2026-11-13-1630-gorilla-variants.zip`**: `PieceSourceFor` sets
+  `Template.MaterialVariantName := ASpec.VariantName` after
+  `LoadModelFile` (logs if it stays -1); still one template per variant, as
+  instances share their template's materials. `LoadEntryModel` sets
+  `FModel.MaterialVariantName` from `Meta.Variants[AVariant]`. No copy of
+  the model is made any more (`PrepareModelVariant` removed from the shared
+  unit). The tiles' names still come from `ModelVariantNames`.
 
 ### Material variants in Builder, phase 2 (13 November 2026, 14:20)
 

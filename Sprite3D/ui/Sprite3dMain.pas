@@ -1636,9 +1636,6 @@ type
     FLoadTimer: TTimer;
     FLoadDialog: TModelLoadForm;
     FLoadFile: String;
-    //** @abstract(The material variant the load under way shows: BASE_VARIANT but when the
-    //** Variant button reloads the model shown as another.)
-    FLoadVariant: Integer;
     //** @abstract(The model shown's variants' names, from its slot; empty for none.)
     FModelVariants: TArray<String>;
     //** @abstract(The variant the model shown shows, from its slot; BASE_VARIANT for the
@@ -2816,7 +2813,8 @@ type
     //**
     //** @param(Sender FVariantButton.)
     procedure VariantButtonClick(Sender: TObject);
-    //** @abstract(Loads the model shown again as the variant chosen, in its own place.)
+    //** @abstract(Makes the model shown the variant chosen, in place: Gorilla3D swaps its
+    //** materials (TGorillaModel.MaterialVariant).)
     //**
     //** @param(Sender A menu item; its Tag is the variant, BASE_VARIANT for the base.)
     procedure VariantItemClick(Sender: TObject);
@@ -3236,7 +3234,6 @@ begin
   FRoll := 0;
   FPolarAngle := 0;
   FFactor := 1.0;
-  FLoadVariant := BASE_VARIANT;
   FModelVariant := BASE_VARIANT;
 
   GorillaViewport := TGorillaViewport.Create(AspectLayout);
@@ -6874,7 +6871,7 @@ begin
   FLoadModel := TGorillaModel.Create(GorillaViewport);
   FLoadModel.Visible := False;
   FLoadModel.Parent := GorillaViewport;
-  FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadVariant, FLoadBox, Fixes);
+  FLoadAnims := LoadModelFile(FLoadModel, FLoadFile, FLoadBox, Fixes);
   // A glTF's textures and buffers that had to be found or made, one line
   // each; nothing for those used as named
   DebugMemo.Lines.AddStrings(TextureFixReport(ExtractFileName(FLoadFile), Fixes));
@@ -6951,25 +6948,20 @@ procedure TMainForm.CommitLoad;
 var
   Slot: TSprite3DModelSlot;
   Index, NameIndex, UnusedIndex: Integer;
-  Shown: String;
 begin
   // Every animation is used until Models, Animations Used says otherwise
   Slot := NewModelSlot(FLoadModel, FLoadFile, FLoadBox, FLoadBounds, FLoadAnims);
   FLoadModel := nil;
-  // Its material variants, and the one it was loaded as
-  Slot.Variants := ModelVariantNames(FLoadFile);
-  if (FLoadVariant >= 0) and (FLoadVariant <= High(Slot.Variants)) then
-    Slot.Variant := FLoadVariant;
+  // Its material variants, as Gorilla3D read them (KHR_materials_variants);
+  // a model starts as made
+  Slot.Variants := nil;
+  if (Slot.Model <> nil) and Assigned(Slot.Model.MaterialVariants) then
+    for var I := 0 to Slot.Model.MaterialVariants.Count - 1 do
+      Slot.Variants := Slot.Variants + [Slot.Model.MaterialVariants[I]];
+  Slot.Variant := BASE_VARIANT;
   if Length(Slot.Variants) > 0 then
-  begin
-    if Slot.Variant >= 0 then
-      Shown := 'variant ' + Slot.Variants[Slot.Variant]
-    else
-      Shown := 'the base';
-    DebugMemo.Lines.Add(Format('%s: %d material variants (%s); showing %s',
-      [ExtractFileName(FLoadFile), Length(Slot.Variants), String.Join(', ', Slot.Variants),
-      Shown]));
-  end;
+    DebugMemo.Lines.Add(Format('%s: %d material variants (%s); showing the base',
+      [ExtractFileName(FLoadFile), Length(Slot.Variants), String.Join(', ', Slot.Variants)]));
   // Measuring stepped the animations through their poses and left the
   // model however the last of them did; put it in its bind pose, exactly as
   // showing a static model does, so it shows, and its bounding box measures, the
@@ -7076,8 +7068,6 @@ var
 begin
   FLoadTimer.Enabled := False;
   FLoadStage := lsNone;
-  // The next load is of the model as made, unless the Variant button asks
-  FLoadVariant := BASE_VARIANT;
   FreeAndNil(FMeasurer);
   if FLoadRead <> nil then
     FLoadRead.Cancel;
@@ -9678,27 +9668,31 @@ begin
   FVariantMenu.Popup(At.X, At.Y);
 end;
 
-// The model shown loaded again as the variant chosen, in its own place, as
-// opening the same file again does
+// The model shown made the variant chosen, in place: Gorilla3D swaps its
+// materials itself (TGorillaModel.MaterialVariant), with no reload; the
+// slot remembers it, for the button
 procedure TMainForm.VariantItemClick(Sender: TObject);
 var
   Variant: Integer;
 begin
   Variant := TMenuItem(Sender).Tag;
-  if (Variant = FModelVariant) or (FModelFile = String.Empty) then
+  if (Variant = FModelVariant) or (GorillaModel = nil) then
     Exit;
-  if (FLoadStage <> lsNone) or FQueueActive or FScanning or Capturing then
+  if Capturing then
   begin
-    ShowMessage('Wait until nothing is loading or being saved.');
+    ShowMessage('Wait until the export has finished.');
     Exit;
   end;
-  if Variant = BASE_VARIANT then
+  GorillaModel.MaterialVariant := Variant;
+  // An index it does not have is the base, as Gorilla3D takes it
+  FModelVariant := GorillaModel.MaterialVariant;
+  if FModelVariant = BASE_VARIANT then
     DebugMemo.Lines.Add(ExtractFileName(FModelFile) + ': showing the model as made')
   else
     DebugMemo.Lines.Add(ExtractFileName(FModelFile) + ': showing variant ' +
-      FModelVariants[Variant]);
-  FLoadVariant := Variant;
-  SwitchModel(FModelFile);
+      FModelVariants[FModelVariant]);
+  SaveCurrentSlot;
+  UpdateVariantButton;
 end;
 
 // Kept in settings.json; ticked, every animation is exported in each
@@ -12122,12 +12116,22 @@ begin
     ActivateSlot(FStaticSlots[AIndex]);
 end;
 
-// Only the animations used can change while a model is shown, and only the
-// Animated tab's model has any
+// What can change while a model is shown: the animations used, which only
+// the Animated tab's model has, and the material variant shown
 procedure TMainForm.SaveCurrentSlot;
 begin
-  if (GorillaModel <> nil) and (GorillaModel = FAnimatedSlot.Model) then
+  if GorillaModel = nil then
+    Exit;
+  if GorillaModel = FAnimatedSlot.Model then
+  begin
     FAnimatedSlot.Used := Copy(FUsedAnimations);
+    FAnimatedSlot.Variant := FModelVariant;
+  end;
+  // The variant shown, which the model itself keeps, for the button when it
+  // is shown again
+  for var I := 0 to High(FStaticSlots) do
+    if FStaticSlots[I].Model = GorillaModel then
+      FStaticSlots[I].Variant := FModelVariant;
 end;
 
 // The form lets go of the model first if it is the one shown; the freeing is

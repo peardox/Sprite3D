@@ -258,8 +258,7 @@ type
     //** floor (TEMPLATE_PARK_Y): every piece of it is drawn by the GPU as an instance of it.)
     Template: TGorillaModel;
     //** @abstract(The file the template was loaded from: the model's own, or its copy with
-    //** the textures and buffers found or made, from PrepareModelTextures, or a copy showing
-    //** a material variant, from PrepareModelVariant.)
+    //** the textures and buffers found or made, from PrepareModelTextures.)
     LoadFile: String;
     //** @abstract(True if the model is static (meshes only, no skin, no animations), so the
     //** template's meshes are made static.)
@@ -3794,8 +3793,6 @@ end;
 function TMainForm.PieceSourceFor(const ASpec: TSprite3DPieceSpec;
   out ASource: TPieceSource): Boolean;
 var
-  Names: TArray<String>;
-  VariantIndex: Integer;
   Fixes: TArray<TSprite3DTextureFix>;
   Box: TBoundingBox;
   Watch: TStopwatch;
@@ -3831,23 +3828,18 @@ begin
         DebugMemo.Lines.Add(Format('Level: %s: %s %s: %s', [ASpec.Name,
           IfThen(Fix.IsBuffer, 'buffer', 'texture'), Fix.Named,
           IfThen(Fix.Used <> '', 'used ' + ExtractFileName(Fix.Used), 'not found')]));
-    // A variant: from a copy whose meshes take its materials; one the model
-    // no longer has is placed as the base, said so
+    LoadModelFile(Template, ASource.LoadFile, Box);
+    // A variant: Gorilla3D reads KHR_materials_variants itself, and swaps
+    // the template's materials (by name, case ignored). Its instances share
+    // its materials, so each variant is a template of its own. One the
+    // model no longer has is the base, said so
     if ASpec.VariantName <> String.Empty then
     begin
-      VariantIndex := -1;
-      Names := VariantNamesOf(ASpec);
-      for var I := 0 to High(Names) do
-        if SameText(Names[I], ASpec.VariantName) then
-          VariantIndex := I;
-      if VariantIndex >= 0 then
-        ASource.LoadFile := PrepareModelVariant(ASource.LoadFile,
-          TSprite3DAppSettings.ThumbnailFolder, ASpec.Key, VariantIndex)
-      else
+      Template.MaterialVariantName := ASpec.VariantName;
+      if Template.MaterialVariant < 0 then
         DebugMemo.Lines.Add(Format('Level: %s has no variant %s now; shown as made',
           [ASpec.Name, ASpec.VariantName]));
     end;
-    LoadModelFile(Template, ASource.LoadFile, Box);
     // Meshes only, no skin, no animations: its meshes can be made static,
     // before it is first drawn, so its buffers are made static ones
     Kind := GuessModelKind(ModelContent(Template));

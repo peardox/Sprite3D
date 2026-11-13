@@ -1,5 +1,6 @@
 //** @abstract(A glTF model's material variants (the KHR_materials_variants extension): their
-//** names, and the copy of the model to load to show one.)
+//** names, read from the file without loading it, and the pieces a tool that writes them
+//** needs.)
 //**
 //** A model with variants holds several looks for the same meshes: the file names them in its
 //** root's @code(extensions.KHR_materials_variants.variants), and each primitive that changes
@@ -8,30 +9,22 @@
 //** own material, and so does every primitive when none is chosen: the model as made, its
 //** base, which a reader that does not know the extension shows.
 //**
-//** The model loader does not choose variants, so PrepareModelVariant makes a copy of the
-//** model in which each primitive's own material is the one its mapping gives for the variant
-//** chosen; that copy is loaded as any model is. It goes in the cache's @code(models) folder,
-//** where Sprite3DModelTextures puts its copies, named after the model's key and the
-//** variant. The loader looks for the files a glTF names in the glTF's own folder only, so a
-//** buffer or image the model keeps in a file of its own is copied there too, named after the
-//** SHA-256 of its content, unless the model loaded is itself a copy in that folder already.
-//** The model kit's own files are never written.
-//**
-//** ModelVariantNames reads the names; GltfVariantNamesOf, ReadGltfJson and GlbBytes are the
-//** pieces, for a tool that writes variants (Sprite3D's glTF, Add Variants).
+//** Gorilla3D reads the extension itself and swaps a loaded model's materials
+//** (TGorillaModel.MaterialVariants, MaterialVariant, MaterialVariantName), so showing a
+//** variant needs nothing here. ModelVariantNames is for knowing a model's variants without
+//** loading it (the Library's tiles); for a GLB it reads only the header and the JSON chunk.
+//** GltfVariantNamesOf, ReadGltfJson and GlbBytes are the pieces, for a tool that writes
+//** variants (Sprite3D's glTF, Add Variants).
 //**
 //** Pure file and JSON work, no Gorilla3D or FireMonkey: any platform, any one thread at a time.
 unit Sprite3DModelVariants;
 
 {
   A glTF model's material variants (KHR_materials_variants): their names,
-  and a copy of the model to load to show one, in which each primitive's own
-  material is the one its mapping gives for that variant. The copy goes in
-  the cache's models folder, named after the model's key and the variant,
-  with any buffer or image the model keeps in a file copied beside it, named
-  after the SHA-256 of its content, as the loader looks in the glTF's own
-  folder only. The model kit's own files are never written. No variant
-  chosen: the model as made, its base. Pure file and JSON work.
+  read from the file without loading it (only a GLB's JSON chunk), and the
+  pieces a tool that writes them needs. Gorilla3D reads the extension itself
+  and swaps a loaded model's materials (TGorillaModel.MaterialVariant), so
+  showing a variant needs nothing here. Pure file and JSON work.
 }
 
 interface
@@ -56,27 +49,6 @@ const
 //** @returns(The names; empty if it has none, is not glTF, or cannot be read. Never an
 //** exception.)
 function ModelVariantNames(const AModelFile: String): TArray<String>;
-
-//** @abstract(The file to load to show variant AVariant of a model: a copy in which each
-//** primitive's own material is the one its mapping gives for that variant.)
-//**
-//** @param(ALoadFile The file the model is loaded from: the model itself, or the copy
-//** Sprite3DModelTextures made of it.)
-//**
-//** @param(ACacheFolder The cache; the copy, and every file it names, go in its
-//** @code(models) folder.)
-//**
-//** @param(AKey The model's key, which names the copy with the variant.)
-//**
-//** @param(AVariant The variant's index in ModelVariantNames; BASE_VARIANT, or one the model
-//** does not have, for the model as made.)
-//**
-//** @returns(The copy; ALoadFile itself for the base, or for a model that is not glTF.)
-//**
-//** @raises(Exception If the model cannot be read as glTF, or the copy, or a file it names,
-//** cannot be written.)
-function PrepareModelVariant(const ALoadFile, ACacheFolder, AKey: String;
-  const AVariant: Integer): String;
 
 //** @abstract(The variant names a glTF's JSON gives, as ModelVariantNames does.)
 //**
@@ -115,12 +87,9 @@ implementation
 
 uses
   // System.Generics.Collections lets TJSONArray's inline GetValue expand
-  System.Classes, System.IOUtils, System.Hash, System.NetEncoding,
-  System.Generics.Collections, OSPaths, JsonText;
+  System.Classes, System.IOUtils, System.Generics.Collections, OSPaths;
 
 const
-  //** @abstract(The cache's folder of models' copies, as Sprite3DModelTextures names it.)
-  MODEL_FOLDER_NAME = 'models';
   //** @abstract(A GLB's magic number: "glTF" in ASCII, little-endian.)
   GLB_MAGIC = $46546C67;
   //** @abstract(The JSON chunk's type: "JSON" in ASCII, little-endian.)
@@ -307,137 +276,6 @@ begin
     end;
   except
     Result := nil;
-  end;
-end;
-
-//** @abstract(Gives each primitive the material its mapping gives for variant AVariant;
-//** one without a mapping for it keeps its own.)
-//**
-//** @param(AJson The glTF's root object, changed.)
-//**
-//** @param(AVariant The variant's index.)
-//**
-//** @returns(How many primitives changed material.)
-function ApplyVariant(const AJson: TJSONObject; const AVariant: Integer): Integer;
-var
-  Meshes, Primitives, Mappings, Variants: TJSONArray;
-  Primitive, Mapping: TJSONObject;
-  Material, Index: Integer;
-begin
-  Result := 0;
-  if not AJson.TryGetValue<TJSONArray>('meshes', Meshes) then
-    Exit;
-  for var M := 0 to Meshes.Count - 1 do
-  begin
-    if not (Meshes.Items[M] is TJSONObject) or
-      not TJSONObject(Meshes.Items[M]).TryGetValue<TJSONArray>('primitives', Primitives) then
-      Continue;
-    for var P := 0 to Primitives.Count - 1 do
-    begin
-      if not (Primitives.Items[P] is TJSONObject) then
-        Continue;
-      Primitive := TJSONObject(Primitives.Items[P]);
-      if not Primitive.TryGetValue<TJSONArray>('extensions.' + VARIANTS_EXTENSION +
-        '.mappings', Mappings) then
-        Continue;
-      for var Q := 0 to Mappings.Count - 1 do
-      begin
-        if not (Mappings.Items[Q] is TJSONObject) then
-          Continue;
-        Mapping := TJSONObject(Mappings.Items[Q]);
-        if not Mapping.TryGetValue<Integer>('material', Material) or
-          not Mapping.TryGetValue<TJSONArray>('variants', Variants) then
-          Continue;
-        for var V := 0 to Variants.Count - 1 do
-          if Variants.Items[V].TryGetValue<Integer>(Index) and (Index = AVariant) then
-          begin
-            Primitive.RemovePair('material').Free;
-            Primitive.AddPair('material', TJSONNumber.Create(Material));
-            Inc(Result);
-          end;
-      end;
-    end;
-  end;
-end;
-
-//** @abstract(Puts every buffer and image the copy names by file beside it in AFolder, named
-//** after the SHA-256 of its content, and names that file instead.)
-//**
-//** A data URI, or an image inside a buffer, needs nothing. A file that is not there is left
-//** as named, for the loader to report.
-//**
-//** @param(AJson The copy's root object, changed.)
-//**
-//** @param(ASourceFolder The folder the model's uris are relative to.)
-//**
-//** @param(AFolder The copy's folder.)
-procedure CopyNamedFiles(const AJson: TJSONObject; const ASourceFolder, AFolder: String);
-var
-  List: TJSONArray;
-  Item: TJSONObject;
-  Uri, Source, Target, Name: String;
-begin
-  for var Kind in TArray<String>.Create('buffers', 'images') do
-  begin
-    if not AJson.TryGetValue<TJSONArray>(Kind, List) then
-      Continue;
-    for var I := 0 to List.Count - 1 do
-    begin
-      if not (List.Items[I] is TJSONObject) then
-        Continue;
-      Item := TJSONObject(List.Items[I]);
-      if not Item.TryGetValue<String>('uri', Uri) or (Uri = String.Empty) or
-        Uri.StartsWith('data:', True) then
-        Continue;
-      Source := OSFriendlyPath(TPath.Combine(ASourceFolder, TNetEncoding.URL.URLDecode(Uri)));
-      if not TFile.Exists(Source) then
-        Continue;
-      Name := LowerCase(THashSHA2.GetHashStringFromFile(Source)) +
-        LowerCase(ExtractFileExt(Source));
-      Target := TPath.Combine(AFolder, Name);
-      // Once only: named after its content, so one there is the same
-      if not TFile.Exists(Target) then
-        TFile.Copy(Source, Target, False);
-      Item.RemovePair('uri').Free;
-      Item.AddPair('uri', Name);
-    end;
-  end;
-end;
-
-function PrepareModelVariant(const ALoadFile, ACacheFolder, AKey: String;
-  const AVariant: Integer): String;
-var
-  LoadFile, Folder, Ext: String;
-  Json: TJSONObject;
-  Bin: TBytes;
-  IsGlb: Boolean;
-begin
-  LoadFile := OSFriendlyPath(ALoadFile);
-  Result := LoadFile;
-  Ext := LowerCase(ExtractFileExt(LoadFile));
-  if (AVariant < 0) or ((Ext <> '.gltf') and (Ext <> '.glb')) then
-    Exit;
-  Json := ReadGltfJson(TFile.ReadAllBytes(LoadFile), Bin, IsGlb);
-  try
-    if AVariant >= Length(GltfVariantNamesOf(Json)) then
-      Exit;   // not one it has: the base
-    ApplyVariant(Json, AVariant);
-    Folder := OSFriendlyPath(TPath.Combine(ACacheFolder, MODEL_FOLDER_NAME));
-    ForceDirectories(Folder);
-    // A copy Sprite3DModelTextures made is in this folder already, with
-    // every file it names; the model itself needs its files brought here
-    if not SameFileName(ExcludeTrailingPathDelimiter(ExtractFilePath(LoadFile)),
-      ExcludeTrailingPathDelimiter(Folder)) then
-      CopyNamedFiles(Json, ExtractFilePath(LoadFile), Folder);
-    Result := TPath.Combine(Folder, Format('%s.variant%d%s', [LowerCase(AKey), AVariant,
-      Ext]));
-    // Written each time: cheap, and never out of step with the model
-    if IsGlb then
-      TFile.WriteAllBytes(Result, GlbBytes(Json, Bin))
-    else
-      TFile.WriteAllBytes(Result, JsonToBytes(Json));
-  finally
-    Json.Free;
   end;
 end;
 

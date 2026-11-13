@@ -331,11 +331,11 @@ type
     //** shown in the order they were opened whether or not Models, Statics Used lists them;
     //** 0 until it is listed.)
     Order: Integer;
-    //** @abstract(The names of the model's material variants (Sprite3DModelVariants), in its
-    //** order; empty for a model without.)
+    //** @abstract(The names of the model's material variants, as Gorilla3D read them
+    //** (TGorillaModel.MaterialVariants), in its order; empty for a model without.)
     Variants: TArray<String>;
-    //** @abstract(The variant shown: an index into Variants, or BASE_VARIANT (-1) for the
-    //** model as made.)
+    //** @abstract(The variant shown (TGorillaModel.MaterialVariant): an index into Variants,
+    //** or -1 for the model as made.)
     Variant: Integer;
   end;
 
@@ -1290,15 +1290,9 @@ function SaveGrab(const ABitmap: TBitmap; const AFolder: String;
 //** if anything had to be found or made; see Sprite3DModelTextures.
 //** The copy is named after the SHA-256 of the model file. Other formats load as they are.
 //**
-//** A glTF with material variants is loaded as variant AVariant, from a copy made by
-//** PrepareModelVariant (Sprite3DModelVariants) beside the other copies; BASE_VARIANT, the
-//** model as made, needs none.
-//**
 //** @param(AModel The model to load into; its old contents are removed first.)
 //**
 //** @param(AFileName A glTF, FBX, OBJ, USD, Collada, STL or PLY file.)
-//**
-//** @param(AVariant The material variant to show; BASE_VARIANT (-1) for the model as made.)
 //**
 //** @param(ABox The model's bounding box straight after loading, before anything is added
 //** to it or it is moved; pass it to PlaceModel.)
@@ -1311,8 +1305,7 @@ function SaveGrab(const ABitmap: TBitmap; const AFolder: String;
 //** @raises(Exception If the file cannot be read or loaded, or the copy cannot be written;
 //** AModel is then left cleared or part-loaded.)
 function LoadModelFile(const AModel: TGorillaModel; const AFileName: String;
-  const AVariant: Integer; out ABox: TBoundingBox;
-  out AFixes: TArray<TSprite3DTextureFix>): TArray<String>;
+  out ABox: TBoundingBox; out AFixes: TArray<TSprite3DTextureFix>): TArray<String>;
 
 //** @abstract(A Debug tab line saying what was done with one of a model's textures or
 //** buffers, as LoadModelFile gave it.)
@@ -1717,7 +1710,7 @@ uses
   System.Classes, System.Math, System.IOUtils, System.Hash, System.StrUtils,
   System.Threading, System.SyncObjs, System.Generics.Collections,
   OSPaths, JsonText, Sprite3DStyles, Sprite3DTitleBar, Sprite3DAxes, Sprite3DGrid,
-  Sprite3DModelAnimations, Sprite3DModelVariants,
+  Sprite3DModelAnimations,
   {$IF DEFINED(MSWINDOWS)}
   GpuPreference,
   {$ENDIF}
@@ -2609,8 +2602,7 @@ begin
 end;
 
 function LoadModelFile(const AModel: TGorillaModel; const AFileName: String;
-  const AVariant: Integer; out ABox: TBoundingBox;
-  out AFixes: TArray<TSprite3DTextureFix>): TArray<String>;
+  out ABox: TBoundingBox; out AFixes: TArray<TSprite3DTextureFix>): TArray<String>;
 var
   Names: TStringList;
   I: Integer;
@@ -2621,11 +2613,6 @@ begin
   // use (a .psd, one not where the model says) fails the whole model, so
   // they are found or made first
   LoadFile := ModelFileToRead(AFileName, AFixes);
-  // The variant chosen, from a copy of what would be loaded; the base, as
-  // it is
-  if AVariant >= 0 then
-    LoadFile := PrepareModelVariant(LoadFile, TSprite3DAppSettings.SupportFolder,
-      THashSHA2.GetHashStringFromFile(OSFriendlyPath(AFileName)), AVariant);
   AModel.Clear;
   AModel.LoadFromFile(nil, OSFriendlyPath(LoadFile), [TAnimationCachingFlag.VertexPosition]);
 

@@ -1499,8 +1499,9 @@ type
     //**
     //** @param(AIndex The entry.)
     //**
-    //** @param(AVariant The material variant to load (PrepareModelVariant); BASE_VARIANT for
-    //** the model as made, as a thumbnail always is.)
+    //** @param(AVariant The material variant to show, an index into the entry's
+    //** Meta.Variants, set by Gorilla3D's MaterialVariantName; BASE_VARIANT for the model as
+    //** made, as a thumbnail always is.)
     //**
     //** @returns(True if it loaded; False, with the reason logged and FModel nil, if not.)
     function LoadEntryModel(const AIndex, AVariant: Integer): Boolean;
@@ -6231,16 +6232,16 @@ begin
     LoadFile := PrepareModelTextures(FileName, FCacheFolder, FEntries[AIndex].Meta.Hash,
       Fixes);
     ReportTextures(FEntries[AIndex].Meta.Name, Fixes);
-    // A variant: from a copy whose meshes take its materials
-    if AVariant >= 0 then
-    begin
-      LoadFile := PrepareModelVariant(LoadFile, FCacheFolder, FEntries[AIndex].Meta.Hash,
-        AVariant);
-      DebugLog('as variant ' + IntToStr(AVariant));
-    end;
     if LoadFile <> FileName then
       DebugLog('loading it from ' + LoadFile);
     LoadModelFile(FModel, LoadFile, Box);
+    // A variant: Gorilla3D reads KHR_materials_variants itself and swaps the
+    // model's materials, by name as the metadata keeps them
+    if (AVariant >= 0) and (AVariant <= High(FEntries[AIndex].Meta.Variants)) then
+    begin
+      FModel.MaterialVariantName := FEntries[AIndex].Meta.Variants[AVariant];
+      DebugLog('as variant ' + FEntries[AIndex].Meta.Variants[AVariant]);
+    end;
     FModel.RotationAngle.X := 180;
     FModel.ResetToBindPose();
     // What it holds, and the kind of model that makes it
